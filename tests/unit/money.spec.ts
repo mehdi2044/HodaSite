@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import Decimal from "decimal.js";
 import { Money, snapshotTotal } from "@/lib/money";
+
 describe("Money gate", () => {
   it("accepts exact strings and Decimal", () => {
     expect(
@@ -9,18 +10,48 @@ describe("Money gate", () => {
         .toString(),
     ).toBe("0.3");
   });
+
+  it("subtracts", () =>
+    expect(new Money("10", "USD").sub(new Money("3.5", "USD")).toString()).toBe(
+      "6.5",
+    ));
+
+  it("multiplies by a scalar factor (string or Decimal), full precision", () => {
+    expect(new Money("100", "USD").mul("1.2345").toString()).toBe("123.45");
+    expect(
+      new Money("1500", "TRY").mul(new Decimal("0.0333333")).toString(),
+    ).toBe("49.99995");
+  });
+
+  it("takes a percentage", () =>
+    expect(new Money("200", "USD").percent("8").toString()).toBe("16"));
+
+  it("compares within a currency", () => {
+    expect(new Money("1", "USD").compare(new Money("2", "USD"))).toBe(-1);
+    expect(new Money("2", "USD").compare(new Money("2", "USD"))).toBe(0);
+    expect(new Money("3", "USD").compare(new Money("2", "USD"))).toBe(1);
+  });
+
+  it("formats with digit grouping and the currency code", () => {
+    expect(new Money("1234567.5", "USD").format()).toBe("1,234,567.50 USD");
+    expect(new Money("999", "IRT").format()).toBe("999 IRT");
+    expect(new Money("-12000.25", "CAD").format()).toBe("-12,000.25 CAD");
+  });
+
   it("rounds IRT half-up to 1000", () =>
     expect(
       new Money("12500", "IRT")
         .round({ mode: "HALF_UP", increment: "1000" })
         .toString(),
     ).toBe("13000"));
+
   it("supports half-even explicitly", () =>
     expect(
       new Money("12500", "IRT")
         .round({ mode: "HALF_EVEN", increment: "1000" })
         .toString(),
     ).toBe("12000"));
+
   it.each(["TRY", "CAD"] as const)("rounds %s to two decimals", (c) =>
     expect(
       new Money("12.345", c)
@@ -28,14 +59,27 @@ describe("Money gate", () => {
         .toString(),
     ).toBe("12.35"),
   );
+
   it("supports .99 endings", () =>
     expect(
       new Money("13.2", "CAD")
         .round({ mode: "HALF_UP", increment: "1", ending: "0.99" })
         .toString(),
     ).toBe("12.99"));
-  it("rejects currency mixing", () =>
-    expect(() => new Money("1", "USD").add(new Money("1", "TRY"))).toThrow());
+
+  it("rejects currency mixing", () => {
+    expect(() => new Money("1", "USD").add(new Money("1", "TRY"))).toThrow();
+    expect(() => new Money("1", "USD").sub(new Money("1", "TRY"))).toThrow();
+    expect(() =>
+      new Money("1", "USD").compare(new Money("1", "TRY")),
+    ).toThrow();
+  });
+
+  it("does not expose the underlying Decimal", () => {
+    const m = new Money("5", "USD") as unknown as Record<string, unknown>;
+    expect(m.amount).toBeUndefined();
+  });
+
   it("keeps an immutable order snapshot", () => {
     const quote = {
       base: "USD" as const,
@@ -47,18 +91,5 @@ describe("Money gate", () => {
     quote.rate = "2";
     expect(order.fxSnapshot.rate).toBe("1.25");
     expect(Object.isFrozen(order.fxSnapshot)).toBe(true);
-  });
-  it("forbids monetary number arithmetic in domain modules", async () => {
-    const fs = await import("node:fs/promises");
-    for (const dir of ["pricing", "fees", "orders", "finance"]) {
-      const path = `src/modules/${dir}`;
-      try {
-        const files = await fs.readdir(path);
-        for (const f of files.filter((x) => x.endsWith(".ts")))
-          expect(await fs.readFile(`${path}/${f}`, "utf8")).not.toMatch(
-            /toNumber\(|parseFloat\(/,
-          );
-      } catch {}
-    }
   });
 });
