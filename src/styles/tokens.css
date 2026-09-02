@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* Design tokens (ThemeSettings → CSS vars, D26) surfaced to Tailwind v4 so
+   utilities like bg-primary / text-muted / rounded-token resolve. */
+@theme inline {
+  --color-primary: var(--primary);
+  --color-surface: var(--surface);
+  --color-bg: var(--background);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --radius-token: var(--radius);
+  --font-sans: Inter, Vazirmatn, sans-serif;
+}
+
 /* Self-hosted variable fonts (no Google Fonts — D26). Files vendored from
    @fontsource-variable/* into public/fonts/ by scripts/vendor-fonts.mjs.
    Both families are SIL OFL 1.1 (see the LICENSE next to each set). */

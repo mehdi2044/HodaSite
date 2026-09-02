@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { updateUser } from "../actions";
+import { Button, Card, Input, Select } from "@/components/ui";
 
 export default async function EditUser({
   params,
@@ -26,48 +27,35 @@ export default async function EditUser({
       <h1>
         ویرایش کاربر: <bdi dir="ltr">{user.email}</bdi>
       </h1>
-      <form
-        action={updateThisUser}
-        className="card grid"
-        style={{ maxWidth: 480 }}
-      >
-        <label>
-          نام
-          <input
-            className="input"
-            name="name"
-            defaultValue={user.name}
-            required
-          />
-        </label>
-        <label>
-          نقش
-          <select className="input" name="roleKey" defaultValue={currentRole}>
-            {roles.map((r) => (
-              <option key={r.id} value={r.key}>
-                {r.key}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          وضعیت
-          <select
-            className="input"
-            name="isActive"
-            defaultValue={String(user.isActive)}
-          >
-            <option value="true">فعال</option>
-            <option value="false">غیرفعال</option>
-          </select>
-        </label>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button className="button" type="submit">
-            ذخیره
-          </button>
-          <Link href="/admin/users">انصراف</Link>
-        </div>
-      </form>
+      <Card className="mt-4 max-w-lg">
+        <form action={updateThisUser} className="grid gap-4">
+          <label className="grid gap-1">
+            نام
+            <Input name="name" defaultValue={user.name} required />
+          </label>
+          <label className="grid gap-1">
+            نقش
+            <Select name="roleKey" defaultValue={currentRole}>
+              {roles.map((r) => (
+                <option key={r.id} value={r.key}>
+                  {r.key}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="grid gap-1">
+            وضعیت
+            <Select name="isActive" defaultValue={String(user.isActive)}>
+              <option value="true">فعال</option>
+              <option value="false">غیرفعال</option>
+            </Select>
+          </label>
+          <div className="flex items-center gap-3">
+            <Button type="submit">ذخیره</Button>
+            <Link href="/admin/users">انصراف</Link>
+          </div>
+        </form>
+      </Card>
     </>
   );
 }

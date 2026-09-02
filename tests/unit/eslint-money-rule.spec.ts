@@ -5,9 +5,10 @@ import { describe, it, expect } from "vitest";
 // text grep.
 describe("ESLint money rule (B1)", () => {
   it("blocks Number(), parseFloat() and .toNumber() under src/modules/{pricing,fees,orders,finance}", async () => {
-    // eslint.config.mjs is an untyped ESM module.
-    // @ts-expect-error - no type declaration for the flat config file
-    const mod = await import("../../eslint.config.mjs");
+    // eslint.config.mjs is an untyped ESM module — dynamic specifier keeps tsc
+    // from trying (and failing) to resolve its types.
+    const specifier = "../../eslint.config.mjs";
+    const mod = (await import(specifier)) as { default: unknown };
     const config = mod.default as Array<{
       files?: string[];
       rules?: Record<string, unknown>;

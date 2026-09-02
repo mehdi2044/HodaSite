@@ -26,6 +26,16 @@ test("the seeded owner can log in and reach the dashboard", async ({
 
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole("heading", { name: "داشبورد" })).toBeVisible();
+
+  // B4: the base component set renders on /admin/design
+  await page.goto("/admin/design");
+  await expect(
+    page.getByRole("heading", { name: "سیستم طراحی" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "باز کردن Dialog" }).click();
+  await expect(
+    page.getByRole("heading", { name: "عنوان دیالوگ" }),
+  ).toBeVisible();
 });
 
 test("bad credentials show an inline error and stay on the login page", async ({
