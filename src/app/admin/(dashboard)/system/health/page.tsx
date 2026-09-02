@@ -30,7 +30,7 @@ export default async function Health() {
             <Badge tone="error">در دسترس نیست</Badge>
           )}
         </p>
-        <p>ذخیره‌سازی: {process.env.STORAGE_DRIVER ?? "local"}</p>
+        <p>ذخیره‌سازی: {process.env.STORAGE_PROVIDER ?? "local"}</p>
         <p>
           آخرین بکاپ:{" "}
           {lastBackup ? <bdi dir="ltr">{lastBackup}</bdi> : "هنوز بکاپی نیست"}

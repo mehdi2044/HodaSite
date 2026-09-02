@@ -64,4 +64,4 @@ export class S3Storage implements StorageProvider {
   }
 }
 export const storage =
-  process.env.STORAGE_DRIVER === "s3" ? new S3Storage() : new LocalStorage();
+  process.env.STORAGE_PROVIDER === "s3" ? new S3Storage() : new LocalStorage();

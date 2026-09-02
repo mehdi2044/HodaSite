@@ -121,16 +121,23 @@ curl -fsSL https://raw.githubusercontent.com/mehdi2044/HodaSite/main/scripts/ser
 
 ### C4. تنظیم `.env` سرور
 فایل `/opt/hodasite/.env` — مقادیر مهم:
+> نکته: در `.env` کامنت درون‌خطی (`مقدار   # توضیح`) ننویسید؛ Docker Compose آن را جزو مقدار می‌خواند. توضیح‌ها را در خط جدا بگذارید.
+
 ```
 APP_URL=https://staging.yourdomain.com
 DATABASE_URL=postgresql://app:<رمز-قوی>@postgres:5432/app
-STORAGE_PROVIDER=minio            # یا r2
-EMAIL_PROVIDER=resend             # کلید API را از resend.com بگیرید
+AUTH_SECRET=<خروجی: openssl rand -base64 33>
+# s3 = هر فضای S3-سازگار: MinIO داخل Compose، یا Cloudflare R2 در Production
+STORAGE_PROVIDER=s3
+# کلید API را از resend.com بگیرید
+EMAIL_PROVIDER=resend
 RESEND_API_KEY=...
-NAVASAN_API_KEY=...               # همان کلید رایگان نوسان که در ارزینو دارید
+# همان کلید رایگان نوسان که در ارزینو دارید
+NAVASAN_API_KEY=...
 CRON_SECRET=<یک-رشته-تصادفی>
 MAINTENANCE_SECRET=<یک-رشته-تصادفی-دیگر>
-BACKUP_OFFSITE_ENDPOINT=...       # برای Production اجباری است — یک سرویس جدا از هاست (Backblaze B2 / Cloudflare R2 / Wasabi)
+# برای Production اجباری — یک سرویس جدا از هاست (Backblaze B2 / Cloudflare R2 / Wasabi)
+BACKUP_OFFSITE_ENDPOINT=...
 BACKUP_OFFSITE_KEY=...
 BACKUP_OFFSITE_SECRET=...
 ```

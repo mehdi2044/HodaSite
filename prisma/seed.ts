@@ -127,7 +127,7 @@ async function main() {
     update: {},
     create: {
       key: "storage",
-      provider: process.env.STORAGE_DRIVER ?? "local",
+      provider: process.env.STORAGE_PROVIDER ?? "local",
       isActive: true,
     },
   });

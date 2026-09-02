@@ -25,7 +25,7 @@ export async function GET() {
     {
       db: database,
       ...(reason ? { reason } : {}),
-      storage: process.env.STORAGE_DRIVER ?? "local",
+      storage: process.env.STORAGE_PROVIDER ?? "local",
       lastBackup,
       lastFx: null,
     },
