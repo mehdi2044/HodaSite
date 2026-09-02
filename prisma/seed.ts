@@ -10,6 +10,18 @@ const roles = [
   "data_entry",
   "marketing",
 ];
+
+// Phase 00 admin permissions (fix-order A2). `owner` also holds "*", but the
+// explicit grants are seeded for both so the permission model is exercised
+// and an audit of RolePermission shows intent.
+const ADMIN_PERMISSIONS = [
+  "settings.brand.edit",
+  "settings.theme.edit",
+  "users.view",
+  "users.manage",
+  "media.upload",
+  "system.health.view",
+];
 async function main() {
   for (const key of roles)
     await db.role.upsert({
@@ -39,6 +51,14 @@ async function main() {
     update: {},
     create: { roleId: owner.id, permission: "*" },
   });
+  const admin = await db.role.findUniqueOrThrow({ where: { key: "admin" } });
+  for (const role of [owner, admin])
+    for (const permission of ADMIN_PERMISSIONS)
+      await db.rolePermission.upsert({
+        where: { roleId_permission: { roleId: role.id, permission } },
+        update: {},
+        create: { roleId: role.id, permission },
+      });
   await db.siteSettings.upsert({
     where: { id: "default" },
     update: {},
