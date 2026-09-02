@@ -5,6 +5,8 @@ import { storage } from "@/modules/integrations/storage";
 import { db } from "@/lib/db";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
+import { isMaintenanceOn } from "@/modules/settings";
+import { enterRequest, leaveRequest } from "@/lib/request-metrics";
 
 const MAX_BYTES = 5_000_000;
 
@@ -24,6 +26,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   if (!(await can(session.user.id, "media.upload")))
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (await isMaintenanceOn())
+    return NextResponse.json({ error: "maintenance" }, { status: 503 });
 
   const file = (await req.formData()).get("file");
   if (!(file instanceof File))
@@ -47,19 +51,22 @@ export async function POST(req: Request) {
     now.getUTCMonth() + 1,
   ).padStart(2, "0")}/${crypto.randomUUID()}.${allowed.ext}`;
 
-  const url = await storage.put(key, buffer, sniffed.mime);
-
-  const media = await db.media.create({
-    data: {
-      kind: allowed.kind,
-      storageKey: key,
-      originalName: file.name, // metadata only, never used as a path
-      url,
-      bytes: file.size,
-      mime: sniffed.mime,
-      uploadedBy: session.user.id,
-    },
-  });
-
-  return NextResponse.json({ id: media.id, url }, { status: 201 });
+  enterRequest();
+  try {
+    const url = await storage.put(key, buffer, sniffed.mime);
+    const media = await db.media.create({
+      data: {
+        kind: allowed.kind,
+        storageKey: key,
+        originalName: file.name, // metadata only, never used as a path
+        url,
+        bytes: file.size,
+        mime: sniffed.mime,
+        uploadedBy: session.user.id,
+      },
+    });
+    return NextResponse.json({ id: media.id, url }, { status: 201 });
+  } finally {
+    leaveRequest();
+  }
 }

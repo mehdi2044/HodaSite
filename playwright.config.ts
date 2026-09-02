@@ -17,6 +17,9 @@ const ciServer =
 
 export default defineConfig({
   testDir: "tests/e2e",
+  // Some specs toggle server-global maintenance state; run serially in CI so
+  // that global state is never shared across parallel workers.
+  workers: isCI ? 1 : undefined,
   use: {
     baseURL: "http://127.0.0.1:3000",
     // Mobile-first viewport on Chromium — CI installs only the chromium
