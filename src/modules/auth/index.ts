@@ -4,14 +4,18 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import authConfig from "./config";
+
 const login = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 });
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  // Adapter is unused by the JWT strategy today; kept for the Phase 04
+  // customer magic-link / OAuth flow, which writes Account/Session rows.
   adapter: PrismaAdapter(db),
-  session: { strategy: "database" },
-  pages: { signIn: "/admin/login" },
   providers: [
     Credentials({
       credentials: { email: {}, password: {} },
