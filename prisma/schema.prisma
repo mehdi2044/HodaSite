@@ -1,26 +1,302 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
-enum FxMode { AUTO_ACCEPT REQUIRE_APPROVAL }
-enum JobStatus { PENDING RUNNING DONE FAILED }
-enum BackupStatus { RUNNING DONE FAILED }
-enum OffsiteStatus { PENDING OK FAILED NOT_CONFIGURED }
-enum RestoreStatus { PENDING VALIDATING RUNNING DONE FAILED CANCELLED }
-enum AlertSeverity { INFO WARNING CRITICAL }
-model User { id String @id @default(cuid()) email String @unique passwordHash String name String isActive Boolean @default(true) mfaSecret String? mfaEnabled Boolean @default(false) lastLoginAt DateTime? sessions Session[] roles UserRole[] overrides UserPermissionOverride[] auditLogs AuditLog[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Account { id String @id @default(cuid()) userId String type String provider String providerAccountId String refresh_token String? access_token String? expires_at Int? token_type String? scope String? id_token String? session_state String? user User @relation(fields:[userId],references:[id],onDelete:Cascade) @@unique([provider,providerAccountId]) }
-model Session { id String @id @default(cuid()) sessionToken String @unique userId String expires DateTime user User @relation(fields:[userId],references:[id],onDelete:Cascade) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model VerificationToken { identifier String token String @unique expires DateTime @@unique([identifier,token]) }
-model Role { id String @id @default(cuid()) key String @unique nameI18n Json permissions RolePermission[] users UserRole[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model RolePermission { id String @id @default(cuid()) roleId String permission String role Role @relation(fields:[roleId],references:[id],onDelete:Cascade) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@unique([roleId,permission]) }
-model UserRole { id String @id @default(cuid()) userId String roleId String scope Json? user User @relation(fields:[userId],references:[id],onDelete:Cascade) role Role @relation(fields:[roleId],references:[id],onDelete:Cascade) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@unique([userId,roleId]) }
-model UserPermissionOverride { id String @id @default(cuid()) userId String permission String allow Boolean scope Json? user User @relation(fields:[userId],references:[id],onDelete:Cascade) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@unique([userId,permission]) }
-model AuditLog { id String @id @default(cuid()) userId String? action String entityType String entityId String before Json? after Json? ip String? user User? @relation(fields:[userId],references:[id]) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Job { id String @id @default(cuid()) type String payload Json @default("{}") runAt DateTime @default(now()) attempts Int @default(0) status JobStatus @default(PENDING) lockedAt DateTime? lastError String? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@index([status,runAt]) }
-model Backup { id String @id @default(cuid()) kind String status BackupStatus offsiteStatus OffsiteStatus @default(PENDING) offsiteSyncedAt DateTime? fileKey String sizeBytes BigInt dbSizeBytes BigInt? mediaIncluded Boolean @default(true) verifiedAt DateTime? verifyResult Json? createdBy String? startedAt DateTime? finishedAt DateTime? error String? checksum String? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model RestoreRequest { id String @id @default(cuid()) backupId String? uploadedFileKey String? mode String @default("FULL") requestedBy String mfaVerifiedAt DateTime? status RestoreStatus @default(PENDING) log String? startedAt DateTime? finishedAt DateTime? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model SystemAlert { id String @id @default(cuid()) severity AlertSeverity code String message String resolvedAt DateTime? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model SiteSettings { id String @id @default("default") brand Json finance Json contact Json @default("{}") seo Json @default("{}") social Json @default("{}") checkout Json @default("{}") maintenance Json @default("{\"state\":\"off\"}") createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model ThemeSettings { id String @id @default("default") colors Json fonts Json radius String @default("12px") logoMediaId String? logoDarkMediaId String? faviconMediaId String? heroStyle String @default("editorial") customCss String? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Market { id String @id @default(cuid()) code String @unique name String currency String isActive Boolean @default(true) salesPaused Boolean @default(false) defaultLocale String enabledLocales String[] markupPercent Decimal @default(0) @db.Decimal(18,4) roundingRule Json holdHours Int paymentDeadlineHours Int fxMode FxMode fxStaleHours Int @default(24) fxMaxJumpPercent Decimal @default(5) @db.Decimal(18,4) volumetricDivisor Int @default(5000) supportChannels Json @default("{}") seo Json @default("{}") createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Integration { id String @id @default(cuid()) key String @unique provider String config Json @default("{}") isActive Boolean @default(false) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
-model Media { id String @id @default(cuid()) kind String storageKey String @unique originalName String url String width Int? height Int? bytes Int mime String altI18n Json @default("{}") variants Json @default("{}") uploadedBy String? deletedAt DateTime? createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FxMode {
+  AUTO_ACCEPT
+  REQUIRE_APPROVAL
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum BackupStatus {
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum OffsiteStatus {
+  PENDING
+  OK
+  FAILED
+  NOT_CONFIGURED
+}
+
+enum RestoreStatus {
+  PENDING
+  VALIDATING
+  RUNNING
+  DONE
+  FAILED
+  CANCELLED
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model User {
+  id           String                   @id @default(cuid())
+  email        String                   @unique
+  passwordHash String
+  name         String
+  isActive     Boolean                  @default(true)
+  mfaSecret    String?
+  mfaEnabled   Boolean                  @default(false)
+  lastLoginAt  DateTime?
+  sessions     Session[]
+  roles        UserRole[]
+  overrides    UserPermissionOverride[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+  accounts     Account[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  nameI18n    Json
+  permissions RolePermission[]
+  users       UserRole[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model RolePermission {
+  id         String   @id @default(cuid())
+  roleId     String
+  permission String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([roleId, permission])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  scope     Json?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleId])
+}
+
+model UserPermissionOverride {
+  id         String   @id @default(cuid())
+  userId     String
+  permission String
+  allow      Boolean
+  scope      Json?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, permission])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  ip         String?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Job {
+  id        String    @id @default(cuid())
+  type      String
+  payload   Json      @default("{}")
+  runAt     DateTime  @default(now())
+  attempts  Int       @default(0)
+  status    JobStatus @default(PENDING)
+  lockedAt  DateTime?
+  lastError String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status, runAt])
+}
+
+model Backup {
+  id              String        @id @default(cuid())
+  kind            String
+  status          BackupStatus
+  offsiteStatus   OffsiteStatus @default(PENDING)
+  offsiteSyncedAt DateTime?
+  fileKey         String
+  sizeBytes       BigInt
+  dbSizeBytes     BigInt?
+  mediaIncluded   Boolean       @default(true)
+  verifiedAt      DateTime?
+  verifyResult    Json?
+  createdBy       String?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  error           String?
+  checksum        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model RestoreRequest {
+  id              String        @id @default(cuid())
+  backupId        String?
+  uploadedFileKey String?
+  mode            String        @default("FULL")
+  requestedBy     String
+  mfaVerifiedAt   DateTime?
+  status          RestoreStatus @default(PENDING)
+  log             String?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model SystemAlert {
+  id         String        @id @default(cuid())
+  severity   AlertSeverity
+  code       String
+  message    String
+  resolvedAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model SiteSettings {
+  id          String   @id @default("default")
+  brand       Json
+  finance     Json
+  contact     Json     @default("{}")
+  seo         Json     @default("{}")
+  social      Json     @default("{}")
+  checkout    Json     @default("{}")
+  maintenance Json     @default("{\"state\":\"off\"}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ThemeSettings {
+  id              String   @id @default("default")
+  colors          Json
+  fonts           Json
+  radius          String   @default("12px")
+  logoMediaId     String?
+  logoDarkMediaId String?
+  faviconMediaId  String?
+  heroStyle       String   @default("editorial")
+  customCss       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Market {
+  id                   String   @id @default(cuid())
+  code                 String   @unique
+  name                 String
+  currency             String
+  isActive             Boolean  @default(true)
+  salesPaused          Boolean  @default(false)
+  defaultLocale        String
+  enabledLocales       String[]
+  markupPercent        Decimal  @default(0) @db.Decimal(18, 4)
+  roundingRule         Json
+  holdHours            Int
+  paymentDeadlineHours Int
+  fxMode               FxMode
+  fxStaleHours         Int      @default(24)
+  fxMaxJumpPercent     Decimal  @default(5) @db.Decimal(18, 4)
+  volumetricDivisor    Int      @default(5000)
+  supportChannels      Json     @default("{}")
+  seo                  Json     @default("{}")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Integration {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  provider  String
+  config    Json     @default("{}")
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  kind         String
+  storageKey   String    @unique
+  originalName String
+  url          String
+  width        Int?
+  height       Int?
+  bytes        Int
+  mime         String
+  altI18n      Json      @default("{}")
+  variants     Json      @default("{}")
+  uploadedBy   String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
