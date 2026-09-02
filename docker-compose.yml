@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    environment: {POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda}
+    healthcheck: {test: [CMD-SHELL, pg_isready -U hoda], interval: 3s, timeout: 3s, retries: 20}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+  minio:
+    image: minio/minio
+    command: server /data --console-address :9001
+    environment: {MINIO_ROOT_USER: minio, MINIO_ROOT_PASSWORD: minio123}
+    volumes: [media:/data]
+  mailpit: {image: axllent/mailpit, ports: ['8025:8025']}
+  app:
+    build: {context: ., target: deps}
+    command: sh -c 'pnpm prisma migrate deploy && pnpm prisma db seed && pnpm dev --hostname 0.0.0.0'
+    ports: ['3000:3000']
+    env_file: [.env]
+    environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, MEDIA_DIR: /data/media}
+    volumes: ['.:/app', 'node_modules:/app/node_modules', 'media:/data/media']
+    depends_on: {postgres: {condition: service_healthy}}
+  cron:
+    image: curlimages/curl
+    command: sh -c 'while true; do sleep 60; curl -fsS -X POST -H "Authorization: Bearer $${CRON_SECRET}" http://app:3000/api/cron/tick || true; done'
+    env_file: [.env]
+  ops:
+    build: {context: ., target: ops}
+    env_file: [.env]
+    environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, APP_URL: http://app:3000, APP_SRC: /app, MEDIA_DIR: /data/media, BACKUP_ROOT: /backups}
+    volumes: [media:/data/media, backups:/backups]
+  caddy:
+    image: caddy:2-alpine
+    ports: ['80:80','443:443']
+    volumes: ['./Caddyfile:/etc/caddy/Caddyfile:ro','caddy_data:/data']
+    depends_on: [app]
+volumes:
+  postgres_data: {}
+  media: {}
+  backups: {}
+  node_modules: {}
+  caddy_data: {}

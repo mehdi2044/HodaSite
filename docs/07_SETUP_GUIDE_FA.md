@@ -167,3 +167,15 @@ cd /opt/hodasite && ./scripts/deploy.sh
 1. ادمین → System Health را ببینید (اگر باز می‌شود).
 2. در سرور: `docker compose ps` و `docker compose logs --tail=200 app`.
 3. متن خطا را برای پیکسل بفرستید.
+
+## اجرای فاز ۰۰ روی لپ‌تاپ
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
+```
+بار اول، migration و seed خودکار اجرا می‌شوند. سایت در `http://localhost:3000/fa`، پنل در `http://localhost:3000/admin` و ایمیل آزمایشی در `http://localhost:8025` است.
+
+برای خاموش‌کردن و پاک‌کردن کامل دادهٔ آزمایشی:
+```bash
+docker compose -f docker-compose.dev.yml down -v
+```

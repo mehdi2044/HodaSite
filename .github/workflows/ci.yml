@@ -1,0 +1,23 @@
+name: CI
+on: [pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda}
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U hoda" --health-interval 5s --health-timeout 5s --health-retries 10
+    env: {DATABASE_URL: 'postgresql://hoda:hoda@localhost:5432/hoda', ADMIN_EMAIL: 'owner@example.com', ADMIN_PASSWORD: 'ChangeMe123!', AUTH_SECRET: test-secret, CRON_SECRET: test-cron, MAINTENANCE_SECRET: test-maintenance}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 20, cache: pnpm}
+      - run: sudo apt-get update && sudo apt-get install -y zstd unzip file
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma migrate deploy && pnpm prisma db seed
+      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: bash scripts/backup/tests/run.sh
+      - run: pnpm exec playwright install --with-deps chromium && pnpm e2e
