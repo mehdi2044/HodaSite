@@ -34,6 +34,12 @@ test("an authenticated upload of a real PNG succeeds", async ({ page }) => {
   expect(res.status()).toBe(201);
   const body = await res.json();
   expect(body.url).toMatch(/\/media\/media\/\d{4}\/\d{2}\/[0-9a-f-]+\.png$/);
+
+  // B10: the uploaded file is actually served
+  const served = await page.request.get(body.url);
+  expect(served.status()).toBe(200);
+  expect(served.headers()["content-type"]).toContain("image/png");
+  expect(Buffer.from(await served.body()).equals(PNG)).toBe(true);
 });
 
 test("a text file renamed .png is rejected by magic-byte sniffing", async ({

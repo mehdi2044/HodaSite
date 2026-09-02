@@ -73,6 +73,7 @@ export default auth(async (req) => {
 });
 
 export const config = {
-  // Run on everything except Next internals and static assets.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts/).*)"],
+  // Run on everything except Next internals, static assets and /media/*
+  // (served by its own route handler with its own access checks — B10).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts/|media/).*)"],
 };
