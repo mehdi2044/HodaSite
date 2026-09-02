@@ -59,7 +59,9 @@
 | B9 | ✅ | همه‌جا `STORAGE_PROVIDER` (نه `STORAGE_DRIVER`): `storage/index.ts`، `api/health`، `admin/system/health`، `prisma/seed.ts`، `.env.example`، `docs/07_SETUP_GUIDE_FA.md`. **کامنت‌های درون‌خطی از `.env.example` حذف شد** — هر مقدار دیگر `# ...` را جذب نمی‌کند (تأیید با `docker compose config`: `BACKUP_OFFSITE_ENDPOINT: ""`). مقدارها `local | s3` (MinIO و R2 هر دو `s3`). |
 | B10 | ✅ | `src/app/media/[...key]/route.ts` فایل‌های نوشته‌شده توسط `LocalStorage` را سرو می‌کند (و در `s3` به presigned URL ریدایرکت). `middleware` مسیر `/media/` را کنار می‌گذارد تا locale-redirect نشود. kindهای خصوصی (`receipt`، `backup`) نشست + مجوز `media.upload` می‌خواهند، وگرنه 404 (بدون لو دادن وجود فایل). `getBytes` به `StorageProvider` اضافه شد. تست e2e: بعد از آپلود، فایل با 200 و `content-type: image/png` و بایت‌های یکسان سرو می‌شود. |
 | B11 | ✅ | همهٔ ۳ نقطهٔ `auditLog.create` (brand/theme/users) `userId` واقعی می‌نویسند (در A2/B3 انجام شد). مایگریشن `20260903000000_auditlog_append_only`: `DROP COLUMN "updatedAt"` + تریگر Postgres که `UPDATE`/`DELETE` روی `AuditLog` را با EXCEPTION رد می‌کند (append-only، D24). `updatedAt` از مدل حذف شد. تست integration: INSERT مجاز، UPDATE و DELETE رد می‌شوند. |
-| B12، C1–C2، C4 | ⬜ | در حال انجام. |
+| B12 | ✅ | فلگ `--rollback` از `scripts/deploy.sh` حذف شد (فقط pull+restart بود، rollback واقعی نبود). **به فاز ۰۵ موکول شد:** rollback واقعی = تگ‌کردن image به‌ازای هر دیپلوی + نگه‌داشتن تگ قبلی + بازگردانی از بکاپ امنیتیِ پیش‌ازدیپلوی هنگام شکست. تا آن زمان: `restore.sh` داخل `ops`. `docs/07_SETUP_GUIDE_FA.md` هم به‌روز شد. |
+| بخش B | ✅ **کامل** | B1–B12 انجام شد. |
+| C1–C2، C4 | ⬜ | (C3 قبلاً انجام شد) بعد از بازبینی بخش B. |
 
 **وضعیت راستی‌آزمایی (Phase 00 review round 1):**
 - **محلی اجرا شد و سبز:** `prisma validate`, `prisma format --check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (۱۲/۱۲)، `docker compose ... config` برای هر دو فایل. Smoke با `next dev`: ریدایرکت‌های `/admin`، سرو فایل‌های فونت + LICENSE، endpointهای maintenance/state و ۴۰۱‌ها.
