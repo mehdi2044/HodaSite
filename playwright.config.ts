@@ -11,7 +11,9 @@ const isCI = !!process.env.CI;
 const ciServer =
   "cp -r .next/static .next/standalone/.next/ && " +
   "(cp -r public .next/standalone/ 2>/dev/null || true) && " +
-  "HOSTNAME=127.0.0.1 PORT=3000 node .next/standalone/server.js";
+  "mkdir -p /tmp/hoda-media && " +
+  "MEDIA_DIR=/tmp/hoda-media HOSTNAME=127.0.0.1 PORT=3000 " +
+  "node .next/standalone/server.js";
 
 export default defineConfig({
   testDir: "tests/e2e",

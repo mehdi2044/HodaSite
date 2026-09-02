@@ -20,6 +20,7 @@
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
     "decimal.js": "^10.6.0",
+    "file-type": "^22.0.2",
     "next": "15.5.2",
     "next-auth": "5.0.0-beta.29",
     "next-intl": "^4.3.5",

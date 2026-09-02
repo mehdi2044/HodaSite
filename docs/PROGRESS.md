@@ -41,7 +41,8 @@
 | A1 | ✅ | `src/middleware.ts` مسیرهای `/admin/*` (به‌جز `/admin/login`) را با **تأیید امضای JWT** محافظت می‌کند و کاربر بدون نشست را به `/admin/login?next=…` می‌فرستد. صفحه‌های محافظت‌شده زیر `admin/(dashboard)/` رفتند و لایهٔ آن‌ها نشست را دوباره روی سرور بررسی می‌کند (دفاع لایه‌ای). |
 | A4 | ✅ | صفحهٔ ورود یک کامپوننت کلاینت شد که `signIn("credentials", …)` را صدا می‌زند، حالت loading و خطای درون‌خطی دارد و `next` را رعایت می‌کند. دکمهٔ «خروج» در پوستهٔ ادمین. تست‌های Playwright: ورود owner نمونه → داشبورد، و ریدایرکت `/admin` بدون نشست. |
 | A2 | ✅ | هر Server Action ادمین با `auth()` + `assertCan(...)` شروع می‌شود (`saveBrand` → `settings.brand.edit`، `saveTheme` → `settings.theme.edit`) و رکورد AuditLog با `userId` واقعی می‌نویسد. مجوزها (`settings.brand.edit`، `settings.theme.edit`، `users.view`، `users.manage`، `media.upload`، `system.health.view`) برای `owner` و `admin` seed می‌شوند. تست واحد `tests/unit/admin-authz.spec.ts` تمام `src/app/admin/**/actions.ts` را glob می‌کند، **اگر صفر فایل پیدا شود fail می‌کند**، و fail می‌کند اگر فایلی `assertCan` نداشته باشد. Route handler ادمینی وجود ندارد؛ `/api/uploads` در A3. |
-| A3, A5, A6, A7, A8 | ⬜ | در حال انجام. |
+| A3 | ✅ | `/api/uploads` حالا نشست معتبر با مجوز `media.upload` می‌خواهد (بدون نشست → 401، بدون مجوز → 403). محتوای واقعی فایل با magic bytes (`file-type`) بررسی می‌شود و اگر نوع sniff‌شده در allow-list نباشد رد می‌شود (415). پسوند فایل ذخیره‌شده از **MIME تأییدشده** می‌آید نه از نام فایل کاربر؛ نام اصلی فقط در `Media.originalName`. سقف ۵MB و allow-list حفظ شد. تست‌های e2e: 401 بدون نشست، آپلود PNG واقعی → 201، فایل متنی با نام `.png` → 415. |
+| A5, A6, A7, A8 | ⬜ | در حال انجام. |
 | B1–B12، C1–C2، C4 | ⬜ | بعد از پایان A. |
 
 **یادداشت ADR پیشنهادی (شمارهٔ D توسط پیکسل بعد از بازبینی وی‌بانو):**
