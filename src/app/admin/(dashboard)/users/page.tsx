@@ -15,7 +15,8 @@ export default async function Users() {
       orderBy: { createdAt: "asc" },
       include: { roles: { include: { role: true } } },
     });
-  } catch {
+  } catch (err) {
+    console.error("[admin/users] failed to load users:", err);
     loadError = true;
   }
 

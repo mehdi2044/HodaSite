@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+
 export async function GET() {
-  let database = "down",
-    lastBackup: null | string = null;
+  let database = "down";
+  let reason: string | undefined;
+  let lastBackup: string | null = null;
+
   try {
     await db.$queryRaw`SELECT 1`;
     database = "ok";
@@ -13,11 +16,19 @@ export async function GET() {
           orderBy: { finishedAt: "desc" },
         })
       )?.finishedAt?.toISOString() ?? null;
-  } catch {}
-  return NextResponse.json({
-    db: database,
-    storage: process.env.STORAGE_DRIVER ?? "local",
-    lastBackup,
-    lastFx: null,
-  });
+  } catch (err) {
+    reason = err instanceof Error ? err.message : "unknown error";
+    console.error("[health] database check failed:", err);
+  }
+
+  return NextResponse.json(
+    {
+      db: database,
+      ...(reason ? { reason } : {}),
+      storage: process.env.STORAGE_DRIVER ?? "local",
+      lastBackup,
+      lastFx: null,
+    },
+    { status: database === "ok" ? 200 : 503 },
+  );
 }

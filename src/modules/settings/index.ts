@@ -6,7 +6,10 @@ export async function getAppearance() {
       db.siteSettings.findUnique({ where: { id: "default" } }),
       db.themeSettings.findUnique({ where: { id: "default" } }),
     ]);
-  } catch {
+  } catch (err) {
+    // The storefront still renders with fallback branding, but the failure
+    // must be visible in the logs (B7).
+    console.error("[settings] getAppearance failed:", err);
     return [null, null] as const;
   }
 }
