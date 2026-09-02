@@ -148,6 +148,8 @@ model UserPermissionOverride {
   @@unique([userId, permission])
 }
 
+/// Append-only (D24). A Postgres trigger blocks UPDATE and DELETE; there is
+/// no updatedAt.
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String?
@@ -159,7 +161,6 @@ model AuditLog {
   ip         String?
   user       User?    @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 }
 
 model Job {
