@@ -26,33 +26,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   if (!(await can(session.user.id, "media.upload")))
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  if (await isMaintenanceOn())
-    return NextResponse.json({ error: "maintenance" }, { status: 503 });
 
-  const file = (await req.formData()).get("file");
-  if (!(file instanceof File))
-    return NextResponse.json({ error: "invalid_file" }, { status: 400 });
-  if (file.size === 0 || file.size > MAX_BYTES)
-    return NextResponse.json({ error: "invalid_size" }, { status: 400 });
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  // Trust the bytes, not the client-supplied file.type.
-  const sniffed = await fileTypeFromBuffer(buffer);
-  const allowed = sniffed && ALLOWED[sniffed.mime];
-  if (!allowed)
-    return NextResponse.json(
-      { error: "unsupported_media_type" },
-      { status: 415 },
-    );
-
-  const now = new Date();
-  const key = `media/${now.getUTCFullYear()}/${String(
-    now.getUTCMonth() + 1,
-  ).padStart(2, "0")}/${crypto.randomUUID()}.${allowed.ext}`;
-
+  // Count first, then check maintenance — same ordering as withMutation so a
+  // restore drain can never miss this request (A8, Vee).
   enterRequest();
   try {
+    if (await isMaintenanceOn())
+      return NextResponse.json({ error: "maintenance" }, { status: 503 });
+
+    const file = (await req.formData()).get("file");
+    if (!(file instanceof File))
+      return NextResponse.json({ error: "invalid_file" }, { status: 400 });
+    if (file.size === 0 || file.size > MAX_BYTES)
+      return NextResponse.json({ error: "invalid_size" }, { status: 400 });
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Trust the bytes, not the client-supplied file.type.
+    const sniffed = await fileTypeFromBuffer(buffer);
+    const allowed = sniffed && ALLOWED[sniffed.mime];
+    if (!allowed)
+      return NextResponse.json(
+        { error: "unsupported_media_type" },
+        { status: 415 },
+      );
+
+    const now = new Date();
+    const key = `media/${now.getUTCFullYear()}/${String(
+      now.getUTCMonth() + 1,
+    ).padStart(2, "0")}/${crypto.randomUUID()}.${allowed.ext}`;
+
     const url = await storage.put(key, buffer, sniffed.mime);
     const media = await db.media.create({
       data: {

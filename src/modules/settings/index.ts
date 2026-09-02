@@ -11,30 +11,35 @@ export async function getAppearance() {
   }
 }
 
-// Maintenance flag (fix-order A8). Cached briefly so the write-gate does not
-// hit the database on every mutation. On a read error we keep serving the last
-// known value rather than flapping.
-type MaintenanceCache = { value: boolean; at: number } | null;
-let maintenanceCache: MaintenanceCache = null;
-const MAINTENANCE_TTL_MS = 5_000;
+// Maintenance flag (fix-order A8).
+//
+// The write-gate must never act on a stale value (Vee): a mutation arriving
+// seconds after maintenance was switched on must still be rejected. So the
+// source of truth is an in-process flag that POST /api/system/maintenance sets
+// synchronously (same process — single-container assumption, D22). The DB is
+// read only to hydrate the flag on a cold start (covers the app restarting
+// while maintenance was left on). There is no TTL cache on this path.
+let maintenanceFlag: boolean | undefined;
 
-export function bustMaintenanceCache(next?: boolean): void {
-  maintenanceCache =
-    next === undefined ? null : { value: next, at: Date.now() };
+/** Called synchronously by the maintenance toggle endpoint. */
+export function setMaintenanceFlag(on: boolean): void {
+  maintenanceFlag = on;
 }
 
 export async function isMaintenanceOn(): Promise<boolean> {
-  if (maintenanceCache && Date.now() - maintenanceCache.at < MAINTENANCE_TTL_MS)
-    return maintenanceCache.value;
+  if (maintenanceFlag !== undefined) return maintenanceFlag;
   try {
     const s = await db.siteSettings.findUnique({
       where: { id: "default" },
       select: { maintenance: true },
     });
-    const value = (s?.maintenance as { state?: string } | null)?.state === "on";
-    maintenanceCache = { value, at: Date.now() };
-    return value;
+    maintenanceFlag =
+      (s?.maintenance as { state?: string } | null)?.state === "on";
+    return maintenanceFlag;
   } catch {
-    return maintenanceCache?.value ?? false;
+    // Cold start + DB unreachable. Restore always sets maintenance through the
+    // endpoint (which sets the flag directly), so an unreadable DB here means
+    // "not in a restore". Leave the flag unset so the next call retries.
+    return false;
   }
 }
