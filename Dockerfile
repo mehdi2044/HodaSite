@@ -17,11 +17,14 @@ RUN pnpm prisma generate && pnpm build
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# `output: "standalone"` already traces @prisma/client and its query engine
+# into .next/standalone/node_modules (with pnpm the generated client lives in
+# the virtual store, not at node_modules/.prisma, so it must not be copied by
+# that path). The CI e2e job exercises Prisma queries against this bundle.
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY entrypoint.sh ./
 CMD ["./entrypoint.sh"]
 
