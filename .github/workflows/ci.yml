@@ -21,3 +21,20 @@ jobs:
       - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
       - run: bash scripts/backup/tests/run.sh
       - run: pnpm exec playwright install --with-deps chromium && pnpm e2e
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image (runner stage)
+        run: docker build --target runner -t hoda-app .
+      - name: Build the ops image
+        run: docker build --target ops -t hoda-ops .
+      - name: ops image has the Prisma CLI and schema at /app/prisma
+        run: |
+          docker run --rm hoda-ops sh -c 'test -f /app/prisma/schema.prisma && npx prisma -v'
+      - name: production compose config is valid
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.dev.yml config --quiet

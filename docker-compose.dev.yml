@@ -20,7 +20,9 @@ services:
     depends_on: {postgres: {condition: service_healthy}}
   cron:
     image: curlimages/curl
-    command: sh -c 'while true; do sleep 60; curl -fsS -X POST -H "Authorization: Bearer $${CRON_SECRET}" http://app:3000/api/cron/tick || true; done'
+    # exec-form list: the inline "Authorization: Bearer" string is not valid as
+    # a YAML plain scalar (colon-space) and Docker Compose v2 rejects it.
+    command: ["sh", "-c", "while true; do sleep 60; curl -fsS -X POST -H \"Authorization: Bearer $${CRON_SECRET}\" http://app:3000/api/cron/tick || true; done"]
     env_file: [.env]
   ops:
     build: {context: ., target: ops}

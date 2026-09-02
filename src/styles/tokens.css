@@ -1,2 +1,170 @@
 @import "tailwindcss";
-@font-face{font-family:Vazirmatn;src:url('/fonts/vazirmatn/Vazirmatn.woff2')}@font-face{font-family:Inter;src:url('/fonts/inter/Inter.woff2')} :root{--primary:#E8792A;--background:#FBF8F3;--surface:#fff;--text:#1A1A1A;--muted:#6B6B6B;--success:#2E7D4F;--error:#C0392B;--warning:#B7791F;--radius:12px}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--text);font-family:Inter,Vazirmatn,sans-serif}html[lang=fa] body,[dir=rtl]{font-family:Vazirmatn,Inter,sans-serif}.shell{max-width:1180px;margin-inline:auto;padding:24px}.button{min-height:44px;border:0;border-radius:999px;padding-inline:24px;background:var(--primary);color:white;font:inherit;cursor:pointer}.card{background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:0 12px 40px #39230b0d}.input{min-height:44px;border:1px solid #ddd;border-radius:10px;padding-inline:12px;font:inherit;width:100%}.muted{color:var(--muted)}.grid{display:grid;gap:16px}.admin{display:grid;grid-template-columns:240px 1fr;min-height:100vh}.sidebar{background:#1a1a1a;color:white;padding:24px}.sidebar a{display:block;color:#ddd;text-decoration:none;padding:12px;border-radius:9px}.sidebar a:hover{background:#333}.hero{min-height:72vh;display:grid;align-content:center;background:radial-gradient(circle at 80% 10%,#f2c9a8,transparent 40%)}@media(max-width:700px){.admin{grid-template-columns:1fr}.sidebar{display:flex;overflow:auto;padding:8px}.sidebar a{white-space:nowrap}.shell{padding:20px}}
+
+/* Self-hosted variable fonts (no Google Fonts — D26). Files vendored from
+   @fontsource-variable/* into public/fonts/ by scripts/vendor-fonts.mjs.
+   Both families are SIL OFL 1.1 (see the LICENSE next to each set). */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-088E, U+08A0-08FF, U+200C-200E,
+    U+2010-2011, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/vazirmatn-latin-ext-wght-normal.woff2")
+    format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+1E00-1E9F, U+2020, U+20A0-20C0,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/vazirmatn/vazirmatn-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122,
+    U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter/inter-latin-ext-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+1E00-1E9F, U+2020, U+20A0-20C0,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter/inter-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122,
+    U+FEFF, U+FFFD;
+}
+
+:root {
+  --primary: #e8792a;
+  --background: #fbf8f3;
+  --surface: #fff;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --success: #2e7d4f;
+  --error: #c0392b;
+  --warning: #b7791f;
+  --radius: 12px;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: Inter, Vazirmatn, sans-serif;
+}
+html[lang="fa"] body,
+[dir="rtl"] {
+  font-family: Vazirmatn, Inter, sans-serif;
+}
+.shell {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 24px;
+}
+.button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  padding-inline: 24px;
+  background: var(--primary);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+.button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: 0 12px 40px #39230b0d;
+}
+.input {
+  min-height: 44px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding-inline: 12px;
+  font: inherit;
+  width: 100%;
+}
+.muted {
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  gap: 16px;
+}
+.admin {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #1a1a1a;
+  color: white;
+  padding: 24px;
+}
+.sidebar a {
+  display: block;
+  color: #ddd;
+  text-decoration: none;
+  padding: 12px;
+  border-radius: 9px;
+}
+.sidebar a:hover {
+  background: #333;
+}
+.sidebar-user {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #333;
+  display: grid;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #ddd;
+}
+.sidebar-user .button {
+  margin-top: 8px;
+  min-height: 36px;
+}
+.hero {
+  min-height: 72vh;
+  display: grid;
+  align-content: center;
+  background: radial-gradient(circle at 80% 10%, #f2c9a8, transparent 40%);
+}
+@media (max-width: 700px) {
+  .admin {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: flex;
+    overflow: auto;
+    padding: 8px;
+  }
+  .sidebar a {
+    white-space: nowrap;
+  }
+  .sidebar-user {
+    margin-top: 8px;
+    border-top: 0;
+  }
+  .shell {
+    padding: 20px;
+  }
+}
