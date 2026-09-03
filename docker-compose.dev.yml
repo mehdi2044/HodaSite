@@ -8,7 +8,7 @@ services:
     image: minio/minio
     command: server /data --console-address :9001
     environment: {MINIO_ROOT_USER: minio, MINIO_ROOT_PASSWORD: minio123}
-    volumes: [media:/data]
+    volumes: [minio_data:/data]
   mailpit: {image: axllent/mailpit, ports: ['8025:8025']}
   app:
     build: {context: ., target: deps}
@@ -16,7 +16,9 @@ services:
     ports: ['3000:3000']
     env_file: [.env]
     environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, MEDIA_DIR: /data/media}
-    volumes: ['.:/app', 'node_modules:/app/node_modules', 'media:/data/media']
+    # media volume mounts at /data (not /data/media) so restore.sh's atomic
+    # `mv /data/media /data/media.prev` isn't operating on a mount point.
+    volumes: ['.:/app', 'node_modules:/app/node_modules', 'media:/data']
     depends_on: {postgres: {condition: service_healthy}}
   cron:
     image: curlimages/curl
@@ -28,5 +30,5 @@ services:
     build: {context: ., target: ops}
     env_file: [.env]
     environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, APP_URL: http://app:3000, APP_SRC: /app, MEDIA_DIR: /data/media, BACKUP_ROOT: /backups}
-    volumes: [media:/data/media, backups:/backups]
-volumes: {postgres_data: {}, media: {}, backups: {}, node_modules: {}}
+    volumes: [media:/data, backups:/backups]
+volumes: {postgres_data: {}, media: {}, minio_data: {}, backups: {}, node_modules: {}}

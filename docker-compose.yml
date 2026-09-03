@@ -26,7 +26,7 @@ services:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
     volumes:
-      - media:/data
+      - minio_data:/data
 
   # One-shot: apply migrations before `app` starts. Built from the `ops` stage
   # because that image ships the full Prisma CLI (the runner image does not).
@@ -52,7 +52,7 @@ services:
     environment:
       MEDIA_DIR: /data/media
     volumes:
-      - media:/data/media
+      - media:/data
     healthcheck:
       test:
         - CMD
@@ -91,7 +91,7 @@ services:
       MEDIA_DIR: /data/media
       BACKUP_ROOT: /backups
     volumes:
-      - media:/data/media
+      - media:/data
       - backups:/backups
 
   caddy:
@@ -109,6 +109,7 @@ services:
 volumes:
   postgres_data: {}
   media: {}
+  minio_data: {}
   backups: {}
   caddy_data: {}
   caddy_config: {}
