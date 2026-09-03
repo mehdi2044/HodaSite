@@ -56,23 +56,51 @@ export class Money {
     );
   }
 
+  /**
+   * Round per a data-driven {@link RoundingRule}.
+   *
+   * Semantics (fix-order C1 — pinned by tests):
+   *
+   * 1. **Without `ending`:** round the amount to the nearest multiple of
+   *    `increment`. `mode` decides an exact half: `HALF_UP` goes away from zero
+   *    (12500 / 1000 → 13000, -12500 → -13000); `HALF_EVEN` goes to the even
+   *    multiple (12500 → 12000, -12500 → -12000).
+   *
+   * 2. **With `ending`** (charm pricing, e.g. `.99`): round to the nearest
+   *    value of the form `m·increment + ending` for integer `m` — i.e. the
+   *    nearest "…99" price. `mode` breaks an exact tie. So 13.20 → 12.99 (it
+   *    really is closer to 12.99 than 13.99) but 13.70 → 13.99, and 13.49 is
+   *    the tie: `HALF_UP` → 13.99, `HALF_EVEN` → 12.99.
+   *    - `ending` is taken modulo `increment`, so it always sits inside one
+   *      step.
+   *    - A non-negative amount never rounds to a negative charm price; the
+   *      floor is `ending` itself (0.10 → 0.99, 0 → 0.99).
+   *    - Negative amounts round to the nearest charm point with no clamping
+   *      (-13.20 → -13.01).
+   *
+   * This replaces an earlier implementation that always dropped to the lower
+   * charm bucket when `bucket + ending` exceeded the amount — that silently cut
+   * a computed 13.70 to 12.99 (a full unit) and also assumed `increment === 1`.
+   */
   round(rule: RoundingRule): Money {
     const mode =
       rule.mode === "HALF_EVEN"
         ? Decimal.ROUND_HALF_EVEN
         : Decimal.ROUND_HALF_UP;
     const increment = new Decimal(rule.increment);
-    let result = this.#amount
-      .div(increment)
-      .toDecimalPlaces(0, mode)
-      .mul(increment);
-    if (rule.ending !== undefined) {
-      const ending = new Decimal(rule.ending);
-      result = result.floor().add(ending);
-      if (result.gt(this.#amount) && result.sub(1).gte(0))
-        result = result.sub(1);
+
+    if (rule.ending === undefined) {
+      const result = this.#amount
+        .div(increment)
+        .toDecimalPlaces(0, mode)
+        .mul(increment);
+      return new Money(result, this.currency);
     }
-    return new Money(result, this.currency);
+
+    const ending = new Decimal(rule.ending).mod(increment);
+    let m = this.#amount.sub(ending).div(increment).toDecimalPlaces(0, mode);
+    if (this.#amount.gte(0) && m.lt(0)) m = new Decimal(0);
+    return new Money(m.mul(increment).add(ending), this.currency);
   }
 
   /** -1 if this < other, 0 if equal, 1 if this > other. Same currency only. */

@@ -11,17 +11,56 @@ const roles = [
   "marketing",
 ];
 
-// Phase 00 admin permissions (fix-order A2). `owner` also holds "*", but the
-// explicit grants are seeded for both so the permission model is exercised
-// and an audit of RolePermission shows intent.
-const ADMIN_PERMISSIONS = [
-  "settings.brand.edit",
-  "settings.theme.edit",
-  "users.view",
-  "users.manage",
-  "media.upload",
-  "system.health.view",
-];
+// Least-privilege permission sets per role (fix-order A2 + C2). `owner` holds
+// "*"; every other role gets only what it needs. `security.role.manage` and
+// `users.manage` are deliberately owner/admin-only. Later phases extend these
+// sets; negative tests in tests/integration/role-least-privilege.spec.ts pin
+// what each role must NOT have.
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  admin: [
+    "settings.brand.edit",
+    "settings.theme.edit",
+    "users.view",
+    "users.manage",
+    "media.upload",
+    "system.health.view",
+    "catalog.product.view",
+    "catalog.product.create",
+    "catalog.product.edit",
+    "catalog.product.publish",
+    "pricing.sale_price.edit",
+    "pricing.cost.view",
+    "inventory.stock.adjust",
+    "order.view",
+    "order.cancel",
+    "payment.receipt.approve",
+    "finance.report.view",
+    "crm.customer.export",
+    "marketing.campaign.publish",
+  ],
+  data_entry: [
+    "catalog.product.view",
+    "catalog.product.create",
+    "catalog.product.edit",
+    "media.upload",
+  ],
+  warehouse: ["catalog.product.view", "inventory.stock.adjust", "order.view"],
+  accountant: [
+    "order.view",
+    "pricing.cost.view",
+    "payment.receipt.approve",
+    "payment.refund",
+    "finance.report.view",
+    "finance.expense.create",
+  ],
+  support: ["order.view", "order.cancel", "users.view", "crm.customer.export"],
+  marketing: [
+    "catalog.product.view",
+    "media.upload",
+    "marketing.campaign.publish",
+    "crm.customer.export",
+  ],
+};
 async function main() {
   for (const key of roles)
     await db.role.upsert({
@@ -51,14 +90,15 @@ async function main() {
     update: {},
     create: { roleId: owner.id, permission: "*" },
   });
-  const admin = await db.role.findUniqueOrThrow({ where: { key: "admin" } });
-  for (const role of [owner, admin])
-    for (const permission of ADMIN_PERMISSIONS)
+  for (const [key, permissions] of Object.entries(ROLE_PERMISSIONS)) {
+    const role = await db.role.findUniqueOrThrow({ where: { key } });
+    for (const permission of permissions)
       await db.rolePermission.upsert({
         where: { roleId_permission: { roleId: role.id, permission } },
         update: {},
         create: { roleId: role.id, permission },
       });
+  }
   await db.siteSettings.upsert({
     where: { id: "default" },
     update: {},
