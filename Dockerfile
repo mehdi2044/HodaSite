@@ -36,8 +36,18 @@ COPY entrypoint.sh ./
 CMD ["./entrypoint.sh"]
 
 FROM base AS ops
+# postgresql-client-16 from PGDG — the Debian 12 package is v15 and cannot
+# pg_dump a Postgres 16 server (docs/phase-00 §10 requires client 16).
 RUN apt-get update \
-    && apt-get install -y postgresql-client zstd jq zip unzip file curl python3 \
+    && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+         -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+         > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+         postgresql-client-16 zstd jq zip unzip file python3 \
     && rm -rf /var/lib/apt/lists/* \
     # mc (MinIO client) for the off-site backup mirror (docs/phase-00 §10)
     && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
