@@ -4,7 +4,7 @@
 
 | فاز | نام | وضعیت | تاریخ | PR |
 |---|---|---|---|---|
-| 00 | Foundation | 🔍 آمادهٔ بازبینی | ۲۰۲۶-۰۹-۰۲ | Phase 00: Foundation |
+| 00 | Foundation | 🔍 بازبینی نهایی (A+B تأیید؛ C+D انجام؛ CI سبز) | ۲۰۲۶-۰۹-۰۳ | #1 |
 | 01 | Settings / Theme / CMS / Translations / Media | ⬜ | | |
 | 02 | Catalog & Storefront | ⬜ | | |
 | — | **Checkpoint 1** (تست مهدی) | ⬜ | | |
@@ -66,10 +66,18 @@
 | C4 | ✅ | توضیح PR #1 و همین فایل بازنویسی شدند تا فقط ادعاهای راستی‌آزمایی‌شده داشته باشند؛ ادعای غلط ۴۰۳ Prisma رد شد؛ تقسیم سه‌طرفهٔ زیر. |
 | D — runtime واقعی Docker | ✅ | job جدید `docker-runtime` در `.github/workflows/ci.yml` (باید در branch protection **required** شود). `scripts/ci/runtime-smoke.sh` + `ops-restore-cycle.sh` + `ops-negative-guards.sh`: `.env` با رازهای تصادفی واقعی → `docker compose up -d --wait` → تأیید اجرای مایگریشن‌ها روی Postgres واقعی و `/api/health: db ok` → seed → یک چرخهٔ کامل داخل `ops`: `backup.sh` → `verify.sh` → تغییر ردیف → `restore.sh --yes` → assert بازگشت ردیف + وجود بکاپ امنیتی + خاموش‌شدن maintenance + اجرای `prisma migrate deploy` از داخل ops بدون Docker socket + بازگشت فایل media بعد از swap اتمیک. موارد منفی: `run.sh` داخل image واقعی، zip با `../evil` رد، media tar با symlink رد، `manifest.json` دستکاری‌شده در checksum شکست می‌خورد. `down -v` + آپلود لاگ‌ها به‌عنوان artifact. Dockerfile ops حالا `zip` و `mc` هم دارد. `verify.sh` برای فاز فعلی سازگار شد (Market/User اجباری؛ Product/Variant فقط اگر موجود باشند). `app` در compose تولید حالا healthcheck دارد. |
 
-**وضعیت راستی‌آزمایی (Phase 00 review round 1 — تا پایان بخش B):**
-- **محلی اجرا شد و سبز (این ماشین: ویندوز، بدون Postgres/Docker daemon):** `prisma validate`, `prisma format --check`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (۲۸ تست unit سبز؛ ۵ تست integration که بدون DB خودشان skip می‌شوند)، `docker compose config` هر دو فایل. Smoke با `next dev`: گارد `/admin` و ریدایرکت `?next=`، مسیر locale (`/`→`/fa`، `<html lang dir>` درست، `/fa/xx`→۴۰۴)، سرو فونت‌ها + LICENSE، `/media/*` بدون locale-redirect، endpointهای maintenance/state.
-- **فقط در CI اجرا شد و سبز:** `pnpm prisma migrate deploy && pnpm prisma db seed` (شامل مایگریشن دوم trigger/DROP COLUMN)، `pnpm build` کامل، `bash scripts/backup/tests/run.sh`، `pnpm e2e` (۱۶ تست: سه‌زبانه/RTL/BiDi، ورود owner → داشبورد + `/admin/design` + Dialog، ریدایرکت‌های `/admin`، ساخت→ورود→غیرفعال‌سازی کاربر، آپلود PNG + سرو فایل + رد فایل متنیِ `.png`، گیت تعمیرات 503، `/api/health`). تست‌های integration: `jobs-lock` (FOR UPDATE SKIP LOCKED)، `audit-append-only` (trigger). job `docker`: build هر دو stage + بررسی image ops + `docker compose config`.
-- **هنوز اصلاً راستی‌آزمایی نشده:** `docker compose -f docker-compose.yml up` کامل end-to-end، `docker compose run --rm ops npx prisma migrate deploy` روی DB واقعی، `backup.sh`/`restore.sh` داخل کانتینر `ops`، و رفتار عملیِ `S3Storage` روی MinIO/R2 (کد مسیرش هست ولی روی S3 واقعی اجرا نشده). نیازمند محیط دارای Docker + Postgres.
+**وضعیت راستی‌آزمایی (Phase 00 review round 1 — نهایی، پایان C + D):**
+
+_این ماشین ویندوز است و Postgres/Docker daemon ندارد؛ هر چیزی که به آن‌ها نیاز دارد فقط در CI اجرا می‌شود._
+
+- **محلی اجرا شد و سبز:** `prisma validate` · `prisma format --check` · `pnpm lint` · `pnpm typecheck` · `pnpm test` (۳۲ تست unit؛ ۸ تست integration که بدون `DATABASE_URL` خودشان skip می‌شوند) · `docker compose -f … config` هر دو فایل · `bash -n` روی همهٔ اسکریپت‌های شل. Smoke با `next dev`: گارد `/admin` + ریدایرکت `?next=`، مسیر locale (`/`→`/fa`، `<html lang dir>`، `/fa/xx`→۴۰۴)، سرو فونت‌ها + LICENSE، `/media/*` بدون locale-redirect، `/api/system/maintenance*` و ۴۰۱‌ها.
+- **فقط در CI اجرا شد و سبز:**
+  - job `checks`: `prisma migrate deploy` (هر دو مایگریشن) + `db seed` روی Postgres 16، `pnpm build` کامل، `bash scripts/backup/tests/run.sh`، `pnpm e2e` (۱۶ تست)، و تست‌های integration روی Postgres واقعی: `jobs-lock` (FOR UPDATE SKIP LOCKED، دو/سه runner همزمان)، `audit-append-only` (trigger)، `role-least-privilege` (۸ تست شامل رد یک server action واقعی).
+  - job `docker`: `docker build --target runner .` و `--target ops .`، بررسی `schema.prisma` + Prisma CLI در image ops، `docker compose config`.
+  - job `docker-runtime` (**باید در branch protection required شود**): استک تولید کامل بالا می‌آید با `.env` رازهای تصادفی؛ مایگریشن‌ها روی کانتینر Postgres واقعی اجرا شده‌اند؛ `app` سالم است و `/api/health: db ok` می‌دهد و پورت هاست ندارد؛ seed (۳ بازار)؛ `ops` بدون Docker socket؛ چرخهٔ کامل داخل `ops`: `backup.sh --kind manual` → `verify.sh` → تغییر ردیف → `restore.sh --yes` → assert بازگشت ردیف + بکاپ امنیتی + خاموش‌شدن maintenance + swap اتمیک media + `prisma migrate deploy` از داخل ops؛ موارد منفی: `run.sh` در image واقعی، zip با `../evil` رد، media tar با symlink رد، `manifest.json` دستکاری‌شده در checksum شکست. لاگ compose/ops به‌عنوان artifact آپلود می‌شود، سپس `down -v`.
+- **هنوز اصلاً راستی‌آزمایی نشده:** رفتار عملیِ `S3Storage` روی MinIO/R2 واقعی (مسیر `s3` در کد هست و در `/media/*` به presigned URL ریدایرکت می‌کند، ولی هرگز روی یک S3 واقعی اجرا نشده — smoke با `STORAGE_PROVIDER=local` است)؛ mirror off-site بکاپ (`mc` نصب شده ولی `BACKUP_OFFSITE_ENDPOINT` در smoke خالی است → `NOT_CONFIGURED`)؛ auto-HTTPS واقعی Caddy با دامنهٔ واقعی؛ MFA/TOTP (طبق برنامه فاز ۰۵).
+
+**باگ‌هایی که job `docker-runtime` پیدا کرد و رفع شد:** (۱) image runner بدون `openssl` → کرش Prisma؛ (۲) `postgresql-client` نسخهٔ ۱۵ در ops در برابر Postgres 16؛ (۳) `--arg label` در `backup.sh` روی jq 1.7+؛ (۴) `/data/media` به‌عنوان mount point → swap اتمیک ناممکن؛ (۵) فرض ستون در `zip_uncompressed_bytes` روی `unzip` دبیان.
 
 **یادداشت ADR پیشنهادی (شمارهٔ D توسط پیکسل بعد از بازبینی وی‌بانو):**
 نشست ادمین از استراتژی **JWT** استفاده می‌کند، نه `session.strategy: "database"`، چون Auth.js v5 از Credentials provider با نشست دیتابیسی پشتیبانی نمی‌کند (خطای صریح: «Credentials provider is present but the JWT strategy is not enabled»). جدول‌های `Account`/`Session` در اسکیما می‌مانند برای جریان magic-link مشتری در فاز ۰۴. عمر نشست کوتاه است: **۸ ساعت** (`SESSION_MAX_AGE_SECONDS` در `src/modules/auth/config.ts`). `AUTH_SECRET` اجباری است و بدون آن سرور بالا نمی‌آید (`src/instrumentation.ts`)؛ هیچ مقدار پیش‌فرضی در کد نیست.
@@ -80,24 +88,27 @@
 _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأیید کردند اینجا ثبت شود؛ تغییرات بزرگ به `02_DECISIONS.md` می‌رود)_
 
 #### وضعیت
-🔍 آمادهٔ بازبینی — ۲ سپتامبر ۲۰۲۶
+🔍 آمادهٔ بازبینی نهایی توسط Vee — ۳ سپتامبر ۲۰۲۶ (بازبینی دور اول: A + B تأییدشده؛ C + D انجام شد؛ CI هر سه job سبز). **merge نشده.**
 
 #### چه چیزی ساخته شد
-- اسکلت Next.js 15 سه‌زبانه، RTL، تم دیتابیس‌محور و صفحهٔ خانهٔ نمایشی.
-- پنل مدیریت، ورود مدیر، کاربران، تنظیم برند/رنگ، نمایش اجزای طراحی و سلامت سیستم.
-- طرح اولیهٔ PostgreSQL/Prisma، نقش‌ها و دسترسی، صف کار، ذخیره‌سازی محلی/S3 و دادهٔ نمونهٔ سه بازار.
-- Docker توسعه/تولید، ops بدون Docker socket، کران، بکاپ/ریستور سخت‌گیری‌شده و CI.
-- دروازهٔ تست پول Decimal، گردکردن و ثابت‌ماندن snapshot نرخ ارز.
+- اسکلت Next.js 15 سه‌زبانه با `next-intl` واقعاً سیم‌کشی‌شده، RTL از طریق `<html dir>`، تم دیتابیس‌محور، Tailwind v4 + مجموعهٔ اجزای `src/components/ui`.
+- پنل مدیریت پشت **middleware با تأیید امضای JWT**: ورود مدیر کارآمد، CRUD کاربر (ساخت/ویرایش/غیرفعال‌سازی)، تنظیم برند/رنگ، صفحهٔ اجزا، سلامت سیستم. هر Server Action با `auth()` + `assertCan()` و AuditLog.
+- PostgreSQL/Prisma با دو مایگریشن (اسکیمای اولیه + `AuditLog` فقط-افزودنی با trigger)، نقش‌ها با **least-privilege** و `can()` scope-aware، صف کار با `SELECT … FOR UPDATE SKIP LOCKED`، ذخیره‌سازی local/S3 با سرو `/media/*` و آپلود magic-byte، دادهٔ نمونهٔ سه بازار.
+- Docker: `docker-compose.yml` تولید واقعی (فقط پشت Caddy، سرویس `migrate` یک‌بار، `ops` بدون Docker socket)، `docker-compose.dev.yml`، بکاپ/ریستور سخت‌گیری‌شده. سه job در CI: `checks`، `docker`، `docker-runtime` (استک واقعی + چرخهٔ بکاپ/ریستور).
+- `Money` نوع بستهٔ Decimal با معنای گردکردن مستند و پین‌شده؛ ثابت‌ماندن snapshot نرخ ارز.
 
-#### تست دستی ساده
-1. فایل `.env.example` را به `.env` کپی کنید و رمز مدیر را عوض کنید.
-2. دستور `docker compose -f docker-compose.dev.yml up --build` را اجرا کنید.
-3. در موبایل، `http://localhost:3000/fa` را باز کنید؛ متن باید راست‌چین باشد. سپس `/tr` و `/en` را ببینید.
-4. وارد `http://localhost:3000/admin/login` شوید. ایمیل و رمز همان فایل `.env` است.
-5. در «برند» نام سایت و در «پوسته» رنگ اصلی را عوض کنید؛ صفحهٔ فروشگاه را تازه کنید.
-6. آدرس `http://localhost:3000/api/health` باید وضعیت دیتابیس، فایل‌ها، بکاپ و نرخ ارز را نشان دهد.
+#### تست دستی ساده (روی سرور یا هر ماشین دارای Docker)
+1. `cp .env.example .env`؛ در `.env` این‌ها را پر کنید: `AUTH_SECRET` (خروجی `openssl rand -base64 33`)، `POSTGRES_PASSWORD`، `CRON_SECRET`، `MAINTENANCE_SECRET`، و رمز مدیر (`ADMIN_PASSWORD`). کامنت درون‌خطی ننویسید.
+2. `docker compose -f docker-compose.dev.yml up --build`.
+3. در موبایل `http://localhost:3000/` را باز کنید → به `/fa` می‌رود و راست‌چین است. `/tr` و `/en` چپ‌چین.
+4. `http://localhost:3000/admin` → به صفحهٔ ورود می‌رود. با ایمیل/رمز `.env` وارد شوید → داشبورد.
+5. در «کاربران» یک کاربر جدید بسازید، وارد شوید، سپس غیرفعالش کنید → دیگر نمی‌تواند وارد شود.
+6. در «برند» نام سایت و در «پوسته» رنگ اصلی را عوض کنید؛ صفحهٔ فروشگاه (`/fa`) را تازه کنید → تغییر دیده می‌شود (بدون rebuild).
+7. `http://localhost:3000/api/health` → `{"db":"ok", …}` با کد ۲۰۰ (اگر دیتابیس قطع باشد کد ۵۰۳ و فیلد `reason`).
+8. داخل `ops`: `docker compose -f docker-compose.dev.yml exec ops bash scripts/ci/ops-restore-cycle.sh` → چرخهٔ کامل بکاپ/verify/restore.
 
 #### محدودیت‌های شناخته‌شده
-- کاتالوگ و ورود مشتری عمداً مربوط به فازهای بعدی‌اند.
-- MFA در دیتابیس آماده است؛ اجباری‌کردن آن طبق برنامه در فاز ۰۵ انجام می‌شود.
-- فونت‌های دارای مجوز باید در مسیرهای مستندشده جایگزین فایل‌های placeholder شوند.
+- کاتالوگ، قیمت‌گذاری، سبد و ورود مشتری عمداً مربوط به فازهای بعدی‌اند.
+- MFA/TOTP در اسکیما آماده است؛ اجباری‌کردن در فاز ۰۵. ابطال فوری توکن (`sessionVersion`) هم فاز ۰۵ — تا آن زمان فقط *دیدن* صفحه‌های ادمین ممکن است تا انقضای توکن (۸ ساعت) عقب بیفتد؛ هیچ اکشنی اجرا نمی‌شود چون `can()` هر بار `isActive` را چک می‌کند.
+- `S3Storage` روی MinIO/R2 واقعی و mirror off-site بکاپ هنوز اجرا نشده (بخش «تست‌نشده» بالا).
+- `deploy.sh --rollback` حذف شد؛ rollback واقعی فاز ۰۵ (B12).
