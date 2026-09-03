@@ -121,16 +121,23 @@ curl -fsSL https://raw.githubusercontent.com/mehdi2044/HodaSite/main/scripts/ser
 
 ### C4. تنظیم `.env` سرور
 فایل `/opt/hodasite/.env` — مقادیر مهم:
+> نکته: در `.env` کامنت درون‌خطی (`مقدار   # توضیح`) ننویسید؛ Docker Compose آن را جزو مقدار می‌خواند. توضیح‌ها را در خط جدا بگذارید.
+
 ```
 APP_URL=https://staging.yourdomain.com
 DATABASE_URL=postgresql://app:<رمز-قوی>@postgres:5432/app
-STORAGE_PROVIDER=minio            # یا r2
-EMAIL_PROVIDER=resend             # کلید API را از resend.com بگیرید
+AUTH_SECRET=<خروجی: openssl rand -base64 33>
+# s3 = هر فضای S3-سازگار: MinIO داخل Compose، یا Cloudflare R2 در Production
+STORAGE_PROVIDER=s3
+# کلید API را از resend.com بگیرید
+EMAIL_PROVIDER=resend
 RESEND_API_KEY=...
-NAVASAN_API_KEY=...               # همان کلید رایگان نوسان که در ارزینو دارید
+# همان کلید رایگان نوسان که در ارزینو دارید
+NAVASAN_API_KEY=...
 CRON_SECRET=<یک-رشته-تصادفی>
 MAINTENANCE_SECRET=<یک-رشته-تصادفی-دیگر>
-BACKUP_OFFSITE_ENDPOINT=...       # برای Production اجباری است — یک سرویس جدا از هاست (Backblaze B2 / Cloudflare R2 / Wasabi)
+# برای Production اجباری — یک سرویس جدا از هاست (Backblaze B2 / Cloudflare R2 / Wasabi)
+BACKUP_OFFSITE_ENDPOINT=...
 BACKUP_OFFSITE_KEY=...
 BACKUP_OFFSITE_SECRET=...
 ```
@@ -141,7 +148,7 @@ BACKUP_OFFSITE_SECRET=...
 ssh deploy@<IP>
 cd /opt/hodasite && ./scripts/deploy.sh
 ```
-`deploy.sh` قبل از به‌روزرسانی خودکار بکاپ می‌گیرد، کد جدید را می‌گیرد، migration را اجرا و سایت را بدون قطعی طولانی ری‌استارت می‌کند. اگر مشکلی شد: `./scripts/deploy.sh --rollback`.
+`deploy.sh` قبل از به‌روزرسانی خودکار یک بکاپ امنیتی می‌گیرد، کد جدید را می‌گیرد، migration را (در کانتینر `migrate`) اجرا و سایت را بدون قطعی طولانی ری‌استارت می‌کند. اگر مشکلی شد: تا فاز ۰۵ که rollback خودکار اضافه می‌شود، با `scripts/backup/restore.sh` داخل کانتینر `ops` از همان بکاپ امنیتیِ پیش‌ازدیپلوی بازگردانی کنید.
 
 ### C6. Production
 همان مراحل C3 با دامنهٔ اصلی روی همان سرور (پورت‌های داخلی متفاوت؛ اسکریپت خودش می‌پرسد `staging` یا `production`) یا یک سرور جدا. پیشنهاد: تا Checkpoint 2 فقط staging.
@@ -167,3 +174,15 @@ cd /opt/hodasite && ./scripts/deploy.sh
 1. ادمین → System Health را ببینید (اگر باز می‌شود).
 2. در سرور: `docker compose ps` و `docker compose logs --tail=200 app`.
 3. متن خطا را برای پیکسل بفرستید.
+
+## اجرای فاز ۰۰ روی لپ‌تاپ
+```bash
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
+```
+بار اول، migration و seed خودکار اجرا می‌شوند. سایت در `http://localhost:3000/fa`، پنل در `http://localhost:3000/admin` و ایمیل آزمایشی در `http://localhost:8025` است.
+
+برای خاموش‌کردن و پاک‌کردن کامل دادهٔ آزمایشی:
+```bash
+docker compose -f docker-compose.dev.yml down -v
+```

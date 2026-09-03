@@ -1,0 +1,68 @@
+name: CI
+on: [pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda}
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U hoda" --health-interval 5s --health-timeout 5s --health-retries 10
+    env: {DATABASE_URL: 'postgresql://hoda:hoda@localhost:5432/hoda', ADMIN_EMAIL: 'owner@example.com', ADMIN_PASSWORD: 'ChangeMe123!', AUTH_SECRET: test-secret, CRON_SECRET: test-cron, MAINTENANCE_SECRET: test-maintenance}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 20, cache: pnpm}
+      - run: sudo apt-get update && sudo apt-get install -y zstd unzip file
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma migrate deploy && pnpm prisma db seed
+      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - run: bash scripts/backup/tests/run.sh
+      - run: pnpm exec playwright install --with-deps chromium && pnpm e2e
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the production image (runner stage)
+        run: docker build --target runner -t hoda-app .
+      - name: Build the ops image
+        run: docker build --target ops -t hoda-ops .
+      - name: ops image has the Prisma CLI and schema at /app/prisma
+        run: |
+          docker run --rm hoda-ops sh -c 'test -f /app/prisma/schema.prisma && npx prisma -v'
+      - name: production compose config is valid
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.dev.yml config --quiet
+
+  # Real runtime: brings the production stack up and exercises migrate,
+  # health, and a full backup/verify/restore cycle inside `ops`. Slower than
+  # the rest — must be a REQUIRED check in branch protection (Vee's GO gate).
+  docker-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runtime smoke (compose up · migrate · health · backup/verify/restore · guards)
+        run: bash scripts/ci/runtime-smoke.sh
+      - name: Collect compose + ops logs
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml logs --no-color --timestamps > compose-logs.txt 2>&1 || true
+          docker compose -f docker-compose.yml exec -T ops sh -c 'echo "== /backups =="; ls -la /backups; for d in /backups/*/; do echo "-- $d"; ls -la "$d"; done' > ops-backups.txt 2>&1 || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-runtime-logs
+          path: |
+            compose-logs.txt
+            ops-backups.txt
+          if-no-files-found: warn
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.yml down -v || true
