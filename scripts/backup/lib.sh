@@ -2,16 +2,26 @@
 # Shared helpers for backup/restore/verify (v1.1.3). Source this file; do not execute.
 # All functions are FAIL-CLOSED: any parsing/query failure returns non-zero.
 
-# zip_uncompressed_bytes <zip>  → prints total uncompressed bytes (machine-readable: sums the per-entry size column of `unzip -Z -l`)
+# zip_uncompressed_bytes <zip>  → prints total uncompressed bytes.
+# Two independent reads of `unzip -Z -l`: the per-entry size column and the
+# "N bytes uncompressed" summary line. They must agree when both are present
+# (catches a tampered central directory); if the per-entry column can't be
+# parsed on this unzip build the summary line is authoritative.
 zip_uncompressed_bytes() {
   local zip="$1" listing sum summary
   listing=$(unzip -Z -l -- "$zip" 2>/dev/null) || return 1
-  # per-entry lines start with a permission string (-rw..., drwx...); column 4 = uncompressed size
-  sum=$(echo "$listing" | awk '$1 ~ /^[-d][-rwxsStT]{9}$/ && $4 ~ /^[0-9]+$/ {s+=$4} END{printf "%d", s+0}')
-  # cross-check with the summary line "N files, X bytes uncompressed, ..."
+  # per-entry lines start with a permission string (-rw..., drwx...); the first
+  # standalone integer field after it is the uncompressed size
+  sum=$(echo "$listing" | awk '
+    $1 ~ /^[-d][-rwxsStT?]{9}/ {
+      for (i = 2; i <= NF; i++) if ($i ~ /^[0-9]+$/) { s += $i; break }
+    }
+    END { printf "%d", s + 0 }')
   summary=$(echo "$listing" | grep -Eo '[0-9]+ bytes uncompressed' | grep -Eo '^[0-9]+' | tail -1)
-  [[ -n "$summary" && "$summary" != "$sum" ]] && { echo "[zip-size] listing sum ($sum) != summary ($summary)" >&2; return 2; }
-  echo "$sum"
+  if [[ "$sum" -gt 0 && -n "$summary" && "$summary" != "$sum" ]]; then
+    echo "[zip-size] listing sum ($sum) != summary ($summary)" >&2; return 2
+  fi
+  if [[ -n "$summary" ]]; then echo "$summary"; else echo "$sum"; fi
 }
 
 # check_zip_archive <zip> <max_files> <max_bytes>  → rejects traversal/absolute paths, too many entries, zip bombs
