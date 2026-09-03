@@ -38,3 +38,31 @@ jobs:
           cp .env.example .env
           docker compose -f docker-compose.yml config --quiet
           docker compose -f docker-compose.dev.yml config --quiet
+
+  # Real runtime: brings the production stack up and exercises migrate,
+  # health, and a full backup/verify/restore cycle inside `ops`. Slower than
+  # the rest — must be a REQUIRED check in branch protection (Vee's GO gate).
+  docker-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runtime smoke (compose up · migrate · health · backup/verify/restore · guards)
+        run: bash scripts/ci/runtime-smoke.sh
+      - name: Collect compose + ops logs
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml logs --no-color --timestamps > compose-logs.txt 2>&1 || true
+          docker compose -f docker-compose.yml exec -T ops sh -c 'echo "== /backups =="; ls -la /backups; for d in /backups/*/; do echo "-- $d"; ls -la "$d"; done' > ops-backups.txt 2>&1 || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-runtime-logs
+          path: |
+            compose-logs.txt
+            ops-backups.txt
+          if-no-files-found: warn
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.yml down -v || true

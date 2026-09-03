@@ -23,7 +23,15 @@ if [[ "${1:-}" == "--live" ]]; then TARGET="$DATABASE_URL"; SRC=""; validate_med
   fi
 fi
 q(){ psql "$TARGET" -Atc "$1"; }
-for t in Market User Product Variant; do n=$(q "select count(*) from \"$t\""); echo "[verify] $t: $n"; [[ "$n" -gt 0 ]] || { echo "[verify] empty core table $t"; exit 5; }; done
+# Market + User exist from Phase 00; Product/Variant arrive in Phase 02, so they
+# are only enforced once present (a missing table before its phase is fine, an
+# empty one after is not).
+require_nonempty(){ local n; n=$(q "select count(*) from \"$1\"" 2>/dev/null) || { echo "[verify] core table $1 missing"; exit 5; }; echo "[verify] $1: $n"; [[ "$n" -gt 0 ]] || { echo "[verify] empty core table $1"; exit 5; }; }
+check_if_present(){ local n; n=$(q "select count(*) from \"$1\"" 2>/dev/null) || { echo "[verify] $1: not present yet (later phase)"; return 0; }; echo "[verify] $1: $n"; [[ "$n" -gt 0 ]] || { echo "[verify] empty core table $1"; exit 5; }; }
+require_nonempty Market
+require_nonempty User
+check_if_present Product
+check_if_present Variant
 # FK / orphan checks (tables may not exist before Phase 04 → ignore missing)
 chk(){ r=$(q "$1" 2>/dev/null || echo 0); [[ "$r" == "0" ]] || { echo "[verify] integrity failed: $2 ($r)"; exit 6; }; }
 chk 'select count(*) from "Variant" v left join "Product" p on p.id=v."productId" where p.id is null' "Variant without Product"
