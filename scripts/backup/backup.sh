@@ -29,10 +29,11 @@ fi
 # full applied-migration set (used for compatibility checks — never compare names lexicographically)
 MIGRATIONS_JSON=$(q "select coalesce(json_agg(migration_name order by finished_at), '[]'::json) from _prisma_migrations where finished_at is not null" 2>/dev/null || echo '[]')
 # manifest FIRST, then checksums over an explicit file list that INCLUDES the manifest (integrity of projectId/migrations/counts)
-# keys are quoted: `label` is a jq keyword and an unquoted {label:...} fails on jq 1.7+
-jq -n --arg created "$(date -u +%FT%TZ)" --arg label "$LABEL" --arg kind "$BACKUP_KIND" --arg ver "${APP_VERSION:-dev}" \
+# `label` is a jq keyword — it cannot be a --arg variable name on jq 1.7+
+# ("unexpected label"), so the variable is $lbl.
+jq -n --arg created "$(date -u +%FT%TZ)" --arg lbl "$LABEL" --arg kind "$BACKUP_KIND" --arg ver "${APP_VERSION:-dev}" \
       --arg proj "$PROJECT_ID" --argjson media "$WITH_MEDIA" --argjson count "$MEDIA_COUNT" --argjson migs "$MIGRATIONS_JSON" \
-      '{"createdAt":$created,"label":$label,"kind":$kind,"appVersion":$ver,"projectId":$proj,"withMedia":($media==1),"mediaFileCount":$count,
+      '{"createdAt":$created,"label":$lbl,"kind":$kind,"appVersion":$ver,"projectId":$proj,"withMedia":($media==1),"mediaFileCount":$count,
         "migrations":$migs,"latestMigration":($migs|last)}' > "$DIR/manifest.json"
 FILES="db.dump manifest.json"; [[ -f "$DIR/media.tar.zst" ]] && FILES="$FILES media.tar.zst"
 ( cd "$DIR" && sha256sum $FILES > checksums.sha256 )
