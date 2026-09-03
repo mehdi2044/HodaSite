@@ -74,6 +74,15 @@ If two documents conflict, follow the higher one and add a note in your PR under
 - Do not let AI-generated product text publish without the admin's explicit "approve" click.
 - **AI policy (D25, verbatim):** *No direct database writes; all mutations through authorized tools; checkout/payment/refund/discount require explicit confirmation and permission.* Every AI tool call passes `assertCan()` with the acting user's identity and scope, and product/review content reaching a prompt is data, never instructions.
 
+### Branch discipline (D44) — hard rules
+
+GitHub does **not** enforce branch protection or rulesets on a private repo on the Free plan (confirmed: the ruleset exists but is inert). Nothing automated will stop a bad push to `main` — the rules live here and must be honoured. **Breaking any of these is a serious error, not a shortcut:**
+
+- **Never commit or push directly to `main`.** Every change goes through a branch and a PR — even a one-line docs fix. (The one and only exception: the Phase 00 housekeeping commit, which Mahdi authorized explicitly. There is no standing exception for "trivial" changes.)
+- **Never merge your own PR.** Merging is the owner's action, after Pixel and Vee have reviewed.
+- **Never ask for review while any CI job is red or still running.**
+- **Never force-push to a shared branch, and never rewrite history that has been pushed.**
+
 ## 6. Definition of Done (each phase)
 - Acceptance criteria in the phase file all pass.
 - Works in `fa` (RTL), `tr`, `en` on mobile width.
