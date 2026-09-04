@@ -99,6 +99,50 @@ git pull
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+### B6. اجرای محلی روی ویندوز
+
+این بخش دقیقاً همان دستورهایی است که روی لپ‌تاپ ویندوزی مهدی اجرا می‌شود (PowerShell). Docker Desktop باید نصب و روشن باشد (آیکون نهنگ در نوار وضعیت).
+
+**روشن کردن سایت (بار اول یا بعد از تغییر کد):**
+```powershell
+docker compose -f docker-compose.dev.yml up --build
+```
+بار اول ۵–۱۰ دقیقه طول می‌کشد. وقتی خط `✓ Ready` را دیدید، سایت روی http://localhost:3000/fa بالاست.
+
+**روشن کردن سریع (بدون تغییر کد، از دفعهٔ قبل):**
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+```
+
+**خاموش کردن (دادهٔ آزمایشی حفظ می‌شود):**
+```powershell
+docker compose -f docker-compose.dev.yml stop
+```
+
+**پاک‌کردن کامل و شروع از صفر (دادهٔ آزمایشی پاک می‌شود):**
+```powershell
+docker compose -f docker-compose.dev.yml down -v
+```
+
+**دیدن لاگ‌ها (وقتی چیزی درست کار نمی‌کند):**
+```powershell
+docker compose -f docker-compose.dev.yml logs --tail=200 app
+```
+برای دنبال‌کردن زنده‌ی لاگ‌ها (تا `Ctrl+C` بزنید): همان دستور را با `-f` اضافه اجرا کنید: `docker compose -f docker-compose.dev.yml logs -f app`.
+
+**اگر سایت بالا نیامد، به ترتیب این‌ها را چک کنید:**
+1. `docker compose -f docker-compose.dev.yml ps` — همهٔ سرویس‌ها باید `Up` باشند (`postgres` باید `healthy` باشد).
+2. لاگ `app` را ببینید (دستور بالا) و متن خطا را برای پیکسل بفرستید.
+3. **تداخل پورت روی ویندوز:** اگر قبلاً یک Postgres یا هر برنامهٔ دیگری روی همین کامپیوتر نصب بوده، ممکن است پورت‌های `3000` یا `5432`/`55432` را قبل از Docker گرفته باشد و اتصال به دیتابیس یا سایت اشتباه برود (بدون خطای واضح). برای بررسی: `netstat -ano | findstr :3000` (یا `:55432`) — اگر یک PID غیرمرتبط با Docker آنجا بود، همان برنامه پورت را گرفته؛ یا آن برنامه را ببندید یا پورت را در `docker-compose.dev.yml` عوض کنید.
+4. اگر مطمئن نیستید فایل `.env` درست است: دوباره `cp .env.example .env` بزنید و مقدارهای لازم را پر کنید.
+
+**ایمیل و رمز ادمین کجاست؟** در فایل `.env` (نه `.env.example`) دو خط زیر است:
+```
+ADMIN_EMAIL=...
+ADMIN_PASSWORD=...
+```
+این‌ها فقط روی همین لپ‌تاپ هستند (`.env` هرگز commit نمی‌شود). **رمز و ایمیل سرور Production باید متفاوت از لپ‌تاپ باشند** — همان مقداری که اینجا برای تست محلی گذاشته‌اید را روی سرور واقعی دوباره استفاده نکنید (بخش C4 را ببینید).
+
 ---
 
 ## C) اجرا روی سرور (staging و production)

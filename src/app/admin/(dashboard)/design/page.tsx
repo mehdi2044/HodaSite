@@ -112,6 +112,17 @@ export default function Design() {
         </Card>
 
         <Card>
+          <CardTitle>ایزوله‌سازی BiDi (V-2)</CardTitle>
+          <CardDescription>
+            کد لاتین/عددی داخل جملهٔ فارسی با <code>{'<bdi dir="ltr">'}</code>{" "}
+            ایزوله می‌شود تا ترتیب نمایش به‌هم نریزد.
+          </CardDescription>
+          <p className="mt-3">
+            کد کالا: <bdi dir="ltr">SH-MW-1023</bdi> موجود است.
+          </p>
+        </Card>
+
+        <Card>
           <CardTitle>Table</CardTitle>
           <div className="mt-3">
             <Table>

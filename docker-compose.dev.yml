@@ -3,6 +3,15 @@ services:
     image: postgres:16
     environment: {POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda}
     healthcheck: {test: [CMD-SHELL, pg_isready -U hoda], interval: 3s, timeout: 3s, retries: 20}
+    # Published to the host (unlike docker-compose.yml's production postgres)
+    # so `pnpm test` on the host machine can reach it directly — the
+    # integration suites in tests/integration/*.spec.ts skip themselves via
+    # `db.$queryRaw` when DATABASE_URL isn't reachable (see vitest.config.ts).
+    # Host port 55432, not 5432: a machine with its own local Postgres
+    # install (e.g. a Windows "postgres" service) may already own 5432, and
+    # two listeners on the same host port silently misroute connections to
+    # the wrong server instead of failing loudly.
+    ports: ['55432:5432']
     volumes: [postgres_data:/var/lib/postgresql/data]
   minio:
     image: minio/minio
