@@ -4,7 +4,9 @@
 
 ```
  Phase 00  Foundation (زیرساخت، Docker، دیتابیس، ادمین خام، بکاپ v1)
- Phase 01  Markets + Site Settings + Theme + Menus + Pages + Translations + Media  ← «همه‌چیز از ادمین»
+ Phase 01a Markets + Site Settings + Theme + Maintenance mode + typed ForbiddenError
+ Phase 01b Media Library (آپلود، WebP/AVIF، responsive sizes، صف media-optimize، retry)
+ Phase 01c CMS & Storefront Design (منوها، Pages، Homepage Builder، Translation Editor)  ← «همه‌چیز از ادمین»
  Phase 02  Catalog (محصول/Variant/رنگ/سایز/عکس/راهنمای سایز) + ویترین + جست‌وجو
  ─────────────── CHECKPOINT 1: فروشگاه قابل مرور ───────────────
  Phase 03  Pricing + FX (frankfurter + Navasan + manual) + Fees Engine + Inventory + Lot/Cost model
@@ -24,10 +26,12 @@
 
 ## جدول فازها
 
-| فاز | نام | خروجی قابل دیدن | تخمین کار Codex* |
+| فاز | نام | خروجی قابل دیدن | تخمین کار Claude Code* |
 |---|---|---|---|
 | 00 | Foundation | پروژه بالا می‌آید، ادمین لاگین می‌شود، دیتابیس و بکاپ کار می‌کند، CI سبز | ۱–۲ روز |
-| 01 | Settings/Theme/CMS | اسم سایت، لوگو، رنگ، منو، فوتر، صفحات، بنرها، ترجمه‌ها همه از ادمین | ۲–۳ روز |
+| 01a | Markets, Settings, Theme | بازارها، تنظیمات سایت، Maintenance mode ادمین، تم + Live Preview، خطای مجوز typed (`ForbiddenError` به‌جای `Error("FORBIDDEN")`) با نمایش i18n در UI | ۱–۲ روز |
+| 01b | Media Library | آپلود/کتابخانه، پردازش WebP/AVIF، اندازه‌های responsive، صف `media-optimize`، retry، وضعیت Processing، تست‌های امنیتی | ۱ روز |
+| 01c | CMS & Storefront Design | منوها، Pages/بلوک‌ها، Homepage Builder، Translation Editor، Notification Templates، طراحی نهایی 390px | ۱–۲ روز |
 | 02 | Catalog & Storefront | صفحهٔ اصلی، دسته‌ها، صفحهٔ محصول با رنگ/سایز، جست‌وجو، سه زبان، موبایل | ۳–۴ روز |
 | 03 | Pricing/FX/Fees/Inventory/Lot | قیمت‌ها به تومان/لیر/دلار کانادا (Navasan + frankfurter)، قوانین هزینه، شبیه‌ساز، موجودی با Lot و قیمت خرید | ۳ روز |
 | 04 | Cart→Checkout→Payment | خرید واقعی با فیش، تأیید ادمین، ایمیل‌ها، رزرو کوتاه + مهلت پرداخت | ۳–۴ روز |
@@ -39,7 +43,7 @@
 | 10 | AI Shopping Agent | چت خرید سه‌زبانه با داده واقعی، افزودن به سبد با تأیید | ۳–۴ روز |
 | 11 | Visual/Voice/Try-On/App | جست‌وجو با عکس، پیشنهاد سایز، صدا، پرو مجازی آزمایشی، بستهٔ اپ | ۵+ روز |
 
-*تخمین برای Codex به‌علاوهٔ زمان بازبینی. واقعیت معمولاً ۱.۵ برابر است.
+*تخمین برای Claude Code به‌علاوهٔ زمان بازبینی. واقعیت معمولاً ۱.۵ برابر است.
 
 ## Checkpointها (تست دستی مهدی)
 

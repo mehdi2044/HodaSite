@@ -1,6 +1,6 @@
-# Prompt for Max (Codex) — Phase 04: Cart, Customer Auth, Checkout, Orders, Offline Payment, Returns Model
+# Prompt for Max (Claude Code) — Phase 04: Cart, Customer Auth, Checkout, Orders, Offline Payment, Returns Model
 
-> مهدی: کل متن زیر (از خط بعد از «---» تا آخر) را کپی و در مکس (Codex) پیست کن. اگر مکس سؤالی پرسید که جوابش را نمی‌دانی، همان سؤال را برای پیکسل بفرست.
+> مهدی: کل متن زیر (از خط بعد از «---» تا آخر) را کپی و در مکس (Claude Code) پیست کن. اگر مکس سؤالی پرسید که جوابش را نمی‌دانی، همان سؤال را برای پیکسل بفرست.
 
 ---
 

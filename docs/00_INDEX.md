@@ -2,17 +2,17 @@
 
 **Architecture baseline: v1.2** (۲ سپتامبر ۲۰۲۶ — Foundation بسته؛ آمادهٔ شروع فاز ۰۰). سلسله‌مراتب اعتبار: `02_DECISIONS.md` → `phases/` → `spec/` → `AGENTS.md` → `prompts/`.
 
-ترتیب پیشنهادی خواندن (برای آدم و برای Codex):
+ترتیب پیشنهادی خواندن (برای آدم و برای Claude Code):
 
 | # | فایل | برای چه کسی | خلاصه |
 |---|---|---|---|
 | 1 | `01_REVIEW_AND_GAPS_FA.md` | مهدی | نظر مدیر پروژه دربارهٔ سند مادر: چه چیزی خوب است، چه چیزی کم است، چه چیزی باید عوض شود |
 | 2 | `02_DECISIONS.md` | همه | تصمیم‌های قطعی (استک فنی، ارز پایه، هاست، روش نرخ ارز، …). هیچ کدی نباید خلاف اینها باشد |
-| 3 | `03_ARCHITECTURE.md` | Codex / Claude | معماری، ساختار پوشه‌ها، ماژول‌ها، Provider Interfaceها |
-| 4 | `04_DATABASE_AND_BACKUP.md` | Codex / Claude | مدل داده، قواعد دیتابیس، سیستم بکاپ و ریستور |
+| 3 | `03_ARCHITECTURE.md` | Claude Code / Claude | معماری، ساختار پوشه‌ها، ماژول‌ها، Provider Interfaceها |
+| 4 | `04_DATABASE_AND_BACKUP.md` | Claude Code / Claude | مدل داده، قواعد دیتابیس، سیستم بکاپ و ریستور |
 | 5 | `05_ROADMAP.md` | همه | نقشهٔ راه: ۱۲ فاز، ۵ Checkpoint، خروجی هر فاز |
-| 6 | `06_ADMIN_AND_DESIGN.md` | Codex / مهدی | لیست کامل چیزهایی که باید از ادمین ویرایش شود + راهنمای ظاهر و هویت بصری |
-| 7 | `07_SETUP_GUIDE_FA.md` | مهدی | نصب روی لپ‌تاپ، نصب روی سرور، اتصال Codex و GitHub |
+| 6 | `06_ADMIN_AND_DESIGN.md` | Claude Code / مهدی | لیست کامل چیزهایی که باید از ادمین ویرایش شود + راهنمای ظاهر و هویت بصری |
+| 7 | `07_SETUP_GUIDE_FA.md` | مهدی | نصب روی لپ‌تاپ، نصب روی سرور، اتصال Claude Code و GitHub |
 | 8 | `08_TEST_CHECKPOINTS_FA.md` | مهدی | چک‌لیست تست دستی برای هر Checkpoint |
 | 9 | `09_REPORT_FOR_CHATGPT.md` | وی‌بانو | گزارش بازبینی دور اول (پاسخ داده شد) |
 | 10 | `10_REVIEW_ROUND_1_FA.md` | همه | پاسخ پیکسل به بازبینی دور اول وی‌بانو + تغییرات v1.1 |

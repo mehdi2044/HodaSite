@@ -1,12 +1,12 @@
 # راهنمای نصب و راه‌اندازی (برای مهدی — بدون نیاز به برنامه‌نویسی)
 
 این راهنما در چهار بخش است:
-A) گیت‌هاب و Codex، B) اجرا روی لپ‌تاپ، C) اجرا روی سرور، D) کارهای روزمره (بکاپ، به‌روزرسانی).
+A) گیت‌هاب و Claude Code، B) اجرا روی لپ‌تاپ، C) اجرا روی سرور، D) کارهای روزمره (بکاپ، به‌روزرسانی).
 مکس موظف است هر وقت مرحله‌ای عوض شد، همین فایل را به‌روز کند.
 
 ---
 
-## A) گیت‌هاب و Codex (یک‌بار برای همیشه — حدود ۱۵ دقیقه)
+## A) گیت‌هاب و Claude Code (یک‌بار برای همیشه — حدود ۱۵ دقیقه)
 
 ### A1. آپلود بسته در مخزن (مخزن ساخته شده: `mehdi2044/HodaSite`)
 1. وارد https://github.com/mehdi2044/HodaSite شوید.
@@ -22,21 +22,20 @@ A) گیت‌هاب و Codex، B) اجرا روی لپ‌تاپ، C) اجرا ر�
 
 > نکته: اگر آپلود پوشه‌ای در مرورگر کار نکرد، از **GitHub Desktop** (برنامهٔ رایگان) استفاده کنید: File → Add local repository → پوشه را انتخاب → Publish.
 
-### A2. اتصال Codex به مخزن
-1. وارد Codex شوید (chatgpt.com/codex یا از داخل ChatGPT).
-2. **Connect GitHub** → اجازه به مخزن `mehdi2044/HodaSite`.
-3. یک Environment برای مخزن بسازید. در تنظیمات Environment:
-   - Setup script:
-     ```bash
-     corepack enable && corepack prepare pnpm@latest --activate
-     pnpm install --frozen-lockfile || true
-     ```
-   - Node: 20
-   - اینترنت: روشن (برای نصب پکیج‌ها).
-4. تمام. از این به بعد برای هر فاز، متن `docs/prompts/phase-XX.md` را در Codex پیست می‌کنید. Codex خودش `AGENTS.md` را می‌خواند.
+### A2. اتصال Claude Code به مخزن
+1. Claude Code را روی کامپیوترتان نصب کنید — در PowerShell این را اجرا کنید:
+   ```powershell
+   irm https://claude.ai/install.ps1 | iex
+   ```
+2. مخزن را روی کامپیوترتان clone کنید (اگر ابزارهای بخش B1 پایین را هنوز نصب نکرده‌اید، اول همان را ببینید): `git clone https://github.com/mehdi2044/HodaSite.git` و بعد `cd HodaSite`.
+3. در همان پوشه، در PowerShell بنویسید:
+   ```powershell
+   claude
+   ```
+4. تمام. از این به بعد برای هر فاز، متن `docs/prompts/phase-XX.md` را همان‌جا در Claude Code پیست می‌کنید. Claude Code خودش `AGENTS.md` و `CLAUDE.md` را می‌خواند.
 
 ### A3. چرخهٔ هر فاز
-1. متن prompt فاز را به Codex بدهید.
+1. متن prompt فاز را به Claude Code بدهید.
 2. مکس یک **Pull Request** می‌سازد. لینک PR و خلاصهٔ گزارش را اول برای پیکسل و بعد برای وی‌بانو بفرستید تا بازبینی کنند.
 3. اگر هر دو گفتند خوب است: در گیت‌هاب روی PR دکمهٔ **Merge pull request** → **Confirm merge**.
 4. اگر ایراد داشت: متن اصلاحیه را به همان گفت‌وگوی مکس بدهید. اگر پیکسل و وی‌بانو اختلاف داشتند، شما تصمیم می‌گیرید.
@@ -181,7 +180,7 @@ pnpm test
 ```bash
 ssh root@<IP-سرور>
 ```
-سپس (این اسکریپت را Codex در فاز 00 می‌سازد):
+سپس (این اسکریپت را Claude Code در فاز ۰۰ ساخت):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mehdi2044/HodaSite/main/scripts/server-setup.sh | bash
 ```

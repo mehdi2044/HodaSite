@@ -1,6 +1,6 @@
-# Prompt for Max (Codex) — Phase 01: Markets, Site Settings, Theme, Menus, Pages, Translations, Media
+# Prompt for Max (Claude Code) — Phase 01: Markets, Site Settings, Theme, Menus, Pages, Translations, Media
 
-> مهدی: کل متن زیر (از خط بعد از «---» تا آخر) را کپی و در مکس (Codex) پیست کن. اگر مکس سؤالی پرسید که جوابش را نمی‌دانی، همان سؤال را برای پیکسل بفرست.
+> مهدی: کل متن زیر (از خط بعد از «---» تا آخر) را کپی و در مکس (Claude Code) پیست کن. اگر مکس سؤالی پرسید که جوابش را نمی‌دانی، همان سؤال را برای پیکسل بفرست.
 
 ---
 

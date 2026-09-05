@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keep N daily / weekly / monthly backups. Draft; Codex finalizes.
+# Keep N daily / weekly / monthly backups. Draft; Claude Code finalizes.
 set -euo pipefail
 BACKUP_ROOT="${BACKUP_ROOT:-/backups}"; KEEP_DAILY=${KEEP_DAILY:-7}; KEEP_WEEKLY=${KEEP_WEEKLY:-4}; KEEP_MONTHLY=${KEEP_MONTHLY:-6}
 cd "$BACKUP_ROOT"
