@@ -143,6 +143,20 @@ ADMIN_PASSWORD=...
 ```
 این‌ها فقط روی همین لپ‌تاپ هستند (`.env` هرگز commit نمی‌شود). **رمز و ایمیل سرور Production باید متفاوت از لپ‌تاپ باشند** — همان مقداری که اینجا برای تست محلی گذاشته‌اید را روی سرور واقعی دوباره استفاده نکنید (بخش C4 را ببینید).
 
+### B7. اجرای `pnpm test` مستقیم روی لپ‌تاپ (نه داخل Docker)
+
+با `docker compose -f docker-compose.dev.yml up` بالا، دیتابیس Postgres روی پورت `55432` هاست هم در دسترس است، اما `pnpm test` روی لپ‌تاپ به‌طور پیش‌فرض دنبال آدرس داخل شبکهٔ Docker (`DATABASE_URL` در `.env`) می‌گردد، نه پورت هاست — پس تست‌های integration (که به دیتابیس واقعی نیاز دارند) بی‌صدا skip می‌شدند.
+
+برای رفع این مشکل، در `.env` مقدار `TEST_DATABASE_URL` (نمونه‌اش در `.env.example` هست) را نگه دارید و همان‌طور اجرا کنید:
+```powershell
+pnpm test
+```
+اگر Postgres در دسترس نباشد، همین ابتدای خروجی این هشدار واضح چاپ می‌شود (به‌جای skip بی‌صدا):
+```
+⚠ integration tests SKIPPED: database not reachable at postgresql://hoda:hoda@localhost:55432/hoda
+```
+اگر این هشدار را دیدید یعنی `docker compose -f docker-compose.dev.yml up` روشن نیست یا پورت `55432` توسط برنامهٔ دیگری اشغال شده (بخش B6، مورد ۳ بالا را ببینید).
+
 ---
 
 ## C) اجرا روی سرور (staging و production)
