@@ -15,6 +15,7 @@ export function AdminShell({
         <Link href="/admin">داشبورد</Link>
         <Link href="/admin/users">کاربران</Link>
         <Link href="/admin/markets">بازارها</Link>
+        <Link href="/admin/media">رسانه‌ها</Link>
         <Link href="/admin/settings/brand">برند</Link>
         <Link href="/admin/settings/theme">پوسته</Link>
         <Link href="/admin/settings/contact">تماس</Link>

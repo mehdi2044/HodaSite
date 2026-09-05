@@ -4,7 +4,7 @@ import { normalizeBrand } from "@/lib/brand";
 import { saveBrand } from "./actions";
 import { Card, CardTitle, CardDescription, Input } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
-import { MediaUploadField } from "@/components/admin/media-upload-field";
+import { MediaPicker } from "@/components/admin/media-picker";
 
 export default async function Brand() {
   const [site, theme] = await Promise.all([
@@ -56,25 +56,25 @@ export default async function Brand() {
           ))}
 
           <CardTitle className="mt-4">لوگو</CardTitle>
-          <MediaUploadField
+          <MediaPicker
             name="logoMediaId"
             label="لوگو (روشن)"
             defaultMediaId={theme?.logoMediaId}
             defaultUrl={urlOf(theme?.logoMediaId)}
           />
-          <MediaUploadField
+          <MediaPicker
             name="logoDarkMediaId"
             label="لوگو (تیره)"
             defaultMediaId={theme?.logoDarkMediaId}
             defaultUrl={urlOf(theme?.logoDarkMediaId)}
           />
-          <MediaUploadField
+          <MediaPicker
             name="faviconMediaId"
             label="فاویکون"
             defaultMediaId={theme?.faviconMediaId}
             defaultUrl={urlOf(theme?.faviconMediaId)}
           />
-          <MediaUploadField
+          <MediaPicker
             name="emailLogoMediaId"
             label="لوگوی ایمیل"
             defaultMediaId={theme?.emailLogoMediaId}
