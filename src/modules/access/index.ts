@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ForbiddenError } from "./errors";
 
 export type Scope = {
   marketId?: string;
@@ -65,5 +66,8 @@ export async function assertCan(
   permission: string,
   scope?: Scope,
 ): Promise<void> {
-  if (!(await can(userId, permission, scope))) throw new Error("FORBIDDEN");
+  if (!(await can(userId, permission, scope)))
+    throw new ForbiddenError(permission, scope);
 }
+
+export { ForbiddenError, UnauthorizedError } from "./errors";

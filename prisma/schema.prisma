@@ -231,6 +231,7 @@ model SiteSettings {
   contact     Json     @default("{}")
   seo         Json     @default("{}")
   social      Json     @default("{}")
+  legal       Json     @default("{}")
   checkout    Json     @default("{}")
   maintenance Json     @default("{\"state\":\"off\"}")
   createdAt   DateTime @default(now())
@@ -238,17 +239,21 @@ model SiteSettings {
 }
 
 model ThemeSettings {
-  id              String   @id @default("default")
-  colors          Json
-  fonts           Json
-  radius          String   @default("12px")
-  logoMediaId     String?
-  logoDarkMediaId String?
-  faviconMediaId  String?
-  heroStyle       String   @default("editorial")
-  customCss       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default("default")
+  colors           Json
+  fonts            Json
+  radius           String   @default("12px")
+  logoMediaId      String?
+  logoDarkMediaId  String?
+  faviconMediaId   String?
+  emailLogoMediaId String?
+  heroStyle        String   @default("editorial")
+  darkMode         String   @default("off")
+  headerStyle      String   @default("minimal")
+  buttonStyle      String   @default("pill")
+  customCss        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Market {
@@ -269,6 +274,7 @@ model Market {
   fxMaxJumpPercent     Decimal  @default(5) @db.Decimal(18, 4)
   volumetricDivisor    Int      @default(5000)
   supportChannels      Json     @default("{}")
+  announcementBar      Json     @default("{\"enabled\":false}")
   seo                  Json     @default("{}")
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
