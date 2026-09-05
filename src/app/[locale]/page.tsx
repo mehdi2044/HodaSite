@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getAppearance } from "@/modules/settings";
+import { getSiteSettings } from "@/modules/settings";
 
 export default async function Home({
   params,
@@ -9,22 +9,18 @@ export default async function Home({
   const { locale } = await params;
   const t = await getTranslations();
 
-  const [site, theme] = await getAppearance();
-  const brand = (site?.brand ?? {}) as Record<string, string>;
-  const colors = (theme?.colors ?? {}) as Record<string, string>;
+  const site = await getSiteSettings();
+  const brand = (site?.brand ?? {}) as { name?: Record<string, string> };
+  const siteName = brand.name?.[locale] ?? brand.name?.fa ?? "STYLE HUB";
 
   return (
-    <main
-      className="hero"
-      dir={locale === "fa" ? "rtl" : "ltr"}
-      style={{ ["--primary" as string]: colors.primary ?? "#E8792A" }}
-    >
+    <main className="hero" dir={locale === "fa" ? "rtl" : "ltr"}>
       <section className="shell">
         <p style={{ letterSpacing: ".16em", color: "var(--primary)" }}>
           {t("tagline")}
         </p>
         <h1 style={{ fontSize: "clamp(3rem,12vw,8rem)", margin: 0 }}>
-          {brand[locale] ?? "STYLE HUB"}
+          {siteName}
         </h1>
         <p className="muted" style={{ fontSize: "1.2rem" }}>
           {t("welcome")}

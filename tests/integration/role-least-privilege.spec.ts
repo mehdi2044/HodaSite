@@ -102,8 +102,15 @@ describe.skipIf(!hasDb)("least-privilege roles (C2)", () => {
   it("a warehouse user is refused by a real admin server action", async () => {
     acting.userId = userIds.warehouse;
     const fd = new FormData();
-    fd.set("primary", "#ffffff");
-    await expect(saveTheme(fd)).rejects.toThrow("FORBIDDEN");
+    fd.set("light_primary", "#ffffff");
+    // assertCan() runs before field validation, so a minimal FormData is
+    // enough — the action never reaches schema.parse for this role.
+    const result = await saveTheme(null, fd);
+    expect(result).toEqual({
+      ok: false,
+      code: "FORBIDDEN",
+      message: expect.any(String),
+    });
     acting.userId = null;
   });
 });

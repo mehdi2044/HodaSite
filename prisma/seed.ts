@@ -20,6 +20,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
     "settings.brand.edit",
     "settings.theme.edit",
+    "settings.contact.edit",
+    "settings.social.edit",
+    "settings.legal.edit",
+    "settings.maintenance.edit",
+    "markets.edit",
     "users.view",
     "users.manage",
     "media.upload",
@@ -103,11 +108,49 @@ async function main() {
     where: { id: "default" },
     update: {},
     create: {
-      brand: { fa: "استایل هاب", tr: "STYLE HUB", en: "STYLE HUB" },
+      brand: {
+        name: { fa: "استایل هاب", tr: "STYLE HUB", en: "STYLE HUB" },
+        tagline: {
+          fa: "مد، آرام و ماندگار",
+          tr: "Sakin ve kalıcı moda",
+          en: "Quiet, enduring fashion",
+        },
+      },
       finance: {
         pricingBaseCurrency: "USD",
         functionalCurrency: "TRY",
         reportingCurrency: "USD",
+      },
+      contact: {
+        email: "hello@example.com",
+        phones: {
+          IR: "+98 21 0000 0000",
+          TR: "+90 212 000 00 00",
+          CA: "+1 416 000 0000",
+        },
+        address: {
+          fa: "تهران، ایران",
+          tr: "İstanbul, Türkiye",
+          en: "Toronto, Canada",
+        },
+        hours: {
+          fa: "شنبه تا پنجشنبه، ۹ تا ۱۸",
+          tr: "Pazartesi - Cuma, 09:00 - 18:00",
+          en: "Mon–Fri, 9am–6pm",
+        },
+      },
+      social: {
+        instagram: "https://instagram.com/stylehub",
+      },
+      legal: {
+        companyName: "Style Hub Ticaret A.Ş.",
+        registrationNo: "",
+        taxNo: "",
+        footerLine: {
+          fa: "© تمام حقوق محفوظ است.",
+          tr: "© Tüm hakları saklıdır.",
+          en: "© All rights reserved.",
+        },
       },
     },
   });
@@ -116,13 +159,31 @@ async function main() {
     update: {},
     create: {
       colors: {
-        primary: "#E8792A",
-        background: "#FBF8F3",
-        surface: "#FFFFFF",
-        text: "#1A1A1A",
-        muted: "#6B6B6B",
+        light: {
+          primary: "#E8792A",
+          background: "#FBF8F3",
+          surface: "#FFFFFF",
+          text: "#1A1A1A",
+          muted: "#6B6B6B",
+          success: "#2E7D4F",
+          error: "#C0392B",
+          warning: "#B7791F",
+        },
+        dark: {
+          primary: "#F0955A",
+          background: "#171310",
+          surface: "#221C17",
+          text: "#F5F1EA",
+          muted: "#B5AA9C",
+          success: "#4FAF77",
+          error: "#E06655",
+          warning: "#D9A441",
+        },
       },
       fonts: { fa: "Vazirmatn", latin: "Inter" },
+      darkMode: "off",
+      headerStyle: "minimal",
+      buttonStyle: "pill",
     },
   });
   for (const m of [
@@ -145,6 +206,14 @@ async function main() {
       holdHours: 3,
       fxMode: FxMode.AUTO_ACCEPT,
       roundingRule: { mode: "HALF_UP", increment: "0.01" },
+      announcementBar: {
+        enabled: true,
+        text: {
+          fa: "ارسال رایگان برای سفارش‌های بالای ۲۰۰۰ لیر",
+          tr: "2000 TL üzeri siparişlerde ücretsiz kargo",
+          en: "Free shipping over 2000 TRY",
+        },
+      },
     },
     {
       code: "CA",

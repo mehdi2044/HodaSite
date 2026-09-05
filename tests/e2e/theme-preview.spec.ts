@@ -1,0 +1,67 @@
+import { test, expect, type Page, type Locator } from "@playwright/test";
+
+const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
+const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
+const ORIGINAL_PRIMARY = "#e8792a";
+const NEW_PRIMARY = "#00aaff";
+
+test.describe.configure({ mode: "serial" });
+
+async function login(page: Page) {
+  await page.context().clearCookies();
+  await page.goto("/admin/login");
+  await page.getByLabel("ایمیل").fill(EMAIL);
+  await page.getByLabel("رمز عبور").fill(PASSWORD);
+  await page.getByRole("button", { name: "ورود امن" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+}
+
+async function primaryVar(locator: Locator) {
+  return locator.evaluate((el) =>
+    getComputedStyle(el).getPropertyValue("--primary").trim(),
+  );
+}
+
+/** input[type=color] isn't a Playwright-"fillable" control — set + dispatch directly. */
+async function setColor(locator: Locator, hex: string) {
+  await locator.evaluate((el: HTMLInputElement, value: string) => {
+    el.value = value;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }, hex);
+}
+
+// Acceptance criterion 4 (Phase 01a): the preview iframe reflects an unsaved
+// color change via postMessage, and after saving the real storefront (/fa)
+// renders the new --color-primary.
+test("theme editor live preview updates before saving, and /fa reflects it after saving", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/settings/theme");
+
+  const mobilePreview = page.frameLocator('iframe[title="پیش‌نمایش موبایل"]');
+  const root = mobilePreview.locator(":root");
+  await expect(async () => {
+    expect(await primaryVar(root)).toBe(ORIGINAL_PRIMARY);
+  }).toPass();
+
+  await setColor(page.locator('input[name="light_primary"]'), NEW_PRIMARY);
+
+  // Pushed live via postMessage — no save yet.
+  await expect(async () => {
+    expect(await primaryVar(root)).toBe(NEW_PRIMARY);
+  }).toPass();
+
+  await page.getByRole("button", { name: "ذخیره" }).click();
+  await expect(page.getByText("ذخیره شد.")).toBeVisible();
+
+  await page.goto("/fa");
+  await expect(primaryVar(page.locator(":root"))).resolves.toBe(NEW_PRIMARY);
+
+  // restore the seeded demo color
+  await page.goto("/admin/settings/theme");
+  await setColor(page.locator('input[name="light_primary"]'), ORIGINAL_PRIMARY);
+  await page.getByRole("button", { name: "ذخیره" }).click();
+  await expect(page.getByText("ذخیره شد.")).toBeVisible();
+});
