@@ -5,7 +5,7 @@
 | فاز | نام | وضعیت | تاریخ | PR |
 |---|---|---|---|---|
 | 00 | Foundation | ✅ Merge شده | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
-| 01a | Markets, Settings, Theme | 🔍 در بازبینی | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
+| 01a | Markets, Settings, Theme | ✅ Merge شده | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
 | 01b | Media Library | ⬜ | | |
 | 01c | CMS & Storefront Design | ⬜ | | |
 | 02 | Catalog & Storefront | ⬜ | | |
@@ -134,7 +134,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 ### Phase 01a
 
 #### وضعیت
-🔍 **در بازبینی — ۵ سپتامبر ۲۰۲۶.** برنچ `phase/01a-markets-settings-theme` روی `main`. طبق `docs/prompts/phase-01a.md` (نسخهٔ فرعی فاز ۰۱، تقسیم ۰۱a/۰۱b/۰۱c، تصمیم D45/رودمپ v1.2). فقط چیزهایی که در آن فایل بود پیاده شد؛ کتابخانهٔ رسانه، منوها/صفحات/Homepage Builder/ویرایشگر ترجمه به ۰۱b/۰۱c موکول شد.
+✅ **Merge شده — ۵ سپتامبر ۲۰۲۶.** PR [#4](https://github.com/mehdi2044/HodaSite/pull/4) (merge commit `24dceb8`)؛ طبق `docs/prompts/phase-01a.md` (نسخهٔ فرعی فاز ۰۱، تقسیم ۰۱a/۰۱b/۰۱c، تصمیم D45/رودمپ v1.2). فقط چیزهایی که در آن فایل بود پیاده شد؛ کتابخانهٔ رسانه، منوها/صفحات/Homepage Builder/ویرایشگر ترجمه به ۰۱b/۰۱c موکول شد.
 
 #### چه چیزی ساخته شد
 - **بازارها (`/admin/markets`):** لیست ۳ بازار ثابت (بدون ساخت/حذف) + صفحهٔ ویرایش هرکدام: فعال/غیرفعال، توقف فروش، زبان‌های فعال + زبان پیش‌فرض، کانال‌های پشتیبانی، پیام بالای سایت (Announcement bar) سه‌زبانه، SEO پیش‌فرض بازار. فیلدهای قیمت‌گذاری (markup، rounding، hold، deadline) فقط نمایشی — فاز ۰۳.
@@ -193,4 +193,4 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - `theme.customCss` در `RootLayout` حالا قبل از رندر دوباره از `sanitizeCustomCss` می‌گذرد (`safeCustomCss` در `src/lib/custom-css.ts`)؛ در صورت نامعتبر بودن، خالی رندر می‌شود نه کرش.
 - دو تست واحد اضافه شد. `pnpm lint/typecheck/test` سبز (۹۹ تست)، push شد، هر سه job CI روی commit `844bbc9` سبز.
 
-**تمام شد — منتظر merge توسط مهدی.**
+**تمام شد — Merge شد (commit `24dceb8`).**
