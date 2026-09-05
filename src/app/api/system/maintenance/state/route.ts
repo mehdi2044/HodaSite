@@ -21,7 +21,11 @@ export async function GET(req: Request) {
     isMaintenanceOn(),
     getMaintenanceConfig(),
   ]);
-  const effective = isMaintenanceEffective(cfg);
+  // The uncached in-process flag always wins over the (tag-revalidated, but
+  // still a cache) config read: a restore that just flipped maintenance on
+  // must never be shadowed by a config read that hasn't picked it up yet
+  // (D23, PR #4 review, P1).
+  const effective = onFlag || isMaintenanceEffective(cfg);
   const ip = new URL(req.url).searchParams.get("ip");
   const bypass = effective && isIpAllowlisted(ip, cfg.allowlistIps);
   return NextResponse.json({

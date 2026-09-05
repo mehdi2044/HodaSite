@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
+import { normalizeBrand } from "@/lib/brand";
 import { saveBrand } from "./actions";
 import { Card, CardTitle, CardDescription, Input } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
@@ -10,12 +11,9 @@ export default async function Brand() {
     getSiteSettings(),
     getThemeSettings(),
   ]);
-  const brand = (site?.brand ?? {}) as {
-    name?: Record<string, string>;
-    tagline?: Record<string, string>;
-  };
-  const name = brand.name ?? {};
-  const tagline = brand.tagline ?? {};
+  // Accepts Phase 00's legacy flat shape too (backward-compat safety net
+  // alongside the data migration — PR #4 review, P1).
+  const { name, tagline } = normalizeBrand(site?.brand);
 
   const mediaIds = [
     theme?.logoMediaId,

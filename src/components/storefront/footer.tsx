@@ -1,4 +1,10 @@
+import { getTranslations } from "next-intl/server";
 import type { Market } from "@/lib/request-context";
+import {
+  SOCIAL_KEYS,
+  type SocialByMarket,
+  type MarketCode,
+} from "@/lib/social";
 
 export type Contact = {
   email?: string;
@@ -6,34 +12,12 @@ export type Contact = {
   address?: Record<string, string>;
   hours?: Record<string, string>;
 };
-export type Social = Partial<
-  Record<
-    | "instagram"
-    | "telegram"
-    | "whatsapp"
-    | "x"
-    | "tiktok"
-    | "youtube"
-    | "linkedin",
-    string
-  >
->;
 export type Legal = {
   companyName?: string;
   footerLine?: Record<string, string>;
 };
 
-const SOCIAL_LABELS: Record<string, string> = {
-  instagram: "اینستاگرام",
-  telegram: "تلگرام",
-  whatsapp: "واتساپ",
-  x: "X",
-  tiktok: "تیک‌تاک",
-  youtube: "یوتیوب",
-  linkedin: "لینکدین",
-};
-
-export function Footer({
+export async function Footer({
   locale,
   market,
   contact,
@@ -43,18 +27,22 @@ export function Footer({
   locale: string;
   market: Market;
   contact: Contact;
-  social: Social;
+  social: SocialByMarket;
   legal: Legal;
 }) {
+  const t = await getTranslations("footer");
   const phone = contact.phones?.[market.code];
-  const socialLinks = Object.entries(social).filter(([, url]) => Boolean(url));
+  const marketSocial = social[market.code as MarketCode] ?? {};
+  const socialLinks = SOCIAL_KEYS.filter((key) => marketSocial[key]).map(
+    (key) => [key, marketSocial[key] as string] as const,
+  );
   const footerLine = legal.footerLine?.[locale];
 
   return (
     <footer className="mt-16 border-t border-black/5 bg-surface">
       <div className="shell grid gap-6 py-10 text-sm md:grid-cols-3">
         <div className="grid gap-1">
-          <strong>تماس با ما</strong>
+          <strong>{t("contactTitle")}</strong>
           {contact.email && (
             <bdi dir="ltr">
               <a href={`mailto:${contact.email}`}>{contact.email}</a>
@@ -71,10 +59,10 @@ export function Footer({
         </div>
         {socialLinks.length > 0 && (
           <div className="grid gap-1">
-            <strong>شبکه‌های اجتماعی</strong>
+            <strong>{t("socialTitle")}</strong>
             {socialLinks.map(([key, url]) => (
               <a key={key} href={url} target="_blank" rel="noreferrer">
-                {SOCIAL_LABELS[key] ?? key}
+                {t(key)}
               </a>
             ))}
           </div>

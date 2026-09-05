@@ -8,21 +8,27 @@ import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { sanitizeCustomCss } from "@/lib/custom-css";
 import { COLOR_KEYS } from "@/lib/theme-defaults";
+import {
+  cssLength,
+  hexColor,
+  HERO_STYLES,
+  FONT_FA_FAMILIES,
+  FONT_LATIN_FAMILIES,
+} from "@/lib/theme-validation";
 
-const hex = z.string().regex(/^#[0-9a-f]{6}$/i);
 const shape: Record<string, z.ZodTypeAny> = {
-  radius: z.string().min(1),
+  radius: cssLength,
   darkMode: z.enum(["off", "on", "system"]),
   headerStyle: z.enum(["minimal", "centered", "editorial"]),
   buttonStyle: z.enum(["pill", "soft", "sharp"]),
-  heroStyle: z.string().min(1),
-  fontFa: z.string().min(1),
-  fontLatin: z.string().min(1),
+  heroStyle: z.enum(HERO_STYLES),
+  fontFa: z.enum(FONT_FA_FAMILIES),
+  fontLatin: z.enum(FONT_LATIN_FAMILIES),
   customCss: z.string().optional().default(""),
 };
 for (const key of COLOR_KEYS) {
-  shape[`light_${key}`] = hex;
-  shape[`dark_${key}`] = hex;
+  shape[`light_${key}`] = hexColor;
+  shape[`dark_${key}`] = hexColor;
 }
 const schema = z.object(shape);
 

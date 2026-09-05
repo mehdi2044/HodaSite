@@ -4,13 +4,13 @@ import {
   DEFAULT_LIGHT_COLORS,
   DEFAULT_DARK_COLORS,
 } from "@/lib/theme-defaults";
+import { normalizeThemeColors } from "@/lib/theme-validation";
 
 export default async function Theme() {
   const theme = await getThemeSettings();
-  const colors = (theme?.colors ?? {}) as {
-    light?: Record<string, string>;
-    dark?: Record<string, string>;
-  };
+  // Accepts Phase 00's legacy flat shape too (backward-compat safety net
+  // alongside the data migration — PR #4 review, P1).
+  const colors = normalizeThemeColors(theme?.colors);
   const fonts = (theme?.fonts ?? {}) as { fa?: string; latin?: string };
 
   const initial: ThemeDraft = {

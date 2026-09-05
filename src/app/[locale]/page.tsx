@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getSiteSettings } from "@/modules/settings";
+import { normalizeBrand } from "@/lib/brand";
 
 export default async function Home({
   params,
@@ -10,8 +11,8 @@ export default async function Home({
   const t = await getTranslations();
 
   const site = await getSiteSettings();
-  const brand = (site?.brand ?? {}) as { name?: Record<string, string> };
-  const siteName = brand.name?.[locale] ?? brand.name?.fa ?? "STYLE HUB";
+  const brand = normalizeBrand(site?.brand);
+  const siteName = brand.name[locale] ?? brand.name.fa ?? "STYLE HUB";
 
   return (
     <main className="hero" dir={locale === "fa" ? "rtl" : "ltr"}>

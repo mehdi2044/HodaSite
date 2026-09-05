@@ -28,6 +28,7 @@ const MAINTENANCE_COPY: Record<string, { title: string; body: string }> = {
 };
 
 type MaintenanceState = {
+  state: "on" | "off";
   effective: boolean;
   message?: Partial<Record<"fa" | "tr" | "en", string>>;
   bypass: boolean;
@@ -181,8 +182,13 @@ export default auth(async (req) => {
   if (urlLocale) {
     const ip = getClientIp(req.headers);
     const maintenance = await fetchMaintenanceState(req, ip);
-    if (maintenance?.effective && !maintenance.bypass) {
-      return maintenanceResponse(req, urlLocale, maintenance.message);
+    // `effective` already folds in the uncached flag (state === "on") on the
+    // route side, but check both explicitly here too — a restore in
+    // progress (D23) must never be shadowed by a stale cache read, so the
+    // uncached flag always wins, checked independently at this layer as well.
+    const maintenanceOn = maintenance?.state === "on" || maintenance?.effective;
+    if (maintenanceOn && !maintenance?.bypass) {
+      return maintenanceResponse(req, urlLocale, maintenance?.message);
     }
   }
 

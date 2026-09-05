@@ -2,6 +2,11 @@ import "@/styles/tokens.css";
 import { getLocale } from "next-intl/server";
 import { getThemeSettings } from "@/modules/settings";
 import { DEFAULT_LIGHT_COLORS, BUTTON_RADIUS } from "@/lib/theme-defaults";
+import {
+  safeCssLength,
+  safeColorMap,
+  normalizeThemeColors,
+} from "@/lib/theme-validation";
 
 // Depends on the request (locale, and — via the theme accessor — the DB), so
 // a brand/theme change is visible on the next load without a rebuild.
@@ -23,17 +28,19 @@ export default async function RootLayout({
   const locale = await getLocale();
   const theme = await getThemeSettings();
 
-  const colors = (theme?.colors ?? {}) as {
-    light?: Record<string, string>;
-    dark?: Record<string, string>;
-  };
-  const light = { ...DEFAULT_LIGHT_COLORS, ...colors.light };
-  const dark = colors.dark ?? {};
+  // normalizeThemeColors accepts Phase 00's legacy flat shape too (a
+  // backward-compat safety net alongside the data migration). Defense in
+  // depth (Phase 01a PR review, P1): re-validate values already in the DB
+  // before they reach dangerouslySetInnerHTML, not just at save time.
+  const colors = normalizeThemeColors(theme?.colors);
+  const light = safeColorMap(colors.light, DEFAULT_LIGHT_COLORS);
+  const dark = safeColorMap(colors.dark, {});
   const darkMode = theme?.darkMode ?? "off";
   const buttonStyle = theme?.buttonStyle ?? "pill";
   const buttonRadius = BUTTON_RADIUS[buttonStyle] ?? BUTTON_RADIUS.pill;
+  const radius = safeCssLength(theme?.radius, "12px");
 
-  const rootVars = `${toVars(light)}--radius:${theme?.radius ?? "12px"};--radius-button:${buttonRadius};`;
+  const rootVars = `${toVars(light)}--radius:${radius};--radius-button:${buttonRadius};`;
   const darkVars = Object.keys(dark).length
     ? toVars({ ...light, ...dark })
     : "";

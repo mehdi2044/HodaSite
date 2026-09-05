@@ -5,12 +5,13 @@ import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
+import { normalizeBrand } from "@/lib/brand";
+import { normalizeSocial } from "@/lib/social";
 import { getRequestContext } from "@/lib/request-context";
 import { Header } from "@/components/storefront/header";
 import {
   Footer,
   type Contact,
-  type Social,
   type Legal,
 } from "@/components/storefront/footer";
 import { AnnouncementBar } from "@/components/storefront/announcement-bar";
@@ -38,8 +39,8 @@ export async function generateMetadata({
     getThemeSettings(),
     getRequestContext(locale),
   ]);
-  const brand = (site?.brand ?? {}) as { name?: Record<string, string> };
-  const siteName = brand.name?.[locale] ?? brand.name?.fa ?? "STYLE HUB";
+  const brand = normalizeBrand(site?.brand);
+  const siteName = brand.name[locale] ?? brand.name.fa ?? "STYLE HUB";
   const seo = (market?.seo ?? {}) as {
     title?: Record<string, string>;
     description?: Record<string, string>;
@@ -72,8 +73,8 @@ export default async function LocaleLayout({
     getThemeSettings(),
     getRequestContext(locale),
   ]);
-  const brand = (site?.brand ?? {}) as { name?: Record<string, string> };
-  const siteName = brand.name?.[locale] ?? brand.name?.fa ?? "";
+  const brand = normalizeBrand(site?.brand);
+  const siteName = brand.name[locale] ?? brand.name.fa ?? "";
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
@@ -92,7 +93,7 @@ export default async function LocaleLayout({
         locale={locale}
         market={market}
         contact={(site?.contact ?? {}) as Contact}
-        social={(site?.social ?? {}) as Social}
+        social={normalizeSocial(site?.social)}
         legal={(site?.legal ?? {}) as Legal}
       />
     </NextIntlClientProvider>

@@ -16,8 +16,15 @@
 - `Market(code IR|TR|CA, name, currency, isActive, salesPaused, defaultLocale, enabledLocales[], markupPercent, roundingRule json, holdHours, paymentDeadlineHours, fxMode AUTO_ACCEPT|REQUIRE_APPROVAL, fxStaleHours, fxMaxJumpPercent, volumetricDivisor, supportChannels json, seo json)`
 - `SiteSettings.finance json {pricingBaseCurrency:'USD', functionalCurrency:'TRY', reportingCurrency:'USD'}` (D04)
 - `MarketBankAccount(marketId, label, bankName, holder, accountNumber, iban, cardNumber, instructionsI18n json, isActive, sortOrder)`
-- `SiteSettings(id='default', brand json, contact json, seo json, social json, checkout json, maintenance json)`
-- `ThemeSettings(id='default', colors json, fonts json, radius, logoMediaId, logoDarkMediaId, faviconMediaId, heroStyle, customCss)`
+- `SiteSettings(id='default', brand json, contact json, seo json, social json, legal json, checkout json, maintenance json)`
+- `ThemeSettings(id='default', colors json, fonts json, radius, logoMediaId, logoDarkMediaId, faviconMediaId, emailLogoMediaId, heroStyle, darkMode, headerStyle, buttonStyle, customCss)`
+
+**JSON shapes (Phase 01a, current — a data migration converts any pre-01a row; `src/lib/{brand,social,theme-validation}.ts` also normalize a legacy shape defensively at read time):**
+- `SiteSettings.brand`: `{ name: {fa,tr,en}, tagline: {fa,tr,en} }` — logo/logoDark/favicon/emailLogo are **not** here, they're `ThemeSettings.*MediaId` (matches `03_ARCHITECTURE.md` §3.2: ThemeSettings owns media ids), even though the admin page for both is Settings → Brand.
+- `SiteSettings.social`: **per market**, `{ IR: {instagram?,telegram?,whatsapp?,x?,tiktok?,youtube?,linkedin?}, TR: {...}, CA: {...} }` — a link only shows in that market's storefront footer.
+- `SiteSettings.maintenance`: `{ state: 'off'|'on'|'scheduled', message?: {fa,tr,en}, allowlistIps?: string[], startsAt?, endsAt? }`. The ops-secret endpoint (`POST /api/system/maintenance`, what `restore.sh` calls) merges only `state` into this object — it must never replace it, or every restore silently erases the admin-configured message/allowlist/schedule.
+- `ThemeSettings.colors`: `{ light: {primary,background,surface,text,muted,success,error,warning}, dark: {...same keys} }`.
+- Every save action re-validates with Zod before it reaches `dangerouslySetInnerHTML` (`radius` is a strict CSS-length token, colors are strict 6-digit hex) and `src/app/layout.tsx` re-validates again at render time as defense in depth — an already-saved value is never trusted blindly.
 - `Menu(key header|footer|mobile, marketId?)` / `MenuItem(menuId, parentId, labelI18n, url, target, sortOrder, visibleIn[] markets)`
 - `Page(slug, type static|landing, blocks json, status, seoI18n, marketIds[])`
 - `Banner(placement, mediaId, titleI18n, subtitleI18n, ctaI18n, url, startsAt, endsAt, marketIds[], sortOrder)`

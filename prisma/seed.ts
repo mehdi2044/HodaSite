@@ -140,7 +140,12 @@ async function main() {
         },
       },
       social: {
-        instagram: "https://instagram.com/stylehub",
+        IR: {
+          instagram: "https://instagram.com/stylehub.ir",
+          telegram: "https://t.me/stylehub",
+        },
+        TR: { instagram: "https://instagram.com/stylehub.tr" },
+        CA: { instagram: "https://instagram.com/stylehub" },
       },
       legal: {
         companyName: "Style Hub Ticaret A.Ş.",
