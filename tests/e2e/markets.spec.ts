@@ -55,7 +55,10 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
 
   // Enable Turkish for IR from the admin panel.
   await openIrMarketEdit(page);
-  await page.getByLabel("Türkçe").check();
+  // getByLabel("Türkçe") also matches the defaultLocale <select> (its
+  // wrapping <label>'s accessible name includes the concatenated <option>
+  // text) — target the checkbox by role instead.
+  await page.getByRole("checkbox", { name: "Türkçe" }).check();
   await page.getByRole("button", { name: "ذخیره" }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
@@ -68,7 +71,7 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
 
   // Disable it again (also restores the seeded demo state).
   await openIrMarketEdit(page);
-  await page.getByLabel("Türkçe").uncheck();
+  await page.getByRole("checkbox", { name: "Türkçe" }).uncheck();
   await page.getByRole("button", { name: "ذخیره" }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
