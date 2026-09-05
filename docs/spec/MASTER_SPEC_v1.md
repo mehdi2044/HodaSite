@@ -1,6 +1,6 @@
 # Fashion Commerce Master Spec — v1.0 (structured summary)
 
-> This is a clean, machine-readable summary of the owner's original master spec (`Fashion_Commerce_Master_Spec_FA.docx` / `HodaSaite1.pdf`, September 2026). Put the original files in this folder too. Where this file and `docs/02_DECISIONS.md` or a phase file differ, **the decisions/phase files win** (they are the reviewed, newer version).
+> This is a clean, machine-readable summary of the owner's original master spec (Word/PDF, September 2026). The original files are kept outside this public repository, with the owner only. Where this file and `docs/02_DECISIONS.md` or a phase file differ, **the decisions/phase files win** (they are the reviewed, newer version).
 
 Owner: Mahdi · Markets: Türkiye (origin of operations), Canada, Iran · Languages: fa-IR (RTL), tr-TR, en-CA
 

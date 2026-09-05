@@ -32,9 +32,6 @@ export default async function Home({
           {t("soon")}
         </p>
         <button className="button">{t("explore")}</button>
-        <p>
-          <bdi dir="ltr">SH-MW-1023</bdi>
-        </p>
       </section>
     </main>
   );

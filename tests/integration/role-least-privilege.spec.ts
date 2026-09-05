@@ -10,7 +10,10 @@ import { db } from "@/lib/db";
 import { can } from "@/modules/access";
 import { saveTheme } from "@/app/admin/(dashboard)/settings/theme/actions";
 
-const hasDb = await db.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
+// Global setup (tests/setup/global-setup.ts) already confirmed
+// TEST_DATABASE_URL is reachable when set, or fails the whole run — so
+// presence alone is enough here.
+const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 
 // What each non-owner role MUST have (a sample) and MUST NOT have.
 const EXPECT: Record<string, { allow: string[]; deny: string[] }> = {

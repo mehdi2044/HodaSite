@@ -15,7 +15,7 @@ A) گیت‌هاب و Codex، B) اجرا روی لپ‌تاپ، C) اجرا ر�
    - نکته: فایل `README.md` فعلی مخزن جایگزین می‌شود؛ اشکالی ندارد.
    - نکته: فایل‌هایی که با نقطه شروع می‌شوند (`.env.example`, `.gitignore`) گاهی در Finder/Explorer مخفی‌اند؛ در مک با `Cmd+Shift+.` و در ویندوز از View → Hidden items نمایششان دهید.
 4. پایین صفحه در کادر پیام بنویسید `docs: foundation v1.2` و **Commit changes**.
-5. فایل‌های اصلی سند مادر (`Fashion_Commerce_Master_Spec_FA.docx` و `HodaSaite1.pdf`) را داخل پوشهٔ `docs/spec/` آپلود کنید (اول وارد `docs/spec` شوید، بعد Add file → Upload files).
+5. سند مادر کامل (نسخهٔ اصلی Word/PDF) **خارج از مخزن** و فقط نزد شما (مالک) نگهداری می‌شود — چون مخزن public است. خلاصهٔ آن برای استفادهٔ روزمرهٔ تیم در `docs/spec/MASTER_SPEC_v1.md` هست.
 6. اگر مخزن را Private می‌خواهید: Settings → General → پایین صفحه → Change visibility.
 
 > اگر آپلود پوشه‌ای در مرورگر اذیت کرد، **GitHub Desktop** را نصب کنید: Clone `mehdi2044/HodaSite` → فایل‌ها را داخل پوشهٔ محلی کپی کنید → Commit → Push.
@@ -98,6 +98,67 @@ docker compose -f docker-compose.dev.yml down -v
 git pull
 docker compose -f docker-compose.dev.yml up --build
 ```
+
+### B6. اجرای محلی روی ویندوز
+
+این بخش دقیقاً همان دستورهایی است که روی لپ‌تاپ ویندوزی مهدی اجرا می‌شود (PowerShell). Docker Desktop باید نصب و روشن باشد (آیکون نهنگ در نوار وضعیت).
+
+**روشن کردن سایت (بار اول یا بعد از تغییر کد):**
+```powershell
+docker compose -f docker-compose.dev.yml up --build
+```
+بار اول ۵–۱۰ دقیقه طول می‌کشد. وقتی خط `✓ Ready` را دیدید، سایت روی http://localhost:3000/fa بالاست.
+
+**روشن کردن سریع (بدون تغییر کد، از دفعهٔ قبل):**
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+```
+
+**خاموش کردن (دادهٔ آزمایشی حفظ می‌شود):**
+```powershell
+docker compose -f docker-compose.dev.yml stop
+```
+
+**پاک‌کردن کامل و شروع از صفر (دادهٔ آزمایشی پاک می‌شود):**
+```powershell
+docker compose -f docker-compose.dev.yml down -v
+```
+
+**دیدن لاگ‌ها (وقتی چیزی درست کار نمی‌کند):**
+```powershell
+docker compose -f docker-compose.dev.yml logs --tail=200 app
+```
+برای دنبال‌کردن زنده‌ی لاگ‌ها (تا `Ctrl+C` بزنید): همان دستور را با `-f` اضافه اجرا کنید: `docker compose -f docker-compose.dev.yml logs -f app`.
+
+**اگر سایت بالا نیامد، به ترتیب این‌ها را چک کنید:**
+1. `docker compose -f docker-compose.dev.yml ps` — همهٔ سرویس‌ها باید `Up` باشند (`postgres` باید `healthy` باشد).
+2. لاگ `app` را ببینید (دستور بالا) و متن خطا را برای پیکسل بفرستید.
+3. **تداخل پورت روی ویندوز:** اگر قبلاً یک Postgres یا هر برنامهٔ دیگری روی همین کامپیوتر نصب بوده، ممکن است پورت‌های `3000` یا `5432`/`55432` را قبل از Docker گرفته باشد و اتصال به دیتابیس یا سایت اشتباه برود (بدون خطای واضح). برای بررسی: `netstat -ano | findstr :3000` (یا `:55432`) — اگر یک PID غیرمرتبط با Docker آنجا بود، همان برنامه پورت را گرفته؛ یا آن برنامه را ببندید یا پورت را در `docker-compose.dev.yml` عوض کنید.
+4. اگر مطمئن نیستید فایل `.env` درست است: دوباره `cp .env.example .env` بزنید و مقدارهای لازم را پر کنید.
+
+**ایمیل و رمز ادمین کجاست؟** در فایل `.env` (نه `.env.example`) دو خط زیر است:
+```
+ADMIN_EMAIL=...
+ADMIN_PASSWORD=...
+```
+این‌ها فقط روی همین لپ‌تاپ هستند (`.env` هرگز commit نمی‌شود). **رمز و ایمیل سرور Production باید متفاوت از لپ‌تاپ باشند** — همان مقداری که اینجا برای تست محلی گذاشته‌اید را روی سرور واقعی دوباره استفاده نکنید (بخش C4 را ببینید).
+
+### B7. اجرای `pnpm test` مستقیم روی لپ‌تاپ (نه داخل Docker)
+
+با `docker compose -f docker-compose.dev.yml up` بالا، دیتابیس Postgres روی پورت `55432` هاست هم در دسترس است، اما `pnpm test` روی لپ‌تاپ به‌طور پیش‌فرض دنبال آدرس داخل شبکهٔ Docker (`DATABASE_URL` در `.env`) می‌گردد، نه پورت هاست. برای همین متغیر جدا `TEST_DATABASE_URL` وجود دارد (نمونه‌اش در `.env.example`، زیر بلوک Database) — رفتار `pnpm test` بسته به آن دقیقاً سه حالت دارد:
+
+1. **`TEST_DATABASE_URL` در `.env` خالی/نبود:** تست‌های integration فقط **skip** می‌شوند (تست‌های unit عادی اجرا می‌شوند) و همین ابتدای خروجی این خط چاپ می‌شود:
+   ```
+   ℹ integration tests skipped: TEST_DATABASE_URL not set (unit tests only)
+   ```
+2. **`TEST_DATABASE_URL` تنظیم شده ولی Postgres در دسترس نیست:** اجرای `pnpm test` **fail** می‌شود (نه skip بی‌صدا) با پیام واضح که آدرس در دسترس نیست. یعنی اگر این مقدار را گذاشته‌اید، باید `docker compose -f docker-compose.dev.yml up` هم روشن باشد؛ وگرنه `pnpm test` عمداً قرمز می‌شود تا یادتان نرود.
+3. **`TEST_DATABASE_URL` تنظیم و در دسترس است:** هر ۴۵ تست (unit + integration) واقعاً اجرا می‌شوند.
+
+برای حالت ۳ (توصیه‌شده وقتی `docker compose -f docker-compose.dev.yml up` روشن است)، در `.env` مقدار `TEST_DATABASE_URL` را نگه دارید و همان‌طور اجرا کنید:
+```powershell
+pnpm test
+```
+اگر پیام fail را دیدید یعنی پورت `55432` توسط برنامهٔ دیگری اشغال شده یا استک روشن نیست (بخش B6، مورد ۳ بالا را ببینید).
 
 ---
 
