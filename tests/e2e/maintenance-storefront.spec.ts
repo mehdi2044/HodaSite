@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { ensureMaintenanceOff } from "./helpers/maintenance";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -28,10 +29,14 @@ async function setMaintenance(page: Page, state: "off" | "on") {
 }
 
 test.afterAll(async ({ browser }) => {
-  const page = await browser.newPage();
-  await login(page);
-  await setMaintenance(page, "off");
-  await page.close();
+  // Go straight through the ops-secret flag rather than the admin UI form:
+  // fewer moving parts to fail in a cleanup path, and other spec files
+  // (which share this one server process/DB across the whole run) depend on
+  // maintenance actually being off afterward, not just on this test's own
+  // assertions having passed.
+  const context = await browser.newContext();
+  await ensureMaintenanceOff(context.request);
+  await context.close();
 });
 
 // Acceptance criterion 2 (Phase 01a): the storefront shows a localized 503

@@ -1,4 +1,5 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
+import { ensureMaintenanceOff } from "./helpers/maintenance";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -41,6 +42,7 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
   page,
   context,
 }) => {
+  await ensureMaintenanceOff(page.request);
   await login(page);
   await setMarketCookie(context, "IR");
 

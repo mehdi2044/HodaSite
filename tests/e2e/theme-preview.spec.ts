@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
+import { ensureMaintenanceOff } from "./helpers/maintenance";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -50,6 +51,7 @@ async function setColor(locator: Locator, hex: string) {
 test("theme editor live preview updates before saving, and /fa reflects it after saving", async ({
   page,
 }) => {
+  await ensureMaintenanceOff(page.request);
   await login(page);
   await page.goto("/admin/settings/theme");
 
