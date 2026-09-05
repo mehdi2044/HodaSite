@@ -5,7 +5,7 @@
 | فاز | نام | وضعیت | تاریخ | PR |
 |---|---|---|---|---|
 | 00 | Foundation | ✅ Merge شده | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
-| 01a | Markets, Settings, Theme | 🔍 در بازبینی | ۲۰۲۶-۰۹-۰۵ | (به‌زودی) |
+| 01a | Markets, Settings, Theme | 🔍 در بازبینی | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
 | 01b | Media Library | ⬜ | | |
 | 01c | CMS & Storefront Design | ⬜ | | |
 | 02 | Catalog & Storefront | ⬜ | | |
