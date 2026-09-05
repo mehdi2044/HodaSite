@@ -82,9 +82,24 @@ async function enqueueNextSweep(): Promise<void> {
   });
 }
 
-/** Called once at process startup (src/instrumentation.ts). */
-export async function registerMediaPurgeHandler(): Promise<void> {
+/**
+ * Synchronous, no I/O — safe to call at module load (src/app/api/cron/tick/
+ * route.ts). Deliberately split from ensurePurgeSweepScheduled() below:
+ * Next's `next build` actually imports/executes route modules while
+ * "Collecting page data", so anything that touches the database can only run
+ * lazily on a real request, never as a module-level side effect (this cost a
+ * build failure — "Environment variable not found: DATABASE_URL" — to find).
+ */
+export function registerMediaPurgeHandler(): void {
   registerJobHandler(MEDIA_PURGE_JOB, mediaPurgeHandler);
+}
+
+let purgeSweepBootstrapped = false;
+
+/** Called once, lazily, on the first real cron tick request. */
+export async function ensurePurgeSweepScheduled(): Promise<void> {
+  if (purgeSweepBootstrapped) return;
+  purgeSweepBootstrapped = true;
   const pending = await db.job.findFirst({
     where: { type: MEDIA_PURGE_JOB, status: { in: ["PENDING", "RUNNING"] } },
   });
