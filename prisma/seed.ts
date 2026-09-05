@@ -1,10 +1,25 @@
 import { PrismaClient, FxMode } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import sharp from "sharp";
-import { storage } from "../src/modules/integrations/storage";
-import { imageProcessingQueue } from "../src/modules/media/queue";
 const db = new PrismaClient();
+
+// Deliberately NOT importing from `src/modules/*` (storage provider, job
+// queue): this script also runs inside the `ops` image, which — by design
+// (D22/D23, minimal attack surface, no Docker socket) — only ships
+// package.json/prisma/scripts, never the app's `src/` tree. A minimal local
+// write + a raw Job row (matching src/modules/media/queue.ts's enqueue())
+// keeps seed.ts runnable from both `app` and `ops` without adding `src` to
+// the ops image just for demo data.
+async function putLocalMediaFile(key: string, data: Buffer): Promise<string> {
+  const root = process.env.MEDIA_DIR ?? "/data/media";
+  const p = path.join(root, key);
+  await mkdir(path.dirname(p), { recursive: true });
+  await writeFile(p, data);
+  return `/media/${key}`;
+}
 const roles = [
   "owner",
   "admin",
@@ -268,6 +283,16 @@ async function seedDemoMedia() {
   });
   if (already > 0) return;
 
+  // seed.ts writes files directly (no src/modules/integrations/storage — see
+  // the note above); S3 is out of scope for demo data, which only matters
+  // for the dev/CI fresh-bring-up case (always STORAGE_PROVIDER=local).
+  if (process.env.STORAGE_PROVIDER === "s3") {
+    console.warn(
+      "[seed] STORAGE_PROVIDER=s3 — skipping demo media seed (local-only).",
+    );
+    return;
+  }
+
   const folders = [
     {
       name: "محصولات",
@@ -307,7 +332,7 @@ async function seedDemoMedia() {
       const key = `media/${now.getUTCFullYear()}/${String(
         now.getUTCMonth() + 1,
       ).padStart(2, "0")}/${crypto.randomUUID()}.jpg`;
-      const url = await storage.put(key, buffer, "image/jpeg");
+      const url = await putLocalMediaFile(key, buffer);
 
       const media = await db.media.create({
         data: {
@@ -328,7 +353,11 @@ async function seedDemoMedia() {
           },
         },
       });
-      await imageProcessingQueue.enqueue(media.id);
+      // Matches src/modules/media/queue.ts's enqueue() — DB-backed Job
+      // queue (D21), type must stay in sync with MEDIA_OPTIMIZE_JOB.
+      await db.job.create({
+        data: { type: "media-optimize", payload: { mediaId: media.id } },
+      });
     }
   }
 }

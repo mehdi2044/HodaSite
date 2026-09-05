@@ -75,6 +75,26 @@ MARKETS=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc 'select cou
 [[ "${MARKETS//[[:space:]]/}" == "3" ]] || fail "expected 3 markets, got '$MARKETS'"
 ok "seeded (3 markets)"
 
+step "seed demo media reaches READY with real sharp variants (Phase 01b acceptance criterion 1)"
+# The `cron` sidecar ticks /api/cron/tick every 60s, which runs the
+# media-optimize job (registered by src/instrumentation.ts on app boot) —
+# this is the real webp/avif pipeline, not a mock, running against the
+# `app` image built from the actual Dockerfile.
+READY=0
+for _ in $(seq 1 18); do
+  READY=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
+    "select count(*) from \"Media\" where \"originalName\" like 'seed-%' and status = 'READY' and variants != '{}'::jsonb")
+  READY=${READY//[[:space:]]/}
+  [[ "$READY" == "12" ]] && break
+  sleep 10
+done
+[[ "$READY" == "12" ]] || {
+  "${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
+    "select status, \"processingError\" from \"Media\" where \"originalName\" like 'seed-%' and status != 'READY'"
+  fail "expected 12 seed media READY with variants, got '$READY'"
+}
+ok "12 seed images READY with webp+avif variants"
+
 step "ops has NO docker socket"
 "${COMPOSE[@]}" exec -T ops sh -c '! test -S /var/run/docker.sock' || fail "ops has a docker socket"
 ok "no docker socket in ops"
