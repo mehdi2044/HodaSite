@@ -185,3 +185,12 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - هر سه job CI (`checks`, `docker`, `docker-runtime`) روی commit `7f289a8` سبز.
 
 **آماده‌ی بازبینی نهایی پیکسل.**
+
+#### بازبینی دور دوم پیکسل — ۵ سپتامبر ۲۰۲۶
+
+حکم: **GO**، مشروط به یک اصلاح کوچک دفاع‌درعمق (همان دستهٔ یافتهٔ رادیوس) قبل از merge. رفع شد در commit `844bbc9`:
+- `safeColorMap` (`src/lib/theme-validation.ts`) حالا فقط **کلید**های داخل `COLOR_KEYS` را می‌پذیرد، نه فقط مقدار hex را — چون `toVars()` کلید را خام در `--${k}:` می‌گذارد و کلید ناشناس همان ریسک style-breakout رادیوس است.
+- `theme.customCss` در `RootLayout` حالا قبل از رندر دوباره از `sanitizeCustomCss` می‌گذرد (`safeCustomCss` در `src/lib/custom-css.ts`)؛ در صورت نامعتبر بودن، خالی رندر می‌شود نه کرش.
+- دو تست واحد اضافه شد. `pnpm lint/typecheck/test` سبز (۹۹ تست)، push شد، هر سه job CI روی commit `844bbc9` سبز.
+
+**تمام شد — منتظر merge توسط مهدی.**
