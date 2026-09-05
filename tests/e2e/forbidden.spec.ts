@@ -38,7 +38,9 @@ test("a data_entry user gets a localized forbidden message saving theme, not a c
 
   await page.goto("/admin/settings/theme");
   await page.getByRole("button", { name: "ذخیره" }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  // Next.js also renders its own empty <div role="alert"> route announcer,
+  // so scope to the <p role="alert"> the SettingsForm actually renders.
+  await expect(page.locator('p[role="alert"]')).toContainText(
     "شما اجازهٔ انجام این کار را ندارید",
   );
   // Still on the same page — a real crash would land on Next's error overlay

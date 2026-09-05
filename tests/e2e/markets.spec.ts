@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -23,17 +23,27 @@ async function openIrMarketEdit(page: Page) {
   await expect(page.getByRole("heading")).toContainText("ایران");
 }
 
+// Pin the market cookie explicitly rather than relying on the middleware
+// having set it from a previous navigation — deterministic, and it isolates
+// this test to exactly what acceptance criterion 3 claims: the gate reacts
+// to enabledLocales for a *known* market context.
+async function setMarketCookie(context: BrowserContext, code: string) {
+  await context.addCookies([
+    { name: "market", value: code, url: "http://127.0.0.1:3000" },
+  ]);
+}
+
 // Acceptance criterion 3 (Phase 01a): market.enabledLocales gates both the
 // storefront locale switcher and the middleware's locale redirect. IR ships
 // fa-only by seed; this test proves the gate reacts live to an admin edit in
 // both directions (enable, then disable again).
 test("enabling/disabling a locale for market IR gates the switcher and the redirect", async ({
   page,
+  context,
 }) => {
   await login(page);
+  await setMarketCookie(context, "IR");
 
-  // Establish an IR market cookie by visiting the fa storefront once — the
-  // middleware defaults an unset market cookie to IR for the fa locale.
   await page.goto("/fa");
   await expect(page.getByRole("link", { name: "Türkçe" })).toHaveCount(0);
 
@@ -48,6 +58,7 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
   // The storefront now offers Turkish, and /tr is no longer redirected away.
+  await setMarketCookie(context, "IR");
   await page.goto("/fa");
   await expect(page.getByRole("link", { name: "Türkçe" })).toBeVisible();
   await page.goto("/tr");
@@ -59,6 +70,7 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
   await page.getByRole("button", { name: "ذخیره" }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
+  await setMarketCookie(context, "IR");
   await page.goto("/fa");
   await expect(page.getByRole("link", { name: "Türkçe" })).toHaveCount(0);
   await page.goto("/tr");
