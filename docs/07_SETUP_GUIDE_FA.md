@@ -15,7 +15,7 @@ A) گیت‌هاب و Codex، B) اجرا روی لپ‌تاپ، C) اجرا ر�
    - نکته: فایل `README.md` فعلی مخزن جایگزین می‌شود؛ اشکالی ندارد.
    - نکته: فایل‌هایی که با نقطه شروع می‌شوند (`.env.example`, `.gitignore`) گاهی در Finder/Explorer مخفی‌اند؛ در مک با `Cmd+Shift+.` و در ویندوز از View → Hidden items نمایششان دهید.
 4. پایین صفحه در کادر پیام بنویسید `docs: foundation v1.2` و **Commit changes**.
-5. فایل‌های اصلی سند مادر (`Fashion_Commerce_Master_Spec_FA.docx` و `HodaSaite1.pdf`) را داخل پوشهٔ `docs/spec/` آپلود کنید (اول وارد `docs/spec` شوید، بعد Add file → Upload files).
+5. سند مادر کامل (نسخهٔ اصلی Word/PDF) **خارج از مخزن** و فقط نزد شما (مالک) نگهداری می‌شود — چون مخزن public است. خلاصهٔ آن برای استفادهٔ روزمرهٔ تیم در `docs/spec/MASTER_SPEC_v1.md` هست.
 6. اگر مخزن را Private می‌خواهید: Settings → General → پایین صفحه → Change visibility.
 
 > اگر آپلود پوشه‌ای در مرورگر اذیت کرد، **GitHub Desktop** را نصب کنید: Clone `mehdi2044/HodaSite` → فایل‌ها را داخل پوشهٔ محلی کپی کنید → Commit → Push.
@@ -145,17 +145,20 @@ ADMIN_PASSWORD=...
 
 ### B7. اجرای `pnpm test` مستقیم روی لپ‌تاپ (نه داخل Docker)
 
-با `docker compose -f docker-compose.dev.yml up` بالا، دیتابیس Postgres روی پورت `55432` هاست هم در دسترس است، اما `pnpm test` روی لپ‌تاپ به‌طور پیش‌فرض دنبال آدرس داخل شبکهٔ Docker (`DATABASE_URL` در `.env`) می‌گردد، نه پورت هاست — پس تست‌های integration (که به دیتابیس واقعی نیاز دارند) بی‌صدا skip می‌شدند.
+با `docker compose -f docker-compose.dev.yml up` بالا، دیتابیس Postgres روی پورت `55432` هاست هم در دسترس است، اما `pnpm test` روی لپ‌تاپ به‌طور پیش‌فرض دنبال آدرس داخل شبکهٔ Docker (`DATABASE_URL` در `.env`) می‌گردد، نه پورت هاست. برای همین متغیر جدا `TEST_DATABASE_URL` وجود دارد (نمونه‌اش در `.env.example`، زیر بلوک Database) — رفتار `pnpm test` بسته به آن دقیقاً سه حالت دارد:
 
-برای رفع این مشکل، در `.env` مقدار `TEST_DATABASE_URL` (نمونه‌اش در `.env.example` هست) را نگه دارید و همان‌طور اجرا کنید:
+1. **`TEST_DATABASE_URL` در `.env` خالی/نبود:** تست‌های integration فقط **skip** می‌شوند (تست‌های unit عادی اجرا می‌شوند) و همین ابتدای خروجی این خط چاپ می‌شود:
+   ```
+   ℹ integration tests skipped: TEST_DATABASE_URL not set (unit tests only)
+   ```
+2. **`TEST_DATABASE_URL` تنظیم شده ولی Postgres در دسترس نیست:** اجرای `pnpm test` **fail** می‌شود (نه skip بی‌صدا) با پیام واضح که آدرس در دسترس نیست. یعنی اگر این مقدار را گذاشته‌اید، باید `docker compose -f docker-compose.dev.yml up` هم روشن باشد؛ وگرنه `pnpm test` عمداً قرمز می‌شود تا یادتان نرود.
+3. **`TEST_DATABASE_URL` تنظیم و در دسترس است:** هر ۴۵ تست (unit + integration) واقعاً اجرا می‌شوند.
+
+برای حالت ۳ (توصیه‌شده وقتی `docker compose -f docker-compose.dev.yml up` روشن است)، در `.env` مقدار `TEST_DATABASE_URL` را نگه دارید و همان‌طور اجرا کنید:
 ```powershell
 pnpm test
 ```
-اگر Postgres در دسترس نباشد، همین ابتدای خروجی این هشدار واضح چاپ می‌شود (به‌جای skip بی‌صدا):
-```
-⚠ integration tests SKIPPED: database not reachable at postgresql://hoda:hoda@localhost:55432/hoda
-```
-اگر این هشدار را دیدید یعنی `docker compose -f docker-compose.dev.yml up` روشن نیست یا پورت `55432` توسط برنامهٔ دیگری اشغال شده (بخش B6، مورد ۳ بالا را ببینید).
+اگر پیام fail را دیدید یعنی پورت `55432` توسط برنامهٔ دیگری اشغال شده یا استک روشن نیست (بخش B6، مورد ۳ بالا را ببینید).
 
 ---
 

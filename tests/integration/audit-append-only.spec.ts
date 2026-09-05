@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 
-// The append-only trigger is a Postgres object — needs a database.
-const hasDb = await db.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
+// The append-only trigger is a Postgres object — needs a database. Global
+// setup (tests/setup/global-setup.ts) already confirmed TEST_DATABASE_URL is
+// reachable when set, or fails the whole run — so presence alone is enough.
+const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 
 describe.skipIf(!hasDb)("AuditLog is append-only (B11 / D24)", () => {
   // The CI database is ephemeral, so leaving the test rows is fine — and

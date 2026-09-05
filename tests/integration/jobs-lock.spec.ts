@@ -3,8 +3,10 @@ import { db } from "@/lib/db";
 import { runJobs, registerJobHandler } from "@/modules/jobs";
 
 // FOR UPDATE SKIP LOCKED is real Postgres behaviour — this needs a database.
-// It runs in CI (DATABASE_URL set, migrated + seeded) and skips otherwise.
-const hasDb = await db.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
+// Global setup (tests/setup/global-setup.ts) already confirmed
+// TEST_DATABASE_URL is reachable when set, or fails the whole run — so
+// presence alone is enough here.
+const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 
 let runCount = 0;
 
