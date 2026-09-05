@@ -14,6 +14,8 @@ import { isIpAllowlisted } from "@/lib/cidr";
 //   (on OR an active `scheduled` window) + localized `message` + `bypass`
 //   (whether the caller's IP, passed as ?ip=, is in the maintenance
 //   allowlist). No secret here — none of this is sensitive.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   const [onFlag, cfg] = await Promise.all([
     isMaintenanceOn(),

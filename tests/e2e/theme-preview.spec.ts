@@ -25,12 +25,22 @@ async function primaryVar(locator: Locator) {
   );
 }
 
-/** input[type=color] isn't a Playwright-"fillable" control — set + dispatch directly. */
+/**
+ * input[type=color] isn't a Playwright-"fillable" control, so this sets the
+ * value and dispatches directly — but a plain `el.value = ...` is invisible
+ * to React's onChange on a controlled input: React tracks the native value
+ * setter itself and ignores a bare property assignment. Go through the
+ * native setter (the standard React-controlled-input testing workaround) so
+ * the dispatched "input" event actually fires the component's handler.
+ */
 async function setColor(locator: Locator, hex: string) {
   await locator.evaluate((el: HTMLInputElement, value: string) => {
-    el.value = value;
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value",
+    )!.set!;
+    nativeSetter.call(el, value);
     el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
   }, hex);
 }
 
