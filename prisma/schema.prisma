@@ -47,6 +47,12 @@ enum AlertSeverity {
   CRITICAL
 }
 
+enum MediaStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
 model User {
   id           String                   @id @default(cuid())
   email        String                   @unique
@@ -290,20 +296,41 @@ model Integration {
   updatedAt DateTime @updatedAt
 }
 
+model MediaFolder {
+  id        String        @id @default(cuid())
+  name      String
+  parentId  String?
+  parent    MediaFolder?  @relation("MediaFolderTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  MediaFolder[] @relation("MediaFolderTree")
+  media     Media[]
+  createdAt DateTime      @default(now())
+}
+
 model Media {
-  id           String    @id @default(cuid())
-  kind         String
-  storageKey   String    @unique
-  originalName String
-  url          String
-  width        Int?
-  height       Int?
-  bytes        Int
-  mime         String
-  altI18n      Json      @default("{}")
-  variants     Json      @default("{}")
-  uploadedBy   String?
-  deletedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id              String       @id @default(cuid())
+  kind            String
+  storageKey      String       @unique
+  originalName    String
+  url             String
+  width           Int?
+  height          Int?
+  bytes           Int
+  mime            String
+  altI18n         Json         @default("{}")
+  variants        Json         @default("{}")
+  uploadedBy      String?
+  status          MediaStatus  @default(READY)
+  folderId        String?
+  folder          MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags            String[]     @default([])
+  blurDataUrl     String?
+  processingError String?
+  dominantColor   String?
+  deletedAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([deletedAt, createdAt])
+  @@index([folderId])
+  @@index([tags], type: Gin)
 }
