@@ -63,7 +63,14 @@ async function fetchMaintenanceState(
   try {
     const url = new URL("/api/system/maintenance/state", req.nextUrl.origin);
     if (ip) url.searchParams.set("ip", ip);
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, {
+      cache: "no-store",
+      // Marks this as an internal call so the route computes a real `bypass`
+      // answer for the ip we pass it — a public caller must never be able to
+      // probe the allowlist this way, so it always gets bypass:false without
+      // this header (Phase 01b B2).
+      headers: { "x-internal-secret": process.env.MAINTENANCE_SECRET ?? "" },
+    });
     if (!res.ok) return null;
     return (await res.json()) as MaintenanceState;
   } catch {
