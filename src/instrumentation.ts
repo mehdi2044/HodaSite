@@ -11,4 +11,15 @@ export async function register() {
         `See .env.example.`,
     );
   }
+
+  // Job handlers self-register on import (D21 — DB-backed queue, no
+  // Redis/BullMQ). Only wire this up in the actual Node runtime: sharp has a
+  // native binary and must never load into the Edge runtime bundle.
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { registerMediaJobHandlers } =
+      await import("@/modules/media/optimize");
+    const { registerMediaPurgeHandler } = await import("@/modules/media/purge");
+    registerMediaJobHandlers();
+    await registerMediaPurgeHandler();
+  }
 }

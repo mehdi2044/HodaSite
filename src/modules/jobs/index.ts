@@ -8,7 +8,13 @@ import { db } from "@/lib/db";
  */
 export class JobDeferredError extends Error {}
 
-type JobHandler = (payload: unknown) => Promise<void>;
+export type JobContext = {
+  id: string;
+  type: string;
+  payload: unknown;
+  attempts: number;
+};
+type JobHandler = (job: JobContext) => Promise<void>;
 
 const handlers: Record<string, JobHandler> = {
   heartbeat: async () => {},
@@ -75,7 +81,7 @@ export async function runJobs(): Promise<number> {
     try {
       const handler = handlers[job.type];
       if (!handler) throw new Error(`Unknown job handler: ${job.type}`);
-      await handler(job.payload);
+      await handler(job);
       await db.job.update({ where: { id }, data: { status: "DONE" } });
     } catch (err) {
       if (err instanceof JobDeferredError) {

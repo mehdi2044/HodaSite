@@ -31,6 +31,24 @@ export const getMarketByCode = unstable_cache(
   { tags: ["markets"] },
 );
 
+export type MediaSettings = { purgeRetentionDays: number };
+
+/** Phase 01b: how many days a soft-deleted Media row survives before the
+ * `media-purge` job physically removes its files. Configurable in settings,
+ * default 30 (D31 — business setting, lives in the DB). */
+export const getMediaSettings = unstable_cache(
+  async (): Promise<MediaSettings> => {
+    const s = await db.siteSettings.findUnique({
+      where: { id: "default" },
+      select: { media: true },
+    });
+    const raw = (s?.media as Partial<MediaSettings> | null) ?? {};
+    return { purgeRetentionDays: raw.purgeRetentionDays ?? 30 };
+  },
+  ["media-settings"],
+  { tags: ["site-settings"] },
+);
+
 /** @deprecated use getSiteSettings() / getThemeSettings() */
 export async function getAppearance() {
   try {
