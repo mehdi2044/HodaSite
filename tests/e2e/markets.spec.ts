@@ -21,7 +21,7 @@ async function openIrMarketEdit(page: Page) {
     .locator("tr", { hasText: "ایران" })
     .getByRole("link", { name: "ویرایش" })
     .click();
-  await expect(page.getByRole("heading")).toContainText("ایران");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("ایران");
 }
 
 // Pin the market cookie explicitly rather than relying on the middleware
