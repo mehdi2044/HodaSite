@@ -24,3 +24,22 @@ export function sanitizeCustomCss(input: string): string {
 
   return css;
 }
+
+/**
+ * Defense in depth for the RENDER path (RootLayout), matching
+ * safeCssLength/safeColorMap in theme-validation.ts: re-validate an
+ * already-saved customCss value before it reaches
+ * `dangerouslySetInnerHTML` too, instead of trusting that every row in the
+ * DB went through saveTheme's sanitizeCustomCss() call at save time (Pixel,
+ * PR #4 review round 2). Falls back to empty rather than throwing — a
+ * corrupt/pre-existing value should degrade to "no custom CSS", not crash
+ * the whole page.
+ */
+export function safeCustomCss(value: string | undefined | null): string {
+  if (!value) return "";
+  try {
+    return sanitizeCustomCss(value);
+  } catch {
+    return "";
+  }
+}

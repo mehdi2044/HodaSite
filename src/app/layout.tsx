@@ -7,6 +7,7 @@ import {
   safeColorMap,
   normalizeThemeColors,
 } from "@/lib/theme-validation";
+import { safeCustomCss } from "@/lib/custom-css";
 
 // Depends on the request (locale, and — via the theme accessor — the DB), so
 // a brand/theme change is visible on the next load without a rebuild.
@@ -39,6 +40,7 @@ export default async function RootLayout({
   const buttonStyle = theme?.buttonStyle ?? "pill";
   const buttonRadius = BUTTON_RADIUS[buttonStyle] ?? BUTTON_RADIUS.pill;
   const radius = safeCssLength(theme?.radius, "12px");
+  const customCss = safeCustomCss(theme?.customCss);
 
   const rootVars = `${toVars(light)}--radius:${radius};--radius-button:${buttonRadius};`;
   const darkVars = Object.keys(dark).length
@@ -66,9 +68,10 @@ export default async function RootLayout({
       <head>
         {/* Server-generated CSS vars from admin-controlled ThemeSettings, not user input. */}
         <style dangerouslySetInnerHTML={{ __html: css }} />
-        {theme?.customCss && (
-          // Sanitized at save time (src/lib/custom-css.ts), admin-authored only.
-          <style dangerouslySetInnerHTML={{ __html: theme.customCss }} />
+        {customCss && (
+          // Sanitized at save time and re-validated here at render time
+          // (safeCustomCss), admin-authored only.
+          <style dangerouslySetInnerHTML={{ __html: customCss }} />
         )}
       </head>
       <body>{children}</body>

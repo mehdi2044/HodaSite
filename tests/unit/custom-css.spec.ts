@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeCustomCss, CustomCssError } from "@/lib/custom-css";
+import {
+  sanitizeCustomCss,
+  safeCustomCss,
+  CustomCssError,
+} from "@/lib/custom-css";
 
 describe("sanitizeCustomCss", () => {
   it("accepts plain, harmless CSS", () => {
@@ -43,5 +47,25 @@ describe("sanitizeCustomCss", () => {
 
   it("trims and allows an empty value", () => {
     expect(sanitizeCustomCss("   ")).toBe("");
+  });
+});
+
+describe("safeCustomCss (render-time defense in depth, Pixel PR #4 review round 2)", () => {
+  it("passes through valid CSS unchanged", () => {
+    const css = ".hero { color: red; }";
+    expect(safeCustomCss(css)).toBe(css);
+  });
+
+  it("falls back to empty instead of throwing for an already-invalid DB value", () => {
+    expect(safeCustomCss("<script>alert(1)</script>")).toBe("");
+    expect(safeCustomCss('@import url("https://evil.example/x.css");')).toBe(
+      "",
+    );
+  });
+
+  it("handles null/undefined/empty input", () => {
+    expect(safeCustomCss(null)).toBe("");
+    expect(safeCustomCss(undefined)).toBe("");
+    expect(safeCustomCss("")).toBe("");
   });
 });

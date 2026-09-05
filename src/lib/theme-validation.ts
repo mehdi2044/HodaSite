@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COLOR_KEYS } from "@/lib/theme-defaults";
 
 // Every one of these guards a value that ends up interpolated into raw CSS
 // (a <style dangerouslySetInnerHTML>) or a style= attribute. A value that
@@ -7,6 +8,7 @@ import { z } from "zod";
 // `12px}</style><script>…` break out of the <style> tag on every page.
 const CSS_LENGTH_RE = /^(0|\d{1,3}(\.\d{1,2})?(px|rem|em|%))$|^full$/;
 const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i;
+const ALLOWED_COLOR_KEYS = new Set<string>(COLOR_KEYS);
 
 export const cssLength = z.string().regex(CSS_LENGTH_RE, "Invalid CSS length");
 export const hexColor = z.string().regex(HEX_COLOR_RE, "Invalid hex color");
@@ -34,8 +36,16 @@ export function safeCssLength(
   return value && CSS_LENGTH_RE.test(value) ? value : fallback;
 }
 
-/** Same defense-in-depth, for a whole { key: hex } color map. Invalid or
- * unexpected entries are dropped rather than merged in. */
+/**
+ * Same defense-in-depth, for a whole { key: hex } color map. Invalid or
+ * unexpected entries are dropped rather than merged in — both the VALUE
+ * (must be a strict 6-digit hex) and the KEY (must be one of COLOR_KEYS):
+ * `toVars()` interpolates the key verbatim into `--${k}:`, so an
+ * unconstrained key is the same class of style-breakout risk `radius` was
+ * (Pixel, PR #4 review round 2). The save path already locks keys to
+ * COLOR_KEYS, so this only matters against a row edited outside the app —
+ * exactly the scenario this whole render-time layer defends against.
+ */
 export function safeColorMap(
   raw: Record<string, string> | undefined | null,
   defaults: Record<string, string>,
@@ -43,7 +53,12 @@ export function safeColorMap(
   const out: Record<string, string> = { ...defaults };
   if (!raw) return out;
   for (const [k, v] of Object.entries(raw)) {
-    if (typeof v === "string" && HEX_COLOR_RE.test(v)) out[k] = v;
+    if (
+      ALLOWED_COLOR_KEYS.has(k) &&
+      typeof v === "string" &&
+      HEX_COLOR_RE.test(v)
+    )
+      out[k] = v;
   }
   return out;
 }

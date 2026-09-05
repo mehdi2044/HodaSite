@@ -81,4 +81,17 @@ describe("safeColorMap (render-time defense in depth)", () => {
       primary: "#ffffff",
     });
   });
+
+  it("drops a key that isn't one of COLOR_KEYS, even with a valid hex value (Pixel, PR #4 review round 2)", () => {
+    // toVars() interpolates the key verbatim into `--${k}:` — an
+    // unconstrained key is the same style-breakout risk radius was.
+    const out = safeColorMap(
+      {
+        primary: "#000000",
+        "primary};</style><script>alert(1)</script><style": "#ffffff",
+      },
+      { primary: "#ffffff" },
+    );
+    expect(out).toEqual({ primary: "#000000" });
+  });
 });
