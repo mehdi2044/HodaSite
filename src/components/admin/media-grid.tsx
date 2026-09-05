@@ -34,8 +34,9 @@ function thumbSrc(item: MediaItem): string {
   return item.status === "READY" ? item.url : (item.blurDataUrl ?? item.url);
 }
 
-function daysRemaining(deletedAt: string): number {
-  const purgedAt = new Date(deletedAt).getTime() + 30 * 24 * 60 * 60 * 1000;
+function daysRemaining(deletedAt: string, retentionDays: number): number {
+  const purgedAt =
+    new Date(deletedAt).getTime() + retentionDays * 24 * 60 * 60 * 1000;
   return Math.max(
     0,
     Math.ceil((purgedAt - Date.now()) / (24 * 60 * 60 * 1000)),
@@ -48,12 +49,14 @@ export function MediaGrid({
   trash,
   canWrite,
   canDelete,
+  purgeRetentionDays,
 }: {
   items: MediaItem[];
   folders: { id: string; name: string }[];
   trash: boolean;
   canWrite: boolean;
   canDelete: boolean;
+  purgeRetentionDays: number;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const ids = Array.from(selected).join(",");
@@ -126,6 +129,7 @@ export function MediaGrid({
             trash={trash}
             canWrite={canWrite}
             canDelete={canDelete}
+            purgeRetentionDays={purgeRetentionDays}
             selected={selected.has(item.id)}
             onToggle={() => toggle(item.id)}
           />
@@ -141,6 +145,7 @@ function MediaTile({
   trash,
   canWrite,
   canDelete,
+  purgeRetentionDays,
   selected,
   onToggle,
 }: {
@@ -149,6 +154,7 @@ function MediaTile({
   trash: boolean;
   canWrite: boolean;
   canDelete: boolean;
+  purgeRetentionDays: number;
   selected: boolean;
   onToggle: () => void;
 }) {
@@ -211,7 +217,8 @@ function MediaTile({
             <>
               {item.deletedAt && (
                 <p>
-                  {daysRemaining(item.deletedAt)} روز تا حذف قطعی باقی مانده
+                  {daysRemaining(item.deletedAt, purgeRetentionDays)} روز تا حذف
+                  قطعی باقی مانده
                 </p>
               )}
               {canDelete && (

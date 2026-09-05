@@ -15,7 +15,7 @@ import {
  * integration tests). A background sweep running once an hour has no need
  * for that cache anyway — read the current value straight from the DB.
  */
-async function getPurgeRetentionDays(): Promise<number> {
+export async function getPurgeRetentionDays(): Promise<number> {
   const s = await db.siteSettings.findUnique({
     where: { id: "default" },
     select: { media: true },

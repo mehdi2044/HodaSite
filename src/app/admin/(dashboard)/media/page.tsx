@@ -1,6 +1,7 @@
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { listMedia, getFolders, type MediaListFilters } from "@/modules/media";
+import { getPurgeRetentionDays } from "@/modules/media/purge";
 import { MediaUploader } from "@/components/admin/media-uploader";
 import { MediaGrid } from "@/components/admin/media-grid";
 import { FolderBar } from "@/components/admin/media-folder-bar";
@@ -34,9 +35,10 @@ export default async function MediaLibrary({
     sort: (one(sp.sort) as MediaListFilters["sort"]) ?? "date_desc",
   };
 
-  const [{ items, total }, folders] = await Promise.all([
+  const [{ items, total }, folders, purgeRetentionDays] = await Promise.all([
     listMedia(filters),
     getFolders(),
+    trash ? getPurgeRetentionDays() : Promise.resolve(30),
   ]);
 
   return (
@@ -123,6 +125,7 @@ export default async function MediaLibrary({
         trash={trash}
         canWrite={canWrite}
         canDelete={canDelete}
+        purgeRetentionDays={purgeRetentionDays}
       />
     </>
   );
