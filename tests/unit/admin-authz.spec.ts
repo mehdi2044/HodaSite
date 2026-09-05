@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ADMIN_DIR = join(process.cwd(), "src", "app", "admin");
+const SRC_DIR = join(process.cwd(), "src");
 
 function findActionFiles(dir: string): string[] {
   if (!existsSync(dir)) return [];
@@ -11,6 +12,16 @@ function findActionFiles(dir: string): string[] {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) out.push(...findActionFiles(full));
     else if (entry.name === "actions.ts") out.push(full);
+  }
+  return out;
+}
+
+function findFiles(dir: string, extensions: string[]): string[] {
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...findFiles(full, extensions));
+    else if (extensions.some((ext) => entry.name.endsWith(ext))) out.push(full);
   }
   return out;
 }
@@ -31,4 +42,15 @@ describe("every admin server action is authorized (fix-order A2)", () => {
       expect(src).toMatch(/\bassertCan\s*\(/);
     },
   );
+});
+
+describe("assertCan() throws a typed ForbiddenError, not a raw Error (Phase 01a §4)", () => {
+  it('no `new Error("FORBIDDEN")` remains anywhere in src/', () => {
+    const files = findFiles(SRC_DIR, [".ts", ".tsx"]);
+    expect(files.length).toBeGreaterThan(0);
+    const offenders = files.filter((f) =>
+      readFileSync(f, "utf8").includes('new Error("FORBIDDEN")'),
+    );
+    expect(offenders.map((f) => relative(process.cwd(), f))).toEqual([]);
+  });
 });

@@ -92,7 +92,7 @@ html[lang="fa"] body,
 .button {
   min-height: 44px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-button, 999px);
   padding-inline: 24px;
   background: var(--primary);
   color: white;
