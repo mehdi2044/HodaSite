@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 00 | Foundation | ✅ Merge شده | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
 | 01a | Markets, Settings, Theme | ✅ Merge شده | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
-| 01b | Media Library | 🔍 در بازبینی | ۲۰۲۶-۰۹-۰۵ | |
+| 01b | Media Library | 🔍 در بازبینی | ۲۰۲۶-۰۹-۰۵ | [#5](https://github.com/mehdi2044/HodaSite/pull/5) |
 | 01c | CMS & Storefront Design | ⬜ | | |
 | 02 | Catalog & Storefront | ⬜ | | |
 | — | **Checkpoint 1** (تست مهدی) | ⬜ | | |
@@ -198,7 +198,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 ### Phase 01b
 
 #### وضعیت
-🔍 **در بازبینی — ۵ سپتامبر ۲۰۲۶.** طبق `docs/prompts/phase-01b.md` / `docs/phases/phase-01b.md` (کتابخانهٔ رسانه). فقط محدودهٔ آن فایل پیاده شد؛ منوها/صفحات/Homepage Builder/ویرایشگر ترجمه همچنان ۰۱c هستند؛ تصاویر محصول فاز ۰۲ است.
+🔍 **در بازبینی — ۵ سپتامبر ۲۰۲۶.** PR [#5](https://github.com/mehdi2044/HodaSite/pull/5)؛ طبق `docs/prompts/phase-01b.md` / `docs/phases/phase-01b.md` (کتابخانهٔ رسانه). فقط محدودهٔ آن فایل پیاده شد؛ منوها/صفحات/Homepage Builder/ویرایشگر ترجمه همچنان ۰۱c هستند؛ تصاویر محصول فاز ۰۲ است.
 
 #### چه چیزی ساخته شد
 - **مدل داده (مایگریشن‌های افزایشی):** `Media.status` (`PROCESSING`/`READY`/`FAILED`)، `folderId` (→ `MediaFolder` تک‌سطحی)، `tags[]` (ایندکس GIN)، `blurDataUrl`، `processingError`، `dominantColor`؛ شکل مستندشدهٔ `variants` در `04_DATABASE_AND_BACKUP.md`. ردیف‌های قدیمی (پیش از ۰۱b) با مقدار پیش‌فرض ستون `READY` می‌مانند — بدون مایگریشن دادهٔ جداگانه.
