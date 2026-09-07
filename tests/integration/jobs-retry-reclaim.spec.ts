@@ -8,6 +8,11 @@ import {
 } from "@/modules/jobs";
 
 const hasDb = Boolean(process.env.TEST_DATABASE_URL);
+const TEST_JOB_TYPES = [
+  "test-always-fails",
+  "test-succeeds",
+  "test-deferred",
+] as const;
 
 describe.skipIf(!hasDb)(
   "job retry with backoff + stale-RUNNING reclaim",
@@ -25,9 +30,37 @@ describe.skipIf(!hasDb)(
     afterEach(async () => {
       await db.job.deleteMany({
         where: {
-          type: { in: ["test-always-fails", "test-succeeds", "test-deferred"] },
+          type: {
+            in: [
+              "test-always-fails",
+              "test-succeeds",
+              "test-deferred",
+              "test-unrelated",
+            ],
+          },
         },
       });
+    });
+
+    it("an optional type filter leaves unrelated due jobs untouched", async () => {
+      const selected = await db.job.create({
+        data: { type: "test-succeeds", runAt: new Date(Date.now() - 1000) },
+      });
+      const unrelated = await db.job.create({
+        data: {
+          type: "test-unrelated",
+          runAt: new Date(Date.now() - 2000),
+        },
+      });
+
+      expect(await runJobs(["test-succeeds"])).toBe(1);
+      await expect(
+        db.job.findUniqueOrThrow({ where: { id: selected.id } }),
+      ).resolves.toMatchObject({ status: "DONE" });
+      await expect(
+        db.job.findUniqueOrThrow({ where: { id: unrelated.id } }),
+      ).resolves.toMatchObject({ status: "PENDING", attempts: 0 });
+      await db.job.delete({ where: { id: unrelated.id } });
     });
 
     it("retries a failing job with a future runAt instead of failing it immediately", async () => {
@@ -35,7 +68,7 @@ describe.skipIf(!hasDb)(
         data: { type: "test-always-fails", runAt: new Date(Date.now() - 1000) },
       });
 
-      await runJobs();
+      await runJobs(TEST_JOB_TYPES);
 
       const after = await db.job.findUniqueOrThrow({ where: { id: job.id } });
       expect(after.status).toBe("PENDING");
@@ -44,7 +77,7 @@ describe.skipIf(!hasDb)(
       expect(after.runAt.getTime()).toBeGreaterThan(Date.now());
 
       // Not due yet — a second run must not pick it up early.
-      const processed = await runJobs();
+      const processed = await runJobs(TEST_JOB_TYPES);
       const stillPending = await db.job.findUniqueOrThrow({
         where: { id: job.id },
       });
@@ -61,7 +94,7 @@ describe.skipIf(!hasDb)(
         },
       });
 
-      await runJobs();
+      await runJobs(TEST_JOB_TYPES);
 
       const after = await db.job.findUniqueOrThrow({ where: { id: job.id } });
       expect(after.status).toBe("FAILED");
@@ -82,7 +115,7 @@ describe.skipIf(!hasDb)(
         },
       });
 
-      const processed = await runJobs();
+      const processed = await runJobs(TEST_JOB_TYPES);
 
       expect(processed).toBe(1);
       const after = await db.job.findUniqueOrThrow({ where: { id: job.id } });
@@ -98,7 +131,7 @@ describe.skipIf(!hasDb)(
         data: { status: "RUNNING", lockedAt: new Date() },
       });
 
-      const processed = await runJobs();
+      const processed = await runJobs(TEST_JOB_TYPES);
 
       expect(processed).toBe(0);
       const after = await db.job.findUniqueOrThrow({ where: { id: job.id } });
@@ -110,7 +143,7 @@ describe.skipIf(!hasDb)(
         data: { type: "test-deferred", runAt: new Date(Date.now() - 1000) },
       });
 
-      const processed = await runJobs();
+      const processed = await runJobs(TEST_JOB_TYPES);
 
       expect(processed).toBe(1);
       const after = await db.job.findUniqueOrThrow({ where: { id: job.id } });

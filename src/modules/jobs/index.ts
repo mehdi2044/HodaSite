@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 /**
  * A handler throws this to say "not now, try again shortly" — e.g. the
@@ -55,12 +56,19 @@ const DEFERRED_RETRY_SECONDS = 60;
  * transaction skips the rows the first locked, then each claimed row is flipped
  * to RUNNING before the transaction commits.
  */
-export async function runJobs(): Promise<number> {
+export async function runJobs(types?: readonly string[]): Promise<number> {
+  const typeFilter =
+    types && types.length > 0
+      ? Prisma.sql`AND "type" IN (${Prisma.join([...types])})`
+      : Prisma.empty;
   const claimedIds = await db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ id: string }[]>`
       SELECT id FROM "Job"
-      WHERE ("status" = 'PENDING' AND "runAt" <= now())
-         OR ("status" = 'RUNNING' AND "lockedAt" <= now() - (${STALE_RUNNING_MINUTES}::text || ' minutes')::interval)
+      WHERE (
+        ("status" = 'PENDING' AND "runAt" <= now())
+        OR ("status" = 'RUNNING' AND "lockedAt" <= now() - (${STALE_RUNNING_MINUTES}::text || ' minutes')::interval)
+      )
+      ${typeFilter}
       ORDER BY "runAt"
       LIMIT ${BATCH}
       FOR UPDATE SKIP LOCKED

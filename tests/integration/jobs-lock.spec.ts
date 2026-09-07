@@ -28,7 +28,10 @@ describe.skipIf(!hasDb)("job claiming lock (B8)", () => {
       data: { type: "test-slow", runAt: new Date(Date.now() - 1000) },
     });
 
-    const [a, b] = await Promise.all([runJobs(), runJobs()]);
+    const [a, b] = await Promise.all([
+      runJobs(["test-slow"]),
+      runJobs(["test-slow"]),
+    ]);
 
     expect(runCount).toBe(1);
     expect(a + b).toBe(1); // exactly one runner processed exactly one job
@@ -46,7 +49,11 @@ describe.skipIf(!hasDb)("job claiming lock (B8)", () => {
       })),
     });
 
-    const results = await Promise.all([runJobs(), runJobs(), runJobs()]);
+    const results = await Promise.all([
+      runJobs(["test-slow"]),
+      runJobs(["test-slow"]),
+      runJobs(["test-slow"]),
+    ]);
 
     expect(runCount).toBe(6);
     expect(results.reduce((s, n) => s + n, 0)).toBe(6);
