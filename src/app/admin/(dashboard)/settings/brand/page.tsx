@@ -5,8 +5,10 @@ import { saveBrand } from "./actions";
 import { Card, CardTitle, CardDescription, Input } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
 import { MediaPicker } from "@/components/admin/media-picker";
+import { getTranslations } from "next-intl/server";
 
 export default async function Brand() {
+  const t = await getTranslations("media");
   const [site, theme] = await Promise.all([
     getSiteSettings(),
     getThemeSettings(),
@@ -58,25 +60,25 @@ export default async function Brand() {
           <CardTitle className="mt-4">لوگو</CardTitle>
           <MediaPicker
             name="logoMediaId"
-            label="لوگو (روشن)"
+            label={t("brandLogoLight")}
             defaultMediaId={theme?.logoMediaId}
             defaultUrl={urlOf(theme?.logoMediaId)}
           />
           <MediaPicker
             name="logoDarkMediaId"
-            label="لوگو (تیره)"
+            label={t("brandLogoDark")}
             defaultMediaId={theme?.logoDarkMediaId}
             defaultUrl={urlOf(theme?.logoDarkMediaId)}
           />
           <MediaPicker
             name="faviconMediaId"
-            label="فاویکون"
+            label={t("favicon")}
             defaultMediaId={theme?.faviconMediaId}
             defaultUrl={urlOf(theme?.faviconMediaId)}
           />
           <MediaPicker
             name="emailLogoMediaId"
-            label="لوگوی ایمیل"
+            label={t("emailLogo")}
             defaultMediaId={theme?.emailLogoMediaId}
             defaultUrl={urlOf(theme?.emailLogoMediaId)}
           />

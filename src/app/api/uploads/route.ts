@@ -81,22 +81,33 @@ export async function POST(req: Request) {
     const url = await storage.put(key, buffer, sniffed.mime);
     // Images go PROCESSING -> media-optimize job -> READY; documents (pdf)
     // need no processing and are READY immediately (Phase 01b §2).
-    const media = await db.media.create({
-      data: {
-        kind: allowed.kind,
-        storageKey: key,
-        originalName: file.name, // metadata only, never used as a path
-        url,
-        width,
-        height,
-        bytes: file.size,
-        mime: sniffed.mime,
-        uploadedBy: session.user.id,
-        status: allowed.kind === "image" ? "PROCESSING" : "READY",
-      },
-    });
-
-    if (allowed.kind === "image") await imageProcessingQueue.enqueue(media.id);
+    let media;
+    try {
+      media = await db.$transaction(async (tx) => {
+        const created = await tx.media.create({
+          data: {
+            kind: allowed.kind,
+            storageKey: key,
+            originalName: file.name, // metadata only, never used as a path
+            url,
+            width,
+            height,
+            bytes: file.size,
+            mime: sniffed.mime,
+            uploadedBy: session.user.id,
+            status: allowed.kind === "image" ? "PROCESSING" : "READY",
+          },
+        });
+        if (allowed.kind === "image")
+          await imageProcessingQueue.enqueue(created.id, tx);
+        return created;
+      });
+    } catch (error) {
+      // Compensate the external storage write if the atomic DB+queue write
+      // fails. The provider delete operation is idempotent.
+      await storage.delete(key).catch(() => {});
+      throw error;
+    }
 
     return NextResponse.json(
       { id: media.id, url, status: media.status },

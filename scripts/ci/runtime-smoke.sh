@@ -11,6 +11,8 @@
 # (see the docker-runtime job in .github/workflows/ci.yml).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+STORAGE_MODE="${1:-local}"
+[[ "$STORAGE_MODE" == "local" || "$STORAGE_MODE" == "s3" ]] || { echo "usage: $0 [local|s3]"; exit 2; }
 
 COMPOSE=(docker compose -f docker-compose.yml)
 ok()   { printf '\n\033[32m✓ %s\033[0m\n' "$*"; }
@@ -20,12 +22,13 @@ rand() { head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 40; }
 
 step "generate .env with real random secrets"
 PGPW=$(rand)
+CRON_SECRET_VALUE=$(rand)
 cat > .env <<EOF
 APP_URL=http://app:3000
 NODE_ENV=production
 PROJECT_ID=hoda-ci
 AUTH_SECRET=$(rand)
-CRON_SECRET=$(rand)
+CRON_SECRET=${CRON_SECRET_VALUE}
 MAINTENANCE_SECRET=$(rand)
 ADMIN_EMAIL=owner@example.com
 ADMIN_PASSWORD=$(rand)aA1!
@@ -33,7 +36,7 @@ POSTGRES_USER=hoda
 POSTGRES_PASSWORD=${PGPW}
 POSTGRES_DB=hoda
 DATABASE_URL=postgresql://hoda:${PGPW}@postgres:5432/hoda
-STORAGE_PROVIDER=local
+STORAGE_PROVIDER=${STORAGE_MODE}
 MEDIA_DIR=/data/media
 S3_ENDPOINT=http://minio:9000
 S3_REGION=us-east-1
@@ -94,6 +97,34 @@ done
   fail "expected 12 seed media READY with variants, got '$READY'"
 }
 ok "12 seed images READY with webp+avif variants"
+
+if [[ "$STORAGE_MODE" == "s3" ]]; then
+  step "S3 provider put/get/delete, optimize and stream against MinIO"
+  MEDIA_ID=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
+    "select id from \"Media\" where \"originalName\" like 'seed-%' and status='READY' limit 1")
+  MEDIA_ID=${MEDIA_ID//[[:space:]]/}
+  VARIANT=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
+    "select variants->'webp'->'320'->>'url' from \"Media\" where id='${MEDIA_ID}'")
+  VARIANT=${VARIANT//[[:space:]]/}
+  [[ "$VARIANT" == /media/* ]] || fail "missing S3 variant URL"
+  "${COMPOSE[@]}" exec -T app node -e \
+    "fetch('http://127.0.0.1:3000${VARIANT}',{redirect:'follow'}).then(async r=>{if(!r.ok)throw Error(String(r.status));let b=await r.arrayBuffer();if(!b.byteLength)throw Error('empty')}).catch(e=>{console.error(e);process.exit(1)})"
+  # Age one row and run the real purge handler. This exercises
+  # S3Storage.delete for the original and every variant; the DB row must be
+  # removed only after all object deletions succeed.
+  "${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -v ON_ERROR_STOP=1 -c \
+    "update \"Media\" set \"deletedAt\"=now()-interval '31 days' where id='${MEDIA_ID}';
+     insert into \"Job\"(id,type,payload,status,attempts,\"runAt\",\"createdAt\",\"updatedAt\")
+     values ('s3-purge-smoke','media-purge','{}', 'PENDING',0,now(),now(),now())
+     on conflict (id) do nothing" >/dev/null
+  "${COMPOSE[@]}" exec -T app node -e \
+    "fetch('http://127.0.0.1:3000/api/cron/tick',{method:'POST',headers:{authorization:'Bearer ${CRON_SECRET_VALUE}'}}).then(r=>{if(!r.ok)throw Error(String(r.status))}).catch(e=>{console.error(e);process.exit(1)})"
+  PURGED=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
+    "select count(*) from \"Media\" where id='${MEDIA_ID}'")
+  [[ "${PURGED//[[:space:]]/}" == "0" ]] || fail "S3 purge did not remove media row"
+  ok "S3 provider put/get/delete, optimize and stream passed"
+  exit 0
+fi
 
 step "ops has NO docker socket"
 "${COMPOSE[@]}" exec -T ops sh -c '! test -S /var/run/docker.sock' || fail "ops has a docker socket"

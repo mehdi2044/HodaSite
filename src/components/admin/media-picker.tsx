@@ -1,12 +1,15 @@
 "use client";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui";
+import { useTranslations } from "next-intl";
+import type { MediaVariants } from "@/modules/media/constants";
 
 type PickerItem = {
   id: string;
   url: string;
   status: "PROCESSING" | "READY" | "FAILED";
   blurDataUrl: string | null;
+  variants: MediaVariants | null;
 };
 
 /**
@@ -27,6 +30,7 @@ export function MediaPicker({
   defaultMediaId?: string | null;
   defaultUrl?: string | null;
 }) {
+  const t = useTranslations("media");
   const [mediaId, setMediaId] = useState(defaultMediaId ?? "");
   const [preview, setPreview] = useState(defaultUrl ?? "");
   const [items, setItems] = useState<PickerItem[]>([]);
@@ -38,7 +42,7 @@ export function MediaPicker({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/admin/media?q=${encodeURIComponent(query)}`,
+        `/api/admin/media?kind=image&q=${encodeURIComponent(query)}`,
       );
       const json = (await res.json()) as { items?: PickerItem[] };
       setItems(json.items ?? []);
@@ -86,7 +90,7 @@ export function MediaPicker({
           />
         )}
         <Button type="button" variant="secondary" size="sm" onClick={open}>
-          انتخاب رسانه
+          {t("chooseMedia")}
         </Button>
       </div>
 
@@ -105,11 +109,11 @@ export function MediaPicker({
               setQ(e.target.value);
               void search(e.target.value);
             }}
-            placeholder="جستجو بر اساس نام یا برچسب…"
+            placeholder={t("searchPlaceholder")}
             className="h-9 flex-1 rounded-[8px] border border-black/10 px-3 text-sm"
           />
           <label className="cursor-pointer text-sm text-primary underline">
-            آپلود جدید
+            {t("uploadNew")}
             <input
               type="file"
               hidden
@@ -123,26 +127,27 @@ export function MediaPicker({
             size="sm"
             onClick={() => dialogRef.current?.close()}
           >
-            بستن
+            {t("close")}
           </Button>
         </div>
 
         <div className="mt-4 grid max-h-[60vh] grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4 md:grid-cols-6">
-          {loading && <p className="text-sm text-muted">در حال بارگذاری…</p>}
+          {loading && <p className="text-sm text-muted">{t("loading")}</p>}
           {!loading && items.length === 0 && (
-            <p className="text-sm text-muted">موردی یافت نشد.</p>
+            <p className="text-sm text-muted">{t("empty")}</p>
           )}
           {items.map((item) => (
             <button
               type="button"
               key={item.id}
+              data-testid={`media-picker-item-${item.id}`}
               onClick={() => select(item)}
               className="aspect-square overflow-hidden rounded-[6px] border border-black/10 hover:border-primary"
             >
               <img
                 src={
                   item.status === "READY"
-                    ? item.url
+                    ? (item.variants?.webp?.["320"]?.url ?? item.url)
                     : (item.blurDataUrl ?? item.url)
                 }
                 alt=""

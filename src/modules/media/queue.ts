@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { MEDIA_OPTIMIZE_JOB } from "./constants";
 
 /**
@@ -8,14 +9,17 @@ import { MEDIA_OPTIMIZE_JOB } from "./constants";
  * a future driver never touches them.
  */
 export interface ImageProcessingQueue {
-  enqueue(mediaId: string): Promise<void>;
+  enqueue(mediaId: string, tx?: Prisma.TransactionClient): Promise<void>;
   /** Re-run a FAILED media from the admin "retry" button — resets attempts. */
   enqueueRetry(mediaId: string): Promise<void>;
 }
 
 class DbImageProcessingQueue implements ImageProcessingQueue {
-  async enqueue(mediaId: string): Promise<void> {
-    await db.job.create({
+  async enqueue(
+    mediaId: string,
+    tx: Prisma.TransactionClient = db,
+  ): Promise<void> {
+    await tx.job.create({
       data: { type: MEDIA_OPTIMIZE_JOB, payload: { mediaId } },
     });
   }

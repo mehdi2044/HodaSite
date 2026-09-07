@@ -34,7 +34,11 @@ export class LocalStorage implements StorageProvider {
     }
   }
   async delete(key: string) {
-    await unlink(path.join(this.root, key));
+    try {
+      await unlink(path.join(this.root, key));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
   }
 }
 export class S3Storage implements StorageProvider {

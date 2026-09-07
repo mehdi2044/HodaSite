@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const db = new PrismaClient();
 
 // Deliberately NOT importing from `src/modules/*` (storage provider, job
@@ -18,6 +19,28 @@ async function putLocalMediaFile(key: string, data: Buffer): Promise<string> {
   const p = path.join(root, key);
   await mkdir(path.dirname(p), { recursive: true });
   await writeFile(p, data);
+  return `/media/${key}`;
+}
+async function putMediaFile(key: string, data: Buffer): Promise<string> {
+  if (process.env.STORAGE_PROVIDER !== "s3")
+    return putLocalMediaFile(key, data);
+  const client = new S3Client({
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION ?? "us-east-1",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY ?? "",
+      secretAccessKey: process.env.S3_SECRET_KEY ?? "",
+    },
+  });
+  await client.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET ?? "media",
+      Key: key,
+      Body: data,
+      ContentType: "image/jpeg",
+    }),
+  );
   return `/media/${key}`;
 }
 const roles = [
@@ -283,15 +306,8 @@ async function seedDemoMedia() {
   });
   if (already > 0) return;
 
-  // seed.ts writes files directly (no src/modules/integrations/storage — see
-  // the note above); S3 is out of scope for demo data, which only matters
-  // for the dev/CI fresh-bring-up case (always STORAGE_PROVIDER=local).
-  if (process.env.STORAGE_PROVIDER === "s3") {
-    console.warn(
-      "[seed] STORAGE_PROVIDER=s3 — skipping demo media seed (local-only).",
-    );
-    return;
-  }
+  // Seed through the selected provider so LocalStorage and MinIO exercise
+  // the same processing pipeline in CI.
 
   const folders = [
     {
@@ -332,7 +348,7 @@ async function seedDemoMedia() {
       const key = `media/${now.getUTCFullYear()}/${String(
         now.getUTCMonth() + 1,
       ).padStart(2, "0")}/${crypto.randomUUID()}.jpg`;
-      const url = await putLocalMediaFile(key, buffer);
+      const url = await putMediaFile(key, buffer);
 
       const media = await db.media.create({
         data: {

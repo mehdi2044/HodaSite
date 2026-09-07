@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { useTranslations } from "next-intl";
 
 type UploadState = {
   name: string;
@@ -9,27 +10,40 @@ type UploadState = {
   error?: string;
 };
 
-const ERROR_FA: Record<string, string> = {
-  invalid_size: "حجم فایل مجاز نیست.",
-  unsupported_media_type: "نوع فایل پشتیبانی نمی‌شود.",
-  corrupt_file: "فایل تصویری خراب است.",
-  dimensions_too_large: "ابعاد تصویر بیش از حد مجاز است.",
-  maintenance: "سایت موقتاً در حالت تعمیرات است.",
-  forbidden: "اجازهٔ آپلود ندارید.",
-};
+const UPLOAD_ERROR_CODES = [
+  "invalid_size",
+  "unsupported_media_type",
+  "corrupt_file",
+  "dimensions_too_large",
+  "maintenance",
+  "forbidden",
+] as const;
 
-async function uploadOne(file: File): Promise<void> {
+export type UploadErrorCode =
+  (typeof UPLOAD_ERROR_CODES)[number] | "uploadFailed";
+
+/** Never pass an arbitrary server string to next-intl (MissingMessage). */
+export function normalizeUploadErrorCode(value: unknown): UploadErrorCode {
+  return typeof value === "string" &&
+    (UPLOAD_ERROR_CODES as readonly string[]).includes(value)
+    ? (value as UploadErrorCode)
+    : "uploadFailed";
+}
+
+async function uploadOne(file: File): Promise<string | null> {
   const fd = new FormData();
   fd.set("file", file);
   const res = await fetch("/api/uploads", { method: "POST", body: fd });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(ERROR_FA[body.error ?? ""] ?? "آپلود ناموفق بود.");
+    return normalizeUploadErrorCode(body.error);
   }
+  return null;
 }
 
 /** Drag & drop multi-upload with per-file progress (Phase 01b §3). */
 export function MediaUploader() {
+  const t = useTranslations("media");
   const [dragging, setDragging] = useState(false);
   const [uploads, setUploads] = useState<UploadState[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +56,8 @@ export function MediaUploader() {
     await Promise.all(
       list.map(async (file, i) => {
         try {
-          await uploadOne(file);
+          const error = await uploadOne(file);
+          if (error) throw new Error(t(`errors.${error}`));
           setUploads((prev) =>
             prev.map((u, j) => (j === i ? { ...u, status: "done" } : u)),
           );
@@ -79,7 +94,7 @@ export function MediaUploader() {
           dragging ? "border-primary bg-primary/5" : "border-black/15",
         )}
       >
-        تصاویر را اینجا رها کنید یا کلیک کنید تا انتخاب کنید (چند فایل هم‌زمان)
+        {t("dropzone")}
         <input
           ref={inputRef}
           type="file"
@@ -101,9 +116,9 @@ export function MediaUploader() {
             >
               {u.name} —{" "}
               {u.status === "uploading"
-                ? "در حال آپلود…"
+                ? t("uploading")
                 : u.status === "done"
-                  ? "آپلود شد"
+                  ? t("uploaded")
                   : u.error}
             </li>
           ))}

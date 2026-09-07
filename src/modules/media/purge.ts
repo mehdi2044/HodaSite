@@ -7,6 +7,7 @@ import {
   PURGE_RETENTION_DAYS_DEFAULT,
   type MediaVariants,
 } from "./constants";
+import type { StorageProvider } from "@/modules/integrations/storage";
 
 /**
  * Deliberately NOT the cached `getMediaSettings()` accessor: that goes
@@ -28,16 +29,19 @@ export async function getPurgeRetentionDays(): Promise<number> {
 // beyond the existing cron/tick — this is just how often it re-checks.
 const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 
-async function purgeOne(media: {
-  id: string;
-  storageKey: string;
-  variants: unknown;
-}): Promise<void> {
-  await storage.delete(media.storageKey).catch(() => {});
+export async function purgeOne(
+  media: {
+    id: string;
+    storageKey: string;
+    variants: unknown;
+  },
+  target: StorageProvider = storage,
+): Promise<void> {
+  await target.delete(media.storageKey);
   const variants = (media.variants as MediaVariants | null) ?? {};
   for (const byWidth of Object.values(variants)) {
     for (const variant of Object.values(byWidth ?? {})) {
-      if (variant) await storage.delete(variant.key).catch(() => {});
+      if (variant) await target.delete(variant.key);
     }
   }
   await db.media.delete({ where: { id: media.id } });

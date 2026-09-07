@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { createFolderAction } from "@/app/admin/(dashboard)/media/actions";
+import { useTranslations } from "next-intl";
 
 export function FolderBar({
   folders,
@@ -11,6 +12,7 @@ export function FolderBar({
   activeFolderId?: string | null;
   canWrite: boolean;
 }) {
+  const t = useTranslations("media");
   return (
     <div className="mt-4 flex flex-wrap items-center gap-2">
       <Link
@@ -22,7 +24,7 @@ export function FolderBar({
             : "border-black/10 text-text",
         )}
       >
-        همه پوشه‌ها
+        {t("allFolders")}
       </Link>
       {folders.map((f) => (
         <Link
@@ -43,7 +45,7 @@ export function FolderBar({
           <input
             type="text"
             name="name"
-            placeholder="پوشه جدید…"
+            placeholder={t("newFolderPlaceholder")}
             required
             className="h-8 w-32 rounded-full border border-black/10 px-3 text-xs"
           />
@@ -51,7 +53,7 @@ export function FolderBar({
             type="submit"
             className="h-8 rounded-full border border-black/10 px-3 text-xs"
           >
-            افزودن
+            {t("add")}
           </button>
         </form>
       )}

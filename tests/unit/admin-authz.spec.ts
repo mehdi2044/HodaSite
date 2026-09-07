@@ -54,3 +54,16 @@ describe("assertCan() throws a typed ForbiddenError, not a raw Error (Phase 01a 
     expect(offenders.map((f) => relative(process.cwd(), f))).toEqual([]);
   });
 });
+
+describe("admin media read authorization", () => {
+  it("checks media.upload on the server before querying the library", () => {
+    const page = readFileSync(
+      join(ADMIN_DIR, "(dashboard)", "media", "page.tsx"),
+      "utf8",
+    );
+    expect(page).toContain('can(session.user.id, "media.upload")');
+    expect(page.indexOf('can(session.user.id, "media.upload")')).toBeLessThan(
+      page.indexOf("listMedia(filters)"),
+    );
+  });
+});

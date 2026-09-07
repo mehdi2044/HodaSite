@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Badge, Sheet, Button } from "@/components/ui";
+import { useTranslations } from "next-intl";
+import type { MediaVariants } from "@/modules/media/constants";
 import {
   updateMediaMeta,
   softDeleteMediaAction,
@@ -28,10 +30,13 @@ export type MediaItem = {
   folderName: string | null;
   deletedAt: string | null;
   createdAt: string;
+  variants: MediaVariants | null;
 };
 
 function thumbSrc(item: MediaItem): string {
-  return item.status === "READY" ? item.url : (item.blurDataUrl ?? item.url);
+  return item.status === "READY"
+    ? (item.variants?.webp?.["320"]?.url ?? item.url)
+    : (item.blurDataUrl ?? item.url);
 }
 
 function daysRemaining(deletedAt: string, retentionDays: number): number {
@@ -58,6 +63,7 @@ export function MediaGrid({
   canDelete: boolean;
   purgeRetentionDays: number;
 }) {
+  const t = useTranslations("media");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const ids = Array.from(selected).join(",");
 
@@ -71,13 +77,15 @@ export function MediaGrid({
   }
 
   if (items.length === 0)
-    return <p className="mt-6 text-sm text-muted">موردی یافت نشد.</p>;
+    return <p className="mt-6 text-sm text-muted">{t("empty")}</p>;
 
   return (
     <>
       {selected.size > 0 && canWrite && (
         <div className="sticky top-0 z-10 mt-4 flex flex-wrap items-center gap-2 rounded-token border border-black/10 bg-surface p-3">
-          <span className="text-sm">{selected.size} مورد انتخاب شده</span>
+          <span className="text-sm">
+            {t("selected", { count: selected.size })}
+          </span>
           <form action={bulkMoveAction} className="flex items-center gap-1">
             <input type="hidden" name="ids" value={ids} />
             <select
@@ -85,7 +93,7 @@ export function MediaGrid({
               defaultValue=""
               className="h-8 rounded-[6px] border border-black/10 px-2 text-xs"
             >
-              <option value="">بدون پوشه</option>
+              <option value="">{t("noFolder")}</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
@@ -93,7 +101,7 @@ export function MediaGrid({
               ))}
             </select>
             <Button type="submit" size="sm" variant="secondary">
-              انتقال
+              {t("move")}
             </Button>
           </form>
           <form action={bulkTagAction} className="flex items-center gap-1">
@@ -101,19 +109,19 @@ export function MediaGrid({
             <input
               type="text"
               name="tag"
-              placeholder="برچسب…"
+              placeholder={t("tagPlaceholder")}
               required
               className="h-8 w-24 rounded-[6px] border border-black/10 px-2 text-xs"
             />
             <Button type="submit" size="sm" variant="secondary">
-              افزودن برچسب
+              {t("addTag")}
             </Button>
           </form>
           {canDelete && (
             <form action={bulkDeleteAction}>
               <input type="hidden" name="ids" value={ids} />
               <Button type="submit" size="sm" variant="destructive">
-                حذف گروهی
+                {t("bulkDelete")}
               </Button>
             </form>
           )}
@@ -158,19 +166,24 @@ function MediaTile({
   selected: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations("media");
   return (
-    <div className="relative overflow-hidden rounded-token border border-black/10">
+    <div
+      data-testid={`media-tile-${item.id}`}
+      className="relative overflow-hidden rounded-token border border-black/10"
+    >
       {canWrite && !trash && (
         <input
           type="checkbox"
           checked={selected}
           onChange={onToggle}
           className="absolute start-2 top-2 z-10 h-4 w-4"
-          aria-label="انتخاب"
+          aria-label={t("select")}
         />
       )}
       <Sheet
         title={item.originalName}
+        closeLabel={t("close")}
         trigger={
           <div className="aspect-square cursor-pointer bg-black/5">
             {item.kind === "image" ? (
@@ -188,9 +201,11 @@ function MediaTile({
             )}
             <div className="absolute bottom-1 start-1">
               {item.status === "PROCESSING" && (
-                <Badge tone="warning">در حال پردازش</Badge>
+                <Badge tone="warning">{t("processing")}</Badge>
               )}
-              {item.status === "FAILED" && <Badge tone="error">ناموفق</Badge>}
+              {item.status === "FAILED" && (
+                <Badge tone="error">{t("failed")}</Badge>
+              )}
             </div>
           </div>
         }
@@ -198,7 +213,7 @@ function MediaTile({
         <div className="grid gap-3">
           <p>
             {item.width && item.height ? `${item.width}×${item.height} — ` : ""}
-            {(item.bytes / 1024).toFixed(0)} کیلوبایت
+            {t("kilobytes", { count: (item.bytes / 1024).toFixed(0) })}
           </p>
 
           {item.status === "FAILED" && canWrite && (
@@ -207,7 +222,7 @@ function MediaTile({
               <form action={retryProcessingAction}>
                 <input type="hidden" name="mediaId" value={item.id} />
                 <Button type="submit" size="sm" variant="secondary">
-                  تلاش دوباره
+                  {t("retry")}
                 </Button>
               </form>
             </div>
@@ -217,15 +232,16 @@ function MediaTile({
             <>
               {item.deletedAt && (
                 <p>
-                  {daysRemaining(item.deletedAt, purgeRetentionDays)} روز تا حذف
-                  قطعی باقی مانده
+                  {t("daysUntilPurge", {
+                    count: daysRemaining(item.deletedAt, purgeRetentionDays),
+                  })}
                 </p>
               )}
               {canDelete && (
                 <form action={restoreMediaAction}>
                   <input type="hidden" name="mediaId" value={item.id} />
                   <Button type="submit" size="sm">
-                    بازیابی
+                    {t("restore")}
                   </Button>
                 </form>
               )}
@@ -235,7 +251,7 @@ function MediaTile({
               <form action={updateMediaMeta} className="grid gap-2">
                 <input type="hidden" name="mediaId" value={item.id} />
                 <label className="grid gap-1 text-xs">
-                  متن جایگزین (fa)
+                  {t("alt", { locale: "fa" })}
                   <input
                     name="altFa"
                     defaultValue={item.altI18n?.fa ?? ""}
@@ -243,7 +259,7 @@ function MediaTile({
                   />
                 </label>
                 <label className="grid gap-1 text-xs">
-                  متن جایگزین (tr)
+                  {t("alt", { locale: "tr" })}
                   <input
                     name="altTr"
                     defaultValue={item.altI18n?.tr ?? ""}
@@ -251,7 +267,7 @@ function MediaTile({
                   />
                 </label>
                 <label className="grid gap-1 text-xs">
-                  متن جایگزین (en)
+                  {t("alt", { locale: "en" })}
                   <input
                     name="altEn"
                     defaultValue={item.altI18n?.en ?? ""}
@@ -259,7 +275,7 @@ function MediaTile({
                   />
                 </label>
                 <label className="grid gap-1 text-xs">
-                  برچسب‌ها (با کاما جدا کنید)
+                  {t("tags")}
                   <input
                     name="tags"
                     defaultValue={item.tags.join(", ")}
@@ -267,13 +283,13 @@ function MediaTile({
                   />
                 </label>
                 <label className="grid gap-1 text-xs">
-                  پوشه
+                  {t("folder")}
                   <select
                     name="folderId"
                     defaultValue={item.folderId ?? ""}
                     className="h-8 rounded-[6px] border border-black/10 px-2"
                   >
-                    <option value="">بدون پوشه</option>
+                    <option value="">{t("noFolder")}</option>
                     {folders.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -282,7 +298,7 @@ function MediaTile({
                   </select>
                 </label>
                 <Button type="submit" size="sm">
-                  ذخیره
+                  {t("save")}
                 </Button>
               </form>
             )
@@ -292,7 +308,7 @@ function MediaTile({
             <form action={softDeleteMediaAction}>
               <input type="hidden" name="mediaId" value={item.id} />
               <Button type="submit" size="sm" variant="destructive">
-                حذف
+                {t("delete")}
               </Button>
             </form>
           )}

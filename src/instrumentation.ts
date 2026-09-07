@@ -13,7 +13,7 @@
  * serverExternalPackages.
  */
 export async function register() {
-  const required = ["AUTH_SECRET", "DATABASE_URL"];
+  const required = ["AUTH_SECRET", "DATABASE_URL", "MAINTENANCE_SECRET"];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {
     throw new Error(

@@ -9,10 +9,12 @@ export function Sheet({
   trigger,
   title,
   children,
+  closeLabel = "بستن",
 }: {
   trigger: ReactNode;
   title: string;
   children?: ReactNode;
+  closeLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -41,7 +43,7 @@ export function Sheet({
             size="sm"
             onClick={() => setOpen(false)}
           >
-            بستن
+            {closeLabel}
           </Button>
         </div>
         <div className="mt-4 text-sm text-muted">{children}</div>

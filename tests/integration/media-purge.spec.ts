@@ -13,6 +13,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 describe.skipIf(!hasDb)("media-purge job", () => {
   let tmpDir: string;
   let mediaPurgeHandler: typeof import("@/modules/media/purge").mediaPurgeHandler;
+  let purgeOne: typeof import("@/modules/media/purge").purgeOne;
   let storagePut: typeof import("@/modules/integrations/storage").storage.put;
   let storageGetBytes: typeof import("@/modules/integrations/storage").storage.getBytes;
 
@@ -25,7 +26,7 @@ describe.skipIf(!hasDb)("media-purge job", () => {
     storageGetBytes = storageModule.storage.getBytes.bind(
       storageModule.storage,
     );
-    ({ mediaPurgeHandler } = await import("@/modules/media/purge"));
+    ({ mediaPurgeHandler, purgeOne } = await import("@/modules/media/purge"));
   });
 
   afterAll(async () => {
@@ -109,5 +110,30 @@ describe.skipIf(!hasDb)("media-purge job", () => {
     });
     expect(nextSweep).not.toBeNull();
     expect(nextSweep!.runAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("keeps the DB row when deleting an object fails so a later sweep can retry", async () => {
+    const old = await createSoftDeleted({
+      daysAgo: 31,
+      storageKey: "media/test/delete-fails.jpg",
+    });
+    const failingStorage = {
+      put: async () => "",
+      getSignedUrl: async () => "",
+      getBytes: async () => null,
+      delete: async () => {
+        throw new Error("storage unavailable");
+      },
+    };
+
+    await expect(
+      purgeOne(
+        { id: old.id, storageKey: old.storageKey, variants: old.variants },
+        failingStorage,
+      ),
+    ).rejects.toThrow("storage unavailable");
+    await expect(
+      db.media.findUnique({ where: { id: old.id } }),
+    ).resolves.not.toBeNull();
   });
 });
