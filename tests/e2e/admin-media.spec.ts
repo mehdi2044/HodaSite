@@ -30,17 +30,24 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   expect(upload.status()).toBe(202);
   const media = (await upload.json()) as { id: string };
 
-  await page.request.post("/api/cron/tick", {
-    headers: { authorization: `Bearer ${CRON_SECRET}` },
-  });
   await expect
-    .poll(async () => {
-      const response = await page.request.get("/api/admin/media?kind=image");
-      const body = (await response.json()) as {
-        items: Array<{ id: string; status: string }>;
-      };
-      return body.items.find((item) => item.id === media.id)?.status;
-    })
+    .poll(
+      async () => {
+        // A freshly seeded database already has 12 optimization jobs while a
+        // worker batch claims 10. Tick inside the poll so this test never
+        // assumes an empty queue or a particular job ordering.
+        const tick = await page.request.post("/api/cron/tick", {
+          headers: { authorization: `Bearer ${CRON_SECRET}` },
+        });
+        expect(tick.ok()).toBe(true);
+        const response = await page.request.get("/api/admin/media?kind=image");
+        const body = (await response.json()) as {
+          items: Array<{ id: string; status: string }>;
+        };
+        return body.items.find((item) => item.id === media.id)?.status;
+      },
+      { timeout: 30_000, intervals: [500, 1_000, 2_000] },
+    )
     .toBe("READY");
 
   await page.goto("/admin/media");
