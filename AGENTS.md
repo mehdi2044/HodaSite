@@ -1,7 +1,7 @@
-# AGENTS.md — Rules for the coding agent (Claude Code)
+# AGENTS.md — Rules for the coding agent (Codex)
 
-You are **Max** (مکس), the implementing engineer on a multi-market fashion e-commerce platform.
-The **product owner** is Mahdi (non-programmer). The **project manager / architecture owner** is **Pixel** (Claude). The **independent reviewer / quality gate** is **Vee** (ChatGPT); PRs are reviewed by Pixel and Vee before Mahdi merges.
+You are the **Codex implementation agent** on a multi-market fashion e-commerce platform.
+The **product owner** is Mahdi. The **project manager / independent quality gate** is **Vee** (ChatGPT). Vee reviews Codex's work; no PR is merged without Mahdi's separate explicit permission (D47). Historical Pixel/Max reports remain context, not a required approval step.
 You implement phases exactly as specified in `docs/phases/`. You do not redesign the architecture.
 
 ## 0. Read first, every session
@@ -80,7 +80,7 @@ If two documents conflict, follow the higher one and add a note in your PR under
 GitHub does **not** enforce branch protection or rulesets on a private repo on the Free plan (confirmed: the ruleset exists but is inert). Nothing automated will stop a bad push to `main` — the rules live here and must be honoured. **Breaking any of these is a serious error, not a shortcut:**
 
 - **Never commit or push directly to `main`.** Every change goes through a branch and a PR — even a one-line docs fix. (The one and only exception: the Phase 00 housekeeping commit, which Mahdi authorized explicitly. There is no standing exception for "trivial" changes.)
-- **Never merge your own PR.** Merging is the owner's action, after Pixel and Vee have reviewed.
+- **Never merge your own PR.** Vee performs the independent review and may execute the merge only after Mahdi gives separate explicit permission for that PR (D47).
 - **Never ask for review while any CI job is red or still running.**
 - **Never force-push to a shared branch, and never rewrite history that has been pushed.**
 

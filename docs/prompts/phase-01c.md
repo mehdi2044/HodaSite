@@ -4,7 +4,7 @@ Implement `docs/phases/phase-01c.md` completely on branch `phase/01c-cms-storefr
 
 ## Binding instructions
 
-1. Read `AGENTS.md`, `CLAUDE.md`, `docs/01_PROJECT_RULES.md`, `docs/02_DECISIONS.md`, `docs/03_ARCHITECTURE.md`, `docs/04_DATABASE_AND_BACKUP.md`, `docs/05_ROADMAP.md`, `docs/06_ADMIN_AND_DESIGN.md`, `docs/08_SECURITY_AND_COMPLIANCE.md`, `docs/09_TESTING_AND_ACCEPTANCE.md`, and the full Phase 01c specification before editing.
+1. Read `AGENTS.md`, `CLAUDE.md`, and the mandatory sequence in `AGENTS.md` §0: `docs/00_INDEX.md`, `docs/02_DECISIONS.md`, `docs/03_ARCHITECTURE.md`, `docs/04_DATABASE_AND_BACKUP.md`, `docs/PROGRESS.md`, and the full Phase 01c specification. Also read `docs/06_ADMIN_AND_DESIGN.md` and `docs/08_TEST_CHECKPOINTS_FA.md` before editing.
 2. Preserve every Phase 00/01a/01b behavior and test. Use additive migrations only.
 3. Work in reviewable vertical slices. Run targeted tests after each slice and the complete local verification suite before pushing.
 4. Treat all persisted JSON and rich content as untrusted at write and render time. Preserve authorization, least privilege, audit, maintenance, storage, and backup invariants.
