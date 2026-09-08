@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Market } from "@/lib/request-context";
 import { LocaleSwitcher } from "./locale-switcher";
 import { MarketSwitcher } from "./market-switcher";
+import { ResponsiveImage } from "./responsive-image";
 
 export async function Header({
   locale,
@@ -33,8 +34,21 @@ export async function Header({
         className="flex items-center gap-2 text-lg font-semibold text-text"
       >
         {logo ? (
-          // Theme-provided remote/local logo — no next/image loader configured yet.
-          <img src={logo.url} alt={siteName} className="h-8 w-auto" />
+          <ResponsiveImage
+            media={{
+              url: logo.url,
+              variants: logo.variants,
+              width: logo.width,
+              height: logo.height,
+              blurDataUrl: logo.blurDataUrl,
+              altI18n: { fa: siteName, tr: siteName, en: siteName },
+            }}
+            locale={locale as "fa" | "tr" | "en"}
+            sizes="120px"
+            priority
+            className="h-8"
+            imgClassName="h-8 w-auto object-contain"
+          />
         ) : (
           siteName
         )}

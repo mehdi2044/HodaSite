@@ -22,6 +22,14 @@ export default defineConfig({
     testTimeout: 15_000,
     env: testDatabaseUrl ? { DATABASE_URL: testDatabaseUrl } : {},
     globalSetup: ["./tests/setup/global-setup.ts"],
+    // Integration specs share one live Postgres `Job` table, and the job
+    // queue's claiming query is intentionally unscoped by job type (a real
+    // worker claims any due job). Running spec files in parallel lets one
+    // file's runJobs() claim a row a different file's test just created (or
+    // race its afterEach cleanup), so files must run one at a time. Tests
+    // that call runJobs() concurrently within a single file (Promise.all)
+    // are unaffected — that's the same process either way.
+    fileParallelism: false,
   },
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
 });

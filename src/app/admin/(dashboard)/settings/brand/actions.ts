@@ -31,6 +31,23 @@ export async function saveBrand(
     const userId = session.user.id;
 
     const parsed = schema.parse(Object.fromEntries(data));
+    const requestedMediaIds = [
+      parsed.logoMediaId,
+      parsed.logoDarkMediaId,
+      parsed.faviconMediaId,
+      parsed.emailLogoMediaId,
+    ].filter(Boolean);
+    if (requestedMediaIds.length > 0) {
+      const validImages = await db.media.count({
+        where: {
+          id: { in: requestedMediaIds },
+          kind: "image",
+          deletedAt: null,
+        },
+      });
+      if (validImages !== new Set(requestedMediaIds).size)
+        throw new Error("invalid_brand_media");
+    }
     const brand = {
       name: { fa: parsed.nameFa, tr: parsed.nameTr, en: parsed.nameEn },
       tagline: {

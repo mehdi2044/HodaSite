@@ -13,7 +13,12 @@ import { isIpAllowlisted } from "@/lib/cidr";
 // - the middleware STOREFRONT full-page gate (Phase 01a), via `effective`
 //   (on OR an active `scheduled` window) + localized `message` + `bypass`
 //   (whether the caller's IP, passed as ?ip=, is in the maintenance
-//   allowlist). No secret here — none of this is sensitive.
+//   allowlist).
+//
+// `bypass` is the one sensitive bit: answering it for an arbitrary ?ip= would
+// let anyone probe which IPs are on the allowlist. It's only computed for the
+// middleware's own internal call (marked by x-internal-secret, Phase 01b
+// B2) — every public caller gets bypass:false regardless of ?ip=.
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -26,8 +31,11 @@ export async function GET(req: Request) {
   // must never be shadowed by a config read that hasn't picked it up yet
   // (D23, PR #4 review, P1).
   const effective = onFlag || isMaintenanceEffective(cfg);
+  const isInternal =
+    req.headers.get("x-internal-secret") === process.env.MAINTENANCE_SECRET;
   const ip = new URL(req.url).searchParams.get("ip");
-  const bypass = effective && isIpAllowlisted(ip, cfg.allowlistIps);
+  const bypass =
+    isInternal && effective && isIpAllowlisted(ip, cfg.allowlistIps);
   return NextResponse.json({
     state: onFlag ? "on" : "off",
     effective,

@@ -1,6 +1,48 @@
 import { PrismaClient, FxMode } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import sharp from "sharp";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 const db = new PrismaClient();
+
+// Deliberately NOT importing from `src/modules/*` (storage provider, job
+// queue): this script also runs inside the `ops` image, which — by design
+// (D22/D23, minimal attack surface, no Docker socket) — only ships
+// package.json/prisma/scripts, never the app's `src/` tree. A minimal local
+// write + a raw Job row (matching src/modules/media/queue.ts's enqueue())
+// keeps seed.ts runnable from both `app` and `ops` without adding `src` to
+// the ops image just for demo data.
+async function putLocalMediaFile(key: string, data: Buffer): Promise<string> {
+  const root = process.env.MEDIA_DIR ?? "/data/media";
+  const p = path.join(root, key);
+  await mkdir(path.dirname(p), { recursive: true });
+  await writeFile(p, data);
+  return `/media/${key}`;
+}
+async function putMediaFile(key: string, data: Buffer): Promise<string> {
+  if (process.env.STORAGE_PROVIDER !== "s3")
+    return putLocalMediaFile(key, data);
+  const client = new S3Client({
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION ?? "us-east-1",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY ?? "",
+      secretAccessKey: process.env.S3_SECRET_KEY ?? "",
+    },
+  });
+  await client.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET ?? "media",
+      Key: key,
+      Body: data,
+      ContentType: "image/jpeg",
+    }),
+  );
+  return `/media/${key}`;
+}
 const roles = [
   "owner",
   "admin",
@@ -28,6 +70,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "users.view",
     "users.manage",
     "media.upload",
+    "media.write",
+    "media.delete",
     "system.health.view",
     "catalog.product.view",
     "catalog.product.create",
@@ -48,6 +92,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "catalog.product.create",
     "catalog.product.edit",
     "media.upload",
+    "media.write",
   ],
   warehouse: ["catalog.product.view", "inventory.stock.adjust", "order.view"],
   accountant: [
@@ -62,6 +107,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   marketing: [
     "catalog.product.view",
     "media.upload",
+    "media.write",
     "marketing.campaign.publish",
     "crm.customer.export",
   ],
@@ -245,5 +291,90 @@ async function main() {
       isActive: true,
     },
   });
+
+  await seedDemoMedia();
+}
+
+// Phase 01b acceptance criterion 9: a fresh `down -v && up --build` seeds
+// >=12 demo images across 3 folders with alt text in 3 languages —
+// programmatically generated flat-color placeholders (royalty-free, no real
+// brand logos), run through the real media-optimize pipeline like any other
+// upload (READY once the cron job picks them up after startup).
+async function seedDemoMedia() {
+  const already = await db.media.count({
+    where: { originalName: { startsWith: "seed-" } },
+  });
+  if (already > 0) return;
+
+  // Seed through the selected provider so LocalStorage and MinIO exercise
+  // the same processing pipeline in CI.
+
+  const folders = [
+    {
+      name: "محصولات",
+      altBase: {
+        fa: "تصویر نمونه محصول",
+        tr: "Örnek ürün görseli",
+        en: "Sample product image",
+      },
+    },
+    {
+      name: "بنرها",
+      altBase: { fa: "بنر نمونه", tr: "Örnek banner", en: "Sample banner" },
+    },
+    {
+      name: "لوگوها",
+      altBase: { fa: "لوگوی نمونه", tr: "Örnek logo", en: "Sample logo" },
+    },
+  ];
+  const colors = ["#336699", "#996633", "#669933", "#993366", "#339966"];
+
+  for (const folder of folders) {
+    const folderRow = await db.mediaFolder.upsert({
+      where: { id: `seed-folder-${folder.name}` },
+      update: {},
+      create: { id: `seed-folder-${folder.name}`, name: folder.name },
+    });
+
+    for (let i = 1; i <= 4; i += 1) {
+      const color = colors[(i - 1) % colors.length];
+      const buffer = await sharp({
+        create: { width: 800, height: 600, channels: 3, background: color },
+      })
+        .jpeg()
+        .toBuffer();
+
+      const now = new Date();
+      const key = `media/${now.getUTCFullYear()}/${String(
+        now.getUTCMonth() + 1,
+      ).padStart(2, "0")}/${crypto.randomUUID()}.jpg`;
+      const url = await putMediaFile(key, buffer);
+
+      const media = await db.media.create({
+        data: {
+          kind: "image",
+          storageKey: key,
+          originalName: `seed-${folder.name}-${i}.jpg`,
+          url,
+          width: 800,
+          height: 600,
+          bytes: buffer.length,
+          mime: "image/jpeg",
+          status: "PROCESSING",
+          folderId: folderRow.id,
+          altI18n: {
+            fa: `${folder.altBase.fa} ${i}`,
+            tr: `${folder.altBase.tr} ${i}`,
+            en: `${folder.altBase.en} ${i}`,
+          },
+        },
+      });
+      // Matches src/modules/media/queue.ts's enqueue() — DB-backed Job
+      // queue (D21), type must stay in sync with MEDIA_OPTIMIZE_JOB.
+      await db.job.create({
+        data: { type: "media-optimize", payload: { mediaId: media.id } },
+      });
+    }
+  }
 }
 main().finally(() => db.$disconnect());

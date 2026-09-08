@@ -31,7 +31,7 @@ test("an authenticated upload of a real PNG succeeds", async ({ page }) => {
       file: { name: "photo.png", mimeType: "image/png", buffer: PNG },
     },
   });
-  expect(res.status()).toBe(201);
+  expect(res.status()).toBe(202);
   const body = await res.json();
   expect(body.url).toMatch(/\/media\/media\/\d{4}\/\d{2}\/[0-9a-f-]+\.png$/);
 

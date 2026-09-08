@@ -1,5 +1,6 @@
 import "@/styles/tokens.css";
-import { getLocale } from "next-intl/server";
+import { getLocale, getMessages } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 import { getThemeSettings } from "@/modules/settings";
 import { DEFAULT_LIGHT_COLORS, BUTTON_RADIUS } from "@/lib/theme-defaults";
 import {
@@ -27,6 +28,7 @@ export default async function RootLayout({
   // For /admin/* there is no locale in the URL, so next-intl resolves the
   // default (fa) — the admin panel is RTL.
   const locale = await getLocale();
+  const messages = await getMessages();
   const theme = await getThemeSettings();
 
   // normalizeThemeColors accepts Phase 00's legacy flat shape too (a
@@ -74,7 +76,11 @@ export default async function RootLayout({
           <style dangerouslySetInnerHTML={{ __html: customCss }} />
         )}
       </head>
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

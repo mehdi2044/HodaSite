@@ -22,13 +22,35 @@ export const getThemeSettings = unstable_cache(
 export const getMarkets = unstable_cache(
   async () => db.market.findMany({ orderBy: { code: "asc" } }),
   ["markets"],
-  { tags: ["markets"] },
+  // revalidate: 5 (Phase 01b B2) puts a hard ceiling on staleness for the
+  // public /api/system/markets route even in the (should-never-happen) case
+  // a save's revalidateTag("markets") doesn't land — normal edits are still
+  // instant via the tag.
+  { tags: ["markets"], revalidate: 5 },
 );
 
 export const getMarketByCode = unstable_cache(
   async (code: string) => db.market.findUnique({ where: { code } }),
   ["market-by-code"],
   { tags: ["markets"] },
+);
+
+export type MediaSettings = { purgeRetentionDays: number };
+
+/** Phase 01b: how many days a soft-deleted Media row survives before the
+ * `media-purge` job physically removes its files. Configurable in settings,
+ * default 30 (D31 — business setting, lives in the DB). */
+export const getMediaSettings = unstable_cache(
+  async (): Promise<MediaSettings> => {
+    const s = await db.siteSettings.findUnique({
+      where: { id: "default" },
+      select: { media: true },
+    });
+    const raw = (s?.media as Partial<MediaSettings> | null) ?? {};
+    return { purgeRetentionDays: raw.purgeRetentionDays ?? 30 };
+  },
+  ["media-settings"],
+  { tags: ["site-settings"] },
 );
 
 /** @deprecated use getSiteSettings() / getThemeSettings() */
@@ -78,7 +100,10 @@ export const getMaintenanceConfig = unstable_cache(
     return (s?.maintenance as MaintenanceConfig | null) ?? { state: "off" };
   },
   ["maintenance-config"],
-  { tags: ["site-settings"] },
+  // revalidate: 5 (Phase 01b B2), same rationale as getMarkets above — an
+  // admin toggle is still reflected instantly via revalidateTag; this is
+  // only the outer bound.
+  { tags: ["site-settings"], revalidate: 5 },
 );
 
 // Maintenance flag (fix-order A8).
