@@ -15,3 +15,5 @@ Implement `docs/phases/phase-01c.md` completely on branch `phase/01c-cms-storefr
 9. Do not merge. Report the PR URL, exact head SHA, test output summary, CI links/status, and any residual risk to Vee for independent review.
 
 The notification-template scope here is the authoring/provider foundation from the v1.2 roadmap. Real provider configuration and SMS delivery remain Phase 04 even though the templates are editable now.
+
+RichText uses the dependency-free visual editor approved in D48. Do not add TipTap or another editor package; users must not edit raw JSON as the primary authoring flow.

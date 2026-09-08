@@ -21,7 +21,7 @@ Mahdi can manage the storefront navigation, content pages, homepage composition,
 - Additive `Page` model per the database document: stable internal id, localized slugs, `static | landing`, `draft | published`, SEO I18n, market visibility, ordered block JSON, soft delete.
 - Admin list/editor at `/admin/content/pages` with preview at mobile and desktop widths, save draft, publish/unpublish, duplicate, and soft-delete/restore.
 - Blocks: RichText, Image, Hero, TwoColumns, FAQ, CTA, Countdown, and Embed. Use the shared `MediaPicker` and `ResponsiveImage`.
-- TipTap rich text must support RTL and mixed Latin text. Sanitize persisted/rendered HTML. Embed accepts only an allowlist of HTTPS providers/URLs; never arbitrary HTML or script.
+- The dependency-free visual rich-text editor approved in D48 must support RTL and mixed Latin text without requiring JSON editing. Sanitize persisted/rendered HTML. Embed accepts only an allowlist of HTTPS providers/URLs; never arbitrary HTML or script.
 - Public route `/[locale]/pages/[slug]` returns only published pages visible in the current market. Draft preview is admin-only and must not publish or mutate data.
 - Seed about, contact, terms, privacy, returns, size-guide, and faq in fa/tr/en with neutral placeholder copy.
 

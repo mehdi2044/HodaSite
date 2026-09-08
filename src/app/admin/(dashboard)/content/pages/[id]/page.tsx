@@ -8,6 +8,7 @@ import { SettingsForm } from "@/components/admin/settings-form";
 import { savePage } from "../actions";
 import { getTranslations } from "next-intl/server";
 import { PageBlocksEditor } from "@/components/admin/page-blocks-editor";
+import { pageBlocksSchema } from "@/modules/content";
 
 const emptyLocalized = { fa: "", tr: "", en: "" };
 
@@ -34,6 +35,26 @@ export default async function PageEditor({
     (page?.seoI18n as
       | { title?: typeof emptyLocalized; description?: typeof emptyLocalized }
       | undefined) ?? {};
+  const parsedBlocks = pageBlocksSchema.safeParse(page?.blocks ?? []);
+  const blocks = parsedBlocks.success ? parsedBlocks.data : [];
+  const mediaIds = [
+    ...new Set(
+      blocks.flatMap((block) =>
+        (block.type === "Image" || block.type === "Hero") && block.mediaId
+          ? [block.mediaId]
+          : [],
+      ),
+    ),
+  ];
+  const blockMedia = mediaIds.length
+    ? await db.media.findMany({
+        where: { id: { in: mediaIds }, kind: "image", deletedAt: null },
+        select: { id: true, storageKey: true },
+      })
+    : [];
+  const initialMediaUrls = Object.fromEntries(
+    blockMedia.map((media) => [media.id, `/media/${media.storageKey}`]),
+  );
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -59,7 +80,7 @@ export default async function PageEditor({
           </div>
         )}
       </div>
-      <Card className="mt-5 max-w-4xl">
+      <Card className="mt-5 max-w-none">
         <SettingsForm action={savePage} submitLabel={t("save")}>
           {page && <input type="hidden" name="id" value={page.id} />}
           {(["fa", "tr", "en"] as const).map((locale) => (
@@ -140,10 +161,8 @@ export default async function PageEditor({
             </div>
           ))}
           <PageBlocksEditor
-            defaultValue={page?.blocks ?? []}
-            label={t("blocksJson")}
-            help={t("blocksHelp")}
-            mediaLabel={t("addImage")}
+            defaultValue={blocks}
+            initialMediaUrls={initialMediaUrls}
           />
         </SettingsForm>
       </Card>
