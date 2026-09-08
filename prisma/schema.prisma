@@ -283,6 +283,7 @@ model Market {
   supportChannels      Json     @default("{}")
   announcementBar      Json     @default("{\"enabled\":false}")
   seo                  Json     @default("{}")
+  menus                Menu[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
@@ -334,4 +335,65 @@ model Media {
   @@index([deletedAt, createdAt])
   @@index([folderId])
   @@index([tags], type: Gin)
+}
+
+/// A storefront navigation slot. `marketId = null` is the global fallback;
+/// a market-specific row replaces it for that market (Phase 01c).
+model Menu {
+  id        String     @id @default(cuid())
+  key       String
+  marketId  String?
+  market    Market?    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  items     MenuItem[]
+  deletedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([key, marketId])
+  @@index([key, deletedAt])
+  @@index([marketId])
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  menuId      String
+  menu        Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      MenuItem?  @relation("MenuItemTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    MenuItem[] @relation("MenuItemTree")
+  labelI18n   Json
+  linkType    String     @default("url")
+  url         String?
+  pageId      String?
+  page        Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  referenceId String?
+  target      String     @default("_self")
+  enabled     Boolean    @default(true)
+  visibleIn   String[]   @default([])
+  sortOrder   Int        @default(0)
+  deletedAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([menuId, parentId, sortOrder])
+  @@index([pageId])
+}
+
+/// CMS page identity is stable while every public slug is localized.
+/// `blocks` is validated and sanitized both at write and render time.
+model Page {
+  id        String     @id @default(cuid())
+  slugI18n  Json
+  titleI18n Json
+  type      String     @default("static")
+  status    String     @default("draft")
+  seoI18n   Json       @default("{}")
+  marketIds String[]   @default([])
+  blocks    Json       @default("[]")
+  menuItems MenuItem[]
+  deletedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status, deletedAt])
 }

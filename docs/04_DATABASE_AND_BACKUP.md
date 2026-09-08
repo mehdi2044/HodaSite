@@ -25,8 +25,8 @@
 - `SiteSettings.maintenance`: `{ state: 'off'|'on'|'scheduled', message?: {fa,tr,en}, allowlistIps?: string[], startsAt?, endsAt? }`. The ops-secret endpoint (`POST /api/system/maintenance`, what `restore.sh` calls) merges only `state` into this object — it must never replace it, or every restore silently erases the admin-configured message/allowlist/schedule.
 - `ThemeSettings.colors`: `{ light: {primary,background,surface,text,muted,success,error,warning}, dark: {...same keys} }`.
 - Every save action re-validates with Zod before it reaches `dangerouslySetInnerHTML` (`radius` is a strict CSS-length token, colors are strict 6-digit hex) and `src/app/layout.tsx` re-validates again at render time as defense in depth — an already-saved value is never trusted blindly.
-- `Menu(key header|footer|mobile, marketId?)` / `MenuItem(menuId, parentId, labelI18n, url, target, sortOrder, visibleIn[] markets)`
-- `Page(slug, type static|landing, blocks json, status, seoI18n, marketIds[])`
+- `Menu(key header|footer|mobile, marketId?, deletedAt)` / `MenuItem(menuId, parentId, labelI18n, linkType url|page|category|collection, url?, pageId?, referenceId?, target, enabled, sortOrder, visibleIn[] markets, deletedAt)`؛ `marketId=null` fallback سراسری است و عمق آیتم‌ها حداکثر دو سطح است.
+- `Page(slugI18n, titleI18n, type static|landing, blocks json, status draft|published, seoI18n, marketIds[], deletedAt)`؛ شناسهٔ Page ثابت می‌ماند و slug هر زبان جداست.
 - `Banner(placement, mediaId, titleI18n, subtitleI18n, ctaI18n, url, startsAt, endsAt, marketIds[], sortOrder)`
 - `Translation(entityType, entityId, field, locale, value)` — unique on all four keys
 - `NotificationTemplate(key, channel email|sms, subjectI18n, bodyI18n, isActive)`

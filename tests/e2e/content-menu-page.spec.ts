@@ -1,0 +1,79 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
+const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
+
+async function login(page: Page) {
+  await page.goto("/admin/login");
+  await page.getByLabel("ایمیل").fill(EMAIL);
+  await page.getByLabel("رمز عبور").fill(PASSWORD);
+  await page.getByRole("button", { name: "ورود امن" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+}
+
+test("published seeded menu opens a sanitized mixed-direction CMS page", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/content/pages/seed-page-about");
+
+  const blocks = [
+    {
+      type: "RichText",
+      html: {
+        fa: '<p dir="rtl">کد کالا: <bdi dir="ltr">SH-MW-1023</bdi> موجود است</p>',
+        tr: "<p>Ürün kodu hazır.</p>",
+        en: "<p>The product code is ready.</p>",
+      },
+    },
+    {
+      type: "FAQ",
+      items: [
+        {
+          question: {
+            fa: "پرسش نمونه",
+            tr: "Örnek soru",
+            en: "Sample question",
+          },
+          answer: {
+            fa: "<p>پاسخ نمونه</p>",
+            tr: "<p>Örnek yanıt</p>",
+            en: "<p>Sample answer</p>",
+          },
+        },
+      ],
+    },
+  ];
+  await page.getByLabel(/بلوک‌ها/).fill(JSON.stringify(blocks));
+  await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect(page.getByText("ذخیره شد.")).toBeVisible();
+
+  await page.goto("/fa");
+  await page
+    .getByRole("link", { name: "دربارهٔ ما", exact: true })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/fa\/pages\/درباره-ما$/);
+  await expect(page.locator('bdi[dir="ltr"]')).toHaveText("SH-MW-1023");
+  await expect(page.getByText("پرسش نمونه")).toBeVisible();
+});
+
+test("active content is rejected before it can be persisted", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/content/pages/seed-page-about");
+  const unsafe = [
+    {
+      type: "RichText",
+      html: {
+        fa: "<script>alert(1)</script>",
+        tr: "<p>TR</p>",
+        en: "<p>EN</p>",
+      },
+    },
+  ];
+  await page.getByLabel(/بلوک‌ها/).fill(JSON.stringify(unsafe));
+  await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+});

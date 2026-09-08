@@ -72,6 +72,12 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "media.upload",
     "media.write",
     "media.delete",
+    "content.menu.read",
+    "content.menu.write",
+    "content.page.read",
+    "content.page.write",
+    "content.page.publish",
+    "content.page.delete",
     "system.health.view",
     "catalog.product.view",
     "catalog.product.create",
@@ -93,6 +99,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "catalog.product.edit",
     "media.upload",
     "media.write",
+    "content.page.read",
+    "content.page.write",
   ],
   warehouse: ["catalog.product.view", "inventory.stock.adjust", "order.view"],
   accountant: [
@@ -110,6 +118,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "media.write",
     "marketing.campaign.publish",
     "crm.customer.export",
+    "content.menu.read",
+    "content.menu.write",
+    "content.page.read",
+    "content.page.write",
+    "content.page.publish",
   ],
 };
 async function main() {
@@ -292,7 +305,136 @@ async function main() {
     },
   });
 
+  await seedContent();
+
   await seedDemoMedia();
+}
+
+const SEEDED_PAGES = [
+  {
+    id: "seed-page-about",
+    slugI18n: { fa: "درباره-ما", tr: "hakkimizda", en: "about" },
+    titleI18n: { fa: "دربارهٔ ما", tr: "Hakkımızda", en: "About us" },
+    body: {
+      fa: "<p>ما یک فروشگاه نمونهٔ چندزبانه با تمرکز بر تجربه‌ای آرام و شفاف هستیم.</p>",
+      tr: "<p>Sade, şeffaf ve çok dilli bir alışveriş deneyimi sunan örnek mağazayız.</p>",
+      en: "<p>We are a sample multilingual shop focused on a calm and transparent experience.</p>",
+    },
+  },
+  {
+    id: "seed-page-contact",
+    slugI18n: { fa: "تماس", tr: "iletisim", en: "contact" },
+    titleI18n: { fa: "تماس با ما", tr: "İletişim", en: "Contact" },
+    body: {
+      fa: "<p>راه‌های تماس از تنظیمات هر بازار نمایش داده می‌شوند.</p>",
+      tr: "<p>İletişim bilgileri pazar ayarlarından gösterilir.</p>",
+      en: "<p>Contact details are shown from each market's settings.</p>",
+    },
+  },
+  {
+    id: "seed-page-terms",
+    slugI18n: { fa: "قوانین", tr: "kosullar", en: "terms" },
+    titleI18n: { fa: "قوانین و مقررات", tr: "Koşullar", en: "Terms" },
+    body: {
+      fa: "<p>این متن نمونه است و پیش از راه‌اندازی باید با متن حقوقی تأییدشده جایگزین شود.</p>",
+      tr: "<p>Bu örnek metin yayından önce onaylı hukuki metinle değiştirilmelidir.</p>",
+      en: "<p>This placeholder must be replaced with approved legal copy before launch.</p>",
+    },
+  },
+  {
+    id: "seed-page-privacy",
+    slugI18n: { fa: "حریم-خصوصی", tr: "gizlilik", en: "privacy" },
+    titleI18n: { fa: "حریم خصوصی", tr: "Gizlilik", en: "Privacy" },
+    body: {
+      fa: "<p>این صفحه محل درج سیاست حریم خصوصی تأییدشده است.</p>",
+      tr: "<p>Onaylı gizlilik politikası burada yayınlanacaktır.</p>",
+      en: "<p>The approved privacy policy will be published here.</p>",
+    },
+  },
+  {
+    id: "seed-page-returns",
+    slugI18n: { fa: "بازگشت-کالا", tr: "iade", en: "returns" },
+    titleI18n: { fa: "بازگشت کالا", tr: "İade", en: "Returns" },
+    body: {
+      fa: "<p>شرایط نهایی بازگشت کالا پیش از راه‌اندازی درج می‌شود.</p>",
+      tr: "<p>Nihai iade koşulları yayından önce eklenecektir.</p>",
+      en: "<p>Final return conditions will be added before launch.</p>",
+    },
+  },
+  {
+    id: "seed-page-size-guide",
+    slugI18n: { fa: "راهنمای-سایز", tr: "beden-rehberi", en: "size-guide" },
+    titleI18n: { fa: "راهنمای سایز", tr: "Beden rehberi", en: "Size guide" },
+    body: {
+      fa: "<p>راهنمای اندازه‌گیری و جدول‌های محصول در فاز کاتالوگ تکمیل می‌شوند.</p>",
+      tr: "<p>Ölçüm rehberi ürün kataloğu aşamasında tamamlanacaktır.</p>",
+      en: "<p>Measurements and product tables will be completed with the catalogue.</p>",
+    },
+  },
+  {
+    id: "seed-page-faq",
+    slugI18n: { fa: "سوالات-متداول", tr: "sik-sorulan-sorular", en: "faq" },
+    titleI18n: {
+      fa: "سؤالات متداول",
+      tr: "Sık sorulan sorular",
+      en: "Frequently asked questions",
+    },
+    body: {
+      fa: "<p>پاسخ پرسش‌های رایج هر بازار در این صفحه قرار می‌گیرد.</p>",
+      tr: "<p>Her pazar için sık sorulan sorular burada yer alır.</p>",
+      en: "<p>Common questions for each market are collected here.</p>",
+    },
+  },
+] as const;
+
+async function seedContent() {
+  for (const page of SEEDED_PAGES) {
+    await db.page.upsert({
+      where: { id: page.id },
+      update: {},
+      create: {
+        id: page.id,
+        slugI18n: page.slugI18n,
+        titleI18n: page.titleI18n,
+        type: "static",
+        status: "published",
+        marketIds: [],
+        seoI18n: {
+          title: page.titleI18n,
+          description: { fa: "", tr: "", en: "" },
+        },
+        blocks: [{ type: "RichText", html: page.body }],
+      },
+    });
+  }
+
+  for (const key of ["header", "mobile", "footer"] as const) {
+    const menu = await db.menu.upsert({
+      where: { id: `seed-menu-${key}` },
+      update: {},
+      create: { id: `seed-menu-${key}`, key },
+    });
+    const pageIds =
+      key === "footer"
+        ? SEEDED_PAGES.map((page) => page.id)
+        : ["seed-page-about", "seed-page-contact"];
+    for (const [sortOrder, pageId] of pageIds.entries()) {
+      const page = SEEDED_PAGES.find((candidate) => candidate.id === pageId)!;
+      await db.menuItem.upsert({
+        where: { id: `seed-menu-item-${key}-${pageId}` },
+        update: {},
+        create: {
+          id: `seed-menu-item-${key}-${pageId}`,
+          menuId: menu.id,
+          labelI18n: page.titleI18n,
+          linkType: "page",
+          pageId,
+          enabled: true,
+          sortOrder,
+        },
+      });
+    }
+  }
 }
 
 // Phase 01b acceptance criterion 9: a fresh `down -v && up --build` seeds
