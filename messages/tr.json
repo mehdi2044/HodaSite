@@ -135,6 +135,8 @@
     "footerLocation": "Alt menü",
     "urlLabel": "Web adresi",
     "pages": "Sayfalar",
+    "homepage": "Ana sayfa",
+    "translations": "Çeviriler",
     "activePages": "Etkin sayfalar",
     "trash": "Çöp kutusu",
     "newPage": "Yeni sayfa",
@@ -225,5 +227,45 @@
       "desktop": "Masaüstü 1280",
       "previewFrameTitle": "Güvenli sayfa önizlemesi"
     }
+  },
+  "homepage": {
+    "empty": "Ana sayfa içeriği henüz yayımlanmadı.",
+    "phase2Placeholder": "Bu bölüm katalog Faz 02'de eklendiğinde görüntülenecek."
+  },
+  "homepageAdmin": {
+    "title": "Ana sayfa",
+    "description": "Genel veya pazara özel düzen oluşturun ve kaydetmeden önce mobil ve masaüstünde önizleyin.",
+    "global": "Genel (varsayılan)",
+    "market": "Pazar kapsamı",
+    "add": "Blok ekle",
+    "save": "Düzeni kaydet",
+    "preview": "Kaydedilmemiş önizleme",
+    "mobile": "Mobil 390",
+    "desktop": "Masaüstü 1280",
+    "moveUp": "Yukarı",
+    "moveDown": "Aşağı",
+    "remove": "Kaldır",
+    "empty": "Henüz blok yok.",
+    "phase2": "Kaynak ayarı saklanır; kategori, ürün ve koleksiyon verileri Faz 02'de etkinleşir.",
+    "selectImage": "Görsel seç",
+    "fieldTitle": "Başlık",
+    "body": "Metin",
+    "ctaLabel": "Düğme etiketi",
+    "ctaUrl": "Düğme adresi",
+    "source": "Kaynak"
+  },
+  "translationAdmin": {
+    "title": "Arayüz çevirileri",
+    "description": "Dosya varsayılanlarını arayın ve yalnızca gereken değişiklikleri veritabanında saklayın.",
+    "search": "Anahtar veya metin ara…",
+    "save": "Kaydet",
+    "reset": "Varsayılana dön",
+    "export": "JSON dışa aktar",
+    "import": "JSON içe aktar",
+    "importHelp": "Yalnızca mevcut anahtarlar ile fa, tr ve en dilleri kabul edilir.",
+    "missing": "Eksik içerik çevirileri",
+    "noMissing": "Eksik çeviri bulunmadı.",
+    "defaultValue": "Dosya varsayılanı",
+    "overrideValue": "Değişiklik değeri"
   }
 }

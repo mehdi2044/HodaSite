@@ -299,3 +299,13 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 4. یک تصویر از MediaPicker انتخاب کنید، هر سه زبان را کامل کنید و ذخیره را بزنید؛ سپس صفحهٔ عمومی منتشرشده را باز کنید.
 
 **تأیید محلی این بخش:** TypeScript، ESLint کامل، build تولیدی و ۱۰۴ تست واحد سبز. ۳۲ تست integration به‌دلیل نبود `TEST_DATABASE_URL` در این محیط اجرا نشدند؛ تست Playwright جدید و integrationها باید در CI تأیید شوند.
+
+#### صفحهٔ اصلی و ترجمه‌های رابط
+
+- `/admin/content/homepage` چیدمان سراسری و override هر بازار را برای شش بلوک Hero، CategoryCards، ProductStrip، Banner، TrustBar و RichText ویرایش می‌کند. مرتب‌سازی با drag/drop و دکمهٔ صفحه‌کلید، انتخاب تصویر از MediaPicker و پیش‌نمایش sandbox شدهٔ ذخیره‌نشده در عرض ۳۹۰/۱۲۸۰ دارد.
+- منابع کاتالوگ به‌صورت config ذخیره می‌شوند و تا فاز ۰۲ placeholder صریح دارند. فروشگاه از accessor کش‌شده با fallback بازار→سراسری می‌خواند و ResponsiveImage را برای Hero/Banner به کار می‌برد.
+- `/admin/content/translations` همهٔ کلیدهای سه فایل پیام را جست‌وجو و inline override/reset می‌کند؛ import/export JSON فقط زبان و کلید شناخته‌شده را می‌پذیرد. هر بخش مسیر کلید در برابر prototype pollution بررسی و اندازهٔ مقدار/import محدود است.
+- next-intl فایل پیش‌فرض را بدون mutation clone و با override کش‌شدهٔ DB ادغام می‌کند؛ نبود DB در build/boot به فایل‌ها fallback می‌کند. ذخیره/reset/import کش سراسری و locale را invalid می‌کنند.
+- گزارش ترجمه‌های ناقص Page/Menu/Homepage در همان صفحه دیده می‌شود. مجوزهای `content.homepage.*` و `content.translation.*` کمینه و تمام mutationها audit شده‌اند.
+
+**تأیید محلی این بخش:** `tsc --noEmit` و ESLint کامل سبز؛ ۱۱۶ تست واحد سبز. ۳۴ تست integration (از جمله ۲ تست جدید) به‌دلیل نبود `TEST_DATABASE_URL` skip شدند؛ build تولیدی کامل سبز. Playwright جدید در CI اجرا می‌شود.

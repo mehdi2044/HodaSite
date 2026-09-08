@@ -78,6 +78,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.page.write",
     "content.page.publish",
     "content.page.delete",
+    "content.homepage.read",
+    "content.homepage.write",
+    "content.translation.read",
+    "content.translation.write",
     "system.health.view",
     "catalog.product.view",
     "catalog.product.create",
@@ -101,6 +105,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "media.write",
     "content.page.read",
     "content.page.write",
+    "content.homepage.read",
   ],
   warehouse: ["catalog.product.view", "inventory.stock.adjust", "order.view"],
   accountant: [
@@ -123,6 +128,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.page.read",
     "content.page.write",
     "content.page.publish",
+    "content.homepage.read",
+    "content.homepage.write",
   ],
 };
 async function main() {
@@ -435,6 +442,48 @@ async function seedContent() {
       });
     }
   }
+
+  await db.homepage.upsert({
+    where: { id: "seed-homepage-global" },
+    update: {},
+    create: {
+      id: "seed-homepage-global",
+      blocks: [
+        {
+          type: "Hero",
+          title: {
+            fa: "سبک خودت را پیدا کن",
+            tr: "Tarzını keşfet",
+            en: "Find your style",
+          },
+          body: {
+            fa: "انتخاب‌های آرام و ماندگار",
+            tr: "Sade ve kalıcı seçimler",
+            en: "Quiet, enduring choices",
+          },
+          ctaLabel: { fa: "مشاهده", tr: "Keşfet", en: "Explore" },
+          ctaUrl: "/",
+        },
+        {
+          type: "CategoryCards",
+          title: { fa: "دسته‌بندی‌ها", tr: "Kategoriler", en: "Categories" },
+          source: { mode: "category", limit: 4 },
+        },
+        {
+          type: "ProductStrip",
+          title: { fa: "تازه‌ها", tr: "Yeni gelenler", en: "New arrivals" },
+          source: { mode: "latest", limit: 4 },
+        },
+        {
+          type: "TrustBar",
+          items: [
+            { fa: "خرید امن", tr: "Güvenli alışveriş", en: "Secure shopping" },
+            { fa: "پشتیبانی شفاف", tr: "Şeffaf destek", en: "Clear support" },
+          ],
+        },
+      ],
+    },
+  });
 }
 
 // Phase 01b acceptance criterion 9: a fresh `down -v && up --build` seeds

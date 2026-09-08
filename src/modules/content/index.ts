@@ -8,6 +8,8 @@ import {
 } from "./validation";
 
 export * from "./validation";
+export * from "./homepage";
+export * from "./translations";
 
 export type Localized = Partial<Record<"fa" | "tr" | "en", string>>;
 export type PublicMenuItem = {

@@ -18,16 +18,24 @@ const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 // What each non-owner role MUST have (a sample) and MUST NOT have.
 const EXPECT: Record<string, { allow: string[]; deny: string[] }> = {
   admin: {
-    allow: ["users.manage", "catalog.product.publish", "pricing.cost.view"],
+    allow: [
+      "users.manage",
+      "catalog.product.publish",
+      "pricing.cost.view",
+      "content.translation.write",
+      "content.homepage.write",
+    ],
     deny: ["security.role.manage", "payment.refund", "finance.expense.create"],
   },
   data_entry: {
-    allow: ["catalog.product.create", "media.upload"],
+    allow: ["catalog.product.create", "media.upload", "content.homepage.read"],
     deny: [
       "catalog.product.publish",
       "pricing.cost.view",
       "users.manage",
       "settings.theme.edit",
+      "content.homepage.write",
+      "content.translation.write",
     ],
   },
   warehouse: {
@@ -48,8 +56,17 @@ const EXPECT: Record<string, { allow: string[]; deny: string[] }> = {
     ],
   },
   marketing: {
-    allow: ["marketing.campaign.publish", "crm.customer.export"],
-    deny: ["catalog.product.publish", "pricing.cost.view", "users.manage"],
+    allow: [
+      "marketing.campaign.publish",
+      "crm.customer.export",
+      "content.homepage.write",
+    ],
+    deny: [
+      "catalog.product.publish",
+      "pricing.cost.view",
+      "users.manage",
+      "content.translation.write",
+    ],
   },
 };
 

@@ -284,6 +284,7 @@ model Market {
   announcementBar      Json     @default("{\"enabled\":false}")
   seo                  Json     @default("{}")
   menus                Menu[]
+  homepages            Homepage[]
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
@@ -396,4 +397,33 @@ model Page {
   updatedAt DateTime   @updatedAt
 
   @@index([status, deletedAt])
+}
+
+/// Ordered homepage composition. `marketId = null` is the global fallback.
+model Homepage {
+  id        String   @id @default(cuid())
+  marketId  String?  @unique
+  market    Market?  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  blocks    Json     @default("[]")
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([deletedAt])
+}
+
+/// Long-form and runtime UI translations (D09). UI overrides use
+/// entityType=ui, entityId=global and a dot-separated message key in `field`.
+model Translation {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  field      String
+  locale     String
+  value      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, field, locale])
+  @@index([entityType, entityId, locale])
 }

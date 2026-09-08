@@ -135,6 +135,8 @@
     "footerLocation": "Footer",
     "urlLabel": "URL",
     "pages": "Pages",
+    "homepage": "Homepage",
+    "translations": "Translations",
     "activePages": "Active pages",
     "trash": "Trash",
     "newPage": "New page",
@@ -225,5 +227,45 @@
       "desktop": "Desktop 1280",
       "previewFrameTitle": "Safe page preview"
     }
+  },
+  "homepage": {
+    "empty": "Homepage content has not been published yet.",
+    "phase2Placeholder": "This section will appear when the catalog is added in Phase 02."
+  },
+  "homepageAdmin": {
+    "title": "Homepage",
+    "description": "Build a global or market composition and preview unsaved changes at mobile and desktop widths.",
+    "global": "Global (fallback)",
+    "market": "Market scope",
+    "add": "Add block",
+    "save": "Save composition",
+    "preview": "Unsaved preview",
+    "mobile": "Mobile 390",
+    "desktop": "Desktop 1280",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "empty": "There are no blocks yet.",
+    "phase2": "The source configuration is saved; category, product and collection data becomes active in Phase 02.",
+    "selectImage": "Choose image",
+    "fieldTitle": "Title",
+    "body": "Text",
+    "ctaLabel": "Button label",
+    "ctaUrl": "Button URL",
+    "source": "Source"
+  },
+  "translationAdmin": {
+    "title": "UI translations",
+    "description": "Search file defaults and store only the overrides needed in the database.",
+    "search": "Search key or text…",
+    "save": "Save",
+    "reset": "Reset to default",
+    "export": "Export JSON",
+    "import": "Import JSON",
+    "importHelp": "Only existing keys and fa, tr and en locales are accepted.",
+    "missing": "Missing entity translations",
+    "noMissing": "No missing translation was found.",
+    "defaultValue": "File default",
+    "overrideValue": "Override value"
   }
 }
