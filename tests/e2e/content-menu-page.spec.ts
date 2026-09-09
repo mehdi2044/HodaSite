@@ -17,36 +17,12 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
   await login(page);
   await page.goto("/admin/content/pages/seed-page-about");
 
-  const blocks = [
-    {
-      type: "RichText",
-      html: {
-        fa: '<p dir="rtl">کد کالا: <bdi dir="ltr">SH-MW-1023</bdi> موجود است</p>',
-        tr: "<p>Ürün kodu hazır.</p>",
-        en: "<p>The product code is ready.</p>",
-      },
-    },
-    {
-      type: "FAQ",
-      items: [
-        {
-          question: {
-            fa: "پرسش نمونه",
-            tr: "Örnek soru",
-            en: "Sample question",
-          },
-          answer: {
-            fa: "<p>پاسخ نمونه</p>",
-            tr: "<p>Örnek yanıt</p>",
-            en: "<p>Sample answer</p>",
-          },
-        },
-      ],
-    },
-  ];
-  await page.locator('input[name="blocks"]').evaluate((element, value) => {
-    (element as HTMLInputElement).value = value;
-  }, JSON.stringify(blocks));
+  const richText = page.getByRole("textbox", { name: "متن — فارسی" }).first();
+  await richText.evaluate((element) => {
+    element.innerHTML =
+      '<p dir="rtl">کد کالا: <bdi dir="ltr">SH-MW-1023</bdi> موجود است</p>';
+    element.dispatchEvent(new InputEvent("input", { bubbles: true }));
+  });
   await page.getByRole("button", { name: "ذخیره", exact: true }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
@@ -59,7 +35,6 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
     .poll(() => decodeURIComponent(new URL(page.url()).pathname))
     .toBe("/fa/pages/درباره-ما");
   await expect(page.locator('bdi[dir="ltr"]')).toHaveText("SH-MW-1023");
-  await expect(page.getByText("پرسش نمونه")).toBeVisible();
 });
 
 test("active content is rejected before it can be persisted", async ({

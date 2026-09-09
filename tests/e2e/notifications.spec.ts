@@ -10,6 +10,7 @@ test("notification editor validates templates and sends through noop", async ({
   await page.getByLabel("ایمیل").fill(EMAIL);
   await page.getByLabel("رمز عبور").fill(PASSWORD);
   await page.getByRole("button", { name: "ورود امن" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/settings/notifications");
   const template = page.locator("article", { hasText: "auth.otp" });
   await template.getByLabel("گیرندهٔ آزمایشی").fill("test@example.com");

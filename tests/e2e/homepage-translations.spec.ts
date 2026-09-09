@@ -43,6 +43,11 @@ test("UI override changes runtime text and reset restores file default", async (
   const replacement = `جایگزین ${Date.now()}`;
   await card.getByLabel("مقدار جایگزین").fill(replacement);
   await card.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect
+    .poll(async () => (await page.request.get("/fa")).text(), {
+      timeout: 15_000,
+    })
+    .toContain(replacement);
   await page.goto("/fa");
   await expect(page.getByText(replacement).first()).toBeVisible();
   await page.goto("/admin/content/translations");
