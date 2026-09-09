@@ -46,7 +46,14 @@ export async function generateMetadata({
     description?: Record<string, string>;
   };
   const favicon = theme?.faviconMediaId
-    ? await db.media.findUnique({ where: { id: theme.faviconMediaId } })
+    ? await db.media.findFirst({
+        where: {
+          id: theme.faviconMediaId,
+          kind: "image",
+          status: "READY",
+          deletedAt: null,
+        },
+      })
     : null;
 
   return {

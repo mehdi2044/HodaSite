@@ -7,6 +7,7 @@ import {
   registerMediaPurgeHandler,
   ensurePurgeSweepScheduled,
 } from "@/modules/media/purge";
+import { registerMediaReplaceHandler } from "@/modules/media/replace";
 
 // Registers the media job handlers once, when this route module first loads
 // (D21 — DB-backed queue, no Redis/BullMQ). Deliberately NOT in
@@ -21,6 +22,7 @@ import {
 // (ensurePurgeSweepScheduled) must wait for a real request instead.
 registerMediaJobHandlers();
 registerMediaPurgeHandler();
+registerMediaReplaceHandler();
 
 export async function POST(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)

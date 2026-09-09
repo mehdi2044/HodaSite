@@ -72,6 +72,11 @@
     "folder": "Klasör",
     "save": "Kaydet",
     "delete": "Sil",
+    "replace": "Dosyayı değiştir",
+    "replacing": "Yeni dosya yükleniyor…",
+    "replaceAccepted": "Yeni dosya işleniyor; hazır olana kadar mevcut görsel yayında kalır.",
+    "replaceFailed": "Dosya değiştirme başlatılamadı.",
+    "retryReplace": "Değiştirmeyi tekrar dene",
     "chooseMedia": "Medya seç",
     "uploadNew": "Yeni yükle",
     "close": "Kapat",
@@ -137,6 +142,7 @@
     "pages": "Sayfalar",
     "homepage": "Ana sayfa",
     "translations": "Çeviriler",
+    "notifications": "Bildirimler",
     "activePages": "Etkin sayfalar",
     "trash": "Çöp kutusu",
     "newPage": "Yeni sayfa",
@@ -267,5 +273,19 @@
     "noMissing": "Eksik çeviri bulunmadı.",
     "defaultValue": "Dosya varsayılanı",
     "overrideValue": "Değişiklik değeri"
+  },
+  "notificationAdmin": {
+    "title": "E-posta şablonları",
+    "description": "Çok dilli bildirim metinlerini düzenleyin. Bağlantı bilgileri yalnızca sunucu ortamında kalır.",
+    "active": "Etkin",
+    "subject": "Konu",
+    "body": "İçerik",
+    "variables": "İzin verilen değişkenler",
+    "save": "Şablonu kaydet",
+    "testTitle": "Güvenli test gönder",
+    "recipient": "Test alıcısı",
+    "locale": "Dil",
+    "sendTest": "Test gönder",
+    "success": "Tamamlandı."
   }
 }

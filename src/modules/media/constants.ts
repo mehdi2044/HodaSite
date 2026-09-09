@@ -36,3 +36,4 @@ export const PURGE_RETENTION_DAYS_DEFAULT = 30;
 
 export const MEDIA_OPTIMIZE_JOB = "media-optimize";
 export const MEDIA_PURGE_JOB = "media-purge";
+export const MEDIA_REPLACE_JOB = "media-replace";

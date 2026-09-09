@@ -49,8 +49,8 @@ export async function Footer({
   );
 
   return (
-    <footer className="mt-16 border-t border-black/5 bg-surface">
-      <div className="shell grid gap-6 py-10 text-sm md:grid-cols-4">
+    <footer className="mt-20 bg-text text-bg">
+      <div className="shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div className="grid gap-1">
           <strong>{t("contactTitle")}</strong>
           {contact.email && (
@@ -64,7 +64,7 @@ export async function Footer({
             </bdi>
           )}
           {contact.address?.[locale] && (
-            <p className="text-muted">{contact.address[locale]}</p>
+            <p className="opacity-70">{contact.address[locale]}</p>
           )}
         </div>
         {socialLinks.length > 0 && (
@@ -85,7 +85,7 @@ export async function Footer({
           </nav>
         )}
         {footerLine && (
-          <div className="grid gap-1 text-muted">
+          <div className="grid gap-1 opacity-70">
             <p>{footerLine}</p>
           </div>
         )}
@@ -107,7 +107,7 @@ function FooterMenuItem({ item }: { item: PublicMenuItem }) {
           {item.label}
         </a>
       ) : (
-        <span className="py-2 font-semibold text-muted">{item.label}</span>
+        <span className="py-2 font-semibold opacity-70">{item.label}</span>
       )}
       {item.children.map((child) => (
         <FooterMenuItem key={child.id} item={child} />

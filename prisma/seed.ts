@@ -82,6 +82,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.homepage.write",
     "content.translation.read",
     "content.translation.write",
+    "settings.notification.read",
+    "settings.notification.write",
+    "settings.notification.test",
     "system.health.view",
     "catalog.product.view",
     "catalog.product.create",
@@ -484,6 +487,125 @@ async function seedContent() {
       ],
     },
   });
+
+  const templates = [
+    {
+      key: "auth.otp",
+      subject: {
+        fa: "کد ورود {{code}}",
+        tr: "Giriş kodu {{code}}",
+        en: "Sign-in code {{code}}",
+      },
+      body: {
+        fa: "کد شما {{code}} است و {{expiresMinutes}} دقیقه اعتبار دارد.",
+        tr: "Kodunuz {{code}}; {{expiresMinutes}} dakika geçerlidir.",
+        en: "Your code is {{code}}. It expires in {{expiresMinutes}} minutes.",
+      },
+    },
+    {
+      key: "order.placed",
+      subject: {
+        fa: "سفارش {{orderNumber}} دریافت شد",
+        tr: "{{orderNumber}} siparişi alındı",
+        en: "Order {{orderNumber}} received",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، سفارش {{orderNumber}} به مبلغ {{total}} دریافت شد.",
+        tr: "Merhaba {{customerName}}, {{total}} tutarındaki {{orderNumber}} siparişini aldık.",
+        en: "Hello {{customerName}}, we received order {{orderNumber}} for {{total}}.",
+      },
+    },
+    {
+      key: "order.receipt_received",
+      subject: {
+        fa: "رسید سفارش {{orderNumber}} دریافت شد",
+        tr: "{{orderNumber}} makbuzu alındı",
+        en: "Receipt received for {{orderNumber}}",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، رسید سفارش {{orderNumber}} در حال بررسی است.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} siparişinin makbuzu inceleniyor.",
+        en: "Hello {{customerName}}, your receipt for order {{orderNumber}} is under review.",
+      },
+    },
+    {
+      key: "order.paid",
+      subject: {
+        fa: "پرداخت سفارش {{orderNumber}} تأیید شد",
+        tr: "{{orderNumber}} ödemesi onaylandı",
+        en: "Order {{orderNumber}} paid",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، پرداخت {{total}} برای سفارش {{orderNumber}} تأیید شد.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} için {{total}} ödeme onaylandı.",
+        en: "Hello {{customerName}}, payment for {{orderNumber}} ({{total}}) is confirmed.",
+      },
+    },
+    {
+      key: "order.rejected",
+      subject: {
+        fa: "نتیجهٔ بررسی سفارش {{orderNumber}}",
+        tr: "{{orderNumber}} ödeme incelemesi",
+        en: "Payment review for {{orderNumber}}",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، پرداخت سفارش {{orderNumber}} پذیرفته نشد: {{reason}}.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} ödemesi kabul edilmedi: {{reason}}.",
+        en: "Hello {{customerName}}, payment for {{orderNumber}} was not accepted: {{reason}}.",
+      },
+    },
+    {
+      key: "order.shipped",
+      subject: {
+        fa: "سفارش {{orderNumber}} ارسال شد",
+        tr: "{{orderNumber}} gönderildi",
+        en: "Order {{orderNumber}} shipped",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، سفارش {{orderNumber}} ارسال شد. کد رهگیری: {{trackingNumber}}.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} gönderildi. Takip: {{trackingNumber}}.",
+        en: "Hello {{customerName}}, order {{orderNumber}} shipped. Tracking: {{trackingNumber}}.",
+      },
+    },
+    {
+      key: "order.delivered",
+      subject: {
+        fa: "سفارش {{orderNumber}} تحویل شد",
+        tr: "{{orderNumber}} teslim edildi",
+        en: "Order {{orderNumber}} delivered",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، سفارش {{orderNumber}} تحویل شد.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} teslim edildi.",
+        en: "Hello {{customerName}}, order {{orderNumber}} was delivered.",
+      },
+    },
+    {
+      key: "order.cancelled",
+      subject: {
+        fa: "سفارش {{orderNumber}} لغو شد",
+        tr: "{{orderNumber}} iptal edildi",
+        en: "Order {{orderNumber}} cancelled",
+      },
+      body: {
+        fa: "{{customerName}} عزیز، سفارش {{orderNumber}} لغو شد: {{reason}}.",
+        tr: "Merhaba {{customerName}}, {{orderNumber}} iptal edildi: {{reason}}.",
+        en: "Hello {{customerName}}, order {{orderNumber}} was cancelled: {{reason}}.",
+      },
+    },
+  ] as const;
+  for (const { key, subject, body } of templates) {
+    await db.notificationTemplate.upsert({
+      where: { key_channel: { key, channel: "email" } },
+      update: {},
+      create: {
+        key,
+        channel: "email",
+        subjectI18n: subject,
+        bodyI18n: body,
+      },
+    });
+  }
 }
 
 // Phase 01b acceptance criterion 9: a fresh `down -v && up --build` seeds

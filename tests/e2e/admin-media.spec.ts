@@ -50,6 +50,52 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
     )
     .toBe("READY");
 
+  const beforeReplaceResponse = await page.request.get(
+    "/api/admin/media?kind=image",
+  );
+  const beforeReplace = (await beforeReplaceResponse.json()) as {
+    items: Array<{ id: string; url: string }>;
+  };
+  const oldUrl = beforeReplace.items.find((item) => item.id === media.id)?.url;
+  expect(oldUrl).toBeTruthy();
+  const replacementImage = await sharp({
+    create: { width: 960, height: 720, channels: 3, background: "#2e7d4f" },
+  })
+    .jpeg()
+    .toBuffer();
+  const replace = await page.request.post(`/api/uploads/${media.id}/replace`, {
+    multipart: {
+      file: {
+        name: "e2e-replacement.jpg",
+        mimeType: "image/jpeg",
+        buffer: replacementImage,
+      },
+    },
+  });
+  expect(replace.status()).toBe(202);
+  await expect
+    .poll(
+      async () => {
+        await page.request.post("/api/cron/tick", {
+          headers: { authorization: `Bearer ${CRON_SECRET}` },
+        });
+        const response = await page.request.get("/api/admin/media?kind=image");
+        const body = (await response.json()) as {
+          items: Array<{ id: string; url: string; width: number }>;
+        };
+        return body.items.find((item) => item.id === media.id);
+      },
+      { timeout: 30_000, intervals: [500, 1_000, 2_000] },
+    )
+    .toMatchObject({ id: media.id, width: 960 });
+  const afterReplace = await page.request.get("/api/admin/media?kind=image");
+  const replacedItems = (await afterReplace.json()) as {
+    items: Array<{ id: string; url: string }>;
+  };
+  expect(
+    replacedItems.items.find((item) => item.id === media.id)?.url,
+  ).not.toBe(oldUrl);
+
   await page.goto("/admin/media");
   const tile = page.getByTestId(`media-tile-${media.id}`);
   await expect(tile).toBeVisible();

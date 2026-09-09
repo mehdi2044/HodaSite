@@ -29,6 +29,7 @@ export async function AdminShell({
         <Link href="/admin/settings/legal">حقوقی</Link>
         <Link href="/admin/settings/checkout">پرداخت</Link>
         <Link href="/admin/settings/maintenance">حالت تعمیرات</Link>
+        <Link href="/admin/settings/notifications">{t("notifications")}</Link>
         <Link href="/admin/design">طراحی</Link>
         <Link href="/admin/system/health">سلامت</Link>
         <div className="sidebar-user">

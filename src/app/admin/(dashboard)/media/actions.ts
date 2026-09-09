@@ -109,6 +109,50 @@ export async function retryProcessingAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/media");
 }
 
+const replacementIdSchema = z.object({
+  replacementId: z.string().min(1).max(100),
+});
+
+export async function retryReplacementAction(
+  formData: FormData,
+): Promise<void> {
+  const userId = await requireUser();
+  await assertCan(userId, "media.write");
+  const { replacementId } = replacementIdSchema.parse(
+    Object.fromEntries(formData),
+  );
+  await withMutation(() =>
+    db.$transaction(async (tx) => {
+      const replacement = await tx.mediaReplacement.findFirstOrThrow({
+        where: {
+          id: replacementId,
+          status: { in: ["FAILED", "CLEANUP_FAILED"] },
+        },
+      });
+      const nextStatus =
+        replacement.status === "CLEANUP_FAILED" ? "SWAPPED" : "PENDING";
+      const claimed = await tx.mediaReplacement.updateMany({
+        where: { id: replacement.id, status: replacement.status },
+        data: { status: nextStatus, error: null },
+      });
+      if (claimed.count !== 1) throw new z.ZodError([]);
+      await tx.job.create({
+        data: { type: "media-replace", payload: { replacementId } },
+      });
+      await tx.auditLog.create({
+        data: {
+          userId,
+          action: "media.replace.retry",
+          entityType: "Media",
+          entityId: replacement.mediaId,
+          after: { replacementId },
+        },
+      });
+    }),
+  );
+  revalidatePath("/admin/media");
+}
+
 const folderSchema = z.object({ name: z.string().min(1) });
 
 export async function createFolderAction(formData: FormData): Promise<void> {

@@ -1,18 +1,15 @@
 "use client";
 
-const NAMES: Record<string, string> = {
-  IR: "ایران",
-  TR: "ترکیه",
-  CA: "کانادا",
-};
 const YEAR = 60 * 60 * 24 * 365;
 
 export function MarketSwitcher({
   current,
   markets,
+  ariaLabel,
 }: {
   current: string;
-  markets: { code: string; isActive: boolean }[];
+  markets: { code: string; name: string; isActive: boolean }[];
+  ariaLabel: string;
 }) {
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
@@ -24,16 +21,16 @@ export function MarketSwitcher({
 
   return (
     <select
-      aria-label="بازار"
+      aria-label={ariaLabel}
       defaultValue={current}
       onChange={onChange}
-      className="min-h-9 rounded-[8px] border border-black/10 bg-transparent px-2 text-sm"
+      className="min-h-11 rounded-full border border-black/10 bg-transparent px-3 text-sm"
     >
       {markets
         .filter((m) => m.isActive)
         .map((m) => (
           <option key={m.code} value={m.code}>
-            {NAMES[m.code] ?? m.code}
+            {m.name}
           </option>
         ))}
     </select>

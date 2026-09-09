@@ -49,7 +49,10 @@ export async function listMedia(filters: MediaListFilters = {}) {
       orderBy: SORT[filters.sort ?? "date_desc"],
       skip: filters.skip ?? 0,
       take: filters.take ?? 60,
-      include: { folder: true },
+      include: {
+        folder: true,
+        replacements: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
     }),
     db.media.count({ where }),
   ]);

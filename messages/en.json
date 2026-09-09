@@ -72,6 +72,11 @@
     "folder": "Folder",
     "save": "Save",
     "delete": "Delete",
+    "replace": "Replace file",
+    "replacing": "Uploading replacement…",
+    "replaceAccepted": "Replacement is processing. The current image remains live until it is ready.",
+    "replaceFailed": "Replacement could not be started.",
+    "retryReplace": "Retry replacement",
     "chooseMedia": "Choose media",
     "uploadNew": "Upload new",
     "close": "Close",
@@ -137,6 +142,7 @@
     "pages": "Pages",
     "homepage": "Homepage",
     "translations": "Translations",
+    "notifications": "Notifications",
     "activePages": "Active pages",
     "trash": "Trash",
     "newPage": "New page",
@@ -267,5 +273,19 @@
     "noMissing": "No missing translation was found.",
     "defaultValue": "File default",
     "overrideValue": "Override value"
+  },
+  "notificationAdmin": {
+    "title": "Email templates",
+    "description": "Edit multilingual notification copy. Delivery credentials stay in environment configuration.",
+    "active": "Active",
+    "subject": "Subject",
+    "body": "Body",
+    "variables": "Allowed variables",
+    "save": "Save template",
+    "testTitle": "Send a safe test",
+    "recipient": "Test recipient",
+    "locale": "Language",
+    "sendTest": "Send test",
+    "success": "Done."
   }
 }

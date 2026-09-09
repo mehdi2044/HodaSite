@@ -33,7 +33,7 @@
 - `Homepage(marketId?, blocks json, deletedAt)`؛ `marketId=null` ترکیب سراسری است، ردیف ویژهٔ بازار جای آن را می‌گیرد و `blocks` فقط از قرارداد اعتبارسنجی‌شدهٔ فاز 01c خوانده می‌شود.
 - `Banner(placement, mediaId, titleI18n, subtitleI18n, ctaI18n, url, startsAt, endsAt, marketIds[], sortOrder)`
 - `Translation(entityType, entityId, field, locale, value)` — unique on all four keys
-- `NotificationTemplate(key, channel email|sms, subjectI18n, bodyI18n, isActive)`
+- `NotificationTemplate(key, channel email|sms, subjectI18n, bodyI18n, isActive)` — فاز 01c هشت قالب ایمیل سه‌زبانه را seed می‌کند. فقط متغیرهای allowlist هر کلید پذیرفته می‌شوند؛ secret و گیرنده در این جدول یا AuditLog ذخیره نمی‌شود. `noop` پیش‌فرض است و اتصال واقعی `smtp`/`resend` طبق فاز 04 فقط از Environment فعال می‌شود.
 - `Integration(key fx|email|sms|storage|payment.*|carrier.*|ai, provider, config json (non-secret), isActive)`
 
 ### Catalog
@@ -45,6 +45,7 @@
 - `Color(name I18n, hex)`, `Size(scale EU|TR|US|CA|INTL, value, sortOrder, groupKey)`
 - `Media(kind image|video|receipt|document, storageKey, url, width, height, bytes, mime, altI18n, variants json, uploadedBy, status PROCESSING|READY|FAILED, folderId?, tags[], blurDataUrl?, processingError?, dominantColor?)` — soft delete only (`deletedAt`); `media-purge` job (Phase 01b) physically removes the file + variants 30 days after (never while maintenance is on)
 - `MediaFolder(id, name, parentId?, createdAt)` — one level of nesting is enough for 01b
+- `MediaReplacement(mediaId, baseStorageKey, storageKey, variants, status PENDING|PROCESSING|SWAPPED|DONE|FAILED|CLEANUP_FAILED, requestedBy)` — فایل تازه مستقل پردازش می‌شود و `Media.id`/alt/tag/folder ثابت می‌ماند. فقط پس از آماده‌شدن variantها و تطبیق `baseStorageKey`، metadata ذخیره‌سازی در transaction عوض می‌شود. خطای پیش از swap فایل زنده را تغییر نمی‌دهد؛ خطای cleanup با `CLEANUP_FAILED` قابل retry و fail-closed است.
 
 **`Media.variants` JSON shape (Phase 01b):** `{ [format in 'webp'|'avif']: { [width in '320'|'640'|'960'|'1280'|'1920']: { key, url, bytes } } }`. Populated by the `media-optimize` job (`src/modules/media/optimize.ts`, `sharp`) after upload; `status` starts `PROCESSING` and becomes `READY` (with `variants`/`width`/`height`/`blurDataUrl`/`dominantColor` filled in) or `FAILED` (with `processingError`, up to 3 attempts). Legacy rows (pre-01b) default to `READY` via the column default — no separate data migration needed since they never had variants to begin with (the original `url` keeps serving them).
 

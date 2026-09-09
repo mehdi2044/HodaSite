@@ -128,6 +128,12 @@ export default async function MediaLibrary({
           createdAt: m.createdAt.toISOString(),
           variants: m.variants as
             import("@/modules/media/constants").MediaVariants | null,
+          replacement: m.replacements[0]
+            ? {
+                id: m.replacements[0].id,
+                status: m.replacements[0].status,
+              }
+            : null,
         }))}
         folders={folders.map((f) => ({ id: f.id, name: f.name }))}
         trash={trash}

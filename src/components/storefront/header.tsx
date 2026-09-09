@@ -24,77 +24,96 @@ export async function Header({
 }) {
   const normalizedLocale = locale as "fa" | "tr" | "en";
   const [logo, desktopMenu, mobileMenu, t] = await Promise.all([
-    logoMediaId ? db.media.findUnique({ where: { id: logoMediaId } }) : null,
+    logoMediaId
+      ? db.media.findFirst({
+          where: {
+            id: logoMediaId,
+            kind: "image",
+            status: "READY",
+            deletedAt: null,
+          },
+        })
+      : null,
     getMenu("header", market.id, market.code, normalizedLocale),
     getMenu("mobile", market.id, market.code, normalizedLocale),
-    getTranslations("contentNavigation"),
+    getTranslations(),
   ]);
 
   return (
     <header
       data-header-style={headerStyle}
-      className="shell flex flex-wrap items-center justify-between gap-3 py-4"
+      className="sticky top-0 z-40 border-b border-black/5 bg-bg/95 backdrop-blur-md"
     >
-      <Link
-        href={`/${locale}`}
-        className="flex items-center gap-2 text-lg font-semibold text-text"
-      >
-        {logo ? (
-          <ResponsiveImage
-            media={{
-              url: logo.url,
-              variants: logo.variants,
-              width: logo.width,
-              height: logo.height,
-              blurDataUrl: logo.blurDataUrl,
-              altI18n: { fa: siteName, tr: siteName, en: siteName },
-            }}
-            locale={locale as "fa" | "tr" | "en"}
-            sizes="120px"
-            priority
-            className="h-8"
-            imgClassName="h-8 w-auto object-contain"
+      <div className="shell flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
+        <Link
+          href={`/${locale}`}
+          className="flex min-h-11 items-center gap-2 text-lg font-semibold tracking-tight text-text"
+        >
+          {logo ? (
+            <ResponsiveImage
+              media={{
+                url: logo.url,
+                variants: logo.variants,
+                width: logo.width,
+                height: logo.height,
+                blurDataUrl: logo.blurDataUrl,
+                altI18n: { fa: siteName, tr: siteName, en: siteName },
+              }}
+              locale={locale as "fa" | "tr" | "en"}
+              sizes="120px"
+              priority
+              className="h-8"
+              imgClassName="h-8 w-auto object-contain"
+            />
+          ) : (
+            siteName
+          )}
+        </Link>
+        <nav
+          aria-label={t("contentNavigation.main")}
+          className="hidden items-center gap-5 md:flex"
+        >
+          {desktopMenu.map((item) => (
+            <MenuLink
+              key={item.id}
+              item={item}
+              placeholderLabel={t("contentNavigation.phase02Placeholder")}
+            />
+          ))}
+        </nav>
+        <div className="flex items-center gap-4">
+          <LocaleSwitcher
+            current={locale}
+            enabledLocales={market.enabledLocales}
+            ariaLabel={t("locale.switchTo")}
           />
-        ) : (
-          siteName
-        )}
-      </Link>
-      <nav aria-label={t("main")} className="hidden items-center gap-5 md:flex">
-        {desktopMenu.map((item) => (
-          <MenuLink
-            key={item.id}
-            item={item}
-            placeholderLabel={t("phase02Placeholder")}
+          <MarketSwitcher
+            current={market.code}
+            markets={markets}
+            ariaLabel={t("market.chooseMarket")}
           />
-        ))}
-      </nav>
-      <div className="flex items-center gap-4">
-        <LocaleSwitcher
-          current={locale}
-          enabledLocales={market.enabledLocales}
-        />
-        <MarketSwitcher current={market.code} markets={markets} />
-        <details className="relative md:hidden">
-          <summary
-            className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border border-black/10"
-            aria-label={t("mobile")}
-          >
-            ☰
-          </summary>
-          <nav
-            className="absolute end-0 top-12 z-30 grid min-w-64 gap-1 rounded-token bg-surface p-3 shadow-xl"
-            aria-label={t("mobile")}
-          >
-            {(mobileMenu.length ? mobileMenu : desktopMenu).map((item) => (
-              <MenuLink
-                key={item.id}
-                item={item}
-                mobile
-                placeholderLabel={t("phase02Placeholder")}
-              />
-            ))}
-          </nav>
-        </details>
+          <details className="relative md:hidden">
+            <summary
+              className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full border border-black/10 bg-surface shadow-sm"
+              aria-label={t("contentNavigation.mobile")}
+            >
+              ☰
+            </summary>
+            <nav
+              className="absolute end-0 top-14 z-30 grid min-w-72 gap-1 rounded-token border border-black/5 bg-surface p-3 shadow-2xl"
+              aria-label={t("contentNavigation.mobile")}
+            >
+              {(mobileMenu.length ? mobileMenu : desktopMenu).map((item) => (
+                <MenuLink
+                  key={item.id}
+                  item={item}
+                  mobile
+                  placeholderLabel={t("contentNavigation.phase02Placeholder")}
+                />
+              ))}
+            </nav>
+          </details>
+        </div>
       </div>
     </header>
   );

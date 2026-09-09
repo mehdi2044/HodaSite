@@ -109,6 +109,32 @@ if [[ "$STORAGE_MODE" == "s3" ]]; then
   [[ "$VARIANT" == /media/* ]] || fail "missing S3 variant URL"
   "${COMPOSE[@]}" exec -T app node -e \
     "fetch('http://127.0.0.1:3000${VARIANT}',{redirect:'follow'}).then(async r=>{if(!r.ok)throw Error(String(r.status));let b=await r.arrayBuffer();if(!b.byteLength)throw Error('empty')}).catch(e=>{console.error(e);process.exit(1)})"
+  # Copy a second seeded original to a unique staging key, then run the real
+  # media-replace handler through cron. Reusing the source Media.storageKey
+  # would violate Media's unique constraint and would not model a real upload.
+  SOURCE_KEY=$(${COMPOSE[@]} exec -T postgres psql -U hoda -d hoda -tAc \
+    "select \"storageKey\" from \"Media\" where id <> '${MEDIA_ID}' and status='READY' limit 1")
+  SOURCE_KEY=${SOURCE_KEY//[[:space:]]/}
+  [[ -n "$SOURCE_KEY" ]] || fail "missing S3 replacement source"
+  REPLACEMENT_KEY="media/replacements/s3-smoke-input.jpg"
+  "${COMPOSE[@]}" run --rm --entrypoint /bin/sh minio-init -c \
+    'mc alias set local http://minio:9000 "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null && mc cp "local/$S3_BUCKET/'"${SOURCE_KEY}"'" "local/$S3_BUCKET/'"${REPLACEMENT_KEY}"'" >/dev/null'
+  "${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -v ON_ERROR_STOP=1 -c \
+    "insert into \"MediaReplacement\"(id,\"mediaId\",\"baseStorageKey\",\"storageKey\",url,\"originalName\",bytes,mime,width,height,status,\"requestedBy\",\"createdAt\",\"updatedAt\")
+     select 's3-replace-smoke', target.id, target.\"storageKey\", '${REPLACEMENT_KEY}', '/media/${REPLACEMENT_KEY}',
+            's3-replacement.jpg', source.bytes, source.mime, source.width, source.height,
+            'PENDING', owner.id, now(), now()
+     from \"Media\" target
+     cross join lateral (select * from \"Media\" where id <> target.id and status='READY' limit 1) source
+     cross join lateral (select id from \"User\" limit 1) owner
+     where target.id='${MEDIA_ID}';
+     insert into \"Job\"(id,type,payload,status,attempts,\"runAt\",\"createdAt\",\"updatedAt\")
+     values ('s3-replace-job','media-replace','{\"replacementId\":\"s3-replace-smoke\"}'::jsonb,'PENDING',0,now(),now(),now());" >/dev/null
+  "${COMPOSE[@]}" exec -T app node -e \
+    "fetch('http://127.0.0.1:3000/api/cron/tick',{method:'POST',headers:{authorization:'Bearer ${CRON_SECRET_VALUE}'}}).then(r=>{if(!r.ok)throw Error(String(r.status))}).catch(e=>{console.error(e);process.exit(1)})"
+  REPLACED=$(${COMPOSE[@]} exec -T postgres psql -U hoda -d hoda -tAc \
+    "select count(*) from \"Media\" m join \"MediaReplacement\" r on r.\"mediaId\"=m.id where r.id='s3-replace-smoke' and r.status='DONE' and m.id='${MEDIA_ID}' and m.\"storageKey\"=r.\"storageKey\"")
+  [[ "${REPLACED//[[:space:]]/}" == "1" ]] || fail "S3 media replacement did not finish atomically"
   # Age one row and run the real purge handler. This exercises
   # S3Storage.delete for the original and every variant; the DB row must be
   # removed only after all object deletions succeed.
