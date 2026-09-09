@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import sharp from "sharp";
 import { db } from "@/lib/db";
 import { MAX_JOB_ATTEMPTS } from "@/modules/jobs";
@@ -42,13 +42,12 @@ describe.skipIf(!hasDb)("atomic media replacement", () => {
     });
   });
   afterEach(async () => {
-    await db.auditLog.deleteMany({ where: { userId } });
+    // AuditLog is intentionally append-only (D24), including in tests.
+    // MediaReplacement cascades from Media, while audit rows remain as the
+    // immutable record of the completed operation.
     await db.media.deleteMany({ where: { uploadedBy: userId } });
     target.objects.clear();
     target.failDeleteOnce.clear();
-  });
-  afterAll(async () => {
-    await db.user.delete({ where: { id: userId } }).catch(() => {});
   });
 
   async function jpeg(color: string) {
