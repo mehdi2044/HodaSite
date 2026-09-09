@@ -53,6 +53,27 @@ enum MediaStatus {
   FAILED
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProductGender {
+  WOMEN
+  MEN
+  KIDS
+  UNISEX
+}
+
+enum SizeScale {
+  EU
+  TR
+  US
+  CA
+  INTL
+}
+
 model User {
   id           String                   @id @default(cuid())
   email        String                   @unique
@@ -333,6 +354,10 @@ model Media {
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   replacements    MediaReplacement[]
+  categoryCovers  Category[]         @relation("CategoryCover")
+  colorSwatches   Color[]            @relation("ColorSwatch")
+  productMedia    ProductMedia[]
+  variantMedia    VariantMedia[]
 
   @@index([deletedAt, createdAt])
   @@index([folderId])
@@ -470,4 +495,208 @@ model MediaReplacement {
 
   @@index([mediaId, createdAt])
   @@index([status])
+}
+
+/// Catalog taxonomy and product data introduced in Phase 02. Content records
+/// follow D24 soft deletion; financial inventory is deliberately Phase 03.
+model Brand {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameI18n  Json
+  products  Product[]
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([deletedAt, slug])
+}
+
+model Category {
+  id              String        @id @default(cuid())
+  parentId        String?
+  parent          Category?     @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Category[]    @relation("CategoryTree")
+  slugI18n        Json
+  titleI18n       Json
+  descriptionI18n Json          @default("{}")
+  seoI18n         Json          @default("{}")
+  gender          ProductGender
+  sortOrder       Int           @default(0)
+  mediaId         String?
+  media           Media?        @relation("CategoryCover", fields: [mediaId], references: [id], onDelete: SetNull)
+  products        Product[]
+  deletedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([parentId, sortOrder])
+  @@index([gender, deletedAt])
+  @@index([mediaId])
+}
+
+model Collection {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  titleI18n Json
+  products  Product[]
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([deletedAt, slug])
+}
+
+model Color {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  nameI18n      Json
+  hex           String
+  swatchMediaId String?
+  swatchMedia   Media?    @relation("ColorSwatch", fields: [swatchMediaId], references: [id], onDelete: SetNull)
+  variants      Variant[]
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([deletedAt, code])
+  @@index([swatchMediaId])
+}
+
+model Size {
+  id        String    @id @default(cuid())
+  scale     SizeScale
+  value     String
+  groupKey  String
+  sortOrder Int       @default(0)
+  variants  Variant[]
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([scale, value, groupKey])
+  @@index([groupKey, sortOrder])
+}
+
+model Product {
+  id                          String                   @id @default(cuid())
+  slugI18n                    Json
+  titleI18n                   Json
+  descriptionI18n             Json
+  brandId                     String?
+  brand                       Brand?                   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  categoryId                  String
+  category                    Category                 @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  collections                 Collection[]
+  gender                      ProductGender
+  material                    String?
+  fit                         String?
+  season                      String?
+  careI18n                    Json                     @default("{}")
+  originCountry               String?
+  tags                        String[]                 @default([])
+  status                      ProductStatus            @default(DRAFT)
+  basePriceAmount             Decimal                  @db.Decimal(18, 4)
+  basePriceCurrency           String                   @default("USD")
+  compareAtPriceAmount        Decimal?                 @db.Decimal(18, 4)
+  defaultPurchaseCostAmount   Decimal?                 @db.Decimal(18, 4)
+  defaultPurchaseCostCurrency String?
+  weightGrams                 Int                      @default(250)
+  seoI18n                     Json                     @default("{}")
+  marketIds                   String[]                 @default([])
+  searchText                  String                   @default("")
+  searchVector                Unsupported("tsvector")?
+  variants                    Variant[]
+  attributes                  ProductAttribute[]
+  media                       ProductMedia[]
+  deletedAt                   DateTime?
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+
+  @@index([categoryId, status, deletedAt])
+  @@index([brandId])
+  @@index([gender, status])
+  @@index([marketIds], type: Gin)
+  @@index([tags], type: Gin)
+}
+
+model ProductAttribute {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  key       String
+  valueI18n Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, key])
+  @@index([productId])
+}
+
+model Variant {
+  id               String         @id @default(cuid())
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku              String         @unique
+  barcode          String?        @unique
+  colorId          String
+  color            Color          @relation(fields: [colorId], references: [id], onDelete: Restrict)
+  sizeId           String
+  size             Size           @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+  priceOverrideUsd Decimal?       @db.Decimal(18, 4)
+  weightGrams      Int?
+  dimensions       Json?
+  isActive         Boolean        @default(true)
+  media            VariantMedia[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([productId, colorId, sizeId])
+  @@index([productId, isActive])
+  @@index([colorId])
+  @@index([sizeId])
+}
+
+model ProductMedia {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mediaId   String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, mediaId])
+  @@index([productId, sortOrder])
+  @@index([mediaId])
+}
+
+model VariantMedia {
+  id        String   @id @default(cuid())
+  variantId String
+  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  mediaId   String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([variantId, mediaId])
+  @@index([variantId, sortOrder])
+  @@index([mediaId])
+}
+
+model SizeGuide {
+  id        String    @id @default(cuid())
+  scope     String
+  refId     String
+  nameI18n  Json
+  unit      String    @default("cm")
+  tableI18n Json
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([scope, refId])
+  @@index([scope, deletedAt])
 }

@@ -28,7 +28,7 @@ export default async function Home({
     <HomepageBlocks
       blocks={homepage.blocks}
       locale={safeLocale}
-      phase2={t("homepage.phase2Placeholder")}
+      market={market}
     />
   );
 }

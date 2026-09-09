@@ -234,6 +234,37 @@
       "previewFrameTitle": "Safe page preview"
     }
   },
+  "catalog": {
+    "filters": "Product filters",
+    "brand": "Brand",
+    "color": "Colour",
+    "size": "Size",
+    "material": "Material",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price",
+    "available": "Available only",
+    "sort": "Sort",
+    "apply": "Apply",
+    "all": "All",
+    "results": "{count} products",
+    "loadMore": "Show more",
+    "empty": "No products match these filters.",
+    "search": "Search",
+    "searchPlaceholder": "Product, brand, or category…",
+    "addToCart": "Add to bag",
+    "cartStub": "The shopping bag becomes active in Phase 04.",
+    "sizeGuide": "Size and care guide",
+    "related": "Related products",
+    "breadcrumbs": "Breadcrumbs",
+    "home": "Home",
+    "newBadge": "New",
+    "saleBadge": "Sale",
+    "noSizeGuide": "No dedicated size guide is available for this product.",
+    "care": "Description and care",
+    "shippingReturns": "Shipping and returns",
+    "notFoundTitle": "Page or product not found",
+    "backHome": "Back to shop"
+  },
   "homepage": {
     "empty": "Homepage content has not been published yet.",
     "phase2Placeholder": "This section will appear when the catalog is added in Phase 02."

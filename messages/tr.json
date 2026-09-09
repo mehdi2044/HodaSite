@@ -234,6 +234,37 @@
       "previewFrameTitle": "Güvenli sayfa önizlemesi"
     }
   },
+  "catalog": {
+    "filters": "Ürün filtreleri",
+    "brand": "Marka",
+    "color": "Renk",
+    "size": "Beden",
+    "material": "Malzeme",
+    "minPrice": "En düşük fiyat",
+    "maxPrice": "En yüksek fiyat",
+    "available": "Yalnız mevcut",
+    "sort": "Sıralama",
+    "apply": "Uygula",
+    "all": "Tümü",
+    "results": "{count} ürün",
+    "loadMore": "Daha fazla göster",
+    "empty": "Bu filtrelerle ürün bulunamadı.",
+    "search": "Ara",
+    "searchPlaceholder": "Ürün, marka veya kategori…",
+    "addToCart": "Sepete ekle",
+    "cartStub": "Sepet 04. aşamada etkinleşecek.",
+    "sizeGuide": "Beden ve bakım rehberi",
+    "related": "Benzer ürünler",
+    "breadcrumbs": "Sayfa yolu",
+    "home": "Ana sayfa",
+    "newBadge": "Yeni",
+    "saleBadge": "İndirim",
+    "noSizeGuide": "Bu ürün için özel beden rehberi yok.",
+    "care": "Açıklama ve bakım",
+    "shippingReturns": "Teslimat ve iade koşulları",
+    "notFoundTitle": "Sayfa veya ürün bulunamadı",
+    "backHome": "Mağazaya dön"
+  },
   "homepage": {
     "empty": "Ana sayfa içeriği henüz yayımlanmadı.",
     "phase2Placeholder": "Bu bölüm katalog Faz 02'de eklendiğinde görüntülenecek."
