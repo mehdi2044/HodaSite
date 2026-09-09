@@ -318,6 +318,7 @@ async function main() {
   await seedContent();
 
   await seedDemoMedia();
+  await seedCatalog();
 }
 
 const SEEDED_PAGES = [
@@ -689,5 +690,279 @@ async function seedDemoMedia() {
       });
     }
   }
+}
+
+async function seedCatalog() {
+  await db.integration.upsert({
+    where: { key: "pricing.phase02-test-rates" },
+    update: { config: { IR: "60000", TR: "35", CA: "1.40" } },
+    create: {
+      key: "pricing.phase02-test-rates",
+      provider: "seed",
+      isActive: true,
+      config: { IR: "60000", TR: "35", CA: "1.40" },
+    },
+  });
+  const brands = await Promise.all(
+    [
+      ["atelier", { fa: "آتلیه", tr: "Atölye", en: "Atelier" }],
+      ["narin", { fa: "نارین", tr: "Narin", en: "Narin" }],
+      ["north", { fa: "نورث", tr: "North", en: "North" }],
+    ].map(([slug, nameI18n]) =>
+      db.brand.upsert({
+        where: { slug: slug as string },
+        update: {},
+        create: { id: `seed-brand-${slug}`, slug: slug as string, nameI18n },
+      }),
+    ),
+  );
+  const categoryRows = [
+    ["women", "زنان", "Kadın", "Women", "WOMEN"],
+    ["men", "مردان", "Erkek", "Men", "MEN"],
+    ["kids", "کودکان", "Çocuk", "Kids", "KIDS"],
+    ["accessories", "اکسسوری", "Aksesuar", "Accessories", "UNISEX"],
+  ] as const;
+  const categories = await Promise.all(
+    categoryRows.map(([slug, fa, tr, en, gender], sortOrder) =>
+      db.category.upsert({
+        where: { id: `seed-category-${slug}` },
+        update: {},
+        create: {
+          id: `seed-category-${slug}`,
+          slugI18n: {
+            fa:
+              slug === "women"
+                ? "زنانه"
+                : slug === "men"
+                  ? "مردانه"
+                  : slug === "kids"
+                    ? "کودک"
+                    : "اکسسوری",
+            tr:
+              slug === "women"
+                ? "kadin"
+                : slug === "men"
+                  ? "erkek"
+                  : slug === "kids"
+                    ? "cocuk"
+                    : "aksesuar",
+            en: slug,
+          },
+          titleI18n: { fa, tr, en },
+          descriptionI18n: {
+            fa: `مجموعه ${fa}`,
+            tr: `${tr} koleksiyonu`,
+            en: `${en} collection`,
+          },
+          seoI18n: {},
+          gender,
+          sortOrder,
+        },
+      }),
+    ),
+  );
+  const subcategories = [
+    ["tops", "بالاپوش", "Üst giyim", "Tops"],
+    ["bottoms", "پایین‌پوش", "Alt giyim", "Bottoms"],
+    ["shoes", "کفش", "Ayakkabı", "Shoes"],
+  ] as const;
+  for (const root of categories.slice(0, 3))
+    for (const [slug, fa, tr, en] of subcategories)
+      await db.category.upsert({
+        where: { id: `seed-category-${root.id}-${slug}` },
+        update: {},
+        create: {
+          id: `seed-category-${root.id}-${slug}`,
+          parentId: root.id,
+          slugI18n: {
+            fa: `${fa}-${root.gender.toLowerCase()}`,
+            tr: `${slug}-${root.gender.toLowerCase()}`,
+            en: `${root.gender.toLowerCase()}-${slug}`,
+          },
+          titleI18n: { fa, tr, en },
+          descriptionI18n: { fa, tr, en },
+          seoI18n: {},
+          gender: root.gender,
+          sortOrder: 10,
+        },
+      });
+  const colors = await Promise.all(
+    [
+      ["BLACK", "#181818", "مشکی", "Siyah", "Black"],
+      ["SAND", "#C8A77A", "شنی", "Kum", "Sand"],
+      ["RUST", "#A45135", "آجری", "Kiremit", "Rust"],
+      ["NAVY", "#1B3155", "سرمه‌ای", "Lacivert", "Navy"],
+    ].map(([code, hex, fa, tr, en]) =>
+      db.color.upsert({
+        where: { code },
+        update: {},
+        create: {
+          id: `seed-color-${code.toLowerCase()}`,
+          code,
+          hex,
+          nameI18n: { fa, tr, en },
+        },
+      }),
+    ),
+  );
+  const sizes = await Promise.all(
+    ["XS", "S", "M", "L", "XL"].map((value, sortOrder) =>
+      db.size.upsert({
+        where: {
+          scale_value_groupKey: { scale: "INTL", value, groupKey: "apparel" },
+        },
+        update: {},
+        create: {
+          id: `seed-size-${value.toLowerCase()}`,
+          scale: "INTL",
+          value,
+          groupKey: "apparel",
+          sortOrder,
+        },
+      }),
+    ),
+  );
+  for (const [groupKey, scale, values] of [
+    ["tops", "EU", ["36", "38", "40"]],
+    ["bottoms", "TR", ["36", "38", "40"]],
+    ["shoes", "US", ["7", "8", "9"]],
+    ["kids-age", "CA", ["2Y", "4Y", "6Y"]],
+  ] as const)
+    for (const [sortOrder, value] of values.entries())
+      await db.size.upsert({
+        where: { scale_value_groupKey: { scale, value, groupKey } },
+        update: {},
+        create: { scale, value, groupKey, sortOrder },
+      });
+  const collection = await db.collection.upsert({
+    where: { slug: "new-season" },
+    update: {},
+    create: {
+      id: "seed-collection-new",
+      slug: "new-season",
+      titleI18n: { fa: "فصل جدید", tr: "Yeni sezon", en: "New season" },
+    },
+  });
+  const markets = await db.market.findMany({
+    select: { id: true, code: true },
+  });
+  const media = await db.media.findMany({
+    where: { folderId: "seed-folder-محصولات" },
+    orderBy: { createdAt: "asc" },
+    take: 4,
+  });
+  for (let index = 1; index <= 30; index += 1) {
+    const category = categories[(index - 1) % categories.length];
+    const brand = brands[(index - 1) % brands.length];
+    const titles = {
+      fa: `محصول نمونه ${index}`,
+      tr: `Örnek ürün ${index}`,
+      en: `Sample product ${index}`,
+    };
+    const slugs = {
+      fa: `محصول-${index}`,
+      tr: `urun-${index}`,
+      en: `product-${index}`,
+    };
+    const allowedMarkets =
+      index === 30
+        ? markets.filter((m) => m.code === "TR").map((m) => m.id)
+        : markets.map((m) => m.id);
+    const product = await db.product.upsert({
+      where: { id: `seed-product-${index}` },
+      update: { marketIds: allowedMarkets },
+      create: {
+        id: `seed-product-${index}`,
+        slugI18n: slugs,
+        titleI18n: titles,
+        descriptionI18n: {
+          fa: "محصول نمونه با پارچه باکیفیت و طراحی مینیمال.",
+          tr: "Kaliteli kumaş ve sade tasarıma sahip örnek ürün.",
+          en: "A sample product with quality fabric and a minimal design.",
+        },
+        brandId: brand.id,
+        categoryId: category.id,
+        collections: { connect: { id: collection.id } },
+        gender: category.gender,
+        material: index % 2 ? "cotton" : "linen",
+        fit: "regular",
+        season: "all",
+        careI18n: {
+          fa: "شست‌وشو با آب سرد",
+          tr: "Soğuk yıkayın",
+          en: "Cold wash",
+        },
+        originCountry: index % 2 ? "TR" : "IR",
+        tags: ["seed", "new"],
+        status: "ACTIVE",
+        basePriceAmount: String(20 + index),
+        basePriceCurrency: "USD",
+        weightGrams: 250 + index,
+        seoI18n: {
+          title: titles,
+          description: {
+            fa: "خرید محصول نمونه",
+            tr: "Örnek ürün",
+            en: "Shop sample product",
+          },
+        },
+        marketIds: allowedMarkets,
+        searchText: `${titles.fa} ${titles.tr} ${titles.en} seed new`,
+      },
+    });
+    for (let n = 0; n < 2; n += 1) {
+      const color = colors[(index + n) % colors.length];
+      const size = sizes[(index + n) % sizes.length];
+      await db.variant.upsert({
+        where: {
+          sku: `SH-${String(index).padStart(3, "0")}-${color.code}-${size.value}`,
+        },
+        update: {
+          priceOverrideUsd: index === 1 && n === 1 ? "99" : null,
+        },
+        create: {
+          productId: product.id,
+          sku: `SH-${String(index).padStart(3, "0")}-${color.code}-${size.value}`,
+          colorId: color.id,
+          sizeId: size.id,
+          priceOverrideUsd: index === 1 && n === 1 ? "99" : null,
+          isActive: true,
+        },
+      });
+    }
+    if (media.length) {
+      const item = media[(index - 1) % media.length];
+      await db.productMedia.upsert({
+        where: {
+          productId_mediaId: { productId: product.id, mediaId: item.id },
+        },
+        update: {},
+        create: { productId: product.id, mediaId: item.id, sortOrder: 0 },
+      });
+    }
+  }
+  await db.sizeGuide.upsert({
+    where: { scope_refId: { scope: "category", refId: categories[0].id } },
+    update: {},
+    create: {
+      id: "seed-size-guide-women",
+      scope: "category",
+      refId: categories[0].id,
+      nameI18n: {
+        fa: "راهنمای پوشاک",
+        tr: "Giyim beden rehberi",
+        en: "Apparel size guide",
+      },
+      unit: "cm",
+      tableI18n: {
+        columns: ["size", "chest", "waist"],
+        rows: [
+          ["S", "88", "70"],
+          ["M", "94", "76"],
+          ["L", "100", "82"],
+        ],
+      },
+    },
+  });
 }
 main().finally(() => db.$disconnect());

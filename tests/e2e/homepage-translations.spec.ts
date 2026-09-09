@@ -36,26 +36,22 @@ test("UI override changes runtime text and reset restores file default", async (
 }) => {
   await login(page);
   await page.goto("/admin/content/translations");
-  await page
-    .getByPlaceholder("جست‌وجوی کلید یا متن…")
-    .fill("homepage.phase2Placeholder");
-  const card = page.getByTestId("translation-homepage.phase2Placeholder");
+  await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
+  const card = page.getByTestId("translation-catalog.search");
   const replacement = `جایگزین ${Date.now()}`;
   await card.getByLabel("مقدار جایگزین").fill(replacement);
   await card.getByRole("button", { name: "ذخیره", exact: true }).click();
   await expect
-    .poll(async () => (await page.request.get("/fa")).text(), {
+    .poll(async () => (await page.request.get("/fa/search")).text(), {
       timeout: 15_000,
     })
     .toContain(replacement);
-  await page.goto("/fa");
+  await page.goto("/fa/search");
   await expect(page.getByText(replacement).first()).toBeVisible();
   await page.goto("/admin/content/translations");
+  await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
   await page
-    .getByPlaceholder("جست‌وجوی کلید یا متن…")
-    .fill("homepage.phase2Placeholder");
-  await page
-    .getByTestId("translation-homepage.phase2Placeholder")
+    .getByTestId("translation-catalog.search")
     .getByRole("button", { name: "بازگشت به پیش‌فرض" })
     .click();
 });

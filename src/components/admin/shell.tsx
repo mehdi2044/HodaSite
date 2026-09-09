@@ -18,6 +18,8 @@ export async function AdminShell({
         <Link href="/admin/users">کاربران</Link>
         <Link href="/admin/markets">بازارها</Link>
         <Link href="/admin/media">رسانه‌ها</Link>
+        <Link href="/admin/catalog/products">محصولات</Link>
+        <Link href="/admin/catalog/taxonomy">طبقه‌بندی کاتالوگ</Link>
         <Link href="/admin/content/menus">{t("menus")}</Link>
         <Link href="/admin/content/pages">{t("pages")}</Link>
         <Link href="/admin/content/homepage">{t("homepage")}</Link>

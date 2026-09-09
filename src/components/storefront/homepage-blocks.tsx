@@ -2,17 +2,24 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { ResponsiveImage } from "./responsive-image";
 import { localizedValue, type HomepageBlock } from "@/modules/content/homepage";
+import { listCatalogProducts } from "@/modules/catalog";
+import { ProductCard } from "./product-card";
 
 type Locale = "fa" | "tr" | "en";
 
 export async function HomepageBlocks({
   blocks,
   locale,
-  phase2,
+  market,
 }: {
   blocks: HomepageBlock[];
   locale: Locale;
-  phase2: string;
+  market: {
+    id: string;
+    code: string;
+    currency: string;
+    markupPercent: { toString(): string };
+  };
 }) {
   const mediaIds = [
     ...new Set(
@@ -23,16 +30,39 @@ export async function HomepageBlocks({
       ),
     ),
   ];
-  const media = mediaIds.length
-    ? await db.media.findMany({
-        where: {
-          id: { in: mediaIds },
-          kind: "image",
-          status: "READY",
-          deletedAt: null,
-        },
-      })
-    : [];
+  const [media, productRows, categories] = await Promise.all([
+    mediaIds.length
+      ? await db.media.findMany({
+          where: {
+            id: { in: mediaIds },
+            kind: "image",
+            status: "READY",
+            deletedAt: null,
+          },
+        })
+      : [],
+    Promise.all(
+      blocks.map((block) =>
+        block.type === "ProductStrip"
+          ? listCatalogProducts(market.id, locale, {
+              limit: block.source.limit,
+              ...(block.source.mode === "category" && block.source.referenceId
+                ? { categoryId: block.source.referenceId }
+                : {}),
+              ...(block.source.mode === "collection" && block.source.referenceId
+                ? { collectionId: block.source.referenceId }
+                : {}),
+            })
+          : Promise.resolve(null),
+      ),
+    ),
+    db.category.findMany({
+      where: { deletedAt: null },
+      orderBy: { sortOrder: "asc" },
+      take: 12,
+      include: { media: true },
+    }),
+  ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
   return (
     <main dir={locale === "fa" ? "rtl" : "ltr"}>
@@ -80,17 +110,56 @@ export async function HomepageBlocks({
             </section>
           );
         }
-        if (block.type === "CategoryCards" || block.type === "ProductStrip")
+        if (block.type === "ProductStrip")
           return (
             <section key={index} className="shell py-16 md:py-24">
               <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {localizedValue(block.title, locale)}
               </h2>
-              <div
-                className="mt-8 grid min-h-52 place-items-center rounded-token border border-black/5 bg-surface px-6 text-center text-muted shadow-[0_20px_70px_rgba(57,35,11,0.06)]"
-                role="status"
-              >
-                {phase2}
+              <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                {productRows[index]?.items
+                  .slice(0, block.source.limit)
+                  .map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      locale={locale}
+                      market={market}
+                    />
+                  ))}
+              </div>
+            </section>
+          );
+        if (block.type === "CategoryCards")
+          return (
+            <section key={index} className="shell py-16 md:py-24">
+              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {localizedValue(block.title, locale)}
+              </h2>
+              <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                {categories.slice(0, block.source.limit).map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/${locale}/c/${encodeURIComponent(localizedValue(category.slugI18n as Record<Locale, string>, locale))}`}
+                    className="group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
+                  >
+                    {category.media && (
+                      <ResponsiveImage
+                        media={category.media}
+                        locale={locale}
+                        sizes="(max-width:640px) 50vw,25vw"
+                        className="aspect-[4/5] overflow-hidden bg-black/5"
+                        imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      />
+                    )}
+                    <h3 className="p-4 text-lg font-semibold">
+                      {localizedValue(
+                        category.titleI18n as Record<Locale, string>,
+                        locale,
+                      )}
+                    </h3>
+                  </Link>
+                ))}
               </div>
             </section>
           );

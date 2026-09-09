@@ -101,8 +101,13 @@ ok "12 seed images READY with webp+avif variants"
 if [[ "$STORAGE_MODE" == "s3" ]]; then
   step "S3 provider put/get/delete, optimize and stream against MinIO"
   MEDIA_ID=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
-    "select id from \"Media\" where \"originalName\" like 'seed-%' and status='READY' limit 1")
+    "select m.id from \"Media\" m
+     where m.\"originalName\" like 'seed-%' and m.status='READY'
+       and not exists (select 1 from \"ProductMedia\" pm where pm.\"mediaId\"=m.id)
+       and not exists (select 1 from \"VariantMedia\" vm where vm.\"mediaId\"=m.id)
+     limit 1")
   MEDIA_ID=${MEDIA_ID//[[:space:]]/}
+  [[ -n "$MEDIA_ID" ]] || fail "missing unreferenced S3 smoke media"
   VARIANT=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc \
     "select variants->'webp'->'320'->>'url' from \"Media\" where id='${MEDIA_ID}'")
   VARIANT=${VARIANT//[[:space:]]/}
