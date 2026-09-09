@@ -43,7 +43,9 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
   await expect
     .poll(() => decodeURIComponent(new URL(page.url()).pathname))
     .toBe("/fa/pages/درباره-ما");
-  await expect(page.locator('bdi[dir="ltr"]')).toHaveText("SH-MW-1023");
+  const isolatedCode = page.getByText("SH-MW-1023", { exact: true });
+  await expect(isolatedCode).toHaveText("SH-MW-1023");
+  await expect(isolatedCode).toHaveAttribute("dir", "ltr");
 });
 
 test("active content is rejected before it can be persisted", async ({
