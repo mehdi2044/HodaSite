@@ -9,6 +9,7 @@ import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import {
   parseTranslationImport,
+  uiTranslationKeySchema,
   uiTranslationSchema,
   UI_LOCALES,
 } from "@/modules/content/translations";
@@ -80,9 +81,10 @@ export async function resetUiTranslation(
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
     await assertCan(session.user.id, "content.translation.write");
-    const input = uiTranslationSchema
-      .pick({ locale: true, key: true })
-      .parse({ locale: data.get("locale"), key: data.get("key") });
+    const input = uiTranslationKeySchema.parse({
+      locale: data.get("locale"),
+      key: data.get("key"),
+    });
     const before = await db.translation.findUnique({
       where: {
         entityType_entityId_field_locale: {

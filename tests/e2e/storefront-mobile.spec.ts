@@ -7,7 +7,7 @@ test("390px Persian navigation is RTL, reachable and touch sized", async ({
   await page.context().clearCookies();
   await page.goto("/fa");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  const toggle = page.getByLabel("منوی موبایل").first();
+  const toggle = page.getByLabel("ناوبری موبایل").first();
   const box = await toggle.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(box?.height).toBeGreaterThanOrEqual(44);

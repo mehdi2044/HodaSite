@@ -76,10 +76,13 @@ export function isValidUiOverride(
   );
 }
 
-export const uiTranslationSchema = z
-  .object({
-    locale: z.enum(UI_LOCALES),
-    key: z.string().refine(isAllowedUiKey, "unknown_ui_key"),
+export const uiTranslationKeySchema = z.object({
+  locale: z.enum(UI_LOCALES),
+  key: z.string().refine(isAllowedUiKey, "unknown_ui_key"),
+});
+
+export const uiTranslationSchema = uiTranslationKeySchema
+  .extend({
     value: z.string().max(MAX_VALUE),
   })
   .refine(

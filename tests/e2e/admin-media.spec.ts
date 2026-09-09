@@ -117,15 +117,15 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await expect(picture).toBeVisible();
   await expect(picture.locator('source[type="image/avif"]')).toHaveAttribute(
     "srcset",
-    /\/media\/media\/variants\//,
+    /\/media\/media\/replacements\//,
   );
   const webpSource = picture.locator('source[type="image/webp"]');
   await expect(webpSource).toHaveAttribute(
     "srcset",
-    /\/media\/media\/variants\//,
+    /\/media\/media\/replacements\//,
   );
-  await expect(picture.locator("img")).toHaveAttribute("width", "640");
-  await expect(picture.locator("img")).toHaveAttribute("height", "480");
+  await expect(picture.locator("img")).toHaveAttribute("width", "960");
+  await expect(picture.locator("img")).toHaveAttribute("height", "720");
 
   const srcset = await webpSource.getAttribute("srcset");
   const variantUrl = srcset?.split(",")[0]?.trim().split(" ")[0];

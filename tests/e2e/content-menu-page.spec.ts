@@ -55,7 +55,9 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
     .getByRole("link", { name: "دربارهٔ ما", exact: true })
     .first()
     .click();
-  await expect(page).toHaveURL(/\/fa\/pages\/درباره-ما$/);
+  await expect
+    .poll(() => decodeURIComponent(new URL(page.url()).pathname))
+    .toBe("/fa/pages/درباره-ما");
   await expect(page.locator('bdi[dir="ltr"]')).toHaveText("SH-MW-1023");
   await expect(page.getByText("پرسش نمونه")).toBeVisible();
 });

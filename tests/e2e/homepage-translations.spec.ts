@@ -39,9 +39,7 @@ test("UI override changes runtime text and reset restores file default", async (
   await page
     .getByPlaceholder("جست‌وجوی کلید یا متن…")
     .fill("homepage.phase2Placeholder");
-  const card = page
-    .getByText("homepage.phase2Placeholder", { exact: true })
-    .locator("..");
+  const card = page.getByTestId("translation-homepage.phase2Placeholder");
   const replacement = `جایگزین ${Date.now()}`;
   await card.getByLabel("مقدار جایگزین").fill(replacement);
   await card.getByRole("button", { name: "ذخیره", exact: true }).click();
@@ -52,8 +50,7 @@ test("UI override changes runtime text and reset restores file default", async (
     .getByPlaceholder("جست‌وجوی کلید یا متن…")
     .fill("homepage.phase2Placeholder");
   await page
-    .getByText("homepage.phase2Placeholder", { exact: true })
-    .locator("..")
+    .getByTestId("translation-homepage.phase2Placeholder")
     .getByRole("button", { name: "بازگشت به پیش‌فرض" })
     .click();
 });

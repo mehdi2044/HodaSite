@@ -5,6 +5,7 @@ import {
   isAllowedUiKey,
   isSafeMessageKey,
   parseTranslationImport,
+  uiTranslationKeySchema,
   uiTranslationSchema,
 } from "@/modules/content/translations";
 
@@ -17,6 +18,18 @@ describe("UI translation overrides", () => {
         locale: "de",
         key: "homepage.empty",
         value: "x",
+      }).success,
+    ).toBe(false);
+    expect(
+      uiTranslationKeySchema.safeParse({
+        locale: "fa",
+        key: "homepage.empty",
+      }).success,
+    ).toBe(true);
+    expect(
+      uiTranslationKeySchema.safeParse({
+        locale: "fa",
+        key: "invented.namespace",
       }).success,
     ).toBe(false);
   });

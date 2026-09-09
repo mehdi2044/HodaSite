@@ -3,12 +3,15 @@ import { test, expect } from "@playwright/test";
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
 
-for (const locale of ["fa", "tr", "en"])
+for (const locale of ["fa", "tr", "en"] as const)
   test(`${locale} mobile home`, async ({ page }) => {
     await page.goto(`/${locale}`);
-    await expect(page.locator("h1")).toContainText(
-      locale === "fa" ? "استایل هاب" : "STYLE HUB",
-    );
+    const titles = {
+      fa: "سبک خودت را پیدا کن",
+      tr: "Tarzını keşfet",
+      en: "Find your style",
+    };
+    await expect(page.locator("h1")).toContainText(titles[locale]);
     await expect(page.locator("main")).toHaveAttribute(
       "dir",
       locale === "fa" ? "rtl" : "ltr",
