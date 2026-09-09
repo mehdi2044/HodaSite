@@ -101,10 +101,13 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await expect(tile).toBeVisible();
   await tile.locator("img").click();
   await page.getByRole("button", { name: "حذف", exact: true }).click();
+  await expect(tile).toBeHidden();
   await page.goto("/admin/media?view=trash");
-  await expect(page.getByTestId(`media-tile-${media.id}`)).toBeVisible();
-  await page.getByTestId(`media-tile-${media.id}`).locator("img").click();
+  const trashTile = page.getByTestId(`media-tile-${media.id}`);
+  await expect(trashTile).toBeVisible();
+  await trashTile.locator("img").click();
   await page.getByRole("button", { name: "بازیابی" }).click();
+  await expect(trashTile).toBeHidden();
 
   await page.goto("/admin/settings/brand");
   await page.getByRole("button", { name: "انتخاب رسانه" }).first().click();

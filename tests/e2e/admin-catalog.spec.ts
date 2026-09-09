@@ -47,5 +47,9 @@ test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   await page.getByRole("link", { name: "ویرایش" }).first().click();
   await expect(page).toHaveURL(/editKind=brand/);
-  await expect(page.locator('input[name="id"]')).toHaveValue(/seed-brand/);
+  const editForm = page
+    .locator("form")
+    .filter({ has: page.locator('input[name="slug"]') })
+    .first();
+  await expect(editForm.locator('input[name="id"]')).toHaveValue(/seed-brand/);
 });
