@@ -23,8 +23,17 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
       '<p dir="rtl">کد کالا: <bdi dir="ltr">SH-MW-1023</bdi> موجود است</p>';
     element.dispatchEvent(new InputEvent("input", { bubbles: true }));
   });
+  await expect(page.getByTestId("serialized-page-blocks")).toHaveValue(
+    /SH-MW-1023/,
+  );
   await page.getByRole("button", { name: "ذخیره", exact: true }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
+
+  await expect
+    .poll(async () => (await page.request.get("/fa/pages/درباره-ما")).text(), {
+      timeout: 15_000,
+    })
+    .toContain("SH-MW-1023");
 
   await page.goto("/fa");
   await page

@@ -108,6 +108,8 @@ export async function savePage(
     revalidateTag("menus");
     revalidatePath("/admin/content/pages");
     revalidatePath(`/admin/content/pages/${saved.id}`);
+    revalidateLocalizedPagePaths(saved.slugI18n);
+    if (current) revalidateLocalizedPagePaths(current.slugI18n);
   });
 }
 
@@ -244,4 +246,13 @@ function pageData(input: z.infer<typeof pageInputSchema>) {
     seoI18n: input.seoI18n,
     blocks: input.blocks,
   };
+}
+
+function revalidateLocalizedPagePaths(slugs: unknown) {
+  if (!slugs || typeof slugs !== "object" || Array.isArray(slugs)) return;
+  for (const locale of ["fa", "tr", "en"] as const) {
+    const slug = (slugs as Record<string, unknown>)[locale];
+    if (typeof slug === "string" && slug)
+      revalidatePath(`/${locale}/pages/${slug}`);
+  }
 }
