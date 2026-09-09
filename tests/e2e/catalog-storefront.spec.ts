@@ -36,7 +36,10 @@ for (const entry of [
     ).toHaveCount(1);
     const swatches = page.locator("button[title]");
     if ((await swatches.count()) > 1) await swatches.nth(1).click();
-    await page.getByText(/راهنمای سایز|Beden ve bakım|Size and care/).click();
+    await page
+      .locator("summary")
+      .filter({ hasText: /راهنمای سایز|Beden ve bakım|Size and care/ })
+      .click();
     await expect(
       page.getByRole("button", { name: /سبد|Sepete|bag/ }),
     ).toBeVisible();
@@ -57,6 +60,7 @@ test("market-restricted product is hidden outside its market", async ({
     "/fa/p/%D9%85%D8%AD%D8%B5%D9%88%D9%84-30",
   );
   expect(hidden.status()).toBe(404);
+  await page.context().clearCookies();
   const visible = await page.request.get("/tr/p/urun-30");
   expect(visible.status()).toBe(200);
 });

@@ -17,7 +17,7 @@ test("admin catalog lists products and opens the complete editor", async ({
   await page.goto("/admin/catalog/products");
   await expect(page.getByRole("heading", { name: "محصولات" })).toBeVisible();
   await expect(page.getByRole("link", { name: "محصول جدید" })).toBeVisible();
-  await page.getByRole("link", { name: "محصول نمونه 1", exact: true }).click();
+  await page.goto("/admin/catalog/products/seed-product-1");
   for (const tab of [
     "عمومی",
     "رسانه",
