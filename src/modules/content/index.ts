@@ -123,11 +123,17 @@ export async function getPublishedPage(
   locale: "fa" | "tr" | "en",
   marketId: string,
 ) {
+  let decodedSlug: string;
+  try {
+    decodedSlug = decodeURIComponent(slug);
+  } catch {
+    return null;
+  }
   const pages = await getPublishedPages();
   const page = pages.find((candidate) => {
     const slugs = candidate.slugI18n as Localized;
     return (
-      slugs[locale] === slug &&
+      slugs[locale] === decodedSlug &&
       (candidate.marketIds.length === 0 ||
         candidate.marketIds.includes(marketId))
     );

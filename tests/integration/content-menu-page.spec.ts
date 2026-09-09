@@ -28,7 +28,7 @@ describe.skipIf(!hasDb)("cached menu and published page accessors", () => {
     const page = await db.page.create({
       data: {
         slugI18n: {
-          fa: `fa-${suffix}`,
+          fa: `درباره-${suffix}`,
           tr: `tr-${suffix}`,
           en: `en-${suffix}`,
         },
@@ -114,6 +114,13 @@ describe.skipIf(!hasDb)("cached menu and published page accessors", () => {
     });
     expect(
       await getPublishedPage(`en-${suffix}`, "en", market.id),
+    ).not.toBeNull();
+    expect(
+      await getPublishedPage(
+        encodeURIComponent(`درباره-${suffix}`),
+        "fa",
+        market.id,
+      ),
     ).not.toBeNull();
     expect(await getPublishedPage(`en-${suffix}`, "en", "OTHER")).toBeNull();
     expect(
