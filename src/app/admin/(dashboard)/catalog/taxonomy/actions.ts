@@ -1,5 +1,6 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
@@ -199,6 +200,8 @@ export async function archiveTaxonomy(
       .parse({ kind: data.get("kind"), id: data.get("id") });
     await withMutation(() =>
       db.$transaction(async (tx) => {
+        if (await hasLiveReferences(tx, parsed.kind, parsed.id))
+          throw new z.ZodError([]);
         if (parsed.kind === "sizeGuide")
           await tx.sizeGuide.update({
             where: { id: parsed.id },
@@ -290,4 +293,33 @@ async function readBefore(kind: z.infer<typeof common>["kind"], id?: string) {
   if (kind === "color") return db.color.findUnique({ where: { id } });
   if (kind === "size") return db.size.findUnique({ where: { id } });
   return db.sizeGuide.findUnique({ where: { id } });
+}
+
+async function hasLiveReferences(
+  tx: Prisma.TransactionClient,
+  kind: z.infer<typeof common>["kind"],
+  id: string,
+) {
+  if (kind === "sizeGuide") return false;
+  const base = { deletedAt: null, status: "ACTIVE" as const };
+  if (kind === "category")
+    return (await tx.product.count({ where: { ...base, categoryId: id } })) > 0;
+  if (kind === "brand")
+    return (await tx.product.count({ where: { ...base, brandId: id } })) > 0;
+  if (kind === "collection")
+    return (
+      (await tx.product.count({
+        where: { ...base, collections: { some: { id } } },
+      })) > 0
+    );
+  return (
+    (await tx.product.count({
+      where: {
+        ...base,
+        variants: {
+          some: kind === "color" ? { colorId: id } : { sizeId: id },
+        },
+      },
+    })) > 0
+  );
 }

@@ -22,12 +22,15 @@ export async function saveProduct(
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
     const status = String(data.get("status") || "DRAFT");
+    const requestedId = optional(data, "id");
     await assertCan(
       session.user.id,
-      status === "ACTIVE" ? "catalog.product.publish" : "catalog.product.edit",
+      requestedId ? "catalog.product.edit" : "catalog.product.create",
     );
+    if (status === "ACTIVE")
+      await assertCan(session.user.id, "catalog.product.publish");
     const input = productInputSchema.parse({
-      id: optional(data, "id"),
+      id: requestedId,
       titleI18n: localized(data, "title"),
       descriptionI18n: localized(data, "description"),
       slugI18n: localized(data, "slug"),
@@ -215,12 +218,12 @@ export async function setProductStatus(
         ids: data.getAll("ids").map(String),
         status: data.get("status"),
       });
-    await assertCan(
-      session.user.id,
-      parsed.status === "ACTIVE"
-        ? "catalog.product.publish"
-        : "catalog.product.edit",
-    );
+    await assertCan(session.user.id, "catalog.product.edit");
+    const hasActiveProduct = await db.product.count({
+      where: { id: { in: parsed.ids }, deletedAt: null, status: "ACTIVE" },
+    });
+    if (parsed.status === "ACTIVE" || hasActiveProduct > 0)
+      await assertCan(session.user.id, "catalog.product.publish");
     await withMutation(() =>
       db.$transaction(async (tx) => {
         await tx.product.updateMany({
@@ -252,6 +255,8 @@ export async function setProductDeleted(
     await assertCan(session.user.id, "catalog.product.edit");
     const id = z.string().min(1).parse(data.get("id"));
     const before = await db.product.findUniqueOrThrow({ where: { id } });
+    if (before.status === "ACTIVE")
+      await assertCan(session.user.id, "catalog.product.publish");
     await withMutation(() =>
       db.$transaction([
         db.product.update({
@@ -291,15 +296,12 @@ export async function quickEditProduct(
         status: data.get("status"),
         basePriceAmount: data.get("basePriceAmount"),
       });
-    await assertCan(
-      session.user.id,
-      input.status === "ACTIVE"
-        ? "catalog.product.publish"
-        : "catalog.product.edit",
-    );
+    await assertCan(session.user.id, "catalog.product.edit");
     const before = await db.product.findFirstOrThrow({
       where: { id: input.id, deletedAt: null },
     });
+    if (input.status === "ACTIVE" || before.status === "ACTIVE")
+      await assertCan(session.user.id, "catalog.product.publish");
     await withMutation(() =>
       db.$transaction([
         db.product.update({

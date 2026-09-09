@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button, Card, Input, Select } from "@/components/ui";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { CatalogActionForm } from "@/components/admin/catalog-action-form";
@@ -52,14 +53,14 @@ export type ProductEditorValue = {
 };
 
 const TABS = [
-  "عمومی",
-  "رسانه",
-  "تنوع‌ها",
-  "قیمت",
-  "راهنمای سایز",
-  "SEO",
-  "بازارها",
-  "انتشار",
+  "general",
+  "media",
+  "variants",
+  "pricing",
+  "sizeGuide",
+  "seo",
+  "markets",
+  "publishing",
 ] as const;
 
 export function ProductEditor({
@@ -81,6 +82,7 @@ export function ProductEditor({
   markets: Option[];
   mediaUrls: Record<string, string>;
 }) {
+  const t = useTranslations("catalogAdmin");
   const [tab, setTab] = useState<(typeof TABS)[number]>(TABS[0]);
   const [mediaIds, setMediaIds] = useState(initial.mediaIds);
   const [variants, setVariants] = useState(initial.variants);
@@ -146,32 +148,32 @@ export function ProductEditor({
             role="tab"
             aria-selected={tab === item}
           >
-            {item}
+            {t(`tabs.${item}`)}
           </Button>
         ))}
       </div>
 
-      <section hidden={tab !== "عمومی"}>
+      <section hidden={tab !== "general"}>
         <Card className="grid gap-4">
           <LocalizedFields
             prefix="title"
-            label="عنوان محصول"
+            label={t("productTitle")}
             value={initial.titleI18n}
           />
           <LocalizedAreas
             prefix="description"
-            label="توضیحات"
+            label={t("description")}
             value={initial.descriptionI18n}
           />
           <div className="grid gap-3 md:grid-cols-3">
             <label>
-              دسته
+              {t("category")}
               <Select
                 name="categoryId"
                 defaultValue={initial.categoryId}
                 required
               >
-                <option value="">انتخاب کنید</option>
+                <option value="">{t("select")}</option>
                 {categories.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
@@ -180,9 +182,9 @@ export function ProductEditor({
               </Select>
             </label>
             <label>
-              برند
+              {t("brand")}
               <Select name="brandId" defaultValue={initial.brandId}>
-                <option value="">بدون برند</option>
+                <option value="">{t("noBrand")}</option>
                 {brands.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
@@ -191,7 +193,7 @@ export function ProductEditor({
               </Select>
             </label>
             <label>
-              گروه
+              {t("gender")}
               <Select name="gender" defaultValue={initial.gender}>
                 <option>WOMEN</option>
                 <option>MEN</option>
@@ -203,24 +205,24 @@ export function ProductEditor({
           <div className="grid gap-3 md:grid-cols-3">
             <Field
               name="material"
-              label="جنس"
+              label={t("material")}
               defaultValue={initial.material}
             />
-            <Field name="fit" label="فرم" defaultValue={initial.fit} />
-            <Field name="season" label="فصل" defaultValue={initial.season} />
+            <Field name="fit" label={t("fit")} defaultValue={initial.fit} />
+            <Field
+              name="season"
+              label={t("season")}
+              defaultValue={initial.season}
+            />
             <Field
               name="originCountry"
-              label="کشور سازنده (IR/TR/CA…)"
+              label={t("originCountry")}
               defaultValue={initial.originCountry}
             />
-            <Field
-              name="tags"
-              label="برچسب‌ها با ویرگول"
-              defaultValue={initial.tags}
-            />
+            <Field name="tags" label={t("tags")} defaultValue={initial.tags} />
           </div>
           <fieldset>
-            <legend>کالکشن‌ها</legend>
+            <legend>{t("collections")}</legend>
             <div className="mt-2 flex flex-wrap gap-3">
               {collections.map((item) => (
                 <Check
@@ -235,20 +237,20 @@ export function ProductEditor({
           </fieldset>
           <LocalizedAreas
             prefix="care"
-            label="روش نگهداری"
+            label={t("care")}
             value={initial.careI18n}
           />
         </Card>
       </section>
 
-      <section hidden={tab !== "رسانه"}>
+      <section hidden={tab !== "media"}>
         <Card>
-          <h2 className="text-lg font-semibold">تصاویر محصول</h2>
-          <p className="muted mt-1">تصویر اول، تصویر اصلی کارت محصول است.</p>
+          <h2 className="text-lg font-semibold">{t("productImages")}</h2>
+          <p className="muted mt-1">{t("firstImageHelp")}</p>
           <div className="mt-4">
             <MediaPicker
               name="newProductMedia"
-              label="افزودن از کتابخانه"
+              label={t("addFromLibrary")}
               onSelect={(id) =>
                 setMediaIds((items) =>
                   items.includes(id) ? items : [...items, id],
@@ -302,7 +304,7 @@ export function ProductEditor({
                       )
                     }
                   >
-                    حذف
+                    {t("remove")}
                   </Button>
                 </div>
               </div>
@@ -311,18 +313,18 @@ export function ProductEditor({
         </Card>
       </section>
 
-      <section hidden={tab !== "تنوع‌ها"}>
+      <section hidden={tab !== "variants"}>
         <Card>
-          <h2 className="text-lg font-semibold">ماتریس رنگ × سایز</h2>
+          <h2 className="text-lg font-semibold">{t("variantMatrix")}</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Field
               name="skuPrefixPreview"
-              label="پیشوند SKU"
+              label={t("skuPrefix")}
               value={prefix}
               onChange={(value) => setPrefix(value)}
             />
             <fieldset>
-              <legend>رنگ‌ها</legend>
+              <legend>{t("colors")}</legend>
               {colors.map((item) => (
                 <Check
                   key={item.id}
@@ -336,7 +338,7 @@ export function ProductEditor({
               ))}
             </fieldset>
             <fieldset>
-              <legend>سایزها</legend>
+              <legend>{t("sizes")}</legend>
               {sizes.map((item) => (
                 <Check
                   key={item.id}
@@ -351,7 +353,7 @@ export function ProductEditor({
             </fieldset>
           </div>
           <Button type="button" className="mt-3" onClick={generateMatrix}>
-            ساخت ترکیب‌ها
+            {t("generateVariants")}
           </Button>
           <div className="mt-5 grid gap-2">
             {variants.map((variant, index) => (
@@ -371,7 +373,7 @@ export function ProductEditor({
                   }
                 />
                 <Field
-                  label="قیمت USD اختیاری"
+                  label={t("optionalUsdPrice")}
                   value={variant.priceOverrideUsd}
                   onChange={(value) =>
                     setVariants(
@@ -389,7 +391,7 @@ export function ProductEditor({
                     )
                   }
                 >
-                  حذف
+                  {t("remove")}
                 </Button>
                 <label className="md:col-span-5">
                   <input
@@ -403,12 +405,12 @@ export function ProductEditor({
                       )
                     }
                   />{" "}
-                  فعال
+                  {t("active")}
                 </label>
                 <div className="md:col-span-5">
                   <MediaPicker
                     name={`variantMedia-${index}`}
-                    label="تصویر ویژهٔ این تنوع"
+                    label={t("variantImage")}
                     onSelect={(mediaId) =>
                       setVariants(
                         update(variants, index, {
@@ -437,7 +439,7 @@ export function ProductEditor({
                             )
                           }
                         >
-                          حذف تصویر {mediaId.slice(-5)}
+                          {t("removeImage", { id: mediaId.slice(-5) })}
                         </Button>
                       ))}
                     </div>
@@ -449,26 +451,26 @@ export function ProductEditor({
         </Card>
       </section>
 
-      <section hidden={tab !== "قیمت"}>
+      <section hidden={tab !== "pricing"}>
         <Card className="grid gap-3 md:grid-cols-2">
           <Field
             name="basePriceAmount"
-            label="قیمت پایه USD"
+            label={t("baseUsdPrice")}
             type="text"
             defaultValue={initial.basePriceAmount}
           />
           <Field
             name="compareAtPriceAmount"
-            label="قیمت قبل از تخفیف USD"
+            label={t("compareUsdPrice")}
             defaultValue={initial.compareAtPriceAmount}
           />
           <Field
             name="defaultPurchaseCostAmount"
-            label="هزینه خرید ثبت اولیه"
+            label={t("purchaseCost")}
             defaultValue={initial.defaultPurchaseCostAmount}
           />
           <label>
-            ارز هزینه خرید
+            {t("purchaseCurrency")}
             <Select
               name="defaultPurchaseCostCurrency"
               defaultValue={initial.defaultPurchaseCostCurrency}
@@ -481,24 +483,21 @@ export function ProductEditor({
           </label>
           <Field
             name="weightGrams"
-            label="وزن پیش‌فرض (گرم)"
+            label={t("weightGrams")}
             type="number"
             defaultValue={String(initial.weightGrams)}
           />
         </Card>
       </section>
 
-      <section hidden={tab !== "راهنمای سایز"}>
+      <section hidden={tab !== "sizeGuide"}>
         <Card>
-          <p>
-            راهنمای سایز از بخش «طبقه‌بندی کاتالوگ» و بر اساس محصول، برند یا
-            دسته انتخاب می‌شود. اولویت نمایش: محصول ← برند ← دسته.
-          </p>
-          <h3 className="mt-5 font-semibold">ویژگی‌های محصول</h3>
+          <p>{t("sizeGuideHelp")}</p>
+          <h3 className="mt-5 font-semibold">{t("attributes")}</h3>
           {attributes.map((attribute, index) => (
             <div key={index} className="mt-3 grid gap-2 md:grid-cols-4">
               <Field
-                label="کلید"
+                label={t("key")}
                 value={attribute.key}
                 onChange={(key) =>
                   setAttributes(update(attributes, index, { key }))
@@ -518,7 +517,7 @@ export function ProductEditor({
                   setAttributes(attributes.filter((_, i) => i !== index))
                 }
               >
-                حذف
+                {t("remove")}
               </Button>
             </div>
           ))}
@@ -533,31 +532,31 @@ export function ProductEditor({
               ])
             }
           >
-            افزودن ویژگی
+            {t("addAttribute")}
           </Button>
         </Card>
       </section>
 
-      <section hidden={tab !== "SEO"}>
+      <section hidden={tab !== "seo"}>
         <Card className="grid gap-4">
           <LocalizedFields
             prefix="slug"
-            label="Slug هر زبان"
+            label={t("localizedSlug")}
             value={initial.slugI18n}
           />
           <LocalizedFields
             prefix="seoTitle"
-            label="عنوان SEO"
+            label={t("seoTitle")}
             value={initial.seoTitleI18n}
           />
           <LocalizedAreas
             prefix="seoDescription"
-            label="توضیح SEO"
+            label={t("seoDescription")}
             value={initial.seoDescriptionI18n}
           />
           <MediaPicker
             name="seoOgMediaId"
-            label="تصویر اشتراک‌گذاری (OG)"
+            label={t("ogImage")}
             defaultMediaId={initial.seoOgMediaId || undefined}
             defaultUrl={
               initial.seoOgMediaId ? mediaUrls[initial.seoOgMediaId] : undefined
@@ -565,10 +564,10 @@ export function ProductEditor({
           />
         </Card>
       </section>
-      <section hidden={tab !== "بازارها"}>
+      <section hidden={tab !== "markets"}>
         <Card>
           <fieldset>
-            <legend>بازارهای قابل نمایش</legend>
+            <legend>{t("visibleMarkets")}</legend>
             <div className="mt-3 flex gap-4">
               {markets.map((item) => (
                 <Check
@@ -583,14 +582,14 @@ export function ProductEditor({
           </fieldset>
         </Card>
       </section>
-      <section hidden={tab !== "انتشار"}>
+      <section hidden={tab !== "publishing"}>
         <Card className="grid gap-3">
           <label>
-            وضعیت
+            {t("status")}
             <Select name="status" defaultValue={initial.status}>
-              <option value="DRAFT">پیش‌نویس</option>
-              <option value="ACTIVE">فعال</option>
-              <option value="ARCHIVED">بایگانی</option>
+              <option value="DRAFT">{t("draft")}</option>
+              <option value="ACTIVE">{t("active")}</option>
+              <option value="ARCHIVED">{t("archived")}</option>
             </Select>
           </label>
           {initial.id && (
@@ -600,7 +599,7 @@ export function ProductEditor({
               target="_blank"
               rel="noreferrer"
             >
-              پیش‌نمایش محصول
+              {t("previewProduct")}
             </a>
           )}
         </Card>

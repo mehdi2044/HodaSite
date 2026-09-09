@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
@@ -8,13 +9,19 @@ import { ActionSubmit } from "@/components/admin/action-submit";
 import { SizeGuideEditor } from "@/components/admin/size-guide-editor";
 import { archiveTaxonomy, saveTaxonomy } from "./actions";
 
-export default async function CatalogTaxonomyPage() {
+type Params = Record<string, string | string[] | undefined>;
+export default async function CatalogTaxonomyPage({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
   const session = await auth();
   if (
     !session?.user?.id ||
     !(await can(session.user.id, "catalog.product.view"))
   )
     redirect("/admin");
+  const t = await getTranslations("catalogAdmin");
   const [brands, categories, collections, colors, sizes, guides] =
     await Promise.all([
       db.brand.findMany({
@@ -42,16 +49,33 @@ export default async function CatalogTaxonomyPage() {
         orderBy: { createdAt: "desc" },
       }),
     ]);
+  const query = await searchParams;
+  const editKind = String(query.editKind ?? "");
+  const editId = String(query.editId ?? "");
+  const brandEdit =
+    editKind === "brand" ? brands.find((x) => x.id === editId) : undefined;
+  const collectionEdit =
+    editKind === "collection"
+      ? collections.find((x) => x.id === editId)
+      : undefined;
+  const colorEdit =
+    editKind === "color" ? colors.find((x) => x.id === editId) : undefined;
+  const sizeEdit =
+    editKind === "size" ? sizes.find((x) => x.id === editId) : undefined;
+  const categoryEdit =
+    editKind === "category"
+      ? categories.find((x) => x.id === editId)
+      : undefined;
+  const guideEdit =
+    editKind === "sizeGuide" ? guides.find((x) => x.id === editId) : undefined;
   return (
     <div className="grid gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">طبقه‌بندی کاتالوگ</h1>
-        <p className="muted mt-1">
-          برند، دسته، کالکشن، رنگ، سایز و راهنمای اندازه
-        </p>
+        <h1 className="text-2xl font-semibold">{t("taxonomyTitle")}</h1>
+        <p className="muted mt-1">{t("taxonomySubtitle")}</p>
       </div>
       <TaxonomySection
-        title="برندها"
+        title={t("brands")}
         kind="brand"
         rows={brands.map((row) => ({
           id: row.id,
@@ -60,13 +84,22 @@ export default async function CatalogTaxonomyPage() {
         }))}
         fields={
           <>
-            <Field name="slug" label="شناسه انگلیسی" />
-            <Localized prefix="name" label="نام" />
+            <Field
+              name="slug"
+              label={t("englishId")}
+              defaultValue={brandEdit?.slug}
+            />
+            <Localized
+              prefix="name"
+              label={t("name")}
+              value={brandEdit?.nameI18n}
+            />
           </>
         }
+        editId={brandEdit?.id}
       />
       <TaxonomySection
-        title="کالکشن‌ها"
+        title={t("collections")}
         kind="collection"
         rows={collections.map((row) => ({
           id: row.id,
@@ -75,13 +108,22 @@ export default async function CatalogTaxonomyPage() {
         }))}
         fields={
           <>
-            <Field name="slug" label="شناسه انگلیسی" />
-            <Localized prefix="name" label="عنوان" />
+            <Field
+              name="slug"
+              label={t("englishId")}
+              defaultValue={collectionEdit?.slug}
+            />
+            <Localized
+              prefix="name"
+              label={t("productTitle")}
+              value={collectionEdit?.titleI18n}
+            />
           </>
         }
+        editId={collectionEdit?.id}
       />
       <TaxonomySection
-        title="رنگ‌ها"
+        title={t("colors")}
         kind="color"
         rows={colors.map((row) => ({
           id: row.id,
@@ -90,14 +132,27 @@ export default async function CatalogTaxonomyPage() {
         }))}
         fields={
           <>
-            <Field name="code" label="کد رنگ مثل NAVY" />
-            <Field name="hex" label="رنگ Hex مثل #112233" />
-            <Localized prefix="name" label="نام رنگ" />
+            <Field
+              name="code"
+              label={t("colorCode")}
+              defaultValue={colorEdit?.code}
+            />
+            <Field
+              name="hex"
+              label={t("hexColor")}
+              defaultValue={colorEdit?.hex}
+            />
+            <Localized
+              prefix="name"
+              label={t("colorName")}
+              value={colorEdit?.nameI18n}
+            />
           </>
         }
+        editId={colorEdit?.id}
       />
       <TaxonomySection
-        title="سایزها"
+        title={t("sizes")}
         kind="size"
         rows={sizes.map((row) => ({
           id: row.id,
@@ -107,8 +162,8 @@ export default async function CatalogTaxonomyPage() {
         fields={
           <>
             <label>
-              مقیاس
-              <Select name="scale" defaultValue="INTL">
+              {t("scale")}
+              <Select name="scale" defaultValue={sizeEdit?.scale ?? "INTL"}>
                 <option>INTL</option>
                 <option>EU</option>
                 <option>TR</option>
@@ -116,25 +171,54 @@ export default async function CatalogTaxonomyPage() {
                 <option>CA</option>
               </Select>
             </label>
-            <Field name="value" label="مقدار مثل M یا 42" />
-            <Field name="groupKey" label="گروه مثل tops" />
-            <Field name="sortOrder" label="ترتیب" type="number" />
+            <Field
+              name="value"
+              label={t("sizeValue")}
+              defaultValue={sizeEdit?.value}
+            />
+            <Field
+              name="groupKey"
+              label={t("groupKey")}
+              defaultValue={sizeEdit?.groupKey}
+            />
+            <Field
+              name="sortOrder"
+              label={t("sortOrder")}
+              type="number"
+              defaultValue={sizeEdit?.sortOrder}
+            />
           </>
         }
+        editId={sizeEdit?.id}
       />
       <Card>
-        <h2 className="text-xl font-semibold">دسته‌بندی‌ها</h2>
+        <h2 className="text-xl font-semibold">{t("categories")}</h2>
         <CatalogActionForm
           action={saveTaxonomy}
           className="mt-4 grid gap-3 md:grid-cols-2"
         >
           <input type="hidden" name="kind" value="category" />
-          <Localized prefix="name" label="عنوان" />
-          <Localized prefix="slug" label="Slug" />
-          <Localized prefix="description" label="توضیح" />
+          {categoryEdit && (
+            <input type="hidden" name="id" value={categoryEdit.id} />
+          )}
+          <Localized
+            prefix="name"
+            label={t("productTitle")}
+            value={categoryEdit?.titleI18n}
+          />
+          <Localized
+            prefix="slug"
+            label="Slug"
+            value={categoryEdit?.slugI18n}
+          />
+          <Localized
+            prefix="description"
+            label={t("description")}
+            value={categoryEdit?.descriptionI18n}
+          />
           <label>
-            گروه
-            <Select name="gender">
+            {t("gender")}
+            <Select name="gender" defaultValue={categoryEdit?.gender}>
               <option>WOMEN</option>
               <option>MEN</option>
               <option>KIDS</option>
@@ -142,9 +226,9 @@ export default async function CatalogTaxonomyPage() {
             </Select>
           </label>
           <label>
-            والد
-            <Select name="parentId">
-              <option value="">بدون والد</option>
+            {t("parent")}
+            <Select name="parentId" defaultValue={categoryEdit?.parentId ?? ""}>
+              <option value="">{t("noParent")}</option>
               {categories.map((row) => (
                 <option key={row.id} value={row.id}>
                   {title(row.titleI18n)}
@@ -152,7 +236,12 @@ export default async function CatalogTaxonomyPage() {
               ))}
             </Select>
           </label>
-          <Field name="sortOrder" label="ترتیب" type="number" />
+          <Field
+            name="sortOrder"
+            label={t("sortOrder")}
+            type="number"
+            defaultValue={categoryEdit?.sortOrder}
+          />
         </CatalogActionForm>
         <Rows
           kind="category"
@@ -164,23 +253,35 @@ export default async function CatalogTaxonomyPage() {
         />
       </Card>
       <Card>
-        <h2 className="text-xl font-semibold">راهنمای سایز</h2>
+        <h2 className="text-xl font-semibold">{t("sizeGuides")}</h2>
         <CatalogActionForm
           action={saveTaxonomy}
           className="mt-4 grid gap-3 md:grid-cols-2"
         >
           <input type="hidden" name="kind" value="sizeGuide" />
-          <Localized prefix="name" label="نام راهنما" />
+          {guideEdit && <input type="hidden" name="id" value={guideEdit.id} />}
+          <Localized
+            prefix="name"
+            label={t("guideName")}
+            value={guideEdit?.nameI18n}
+          />
           <label>
-            سطح
-            <Select name="scope">
-              <option value="brand">برند</option>
-              <option value="category">دسته</option>
-              <option value="product">محصول</option>
+            {t("scope")}
+            <Select name="scope" defaultValue={guideEdit?.scope}>
+              <option value="brand">{t("brand")}</option>
+              <option value="category">{t("category")}</option>
+              <option value="product">{t("product")}</option>
             </Select>
           </label>
-          <Field name="refId" label="شناسه برند/دسته/محصول" />
-          <SizeGuideEditor />
+          <Field
+            name="refId"
+            label={t("referenceId")}
+            defaultValue={guideEdit?.refId}
+          />
+          <SizeGuideEditor
+            initialUnit={guideEdit?.unit as "cm" | "in" | undefined}
+            initialTable={guideEdit?.tableI18n}
+          />
         </CatalogActionForm>
         <Rows
           kind="sizeGuide"
@@ -200,11 +301,13 @@ function TaxonomySection({
   kind,
   rows,
   fields,
+  editId,
 }: {
   title: string;
   kind: "brand" | "collection" | "color" | "size";
   rows: Array<{ id: string; code: string; title: string }>;
   fields: React.ReactNode;
+  editId?: string;
 }) {
   return (
     <Card>
@@ -214,26 +317,28 @@ function TaxonomySection({
         className="mt-4 grid gap-3 md:grid-cols-2"
       >
         <input type="hidden" name="kind" value={kind} />
+        {editId && <input type="hidden" name="id" value={editId} />}
         {fields}
       </CatalogActionForm>
       <Rows kind={kind} rows={rows} />
     </Card>
   );
 }
-function Rows({
+async function Rows({
   kind,
   rows,
 }: {
   kind: "brand" | "category" | "collection" | "color" | "size" | "sizeGuide";
   rows: Array<{ id: string; code: string; title: string }>;
 }) {
+  const t = await getTranslations("catalogAdmin");
   return (
     <Table className="mt-5">
       <thead>
         <tr>
-          <TH>عنوان</TH>
-          <TH>کد</TH>
-          <TH>عملیات</TH>
+          <TH>{t("productTitle")}</TH>
+          <TH>{t("code")}</TH>
+          <TH>{t("operations")}</TH>
         </tr>
       </thead>
       <tbody>
@@ -244,12 +349,20 @@ function Rows({
               <bdi dir="ltr">{row.code}</bdi>
             </TD>
             <TD>
-              <ActionSubmit
-                action={archiveTaxonomy}
-                fields={{ id: row.id, kind }}
-                label="بایگانی"
-                variant="destructive"
-              />
+              <div className="flex gap-2">
+                <a
+                  className="button"
+                  href={`/admin/catalog/taxonomy?editKind=${kind}&editId=${row.id}`}
+                >
+                  {t("edit")}
+                </a>
+                <ActionSubmit
+                  action={archiveTaxonomy}
+                  fields={{ id: row.id, kind }}
+                  label={t("archive")}
+                  variant="destructive"
+                />
+              </div>
             </TD>
           </tr>
         ))}
@@ -261,25 +374,55 @@ function Field({
   name,
   label,
   type = "text",
+  defaultValue,
 }: {
   name: string;
   label: string;
   type?: string;
+  defaultValue?: string | number;
 }) {
   return (
     <label>
       {label}
-      <Input className="mt-1" name={name} type={type} required />
+      <Input
+        className="mt-1"
+        name={name}
+        type={type}
+        required
+        defaultValue={defaultValue}
+      />
     </label>
   );
 }
-function Localized({ prefix, label }: { prefix: string; label: string }) {
+async function Localized({
+  prefix,
+  label,
+  value,
+}: {
+  prefix: string;
+  label: string;
+  value?: unknown;
+}) {
+  const t = await getTranslations("catalogAdmin");
+  const initial = (value ?? {}) as Record<string, string>;
   return (
     <fieldset className="grid gap-2 rounded-[10px] border border-black/10 p-3 md:col-span-2">
       <legend>{label}</legend>
-      <Field name={`${prefix}Fa`} label="فارسی" />
-      <Field name={`${prefix}Tr`} label="ترکی" />
-      <Field name={`${prefix}En`} label="انگلیسی" />
+      <Field
+        name={`${prefix}Fa`}
+        label={t("persian")}
+        defaultValue={initial.fa}
+      />
+      <Field
+        name={`${prefix}Tr`}
+        label={t("turkish")}
+        defaultValue={initial.tr}
+      />
+      <Field
+        name={`${prefix}En`}
+        label={t("english")}
+        defaultValue={initial.en}
+      />
     </fieldset>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button, Input, Select } from "@/components/ui";
 
 type Row = { size: string; chest: string; waist: string; hip: string };
@@ -9,9 +10,24 @@ const initial: Row[] = [
   { size: "M", chest: "94", waist: "76", hip: "100" },
   { size: "L", chest: "100", waist: "82", hip: "106" },
 ];
-export function SizeGuideEditor() {
-  const [unit, setUnit] = useState<"cm" | "in">("cm");
-  const [rows, setRows] = useState(initial);
+export function SizeGuideEditor({
+  initialUnit = "cm",
+  initialTable,
+}: {
+  initialUnit?: "cm" | "in";
+  initialTable?: unknown;
+}) {
+  const t = useTranslations("catalogAdmin");
+  const existing = initialTable as { rows?: string[][] } | undefined;
+  const [unit, setUnit] = useState<"cm" | "in">(initialUnit);
+  const [rows, setRows] = useState<Row[]>(
+    existing?.rows?.map((row) => ({
+      size: row[0] ?? "",
+      chest: row[1] ?? "",
+      waist: row[2] ?? "",
+      hip: row[3] ?? "",
+    })) ?? initial,
+  );
   function changeUnit(next: "cm" | "in") {
     if (next === unit) return;
     const factor = next === "in" ? 1 / 2.54 : 2.54;
@@ -36,16 +52,16 @@ export function SizeGuideEditor() {
   };
   return (
     <fieldset className="grid gap-3 md:col-span-2">
-      <legend>جدول تبدیل اندازه</legend>
+      <legend>{t("sizeConversion")}</legend>
       <label>
-        واحد
+        {t("unit")}
         <Select
           name="unit"
           value={unit}
           onChange={(event) => changeUnit(event.target.value as "cm" | "in")}
         >
-          <option value="cm">سانتی‌متر</option>
-          <option value="in">اینچ</option>
+          <option value="cm">{t("centimeter")}</option>
+          <option value="in">{t("inch")}</option>
         </Select>
       </label>
       <input type="hidden" name="tableI18n" value={JSON.stringify(table)} />
@@ -53,10 +69,10 @@ export function SizeGuideEditor() {
         <table className="w-full">
           <thead>
             <tr>
-              <th>سایز</th>
-              <th>سینه</th>
-              <th>کمر</th>
-              <th>باسن</th>
+              <th>{t("size")}</th>
+              <th>{t("chest")}</th>
+              <th>{t("waist")}</th>
+              <th>{t("hip")}</th>
               <th />
             </tr>
           </thead>
@@ -87,7 +103,7 @@ export function SizeGuideEditor() {
                     variant="destructive"
                     onClick={() => setRows(rows.filter((_, i) => i !== index))}
                   >
-                    حذف
+                    {t("remove")}
                   </Button>
                 </td>
               </tr>
@@ -103,7 +119,7 @@ export function SizeGuideEditor() {
           setRows([...rows, { size: "", chest: "", waist: "", hip: "" }])
         }
       >
-        افزودن ردیف
+        {t("addRow")}
       </Button>
     </fieldset>
   );

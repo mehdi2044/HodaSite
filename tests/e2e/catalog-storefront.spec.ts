@@ -35,7 +35,13 @@ for (const entry of [
       page.locator('script[type="application/ld+json"]'),
     ).toHaveCount(1);
     const swatches = page.locator("button[title]");
-    if ((await swatches.count()) > 1) await swatches.nth(1).click();
+    if ((await swatches.count()) > 1) {
+      const firstPrice = await page.getByTestId("product-price").innerText();
+      await swatches.nth(1).click();
+      await expect(page.getByTestId("product-price")).not.toHaveText(
+        firstPrice,
+      );
+    }
     await page
       .locator("summary")
       .filter({ hasText: /راهنمای سایز|Beden ve bakım|Size and care/ })

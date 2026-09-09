@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
@@ -48,6 +49,7 @@ export default async function ProductEditorPage({
   )
     redirect("/admin");
   const { id } = await params;
+  const t = await getTranslations("catalogAdmin");
   const [
     product,
     brands,
@@ -101,9 +103,9 @@ export default async function ProductEditorPage({
     <div className="grid gap-5">
       <div>
         <h1 className="text-2xl font-semibold">
-          {product ? "ویرایش محصول" : "محصول جدید"}
+          {product ? t("editProduct") : t("newProduct")}
         </h1>
-        <p className="muted">اطلاعات سه‌زبانه، رسانه، تنوع و بازارها</p>
+        <p className="muted">{t("editorSubtitle")}</p>
       </div>
       <ProductEditor
         initial={initial}

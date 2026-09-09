@@ -917,12 +917,15 @@ async function seedCatalog() {
         where: {
           sku: `SH-${String(index).padStart(3, "0")}-${color.code}-${size.value}`,
         },
-        update: {},
+        update: {
+          priceOverrideUsd: index === 1 && n === 1 ? "99" : null,
+        },
         create: {
           productId: product.id,
           sku: `SH-${String(index).padStart(3, "0")}-${color.code}-${size.value}`,
           colorId: color.id,
           sizeId: size.id,
+          priceOverrideUsd: index === 1 && n === 1 ? "99" : null,
           isActive: true,
         },
       });

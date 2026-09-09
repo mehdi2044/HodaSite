@@ -9,6 +9,12 @@ vi.mock("@/modules/auth", () => ({
 import { db } from "@/lib/db";
 import { can } from "@/modules/access";
 import { saveTheme } from "@/app/admin/(dashboard)/settings/theme/actions";
+import {
+  quickEditProduct,
+  saveProduct,
+  setProductStatus,
+} from "@/app/admin/(dashboard)/catalog/products/actions";
+import { archiveTaxonomy } from "@/app/admin/(dashboard)/catalog/taxonomy/actions";
 
 // Global setup (tests/setup/global-setup.ts) already confirmed
 // TEST_DATABASE_URL is reachable when set, or fails the whole run — so
@@ -128,6 +134,57 @@ describe.skipIf(!hasDb)("least-privilege roles (C2)", () => {
       code: "FORBIDDEN",
       message: expect.any(String),
     });
+    acting.userId = null;
+  });
+
+  it("a data-entry user cannot create or take published products offline", async () => {
+    acting.userId = userIds.data_entry;
+
+    const createActive = new FormData();
+    createActive.set("status", "ACTIVE");
+    expect(await saveProduct(null, createActive)).toMatchObject({
+      ok: false,
+      code: "FORBIDDEN",
+    });
+
+    const quickEdit = new FormData();
+    quickEdit.set("id", "seed-product-1");
+    quickEdit.set("status", "DRAFT");
+    quickEdit.set("basePriceAmount", "20.00");
+    expect(await quickEditProduct(null, quickEdit)).toMatchObject({
+      ok: false,
+      code: "FORBIDDEN",
+    });
+
+    const bulk = new FormData();
+    bulk.append("ids", "seed-product-1");
+    bulk.set("status", "ARCHIVED");
+    expect(await setProductStatus(null, bulk)).toMatchObject({
+      ok: false,
+      code: "FORBIDDEN",
+    });
+    acting.userId = null;
+  });
+
+  it("refuses to archive a category that still has a live product", async () => {
+    acting.userId = userIds.data_entry;
+    const product = await db.product.findUniqueOrThrow({
+      where: { id: "seed-product-1" },
+      select: { categoryId: true },
+    });
+    const form = new FormData();
+    form.set("kind", "category");
+    form.set("id", product.categoryId);
+    expect(await archiveTaxonomy(null, form)).toMatchObject({
+      ok: false,
+      code: "VALIDATION",
+    });
+    expect(
+      await db.category.findUniqueOrThrow({
+        where: { id: product.categoryId },
+        select: { deletedAt: true },
+      }),
+    ).toEqual({ deletedAt: null });
     acting.userId = null;
   });
 });

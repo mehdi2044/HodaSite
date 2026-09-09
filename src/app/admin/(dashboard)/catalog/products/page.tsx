@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
@@ -28,6 +29,7 @@ export default async function ProductsPage({
   )
     redirect("/admin");
   const params = await searchParams;
+  const t = await getTranslations("catalogAdmin");
   const q = one(params.q)?.trim() ?? "";
   const status = one(params.status);
   const categoryId = one(params.category);
@@ -60,11 +62,11 @@ export default async function ProductsPage({
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">محصولات</h1>
-          <p className="muted">مدیریت محصول، تنوع، قیمت و انتشار</p>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="muted">{t("subtitle")}</p>
         </div>
         <Link className="button" href="/admin/catalog/products/new">
-          محصول جدید
+          {t("newProduct")}
         </Link>
       </div>
       <Card>
@@ -74,16 +76,16 @@ export default async function ProductsPage({
             name="q"
             type="search"
             defaultValue={q}
-            placeholder="عنوان، SKU یا برچسب"
+            placeholder={t("searchPlaceholder")}
           />
           <Select name="status" defaultValue={status ?? ""}>
-            <option value="">همه وضعیت‌ها</option>
-            <option value="DRAFT">پیش‌نویس</option>
-            <option value="ACTIVE">فعال</option>
-            <option value="ARCHIVED">بایگانی</option>
+            <option value="">{t("allStatuses")}</option>
+            <option value="DRAFT">{t("draft")}</option>
+            <option value="ACTIVE">{t("active")}</option>
+            <option value="ARCHIVED">{t("archived")}</option>
           </Select>
           <Select name="category" defaultValue={categoryId ?? ""}>
-            <option value="">همه دسته‌ها</option>
+            <option value="">{t("allCategories")}</option>
             {categories.map((x) => (
               <option key={x.id} value={x.id}>
                 {title(x.titleI18n)}
@@ -91,7 +93,7 @@ export default async function ProductsPage({
             ))}
           </Select>
           <Select name="brand" defaultValue={brandId ?? ""}>
-            <option value="">همه برندها</option>
+            <option value="">{t("allBrands")}</option>
             {brands.map((x) => (
               <option key={x.id} value={x.id}>
                 {title(x.nameI18n)}
@@ -99,7 +101,7 @@ export default async function ProductsPage({
             ))}
           </Select>
           <Select name="market" defaultValue={marketId ?? ""}>
-            <option value="">همه بازارها</option>
+            <option value="">{t("allMarkets")}</option>
             {markets.map((x) => (
               <option key={x.id} value={x.id}>
                 {x.code}
@@ -107,7 +109,7 @@ export default async function ProductsPage({
             ))}
           </Select>
           <button className="button" type="submit">
-            اعمال
+            {t("apply")}
           </button>
         </form>
       </Card>
@@ -121,23 +123,23 @@ export default async function ProductsPage({
           className="mb-3 flex flex-wrap gap-2"
         >
           <Select name="status" defaultValue="ACTIVE">
-            <option value="ACTIVE">فعال‌کردن</option>
-            <option value="DRAFT">پیش‌نویس</option>
-            <option value="ARCHIVED">بایگانی</option>
+            <option value="ACTIVE">{t("activate")}</option>
+            <option value="DRAFT">{t("draft")}</option>
+            <option value="ARCHIVED">{t("archived")}</option>
           </Select>
           <button className="button" type="submit">
-            تغییر گروهی وضعیت
+            {t("bulkStatus")}
           </button>
         </form>
         <Table>
           <thead>
             <tr>
-              <TH>انتخاب</TH>
-              <TH>محصول</TH>
-              <TH>دسته/برند</TH>
-              <TH>تنوع</TH>
-              <TH>وضعیت</TH>
-              <TH>عملیات</TH>
+              <TH>{t("select")}</TH>
+              <TH>{t("product")}</TH>
+              <TH>{t("categoryBrand")}</TH>
+              <TH>{t("variantsCount")}</TH>
+              <TH>{t("status")}</TH>
+              <TH>{t("operations")}</TH>
             </tr>
           </thead>
           <tbody>
@@ -149,7 +151,7 @@ export default async function ProductsPage({
                     type="checkbox"
                     name="ids"
                     value={item.id}
-                    aria-label={`انتخاب ${title(item.titleI18n)}`}
+                    aria-label={t("selectRow", { name: title(item.titleI18n) })}
                   />
                 </TD>
                 <TD>
@@ -178,7 +180,7 @@ export default async function ProductsPage({
                       className="h-9 w-24 rounded border px-2"
                       name="basePriceAmount"
                       defaultValue={item.basePriceAmount.toString()}
-                      aria-label="قیمت USD"
+                      aria-label={t("usdPrice")}
                     />
                     <Select name="status" defaultValue={item.status}>
                       <option>DRAFT</option>
@@ -186,7 +188,7 @@ export default async function ProductsPage({
                       <option>ARCHIVED</option>
                     </Select>
                     <button className="button" type="submit">
-                      ذخیره
+                      {t("save")}
                     </button>
                   </form>
                 </TD>
@@ -195,13 +197,13 @@ export default async function ProductsPage({
                     <ActionSubmit
                       action={duplicateProduct}
                       fields={{ id: item.id }}
-                      label="کپی"
+                      label={t("copy")}
                       variant="secondary"
                     />
                     <ActionSubmit
                       action={setProductDeleted}
                       fields={{ id: item.id }}
-                      label="حذف"
+                      label={t("remove")}
                       variant="destructive"
                     />
                   </div>

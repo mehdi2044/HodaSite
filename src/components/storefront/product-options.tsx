@@ -7,15 +7,18 @@ type Variant = {
   sizeId: string;
   sku: string;
   isActive: boolean;
+  price: string;
   color: { hex: string; name: string };
   size: { value: string };
 };
 export function ProductOptions({
   variants,
   labels,
+  basePrice,
 }: {
   variants: Variant[];
   labels: { color: string; size: string; add: string; stub: string };
+  basePrice: string;
 }) {
   const colors = useMemo(
     () => [...new Map(variants.map((v) => [v.colorId, v.color])).entries()],
@@ -28,6 +31,12 @@ export function ProductOptions({
   const [size, setSize] = useState(
     available.find((item) => item.isActive)?.sizeId ?? "",
   );
+  const announcePrice = (variant?: Variant) =>
+    window.dispatchEvent(
+      new CustomEvent("catalog-price", {
+        detail: variant?.price ?? basePrice,
+      }),
+    );
   return (
     <div className="grid gap-5">
       <fieldset>
@@ -40,14 +49,15 @@ export function ProductOptions({
               title={item.name}
               aria-pressed={id === color}
               onClick={() => {
+                const next = variants.find(
+                  (v) => v.colorId === id && v.isActive,
+                );
                 setColor(id);
                 window.dispatchEvent(
                   new CustomEvent("catalog-color", { detail: id }),
                 );
-                setSize(
-                  variants.find((v) => v.colorId === id && v.isActive)
-                    ?.sizeId ?? "",
-                );
+                setSize(next?.sizeId ?? "");
+                announcePrice(next);
               }}
               className="h-11 w-11 rounded-full border-2 p-1 aria-pressed:border-text"
             >
@@ -68,7 +78,10 @@ export function ProductOptions({
               type="button"
               disabled={!v.isActive}
               aria-pressed={v.sizeId === size}
-              onClick={() => setSize(v.sizeId)}
+              onClick={() => {
+                setSize(v.sizeId);
+                announcePrice(v);
+              }}
               className="min-h-11 min-w-12 rounded-[8px] border px-3 disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:bg-text aria-pressed:text-bg"
             >
               {v.size.value}

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
-import { listCatalogProducts } from "@/modules/catalog";
+import { findProductBySlug, listCatalogProducts } from "@/modules/catalog";
 
 const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -87,5 +87,22 @@ describe.skipIf(!hasDb)("catalog search and market visibility", () => {
       q: "linen shirt",
     });
     expect(result.items).toHaveLength(0);
+  });
+  it("loads a draft only through the explicit preview lookup", async () => {
+    await db.product.update({
+      where: { id: productId },
+      data: { status: "DRAFT" },
+    });
+    const slug = `shirt-${suffix}`;
+    expect(await findProductBySlug(marketId, "en", slug)).toBeNull();
+    expect(
+      await findProductBySlug(marketId, "en", slug, {
+        includeInactive: true,
+      }),
+    ).toMatchObject({ id: productId, status: "DRAFT" });
+    await db.product.update({
+      where: { id: productId },
+      data: { status: "ACTIVE" },
+    });
   });
 });

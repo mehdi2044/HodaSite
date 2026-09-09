@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ProductOptions } from "@/components/storefront/product-options";
+import { ProductPrice } from "@/components/storefront/product-price";
 import { RecentlyViewed } from "@/components/storefront/recently-viewed";
 import { ProductGallery } from "@/components/storefront/product-gallery";
 import { ProductCard } from "@/components/storefront/product-card";
+import { auth } from "@/modules/auth";
+import { can } from "@/modules/access";
 import { getRequestContext } from "@/lib/request-context";
 import { db } from "@/lib/db";
 import {
@@ -62,16 +65,25 @@ export async function generateMetadata({
 
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }) {
   const { locale, slug } = await params;
+  const previewRequested = (await searchParams).preview === "1";
+  const session = previewRequested ? await auth() : null;
+  const previewAllowed = Boolean(
+    session?.user?.id && (await can(session.user.id, "catalog.product.view")),
+  );
   const safe = locale as CatalogLocale;
   const [{ market }, t] = await Promise.all([
     getRequestContext(locale),
     getTranslations("catalog"),
   ]);
-  const product = await findProductBySlug(market.id, safe, slug);
+  const product = await findProductBySlug(market.id, safe, slug, {
+    includeInactive: previewRequested && previewAllowed,
+  });
   if (!product) notFound();
   const [amount, compareAmount, related, guides] = await Promise.all([
     catalogDisplayAmount(product.basePriceAmount.toString(), market),
@@ -104,6 +116,26 @@ export default async function ProductPage({
       ? market.currency
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
+  const variantDisplayPrices = new Map(
+    await Promise.all(
+      product.variants.map(
+        async (variant) =>
+          [
+            variant.id,
+            formatCatalogCurrency(
+              variant.priceOverrideUsd
+                ? await catalogDisplayAmount(
+                    variant.priceOverrideUsd.toString(),
+                    market,
+                  )
+                : amount,
+              currency,
+              safe,
+            ),
+          ] as const,
+      ),
+    ),
+  );
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -184,14 +216,18 @@ export default async function ProductPage({
           <h1 className="mt-2 text-4xl font-semibold">
             {catalogText(product.titleI18n, safe)}
           </h1>
-          <p className="mt-4 text-xl font-semibold" dir="ltr">
-            {formatCatalogCurrency(amount, currency, safe)}
-            {compareAmount && (
-              <del className="ms-3 text-sm font-normal text-muted">
-                {formatCatalogCurrency(compareAmount, currency, safe)}
-              </del>
-            )}
-          </p>
+          <ProductPrice
+            initial={
+              variantDisplayPrices.get(
+                product.variants.find((variant) => variant.isActive)?.id ?? "",
+              ) ?? formatCatalogCurrency(amount, currency, safe)
+            }
+            compare={
+              compareAmount
+                ? formatCatalogCurrency(compareAmount, currency, safe)
+                : undefined
+            }
+          />
           <div className="mt-3 flex gap-2">
             {Date.now() - product.createdAt.getTime() < 30 * 86400000 && (
               <span className="rounded-full bg-text px-3 py-1 text-xs text-bg">
@@ -215,6 +251,9 @@ export default async function ProductPage({
                 sizeId: v.sizeId,
                 sku: v.sku,
                 isActive: v.isActive,
+                price:
+                  variantDisplayPrices.get(v.id) ??
+                  formatCatalogCurrency(amount, currency, safe),
                 color: {
                   hex: v.color.hex,
                   name: catalogText(v.color.nameI18n, safe),
@@ -227,6 +266,7 @@ export default async function ProductPage({
                 add: t("addToCart"),
                 stub: t("cartStub"),
               }}
+              basePrice={formatCatalogCurrency(amount, currency, safe)}
             />
           </div>
           <details className="mt-7 border-t pt-5">

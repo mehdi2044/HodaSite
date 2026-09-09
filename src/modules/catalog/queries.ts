@@ -131,12 +131,13 @@ export async function findProductBySlug(
   marketId: string,
   locale: CatalogLocale,
   encodedSlug: string,
+  options: { includeInactive?: boolean } = {},
 ) {
   const slug = safeDecode(encodedSlug);
   return db.product.findFirst({
     where: {
       deletedAt: null,
-      status: "ACTIVE",
+      ...(options.includeInactive ? {} : { status: "ACTIVE" as const }),
       marketIds: { has: marketId },
       slugI18n: { path: [locale], equals: slug },
     },
