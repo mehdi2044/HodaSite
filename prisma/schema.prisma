@@ -264,27 +264,29 @@ model ThemeSettings {
 }
 
 model Market {
-  id                   String   @id @default(cuid())
-  code                 String   @unique
+  id                   String     @id @default(cuid())
+  code                 String     @unique
   name                 String
   currency             String
-  isActive             Boolean  @default(true)
-  salesPaused          Boolean  @default(false)
+  isActive             Boolean    @default(true)
+  salesPaused          Boolean    @default(false)
   defaultLocale        String
   enabledLocales       String[]
-  markupPercent        Decimal  @default(0) @db.Decimal(18, 4)
+  markupPercent        Decimal    @default(0) @db.Decimal(18, 4)
   roundingRule         Json
   holdHours            Int
   paymentDeadlineHours Int
   fxMode               FxMode
-  fxStaleHours         Int      @default(24)
-  fxMaxJumpPercent     Decimal  @default(5) @db.Decimal(18, 4)
-  volumetricDivisor    Int      @default(5000)
-  supportChannels      Json     @default("{}")
-  announcementBar      Json     @default("{\"enabled\":false}")
-  seo                  Json     @default("{}")
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  fxStaleHours         Int        @default(24)
+  fxMaxJumpPercent     Decimal    @default(5) @db.Decimal(18, 4)
+  volumetricDivisor    Int        @default(5000)
+  supportChannels      Json       @default("{}")
+  announcementBar      Json       @default("{\"enabled\":false}")
+  seo                  Json       @default("{}")
+  menus                Menu[]
+  homepages            Homepage[]
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 }
 
 model Integration {
@@ -308,30 +310,164 @@ model MediaFolder {
 }
 
 model Media {
-  id              String       @id @default(cuid())
+  id              String             @id @default(cuid())
   kind            String
-  storageKey      String       @unique
+  storageKey      String             @unique
   originalName    String
   url             String
   width           Int?
   height          Int?
   bytes           Int
   mime            String
-  altI18n         Json         @default("{}")
-  variants        Json         @default("{}")
+  altI18n         Json               @default("{}")
+  variants        Json               @default("{}")
   uploadedBy      String?
-  status          MediaStatus  @default(READY)
+  status          MediaStatus        @default(READY)
   folderId        String?
-  folder          MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  tags            String[]     @default([])
+  folder          MediaFolder?       @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags            String[]           @default([])
   blurDataUrl     String?
   processingError String?
   dominantColor   String?
   deletedAt       DateTime?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  replacements    MediaReplacement[]
 
   @@index([deletedAt, createdAt])
   @@index([folderId])
   @@index([tags], type: Gin)
+}
+
+/// A storefront navigation slot. `marketId = null` is the global fallback;
+/// a market-specific row replaces it for that market (Phase 01c).
+model Menu {
+  id        String     @id @default(cuid())
+  key       String
+  marketId  String?
+  market    Market?    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  items     MenuItem[]
+  deletedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([key, marketId])
+  @@index([key, deletedAt])
+  @@index([marketId])
+}
+
+model MenuItem {
+  id          String     @id @default(cuid())
+  menuId      String
+  menu        Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      MenuItem?  @relation("MenuItemTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    MenuItem[] @relation("MenuItemTree")
+  labelI18n   Json
+  linkType    String     @default("url")
+  url         String?
+  pageId      String?
+  page        Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  referenceId String?
+  target      String     @default("_self")
+  enabled     Boolean    @default(true)
+  visibleIn   String[]   @default([])
+  sortOrder   Int        @default(0)
+  deletedAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([menuId, parentId, sortOrder])
+  @@index([pageId])
+}
+
+/// CMS page identity is stable while every public slug is localized.
+/// `blocks` is validated and sanitized both at write and render time.
+model Page {
+  id        String     @id @default(cuid())
+  slugI18n  Json
+  titleI18n Json
+  type      String     @default("static")
+  status    String     @default("draft")
+  seoI18n   Json       @default("{}")
+  marketIds String[]   @default([])
+  blocks    Json       @default("[]")
+  menuItems MenuItem[]
+  deletedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([status, deletedAt])
+}
+
+/// Ordered homepage composition. `marketId = null` is the global fallback.
+model Homepage {
+  id        String    @id @default(cuid())
+  marketId  String?   @unique
+  market    Market?   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  blocks    Json      @default("[]")
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([deletedAt])
+}
+
+/// Long-form and runtime UI translations (D09). UI overrides use
+/// entityType=ui, entityId=global and a dot-separated message key in `field`.
+model Translation {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  field      String
+  locale     String
+  value      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId, field, locale])
+  @@index([entityType, entityId, locale])
+}
+
+/// Editable notification copy. Provider credentials are application
+/// configuration and deliberately never live in this table (D31).
+model NotificationTemplate {
+  id          String   @id @default(cuid())
+  key         String
+  channel     String   @default("email")
+  subjectI18n Json
+  bodyI18n    Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, channel])
+  @@index([channel, isActive])
+}
+
+model MediaReplacement {
+  id             String   @id @default(cuid())
+  mediaId        String
+  media          Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  baseStorageKey String
+  storageKey     String   @unique
+  url            String
+  originalName   String
+  bytes          Int
+  mime           String
+  width          Int?
+  height         Int?
+  variants       Json     @default("{}")
+  blurDataUrl    String?
+  dominantColor  String?
+  status         String   @default("PENDING")
+  error          String?
+  oldStorageKey  String?
+  oldVariants    Json?
+  requestedBy    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([mediaId, createdAt])
+  @@index([status])
 }

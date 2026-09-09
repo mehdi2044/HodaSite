@@ -42,6 +42,7 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
   page,
   context,
 }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
   await ensureMaintenanceOff(page.request);
   await login(page);
   await setMarketCookie(context, "IR");

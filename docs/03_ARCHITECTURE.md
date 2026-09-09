@@ -120,6 +120,8 @@ interface AiProvider     { complete(task, input, {locale, budget}): AiResult }
 ```
 Active provider chosen by `Integration` table row (admin-configurable) with env-based secrets. Every provider has a `manual`/`noop` implementation so the shop never breaks when an integration is down.
 
+در فاز 01c، `EmailProvider` با درایور امن `noop` برای ارسال آزمایشی فعال است؛ نام‌های `smtp` و `resend` در قرارداد رزرو شده‌اند و اتصال واقعی/secretهای آن‌ها در فاز 04 پیاده می‌شود. متن قالب از DB می‌آید، ولی credential فقط Environment است (D31).
+
 ### 3.9 Jobs
 `Job {id, type, payload, runAt, attempts, status, lockedAt, lastError}`. `/api/cron/tick` (protected by `CRON_SECRET`) claims due jobs with `FOR UPDATE SKIP LOCKED`, runs handlers (fx-refresh, expire-reservations, cancel-unpaid-orders, backup-daily, send-email, media-optimize, low-stock-alert).
 

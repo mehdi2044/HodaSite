@@ -8,10 +8,12 @@ import {
   softDeleteMediaAction,
   restoreMediaAction,
   retryProcessingAction,
+  retryReplacementAction,
   bulkMoveAction,
   bulkTagAction,
   bulkDeleteAction,
 } from "@/app/admin/(dashboard)/media/actions";
+import { MediaReplaceUpload } from "./media-replace-upload";
 
 export type MediaItem = {
   id: string;
@@ -31,6 +33,7 @@ export type MediaItem = {
   deletedAt: string | null;
   createdAt: string;
   variants: MediaVariants | null;
+  replacement: { id: string; status: string } | null;
 };
 
 function thumbSrc(item: MediaItem): string {
@@ -312,6 +315,53 @@ function MediaTile({
               </Button>
             </form>
           )}
+          {!trash &&
+            canWrite &&
+            item.kind === "image" &&
+            item.status === "READY" && (
+              <div className="grid gap-2">
+                {item.replacement &&
+                  ["FAILED", "CLEANUP_FAILED"].includes(
+                    item.replacement.status,
+                  ) && (
+                    <form
+                      action={retryReplacementAction}
+                      className="grid gap-2"
+                    >
+                      <input
+                        type="hidden"
+                        name="replacementId"
+                        value={item.replacement.id}
+                      />
+                      <p className="text-sm text-error">{t("replaceFailed")}</p>
+                      <Button type="submit" size="sm" variant="secondary">
+                        {t("retryReplace")}
+                      </Button>
+                    </form>
+                  )}
+                {!item.replacement ||
+                ![
+                  "PENDING",
+                  "PROCESSING",
+                  "SWAPPED",
+                  "CLEANUP_FAILED",
+                ].includes(item.replacement.status) ? (
+                  <MediaReplaceUpload
+                    mediaId={item.id}
+                    labels={{
+                      replace: t("replace"),
+                      replacing: t("replacing"),
+                      accepted: t("replaceAccepted"),
+                      failed: t("replaceFailed"),
+                    }}
+                  />
+                ) : (
+                  <p role="status" className="text-sm text-muted">
+                    {t("replacing")}
+                  </p>
+                )}
+              </div>
+            )}
         </div>
       </Sheet>
     </div>

@@ -1,10 +1,10 @@
-# CLAUDE.md — Instructions for Max (مکس / Claude Code)
+# CLAUDE.md — Compatibility instructions for coding agents
 
-You are **Max** (مکس), the implementing engineer on this repository (HodaSite — trilingual fashion e-commerce, IR/TR/CA).
+The active implementing engineer is the **Codex implementation agent** (HodaSite — trilingual fashion e-commerce, IR/TR/CA). This file remains for compatibility with Claude-based tooling; `AGENTS.md` and D47 define the current workflow.
 
 - **Owner / final decision / merges:** Mehdi (مهدی) — non-programmer. Report to him in **simple Persian**.
-- **Project manager / architecture owner:** Pixel (پیکسل, Claude on claude.ai). Pixel writes and maintains `docs/`; you implement.
-- **Independent reviewer / quality gate:** Vee (وی‌بانو, ChatGPT). The Codex bot on GitHub PRs is an *additional* automated reviewer, not a decision-maker.
+- **Project manager / independent reviewer:** Vee (وی‌بانو, ChatGPT). Vee manages the phase specification and reviews the implementation.
+- The `chatgpt-codex-connector` bot on GitHub is an *additional* automated reviewer, distinct from the Codex implementation agent.
 
 ## 1. Single source of truth
 
@@ -12,7 +12,7 @@ All binding engineering rules live in `AGENTS.md`, imported here so they apply t
 
 @AGENTS.md
 
-Wherever `AGENTS.md`, `README.md`, `docs/` or `PROGRESS.md` say **"Codex"** for Max, read **"Claude Code" (you)**. Only the tool name changed; roles, workflow and rules did not. If this file and `AGENTS.md` ever disagree, `AGENTS.md` wins and you report the conflict.
+Historical references to Pixel, Max, or Claude Code describe the earlier workflow and do not create a current approval dependency. If this file and `AGENTS.md` disagree, `AGENTS.md` wins and you report the conflict.
 
 ## 2. Start of every session
 

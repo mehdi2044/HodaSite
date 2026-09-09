@@ -24,11 +24,13 @@ export function MediaPicker({
   label,
   defaultMediaId,
   defaultUrl,
+  onSelect,
 }: {
   name: string;
   label: string;
   defaultMediaId?: string | null;
   defaultUrl?: string | null;
+  onSelect?: (mediaId: string, url: string) => void;
 }) {
   const t = useTranslations("media");
   const [mediaId, setMediaId] = useState(defaultMediaId ?? "");
@@ -59,6 +61,7 @@ export function MediaPicker({
   function select(item: PickerItem) {
     setMediaId(item.id);
     setPreview(item.url);
+    onSelect?.(item.id, item.url);
     dialogRef.current?.close();
   }
 
@@ -72,6 +75,7 @@ export function MediaPicker({
     const json = (await res.json()) as { id: string; url: string };
     setMediaId(json.id);
     setPreview(json.url);
+    onSelect?.(json.id, json.url);
     dialogRef.current?.close();
   }
 

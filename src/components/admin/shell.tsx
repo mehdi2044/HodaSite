@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { signOut } from "@/modules/auth";
+import { getTranslations } from "next-intl/server";
 
-export function AdminShell({
+export async function AdminShell({
   children,
   user,
 }: {
   children: React.ReactNode;
   user: { name: string; email: string };
 }) {
+  const t = await getTranslations("contentAdmin");
   return (
     <div className="admin" dir="rtl">
       <aside className="sidebar">
@@ -16,6 +18,10 @@ export function AdminShell({
         <Link href="/admin/users">کاربران</Link>
         <Link href="/admin/markets">بازارها</Link>
         <Link href="/admin/media">رسانه‌ها</Link>
+        <Link href="/admin/content/menus">{t("menus")}</Link>
+        <Link href="/admin/content/pages">{t("pages")}</Link>
+        <Link href="/admin/content/homepage">{t("homepage")}</Link>
+        <Link href="/admin/content/translations">{t("translations")}</Link>
         <Link href="/admin/settings/brand">برند</Link>
         <Link href="/admin/settings/theme">پوسته</Link>
         <Link href="/admin/settings/contact">تماس</Link>
@@ -23,6 +29,7 @@ export function AdminShell({
         <Link href="/admin/settings/legal">حقوقی</Link>
         <Link href="/admin/settings/checkout">پرداخت</Link>
         <Link href="/admin/settings/maintenance">حالت تعمیرات</Link>
+        <Link href="/admin/settings/notifications">{t("notifications")}</Link>
         <Link href="/admin/design">طراحی</Link>
         <Link href="/admin/system/health">سلامت</Link>
         <div className="sidebar-user">

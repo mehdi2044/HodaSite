@@ -22,6 +22,7 @@ export default defineConfig({
     testTimeout: 15_000,
     env: testDatabaseUrl ? { DATABASE_URL: testDatabaseUrl } : {},
     globalSetup: ["./tests/setup/global-setup.ts"],
+    setupFiles: ["./tests/setup/vitest.ts"],
     // Integration specs share one live Postgres `Job` table, and the job
     // queue's claiming query is intentionally unscoped by job type (a real
     // worker claims any due job). Running spec files in parallel lets one

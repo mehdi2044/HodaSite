@@ -17,14 +17,26 @@ export async function GET(
   const { key } = await params;
   const storageKey = key.join("/");
 
-  const variantMatch = storageKey.match(
+  const legacyVariantMatch = storageKey.match(
     /^media\/variants\/([^/]+)\/\d+\.(webp|avif)$/,
   );
-  const media = variantMatch
-    ? await db.media.findUnique({ where: { id: variantMatch[1] } })
-    : await db.media.findUnique({ where: { storageKey } });
+  const replacementVariantMatch = storageKey.match(
+    /^media\/replacements\/([^/]+)\/\d+\.(webp|avif)$/,
+  );
+  const replacement = replacementVariantMatch
+    ? await db.mediaReplacement.findUnique({
+        where: { id: replacementVariantMatch[1] },
+        include: { media: true },
+      })
+    : null;
+  const media = legacyVariantMatch
+    ? await db.media.findUnique({ where: { id: legacyVariantMatch[1] } })
+    : replacementVariantMatch
+      ? replacement?.media
+      : await db.media.findUnique({ where: { storageKey } });
   if (!media || media.deletedAt) return new NextResponse(null, { status: 404 });
 
+  const variantMatch = legacyVariantMatch ?? replacementVariantMatch;
   const isVariant = Boolean(variantMatch);
   if (isVariant) {
     const variants = (media.variants as MediaVariants | null) ?? {};
