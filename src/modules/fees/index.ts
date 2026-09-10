@@ -225,6 +225,7 @@ export function computeFees(
     SERVICE: new Decimal(0),
     TAX: new Decimal(0),
   };
+  const taxable: Record<FeeType, Decimal> = { ...running };
   const lines: FeeLine[] = [];
   for (const type of ORDER) {
     const selected = rules
@@ -236,8 +237,14 @@ export function computeFees(
           a.id.localeCompare(b.id),
       )[0];
     if (!selected) continue;
-    const amount = calculate(selected, subtotal, running, ctx);
+    const amount = calculate(
+      selected,
+      subtotal,
+      type === "TAX" ? taxable : running,
+      ctx,
+    );
     running[type] = amount;
+    if (selected.taxable) taxable[type] = amount;
     lines.push({
       ruleId: selected.id,
       type,

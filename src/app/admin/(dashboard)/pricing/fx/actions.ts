@@ -186,6 +186,7 @@ export async function saveMarketPricing(
     const parsed = z
       .object({
         marketId: z.string(),
+        fxMode: z.enum(["AUTO_ACCEPT", "REQUIRE_APPROVAL"]),
         markupPercent: z.coerce.number().min(0).max(1000),
         fxMaxJumpPercent: z.coerce.number().positive().max(100),
         fxStaleHours: z.coerce.number().int().positive(),
@@ -208,6 +209,7 @@ export async function saveMarketPricing(
       await db.market.update({
         where: { id: parsed.marketId },
         data: {
+          fxMode: parsed.fxMode,
           markupPercent: parsed.markupPercent.toString(),
           fxMaxJumpPercent: parsed.fxMaxJumpPercent.toString(),
           fxStaleHours: parsed.fxStaleHours,
@@ -223,10 +225,15 @@ export async function saveMarketPricing(
           entityType: "Market",
           entityId: parsed.marketId,
           before: {
+            fxMode: before.fxMode,
             markupPercent: before.markupPercent.toString(),
             roundingRule: before.roundingRule,
           },
-          after: { markupPercent: parsed.markupPercent, roundingRule },
+          after: {
+            fxMode: parsed.fxMode,
+            markupPercent: parsed.markupPercent,
+            roundingRule,
+          },
         },
       });
     });

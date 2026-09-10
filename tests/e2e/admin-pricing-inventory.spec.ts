@@ -57,3 +57,26 @@ test("seeded Canadian simulator reproduces CP2-03", async ({ page }) => {
   );
   await expect(quote.locator("tr", { hasText: "CUSTOMS" })).toContainText("16");
 });
+
+test("FX approval policy can be changed and survives reload", async ({
+  page,
+}) => {
+  await login(page);
+  await page.goto("/admin/pricing/fx");
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('select[name="fxMode"]') })
+    .first();
+  const policy = form.locator('select[name="fxMode"]');
+  const original = await policy.inputValue();
+  const changed =
+    original === "AUTO_ACCEPT" ? "REQUIRE_APPROVAL" : "AUTO_ACCEPT";
+  await policy.selectOption(changed);
+  await form.getByRole("button").click();
+  await expect(form.getByRole("status")).toBeVisible();
+  await page.reload();
+  await expect(policy).toHaveValue(changed);
+  await policy.selectOption(original);
+  await form.getByRole("button").click();
+  await expect(form.getByRole("status")).toBeVisible();
+});

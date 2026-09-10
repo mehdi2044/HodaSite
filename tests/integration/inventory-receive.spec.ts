@@ -10,7 +10,7 @@ describe.skipIf(!hasDb)("inventory receiving and cost snapshots", () => {
       db.warehouse.findFirstOrThrow({ where: { isActive: true } }),
       db.variant.findFirstOrThrow({ orderBy: { sku: "desc" } }),
     ]);
-    const capturedAt = new Date("2026-09-10T00:00:00Z");
+    const capturedAt = new Date();
     const snapshots = await snapshotPurchaseCost("1000", "TRY", capturedAt);
     const result = await receiveStock({
       warehouseId: warehouse.id,

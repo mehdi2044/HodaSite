@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button, Card, Input, Select } from "@/components/ui";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { CatalogActionForm } from "@/components/admin/catalog-action-form";
-import { generateSku } from "@/modules/catalog";
+import { generateSku } from "@/modules/catalog/sku";
 import { saveProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
 
 type Localized = { fa: string; tr: string; en: string };

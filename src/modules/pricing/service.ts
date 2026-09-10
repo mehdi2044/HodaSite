@@ -29,48 +29,74 @@ export async function getFxConfiguration() {
   };
 }
 
-const activeRateCached = unstable_cache(
-  async (marketId: string, atIso: string) => {
-    const at = new Date(atIso);
-    const override = await db.fxOverride.findFirst({
-      where: {
-        marketId,
-        validFrom: { lte: at },
-        OR: [{ validUntil: null }, { validUntil: { gt: at } }],
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    if (override)
-      return {
-        rate: override.rate.toString(),
-        source: "override",
-        at: override.validFrom,
-      };
-    const quote = await db.fxQuote.findFirst({
+const activeQuoteCached = unstable_cache(
+  (marketId: string) =>
+    db.fxQuote.findFirst({
       where: { marketId, status: "ACTIVE" },
-      orderBy: { acceptedAt: "desc" },
-    });
-    return quote
-      ? {
-          rate: quote.rate.toString(),
-          source: quote.provider,
-          at: quote.acceptedAt ?? quote.fetchedAt,
-        }
-      : null;
-  },
-  ["active-fx-rate"],
+      orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
+    }),
+  ["active-fx-quote"],
   { revalidate: 900, tags: ["pricing"] },
 );
+
+/** Resolve exact override boundaries; only the underlying active quote is cached. */
+export async function findEffectiveRate(
+  marketId: string,
+  at = new Date(),
+  historical = false,
+) {
+  const override = await db.fxOverride.findFirst({
+    where: {
+      marketId,
+      validFrom: { lte: at },
+      OR: [{ validUntil: null }, { validUntil: { gt: at } }],
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
+  if (override)
+    return {
+      rate: override.rate.toString(),
+      source: "override",
+      at: override.validFrom,
+    };
+  const quote = historical
+    ? await db.fxQuote.findFirst({
+        where: {
+          marketId,
+          status: { in: ["ACTIVE", "SUPERSEDED"] },
+          acceptedAt: { lte: at },
+        },
+        orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
+      })
+    : await activeQuoteCached(marketId);
+  return quote
+    ? {
+        rate: quote.rate.toString(),
+        source: quote.provider,
+        at: quote.acceptedAt ?? quote.fetchedAt,
+      }
+    : null;
+}
 
 export async function getActiveRate(
   market: { id: string; code: string },
   at = new Date(),
 ) {
-  const bucket = new Date(at);
-  bucket.setUTCSeconds(0, 0);
-  const active = await activeRateCached(market.id, bucket.toISOString());
+  const active = await findEffectiveRate(market.id, at);
   if (!active) throw new Error(`No active FX rate for market ${market.code}`);
   return active;
+}
+
+export async function getRateAt(
+  market: { id: string; code: string },
+  at: Date,
+) {
+  const rate = await findEffectiveRate(market.id, at, true);
+  if (!rate)
+    throw new Error(
+      `No historical FX rate for market ${market.code} at ${at.toISOString()}`,
+    );
+  return rate;
 }
 
 const marketPriceCached = unstable_cache(
@@ -140,24 +166,6 @@ export async function getDisplayPrice(
     compareAtBaseAmount: product.compareAtPriceAmount?.toString(),
     manualCompareAtAmount: manual?.compareAtAmount?.toString(),
   });
-}
-
-export async function getBasePriceFilterAmount(
-  marketAmount: string,
-  market: {
-    id: string;
-    code: string;
-    markupPercent: { toString(): string };
-  },
-) {
-  const active = await getActiveRate(market);
-  return new Decimal(marketAmount).div(
-    new Decimal(active.rate).mul(
-      new Decimal(1).plus(
-        new Decimal(market.markupPercent.toString()).div(100),
-      ),
-    ),
-  );
 }
 
 async function activateQuote(

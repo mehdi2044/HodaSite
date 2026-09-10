@@ -21,6 +21,7 @@ export default async function InventoryPage({
   const session = await auth();
   if (!session?.user?.id || !(await can(session.user.id, "inventory.view")))
     redirect("/admin");
+  const mayViewCost = await can(session.user.id, "pricing.cost.view");
   const [
     t,
     mayReceive,
@@ -46,11 +47,13 @@ export default async function InventoryPage({
       orderBy: { updatedAt: "desc" },
       take: 300,
     }),
-    db.lot.findMany({
-      include: { variant: true, warehouse: true },
-      orderBy: { receivedAt: "desc" },
-      take: 100,
-    }),
+    mayViewCost
+      ? db.lot.findMany({
+          include: { variant: true, warehouse: true },
+          orderBy: { receivedAt: "desc" },
+          take: 100,
+        })
+      : Promise.resolve([]),
     db.stockMovement.findMany({
       include: { variant: true, warehouse: true },
       orderBy: { createdAt: "desc" },
@@ -232,6 +235,16 @@ export default async function InventoryPage({
                           placeholder={t("signedQuantity")}
                         />
                         <Input
+                          name="unitCostAmount"
+                          placeholder={t("positiveAdjustmentCost")}
+                        />
+                        <Select name="unitCostCurrency" defaultValue="TRY">
+                          <option>TRY</option>
+                          <option>USD</option>
+                          <option>CAD</option>
+                          <option>IRT</option>
+                        </Select>
+                        <Input
                           name="reason"
                           required
                           placeholder={t("reason")}
@@ -245,46 +258,48 @@ export default async function InventoryPage({
           </tbody>
         </Table>
       </Card>
-      <Card className="overflow-auto p-5">
-        <h2 className="mb-3 font-semibold">{t("lots")}</h2>
-        <Table>
-          <thead>
-            <tr>
-              <TH>SKU</TH>
-              <TH>{t("receivedRemaining")}</TH>
-              <TH>{t("originalCost")}</TH>
-              <TH>TRY / USD</TH>
-              <TH>{t("time")}</TH>
-            </tr>
-          </thead>
-          <tbody>
-            {lots.map((lot) => (
-              <tr key={lot.id}>
-                <TD>
-                  <bdi dir="ltr">{lot.variant.sku}</bdi>
-                </TD>
-                <TD>
-                  {lot.qtyReceived} / {lot.qtyRemaining}
-                </TD>
-                <TD>
-                  <bdi dir="ltr">
-                    {lot.unitCostAmount.toString()} {lot.unitCostCurrency}
-                  </bdi>
-                </TD>
-                <TD>
-                  <bdi dir="ltr">
-                    {lot.unitCostAmountTry.toString()} /{" "}
-                    {lot.unitCostAmountUsd.toString()}
-                  </bdi>
-                </TD>
-                <TD>
-                  <bdi dir="ltr">{lot.receivedAt.toISOString()}</bdi>
-                </TD>
+      {mayViewCost && (
+        <Card className="overflow-auto p-5">
+          <h2 className="mb-3 font-semibold">{t("lots")}</h2>
+          <Table>
+            <thead>
+              <tr>
+                <TH>SKU</TH>
+                <TH>{t("receivedRemaining")}</TH>
+                <TH>{t("originalCost")}</TH>
+                <TH>TRY / USD</TH>
+                <TH>{t("time")}</TH>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card>
+            </thead>
+            <tbody>
+              {lots.map((lot) => (
+                <tr key={lot.id}>
+                  <TD>
+                    <bdi dir="ltr">{lot.variant.sku}</bdi>
+                  </TD>
+                  <TD>
+                    {lot.qtyReceived} / {lot.qtyRemaining}
+                  </TD>
+                  <TD>
+                    <bdi dir="ltr">
+                      {lot.unitCostAmount.toString()} {lot.unitCostCurrency}
+                    </bdi>
+                  </TD>
+                  <TD>
+                    <bdi dir="ltr">
+                      {lot.unitCostAmountTry.toString()} /{" "}
+                      {lot.unitCostAmountUsd.toString()}
+                    </bdi>
+                  </TD>
+                  <TD>
+                    <bdi dir="ltr">{lot.receivedAt.toISOString()}</bdi>
+                  </TD>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card>
+      )}
       <Card className="overflow-auto p-5">
         <h2 className="mb-3 font-semibold">{t("movementLedger")}</h2>
         <Table>

@@ -152,6 +152,7 @@ describe("fees engine", () => {
       {
         ...active,
         id: "customs",
+        taxable: true,
         type: "CUSTOMS",
         method: "FIXED",
         params: { amount: "20" },
@@ -160,6 +161,7 @@ describe("fees engine", () => {
       {
         ...active,
         id: "shipping",
+        taxable: true,
         type: "SHIPPING",
         method: "FIXED",
         params: { amount: "10" },
@@ -329,5 +331,45 @@ describe("fees engine", () => {
         brackets: [{ uptoAmount: "100", amount: "5", percent: "2" }],
       }),
     ).toThrow();
+  });
+});
+
+describe("taxable fee settings", () => {
+  it.each([false, true])("honors shipping taxable=%s", (taxable) => {
+    const result = computeFees(
+      [
+        {
+          ...active,
+          id: "shipping",
+          type: "SHIPPING",
+          method: "FIXED",
+          params: { amount: "20" },
+          taxable,
+        },
+        {
+          ...active,
+          id: "customs",
+          type: "CUSTOMS",
+          method: "FIXED",
+          params: { amount: "30" },
+          taxable: false,
+        },
+        {
+          ...active,
+          id: "tax",
+          type: "TAX",
+          method: "PERCENT",
+          params: { percent: "10", of: "subtotal_plus_shipping_customs" },
+        },
+      ],
+      {
+        currency: "CAD",
+        volumetricDivisor: "5000",
+        items: [{ quantity: 1, unitPrice: "100", weightGrams: 100 }],
+      },
+    );
+    expect(result.lines.find((line) => line.type === "TAX")?.amount).toBe(
+      taxable ? "12" : "10",
+    );
   });
 });

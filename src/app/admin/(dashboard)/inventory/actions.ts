@@ -1,14 +1,20 @@
 "use server";
 
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
-import { receiveStock, snapshotPurchaseCost } from "@/modules/inventory";
+import {
+  receiveStock,
+  receiveStockBatch,
+  adjustStock,
+  snapshotPurchaseCost,
+  type ReceiveStockInput,
+} from "@/modules/inventory";
 
 async function user(permission: string) {
   const session = await auth();
@@ -65,48 +71,20 @@ export async function adjustInventory(
       })
       .parse(Object.fromEntries(data));
     await withMutation(async () => {
-      await db.$transaction(async (tx) => {
-        const rows = await tx.$queryRaw<
-          Array<{
-            id: string;
-            onHand: number;
-            reserved: number;
-            warehouseId: string;
-            variantId: string;
-          }>
-        >`SELECT id,"onHand",reserved,"warehouseId","variantId" FROM "StockItem" WHERE id=${parsed.stockItemId} FOR UPDATE`;
-        const stock = rows[0];
-        if (!stock || stock.onHand + parsed.quantity < stock.reserved)
-          throw new Error("Adjustment would make available stock negative");
-        await tx.stockItem.update({
-          where: { id: stock.id },
-          data: { onHand: { increment: parsed.quantity } },
-        });
-        const movement = await tx.stockMovement.create({
-          data: {
-            stockItemId: stock.id,
-            warehouseId: stock.warehouseId,
-            variantId: stock.variantId,
-            type: "ADJUST",
-            quantity: parsed.quantity,
-            reason: parsed.reason,
-            createdBy: userId,
-          },
-        });
-        await tx.auditLog.create({
-          data: {
-            userId,
-            action: "inventory.adjust",
-            entityType: "StockMovement",
-            entityId: movement.id,
-            before: { onHand: stock.onHand },
-            after: {
-              onHand: stock.onHand + parsed.quantity,
-              reason: parsed.reason,
-            },
-          },
-        });
-      });
+      let receipt;
+      if (parsed.quantity > 0) {
+        const cost = receiveSchema
+          .pick({ unitCostAmount: true, unitCostCurrency: true })
+          .parse(Object.fromEntries(data));
+        const receivedAt = new Date();
+        const snapshots = await snapshotPurchaseCost(
+          cost.unitCostAmount,
+          cost.unitCostCurrency,
+          receivedAt,
+        );
+        receipt = { ...cost, ...snapshots, receivedAt };
+      }
+      await adjustStock({ ...parsed, receipt, createdBy: userId });
     });
     revalidatePath("/admin/inventory");
   });
@@ -213,30 +191,37 @@ export async function importInventoryCsv(
       .map((x) => x.trim());
     if (!header || header.join(",") !== "sku,quantity,unitCost,currency")
       throw new Error("Invalid CSV header");
-    for (const line of lines) {
-      const [sku, quantity, unitCost, currency] = line
-        .split(",")
-        .map((x) => x.trim());
-      const variant = await db.variant.findUniqueOrThrow({ where: { sku } });
+    await withMutation(async () => {
+      if (!lines.length || lines.length > 1000)
+        throw new Error("CSV must contain 1 to 1000 rows");
       const warehouse = await db.warehouse.findFirstOrThrow({
         where: { isActive: true },
         orderBy: { code: "asc" },
       });
-      const parsed = receiveSchema.parse({
-        warehouseId: warehouse.id,
-        variantId: variant.id,
-        quantity,
-        unitCostAmount: unitCost,
-        unitCostCurrency: currency,
-        receivedAt: new Date(),
-      });
-      const snapshots = await snapshotPurchaseCost(
-        parsed.unitCostAmount,
-        parsed.unitCostCurrency,
-        parsed.receivedAt,
-      );
-      await receiveStock({ ...parsed, ...snapshots, createdBy: userId });
-    }
+      const inputs: ReceiveStockInput[] = [];
+      const receivedAt = new Date();
+      for (const line of lines) {
+        const fields = line.split(",").map((x) => x.trim());
+        if (fields.length !== 4) throw new Error("Invalid CSV row");
+        const [sku, quantity, unitCost, currency] = fields;
+        const variant = await db.variant.findUniqueOrThrow({ where: { sku } });
+        const parsed = receiveSchema.parse({
+          warehouseId: warehouse.id,
+          variantId: variant.id,
+          quantity,
+          unitCostAmount: unitCost,
+          unitCostCurrency: currency,
+          receivedAt,
+        });
+        const snapshots = await snapshotPurchaseCost(
+          parsed.unitCostAmount,
+          parsed.unitCostCurrency,
+          receivedAt,
+        );
+        inputs.push({ ...parsed, ...snapshots, createdBy: userId });
+      }
+      await receiveStockBatch(inputs);
+    });
     revalidatePath("/admin/inventory");
   });
 }

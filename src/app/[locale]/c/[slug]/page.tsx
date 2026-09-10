@@ -12,7 +12,6 @@ import {
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
-import { getBasePriceFilterAmount } from "@/modules/pricing";
 
 type Query = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -67,22 +66,14 @@ export default async function CategoryPage({
     getTranslations("catalog"),
   ]);
   if (!category) notFound();
-  const [minPrice, maxPrice] = await Promise.all([
-    one(query.min)
-      ? getBasePriceFilterAmount(one(query.min)!, market)
-      : undefined,
-    one(query.max)
-      ? getBasePriceFilterAmount(one(query.max)!, market)
-      : undefined,
-  ]);
   const result = await listCatalogProducts(market.id, safe, {
     categoryId: category.id,
     brandId: one(query.brand),
     colorId: one(query.color),
     sizeId: one(query.size),
     material: one(query.material),
-    minPriceUsd: minPrice?.toString(),
-    maxPriceUsd: maxPrice?.toString(),
+    minPrice: one(query.min),
+    maxPrice: one(query.max),
     available: one(query.available) === "1",
     sort: one(query.sort) as
       "newest" | "price-asc" | "price-desc" | "name" | undefined,

@@ -20,8 +20,13 @@
     "title": "Yakında döneceğiz",
     "body": "Mağaza geçici olarak kullanılamıyor. Lütfen kısa süre sonra tekrar deneyin."
   },
-  "market": { "switchTo": "Pazar", "chooseMarket": "Pazar seçin" },
-  "locale": { "switchTo": "Dil" },
+  "market": {
+    "switchTo": "Pazar",
+    "chooseMarket": "Pazar seçin"
+  },
+  "locale": {
+    "switchTo": "Dil"
+  },
   "geoBanner": {
     "suggestFa": "İran'da gibisiniz. İran pazarına geçmek ister misiniz?",
     "suggestTr": "Türkiye'de gibisiniz. Türkiye pazarına geçmek ister misiniz?",
@@ -177,7 +182,11 @@
       "addBlock": "Blok ekle",
       "empty": "Henüz blok eklenmedi.",
       "language": "Düzenleme ve önizleme dili",
-      "locales": { "fa": "Farsça", "tr": "Türkçe", "en": "İngilizce" },
+      "locales": {
+        "fa": "Farsça",
+        "tr": "Türkçe",
+        "en": "İngilizce"
+      },
       "types": {
         "RichText": "Zengin metin",
         "Image": "Görsel",
@@ -552,7 +561,11 @@
     "lots": "Alım partileri",
     "receivedRemaining": "Alınan ve kalan",
     "originalCost": "Orijinal maliyet",
-    "movementLedger": "Hareket defteri"
+    "movementLedger": "Hareket defteri",
+    "fxMode": "Kur onay politikası",
+    "autoAccept": "Sıçrama kontrolüyle otomatik",
+    "requireApproval": "Yönetici onayı gerekli",
+    "positiveAdjustmentCost": "Stok artışı için birim maliyet"
   },
   "notificationAdmin": {
     "title": "E-posta şablonları",

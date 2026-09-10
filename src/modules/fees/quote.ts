@@ -15,19 +15,37 @@ export async function quoteCart(input: CartQuoteInput) {
   const market = await db.market.findUniqueOrThrow({
     where: { id: input.marketId },
   });
+  if (!market.isActive || market.salesPaused)
+    throw new Error("Market is unavailable");
+  const quantities = new Map<string, number>();
+  for (const item of input.items) {
+    if (!Number.isSafeInteger(item.quantity) || item.quantity <= 0)
+      throw new Error("Cart quantities must be positive integers");
+    const quantity = (quantities.get(item.variantId) ?? 0) + item.quantity;
+    if (!Number.isSafeInteger(quantity))
+      throw new Error("Cart quantity is too large");
+    quantities.set(item.variantId, quantity);
+  }
+  const items = [...quantities].map(([variantId, quantity]) => ({
+    variantId,
+    quantity,
+  }));
   const variants = await db.variant.findMany({
     where: {
-      id: { in: input.items.map((item) => item.variantId) },
+      id: { in: items.map((item) => item.variantId) },
       isActive: true,
+      product: {
+        status: "ACTIVE",
+        deletedAt: null,
+        marketIds: { has: input.marketId },
+      },
     },
     include: { product: true },
   });
-  if (
-    variants.length !== new Set(input.items.map((item) => item.variantId)).size
-  )
+  if (variants.length !== new Set(items.map((item) => item.variantId)).size)
     throw new Error("One or more variants are unavailable");
   const quoteItems = await Promise.all(
-    input.items.map(async (item) => {
+    items.map(async (item) => {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0)
         throw new Error("Cart quantities must be positive integers");
       const variant = variants.find(

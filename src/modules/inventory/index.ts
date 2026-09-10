@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getActiveRate } from "@/modules/pricing";
+import { getRateAt } from "@/modules/pricing";
 
 export type CostLot = Readonly<{
   id: string;
@@ -84,6 +84,8 @@ export type ReceiveStockInput = {
   fxRateSnapshot: Prisma.InputJsonValue;
   receivedAt: Date;
   createdBy?: string;
+  movementType?: "IN" | "ADJUST";
+  reason?: string;
 };
 
 export async function snapshotPurchaseCost(
@@ -99,7 +101,7 @@ export async function snapshotPurchaseCost(
   });
   const tryMarket = markets.find((market) => market.currency === "TRY");
   if (!tryMarket) throw new Error("TRY market is required for cost snapshots");
-  const tryRate = await getActiveRate(tryMarket, at);
+  const tryRate = await getRateAt(tryMarket, at);
   const original = new Decimal(amount);
   if (!original.gt(0)) throw new Error("Unit cost must be positive");
   let usd: Decimal;
@@ -114,7 +116,7 @@ export async function snapshotPurchaseCost(
     );
     if (!originalMarket)
       throw new Error(`Market rate is required for ${currency}`);
-    const rate = await getActiveRate(originalMarket, at);
+    const rate = await getRateAt(originalMarket, at);
     originalRate = rate.rate;
     usd = original.div(rate.rate);
   }
@@ -134,62 +136,92 @@ export async function snapshotPurchaseCost(
 export async function receiveStock(input: ReceiveStockInput) {
   if (!Number.isInteger(input.quantity) || input.quantity <= 0)
     throw new Error("Quantity must be a positive integer");
-  return db.$transaction(async (tx) => {
-    const stock = await tx.stockItem.upsert({
-      where: {
-        warehouseId_variantId: {
-          warehouseId: input.warehouseId,
-          variantId: input.variantId,
-        },
-      },
-      update: { onHand: { increment: input.quantity } },
-      create: {
+  return db.$transaction((tx) => receiveStockInTransaction(tx, input));
+}
+
+async function receiveStockInTransaction(
+  tx: Prisma.TransactionClient,
+  input: ReceiveStockInput,
+) {
+  const stock = await tx.stockItem.upsert({
+    where: {
+      warehouseId_variantId: {
         warehouseId: input.warehouseId,
         variantId: input.variantId,
-        onHand: input.quantity,
       },
-    });
-    const lot = await tx.lot.create({
-      data: {
-        warehouseId: input.warehouseId,
-        variantId: input.variantId,
-        qtyReceived: input.quantity,
-        qtyRemaining: input.quantity,
-        unitCostAmount: input.unitCostAmount,
-        unitCostCurrency: input.unitCostCurrency,
-        unitCostAmountTry: input.unitCostAmountTry,
-        unitCostAmountUsd: input.unitCostAmountUsd,
-        fxRateSnapshot: input.fxRateSnapshot,
-        receivedAt: input.receivedAt,
-      },
-    });
-    const movement = await tx.stockMovement.create({
-      data: {
-        stockItemId: stock.id,
-        warehouseId: input.warehouseId,
-        variantId: input.variantId,
-        lotId: lot.id,
-        type: "IN",
-        quantity: input.quantity,
-        createdBy: input.createdBy,
-      },
-    });
-    if (input.createdBy)
-      await tx.auditLog.create({
-        data: {
-          userId: input.createdBy,
-          action: "inventory.receive",
-          entityType: "Lot",
-          entityId: lot.id,
-          after: {
-            quantity: input.quantity,
-            unitCostAmount: input.unitCostAmount,
-            unitCostCurrency: input.unitCostCurrency,
-          },
-        },
-      });
-    return { stock, lot, movement };
+    },
+    update: { onHand: { increment: input.quantity } },
+    create: {
+      warehouseId: input.warehouseId,
+      variantId: input.variantId,
+      onHand: input.quantity,
+    },
   });
+  const lot = await tx.lot.create({
+    data: {
+      warehouseId: input.warehouseId,
+      variantId: input.variantId,
+      qtyReceived: input.quantity,
+      qtyRemaining: input.quantity,
+      unitCostAmount: input.unitCostAmount,
+      unitCostCurrency: input.unitCostCurrency,
+      unitCostAmountTry: input.unitCostAmountTry,
+      unitCostAmountUsd: input.unitCostAmountUsd,
+      fxRateSnapshot: input.fxRateSnapshot,
+      receivedAt: input.receivedAt,
+    },
+  });
+  const movement = await tx.stockMovement.create({
+    data: {
+      stockItemId: stock.id,
+      warehouseId: input.warehouseId,
+      variantId: input.variantId,
+      lotId: lot.id,
+      type: input.movementType ?? "IN",
+      reason: input.reason,
+      quantity: input.quantity,
+      createdBy: input.createdBy,
+    },
+  });
+  if (input.createdBy)
+    await tx.auditLog.create({
+      data: {
+        userId: input.createdBy,
+        action: "inventory.receive",
+        entityType: "Lot",
+        entityId: lot.id,
+        after: {
+          quantity: input.quantity,
+          unitCostAmount: input.unitCostAmount,
+          unitCostCurrency: input.unitCostCurrency,
+        },
+      },
+    });
+  return { stock, lot, movement };
+}
+
+/** The caller validates/prepares every row before this single transaction. */
+export async function receiveStockBatch(inputs: readonly ReceiveStockInput[]) {
+  if (
+    !inputs.length ||
+    inputs.some(
+      (input) => !Number.isInteger(input.quantity) || input.quantity <= 0,
+    )
+  )
+    throw new Error("Invalid receipt quantities");
+  return db.$transaction(
+    async (tx) => {
+      const results = [];
+      for (const input of [...inputs].sort(
+        (a, b) =>
+          a.variantId.localeCompare(b.variantId) ||
+          a.warehouseId.localeCompare(b.warehouseId),
+      ))
+        results.push(await receiveStockInTransaction(tx, input));
+      return results;
+    },
+    { timeout: 60_000 },
+  );
 }
 
 export type ReservationRequest = Readonly<{
@@ -289,4 +321,89 @@ export async function availableForVariant(variantId: string) {
     _sum: { onHand: true, reserved: true },
   });
   return (totals._sum.onHand ?? 0) - (totals._sum.reserved ?? 0);
+}
+
+export async function adjustStock(input: {
+  stockItemId: string;
+  quantity: number;
+  reason: string;
+  createdBy: string;
+  receipt?: Omit<ReceiveStockInput, "warehouseId" | "variantId" | "quantity">;
+}) {
+  if (!Number.isInteger(input.quantity) || input.quantity === 0)
+    throw new Error("Invalid adjustment");
+  if (input.quantity > 0 && !input.receipt)
+    throw new Error("Positive adjustments require a purchase cost");
+  return db.$transaction(async (tx) => {
+    const [stock] = await tx.$queryRaw<
+      Array<{
+        id: string;
+        onHand: number;
+        reserved: number;
+        warehouseId: string;
+        variantId: string;
+      }>
+    >`
+      SELECT id,"onHand",reserved,"warehouseId","variantId" FROM "StockItem" WHERE id=${input.stockItemId} FOR UPDATE
+    `;
+    if (!stock || stock.onHand + input.quantity < stock.reserved)
+      throw new Error("Adjustment would make available stock negative");
+    if (input.quantity > 0) {
+      await receiveStockInTransaction(tx, {
+        ...input.receipt!,
+        warehouseId: stock.warehouseId,
+        variantId: stock.variantId,
+        quantity: input.quantity,
+        createdBy: input.createdBy,
+        movementType: "ADJUST",
+        reason: input.reason,
+      });
+      return;
+    }
+    const lots = await tx.lot.findMany({
+      where: {
+        warehouseId: stock.warehouseId,
+        variantId: stock.variantId,
+        qtyRemaining: { gt: 0 },
+      },
+      orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
+    });
+    let remaining = -input.quantity;
+    for (const lot of lots) {
+      if (!remaining) break;
+      const quantity = Math.min(remaining, lot.qtyRemaining);
+      await tx.lot.update({
+        where: { id: lot.id },
+        data: { qtyRemaining: { decrement: quantity } },
+      });
+      await tx.stockMovement.create({
+        data: {
+          stockItemId: stock.id,
+          warehouseId: stock.warehouseId,
+          variantId: stock.variantId,
+          lotId: lot.id,
+          type: "ADJUST",
+          quantity: -quantity,
+          reason: input.reason,
+          createdBy: input.createdBy,
+        },
+      });
+      remaining -= quantity;
+    }
+    if (remaining) throw new Error("Insufficient lots for adjustment");
+    await tx.stockItem.update({
+      where: { id: stock.id },
+      data: { onHand: { increment: input.quantity } },
+    });
+    await tx.auditLog.create({
+      data: {
+        userId: input.createdBy,
+        action: "inventory.adjust",
+        entityType: "StockItem",
+        entityId: stock.id,
+        before: { onHand: stock.onHand },
+        after: { onHand: stock.onHand + input.quantity, reason: input.reason },
+      },
+    });
+  });
 }

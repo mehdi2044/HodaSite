@@ -20,8 +20,13 @@
     "title": "We'll be right back",
     "body": "The store is temporarily unavailable. Please check back shortly."
   },
-  "market": { "switchTo": "Market", "chooseMarket": "Choose a market" },
-  "locale": { "switchTo": "Language" },
+  "market": {
+    "switchTo": "Market",
+    "chooseMarket": "Choose a market"
+  },
+  "locale": {
+    "switchTo": "Language"
+  },
   "geoBanner": {
     "suggestFa": "Looks like you're in Iran. Switch to the Iran market?",
     "suggestTr": "Looks like you're in Türkiye. Switch to the Türkiye market?",
@@ -177,7 +182,11 @@
       "addBlock": "Add block",
       "empty": "No blocks have been added yet.",
       "language": "Editing and preview language",
-      "locales": { "fa": "Persian", "tr": "Turkish", "en": "English" },
+      "locales": {
+        "fa": "Persian",
+        "tr": "Turkish",
+        "en": "English"
+      },
       "types": {
         "RichText": "Rich text",
         "Image": "Image",
@@ -552,7 +561,11 @@
     "lots": "Purchase lots",
     "receivedRemaining": "Received and remaining",
     "originalCost": "Original cost",
-    "movementLedger": "Movement ledger"
+    "movementLedger": "Movement ledger",
+    "fxMode": "Rate approval policy",
+    "autoAccept": "Automatic with jump guard",
+    "requireApproval": "Require approval",
+    "positiveAdjustmentCost": "Unit cost for stock increase"
   },
   "notificationAdmin": {
     "title": "Email templates",

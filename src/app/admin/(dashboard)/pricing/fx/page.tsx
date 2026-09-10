@@ -6,7 +6,11 @@ import { db } from "@/lib/db";
 import { Card, Input, Select, Table, TD, TH } from "@/components/ui";
 import { ActionSubmit } from "@/components/admin/action-submit";
 import { CatalogActionForm } from "@/components/admin/catalog-action-form";
-import { getFxConfiguration, isRateStale } from "@/modules/pricing";
+import {
+  getFxConfiguration,
+  isRateStale,
+  findEffectiveRate,
+} from "@/modules/pricing";
 import {
   acceptRate,
   endMarketPrice,
@@ -67,6 +71,14 @@ export default async function FxPage() {
     }),
   ]);
 
+  const effectiveRates = new Map(
+    await Promise.all(
+      markets.map(
+        async (market) =>
+          [market.id, await findEffectiveRate(market.id)] as const,
+      ),
+    ),
+  );
   return (
     <div className="grid gap-6">
       <div>
@@ -182,18 +194,12 @@ export default async function FxPage() {
       </Card>
       <div className="grid gap-4 lg:grid-cols-3">
         {markets.map((market) => {
-          const active = quotes.find(
-            (quote) =>
-              quote.marketId === market.id && quote.status === "ACTIVE",
-          );
+          const active = effectiveRates.get(market.id);
           const newest = quotes.find(
             (quote) =>
               quote.marketId === market.id && quote.status === "SUGGESTED",
           );
-          const stale = isRateStale(
-            active?.acceptedAt ?? active?.fetchedAt,
-            market.fxStaleHours,
-          );
+          const stale = isRateStale(active?.at, market.fxStaleHours);
           const history = quotes
             .filter((quote) => quote.marketId === market.id)
             .slice(0, 12)
@@ -284,6 +290,15 @@ export default async function FxPage() {
                 className="grid gap-2"
               >
                 <input type="hidden" name="marketId" value={market.id} />
+                <label>
+                  {t("fxMode")}
+                  <Select name="fxMode" defaultValue={market.fxMode}>
+                    <option value="AUTO_ACCEPT">{t("autoAccept")}</option>
+                    <option value="REQUIRE_APPROVAL">
+                      {t("requireApproval")}
+                    </option>
+                  </Select>
+                </label>
                 <Input
                   name="markupPercent"
                   defaultValue={market.markupPercent.toString()}
