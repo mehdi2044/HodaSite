@@ -17,6 +17,7 @@ export async function ScopeFields({ value = {} }: { value?: Scope }) {
         {t("market")}
         <select
           className="input w-full"
+          aria-label={t("market")}
           name="marketId"
           defaultValue={value.marketId ?? ""}
         >
@@ -32,6 +33,7 @@ export async function ScopeFields({ value = {} }: { value?: Scope }) {
         {t("category")}
         <select
           className="input w-full"
+          aria-label={t("category")}
           name="categoryId"
           defaultValue={value.categoryId ?? ""}
         >

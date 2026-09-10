@@ -462,3 +462,5 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - سیاست صفحه‌های امنیتی: نبود نشست به login می‌رود؛ نداشتن مجوز قبل از جست‌وجوی رکورد با 404 پاسخ می‌گیرد. اکشن‌ها ForbiddenError و APIها 401/403 می‌دهند. در حالت تعمیرات روشن، ساخت نشست تازه هم مانند سایر نوشتن‌ها بسته است تا restore drain ایمن بماند؛ نشست فعالِ مجاز و مسیر ops برای خاموش‌کردن تعمیرات باقی‌اند.
 
 - بازبینی واگذاری مجوز: حذف deny و واگذاری سراسری مجوزی که مدیر در یک بازار از آن منع شده، اکنون نیز نیازمند اختیار معتبر در همه محدوده‌های متأثر است؛ کنترل‌ها و حفاظت owner زیر قفل مشترک مدیریت تکرار می‌شوند. دو regression مستقیم برای این مسیرهای ارتقای دسترسی اضافه شد.
+
+- Phase 05 browser follow-up: Next middleware itself normalized the canonical loopback redirect from `127.0.0.1` to `localhost` after our handler returned. `skipMiddlewareUrlNormalize` now preserves the configured origin; the enrollment browser test remains unchanged as the regression gate. User role/status and scope selects now have explicit accessible names (option text must not become part of the label). Run 94 had 332 unit/DB tests and both Docker gates green, but 2 browser failures; it is not merge evidence.

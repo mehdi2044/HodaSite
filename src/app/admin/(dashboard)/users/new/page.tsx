@@ -28,7 +28,12 @@ export default async function NewUser() {
           </label>
           <label className="grid gap-1">
             نقش
-            <Select name="roleKey" required defaultValue="admin">
+            <Select
+              aria-label="نقش"
+              name="roleKey"
+              required
+              defaultValue="admin"
+            >
               {roles.map((r) => (
                 <option key={r.id} value={r.key}>
                   {r.key}

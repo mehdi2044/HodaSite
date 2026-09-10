@@ -38,7 +38,7 @@ export default async function EditUser({
           </label>
           <label className="grid gap-1">
             نقش
-            <Select name="roleKey" defaultValue={currentRole}>
+            <Select aria-label="نقش" name="roleKey" defaultValue={currentRole}>
               {roles.map((r) => (
                 <option key={r.id} value={r.key}>
                   {r.key}
@@ -48,7 +48,11 @@ export default async function EditUser({
           </label>
           <label className="grid gap-1">
             وضعیت
-            <Select name="isActive" defaultValue={String(user.isActive)}>
+            <Select
+              aria-label="وضعیت"
+              name="isActive"
+              defaultValue={String(user.isActive)}
+            >
               <option value="true">فعال</option>
               <option value="false">غیرفعال</option>
             </Select>
