@@ -1,3 +1,5 @@
+import { auth } from "@/modules/auth";
+import { assertCan } from "@/modules/access";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -9,6 +11,7 @@ export default async function EditUser({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await assertCan((await auth())?.user.id ?? "", "users.manage");
   const { id } = await params;
   const [user, roles] = await Promise.all([
     db.user.findUnique({

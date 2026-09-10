@@ -20,8 +20,30 @@ const authConfig = {
   pages: { signIn: "/admin/login" },
   providers: [],
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        const principal = user as typeof user & {
+          adminSessionId: string;
+          sessionVersion: number;
+          enrollmentOnly: boolean;
+        };
+        token.adminSessionId = principal.adminSessionId;
+        token.sessionVersion = principal.sessionVersion;
+        token.enrollmentOnly = principal.enrollmentOnly;
+      }
+      return token;
+    },
     session({ session, token }) {
       if (session.user && token.sub) session.user.id = token.sub;
+      session.adminSessionId =
+        typeof token.adminSessionId === "string"
+          ? token.adminSessionId
+          : undefined;
+      session.sessionVersion =
+        typeof token.sessionVersion === "number"
+          ? token.sessionVersion
+          : undefined;
+      session.enrollmentOnly = token.enrollmentOnly === true;
       return session;
     },
   },

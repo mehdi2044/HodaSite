@@ -1,37 +1,49 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
-import { db } from "@/lib/db";
 import authConfig from "./config";
-
-const login = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
+import { authenticateAdmin, validAdminSession } from "./security";
+import { getClientIp } from "@/lib/net";
+import { db } from "@/lib/db";
+const nextAuth = NextAuth({
   ...authConfig,
-  // Adapter is unused by the JWT strategy today; kept for the Phase 04
-  // customer magic-link / OAuth flow, which writes Account/Session rows.
-  adapter: PrismaAdapter(db),
   providers: [
     Credentials({
-      credentials: { email: {}, password: {} },
-      authorize: async (raw) => {
-        const parsed = login.safeParse(raw);
-        if (!parsed.success) return null;
-        const user = await db.user.findUnique({
-          where: { email: parsed.data.email },
-        });
-        if (
-          !user?.isActive ||
-          !(await bcrypt.compare(parsed.data.password, user.passwordHash))
-        )
-          return null;
-        return { id: user.id, email: user.email, name: user.name };
-      },
+      credentials: { email: {}, password: {}, token: {} },
+      authorize: (raw, request) =>
+        authenticateAdmin(
+          raw,
+          getClientIp(request.headers) ?? "unknown",
+          request.headers.get("user-agent") ?? "",
+        ),
     }),
   ],
+  events: {
+    signOut: async (event) => {
+      if ("token" in event && typeof event.token?.adminSessionId === "string")
+        await db.adminSession.updateMany({
+          where: { id: event.token.adminSessionId },
+          data: { revokedAt: new Date() },
+        });
+    },
+  },
 });
+export const { handlers, signIn, signOut } = nextAuth;
+export async function getAdminSession(allowEnrollment = false) {
+  const session = await nextAuth.auth();
+  if (
+    !session?.user?.id ||
+    !session.adminSessionId ||
+    typeof session.sessionVersion !== "number"
+  )
+    return null;
+  const row = await validAdminSession(
+    session.user.id,
+    session.adminSessionId,
+    session.sessionVersion,
+    allowEnrollment,
+  );
+  return row ? { ...session, enrollmentOnly: row.enrollmentOnly } : null;
+}
+export async function auth() {
+  return getAdminSession();
+}

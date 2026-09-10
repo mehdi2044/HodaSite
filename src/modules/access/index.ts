@@ -1,3 +1,4 @@
+import { isPermission } from "./namespace";
 import { db } from "@/lib/db";
 import { ForbiddenError } from "./errors";
 
@@ -21,12 +22,19 @@ export function scopeMatches(
   grant: unknown,
   request: Scope | undefined,
 ): boolean {
-  if (grant == null || typeof grant !== "object") return true;
+  if (grant == null) return true;
+  if (typeof grant !== "object" || Array.isArray(grant)) return false;
   const g = grant as Record<string, unknown>;
   const keys = Object.keys(g);
   if (keys.length === 0) return true;
   const r = (request ?? {}) as Record<string, unknown>;
-  return keys.every((k) => r[k] === g[k]);
+  return keys.every(
+    (k) =>
+      ["marketId", "categoryId", "section"].includes(k) &&
+      typeof g[k] === "string" &&
+      g[k] !== "" &&
+      r[k] === g[k],
+  );
 }
 
 export async function can(
@@ -34,6 +42,7 @@ export async function can(
   permission: string,
   scope?: Scope,
 ): Promise<boolean> {
+  if (!isPermission(permission)) return false;
   const user = await db.user.findUnique({
     where: { id: userId },
     include: {
@@ -71,3 +80,5 @@ export async function assertCan(
 }
 
 export { ForbiddenError, UnauthorizedError } from "./errors";
+
+export { PERMISSIONS, isPermission } from "./namespace";

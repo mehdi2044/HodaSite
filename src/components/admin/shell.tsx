@@ -10,6 +10,7 @@ export async function AdminShell({
   user: { name: string; email: string };
 }) {
   const t = await getTranslations("contentAdmin");
+  const security = await getTranslations("security");
   const commerce = await getTranslations("commerce");
   return (
     <div className="admin" dir="rtl">
@@ -17,6 +18,9 @@ export async function AdminShell({
         <strong>STYLE HUB</strong>
         <Link href="/admin">داشبورد</Link>
         <Link href="/admin/users">کاربران</Link>
+        <Link href="/admin/security">{security("title")}</Link>
+        <Link href="/admin/security/roles">{security("roles")}</Link>
+        <Link href="/admin/security/audit">{security("audit")}</Link>
         <Link href="/admin/markets">بازارها</Link>
         <Link href="/admin/media">رسانه‌ها</Link>
         <Link href="/admin/catalog/products">محصولات</Link>

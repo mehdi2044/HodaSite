@@ -1,3 +1,4 @@
+import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test } from "@playwright/test";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
@@ -9,6 +10,7 @@ test("notification editor validates templates and sends through noop", async ({
   await page.goto("/admin/login");
   await page.getByLabel("ایمیل").fill(EMAIL);
   await page.getByLabel("رمز عبور").fill(PASSWORD);
+  await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/settings/notifications");

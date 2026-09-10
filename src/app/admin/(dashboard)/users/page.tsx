@@ -1,3 +1,5 @@
+import { auth } from "@/modules/auth";
+import { assertCan } from "@/modules/access";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -8,6 +10,7 @@ type UserRow = Prisma.UserGetPayload<{
 }>;
 
 export default async function Users() {
+  await assertCan((await auth())?.user.id ?? "", "users.view");
   let users: UserRow[] = [];
   let loadError = false;
   try {

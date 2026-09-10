@@ -1,3 +1,4 @@
+import { fillAdminMfa } from "./helpers/admin-mfa";
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { ensureMaintenanceOff } from "./helpers/maintenance";
 
@@ -16,6 +17,7 @@ async function login(page: Page) {
   await page.goto("/admin/login");
   await page.getByLabel("ایمیل").fill(EMAIL);
   await page.getByLabel("رمز عبور").fill(PASSWORD);
+  await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }

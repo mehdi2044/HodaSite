@@ -128,6 +128,11 @@ model User {
   isActive         Boolean                  @default(true)
   mfaSecret        String?
   mfaEnabled       Boolean                  @default(false)
+  mfaPendingSecret String?
+  mfaLastStep      BigInt?
+  sessionVersion   Int                      @default(0)
+  adminSessions    AdminSession[]
+  recoveryCodes    MfaRecoveryCode[]
   lastLoginAt      DateTime?
   sessions         Session[]
   roles            UserRole[]
@@ -1353,4 +1358,30 @@ model StoreCredit {
 
   @@index([customerId])
   @@index([sourceReturnId])
+}
+
+model AdminSession {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionVersion Int
+  enrollmentOnly Boolean   @default(false)
+  mfaVerifiedAt  DateTime? @db.Timestamptz(3)
+  expiresAt      DateTime  @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  userAgent      String    @default("")
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, expiresAt])
+}
+
+model MfaRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId])
 }

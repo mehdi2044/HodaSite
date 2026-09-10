@@ -157,8 +157,16 @@ export default auth(async (req) => {
       url.searchParams.set("next", pathname + search);
       return NextResponse.redirect(url);
     }
-    if (isLogin && req.auth) {
-      return NextResponse.redirect(new URL("/admin", req.nextUrl));
+    // Do not redirect a login page based on an edge-only JWT: the DB may
+    // have revoked it. The server validates the registry on protected routes.
+    if (
+      !isLogin &&
+      req.auth?.enrollmentOnly &&
+      pathname !== "/admin/security/setup"
+    ) {
+      return NextResponse.redirect(
+        new URL("/admin/security/setup", req.nextUrl),
+      );
     }
     return NextResponse.next();
   }

@@ -1,9 +1,12 @@
+import { auth } from "@/modules/auth";
+import { assertCan } from "@/modules/access";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { createUser } from "../actions";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 export default async function NewUser() {
+  await assertCan((await auth())?.user.id ?? "", "users.manage");
   const roles = await db.role.findMany({ orderBy: { key: "asc" } });
 
   return (
