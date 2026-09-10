@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 // money domains. Structural check against the exported flat config, not a
 // text grep.
 describe("ESLint money rule (B1)", () => {
-  it("blocks Number(), parseFloat() and .toNumber() under src/modules/{pricing,fees,orders,finance}", async () => {
+  it("blocks Number(), parseFloat() and .toNumber() under src/modules/{pricing,fees,orders,finance,shipping}", async () => {
     // eslint.config.mjs is an untyped ESM module — dynamic specifier keeps tsc
     // from trying (and failing) to resolve its types.
     const specifier = "../../eslint.config.mjs";
@@ -20,7 +20,8 @@ describe("ESLint money rule (B1)", () => {
         c.files.some((f) => f.includes("src/modules/pricing")) &&
         c.files.some((f) => f.includes("src/modules/fees")) &&
         c.files.some((f) => f.includes("src/modules/orders")) &&
-        c.files.some((f) => f.includes("src/modules/finance")),
+        c.files.some((f) => f.includes("src/modules/finance")) &&
+        c.files.some((f) => f.includes("src/modules/shipping")),
     );
     expect(entry, "no config entry scoped to the money modules").toBeDefined();
 

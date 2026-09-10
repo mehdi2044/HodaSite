@@ -47,7 +47,14 @@ export async function saveWorkflow(userId: string, raw: unknown) {
           })))
       )
         throw new ShippingError("SHIPPING_DEFAULT");
-      if (input.isDefault)
+      if (input.isDefault) {
+        const demoted = await tx.shippingWorkflow.findMany({
+          where: {
+            marketId: input.marketId,
+            isDefault: true,
+            id: { not: input.id ?? "" },
+          },
+        });
         await tx.shippingWorkflow.updateMany({
           where: {
             marketId: input.marketId,
@@ -56,6 +63,18 @@ export async function saveWorkflow(userId: string, raw: unknown) {
           },
           data: { isDefault: false, version: { increment: 1 } },
         });
+        for (const previous of demoted)
+          await tx.auditLog.create({
+            data: {
+              userId,
+              action: "shipping.workflow.default_removed",
+              entityType: "ShippingWorkflow",
+              entityId: previous.id,
+              before: { isDefault: true, version: previous.version },
+              after: { isDefault: false, version: previous.version + 1 },
+            },
+          });
+      }
       const data = {
         nameI18n: input.nameI18n,
         isActive: input.isActive,

@@ -137,6 +137,7 @@ export async function ShippingPanel({
               !["DELIVERED", "CANCELLED"].includes(l.status) ? (
                 <>
                   <CommerceForm
+                    key={s.version}
                     action={shipmentAction}
                     className="grid gap-3 mt-4"
                   >

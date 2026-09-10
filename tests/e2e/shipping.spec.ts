@@ -123,6 +123,25 @@ test("IR partial parcels, manual event, sequential tracking and final delivery",
       await db.order.findUniqueOrThrow({ where: { id: f.order.id } })
     ).totalAmount.toString(),
   ).toBe(f.order.totalAmount.toString());
+  await page
+    .context()
+    .addCookies([
+      {
+        name: `hoda.order.${f.order.number}`,
+        value: f.guestToken,
+        url: "http://127.0.0.1:3000",
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+    ]);
+  await page.goto(`/en/orders/${f.order.number}`);
+  await expect(
+    page.getByTestId("tracking-timeline").locator("article"),
+  ).toHaveCount(2);
+  await page.context().clearCookies();
+  await page.goto(`/en/orders/${f.order.number}`);
+  await expect(page).toHaveURL(/\/account\/login/);
+  await expect(page.getByTestId("tracking-timeline")).toHaveCount(0);
   for (const locale of ["fa", "tr", "en"] as const) {
     await page.goto(`/${locale}/tracking`);
     await page.locator('main [name="number"]').fill(f.order.number);
@@ -241,6 +260,24 @@ test("TR warehouse sees domestic shipping but cannot fetch IR order or route set
     where: { shipment: { orderId: f.order.id } },
   });
   expect(leg.type).toBe("DOMESTIC");
+  await page.getByText(fa.shipping.addLeg, { exact: true }).first().click();
+  const add = formFor(page, "addLeg");
+  for (const key of ["labelFa", "labelTr", "labelEn"])
+    await add.locator(`[name="${key}"]`).fill("Extra test leg");
+  await submit(add);
+  await expect(page.getByTestId("shipment-leg")).toHaveCount(2);
+  const extra = page.getByTestId("shipment-leg").nth(1);
+  await extra.locator(":scope > summary").click();
+  await submit(formFor(extra, "cancelLeg"));
+  await expect(extra.locator(":scope > summary")).toContainText(
+    fa.shipping.CANCELLED,
+  );
+  await submit(formFor(page, "cancelShipment"));
+  await expect(page.getByTestId("shipment").locator("h3")).toContainText(
+    fa.shipping.CANCELLED,
+  );
+  await expect(formFor(page, "create")).toBeVisible();
+
   await page.goto(`/admin/orders/${ir.order.number}`);
   await expect(page.getByTestId("shipping-admin")).toHaveCount(0);
   await expect(page.getByTestId("admin-order-status")).toHaveCount(0);

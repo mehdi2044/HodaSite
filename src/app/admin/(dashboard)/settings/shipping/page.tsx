@@ -30,6 +30,7 @@ export default async function ShippingSettings() {
             {w.isDefault ? `— ${t("default")}` : ""}
           </summary>
           <WorkflowEditor
+            key={`${w.id}:${w.version}`}
             workflow={{
               ...w,
               nameI18n: w.nameI18n as EditableWorkflow["nameI18n"],
@@ -38,7 +39,7 @@ export default async function ShippingSettings() {
                 labelI18n: l.labelI18n as EditableWorkflow["nameI18n"],
               })),
             }}
-            markets={markets}
+            markets={markets.map(({ id, code }) => ({ id, code }))}
           />
         </details>
       ))}
@@ -46,7 +47,9 @@ export default async function ShippingSettings() {
         <summary className="cursor-pointer font-semibold">
           {t("newWorkflow")}
         </summary>
-        <WorkflowEditor markets={markets} />
+        <WorkflowEditor
+          markets={markets.map(({ id, code }) => ({ id, code }))}
+        />
       </details>
     </div>
   );
