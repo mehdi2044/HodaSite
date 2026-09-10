@@ -741,6 +741,7 @@
     "savedViews": "فیلترهای ذخیره‌شده",
     "saveView": "ذخیره فیلتر فعلی",
     "viewName": "نام فیلتر",
-    "sendViaSupport": "ارسال رسید از طریق {channel}"
+    "sendViaSupport": "ارسال رسید از طریق {channel}",
+    "bulkResult": "انجام‌شده: {succeeded}؛ ناموفق: {failed}."
   }
 }

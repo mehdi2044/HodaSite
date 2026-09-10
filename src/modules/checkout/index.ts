@@ -148,9 +148,6 @@ export async function placeOrder(
         });
         const total = new Decimal(quote.total),
           usd = total.div(marketRate);
-        const rules = await tx.feeRule.findMany({
-          where: { id: { in: quote.lines.map((l) => l.ruleId) } },
-        });
         const order = await tx.order.create({
           data: {
             number: `${cart.market.code}-${sequence.value}`,
@@ -219,7 +216,7 @@ export async function placeOrder(
                 currency: quote.currency,
                 absorbed: line.absorbed,
                 ruleSnapshot: JSON.parse(
-                  JSON.stringify(rules.find((r) => r.id === line.ruleId) ?? {}),
+                  JSON.stringify(quote.ruleSnapshots[line.ruleId]),
                 ),
               })),
             },

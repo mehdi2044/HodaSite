@@ -741,6 +741,7 @@
     "savedViews": "Saved views",
     "saveView": "Save current filter",
     "viewName": "View name",
-    "sendViaSupport": "Send receipt via {channel}"
+    "sendViaSupport": "Send receipt via {channel}",
+    "bulkResult": "Completed: {succeeded}; failed: {failed}."
   }
 }

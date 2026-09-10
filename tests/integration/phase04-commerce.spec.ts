@@ -1,13 +1,20 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const context = vi.hoisted(() => ({ cookies: new Map<string, string>() }));
+const context = vi.hoisted(() => ({
+  cookies: new Map<string, string>(),
+  requests: undefined as
+    | import("node:async_hooks").AsyncLocalStorage<Map<string, string>>
+    | undefined,
+}));
 vi.mock("next/headers", () => ({
   cookies: async () => ({
     get: (key: string) =>
-      context.cookies.has(key)
-        ? { value: context.cookies.get(key) }
+      (context.requests?.getStore() ?? context.cookies).has(key)
+        ? { value: (context.requests?.getStore() ?? context.cookies).get(key) }
         : undefined,
-    set: (key: string, value: string) => context.cookies.set(key, value),
+    set: (key: string, value: string) =>
+      (context.requests?.getStore() ?? context.cookies).set(key, value),
   }),
 }));
 vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
@@ -32,6 +39,7 @@ import {
 import { submitReceipt } from "@/modules/payments";
 import { requestCustomerOtp, verifyCustomerOtp } from "@/modules/customers/otp";
 
+context.requests = new AsyncLocalStorage<Map<string, string>>();
 const hasDb = Boolean(process.env.TEST_DATABASE_URL);
 async function fixture(quantity = 3) {
   const suffix = randomUUID(),
@@ -123,6 +131,43 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe.skipIf(!hasDb)("phase 04 transactional commerce", () => {
+  it("serializes two separate checkouts competing for the last unit", async () => {
+    const f = await fixture(1),
+      firstCookies = new Map(context.cookies),
+      secondToken = opaqueToken();
+    const second = await db.cart.create({
+      data: {
+        tokenHash: tokenHash(secondToken),
+        marketId: f.market.id,
+        locale: "tr",
+        currency: "TRY",
+        expiresAt: new Date(Date.now() + 86400000),
+        items: { create: { variantId: f.variant.id, quantity: 1 } },
+      },
+    });
+    const results = await Promise.allSettled(
+      [
+        firstCookies,
+        new Map([
+          ["hoda.cart", secondToken],
+          ["market", "TR"],
+        ]),
+      ].map((jar) =>
+        context.requests!.run(jar, () => placeOrder(f.address, true, 0)),
+      ),
+    );
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    expect(
+      await db.order.count({
+        where: { cartId: { in: [f.cart.id, second.id] } },
+      }),
+    ).toBe(1);
+    const stock = await db.stockItem.findUniqueOrThrow({
+      where: { id: f.stock.id },
+    });
+    expect(stock.onHand).toBe(1);
+    expect(stock.reserved).toBe(1);
+  });
   it("snapshots quote and FX; a retry creates neither a second order nor a second hold", async () => {
     const f = await fixture();
     const quote = await quoteCart({

@@ -37,7 +37,8 @@ export async function purgeOne(
   },
   target: StorageProvider = storage,
 ): Promise<void> {
-  if (media.storageKey.startsWith("receipts/")) throw new Error("Financial receipts cannot be purged");
+  if (media.storageKey.startsWith("receipts/"))
+    throw new Error("Financial receipts cannot be purged");
   await target.delete(media.storageKey);
   const variants = (media.variants as MediaVariants | null) ?? {};
   for (const byWidth of Object.values(variants)) {
@@ -70,7 +71,10 @@ export async function mediaPurgeHandler(): Promise<void> {
   );
 
   const toPurge = await db.media.findMany({
-    where: { deletedAt: { lte: cutoff }, kind: { notIn: ["receipt", "backup"] } },
+    where: {
+      deletedAt: { lte: cutoff },
+      kind: { notIn: ["receipt", "backup"] },
+    },
     select: { id: true, storageKey: true, variants: true },
   });
   for (const media of toPurge) await purgeOne(media);

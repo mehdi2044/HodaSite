@@ -120,8 +120,14 @@ export async function verifyOtpAction(locale: string, form: FormData) {
     const l = localeSchema.parse(locale);
     await customerSignIn("customer-otp", {
       challengeId: form.get("challengeId"),
-      code: form.get("code") ?? undefined,
-      token: form.get("token") ?? undefined,
+      ...(form.has("token")
+        ? { token: z.string().min(1).max(100).parse(form.get("token")) }
+        : {
+            code: z
+              .string()
+              .regex(/^\d{6}$/)
+              .parse(form.get("code")),
+          }),
       redirect: false,
     });
     const next = String(form.get("next") ?? "");

@@ -12,11 +12,11 @@ export function CartDrawer({
 }) {
   const t = useTranslations("commerce");
   return (
-    <details className="relative">
+    <details>
       <summary className="cursor-pointer py-3">
         {t("cart")} ({items.reduce((n, i) => n + i.quantity, 0)})
       </summary>
-      <section className="absolute end-0 top-full z-50 grid w-[min(22rem,90vw)] gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
+      <section className="absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
         <h2 className="font-semibold">
           {t("cart")} · {currency}
         </h2>

@@ -2,7 +2,12 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-export type CommerceResult = { error?: string; url?: string; ok?: boolean };
+export type CommerceResult = {
+  error?: string;
+  url?: string;
+  ok?: boolean;
+  partial?: { succeeded: number; failed: number };
+};
 export function CommerceForm({
   action,
   children,
@@ -28,6 +33,7 @@ export function CommerceForm({
         {children}
       </fieldset>
       {pending && <p role="status">{t("working")}</p>}
+      {state.partial && <p role="status">{t("bulkResult", state.partial)}</p>}
       {state.error && (
         <p role="alert" className="text-error">
           {t.has(`errors.${state.error}`)

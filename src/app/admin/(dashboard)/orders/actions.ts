@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/modules/auth";
-import { assertCan } from "@/modules/access";
+import { assertCan, ForbiddenError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import {
@@ -111,25 +111,37 @@ export async function orderAction(form: FormData) {
     return { ok: true };
   } catch (error) {
     return {
-      error: error instanceof CommerceError ? error.code : "REQUEST_FAILED",
+      error:
+        error instanceof CommerceError
+          ? error.code
+          : error instanceof ForbiddenError
+            ? "FORBIDDEN"
+            : "REQUEST_FAILED",
     };
   }
 }
 export async function bulkOrderAction(form: FormData) {
-  const ids = z
+  const parsed = z
     .array(z.string().min(1))
     .min(1)
     .max(50)
-    .parse(form.getAll("orderId"));
-  for (const id of ids) {
+    .safeParse(form.getAll("orderId"));
+  if (!parsed.success) return { error: "VALIDATION" };
+  let succeeded = 0,
+    failed = 0,
+    error: string | undefined;
+  for (const id of new Set(parsed.data)) {
     const row = new FormData();
     row.set("orderId", id);
     row.set("operation", String(form.get("operation")));
     row.set("reason", String(form.get("reason") ?? ""));
     const result = await orderAction(row);
-    if (result.error) return { error: result.error };
+    if (result.error) {
+      failed++;
+      error = result.error;
+    } else succeeded++;
   }
-  return { ok: true };
+  return { ok: failed === 0, error, partial: { succeeded, failed } };
 }
 export async function bankAccountAction(form: FormData) {
   try {

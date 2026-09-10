@@ -102,6 +102,12 @@ export async function quoteCart(input: CartQuoteInput) {
         (r.labelI18n as Record<string, string>)?.[input.locale ?? "en"] ?? r.id,
     }));
   return Object.freeze({
+    ruleSnapshots: Object.fromEntries(
+      result.lines.map((line) => [
+        line.ruleId,
+        rules.find((rule) => rule.id === line.ruleId)!,
+      ]),
+    ),
     shippingOptions,
     marketId: market.id,
     currency: market.currency,

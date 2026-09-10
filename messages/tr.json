@@ -741,6 +741,7 @@
     "savedViews": "Kayıtlı görünümler",
     "saveView": "Geçerli filtreyi kaydet",
     "viewName": "Görünüm adı",
-    "sendViaSupport": "{channel} ile dekont gönder"
+    "sendViaSupport": "{channel} ile dekont gönder",
+    "bulkResult": "Tamamlanan: {succeeded}; başarısız: {failed}."
   }
 }
