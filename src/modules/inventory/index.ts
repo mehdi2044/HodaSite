@@ -214,44 +214,41 @@ export async function reserveStock(requests: readonly ReservationRequest[]) {
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     try {
-      return await db.$transaction(
-        async (tx) => {
-          const reservations = [];
-          for (const request of ordered) {
-            const rows = await tx.$queryRaw<
-              Array<{ id: string; onHand: number; reserved: number }>
-            >`
+      return await db.$transaction(async (tx) => {
+        const reservations = [];
+        for (const request of ordered) {
+          const rows = await tx.$queryRaw<
+            Array<{ id: string; onHand: number; reserved: number }>
+          >`
               SELECT id, "onHand", reserved FROM "StockItem"
               WHERE "warehouseId" = ${request.warehouseId} AND "variantId" = ${request.variantId}
               FOR UPDATE
             `;
-            const stock = rows[0];
-            if (!stock || stock.onHand - stock.reserved < request.quantity)
-              throw new Error(
-                `Insufficient stock for variant ${request.variantId}`,
-              );
-            await tx.stockItem.update({
-              where: { id: stock.id },
-              data: { reserved: { increment: request.quantity } },
-            });
-            reservations.push(
-              await tx.reservation.create({
-                data: {
-                  stockItemId: stock.id,
-                  warehouseId: request.warehouseId,
-                  variantId: request.variantId,
-                  quantity: request.quantity,
-                  kind: request.kind,
-                  expiresAt: request.kind === "HOLD" ? request.expiresAt : null,
-                  referenceId: request.referenceId,
-                },
-              }),
+          const stock = rows[0];
+          if (!stock || stock.onHand - stock.reserved < request.quantity)
+            throw new Error(
+              `Insufficient stock for variant ${request.variantId}`,
             );
-          }
-          return reservations;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      );
+          await tx.stockItem.update({
+            where: { id: stock.id },
+            data: { reserved: { increment: request.quantity } },
+          });
+          reservations.push(
+            await tx.reservation.create({
+              data: {
+                stockItemId: stock.id,
+                warehouseId: request.warehouseId,
+                variantId: request.variantId,
+                quantity: request.quantity,
+                kind: request.kind,
+                expiresAt: request.kind === "HOLD" ? request.expiresAt : null,
+                referenceId: request.referenceId,
+              },
+            }),
+          );
+        }
+        return reservations;
+      });
     } catch (error) {
       const retryable =
         error instanceof Prisma.PrismaClientKnownRequestError &&
