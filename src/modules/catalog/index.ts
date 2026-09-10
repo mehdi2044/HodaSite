@@ -14,11 +14,6 @@ export {
   slugsAreUnique,
   variantInputSchema,
 } from "./validation";
-export {
-  catalogBaseAmount,
-  catalogDisplayAmount,
-  getPhase02CatalogRate,
-} from "./pricing";
 export { catalogSeo, catalogText } from "./localized";
 export {
   catalogFacets,

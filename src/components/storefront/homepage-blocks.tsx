@@ -19,6 +19,7 @@ export async function HomepageBlocks({
     code: string;
     currency: string;
     markupPercent: { toString(): string };
+    roundingRule: unknown;
   };
 }) {
   const mediaIds = [

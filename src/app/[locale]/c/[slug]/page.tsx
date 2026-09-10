@@ -6,7 +6,6 @@ import { CatalogFilter } from "@/components/storefront/catalog-filter";
 import { ProductCard } from "@/components/storefront/product-card";
 import { getRequestContext } from "@/lib/request-context";
 import {
-  catalogBaseAmount,
   catalogFacets,
   catalogText,
   findCategoryBySlug,
@@ -67,28 +66,14 @@ export default async function CategoryPage({
     getTranslations("catalog"),
   ]);
   if (!category) notFound();
-  const [minPrice, maxPrice] = await Promise.all([
-    one(query.min)
-      ? catalogBaseAmount(one(query.min)!, {
-          code: market.code,
-          markupPercent: market.markupPercent.toString(),
-        })
-      : undefined,
-    one(query.max)
-      ? catalogBaseAmount(one(query.max)!, {
-          code: market.code,
-          markupPercent: market.markupPercent.toString(),
-        })
-      : undefined,
-  ]);
   const result = await listCatalogProducts(market.id, safe, {
     categoryId: category.id,
     brandId: one(query.brand),
     colorId: one(query.color),
     sizeId: one(query.size),
     material: one(query.material),
-    minPriceUsd: minPrice?.toString(),
-    maxPriceUsd: maxPrice?.toString(),
+    minPrice: one(query.min),
+    maxPrice: one(query.max),
     available: one(query.available) === "1",
     sort: one(query.sort) as
       "newest" | "price-asc" | "price-desc" | "name" | undefined,

@@ -26,6 +26,28 @@ describe("Money gate", () => {
   it("takes a percentage", () =>
     expect(new Money("200", "USD").percent("8").toString()).toBe("16"));
 
+  it("divides without losing decimal precision", () =>
+    expect(new Money("1", "USD").div("3").toString()).toMatch(/^0\.333333/));
+
+  it("rejects division by zero and formats Persian digits", () => {
+    expect(() => new Money("1", "USD").div("0")).toThrow();
+    expect(new Money("1234.5", "TRY").formatLocale("fa")).toBe("۱,۲۳۴.۵۰ TRY");
+    expect(new Money("1234.5", "TRY").formatLocale("tr")).toBe("1,234.50 TRY");
+  });
+
+  it("supports explicit up and down rounding", () => {
+    expect(
+      new Money("12.341", "TRY")
+        .round({ mode: "UP", increment: "0.01" })
+        .toString(),
+    ).toBe("12.35");
+    expect(
+      new Money("12.349", "TRY")
+        .round({ mode: "DOWN", increment: "0.01" })
+        .toString(),
+    ).toBe("12.34");
+  });
+
   it("compares within a currency", () => {
     expect(new Money("1", "USD").compare(new Money("2", "USD"))).toBe(-1);
     expect(new Money("2", "USD").compare(new Money("2", "USD"))).toBe(0);

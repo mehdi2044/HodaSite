@@ -18,6 +18,17 @@ const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 export default defineConfig({
   test: {
     environment: "node",
+    coverage: {
+      provider: "v8",
+      thresholds: { lines: 90, perFile: true },
+      include: [
+        "src/lib/money.ts",
+        "src/modules/pricing/{fx,price,service}.ts",
+        "src/modules/fees/{index,quote,validation}.ts",
+        "src/modules/inventory/index.ts",
+      ],
+      reporter: ["text", "json-summary"],
+    },
     include: ["tests/unit/**/*.spec.ts", "tests/integration/**/*.spec.ts"],
     testTimeout: 15_000,
     env: testDatabaseUrl ? { DATABASE_URL: testDatabaseUrl } : {},

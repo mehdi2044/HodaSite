@@ -1,16 +1,22 @@
 import Link from "next/link";
 import { ResponsiveImage } from "./responsive-image";
 import {
-  catalogDisplayAmount,
   catalogText,
   formatCatalogCurrency,
   type CatalogLocale,
 } from "@/modules/catalog";
+import { getDisplayPrice } from "@/modules/pricing";
 
 type CardProduct = {
+  id: string;
   slugI18n: unknown;
   titleI18n: unknown;
   basePriceAmount: { toString(): string };
+  compareAtPriceAmount: { toString(): string } | null;
+  variants: Array<{
+    id: string;
+    priceOverrideUsd: { toString(): string } | null;
+  }>;
   media: Array<{ media: Parameters<typeof ResponsiveImage>[0]["media"] }>;
 };
 
@@ -22,17 +28,17 @@ export async function ProductCard({
   product: CardProduct;
   locale: CatalogLocale;
   market: {
+    id: string;
     code: string;
     currency: string;
     markupPercent: { toString(): string };
+    roundingRule: unknown;
   };
 }) {
   const title = catalogText(product.titleI18n, locale);
   const slug = catalogText(product.slugI18n, locale);
-  const amount = await catalogDisplayAmount(
-    product.basePriceAmount.toString(),
-    { code: market.code, markupPercent: market.markupPercent.toString() },
-  );
+  const variant = product.variants[0] ?? null;
+  const price = await getDisplayPrice(product, variant, market);
   const currency = (
     ["IRT", "TRY", "CAD", "USD"].includes(market.currency)
       ? market.currency
@@ -60,7 +66,7 @@ export async function ProductCard({
         <div className="p-4">
           <h3 className="font-medium">{title}</h3>
           <p className="mt-2 text-sm font-semibold" dir="ltr">
-            {formatCatalogCurrency(amount, currency, locale)}
+            {formatCatalogCurrency(price.amount, currency, locale)}
           </p>
         </div>
       </Link>

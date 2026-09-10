@@ -12,13 +12,13 @@ import { can } from "@/modules/access";
 import { getRequestContext } from "@/lib/request-context";
 import { db } from "@/lib/db";
 import {
-  catalogDisplayAmount,
   catalogText,
   findProductBySlug,
   formatCatalogCurrency,
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
+import { getDisplayPrice } from "@/modules/pricing";
 
 export async function generateMetadata({
   params,
@@ -85,11 +85,8 @@ export default async function ProductPage({
     includeInactive: previewRequested && previewAllowed,
   });
   if (!product) notFound();
-  const [amount, compareAmount, related, guides] = await Promise.all([
-    catalogDisplayAmount(product.basePriceAmount.toString(), market),
-    product.compareAtPriceAmount
-      ? catalogDisplayAmount(product.compareAtPriceAmount.toString(), market)
-      : Promise.resolve(null),
+  const [basePrice, related, guides, siteSettings] = await Promise.all([
+    getDisplayPrice(product, null, market),
     listCatalogProducts(market.id, safe, {
       categoryId: product.categoryId,
       limit: 4,
@@ -106,7 +103,18 @@ export default async function ProductPage({
         ],
       },
     }),
+    db.siteSettings.findUniqueOrThrow({
+      where: { id: "default" },
+      select: { inventory: true },
+    }),
   ]);
+  const inventorySettings = siteSettings.inventory as {
+    lowStockThreshold?: unknown;
+  };
+  const globalLowStockThreshold =
+    typeof inventorySettings.lowStockThreshold === "number"
+      ? inventorySettings.lowStockThreshold
+      : 2;
   const guide =
     guides.find((item) => item.scope === "product") ??
     guides.find((item) => item.scope === "brand") ??
@@ -116,25 +124,27 @@ export default async function ProductPage({
       ? market.currency
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
-  const variantDisplayPrices = new Map(
+  const variantPrices = new Map(
     await Promise.all(
       product.variants.map(
         async (variant) =>
           [
             variant.id,
-            formatCatalogCurrency(
-              variant.priceOverrideUsd
-                ? await catalogDisplayAmount(
-                    variant.priceOverrideUsd.toString(),
-                    market,
-                  )
-                : amount,
-              currency,
-              safe,
-            ),
+            await getDisplayPrice(product, variant, market),
           ] as const,
       ),
     ),
+  );
+  const variantDisplayPrices = new Map(
+    [...variantPrices].map(([id, price]) => [
+      id,
+      formatCatalogCurrency(price.amount, currency, safe),
+    ]),
+  );
+  const amount = basePrice.amount;
+  const compareAmount = basePrice.compareAtAmount;
+  const hasStock = product.variants.some((variant) =>
+    variant.stockItems.some((stock) => stock.onHand - stock.reserved > 0),
   );
   const jsonLd = {
     "@context": "https://schema.org",
@@ -147,8 +157,10 @@ export default async function ProductPage({
         offers: {
           "@type": "Offer",
           priceCurrency: currency,
-          price: amount.toFixed(currency === "IRT" ? 0 : 2),
-          availability: "https://schema.org/InStock",
+          price: amount,
+          availability: hasStock
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
         },
       },
       {
@@ -228,6 +240,9 @@ export default async function ProductPage({
                 : undefined
             }
           />
+          <p className="mt-1 text-sm text-muted">
+            {market.priceIncludesTax ? t("taxIncluded") : t("taxExcluded")}
+          </p>
           <div className="mt-3 flex gap-2">
             {Date.now() - product.createdAt.getTime() < 30 * 86400000 && (
               <span className="rounded-full bg-text px-3 py-1 text-xs text-bg">
@@ -251,6 +266,17 @@ export default async function ProductPage({
                 sizeId: v.sizeId,
                 sku: v.sku,
                 isActive: v.isActive,
+                available: v.stockItems.reduce(
+                  (total, stock) => total + stock.onHand - stock.reserved,
+                  0,
+                ),
+                lowStockThreshold: Math.max(
+                  0,
+                  ...v.stockItems.map(
+                    (stock) =>
+                      stock.lowStockThreshold ?? globalLowStockThreshold,
+                  ),
+                ),
                 price:
                   variantDisplayPrices.get(v.id) ??
                   formatCatalogCurrency(amount, currency, safe),
@@ -265,6 +291,9 @@ export default async function ProductPage({
                 size: t("size"),
                 add: t("addToCart"),
                 stub: t("cartStub"),
+                inStock: t("inStock"),
+                lowStock: t("lowStock"),
+                outOfStock: t("outOfStock"),
               }}
               basePrice={formatCatalogCurrency(amount, currency, safe)}
             />

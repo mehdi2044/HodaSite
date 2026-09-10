@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button, Card, Input, Select } from "@/components/ui";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { CatalogActionForm } from "@/components/admin/catalog-action-form";
-import { generateSku } from "@/modules/catalog";
+import { generateSku } from "@/modules/catalog/sku";
 import { saveProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
 
 type Localized = { fa: string; tr: string; en: string };
@@ -72,6 +72,7 @@ export function ProductEditor({
   sizes,
   markets,
   mediaUrls,
+  stockByVariant,
 }: {
   initial: ProductEditorValue;
   brands: Option[];
@@ -81,6 +82,7 @@ export function ProductEditor({
   sizes: Option[];
   markets: Option[];
   mediaUrls: Record<string, string>;
+  stockByVariant: Record<string, { onHand: number; reserved: number }>;
 }) {
   const t = useTranslations("catalogAdmin");
   const [tab, setTab] = useState<(typeof TABS)[number]>(TABS[0]);
@@ -363,6 +365,22 @@ export function ProductEditor({
               >
                 <span>{colorMap.get(variant.colorId)?.label}</span>
                 <span>{sizeMap.get(variant.sizeId)?.label}</span>
+                {variant.id && (
+                  <p className="text-sm text-muted md:col-span-5">
+                    {t("variantStock", {
+                      onHand: stockByVariant[variant.id]?.onHand ?? 0,
+                      available:
+                        (stockByVariant[variant.id]?.onHand ?? 0) -
+                        (stockByVariant[variant.id]?.reserved ?? 0),
+                    })}{" "}
+                    <a
+                      className="underline"
+                      href={`/admin/inventory?variantId=${variant.id}`}
+                    >
+                      {t("manageStock")}
+                    </a>
+                  </p>
+                )}
                 <Field
                   label="SKU"
                   value={variant.sku}

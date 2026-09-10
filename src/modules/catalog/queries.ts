@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+import { getDisplayPrice } from "@/modules/pricing";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeSearchText } from "./search";
@@ -12,8 +14,8 @@ export type CatalogFilters = {
   colorId?: string;
   sizeId?: string;
   material?: string;
-  minPriceUsd?: string;
-  maxPriceUsd?: string;
+  minPrice?: string;
+  maxPrice?: string;
   available?: boolean;
   sort?: "newest" | "price-asc" | "price-desc" | "name";
   page?: number;
@@ -26,10 +28,11 @@ export const catalogProductInclude = {
   media: { orderBy: { sortOrder: "asc" as const }, include: { media: true } },
   variants: {
     where: { isActive: true },
-    orderBy: { createdAt: "asc" as const },
+    orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }],
     include: {
       color: true,
       size: true,
+      stockItems: true,
       media: {
         orderBy: { sortOrder: "asc" as const },
         include: { media: true },
@@ -64,6 +67,20 @@ export async function listCatalogProducts(
     if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
   }
 
+  if (filters.available) {
+    const rows = await db.$queryRaw<Array<{ id: string }>>`
+      SELECT DISTINCT v."productId" AS id
+      FROM "Variant" v
+      JOIN "StockItem" s ON s."variantId" = v.id
+      WHERE v."isActive" = true AND s."onHand" - s.reserved > 0
+    `;
+    const availableIds = new Set(rows.map((row) => row.id));
+    matchingIds = matchingIds
+      ? matchingIds.filter((id) => availableIds.has(id))
+      : [...availableIds];
+    if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
+  }
+
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
     status: "ACTIVE",
@@ -75,19 +92,11 @@ export async function listCatalogProducts(
       : {}),
     ...(filters.brandId ? { brandId: filters.brandId } : {}),
     ...(filters.material ? { material: filters.material } : {}),
-    ...(filters.minPriceUsd || filters.maxPriceUsd
-      ? {
-          basePriceAmount: {
-            ...(filters.minPriceUsd ? { gte: filters.minPriceUsd } : {}),
-            ...(filters.maxPriceUsd ? { lte: filters.maxPriceUsd } : {}),
-          },
-        }
-      : {}),
-    ...(filters.available || filters.colorId || filters.sizeId
+    ...(filters.colorId || filters.sizeId
       ? {
           variants: {
             some: {
-              ...(filters.available ? { isActive: true } : {}),
+              isActive: true,
               ...(filters.colorId ? { colorId: filters.colorId } : {}),
               ...(filters.sizeId ? { sizeId: filters.sizeId } : {}),
             },
@@ -95,14 +104,86 @@ export async function listCatalogProducts(
         }
       : {}),
   };
+  const usesPrices =
+    filters.minPrice !== undefined ||
+    filters.maxPrice !== undefined ||
+    filters.sort === "price-asc" ||
+    filters.sort === "price-desc";
+  if (usesPrices) {
+    const market = await db.market.findUniqueOrThrow({
+      where: { id: marketId },
+    });
+    const candidates = await db.product.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      select: {
+        id: true,
+        basePriceAmount: true,
+        compareAtPriceAmount: true,
+        variants: {
+          where: { isActive: true },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          take: 1,
+          select: { id: true, priceOverrideUsd: true },
+        },
+      },
+    });
+    const bound = (value: string | undefined) =>
+      value !== undefined && /^\d+(\.\d+)?$/.test(value)
+        ? new Decimal(value)
+        : null;
+    const min = bound(filters.minPrice),
+      max = bound(filters.maxPrice);
+    const priced: Array<{ id: string; amount: Decimal }> = [];
+    // Bound concurrent lookups and paginate only after effective pricing.
+    for (let offset = 0; offset < candidates.length; offset += 25) {
+      const batch = await Promise.all(
+        candidates.slice(offset, offset + 25).map(async (product) => ({
+          id: product.id,
+          amount: new Decimal(
+            (
+              await getDisplayPrice(
+                product,
+                product.variants[0] ?? null,
+                market,
+              )
+            ).amount,
+          ),
+        })),
+      );
+      priced.push(
+        ...batch.filter(
+          ({ amount }) =>
+            (!min || amount.gte(min)) && (!max || amount.lte(max)),
+        ),
+      );
+    }
+    if (filters.sort === "price-asc" || filters.sort === "price-desc")
+      priced.sort(
+        (a, b) =>
+          (filters.sort === "price-desc"
+            ? b.amount.comparedTo(a.amount)
+            : a.amount.comparedTo(b.amount)) || a.id.localeCompare(b.id),
+      );
+    const ids = priced
+      .slice((page - 1) * take, page * take)
+      .map((item) => item.id);
+    const products = ids.length
+      ? await db.product.findMany({
+          where: { ...where, id: { in: ids } },
+          include: catalogProductInclude,
+        })
+      : [];
+    const byId = new Map(products.map((product) => [product.id, product]));
+    return {
+      items: ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])),
+      total: priced.length,
+      page,
+      pages: Math.ceil(priced.length / take),
+    };
+  }
   const orderBy: Prisma.ProductOrderByWithRelationInput =
-    filters.sort === "price-asc"
-      ? { basePriceAmount: "asc" }
-      : filters.sort === "price-desc"
-        ? { basePriceAmount: "desc" }
-        : filters.sort === "name"
-          ? { titleI18n: "asc" }
-          : { createdAt: "desc" };
+    filters.sort === "name" ? { titleI18n: "asc" } : { createdAt: "desc" };
   const [items, total] = await Promise.all([
     db.product.findMany({
       where,
@@ -148,6 +229,7 @@ export async function findProductBySlug(
         include: {
           color: true,
           size: true,
+          stockItems: true,
           media: { orderBy: { sortOrder: "asc" }, include: { media: true } },
         },
       },

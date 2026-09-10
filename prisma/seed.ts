@@ -91,7 +91,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "catalog.product.edit",
     "catalog.product.publish",
     "pricing.sale_price.edit",
+    "pricing.fx.manage",
+    "fees.manage",
     "pricing.cost.view",
+    "inventory.view",
+    "inventory.receive",
     "inventory.stock.adjust",
     "order.view",
     "order.cancel",
@@ -110,7 +114,13 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.page.write",
     "content.homepage.read",
   ],
-  warehouse: ["catalog.product.view", "inventory.stock.adjust", "order.view"],
+  warehouse: [
+    "catalog.product.view",
+    "inventory.view",
+    "inventory.receive",
+    "inventory.stock.adjust",
+    "order.view",
+  ],
   accountant: [
     "order.view",
     "pricing.cost.view",
@@ -190,6 +200,7 @@ async function main() {
         functionalCurrency: "TRY",
         reportingCurrency: "USD",
       },
+      inventory: { lowStockThreshold: 2 },
       contact: {
         email: "hello@example.com",
         phones: {
@@ -319,6 +330,7 @@ async function main() {
 
   await seedDemoMedia();
   await seedCatalog();
+  await seedPhase03(user.id);
 }
 
 const SEEDED_PAGES = [
@@ -693,16 +705,6 @@ async function seedDemoMedia() {
 }
 
 async function seedCatalog() {
-  await db.integration.upsert({
-    where: { key: "pricing.phase02-test-rates" },
-    update: { config: { IR: "60000", TR: "35", CA: "1.40" } },
-    create: {
-      key: "pricing.phase02-test-rates",
-      provider: "seed",
-      isActive: true,
-      config: { IR: "60000", TR: "35", CA: "1.40" },
-    },
-  });
   const brands = await Promise.all(
     [
       ["atelier", { fa: "آتلیه", tr: "Atölye", en: "Atelier" }],
@@ -962,6 +964,242 @@ async function seedCatalog() {
           ["L", "100", "82"],
         ],
       },
+    },
+  });
+}
+
+async function seedPhase03(ownerId: string) {
+  await db.integration.upsert({
+    where: { key: "fx" },
+    update: {},
+    create: {
+      key: "fx",
+      provider: "multi",
+      isActive: true,
+      config: {
+        intlProvider: "frankfurter",
+        irtProvider: "navasan",
+        navasanField: "usd_sell",
+        refreshHours: 6,
+      },
+    },
+  });
+  const rates: Record<string, string> = { IR: "60000", TR: "35", CA: "1.40" };
+  const markets = await db.market.findMany();
+  for (const market of markets) {
+    const activeQuote = await db.fxQuote.findFirst({
+      where: { marketId: market.id, status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (!activeQuote) {
+      await db.fxQuote.upsert({
+        where: { id: `seed-fx-${market.code}` },
+        update: {
+          rate: rates[market.code] ?? "1",
+          status: "ACTIVE",
+          acceptedAt: new Date(),
+        },
+        create: {
+          id: `seed-fx-${market.code}`,
+          marketId: market.id,
+          baseCurrency: "USD",
+          quoteCurrency: market.currency,
+          rate: rates[market.code] ?? "1",
+          provider: "manual",
+          status: "ACTIVE",
+          acceptedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  const warehouse = await db.warehouse.upsert({
+    where: { code: "IST" },
+    update: {},
+    create: {
+      id: "seed-warehouse-istanbul",
+      code: "IST",
+      nameI18n: {
+        fa: "انبار استانبول",
+        tr: "İstanbul deposu",
+        en: "Istanbul warehouse",
+      },
+    },
+  });
+  const variants = await db.variant.findMany({ orderBy: { sku: "asc" } });
+  for (const variant of variants) {
+    const stock = await db.stockItem.upsert({
+      where: {
+        warehouseId_variantId: {
+          warehouseId: warehouse.id,
+          variantId: variant.id,
+        },
+      },
+      update: {},
+      create: {
+        id: `seed-stock-${variant.id}`,
+        warehouseId: warehouse.id,
+        variantId: variant.id,
+        onHand: 10,
+        lowStockThreshold: 2,
+      },
+    });
+    const lot = await db.lot.upsert({
+      where: { id: `seed-lot-${variant.id}` },
+      update: {},
+      create: {
+        id: `seed-lot-${variant.id}`,
+        warehouseId: warehouse.id,
+        variantId: variant.id,
+        qtyReceived: 10,
+        qtyRemaining: 10,
+        unitCostAmount: "500",
+        unitCostCurrency: "TRY",
+        unitCostAmountTry: "500",
+        unitCostAmountUsd: "14.2857",
+        fxRateSnapshot: { TRY_PER_USD: "35" },
+        receivedAt: new Date("2026-09-09T00:00:00Z"),
+      },
+    });
+    const movement = await db.stockMovement.findFirst({
+      where: { lotId: lot.id, type: "IN" },
+    });
+    if (!movement)
+      await db.stockMovement.create({
+        data: {
+          stockItemId: stock.id,
+          warehouseId: warehouse.id,
+          variantId: variant.id,
+          lotId: lot.id,
+          type: "IN",
+          quantity: 10,
+          reason: "seed",
+          createdBy: ownerId,
+        },
+      });
+  }
+
+  const byCode = Object.fromEntries(
+    markets.map((market) => [market.code, market]),
+  );
+  const simulatorVariant = variants[0];
+  if (simulatorVariant) {
+    await db.variant.update({
+      where: { id: simulatorVariant.id },
+      data: { weightGrams: 3000 },
+    });
+    await db.marketPrice.upsert({
+      where: { id: "seed-price-ca-simulator" },
+      update: {
+        marketId: byCode.CA.id,
+        variantId: simulatorVariant.id,
+        productId: null,
+        amount: "200",
+        currency: "CAD",
+        compareAtAmount: null,
+        isActive: true,
+        validFrom: new Date(),
+        validUntil: null,
+      },
+      create: {
+        id: "seed-price-ca-simulator",
+        marketId: byCode.CA.id,
+        variantId: simulatorVariant.id,
+        amount: "200",
+        currency: "CAD",
+      },
+    });
+  }
+  const feeRules = [
+    {
+      id: "seed-fee-tr-shipping",
+      marketId: byCode.TR.id,
+      labelI18n: {
+        fa: "ارسال داخلی ترکیه",
+        tr: "Türkiye içi kargo",
+        en: "Turkey domestic shipping",
+      },
+      currency: byCode.TR.currency,
+      type: "SHIPPING" as const,
+      method: "FIXED" as const,
+      params: { amount: "150" },
+      minAmount: "150",
+    },
+    {
+      id: "seed-fee-ir-shipping",
+      marketId: byCode.IR.id,
+      labelI18n: {
+        fa: "ارسال وزنی ایران",
+        tr: "İran ağırlık kargosu",
+        en: "Iran weight shipping",
+      },
+      currency: byCode.IR.currency,
+      type: "SHIPPING" as const,
+      method: "PER_KG" as const,
+      params: { perKg: "90000", minKg: "1" },
+    },
+    {
+      id: "seed-fee-ca-shipping",
+      marketId: byCode.CA.id,
+      labelI18n: {
+        fa: "ارسال کانادا",
+        tr: "Kanada kargo",
+        en: "Canada shipping",
+      },
+      currency: byCode.CA.currency,
+      type: "SHIPPING" as const,
+      method: "WEIGHT_BRACKET" as const,
+      params: { brackets: [{ uptoKg: "2", amount: "20" }], extraPerKg: "6" },
+    },
+    {
+      id: "seed-fee-ca-customs",
+      marketId: byCode.CA.id,
+      labelI18n: {
+        fa: "گمرک کانادا",
+        tr: "Kanada gümrük",
+        en: "Canada customs",
+      },
+      currency: byCode.CA.currency,
+      type: "CUSTOMS" as const,
+      method: "PERCENT" as const,
+      params: { percent: "8", of: "subtotal" },
+    },
+    {
+      id: "seed-fee-ca-tax",
+      marketId: byCode.CA.id,
+      labelI18n: {
+        fa: "مالیات نمونه کانادا",
+        tr: "Kanada örnek vergi",
+        en: "Canada placeholder tax",
+      },
+      currency: byCode.CA.currency,
+      type: "TAX" as const,
+      method: "PERCENT" as const,
+      params: { percent: "13", of: "subtotal_plus_shipping_customs" },
+    },
+  ];
+  for (const rule of feeRules)
+    await db.feeRule.upsert({
+      where: { id: rule.id },
+      update: {},
+      create: { ...rule, priority: 0 },
+    });
+  await db.feeRule.upsert({
+    where: { id: "seed-fee-service-inactive" },
+    update: {},
+    create: {
+      id: "seed-fee-service-inactive",
+      marketId: byCode.TR.id,
+      labelI18n: {
+        fa: "خدمات نمونه",
+        tr: "Örnek hizmet",
+        en: "Sample service",
+      },
+      currency: byCode.TR.currency,
+      type: "SERVICE",
+      method: "PERCENT",
+      params: { percent: "2", of: "subtotal" },
+      isActive: false,
     },
   });
 }

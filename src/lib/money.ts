@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 export type Currency = "USD" | "TRY" | "CAD" | "IRT";
 
 export type RoundingRule = {
-  mode: "HALF_UP" | "HALF_EVEN";
+  mode: "HALF_UP" | "HALF_EVEN" | "NEAREST" | "UP" | "DOWN";
   /** Rounding step, e.g. "1000" for IRT, "0.01" for TRY/CAD. */
   increment: string;
   /** Optional psychological ending, e.g. "0.99". */
@@ -48,6 +48,17 @@ export class Money {
     return new Money(this.#amount.mul(new Decimal(factor)), this.currency);
   }
 
+  div(divisor: string | Decimal): Money {
+    const value = new Decimal(divisor);
+    if (value.isZero()) throw new Error("Cannot divide money by zero");
+    return new Money(this.#amount.div(value), this.currency);
+  }
+
+  /** Explicit currency conversion boundary; the caller must apply its FX factor first. */
+  withCurrency(currency: Currency): Money {
+    return new Money(this.#amount, currency);
+  }
+
   /** `pct`% of this amount, e.g. `.percent("8")` for 8 %. */
   percent(pct: string | Decimal): Money {
     return new Money(
@@ -86,7 +97,11 @@ export class Money {
     const mode =
       rule.mode === "HALF_EVEN"
         ? Decimal.ROUND_HALF_EVEN
-        : Decimal.ROUND_HALF_UP;
+        : rule.mode === "UP"
+          ? Decimal.ROUND_UP
+          : rule.mode === "DOWN"
+            ? Decimal.ROUND_DOWN
+            : Decimal.ROUND_HALF_UP;
     const increment = new Decimal(rule.increment);
 
     if (rule.ending === undefined) {
@@ -123,6 +138,14 @@ export class Money {
     const digits = sign ? int.slice(1) : int;
     const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return `${sign}${grouped}${frac ? `.${frac}` : ""} ${this.currency}`;
+  }
+
+  /** Locale-aware display without converting the amount to a JS number. */
+  formatLocale(locale: "fa" | "tr" | "en"): string {
+    const latin = this.format();
+    if (locale !== "fa") return latin;
+    const digits = "۰۱۲۳۴۵۶۷۸۹";
+    return latin.replace(/\d/g, (digit) => digits[Number.parseInt(digit, 10)]!);
   }
 }
 

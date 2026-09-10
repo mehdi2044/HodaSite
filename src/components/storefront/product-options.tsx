@@ -7,6 +7,8 @@ type Variant = {
   sizeId: string;
   sku: string;
   isActive: boolean;
+  available: number;
+  lowStockThreshold: number;
   price: string;
   color: { hex: string; name: string };
   size: { value: string };
@@ -17,7 +19,15 @@ export function ProductOptions({
   basePrice,
 }: {
   variants: Variant[];
-  labels: { color: string; size: string; add: string; stub: string };
+  labels: {
+    color: string;
+    size: string;
+    add: string;
+    stub: string;
+    inStock: string;
+    lowStock: string;
+    outOfStock: string;
+  };
   basePrice: string;
 }) {
   const colors = useMemo(
@@ -25,11 +35,16 @@ export function ProductOptions({
     [variants],
   );
   const [color, setColor] = useState(
-    variants.find((item) => item.isActive)?.colorId ?? colors[0]?.[0] ?? "",
+    variants.find((item) => item.isActive && item.available > 0)?.colorId ??
+      colors[0]?.[0] ??
+      "",
   );
   const available = variants.filter((v) => v.colorId === color);
   const [size, setSize] = useState(
-    available.find((item) => item.isActive)?.sizeId ?? "",
+    available.find((item) => item.isActive && item.available > 0)?.sizeId ?? "",
+  );
+  const selected = variants.find(
+    (variant) => variant.colorId === color && variant.sizeId === size,
   );
   const announcePrice = (variant?: Variant) =>
     window.dispatchEvent(
@@ -50,7 +65,7 @@ export function ProductOptions({
               aria-pressed={id === color}
               onClick={() => {
                 const next = variants.find(
-                  (v) => v.colorId === id && v.isActive,
+                  (v) => v.colorId === id && v.isActive && v.available > 0,
                 );
                 setColor(id);
                 window.dispatchEvent(
@@ -76,7 +91,7 @@ export function ProductOptions({
             <button
               key={v.id}
               type="button"
-              disabled={!v.isActive}
+              disabled={!v.isActive || v.available <= 0}
               aria-pressed={v.sizeId === size}
               onClick={() => {
                 setSize(v.sizeId);
@@ -89,6 +104,13 @@ export function ProductOptions({
           ))}
         </div>
       </fieldset>
+      <p className="text-sm font-medium" data-testid="stock-status">
+        {!selected || selected.available <= 0
+          ? labels.outOfStock
+          : selected.available <= selected.lowStockThreshold
+            ? labels.lowStock
+            : labels.inStock}
+      </p>
       <button
         type="button"
         className="button w-full"

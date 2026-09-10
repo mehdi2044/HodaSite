@@ -20,6 +20,10 @@ export async function AdminShell({
         <Link href="/admin/media">رسانه‌ها</Link>
         <Link href="/admin/catalog/products">محصولات</Link>
         <Link href="/admin/catalog/taxonomy">طبقه‌بندی کاتالوگ</Link>
+        <Link href="/admin/pricing/fx">{t("pricingFx")}</Link>
+        <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
+        <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
+        <Link href="/admin/inventory">{t("inventoryLots")}</Link>
         <Link href="/admin/content/menus">{t("menus")}</Link>
         <Link href="/admin/content/pages">{t("pages")}</Link>
         <Link href="/admin/content/homepage">{t("homepage")}</Link>
