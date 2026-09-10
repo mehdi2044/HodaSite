@@ -363,6 +363,14 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - طبق D46 و استثنای زمان‌بندی D49، پیش از بستن Checkpoint 1 باید staging با دامنهٔ آزمایشی و HTTPS واقعی Caddy در دسترس باشد. S3/MinIO در CI اثبات شده است؛ دامنه، HTTPS واقعی، Lighthouse عمومی و ۱۷ نتیجهٔ دستی هنوز تأیید نشده‌اند.
 - فازهای 03 تا 05 می‌توانند بر پایهٔ CI سبز ادامه یابند؛ این موارد باید حداکثر پیش از اجرای دستی Checkpoint 2 تکمیل شوند. قاعدهٔ توقف در صورت کشف بیش از سه باگ مسدودکننده همچنان برقرار است.
 
+### اصلاح امنیتی وابستگی‌ها — ۱۰ سپتامبر ۲۰۲۶
+
+- Next.js و eslint-config-next از 15.5.2 به 15.5.25 و React/React DOM از 19.1.0 به 19.1.9 ارتقا یافتند؛ فایل قفل با pnpm 10.15.1 معتبر شد.
+- مبنا: https://nextjs.org/blog/CVE-2025-66478 و https://github.com/vercel/next.js/security/advisories/GHSA-2xp9-vwfh-vxw4 ؛ نسخهٔ انتخابی در همان شاخهٔ اصلی 15 باقی می‌ماند.
+- تأیید محلی: Prisma generate، lint، TypeScript، ۱۳۴ تست واحد و build تولیدی موفق. ۴۲ تست دیتابیس به‌علت نبود TEST_DATABASE_URL محلی اجرا نشدند. هر سه job در CI روی commit 908978c موفق شدند؛ Docker، مرورگر، PostgreSQL و backup/restore واقعی LocalStorage و S3/MinIO تأیید شدند (run 34462434107).
+- تغییر مدل داده یا معماری ندارد. هشدار build مربوط به APIهای Node در dependency احراز هویت باقی است؛ تست ورود واقعی CI معیار سازگاری است.
+- Implemented against docs v1.2 / D-numbers touched: D02, D27, D28, D29, D47.
+
 ### Phase 03
 
 #### وضعیت
