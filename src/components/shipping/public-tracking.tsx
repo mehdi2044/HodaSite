@@ -1,11 +1,15 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { publicTrackingAction } from "@/app/[locale]/tracking/actions";
 import type { TrackingView } from "@/modules/shipping/tracking";
 import { TrackingTimeline } from "./tracking-timeline";
 export function PublicTracking() {
   const t = useTranslations("shipping");
+  // React resets uncontrolled action forms after success. Search criteria must
+  // remain editable for another lookup, including a rejected email correction.
+  const [number, setNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [state, action, pending] = useActionState(
     async (
       _: { tracking: TrackingView | null; searched: boolean },
@@ -22,6 +26,8 @@ export function PublicTracking() {
           <input
             className="input w-full"
             name="number"
+            value={number}
+            onChange={(event) => setNumber(event.target.value)}
             required
             maxLength={64}
             autoComplete="off"
@@ -33,6 +39,8 @@ export function PublicTracking() {
           <input
             className="input w-full"
             name="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             type="email"
             required
             maxLength={254}

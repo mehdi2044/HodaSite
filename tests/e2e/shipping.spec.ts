@@ -174,9 +174,15 @@ test("IR partial parcels, manual event, sequential tracking and final delivery",
       ),
     ).toBe(true);
   }
+  await expect(page.locator('main [name="number"]')).toHaveValue(
+    f.order.number,
+  );
+  await expect(page.locator('main [name="email"]')).toHaveValue(f.email);
   await page.locator('main [name="email"]').fill("wrong@example.com");
   await page.getByRole("button", { name: en.shipping.findTracking }).click();
-  await expect(page.getByRole("alert")).toHaveText(en.shipping.notFound);
+  await expect(page.locator("main").getByRole("alert")).toHaveText(
+    en.shipping.notFound,
+  );
   await expect(page.getByTestId("tracking-timeline")).toHaveCount(0);
   expect(page.url()).not.toContain(f.email);
   const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
