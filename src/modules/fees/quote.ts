@@ -105,7 +105,9 @@ export async function quoteCart(input: CartQuoteInput) {
     ruleSnapshots: Object.fromEntries(
       result.lines.map((line) => [
         line.ruleId,
-        rules.find((rule) => rule.id === line.ruleId)!,
+        JSON.parse(
+          JSON.stringify(rules.find((rule) => rule.id === line.ruleId)!),
+        ) as Record<string, unknown>,
       ]),
     ),
     shippingOptions,

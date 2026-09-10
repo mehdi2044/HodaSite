@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z, ZodError } from "zod";
@@ -79,7 +80,7 @@ export async function autosaveAddressAction(form: FormData) {
   });
 }
 export async function placeOrderAction(locale: string, form: FormData) {
-  return safe(async () => {
+  const result = await safe(async () => {
     localeSchema.parse(locale);
     const token = (await cookies()).get(CART_COOKIE)?.value;
     const order = await placeOrder(
@@ -102,6 +103,10 @@ export async function placeOrderAction(locale: string, form: FormData) {
     revalidatePath(`/${locale}/cart`);
     return { url: `/${order.locale}/orders/${order.number}/pay` };
   });
+  // Navigation must happen on the server: cookie/revalidation refreshes would
+  // otherwise re-render the completed cart and redirect checkout back to /cart.
+  if (result.url) redirect(result.url);
+  return result;
 }
 export async function requestOtpAction(locale: string, form: FormData) {
   return safe(async () => {

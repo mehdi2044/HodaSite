@@ -137,6 +137,9 @@ it("offers applicable shipping options and validates a selected method", async (
   };
   const quote = await quoteCart({ ...input, shippingRuleId: "express" });
   expect(quote.total).toBe("25");
+  expect(JSON.parse(JSON.stringify(quote.ruleSnapshots))).toEqual(
+    quote.ruleSnapshots,
+  );
   expect(quote.shippingOptions.map((o) => o.id)).toEqual([
     "standard",
     "express",

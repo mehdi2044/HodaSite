@@ -10,8 +10,8 @@
 | 01c | CMS & Storefront Design                    | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#6](https://github.com/mehdi2044/HodaSite/pull/6) |
 | 02  | Catalog & Storefront                       | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#7](https://github.com/mehdi2044/HodaSite/pull/7) |
 | —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق          | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
-| 03  | Pricing / FX / Fees / Inventory / Lot      | 🟡 در حال انجام | ۲۰۲۶-۰۹-۱۰ |                                                    |
-| 04  | Cart / Auth / Checkout / Payment           | ⬜              |            |                                                    |
+| 03  | Pricing / FX / Fees / Inventory / Lot      | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#9](https://github.com/mehdi2044/HodaSite/pull/9) |
+| 04  | Cart / Auth / Checkout / Payment           | 🟡 آزمون نهایی | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11) |
 | 05  | Shipping / Returns / RBAC / Backup-Restore | ⬜              |            |                                                    |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 06  | Finance Core                               | ⬜              |            |                                                    |
@@ -437,3 +437,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 
 - CI اولیه روی PostgreSQL خطای casing وضعیت صفحه قوانین (`published`) و خروجی `void` قفل advisory را آشکار کرد؛ هر دو اصلاح شدند. بررسی مبلغ پذیرفته‌شده مشتری در زمان ثبت، کنترل دوباره مالکیت سبد زیر قفل و جزئیات آدرس/هزینه/timeline مدیر نیز تکمیل شد. این اصلاحات باید در اجرای بعدی CI تأیید شوند.
 - بازبینی مرز Auth.js نشان داد ارسال فیلد اختیاری با مقدار undefined در URLSearchParams به متن تبدیل می‌شود؛ اکنون فقط کد یا فقط توکن ارسال می‌شود و تست regression مرز Server Action اضافه شده است. خروجی عملیات گروهی، تعداد موفق/ناموفق را نشان می‌دهد. Snapshot قانون هزینه از همان دادهٔ quote گرفته می‌شود تا تغییر هم‌زمان تنظیمات، سند مالی ناسازگار نسازد.
+
+- اجرای 34473891175: آزمون‌های واحد/دیتابیس، build، Docker و دو مسیر backup→restore موفق؛ ۴۷ تست قبلی مرورگر پاس و ۳ جریان جدید خرید در ورود متوقف شدند. اصلاح انتقال credential در Auth.js در commit بعدی ثبت شد؛ نتیجه خرید کامل هنوز در حال بررسی است.
+
+- اجرای 34474502168 ورود مشتری و ایجاد سفارش را عبور داد اما refresh خودکار Server Action پس از اتمام سبد، مشتری را به سبد خالی می‌فرستاد. هدایت به صفحه پرداخت اکنون با redirect سمت سرور و خارج از catch انجام می‌شود؛ تست مرورگر دوباره اجرا می‌شود.

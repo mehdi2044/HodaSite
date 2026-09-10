@@ -26,15 +26,13 @@ async function adminLogin(page: Page) {
   await expect(page).toHaveURL(/\/admin$/);
 }
 async function receipt(page: Page) {
-  await page
-    .locator('[name="receipt"]')
-    .setInputFiles({
-      name: "proof.pdf",
-      mimeType: "application/pdf",
-      buffer: Buffer.from(
-        "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
-      ),
-    });
+  await page.locator('[name="receipt"]').setInputFiles({
+    name: "proof.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from(
+      "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+    ),
+  });
   await submit(page, "receipt");
 }
 for (const [locale, slug, province, city, postal] of [
@@ -49,6 +47,7 @@ for (const [locale, slug, province, city, postal] of [
   }) => {
     test.setTimeout(120000);
     const email = `e2e-${randomUUID()}@example.com`;
+    await page.context().clearCookies();
     await page.goto(`/${locale}/p/${encodeURIComponent(slug)}`);
     await submit(page, "variantId");
     await expect(
@@ -87,7 +86,7 @@ for (const [locale, slug, province, city, postal] of [
       .toBe(true);
     await page.locator('[name="code"]').fill(code);
     await submit(page, "code");
-    await expect(page).toHaveURL(new RegExp(`/${locale}/checkout$`));
+    await expect(page).toHaveURL(`http://127.0.0.1:3000/${locale}/checkout`);
     for (const [key, value] of Object.entries({
       firstName: "Test",
       lastName: "Buyer",
