@@ -69,7 +69,7 @@ export async function GET(
       "content-length": String(bytes.length),
       ...(isPrivate
         ? {
-            "content-disposition": 'attachment; filename="backup"',
+            "content-disposition": 'attachment',
             "x-content-type-options": "nosniff",
             "referrer-policy": "no-referrer",
             "content-security-policy": "sandbox",

@@ -79,7 +79,7 @@ describe("private media download authorization", () => {
     expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("content-disposition")).toBe(
-      'attachment; filename="backup"',
+      'attachment',
     );
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("content-security-policy")).toBe("sandbox");
