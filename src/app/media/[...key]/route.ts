@@ -52,8 +52,10 @@ export async function GET(
   const isPrivate = PRIVATE_KINDS.has(media.kind);
   if (media.kind === "receipt") return new NextResponse(null, { status: 404 });
   if (isPrivate) {
+    // Backup contents require their own permission; media upload is unrelated.
+    // Receipts always use their dedicated capability-protected endpoint above.
     const session = await auth();
-    if (!session?.user?.id || !(await can(session.user.id, "media.upload")))
+    if (!session?.user?.id || !(await can(session.user.id, "backup.view")))
       // Don't reveal that the object exists.
       return new NextResponse(null, { status: 404 });
   }
@@ -65,6 +67,14 @@ export async function GET(
     headers: {
       "content-type": variantMatch ? `image/${variantMatch[2]}` : media.mime,
       "content-length": String(bytes.length),
+      ...(isPrivate
+        ? {
+            "content-disposition": 'attachment',
+            "x-content-type-options": "nosniff",
+            "referrer-policy": "no-referrer",
+            "content-security-policy": "sandbox",
+          }
+        : {}),
       "cache-control": isPrivate
         ? "private, no-store"
         : isVariant
