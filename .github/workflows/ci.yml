@@ -9,6 +9,9 @@ jobs:
         env: { POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda }
         ports: ["5432:5432"]
         options: --health-cmd "pg_isready -U hoda" --health-interval 5s --health-timeout 5s --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.31.1
+        ports: ["1025:1025", "8025:8025"]
     env:
       {
         DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda",
@@ -17,6 +20,12 @@ jobs:
         ADMIN_EMAIL: "owner@example.com",
         ADMIN_PASSWORD: "ChangeMe123!",
         AUTH_SECRET: test-secret,
+        APP_URL: "http://127.0.0.1:3000",
+        EMAIL_PROVIDER: smtp,
+        EMAIL_FROM: "shop@example.com",
+        SMTP_HOST: "127.0.0.1",
+        SMTP_PORT: "1025",
+        MAILPIT_URL: "http://127.0.0.1:8025",
         CRON_SECRET: test-cron,
         MAINTENANCE_SECRET: test-maintenance,
       }

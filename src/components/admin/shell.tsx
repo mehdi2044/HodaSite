@@ -10,6 +10,7 @@ export async function AdminShell({
   user: { name: string; email: string };
 }) {
   const t = await getTranslations("contentAdmin");
+  const commerce = await getTranslations("commerce");
   return (
     <div className="admin" dir="rtl">
       <aside className="sidebar">
@@ -23,6 +24,8 @@ export async function AdminShell({
         <Link href="/admin/pricing/fx">{t("pricingFx")}</Link>
         <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
         <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
+        <Link href="/admin/orders">{commerce("orders")}</Link>
+        <Link href="/admin/payments/banks">{commerce("bankAccounts")}</Link>
         <Link href="/admin/inventory">{t("inventoryLots")}</Link>
         <Link href="/admin/content/menus">{t("menus")}</Link>
         <Link href="/admin/content/pages">{t("pages")}</Link>

@@ -99,6 +99,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "inventory.stock.adjust",
     "order.view",
     "order.cancel",
+    "order.edit",
+    "payment.mark_paid",
     "payment.receipt.approve",
     "finance.report.view",
     "crm.customer.export",
@@ -331,6 +333,7 @@ async function main() {
   await seedDemoMedia();
   await seedCatalog();
   await seedPhase03(user.id);
+  await seedPhase04();
 }
 
 const SEEDED_PAGES = [
@@ -608,6 +611,20 @@ async function seedContent() {
     },
   ] as const;
   for (const { key, subject, body } of templates) {
+    const emailBody = { ...body };
+    if (key === "auth.otp") {
+      emailBody.fa += "\nلینک ورود: {{loginUrl}}";
+      emailBody.tr += "\nGiriş bağlantısı: {{loginUrl}}";
+      emailBody.en += "\nSign-in link: {{loginUrl}}";
+    }
+    if (key === "order.placed") {
+      emailBody.fa +=
+        "\nرزرو تا {{holdUntil}}؛ پرداخت تا {{deadline}}. پس از پایان رزرو، تأیید به موجودی وابسته است.\n{{bankDetails}}\n{{paymentUrl}}";
+      emailBody.tr +=
+        "\nStok rezervasyonu: {{holdUntil}}; ödeme: {{deadline}}. Sonrasında onay stok durumuna bağlıdır.\n{{bankDetails}}\n{{paymentUrl}}";
+      emailBody.en +=
+        "\nStock held until {{holdUntil}}; pay by {{deadline}}. After the hold expires, approval depends on stock availability.\n{{bankDetails}}\n{{paymentUrl}}";
+    }
     await db.notificationTemplate.upsert({
       where: { key_channel: { key, channel: "email" } },
       update: {},
@@ -615,7 +632,7 @@ async function seedContent() {
         key,
         channel: "email",
         subjectI18n: subject,
-        bodyI18n: body,
+        bodyI18n: emailBody,
       },
     });
   }
@@ -1202,5 +1219,33 @@ async function seedPhase03(ownerId: string) {
       isActive: false,
     },
   });
+}
+async function seedPhase04() {
+  const markets = await db.market.findMany();
+  for (const market of markets) {
+    await db.marketBankAccount.upsert({
+      where: { id: `seed-bank-${market.code}` },
+      update: {},
+      create: {
+        id: `seed-bank-${market.code}`,
+        marketId: market.id,
+        label: "Demo bank",
+        bankName: "Example Bank",
+        holder: "Demo Shop",
+        accountNumber: `DEMO-${market.code}-0000`,
+        instructionsI18n: {
+          fa: "این حساب فقط نمونه است؛ واریز واقعی انجام ندهید.",
+          tr: "Bu örnek bir hesaptır; gerçek ödeme yapmayın.",
+          en: "Demo account only. Do not send real payments.",
+        },
+      },
+    });
+  }
+  for (const provider of ["stripe", "iyzico", "zarinpal"])
+    await db.integration.upsert({
+      where: { key: `payment.${provider}` },
+      update: {},
+      create: { key: `payment.${provider}`, provider, isActive: false },
+    });
 }
 main().finally(() => db.$disconnect());

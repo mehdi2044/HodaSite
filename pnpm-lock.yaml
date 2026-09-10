@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@auth/prisma-adapter':
         specifier: ^2.7.4
-        version: 2.11.3(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))
+        version: 2.11.3(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@10.0.3)
       '@aws-sdk/client-s3':
         specifier: ^3.864.0
         version: 3.1124.0
@@ -40,10 +40,13 @@ importers:
         version: 15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9))(react@19.1.9)
+        version: 5.0.0-beta.29(next@15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9))(nodemailer@10.0.3)(react@19.1.9)
       next-intl:
         specifier: ^4.3.5
         version: 4.14.2(next@15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9))(react@19.1.9)
+      nodemailer:
+        specifier: 10.0.3
+        version: 10.0.3
       react:
         specifier: 19.1.9
         version: 19.1.9
@@ -2582,6 +2585,10 @@ packages:
   node-fetch-native@1.6.7:
     resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
 
+  nodemailer@10.0.3:
+    resolution: {integrity: sha512-h5c8ypcMoOIh44bIcVROvTDbjRdOJX8AXTkxMht2C92HlSjkG+/8kjoqmNPypfjQaVNaUHWyZ3tqs5I3K91F3g==}
+    engines: {node: '>=20.0.0'}
+
   nypm@0.6.9:
     resolution: {integrity: sha512-zxlE2yvSWZWmHcNdT3+5zV2lrCogeE9YOklHrR3dFjqutq5wO7GFDYLFDRXLsYnJzwvy/im9fYoxePvS0VTW0w==}
     engines: {node: '>=18'}
@@ -3254,25 +3261,29 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@auth/core@0.40.0':
+  '@auth/core@0.40.0(nodemailer@10.0.3)':
     dependencies:
       '@panva/hkdf': 1.2.1
       jose: 6.2.10
       oauth4webapi: 3.8.7
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
+    optionalDependencies:
+      nodemailer: 10.0.3
 
-  '@auth/core@0.41.3':
+  '@auth/core@0.41.3(nodemailer@10.0.3)':
     dependencies:
       '@panva/hkdf': 1.2.1
       jose: 6.2.10
       oauth4webapi: 3.8.7
       preact: 10.24.3
       preact-render-to-string: 6.5.11(preact@10.24.3)
+    optionalDependencies:
+      nodemailer: 10.0.3
 
-  '@auth/prisma-adapter@2.11.3(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))':
+  '@auth/prisma-adapter@2.11.3(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@10.0.3)':
     dependencies:
-      '@auth/core': 0.41.3
+      '@auth/core': 0.41.3(nodemailer@10.0.3)
       '@prisma/client': 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - '@simplewebauthn/browser'
@@ -5702,11 +5713,13 @@ snapshots:
     dependencies:
       content-type: 2.1.0
 
-  next-auth@5.0.0-beta.29(next@15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9))(react@19.1.9):
+  next-auth@5.0.0-beta.29(next@15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9))(nodemailer@10.0.3)(react@19.1.9):
     dependencies:
-      '@auth/core': 0.40.0
+      '@auth/core': 0.40.0(nodemailer@10.0.3)
       next: 15.5.25(@playwright/test@1.62.1)(@types/node@22.20.1)(react-dom@19.1.9(react@19.1.9))(react@19.1.9)
       react: 19.1.9
+    optionalDependencies:
+      nodemailer: 10.0.3
 
   next-intl-swc-plugin-extractor@4.14.2: {}
 
@@ -5762,6 +5775,8 @@ snapshots:
       semver: 6.3.1
 
   node-fetch-native@1.6.7: {}
+
+  nodemailer@10.0.3: {}
 
   nypm@0.6.9:
     dependencies:

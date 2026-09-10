@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { getDisplayPrice } from "@/modules/pricing";
 import { availableForVariant } from "@/modules/inventory";
-import { computeFees, type FeeRuleInput } from "./index";
+import { feeRuleApplies, computeFees, type FeeRuleInput } from "./index";
 
 export type CartQuoteInput = Readonly<{
   marketId: string;
   locale?: "fa" | "tr" | "en";
   items: readonly { variantId: string; quantity: number }[];
+  shippingRuleId?: string;
   address?: { province?: string; city?: string; postalCode?: string };
 }>;
 
@@ -63,6 +64,7 @@ export async function quoteCart(input: CartQuoteInput) {
         variantId: variant.id,
         quantity: item.quantity,
         unitPrice: price.amount,
+        fxRate: price.rate,
         categoryId: variant.product.categoryId,
         weightGrams: variant.weightGrams ?? variant.product.weightGrams,
         lengthCm: dimensions?.lengthCm,
@@ -72,24 +74,35 @@ export async function quoteCart(input: CartQuoteInput) {
     }),
   );
   const rules = await db.feeRule.findMany({ where: { marketId: market.id } });
-  const result = computeFees(
-    rules.map((rule) => ({
-      ...rule,
-      params: rule.params as Record<string, unknown>,
-      minAmount: rule.minAmount?.toString(),
-      maxAmount: rule.maxAmount?.toString(),
-    })) as FeeRuleInput[],
-    {
-      currency: market.currency,
-      items: quoteItems,
-      province: input.address?.province,
-      city: input.address?.city,
-      postalCode: input.address?.postalCode,
-      volumetricDivisor: market.volumetricDivisor.toString(),
-      locale: input.locale,
-    },
-  );
+  const inputs = rules.map((rule) => ({
+    ...rule,
+    params: rule.params as Record<string, unknown>,
+    minAmount: rule.minAmount?.toString(),
+    maxAmount: rule.maxAmount?.toString(),
+  })) as FeeRuleInput[];
+  const context = {
+    currency: market.currency,
+    items: quoteItems,
+    province: input.address?.province,
+    city: input.address?.city,
+    postalCode: input.address?.postalCode,
+    volumetricDivisor: market.volumetricDivisor.toString(),
+    locale: input.locale,
+    shippingRuleId: input.shippingRuleId,
+  };
+  const result = computeFees(inputs, context);
+  const shippingOptions = inputs
+    .filter(
+      (r) =>
+        r.type === "SHIPPING" && r.selectable && feeRuleApplies(r, context),
+    )
+    .map((r) => ({
+      id: r.id,
+      label:
+        (r.labelI18n as Record<string, string>)?.[input.locale ?? "en"] ?? r.id,
+    }));
   return Object.freeze({
+    shippingOptions,
     marketId: market.id,
     currency: market.currency,
     items: Object.freeze(quoteItems),

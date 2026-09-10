@@ -112,3 +112,39 @@ describe("cart quote eligibility", () => {
     );
   });
 });
+
+it("offers applicable shipping options and validates a selected method", async () => {
+  const base = {
+    type: "SHIPPING",
+    method: "FIXED",
+    currency: "CAD",
+    isActive: true,
+    selectable: true,
+    validFrom: new Date(0),
+    priority: 0,
+    labelI18n: { en: "Delivery" },
+    params: { amount: "5" },
+  };
+  mock.rules.mockResolvedValue([
+    { ...base, id: "standard" },
+    { ...base, id: "express", params: { amount: "15" } },
+    { ...base, id: "other-province", province: "BC" },
+  ]);
+  const input = {
+    marketId: "CA",
+    items: [{ variantId: "v", quantity: 1 }],
+    address: { province: "ON" },
+  };
+  const quote = await quoteCart({ ...input, shippingRuleId: "express" });
+  expect(quote.total).toBe("25");
+  expect(quote.shippingOptions.map((o) => o.id)).toEqual([
+    "standard",
+    "express",
+  ]);
+  await expect(
+    quoteCart({ ...input, shippingRuleId: "other-province" }),
+  ).rejects.toThrow("Invalid shipping selection");
+  await expect(
+    quoteCart({ ...input, shippingRuleId: "nonexistent" }),
+  ).rejects.toThrow("Invalid shipping selection");
+});

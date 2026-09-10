@@ -90,3 +90,6 @@ GitHub does **not** enforce branch protection or rulesets on a private repo on t
 - Migrations + seed run clean on a fresh database: `docker compose down -v && docker compose up` → working shop.
 - `scripts/backup/backup.sh` and `restore.sh` still work (run them once).
 - PROGRESS.md updated. Lint/typecheck/tests green.
+
+## Owner delegation — D50/D51 (2026-09-10)
+The owner explicitly delegated technical decisions and necessary PR merges to the implementation agent. Separate per-PR permission and the prohibition on merging an implemented PR are superseded by D50. Keep branch + PR, security review, green checks/docker/docker-runtime, no force push, and evidence-based reporting. Do not claim independent human review when only automated or self-review occurred. Hosting/domain purchase may wait until pre-launch under D51; real-environment acceptance gates remain required before release.

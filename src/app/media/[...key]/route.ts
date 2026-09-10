@@ -50,6 +50,7 @@ export async function GET(
   }
 
   const isPrivate = PRIVATE_KINDS.has(media.kind);
+  if (media.kind === "receipt") return new NextResponse(null, { status: 404 });
   if (isPrivate) {
     const session = await auth();
     if (!session?.user?.id || !(await can(session.user.id, "media.upload")))

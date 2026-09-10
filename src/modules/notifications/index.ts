@@ -19,8 +19,16 @@ export const ALLOWED_TEMPLATE_VARIABLES: Record<
   NotificationTemplateKey,
   readonly string[]
 > = {
-  "auth.otp": ["code", "expiresMinutes"],
-  "order.placed": ["customerName", "orderNumber", "total"],
+  "auth.otp": ["code", "expiresMinutes", "loginUrl"],
+  "order.placed": [
+    "customerName",
+    "orderNumber",
+    "total",
+    "paymentUrl",
+    "holdUntil",
+    "deadline",
+    "bankDetails",
+  ],
   "order.receipt_received": ["customerName", "orderNumber"],
   "order.paid": ["customerName", "orderNumber", "total"],
   "order.rejected": ["customerName", "orderNumber", "reason"],
@@ -95,6 +103,8 @@ export function renderTemplate(
 }
 
 export type EmailMessage = {
+  idempotencyKey?: string;
+  fromName?: string;
   to: string;
   subject: string;
   text: string;
@@ -113,10 +123,67 @@ class NoopEmailProvider implements EmailProvider {
   }
 }
 
-class Phase04EmailProvider implements EmailProvider {
-  constructor(private readonly name: "smtp" | "resend") {}
-  async send(): Promise<{ id: string }> {
-    throw new Error(`${this.name} delivery is configured in Phase 04`);
+class SmtpEmailProvider implements EmailProvider {
+  async send(message: EmailMessage) {
+    const { default: nodemailer } = await import("nodemailer");
+    if (!process.env.SMTP_HOST || !process.env.EMAIL_FROM)
+      throw new Error("SMTP configuration required");
+    const local = ["mailpit", "localhost", "127.0.0.1"].includes(
+      process.env.SMTP_HOST,
+    );
+    const transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_SECURE === "true",
+      requireTLS: !local,
+      auth: process.env.SMTP_USER
+        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
+        : undefined,
+      connectionTimeout: 10000,
+      socketTimeout: 15000,
+    });
+    const result = await transport.sendMail({
+      from: { name: message.fromName ?? "", address: process.env.EMAIL_FROM },
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+      ...(message.idempotencyKey
+        ? {
+            messageId: `<${message.idempotencyKey}@${process.env.EMAIL_FROM.split("@")[1]}>`,
+          }
+        : {}),
+      disableFileAccess: true,
+      disableUrlAccess: true,
+    });
+    if (result.rejected?.length) throw new Error("EMAIL_DELIVERY_FAILED");
+    return { id: result.messageId };
+  }
+}
+class ResendEmailProvider implements EmailProvider {
+  async send(message: EmailMessage) {
+    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM)
+      throw new Error("Resend configuration required");
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+        ...(message.idempotencyKey
+          ? { "Idempotency-Key": message.idempotencyKey }
+          : {}),
+      },
+      body: JSON.stringify({
+        from: message.fromName
+          ? `"${message.fromName.replace(/[\r\n"\\]/g, " ")}" <${process.env.EMAIL_FROM}>`
+          : process.env.EMAIL_FROM,
+        to: [message.to],
+        subject: message.subject,
+        text: message.text,
+      }),
+    });
+    if (!response.ok) throw new Error("EMAIL_DELIVERY_FAILED");
+    return z.object({ id: z.string() }).parse(await response.json());
   }
 }
 
@@ -124,7 +191,13 @@ export function getEmailProvider(
   name = process.env.EMAIL_PROVIDER ?? "noop",
 ): EmailProvider {
   if (name === "noop") return new NoopEmailProvider();
-  if (name === "smtp" || name === "resend")
-    return new Phase04EmailProvider(name);
+  if (name === "smtp") return new SmtpEmailProvider();
+  if (name === "resend") return new ResendEmailProvider();
   throw new Error("Unsupported EMAIL_PROVIDER");
 }
+
+export {
+  queueEmail,
+  registerNotificationJobs,
+  NoopSmsProvider,
+} from "./delivery";

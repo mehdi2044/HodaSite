@@ -23,6 +23,7 @@ export type FeeRuleInput = Readonly<{
   categoryIds?: readonly string[];
   minAmount?: string | null;
   maxAmount?: string | null;
+  selectable?: boolean;
   absorb?: boolean;
   taxable?: boolean;
   isActive: boolean;
@@ -43,6 +44,7 @@ export type FeeItem = Readonly<{
 export type FeeContext = Readonly<{
   currency: string;
   items: readonly FeeItem[];
+  shippingRuleId?: string;
   province?: string;
   city?: string;
   postalCode?: string;
@@ -79,7 +81,7 @@ function specificity(rule: FeeRuleInput): number {
   );
 }
 
-function applies(rule: FeeRuleInput, ctx: FeeContext): boolean {
+export function feeRuleApplies(rule: FeeRuleInput, ctx: FeeContext): boolean {
   const now = ctx.now ?? new Date();
   if (!rule.isActive || rule.validFrom > now) return false;
   if (rule.currency && rule.currency !== ctx.currency) return false;
@@ -215,6 +217,17 @@ export function computeFees(
   total: string;
   chargeableWeightKg: string;
 }> {
+  if (
+    ctx.shippingRuleId &&
+    !rules.some(
+      (r) =>
+        r.id === ctx.shippingRuleId &&
+        r.type === "SHIPPING" &&
+        r.selectable &&
+        feeRuleApplies(r, ctx),
+    )
+  )
+    throw new Error("Invalid shipping selection");
   const subtotal = ctx.items.reduce(
     (sum, item) => sum.add(new Decimal(item.unitPrice).mul(item.quantity)),
     new Decimal(0),
@@ -229,7 +242,14 @@ export function computeFees(
   const lines: FeeLine[] = [];
   for (const type of ORDER) {
     const selected = rules
-      .filter((rule) => rule.type === type && applies(rule, ctx))
+      .filter(
+        (rule) =>
+          rule.type === type &&
+          feeRuleApplies(rule, ctx) &&
+          (type !== "SHIPPING" ||
+            !ctx.shippingRuleId ||
+            rule.id === ctx.shippingRuleId),
+      )
       .sort(
         (a, b) =>
           specificity(b) - specificity(a) ||

@@ -30,6 +30,7 @@ const SORT: Record<
  */
 export async function listMedia(filters: MediaListFilters = {}) {
   const where: Prisma.MediaWhereInput = {
+    AND: [{kind: {notIn: ["receipt", "backup"]}}],
     deletedAt: filters.trash ? { not: null } : null,
   };
   if (filters.q) {

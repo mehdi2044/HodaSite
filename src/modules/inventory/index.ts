@@ -407,3 +407,5 @@ export async function adjustStock(input: {
     });
   });
 }
+
+export { reserveOrderInventory, releaseOrderInventory, verifyOrderInventory, consumeOrderInventory, InsufficientOrderStock } from "./orders";
