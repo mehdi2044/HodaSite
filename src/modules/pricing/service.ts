@@ -74,13 +74,8 @@ export async function getActiveRate(
 }
 
 const marketPriceCached = unstable_cache(
-  async (
-    marketId: string,
-    productId: string,
-    variantId: string | null,
-    atIso: string,
-  ) => {
-    const at = new Date(atIso);
+  async (marketId: string, productId: string, variantId: string | null) => {
+    const at = new Date();
     const validity = {
       marketId,
       isActive: true,
@@ -120,21 +115,13 @@ export async function getDisplayPrice(
     markupPercent: { toString(): string };
     roundingRule: unknown;
   },
-  at = new Date(),
 ) {
-  const priceBucket = new Date(at);
-  priceBucket.setUTCMinutes(
-    Math.floor(priceBucket.getUTCMinutes() / 15) * 15,
-    0,
-    0,
-  );
   const manual = await marketPriceCached(
     market.id,
     product.id,
     variant?.id ?? null,
-    priceBucket.toISOString(),
   );
-  const active = await getActiveRate(market, at);
+  const active = await getActiveRate(market);
   const currency = (
     ["USD", "TRY", "CAD", "IRT"].includes(market.currency)
       ? market.currency
