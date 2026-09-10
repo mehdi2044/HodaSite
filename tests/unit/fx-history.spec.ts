@@ -6,6 +6,13 @@ vi.mock("@/lib/db", () => ({
     fxOverride: { findFirst: mock.override },
   },
 }));
+vi.mock("next/cache", () => ({
+  revalidateTag: vi.fn(),
+  unstable_cache:
+    (fn: (...args: unknown[]) => Promise<unknown>) =>
+    async (...args: unknown[]) =>
+      JSON.parse(JSON.stringify(await fn(...args))),
+}));
 vi.mock("@/modules/jobs", () => ({ registerJobHandler: vi.fn() }));
 import {
   findEffectiveRate,
@@ -80,4 +87,17 @@ it("fails explicitly if current rates are missing", async () => {
   await expect(getActiveRate({ id: "TR", code: "TR" })).rejects.toThrow(
     "No active FX rate",
   );
+});
+
+it("restores dates from the serialized cache before checking staleness", async () => {
+  const acceptedAt = new Date("2026-09-10T10:00:00.123Z");
+  mock.quote.mockResolvedValue({
+    rate: "40",
+    provider: "manual",
+    acceptedAt,
+    fetchedAt: acceptedAt,
+  });
+  const rate = await getActiveRate({ id: "TR", code: "TR" });
+  expect(rate.at).toBeInstanceOf(Date);
+  expect(rate.at.getTime()).toBe(acceptedAt.getTime());
 });

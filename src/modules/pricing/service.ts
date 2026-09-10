@@ -30,11 +30,20 @@ export async function getFxConfiguration() {
 }
 
 const activeQuoteCached = unstable_cache(
-  (marketId: string) =>
-    db.fxQuote.findFirst({
+  async (marketId: string) => {
+    const quote = await db.fxQuote.findFirst({
       where: { marketId, status: "ACTIVE" },
       orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
-    }),
+    });
+    // Next's persistent cache JSON-serializes values: use an explicit wire shape.
+    return quote
+      ? {
+          rate: quote.rate.toString(),
+          source: quote.provider,
+          at: (quote.acceptedAt ?? quote.fetchedAt).toISOString(),
+        }
+      : null;
+  },
   ["active-fx-quote"],
   { revalidate: 900, tags: ["pricing"] },
 );
@@ -59,16 +68,18 @@ export async function findEffectiveRate(
       source: "override",
       at: override.validFrom,
     };
-  const quote = historical
-    ? await db.fxQuote.findFirst({
-        where: {
-          marketId,
-          status: { in: ["ACTIVE", "SUPERSEDED"] },
-          acceptedAt: { lte: at },
-        },
-        orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
-      })
-    : await activeQuoteCached(marketId);
+  if (!historical) {
+    const active = await activeQuoteCached(marketId);
+    return active ? { ...active, at: new Date(active.at) } : null;
+  }
+  const quote = await db.fxQuote.findFirst({
+    where: {
+      marketId,
+      status: { in: ["ACTIVE", "SUPERSEDED"] },
+      acceptedAt: { lte: at },
+    },
+    orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
+  });
   return quote
     ? {
         rate: quote.rate.toString(),
