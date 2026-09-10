@@ -1,3 +1,5 @@
+import { TrackingTimeline } from "@/components/shipping/tracking-timeline";
+import { trackingView } from "@/modules/shipping/tracking";
 import { currentCustomer } from "@/modules/customers";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -241,6 +243,10 @@ export default async function PaymentPage({
             ))}
         </section>
       </div>
+      <TrackingTimeline value={await trackingView(order.id)} />
+      <Link className="underline" href={`/${locale}/tracking`}>
+        {(await getTranslations("shipping"))("tracking")}
+      </Link>
       <Link className="underline" href={`/${locale}/account`}>
         {t("account")}
       </Link>

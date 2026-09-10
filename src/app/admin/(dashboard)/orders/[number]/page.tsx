@@ -1,3 +1,4 @@
+import { ShippingPanel } from "@/components/shipping/admin-panel";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
@@ -148,6 +149,7 @@ export default async function OrderPage({
           </details>
         </section>
       </div>
+      <ShippingPanel orderId={order.id} userId={session!.user.id} />
     </main>
   );
 }

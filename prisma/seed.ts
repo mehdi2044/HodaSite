@@ -1,3 +1,4 @@
+import { seedShipping } from "./shipping-seed";
 import { PrismaClient, FxMode } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
@@ -60,6 +61,8 @@ const roles = [
 // what each role must NOT have.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
+    "order.shipment.manage",
+    "shipping.workflow.manage",
     "settings.brand.edit",
     "settings.theme.edit",
     "settings.contact.edit",
@@ -117,6 +120,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.homepage.read",
   ],
   warehouse: [
+    "order.shipment.manage",
     "catalog.product.view",
     "inventory.view",
     "inventory.receive",
@@ -1248,4 +1252,6 @@ async function seedPhase04() {
       create: { key: `payment.${provider}`, provider, isActive: false },
     });
 }
-main().finally(() => db.$disconnect());
+main()
+  .then(() => seedShipping(db))
+  .finally(() => db.$disconnect());
