@@ -367,7 +367,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 
 - Next.js و eslint-config-next از 15.5.2 به 15.5.25 و React/React DOM از 19.1.0 به 19.1.9 ارتقا یافتند؛ فایل قفل با pnpm 10.15.1 معتبر شد.
 - مبنا: https://nextjs.org/blog/CVE-2025-66478 و https://github.com/vercel/next.js/security/advisories/GHSA-2xp9-vwfh-vxw4 ؛ نسخهٔ انتخابی در همان شاخهٔ اصلی 15 باقی می‌ماند.
-- تأیید محلی: Prisma generate، lint، TypeScript، ۱۳۴ تست واحد و build تولیدی موفق. ۴۲ تست دیتابیس به‌علت نبود TEST_DATABASE_URL محلی اجرا نشدند. هر سه job در CI روی commit 908978c موفق شدند؛ Docker، مرورگر، PostgreSQL و backup/restore واقعی LocalStorage و S3/MinIO تأیید شدند (run 34462434107).
+- تأیید محلی: Prisma generate، lint، TypeScript، ۱۳۴ تست واحد و build تولیدی موفق. ۴۲ تست دیتابیس به‌علت نبود TEST_DATABASE_URL محلی اجرا نشدند. هر سه job در CI روی commit 908978c موفق شدند؛ Docker، مرورگر، PostgreSQL و backup/restore واقعی LocalStorage و چرخهٔ رسانه S3/MinIO تأیید شدند (run 34462434107).
 - تغییر مدل داده یا معماری ندارد. هشدار build مربوط به APIهای Node در dependency احراز هویت باقی است؛ تست ورود واقعی CI معیار سازگاری است.
 - Implemented against docs v1.2 / D-numbers touched: D02, D27, D28, D29, D47.
 
@@ -419,7 +419,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 
 ### آغاز فاز ۰۴ — ۱۰ سپتامبر ۲۰۲۶
 - PR #10 و #9 پس از تأیید CI و رفع یافته‌های بازبینی ادغام شدند؛ مبنای فاز ۰۴ commit 58c9fa0 است.
-- CI نهایی فاز ۰۳: ۲۸۱ تست واحد/دیتابیس و ۴۷ تست مرورگر پاس؛ پوشش خطی فایل‌های حساس ۹۹٫۲۵٪؛ Docker و LocalStorage/S3 backup→restore موفق (run 34465124340).
+- CI نهایی فاز ۰۳: ۲۸۱ تست واحد/دیتابیس و ۴۷ تست مرورگر پاس؛ پوشش خطی فایل‌های حساس ۹۹٫۲۵٪؛ Docker و backup→restore در LocalStorage و چرخهٔ رسانه S3/MinIO موفق (run 34465124340).
 - اختیار ادغام و زمان‌بندی زیرساخت مطابق دستور مالک در D50/D51 ثبت شد.
 - فاز ۰۴ در حال پیاده‌سازی است و تا تکمیل جریان خرید و معیارهای سند فاز، تکمیل‌شده اعلام نمی‌شود.
 
@@ -442,13 +442,13 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 
 - اجرای 34474502168 ورود مشتری و ایجاد سفارش را عبور داد اما refresh خودکار Server Action پس از اتمام سبد، مشتری را به سبد خالی می‌فرستاد. هدایت به صفحه پرداخت اکنون با redirect سمت سرور و خارج از catch انجام می‌شود؛ تست مرورگر دوباره اجرا می‌شود.
 
-- اجرای 34475208533: هر ۳۰۸ آزمون واحد/دیتابیس، build، Docker و LocalStorage/S3 backup→restore موفق شدند. سه جریان خرید تا بارگذاری رسید و کنترل لینک خصوصی رسیدند؛ انتخاب مبهم فرم در تست پنل مدیریت اصلاح شد.
+- اجرای 34475208533: هر ۳۰۸ آزمون واحد/دیتابیس، build، Docker و backup→restore در LocalStorage و چرخهٔ رسانه S3/MinIO موفق شدند. سه جریان خرید تا بارگذاری رسید و کنترل لینک خصوصی رسیدند؛ انتخاب مبهم فرم در تست پنل مدیریت اصلاح شد.
 - بازبینی هم‌زمانی، race ساخت Customer مهمان را آشکار کرد؛ upsert اکنون اتمیک دیتابیس است و پروفایل موجود را تغییر نمی‌دهد. تست رقابت دو مشتری برای آخرین واحد، علت شکست را صریحاً کمبود موجودی بررسی می‌کند؛ تست جداگانهٔ دو خرید هم‌زمان با یک ایمیل تازه و موجودی کافی نیز اضافه شد.
 - نقص امنیتی Cron در نبود CRON_SECRET بسته شد: درخواست با مقدار literal undefined و تنظیم خالی اکنون پیش از اجرای هر کار، 401 می‌گیرد. دو تست regression اضافه شدند. تصمیم نشست مشتری مستقل در D52 ثبت شد.
 - این اصلاحات در انتظار CI آخرین commit هستند؛ گزارش نتیجه نهایی و ادغام در PR #11 ثبت می‌شود. اتصال SMTP واقعی، اطلاعات بانکی واقعی، secrets عملیاتی و پذیرش پیش از انتشار همچنان انجام نشده‌اند.
 
 ### آغاز فاز ۰۵ — ۱۰ سپتامبر ۲۰۲۶
-- فاز ۰۴ در PR #11 با commit ادغام becb86ef0b90faf9dba9751faa567392d40733e2 بسته شد. اجرای 34476163861: هر سه checks/docker/docker-runtime سبز، ۳۱۱ تست واحد/دیتابیس و ۵۰ تست مرورگر پاس؛ LocalStorage/S3 backup→restore موفق. گزارش‌های «در انتظار» بالاتر تاریخچه اجرا هستند.
+- فاز ۰۴ در PR #11 با commit ادغام becb86ef0b90faf9dba9751faa567392d40733e2 بسته شد. اجرای 34476163861: هر سه checks/docker/docker-runtime سبز، ۳۱۱ تست واحد/دیتابیس و ۵۰ تست مرورگر پاس؛ backup→restore در LocalStorage و چرخهٔ رسانه S3/MinIO موفق. گزارش‌های «در انتظار» بالاتر تاریخچه اجرا هستند.
 - فاز ۰۵ از امنیت مدیر، MFA، ابطال نشست و نقش‌ها آغاز می‌شود و سپس عملیات ارسال، فاکتور، مرجوعی و ابزارهای بکاپ تکمیل خواهند شد. بدون خرید هاست و دامنه طبق دستور دوباره مالک و D51 ادامه می‌دهیم؛ پذیرش واقعی پیش از انتشار همچنان باز است.
 
 - بخش امنیتی فاز ۰۵: دفتر AdminSession با ابطال فوری و نسخه نشست، راه‌اندازی اجباری MFA برای نقش‌های حساس، کد بازیابی یک‌بارمصرف، منع بازپخش TOTP زیر قفل و محدودیت تلاش؛ کاربر بدون MFA فقط به راه‌اندازی دسترسی دارد. نقش‌های حساسِ سفارشی و استثناهای users.manage/security.role.manage نیز مشمول MFA هستند.
@@ -472,3 +472,9 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - Dependency audit found 13 upstream advisory entries (some duplicate packages/paths; not evidence that every issue is exploitable in this application). Auth.js is upgraded from beta.29 to beta.32 / core 0.41.3, the unused Prisma adapter is removed, PostCSS is pinned to 8.5.28 and Prisma config’s deepmerge-ts to 8.0.0. Prisma’s config merger uses plain records; v8 Map-merging changes are not used here. Auth middleware additionally requires a concrete user id. CI now blocks high/critical production dependency advisories. Versions were checked against upstream advisories GHSA-8fpg-xm3f-6cx3, GHSA-xmf8-cvqr-rfgj, GHSA-fxqj-rqcc-2cmp and the deepmerge-ts v8 release notes. Nodemailer 10 remains for the app’s own provider; the optional older Auth.js Nodemailer peer is not used. Updated audit, build, MFA/customer browser flows and migration/restore compatibility must pass before merge.
 
 - پس از ارتقای وابستگی‌ها، `pnpm audit --prod` روی ۲۲۹ وابستگی اجرایی هیچ advisory شناخته‌شده‌ای گزارش نکرد (۲۰۲۶-۰۹-۱۰). این نتیجه تضمین نبودن آسیب‌پذیری نیست. نتیجه نهایی CI و ادغام این بخش در PR #12 ثبت می‌شود؛ کل فاز ۰۵ همچنان در حال انجام است.
+
+### نتیجهٔ بخش امنیت فاز ۰۵ — PR #12
+- کد `3d43593018f6d31666234708fe394480f9c21428` در اجرای CI شمارهٔ 34484330168 هر سه بررسی checks/docker/docker-runtime را گذراند: ۳۳۷ تست واحد/دیتابیس، ۵۳ تست مرورگر، build و audit وابستگی‌های اجرایی موفق.
+- شواهد بکاپ دقیقاً شامل backup→verify→restore در LocalStorage، بکاپ ایمنی پیش از restore، خروج از حالت تعمیرات و آزمون‌های ورودی مخرب است. شاخه S3 در اسکریپت CI، ذخیره/دریافت/حذف/جایگزینی/پردازش و stream رسانه را بررسی می‌کند و پیش از اجرای ops-restore-cycle خارج می‌شود؛ بازیابی کامل از S3 هنوز تأیید نشده و جزو کارهای باقیماندهٔ بکاپ است. عبارت‌های گسترده‌ترِ گزارش‌های قبلی بالا اصلاح شدند.
+- بازبینی امنیتی توسط عامل پیاده‌ساز انجام شد؛ بررسی مستقل انسانی ادعا نمی‌شود. رشتهٔ review باز وجود نداشت. ادغام طبق D50 با SHA مورد انتظار و پس از سبز بودن همهٔ بررسی‌های آخرین commit انجام می‌شود؛ نتیجهٔ ادغام در PR ثبت می‌شود.
+- فاز ۰۵ هنوز باز است: ارسال چندمرحله‌ای و جزئی، رهگیری، فاکتور خصوصی سه‌زبانه، مرجوعی/تعویض/اعتبار، پنل backup/restore، ماتریس جامع مجوزها و فیلتر دامنه در همه endpointهای عملیاتی، پیش‌نمایش نقش، توقف فروش و تکمیل هشدارها. زیرساخت نهایی و خرید هاست/دامنه طبق دستور مالک به بعد موکول شده‌اند.
