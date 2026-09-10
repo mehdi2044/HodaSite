@@ -5,6 +5,9 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const config: NextConfig = {
   output: "standalone",
+  // Preserve our canonical redirect origin. Next otherwise rewrites loopback
+  // hosts (127.0.0.1 -> localhost), dropping host-bound admin cookies.
+  skipMiddlewareUrlNormalize: true,
   experimental: { serverActions: { bodySizeLimit: "6mb" } },
   // sharp ships a native binary; Next's standalone output-file-tracing can
   // fail to detect it through sharp's dynamic require()-based platform

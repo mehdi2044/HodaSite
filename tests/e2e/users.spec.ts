@@ -1,3 +1,4 @@
+import { fillAdminMfa } from "./helpers/admin-mfa";
 import { test, expect, type Page } from "@playwright/test";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
@@ -15,6 +16,7 @@ async function login(page: Page, email: string, pw: string) {
   await page.goto("/admin/login");
   await page.getByLabel("ایمیل").fill(email);
   await page.getByLabel("رمز عبور").fill(pw);
+  await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
 }
 

@@ -1,9 +1,12 @@
+import { ScopeFields } from "@/components/admin/security/scope-fields";
+import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { createUser } from "../actions";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 export default async function NewUser() {
+  await requireAdminPage("users.manage");
   const roles = await db.role.findMany({ orderBy: { key: "asc" } });
 
   return (
@@ -25,7 +28,12 @@ export default async function NewUser() {
           </label>
           <label className="grid gap-1">
             نقش
-            <Select name="roleKey" required defaultValue="admin">
+            <Select
+              aria-label="نقش"
+              name="roleKey"
+              required
+              defaultValue="admin"
+            >
               {roles.map((r) => (
                 <option key={r.id} value={r.key}>
                   {r.key}
@@ -33,6 +41,7 @@ export default async function NewUser() {
               ))}
             </Select>
           </label>
+          <ScopeFields />
           <div className="flex items-center gap-3">
             <Button type="submit">ساخت کاربر</Button>
             <Link href="/admin/users">انصراف</Link>

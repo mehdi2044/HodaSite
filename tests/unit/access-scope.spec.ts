@@ -14,6 +14,10 @@ describe("scopeMatches (B2)", () => {
     expect(scopeMatches({}, { marketId: "tr" })).toBe(true);
   });
 
+  it("rejects malformed persisted grants", () => {
+    for (const value of ["all", 1, [], { unknown: "tr" }, { marketId: "" }])
+      expect(scopeMatches(value, { marketId: "tr" })).toBe(false);
+  });
   it("a scoped grant matches only when every grant key equals the request", () => {
     expect(scopeMatches({ marketId: "tr" }, { marketId: "tr" })).toBe(true);
     expect(
@@ -76,8 +80,10 @@ describe("can() with scope (B2)", () => {
     findUnique.mockResolvedValue(
       user([], [{ scope: null, role: { permissions: [{ permission: "*" }] } }]),
     );
-    expect(await can("u", "anything", { marketId: "ca" })).toBe(true);
-    expect(await can("u", "anything")).toBe(true);
+    expect(await can("u", "catalog.product.edit", { marketId: "ca" })).toBe(
+      true,
+    );
+    expect(await can("u", "catalog.product.edit")).toBe(true);
   });
 
   it("a scoped deny override blocks only inside its scope", async () => {

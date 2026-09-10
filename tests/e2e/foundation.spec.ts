@@ -1,3 +1,4 @@
+import { fillAdminMfa } from "./helpers/admin-mfa";
 import { test, expect } from "@playwright/test";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
@@ -28,6 +29,7 @@ test("Persian BiDi code is isolated (V-2, /admin/design)", async ({ page }) => {
   await page.goto("/admin/login");
   await page.getByLabel("ایمیل").fill(EMAIL);
   await page.getByLabel("رمز عبور").fill(PASSWORD);
+  await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
 

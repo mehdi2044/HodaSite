@@ -4,7 +4,7 @@ import type { NextAuthConfig } from "next-auth";
  * Edge-safe Auth.js config: no adapter, no bcrypt, no Prisma — only what the
  * middleware needs to *verify* a session JWT (secret + callbacks). The full
  * config in `./index.ts` spreads this and adds the Credentials provider and
- * the Prisma adapter (both Node-only).
+ * Node-only authentication logic.
  *
  * Admin sessions use the JWT strategy (signed, HTTP-only cookie): Auth.js v5
  * does not support the Credentials provider together with
@@ -20,8 +20,30 @@ const authConfig = {
   pages: { signIn: "/admin/login" },
   providers: [],
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        const principal = user as typeof user & {
+          adminSessionId: string;
+          sessionVersion: number;
+          enrollmentOnly: boolean;
+        };
+        token.adminSessionId = principal.adminSessionId;
+        token.sessionVersion = principal.sessionVersion;
+        token.enrollmentOnly = principal.enrollmentOnly;
+      }
+      return token;
+    },
     session({ session, token }) {
       if (session.user && token.sub) session.user.id = token.sub;
+      session.adminSessionId =
+        typeof token.adminSessionId === "string"
+          ? token.adminSessionId
+          : undefined;
+      session.sessionVersion =
+        typeof token.sessionVersion === "number"
+          ? token.sessionVersion
+          : undefined;
+      session.enrollmentOnly = token.enrollmentOnly === true;
       return session;
     },
   },

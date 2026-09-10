@@ -1,3 +1,4 @@
+import { fillAdminMfa } from "./helpers/admin-mfa";
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
@@ -28,6 +29,7 @@ async function adminLogin(page: Page) {
   await page
     .getByLabel("رمز عبور")
     .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+  await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
 }

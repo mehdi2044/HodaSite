@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -8,6 +9,7 @@ type UserRow = Prisma.UserGetPayload<{
 }>;
 
 export default async function Users() {
+  await requireAdminPage("users.view");
   let users: UserRow[] = [];
   let loadError = false;
   try {

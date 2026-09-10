@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
+import { adminRedirectUrl } from "@/modules/auth/redirects";
 import authConfig from "@/modules/auth/config";
 import { routing } from "@/i18n/routing";
 import { getClientIp } from "@/lib/net";
@@ -152,13 +153,21 @@ export default auth(async (req) => {
   // --- Admin: JWT guard, no locale routing ---
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const isLogin = pathname === "/admin/login";
-    if (!isLogin && !req.auth) {
-      const url = new URL("/admin/login", req.nextUrl);
+    if (!isLogin && !req.auth?.user?.id) {
+      const url = adminRedirectUrl("/admin/login", req.url);
       url.searchParams.set("next", pathname + search);
       return NextResponse.redirect(url);
     }
-    if (isLogin && req.auth) {
-      return NextResponse.redirect(new URL("/admin", req.nextUrl));
+    // Do not redirect a login page based on an edge-only JWT: the DB may
+    // have revoked it. The server validates the registry on protected routes.
+    if (
+      !isLogin &&
+      req.auth?.enrollmentOnly &&
+      pathname !== "/admin/security/setup"
+    ) {
+      return NextResponse.redirect(
+        adminRedirectUrl("/admin/security/setup", req.url),
+      );
     }
     return NextResponse.next();
   }
