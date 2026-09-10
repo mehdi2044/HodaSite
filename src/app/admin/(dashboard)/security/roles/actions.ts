@@ -41,6 +41,9 @@ export async function saveRole(form: FormData) {
         : null;
       if (before?.key === "owner")
         throw new ForbiddenError("security.role.manage");
+      // Editing a stronger role can disable access for every assigned user.
+      for (const grant of before?.permissions ?? [])
+        await assertDelegablePermission(userId, grant.permission);
       const role = before
         ? await tx.role.update({
             where: { id: before.id },

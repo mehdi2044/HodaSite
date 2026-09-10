@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { can } from "@/modules/access";
 import {
   createUser,
+  updateUser,
   setUserActive,
 } from "@/app/admin/(dashboard)/users/actions";
 import {
@@ -197,6 +198,75 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       });
       input.append("permissions", "order.view");
       await expect(saveRole(input)).rejects.toThrow("FORBIDDEN");
+    });
+    it("a delegated role editor cannot strip permissions it cannot manage", async () => {
+      const actor = await user("support");
+      state.userId = actor.id;
+      await db.userPermissionOverride.create({
+        data: {
+          userId: actor.id,
+          permission: "security.role.manage",
+          allow: true,
+        },
+      });
+      const role = await db.role.create({
+        data: {
+          key: `strong_${randomUUID().replaceAll("-", "").slice(0, 25)}`,
+          nameI18n: {},
+          permissions: { create: { permission: "users.manage" } },
+        },
+      });
+      await expect(
+        saveRole(form({ id: role.id, key: role.key, name: "Stripped" })),
+      ).rejects.toThrow("FORBIDDEN");
+      expect(
+        await db.rolePermission.count({
+          where: { roleId: role.id, permission: "users.manage" },
+        }),
+      ).toBe(1);
+    });
+    it("activation and edit cannot restore a broader override than the actor can delegate", async () => {
+      const actor = await user("admin");
+      state.userId = actor.id;
+      const tr = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+      await db.userPermissionOverride.create({
+        data: {
+          userId: actor.id,
+          permission: "order.view",
+          allow: false,
+          scope: { marketId: tr.id },
+        },
+      });
+      const role = await db.role.create({
+        data: {
+          key: `empty_${randomUUID().replaceAll("-", "").slice(0, 25)}`,
+          nameI18n: {},
+        },
+      });
+      const target = await db.user.create({
+        data: {
+          email: `activation-${randomUUID()}@example.com`,
+          name: "Inactive",
+          passwordHash: "unused",
+          isActive: false,
+          roles: { create: { roleId: role.id } },
+          overrides: { create: { permission: "order.view", allow: true } },
+        },
+      });
+      await expect(setUserActive(target.id, true)).rejects.toThrow("FORBIDDEN");
+      await expect(
+        updateUser(
+          target.id,
+          form({ name: "Reactivated", roleKey: role.key, isActive: "true" }),
+        ),
+      ).rejects.toThrow("FORBIDDEN");
+      expect(
+        (await db.user.findUniqueOrThrow({ where: { id: target.id } }))
+          .isActive,
+      ).toBe(false);
+      expect(await db.auditLog.count({ where: { entityId: target.id } })).toBe(
+        0,
+      );
     });
     it("a user may revoke their own session but cannot revoke another user's session", async () => {
       const a = await user("warehouse"),

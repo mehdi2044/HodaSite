@@ -8,6 +8,7 @@ import { auth } from "@/modules/auth";
 import { assertCan } from "@/modules/access";
 import {
   assertRoleGrant,
+  assertDelegablePermission,
   lockSecurity,
   protectLastOwner,
   parseScope,
@@ -102,7 +103,7 @@ export async function updateUser(id: string, form: FormData) {
         );
       for (const override of before.overrides)
         if (override.allow)
-          await assertCan(
+          await assertDelegablePermission(
             actor,
             override.permission,
             (override.scope as object) ?? undefined,
@@ -164,7 +165,7 @@ export async function setUserActive(id: string, active: boolean) {
         );
       for (const override of before.overrides)
         if (override.allow)
-          await assertCan(
+          await assertDelegablePermission(
             actor,
             override.permission,
             (override.scope as object) ?? undefined,
