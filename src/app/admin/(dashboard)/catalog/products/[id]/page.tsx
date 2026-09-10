@@ -67,7 +67,12 @@ export default async function ProductEditorPage({
           include: {
             collections: true,
             media: { orderBy: { sortOrder: "asc" } },
-            variants: { include: { media: { orderBy: { sortOrder: "asc" } } } },
+            variants: {
+              include: {
+                media: { orderBy: { sortOrder: "asc" } },
+                stockItems: true,
+              },
+            },
             attributes: true,
           },
         }),
@@ -116,6 +121,21 @@ export default async function ProductEditorPage({
         sizes={sizes.map((x) => option(x, x.value, undefined, x.scale))}
         markets={markets.map((x) => option(x, x.name, x.id))}
         mediaUrls={Object.fromEntries(media.map((x) => [x.id, x.url]))}
+        stockByVariant={Object.fromEntries(
+          (product?.variants ?? []).map((variant) => [
+            variant.id,
+            {
+              onHand: variant.stockItems.reduce(
+                (sum, item) => sum + item.onHand,
+                0,
+              ),
+              reserved: variant.stockItems.reduce(
+                (sum, item) => sum + item.reserved,
+                0,
+              ),
+            },
+          ]),
+        )}
       />
     </div>
   );
@@ -135,6 +155,7 @@ function toEditor(
       weightGrams: number | null;
       isActive: boolean;
       media: Array<{ mediaId: string }>;
+      stockItems: Array<{ onHand: number; reserved: number }>;
     }>;
     attributes: Array<{ key: string; valueI18n: unknown }>;
   },

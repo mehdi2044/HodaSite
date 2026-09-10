@@ -2,27 +2,27 @@
 
 > Codex: بعد از هر فاز این فایل را به‌روز کن. برای هر فاز بنویس: وضعیت، چه چیزی ساخته شد، **تست دستی به زبان ساده فارسی**، محدودیت‌های شناخته‌شده و سؤال‌های باز برای وی‌بانو/مهدی.
 
-| فاز | نام                                        | وضعیت          | تاریخ      | PR                                                 |
-| --- | ------------------------------------------ | -------------- | ---------- | -------------------------------------------------- |
-| 00  | Foundation                                 | ✅ Merge شده   | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
-| 01a | Markets, Settings, Theme                   | ✅ Merge شده   | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
-| 01b | Media Library                              | ✅ Merge شده   | ۲۰۲۶-۰۹-۰۸ | [#5](https://github.com/mehdi2044/HodaSite/pull/5) |
-| 01c | CMS & Storefront Design                    | ✅ Merge شده   | ۲۰۲۶-۰۹-۰۹ | [#6](https://github.com/mehdi2044/HodaSite/pull/6) |
-| 02  | Catalog & Storefront                       | ✅ Merge شده   | ۲۰۲۶-۰۹-۰۹ | [#7](https://github.com/mehdi2044/HodaSite/pull/7) |
-| —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق        | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
-| 03  | Pricing / FX / Fees / Inventory / Lot      | ⬜             |            |                                                    |
-| 04  | Cart / Auth / Checkout / Payment           | ⬜             |            |                                                    |
-| 05  | Shipping / Returns / RBAC / Backup-Restore | ⬜             |            |                                                    |
-| —   | **Checkpoint 2**                           | ⬜             |            |                                                    |
-| 06  | Finance Core                               | ⬜             |            |                                                    |
-| 07  | AI Gateway / Data Entry                    | ⬜             |            |                                                    |
-| 08  | SEO / PWA / Performance / Launch Checklist | ⬜             |            |                                                    |
-| —   | **Checkpoint 3 — Soft Launch**             | ⬜             |            |                                                    |
-| 09  | CRM / Promotions / Loyalty                 | ⬜             |            |                                                    |
-| 10  | AI Shopping Agent                          | ⬜             |            |                                                    |
-| —   | **Checkpoint 4**                           | ⬜             |            |                                                    |
-| 11  | Visual / Voice / Try-On / App              | ⬜             |            |                                                    |
-| —   | **Checkpoint 5**                           | ⬜             |            |                                                    |
+| فاز | نام                                        | وضعیت           | تاریخ      | PR                                                 |
+| --- | ------------------------------------------ | --------------- | ---------- | -------------------------------------------------- |
+| 00  | Foundation                                 | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
+| 01a | Markets, Settings, Theme                   | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
+| 01b | Media Library                              | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۸ | [#5](https://github.com/mehdi2044/HodaSite/pull/5) |
+| 01c | CMS & Storefront Design                    | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#6](https://github.com/mehdi2044/HodaSite/pull/6) |
+| 02  | Catalog & Storefront                       | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#7](https://github.com/mehdi2044/HodaSite/pull/7) |
+| —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق          | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
+| 03  | Pricing / FX / Fees / Inventory / Lot      | 🟡 در حال انجام | ۲۰۲۶-۰۹-۱۰ |                                                    |
+| 04  | Cart / Auth / Checkout / Payment           | ⬜              |            |                                                    |
+| 05  | Shipping / Returns / RBAC / Backup-Restore | ⬜              |            |                                                    |
+| —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
+| 06  | Finance Core                               | ⬜              |            |                                                    |
+| 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
+| 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
+| —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
+| 09  | CRM / Promotions / Loyalty                 | ⬜              |            |                                                    |
+| 10  | AI Shopping Agent                          | ⬜              |            |                                                    |
+| —   | **Checkpoint 4**                           | ⬜              |            |                                                    |
+| 11  | Visual / Voice / Try-On / App              | ⬜              |            |                                                    |
+| —   | **Checkpoint 5**                           | ⬜              |            |                                                    |
 
 وضعیت‌ها: ⬜ شروع نشده · 🟡 در حال انجام · 🔍 در بازبینی · ✅ Merge شده · 🧪 تست‌شده توسط مهدی
 
@@ -362,3 +362,37 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 
 - طبق D46 و استثنای زمان‌بندی D49، پیش از بستن Checkpoint 1 باید staging با دامنهٔ آزمایشی و HTTPS واقعی Caddy در دسترس باشد. S3/MinIO در CI اثبات شده است؛ دامنه، HTTPS واقعی، Lighthouse عمومی و ۱۷ نتیجهٔ دستی هنوز تأیید نشده‌اند.
 - فازهای 03 تا 05 می‌توانند بر پایهٔ CI سبز ادامه یابند؛ این موارد باید حداکثر پیش از اجرای دستی Checkpoint 2 تکمیل شوند. قاعدهٔ توقف در صورت کشف بیش از سه باگ مسدودکننده همچنان برقرار است.
+
+### Phase 03
+
+#### وضعیت
+
+🟡 **پیاده‌سازی کامل و در انتظار CI/بازبینی — ۱۰ سپتامبر ۲۰۲۶.** شاخهٔ `phase/03-pricing-fx-fees-inventory` از Merge commit فاز قبل ساخته شده است؛ تا سبزشدن هر سه job و رفع همهٔ یافته‌های بازبینی، این فاز تمام‌شده یا آمادهٔ Merge اعلام نمی‌شود.
+
+#### ساخته‌شده
+
+- Money مبتنی بر Decimal، قوانین گردکردن بازار و قالب‌بندی محلی؛ قیمت‌گذاری واقعی سه بازار با override محصول/تنوع، compare-at، کش ۱۵ دقیقه‌ای و برچسب مالیات.
+- دریافت نرخ Frankfurter با v2 و fallback به v1، Navasan با فیلد قابل‌تنظیم و نرخ دستی؛ تاریخچه، نمودار، نرخ پیشنهادی/فعال، کنترل جهش، هشدار نرخ کهنه، override زمان‌دار و تنظیم ارائه‌دهنده از ادمین. فقط secret نوسان در محیط سرور می‌ماند.
+- موتور داده‌محور هزینه با شش روش ثابت، دامنهٔ بازار/آدرس/دسته، اولویت، حداقل/حداکثر، جذب هزینه، مالیات و فرم پارامتر اختصاصی؛ شبیه‌ساز تا سه قلم، قانون منطبق و ترتیب محاسبه را نشان می‌دهد.
+- انبار، موجودی، Lot خرید با بهای اصلی و snapshot نرخ TRY/USD، دفتر StockMovement غیرقابل‌ویرایش، FIFO COGS، رزرو تراکنشی و job انقضا؛ دریافت دستی، ورود CSV، اصلاح با دلیل و آستانهٔ کمبود سراسری یا ویژهٔ SKU/انبار.
+- ویترین قیمت و موجودی واقعی را می‌خواند؛ تنوع ناموجود غیرفعال و وضعیت موجود/کم/ناموجود سه‌زبانه است. سناریوی seed کانادا برای CP2-03 حمل ۲۶ CAD و گمرک ۱۶ CAD را بازتولید می‌کند.
+
+#### تأیید فعلی
+
+- TypeScript، ESLint کامل و build تولیدی Next سبز است.
+- ۱۶۳ تست واحد در ۳۱ فایل پاس است؛ تست‌های جدید Money، FX، قیمت، هر شش روش هزینه، FIFO و قراردادهای موجودی را پوشش می‌دهند.
+- ۴۷ تست integration در ۱۴ فایل، از جمله جهش ۱۲٪ نرخ، دریافت Lot، انقضای رزرو، دو خریدار برای آخرین واحد و ۲۰ worker برای ۵ واحد، به‌دلیل نبود PostgreSQL محلی اجرا نشدند و باید در job `checks` CI پاس شوند.
+- Playwright جدید پنل FX/هزینه/انبار و سناریوی CP2-03 را پوشش می‌دهد؛ Docker، MinIO و backup→restore نیز طبق قانون پروژه فقط پس از CI تأیید خواهند شد.
+
+#### تست دستی ساده پس از بالا آمدن محیط
+
+1. در `Pricing → FX` نرخ فعال و پیشنهادی هر بازار را ببینید؛ یک نرخ دستی با تأیید اثر روی قیمت ثبت کنید و تغییر قیمت ویترین را بررسی کنید.
+2. در `Pricing → Fees → Simulator` بازار کانادا و محصول ۳ کیلویی seed را انتخاب کنید؛ حمل باید ۲۶ و گمرک ۱۶ CAD باشد. سپس قانون گمرک را خاموش و دوباره محاسبه کنید.
+3. در `Inventory` برای یک SKU تعداد، بهای خرید، ارز و تاریخ ثبت کنید؛ Lot، snapshotهای TRY/USD و حرکت `IN` باید ظاهر شوند.
+4. آستانهٔ سراسری و سپس مقدار ویژهٔ همان SKU را تغییر دهید؛ وضعیت «موجودی رو به پایان» در ویترین باید از مقدار مؤثر پیروی کند و تنوع صفر قابل انتخاب نباشد.
+
+#### محدودیت‌ها و سؤال باز
+
+- معیار پوشش خطی ≥۹۰٪ برای چهار ماژول هنوز اندازه‌گیری نشده، چون provider رسمی `@vitest/coverage-v8` در lockfile پروژه وجود ندارد و این محیط امکان افزودن امن dependency را نداشت. این معیار باز است و نباید پاس‌شده فرض شود.
+- معیار «order fixture واقعی و byte-identical بعد از تغییر نرخ» با زمان‌بندی فازها تعارض دارد: مدل و جریان Order طبق نقشه در فاز 04 ساخته می‌شود. در این فاز قرارداد snapshot و محاسبات خالص تست شده‌اند؛ تست regression روی رکورد واقعی Order باید هم‌زمان با ساخت Order در فاز 04 اضافه شود، مگر اینکه مدیر محصول انتقال بخشی از فاز 04 به این PR را بخواهد.
+- smoke واقعی Navasan به کلید API نیاز دارد. parser با نمونهٔ ثبت‌شده و واحد تومانِ الزام D06/سند فاز تست شده است؛ تماس احراز هویت‌شده باید هنگام فراهم‌شدن secret در staging انجام شود.

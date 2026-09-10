@@ -6,13 +6,13 @@ import { CatalogFilter } from "@/components/storefront/catalog-filter";
 import { ProductCard } from "@/components/storefront/product-card";
 import { getRequestContext } from "@/lib/request-context";
 import {
-  catalogBaseAmount,
   catalogFacets,
   catalogText,
   findCategoryBySlug,
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
+import { getBasePriceFilterAmount } from "@/modules/pricing";
 
 type Query = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -69,16 +69,10 @@ export default async function CategoryPage({
   if (!category) notFound();
   const [minPrice, maxPrice] = await Promise.all([
     one(query.min)
-      ? catalogBaseAmount(one(query.min)!, {
-          code: market.code,
-          markupPercent: market.markupPercent.toString(),
-        })
+      ? getBasePriceFilterAmount(one(query.min)!, market)
       : undefined,
     one(query.max)
-      ? catalogBaseAmount(one(query.max)!, {
-          code: market.code,
-          markupPercent: market.markupPercent.toString(),
-        })
+      ? getBasePriceFilterAmount(one(query.max)!, market)
       : undefined,
   ]);
   const result = await listCatalogProducts(market.id, safe, {

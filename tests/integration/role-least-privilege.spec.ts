@@ -45,8 +45,19 @@ const EXPECT: Record<string, { allow: string[]; deny: string[] }> = {
     ],
   },
   warehouse: {
-    allow: ["inventory.stock.adjust", "order.view"],
-    deny: ["pricing.sale_price.edit", "users.manage", "security.role.manage"],
+    allow: [
+      "inventory.view",
+      "inventory.receive",
+      "inventory.stock.adjust",
+      "order.view",
+    ],
+    deny: [
+      "pricing.sale_price.edit",
+      "pricing.fx.manage",
+      "fees.manage",
+      "users.manage",
+      "security.role.manage",
+    ],
   },
   accountant: {
     allow: ["finance.report.view", "pricing.cost.view", "payment.refund"],

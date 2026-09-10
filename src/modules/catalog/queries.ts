@@ -30,6 +30,7 @@ export const catalogProductInclude = {
     include: {
       color: true,
       size: true,
+      stockItems: true,
       media: {
         orderBy: { sortOrder: "asc" as const },
         include: { media: true },
@@ -64,6 +65,20 @@ export async function listCatalogProducts(
     if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
   }
 
+  if (filters.available) {
+    const rows = await db.$queryRaw<Array<{ id: string }>>`
+      SELECT DISTINCT v."productId" AS id
+      FROM "Variant" v
+      JOIN "StockItem" s ON s."variantId" = v.id
+      WHERE v."isActive" = true AND s."onHand" - s.reserved > 0
+    `;
+    const availableIds = new Set(rows.map((row) => row.id));
+    matchingIds = matchingIds
+      ? matchingIds.filter((id) => availableIds.has(id))
+      : [...availableIds];
+    if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
+  }
+
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
     status: "ACTIVE",
@@ -83,11 +98,11 @@ export async function listCatalogProducts(
           },
         }
       : {}),
-    ...(filters.available || filters.colorId || filters.sizeId
+    ...(filters.colorId || filters.sizeId
       ? {
           variants: {
             some: {
-              ...(filters.available ? { isActive: true } : {}),
+              isActive: true,
               ...(filters.colorId ? { colorId: filters.colorId } : {}),
               ...(filters.sizeId ? { sizeId: filters.sizeId } : {}),
             },
@@ -148,6 +163,7 @@ export async function findProductBySlug(
         include: {
           color: true,
           size: true,
+          stockItems: true,
           media: { orderBy: { sortOrder: "asc" }, include: { media: true } },
         },
       },

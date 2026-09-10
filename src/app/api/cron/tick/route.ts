@@ -8,6 +8,11 @@ import {
   ensurePurgeSweepScheduled,
 } from "@/modules/media/purge";
 import { registerMediaReplaceHandler } from "@/modules/media/replace";
+import {
+  ensureFxRefreshScheduled,
+  registerPricingJobHandlers,
+} from "@/modules/pricing";
+import { expireReservations } from "@/modules/inventory";
 
 // Registers the media job handlers once, when this route module first loads
 // (D21 — DB-backed queue, no Redis/BullMQ). Deliberately NOT in
@@ -23,6 +28,7 @@ import { registerMediaReplaceHandler } from "@/modules/media/replace";
 registerMediaJobHandlers();
 registerMediaPurgeHandler();
 registerMediaReplaceHandler();
+registerPricingJobHandlers();
 
 export async function POST(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
@@ -35,6 +41,8 @@ export async function POST(req: Request) {
     if (await isMaintenanceOn())
       return NextResponse.json({ skipped: "maintenance" }, { status: 503 });
     await ensurePurgeSweepScheduled();
+    await ensureFxRefreshScheduled();
+    await expireReservations();
     return NextResponse.json({ processed: await runJobs() });
   } finally {
     leaveRequest();
