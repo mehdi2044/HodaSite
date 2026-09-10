@@ -1,3 +1,4 @@
+import { equalSecret } from "@/lib/secure-tokens";
 import { runJobs } from "@/modules/jobs";
 import { NextResponse } from "next/server";
 import { isMaintenanceOn } from "@/modules/settings";
@@ -34,7 +35,11 @@ registerPricingJobHandlers();
 registerNotificationJobs();
 
 export async function POST(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
+  const secret = process.env.CRON_SECRET;
+  if (
+    !secret ||
+    !equalSecret(req.headers.get("authorization") ?? "", `Bearer ${secret}`)
+  )
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   // Count first, then check maintenance (A8 ordering, Vee).

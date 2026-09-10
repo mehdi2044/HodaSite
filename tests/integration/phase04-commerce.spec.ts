@@ -24,6 +24,7 @@ vi.mock("@/modules/integrations/storage", () => ({
 import { db } from "@/lib/db";
 import { opaqueToken, tokenHash, unseal } from "@/lib/secure-tokens";
 import { placeOrder, addressSchema } from "@/modules/checkout";
+import { InsufficientOrderStock } from "@/modules/inventory/orders";
 import { quoteCart } from "@/modules/fees";
 import {
   receiveStock,
@@ -131,43 +132,81 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe.skipIf(!hasDb)("phase 04 transactional commerce", () => {
-  it("serializes two separate checkouts competing for the last unit", async () => {
-    const f = await fixture(1),
-      firstCookies = new Map(context.cookies),
-      secondToken = opaqueToken();
-    const second = await db.cart.create({
-      data: {
-        tokenHash: tokenHash(secondToken),
-        marketId: f.market.id,
-        locale: "tr",
-        currency: "TRY",
-        expiresAt: new Date(Date.now() + 86400000),
-        items: { create: { variantId: f.variant.id, quantity: 1 } },
-      },
-    });
-    const results = await Promise.allSettled(
-      [
-        firstCookies,
-        new Map([
-          ["hoda.cart", secondToken],
-          ["market", "TR"],
-        ]),
-      ].map((jar) =>
-        context.requests!.run(jar, () => placeOrder(f.address, true, 0)),
-      ),
-    );
-    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect(
-      await db.order.count({
-        where: { cartId: { in: [f.cart.id, second.id] } },
-      }),
-    ).toBe(1);
-    const stock = await db.stockItem.findUniqueOrThrow({
-      where: { id: f.stock.id },
-    });
-    expect(stock.onHand).toBe(1);
-    expect(stock.reserved).toBe(1);
-  });
+  it.each([1, 2])(
+    "handles concurrent checkout with %i units without customer creation races",
+    async (quantity) => {
+      const f = await fixture(quantity),
+        firstCookies = new Map(context.cookies),
+        secondToken = opaqueToken();
+      const second = await db.cart.create({
+        data: {
+          tokenHash: tokenHash(secondToken),
+          marketId: f.market.id,
+          locale: "tr",
+          currency: "TRY",
+          expiresAt: new Date(Date.now() + 86400000),
+          items: { create: { variantId: f.variant.id, quantity: 1 } },
+        },
+      });
+      const results = await Promise.allSettled(
+        [
+          firstCookies,
+          new Map([
+            ["hoda.cart", secondToken],
+            ["market", "TR"],
+          ]),
+        ].map((jar, index) =>
+          context.requests!.run(jar, () =>
+            placeOrder(
+              {
+                ...f.address,
+                // Different buyers must compete on stock; the same new email must
+                // also support two simultaneous purchases when stock is sufficient.
+                email:
+                  quantity === 1 && index === 1
+                    ? `other-${f.address.email}`
+                    : f.address.email,
+              },
+              true,
+              0,
+            ),
+          ),
+        ),
+      );
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(
+        quantity,
+      );
+      if (quantity === 1) {
+        const failure = results.find((r) => r.status === "rejected");
+        expect(failure?.status).toBe("rejected");
+        if (failure?.status === "rejected") {
+          expect(
+            failure.reason instanceof InsufficientOrderStock ||
+              (failure.reason instanceof Error &&
+                failure.reason.message.startsWith("Insufficient stock")),
+          ).toBe(true);
+        }
+      } else {
+        const orders = await db.order.findMany({
+          where: { cartId: { in: [f.cart.id, second.id] } },
+        });
+        expect(new Set(orders.map((order) => order.customerId)).size).toBe(1);
+        expect(
+          await db.customer.count({ where: { email: f.address.email } }),
+        ).toBe(1);
+      }
+      expect(
+        await db.order.count({
+          where: { cartId: { in: [f.cart.id, second.id] } },
+        }),
+      ).toBe(quantity);
+      const stock = await db.stockItem.findUniqueOrThrow({
+        where: { id: f.stock.id },
+      });
+      expect(stock.onHand).toBe(quantity);
+      expect(stock.reserved).toBe(quantity);
+    },
+  );
   it("snapshots quote and FX; a retry creates neither a second order nor a second hold", async () => {
     const f = await fixture();
     const quote = await quoteCart({

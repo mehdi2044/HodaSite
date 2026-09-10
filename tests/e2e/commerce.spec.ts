@@ -9,7 +9,13 @@ const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 async function submit(page: Page, field: string) {
   await page
     .locator("form")
-    .filter({ has: page.locator(`[name="${field}"]`) })
+    .filter({
+      has: page.locator(
+        field === "operation"
+          ? 'select[name="operation"]'
+          : `[name="${field}"]`,
+      ),
+    })
     .locator('button:not([type="button"])')
     .last()
     .click();
@@ -133,7 +139,7 @@ for (const [locale, slug, province, city, postal] of [
     await adminLogin(admin);
     await admin.goto(`/admin/orders/${number}`);
     if (locale === "fa") {
-      await admin.locator('[name="operation"]').selectOption("reject");
+      await admin.locator('select[name="operation"]').selectOption("reject");
       await admin
         .locator('[name="reason"]')
         .fill("Please upload the correct transfer reference");
@@ -148,7 +154,7 @@ for (const [locale, slug, province, city, postal] of [
       );
       await admin.reload();
     }
-    await admin.locator('[name="operation"]').selectOption("approve");
+    await admin.locator('select[name="operation"]').selectOption("approve");
     await submit(admin, "operation");
     await expect(admin.getByTestId("admin-order-status")).toHaveText(
       fa.commerce.statuses.PAID,

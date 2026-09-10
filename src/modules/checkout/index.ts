@@ -139,7 +139,9 @@ export async function placeOrder(
               locale,
               isGuest: true,
             },
-            update: {},
+            // A nonempty update keeps this a database-native atomic upsert.
+            // Do not overwrite a returning customer's profile from guest input.
+            update: { email: address.email },
           }));
         const sequence = await tx.orderSequence.upsert({
           where: { id: cart.marketId },
