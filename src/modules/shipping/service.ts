@@ -272,7 +272,9 @@ export async function changeShipment(
                   status: data.status,
                   at:
                     deliveredAt ??
-                    (data.status === "IN_TRANSIT" ? shippedAt! : now),
+                    (data.status === "IN_TRANSIT" && !leg.shippedAt
+                      ? shippedAt!
+                      : now),
                 },
               });
           }

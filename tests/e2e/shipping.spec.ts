@@ -123,17 +123,15 @@ test("IR partial parcels, manual event, sequential tracking and final delivery",
       await db.order.findUniqueOrThrow({ where: { id: f.order.id } })
     ).totalAmount.toString(),
   ).toBe(f.order.totalAmount.toString());
-  await page
-    .context()
-    .addCookies([
-      {
-        name: `hoda.order.${f.order.number}`,
-        value: f.guestToken,
-        url: "http://127.0.0.1:3000",
-        httpOnly: true,
-        sameSite: "Lax",
-      },
-    ]);
+  await page.context().addCookies([
+    {
+      name: `hoda.order.${f.order.number}`,
+      value: f.guestToken,
+      url: "http://127.0.0.1:3000",
+      httpOnly: true,
+      sameSite: "Lax",
+    },
+  ]);
   await page.goto(`/en/orders/${f.order.number}`);
   await expect(
     page.getByTestId("tracking-timeline").locator("article"),
@@ -143,6 +141,9 @@ test("IR partial parcels, manual event, sequential tracking and final delivery",
   await expect(page).toHaveURL(/\/account\/login/);
   await expect(page.getByTestId("tracking-timeline")).toHaveCount(0);
   for (const locale of ["fa", "tr", "en"] as const) {
+    // Each locale starts in its own market; a persisted IR market intentionally
+    // redirects unsupported Turkish to the configured default language (D10).
+    await page.context().clearCookies();
     await page.goto(`/${locale}/tracking`);
     await page.locator('main [name="number"]').fill(f.order.number);
     await page.locator('main [name="email"]').fill(f.email);

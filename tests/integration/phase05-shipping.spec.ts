@@ -173,6 +173,14 @@ describe.skipIf(!hasDb)("shipping transactions and public privacy", () => {
     ).rejects.toThrow("SHIPPING_STATE");
     await change(f, 0, "FAILED");
     await change(f, 0, "IN_TRANSIT");
+    expect(
+      (
+        await db.trackingEvent.findMany({
+          where: { legId: s.legs[0].id },
+          orderBy: [{ at: "asc" }, { createdAt: "asc" }],
+        })
+      ).map((e) => e.status),
+    ).toEqual(["IN_TRANSIT", "FAILED", "IN_TRANSIT"]);
     await change(f, 0, "DELIVERED");
     s = await db.shipment.findUniqueOrThrow({
       where: { id: f.id },
