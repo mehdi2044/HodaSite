@@ -81,6 +81,8 @@ export async function changeCart(
         include: { items: true },
       });
       if (latest.completedAt) throw new CommerceError("CART_COMPLETED");
+      if (latest.customerId && latest.customerId !== customer?.id)
+        throw new CommerceError("FORBIDDEN");
       const old = latest.items.find((i) => i.variantId === variantId),
         next = add ? (old?.quantity ?? 0) + quantity : quantity;
       if (next > 100) throw new CommerceError("INVALID_QUANTITY");
@@ -110,6 +112,7 @@ export async function changeCartMarket(locale: "fa" | "tr" | "en") {
     const cart = await readCart();
     if (!cart) return;
     const { market } = await getRequestContext(locale);
+    const customer = await currentCustomer();
     await db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Cart" WHERE id=${cart.id} FOR UPDATE`;
       const latest = await tx.cart.findUniqueOrThrow({
@@ -117,6 +120,8 @@ export async function changeCartMarket(locale: "fa" | "tr" | "en") {
         include: { items: true },
       });
       if (latest.completedAt) throw new CommerceError("CART_COMPLETED");
+      if (latest.customerId && latest.customerId !== customer?.id)
+        throw new CommerceError("FORBIDDEN");
       if (latest.items.length)
         await quoteCart({ marketId: market.id, locale, items: latest.items });
       await tx.cart.update({
@@ -136,7 +141,12 @@ export async function saveCheckout(data: Prisma.InputJsonObject) {
   const cart = await readCart();
   if (!cart) throw new CommerceError("CART_EMPTY");
   const changed = await db.cart.updateMany({
-    where: { id: cart.id, completedAt: null },
+    where: {
+      id: cart.id,
+      completedAt: null,
+      customerId: cart.customerId,
+      marketId: cart.marketId,
+    },
     data: { checkout: data, revision: { increment: 1 } },
   });
   if (!changed.count) throw new CommerceError("CART_COMPLETED");
@@ -148,7 +158,7 @@ export async function mergeCustomerCart(customerId: string) {
   const restored = await withMutation(() =>
     db.$transaction(
       async (tx) => {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`cart:${customerId}`}))`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`cart:${customerId}`}))::text`;
         const currentId = token
           ? (
               await tx.cart.findUnique({

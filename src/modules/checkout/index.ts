@@ -20,6 +20,7 @@ export async function placeOrder(
   raw: CheckoutAddress,
   acceptedTerms: boolean,
   expectedRevision: number,
+  expectedTotal?: string,
 ) {
   const address = addressSchema.parse(raw);
   if (!acceptedTerms) throw new CommerceError("TERMS_REQUIRED");
@@ -68,7 +69,11 @@ export async function placeOrder(
         const terms = await tx.page.findFirst({
           where: {
             id: checkoutSettings?.termsPageId ?? "seed-page-terms",
-            status: "PUBLISHED",
+            status: "published",
+            OR: [
+              { marketIds: { isEmpty: true } },
+              { marketIds: { has: cart.marketId } },
+            ],
             deletedAt: null,
           },
         });
@@ -102,6 +107,11 @@ export async function placeOrder(
             undefined,
           address,
         });
+        if (
+          expectedTotal !== undefined &&
+          !new Decimal(expectedTotal).eq(quote.total)
+        )
+          throw new CommerceError("PRICE_CHANGED");
         const rates = new Set(quote.items.map((i) => i.fxRate));
         if (rates.size !== 1) throw new CommerceError("PRICE_CHANGED");
         const marketRate = quote.items[0].fxRate;

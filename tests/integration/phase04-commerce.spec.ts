@@ -205,6 +205,9 @@ describe.skipIf(!hasDb)("phase 04 transactional commerce", () => {
     await expect(placeOrder(f.address, true, 1)).rejects.toThrow(
       "CART_CHANGED",
     );
+    await expect(placeOrder(f.address, true, 0, "0")).rejects.toThrow(
+      "PRICE_CHANGED",
+    );
     context.cookies.set("market", "CA");
     await expect(placeOrder(f.address, true, 0)).rejects.toThrow(
       "MARKET_CHANGED",

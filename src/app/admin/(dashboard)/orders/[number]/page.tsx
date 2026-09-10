@@ -43,11 +43,24 @@ export default async function OrderPage({
               {i.lineTotalAmount.toString()} {i.currency}
             </p>
           ))}
+          <p>
+            {address.line1} {address.line2} · {address.city} ·{" "}
+            {address.province} · {address.postalCode} · {address.country}
+          </p>
+          <p dir="ltr">{contact.phone}</p>
+          {order.fees.map((f) => (
+            <p key={f.id}>
+              {f.label}: {f.absorbed ? "0" : f.amount.toString()} {f.currency}
+            </p>
+          ))}
           <h2 className="text-xl font-semibold">{t("timeline")}</h2>
           {order.events.map((e) => (
             <p key={e.id}>
               {e.createdAt.toLocaleString("fa")} ·{" "}
               {e.toStatus ? t(`statuses.${e.toStatus}`) : t("orderUpdated")}
+              {e.note && (
+                <span className="block text-sm text-muted">{e.note}</span>
+              )}
             </p>
           ))}
           <h2 className="text-xl font-semibold">{t("returns")}</h2>

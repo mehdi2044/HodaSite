@@ -86,6 +86,10 @@ export async function placeOrderAction(locale: string, form: FormData) {
       addressSchema.parse(JSON.parse(z.string().parse(form.get("address")))),
       form.get("terms") === "on",
       z.coerce.number().int().parse(form.get("revision")),
+      z
+        .string()
+        .regex(/^\d+(\.\d+)?$/)
+        .parse(form.get("expectedTotal")),
     );
     if (token)
       (await cookies()).set(`hoda.order.${order.number}`, token, {

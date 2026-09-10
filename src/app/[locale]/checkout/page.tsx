@@ -26,12 +26,21 @@ export default async function CheckoutPage({
   const settings = await db.siteSettings.findUniqueOrThrow({
     where: { id: "default" },
   });
+  if (
+    !customer &&
+    (settings.checkout as { guestCheckout?: boolean }).guestCheckout === false
+  )
+    redirect(`/${locale}/account/login?next=/${locale}/checkout`);
   const terms = await db.page.findFirst({
     where: {
       id:
         (settings.checkout as { termsPageId?: string }).termsPageId ??
         "seed-page-terms",
-      status: "PUBLISHED",
+      status: "published",
+      OR: [
+        { marketIds: { isEmpty: true } },
+        { marketIds: { has: cart.marketId } },
+      ],
       deletedAt: null,
     },
   });
@@ -167,7 +176,12 @@ export default async function CheckoutPage({
           <CommerceForm action={placeOrderAction.bind(null, locale)}>
             <h2 className="text-xl font-semibold">{t("bankTransfer")}</h2>
             <p>{t("paymentIntro")}</p>
-            <QuoteSummary cart={cart} address={parsed.data!} locale={locale} />
+            <QuoteSummary
+              cart={cart}
+              address={parsed.data!}
+              locale={locale}
+              confirm
+            />
             <input
               type="hidden"
               name="address"
@@ -202,7 +216,9 @@ async function QuoteSummary({
   cart,
   address,
   locale,
+  confirm = false,
 }: {
+  confirm?: boolean;
   cart: NonNullable<Awaited<ReturnType<typeof readCart>>>;
   address: { province: string; city: string; postalCode: string };
   locale: string;
@@ -219,6 +235,9 @@ async function QuoteSummary({
   if (!quote) return <p role="alert">{t("errors.STOCK_UNAVAILABLE")}</p>;
   return (
     <dl className="grid gap-3">
+      {confirm && (
+        <input type="hidden" name="expectedTotal" value={quote.total} />
+      )}
       <div className="flex justify-between">
         <dt>{t("subtotal")}</dt>
         <dd>

@@ -11,7 +11,7 @@ export default async function CheckoutSettings() {
     [markets, settings, pages] = await Promise.all([
       db.market.findMany(),
       db.siteSettings.findUniqueOrThrow({ where: { id: "default" } }),
-      db.page.findMany({ where: { deletedAt: null, status: "PUBLISHED" } }),
+      db.page.findMany({ where: { deletedAt: null, status: "published" } }),
     ]),
     config = settings.checkout as {
       guestCheckout?: boolean;

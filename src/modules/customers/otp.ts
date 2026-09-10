@@ -25,7 +25,7 @@ export async function requestCustomerOtp(
         [tokenHash(`email:${email}`), 5],
         [tokenHash(`ip:${ip}`), 30],
       ] as const) {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${id}))`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${id}))::text`;
         const bucket = await tx.authThrottle.findUnique({ where: { id } });
         const fresh =
           !bucket || now.getTime() - bucket.windowStart.getTime() >= 15 * 60000;
