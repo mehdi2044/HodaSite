@@ -25,6 +25,26 @@ export async function validateScope(scope: Scope) {
   if (scope.categoryId)
     await db.category.findUniqueOrThrow({ where: { id: scope.categoryId } });
 }
+/** A global grant must not silently erase a narrower deny held by its issuer. */
+export function scopesIntersect(a: Scope, b: Scope) {
+  return (["marketId", "categoryId", "section"] as const).every(
+    (key) => !a[key] || !b[key] || a[key] === b[key],
+  );
+}
+export async function assertDelegablePermission(
+  actor: string,
+  permission: string,
+  scope: Scope = {},
+) {
+  await assertCan(actor, permission, scope);
+  const denies = await db.userPermissionOverride.findMany({
+    where: { userId: actor, permission, allow: false },
+  });
+  if (
+    denies.some((deny) => scopesIntersect((deny.scope ?? {}) as Scope, scope))
+  )
+    throw new ForbiddenError(permission, scope);
+}
 export async function assertRoleGrant(
   actor: string,
   roleId: string,
@@ -39,7 +59,11 @@ export async function assertRoleGrant(
     role.permissions.some((p) => p.permission === "*")
   ) {
     const owner = await db.userRole.findFirst({
-      where: { userId: actor, role: { key: "owner" } },
+      where: {
+        userId: actor,
+        user: { isActive: true },
+        role: { key: "owner" },
+      },
     });
     if (!owner || (owner.scope && Object.keys(owner.scope as object).length))
       throw new ForbiddenError("security.role.manage");
@@ -47,7 +71,7 @@ export async function assertRoleGrant(
       throw new Error("OWNER_SCOPE_REQUIRED");
   } else
     for (const { permission } of role.permissions)
-      await assertCan(actor, permission, scope);
+      await assertDelegablePermission(actor, permission, scope);
 }
 export async function lockSecurity(tx: Prisma.TransactionClient) {
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('admin-security-management'))::text`;

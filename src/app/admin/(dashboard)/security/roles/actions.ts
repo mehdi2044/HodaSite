@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/modules/auth";
 import { assertCan, isPermission, ForbiddenError } from "@/modules/access";
 import {
+  assertDelegablePermission,
   lockSecurity,
   roleSchema,
   parseScope,
@@ -26,13 +27,12 @@ export async function saveRole(form: FormData) {
     permissions: form.getAll("permissions"),
   });
   if (input.key === "owner") throw new ForbiddenError("security.role.manage");
-  // An actor must not grant permissions they do not possess.
-  for (const permission of input.permissions)
-    await assertCan(userId, permission);
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
       await assertCan(userId, "security.role.manage");
+      for (const permission of input.permissions)
+        await assertDelegablePermission(userId, permission);
       const before = input.id
         ? await tx.role.findUniqueOrThrow({
             where: { id: input.id },
@@ -98,18 +98,25 @@ export async function saveOverride(form: FormData) {
   const mode = z.enum(["allow", "deny", "remove"]).parse(form.get("mode"));
   const scope = parseScope(form);
   await validateScope(scope);
-  if (mode === "allow") await assertCan(userId, permission, scope);
-  const owner = await db.userRole.findFirst({
-    where: { userId: targetId, role: { key: "owner" } },
-  });
-  if (owner) throw new Error("OWNER_OVERRIDE_FORBIDDEN");
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
       await assertCan(userId, "security.role.manage");
+      // Removing a deny can grant access just as surely as adding an allow.
+      await assertDelegablePermission(userId, permission, scope);
+      const owner = await tx.userRole.findFirst({
+        where: { userId: targetId, role: { key: "owner" } },
+      });
+      if (owner) throw new Error("OWNER_OVERRIDE_FORBIDDEN");
       const before = await tx.userPermissionOverride.findUnique({
         where: { userId_permission: { userId: targetId, permission } },
       });
+      if (before && !before.allow)
+        await assertDelegablePermission(
+          userId,
+          permission,
+          (before.scope ?? {}) as import("@/modules/access").Scope,
+        );
       if (mode === "remove")
         await tx.userPermissionOverride.deleteMany({
           where: { userId: targetId, permission },

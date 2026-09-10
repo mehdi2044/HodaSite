@@ -159,6 +159,45 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ),
       ).rejects.toThrow("OWNER_OVERRIDE_FORBIDDEN");
     });
+    it("delegated role managers cannot remove their own deny to regain access", async () => {
+      const actor = await user("admin");
+      state.userId = actor.id;
+      await db.userPermissionOverride.createMany({
+        data: [
+          { userId: actor.id, permission: "security.role.manage", allow: true },
+          { userId: actor.id, permission: "order.view", allow: false },
+        ],
+      });
+      await expect(
+        saveOverride(
+          form({ userId: actor.id, permission: "order.view", mode: "remove" }),
+        ),
+      ).rejects.toThrow("FORBIDDEN");
+      expect(await can(actor.id, "order.view")).toBe(false);
+    });
+    it("a manager with a market deny cannot delegate that permission globally", async () => {
+      const actor = await user("admin");
+      state.userId = actor.id;
+      const tr = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+      await db.userPermissionOverride.createMany({
+        data: [
+          { userId: actor.id, permission: "security.role.manage", allow: true },
+          {
+            userId: actor.id,
+            permission: "order.view",
+            allow: false,
+            scope: { marketId: tr.id },
+          },
+        ],
+      });
+      expect(await can(actor.id, "order.view")).toBe(true);
+      const input = form({
+        key: `deny_${randomUUID().replaceAll("-", "")}`,
+        name: "Forbidden grant",
+      });
+      input.append("permissions", "order.view");
+      await expect(saveRole(input)).rejects.toThrow("FORBIDDEN");
+    });
     it("a user may revoke their own session but cannot revoke another user's session", async () => {
       const a = await user("warehouse"),
         b = await user("support");
