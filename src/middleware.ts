@@ -153,7 +153,7 @@ export default auth(async (req) => {
   // --- Admin: JWT guard, no locale routing ---
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const isLogin = pathname === "/admin/login";
-    if (!isLogin && !req.auth) {
+    if (!isLogin && !req.auth?.user?.id) {
       const url = adminRedirectUrl("/admin/login", req.url);
       url.searchParams.set("next", pathname + search);
       return NextResponse.redirect(url);
