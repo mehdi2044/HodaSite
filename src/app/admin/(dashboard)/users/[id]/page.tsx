@@ -1,5 +1,5 @@
-import { auth } from "@/modules/auth";
-import { assertCan } from "@/modules/access";
+import { ScopeFields } from "@/components/admin/security/scope-fields";
+import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -11,7 +11,7 @@ export default async function EditUser({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await assertCan((await auth())?.user.id ?? "", "users.manage");
+  await requireAdminPage("users.manage");
   const { id } = await params;
   const [user, roles] = await Promise.all([
     db.user.findUnique({
@@ -53,6 +53,11 @@ export default async function EditUser({
               <option value="false">غیرفعال</option>
             </Select>
           </label>
+          <ScopeFields
+            value={
+              (user.roles[0]?.scope ?? {}) as import("@/modules/access").Scope
+            }
+          />
           <div className="flex items-center gap-3">
             <Button type="submit">ذخیره</Button>
             <Link href="/admin/users">انصراف</Link>

@@ -13,7 +13,10 @@ export const adminIdentityInclude = {
   roles: { include: { role: { include: { permissions: true } } } },
 } satisfies Prisma.UserInclude;
 type Identity = Prisma.UserGetPayload<{ include: typeof adminIdentityInclude }>;
-export function requiresMfa(user: { roles: {role: {key: string; permissions: {permission: string}[]}}[]; overrides: {allow: boolean; permission: string}[] }) {
+export function requiresMfa(user: {
+  roles: { role: { key: string; permissions: { permission: string }[] } }[];
+  overrides: { allow: boolean; permission: string }[];
+}) {
   return (
     user.overrides.some(
       (o) =>

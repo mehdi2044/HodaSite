@@ -1,5 +1,4 @@
-import { auth } from "@/modules/auth";
-import { assertCan } from "@/modules/access";
+import { requireAdminPage } from "@/modules/auth/page";
 import { db } from "@/lib/db";
 import { getTranslations } from "next-intl/server";
 export default async function AuditPage({
@@ -13,7 +12,7 @@ export default async function AuditPage({
     to?: string;
   }>;
 }) {
-  await assertCan((await auth())?.user.id ?? "", "audit.view");
+  await requireAdminPage("audit.view");
   const q = await searchParams,
     t = await getTranslations("security");
   const start =

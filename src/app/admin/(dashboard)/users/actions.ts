@@ -100,6 +100,13 @@ export async function updateUser(id: string, form: FormData) {
           grant.roleId,
           (grant.scope as object) ?? undefined,
         );
+      for (const override of before.overrides)
+        if (override.allow)
+          await assertCan(
+            actor,
+            override.permission,
+            (override.scope as object) ?? undefined,
+          );
       await tx.userRole.deleteMany({ where: { userId: id } });
       await tx.user.update({
         where: { id },
@@ -155,6 +162,13 @@ export async function setUserActive(id: string, active: boolean) {
           grant.roleId,
           (grant.scope as object) ?? undefined,
         );
+      for (const override of before.overrides)
+        if (override.allow)
+          await assertCan(
+            actor,
+            override.permission,
+            (override.scope as object) ?? undefined,
+          );
       if (before.isActive === active) return;
       await tx.user.update({
         where: { id },

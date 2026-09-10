@@ -32,6 +32,7 @@ export async function saveRole(form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
+      await assertCan(userId, "security.role.manage");
       const before = input.id
         ? await tx.role.findUniqueOrThrow({
             where: { id: input.id },
@@ -105,6 +106,7 @@ export async function saveOverride(form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
+      await assertCan(userId, "security.role.manage");
       const before = await tx.userPermissionOverride.findUnique({
         where: { userId_permission: { userId: targetId, permission } },
       });

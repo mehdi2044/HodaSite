@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
+import { adminRedirectUrl } from "@/modules/auth/redirects";
 import authConfig from "@/modules/auth/config";
 import { routing } from "@/i18n/routing";
 import { getClientIp } from "@/lib/net";
@@ -153,7 +154,7 @@ export default auth(async (req) => {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const isLogin = pathname === "/admin/login";
     if (!isLogin && !req.auth) {
-      const url = new URL("/admin/login", req.nextUrl);
+      const url = adminRedirectUrl("/admin/login", req.url);
       url.searchParams.set("next", pathname + search);
       return NextResponse.redirect(url);
     }
@@ -165,7 +166,7 @@ export default auth(async (req) => {
       pathname !== "/admin/security/setup"
     ) {
       return NextResponse.redirect(
-        new URL("/admin/security/setup", req.nextUrl),
+        adminRedirectUrl("/admin/security/setup", req.url),
       );
     }
     return NextResponse.next();

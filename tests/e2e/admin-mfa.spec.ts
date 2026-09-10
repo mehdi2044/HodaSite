@@ -52,7 +52,11 @@ test("owner enrollment, one-time recovery and session revocation in the real bro
   await login(page, account.email, codes[1]);
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/security");
-  await page.getByText("همین نشست", {exact:true}).locator("../..").getByRole("button",{name:"پایان نشست",exact:true}).click();
+  await page
+    .getByText("همین نشست", { exact: true })
+    .locator("../..")
+    .getByRole("button", { name: "پایان نشست", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/login/);
   await page.goto("/admin/users");
   await expect(page).toHaveURL(/\/admin\/login/);

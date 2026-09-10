@@ -39,3 +39,14 @@ it("requires MFA for elevated custom roles and overrides", () => {
     } as Parameters<typeof requiresMfa>[0]),
   ).toBe(true);
 });
+
+it("uses the public application origin for MFA redirects behind a proxy", async () => {
+  const { adminRedirectUrl } = await import("@/modules/auth/redirects");
+  vi.stubEnv("APP_URL", "https://shop.example.com");
+  expect(
+    adminRedirectUrl(
+      "/admin/security/setup",
+      "http://localhost:3000/admin",
+    ).toString(),
+  ).toBe("https://shop.example.com/admin/security/setup");
+});

@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/modules/auth";
-import { assertCan, PERMISSIONS } from "@/modules/access";
+import { requireAdminPage } from "@/modules/auth/page";
+import { PERMISSIONS } from "@/modules/access";
 import { db } from "@/lib/db";
 import { saveRole, saveOverride } from "./actions";
 export default async function RolesPage() {
-  await assertCan((await auth())?.user.id ?? "", "security.role.manage");
+  await requireAdminPage("security.role.manage");
   const t = await getTranslations("security");
   const [roles, users, markets] = await Promise.all([
     db.role.findMany({

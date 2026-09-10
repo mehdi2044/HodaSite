@@ -60,7 +60,7 @@ export async function protectLastOwner(
 ) {
   const old = await tx.user.findUniqueOrThrow({
     where: { id: userId },
-    include: { roles: { include: { role: true } } },
+    include: { overrides: true, roles: { include: { role: true } } },
   });
   if (
     old.roles.some((r) => r.role.key === "owner") &&

@@ -796,6 +796,34 @@
     "filter": "Filter",
     "system": "System",
     "before": "Before",
-    "after": "After"
+    "after": "After",
+    "scope": "Access scope",
+    "category": "Category",
+    "allCategories": "All categories",
+    "section": "Section (optional)"
+  },
+  "healthAdmin": {
+    "title": "System health",
+    "database": "Database size",
+    "media": "Recorded media size",
+    "disk": "Free application disk space",
+    "unknown": "Unknown",
+    "storage": "Storage",
+    "queued": "Pending jobs",
+    "failed": "Failed jobs",
+    "email": "Email delivery",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "backup": "Last successful backup",
+    "verified": "Last backup verification",
+    "none": "Not recorded",
+    "configurationOnly": "Email configuration does not guarantee delivery; real delivery is tested before release.",
+    "offsite": "Off-site backup",
+    "ok": "Off-site copy succeeded",
+    "offsiteMissing": "A successful off-site copy has not been verified",
+    "fx": "Latest market FX updates",
+    "migration": "Database migration",
+    "alerts": "Open alerts",
+    "noAlerts": "No open alerts"
   }
 }

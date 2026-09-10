@@ -17,7 +17,7 @@ export async function GET() {
         })
       )?.finishedAt?.toISOString() ?? null;
   } catch (err) {
-    reason = err instanceof Error ? err.message : "unknown error";
+    reason = "database unavailable";
     console.error("[health] database check failed:", err);
   }
 
