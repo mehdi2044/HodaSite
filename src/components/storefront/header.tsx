@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { readCart } from "@/modules/cart";
+import { CartDrawer } from "./cart-drawer";
 import { db } from "@/lib/db";
 import type { Market } from "@/lib/request-context";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -39,6 +41,7 @@ export async function Header({
     getTranslations(),
   ]);
 
+  const cart = await readCart();
   return (
     <header
       data-header-style={headerStyle}
@@ -82,6 +85,22 @@ export async function Header({
           ))}
         </nav>
         <div className="flex items-center gap-4">
+          <CartDrawer
+            locale={locale}
+            currency={cart?.currency ?? market.currency}
+            items={
+              cart?.items.map((i) => ({
+                title:
+                  (i.variant.product.titleI18n as Record<string, string>)[
+                    locale
+                  ] ?? "",
+                quantity: i.quantity,
+              })) ?? []
+            }
+          />
+          <Link className="min-h-11 py-3" href={`/${locale}/account`}>
+            {t("commerce.account")}
+          </Link>
           <LocaleSwitcher
             current={locale}
             enabledLocales={market.enabledLocales}

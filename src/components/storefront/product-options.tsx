@@ -1,5 +1,8 @@
 "use client";
 import { useMemo, useState } from "react";
+import { useLocale } from "next-intl";
+import { CommerceForm } from "./commerce-form";
+import { updateCartAction } from "@/app/[locale]/commerce-actions";
 
 type Variant = {
   id: string;
@@ -30,6 +33,7 @@ export function ProductOptions({
   };
   basePrice: string;
 }) {
+  const locale = useLocale();
   const colors = useMemo(
     () => [...new Map(variants.map((v) => [v.colorId, v.color])).entries()],
     [variants],
@@ -111,14 +115,17 @@ export function ProductOptions({
             ? labels.lowStock
             : labels.inStock}
       </p>
-      <button
-        type="button"
-        className="button w-full"
-        onClick={() => alert(labels.stub)}
-        disabled={!size}
-      >
-        {labels.add}
-      </button>
+      <CommerceForm action={updateCartAction.bind(null, locale)}>
+        <input type="hidden" name="variantId" value={selected?.id ?? ""} />
+        <input type="hidden" name="quantity" value="1" />
+        <input type="hidden" name="mode" value="add" />
+        <button
+          className="button w-full"
+          disabled={!selected || selected.available <= 0}
+        >
+          {labels.add}
+        </button>
+      </CommerceForm>
     </div>
   );
 }

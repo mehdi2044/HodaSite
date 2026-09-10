@@ -1,3 +1,4 @@
+import { equalSecret } from "@/lib/secure-tokens";
 import { runJobs } from "@/modules/jobs";
 import { NextResponse } from "next/server";
 import { isMaintenanceOn } from "@/modules/settings";
@@ -12,6 +13,8 @@ import {
   ensureFxRefreshScheduled,
   registerPricingJobHandlers,
 } from "@/modules/pricing";
+import { cancelUnpaidOrders } from "@/modules/orders";
+import { registerNotificationJobs } from "@/modules/notifications";
 import { expireReservations } from "@/modules/inventory";
 
 // Registers the media job handlers once, when this route module first loads
@@ -29,9 +32,14 @@ registerMediaJobHandlers();
 registerMediaPurgeHandler();
 registerMediaReplaceHandler();
 registerPricingJobHandlers();
+registerNotificationJobs();
 
 export async function POST(req: Request) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
+  const secret = process.env.CRON_SECRET;
+  if (
+    !secret ||
+    !equalSecret(req.headers.get("authorization") ?? "", `Bearer ${secret}`)
+  )
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   // Count first, then check maintenance (A8 ordering, Vee).
@@ -43,6 +51,7 @@ export async function POST(req: Request) {
     await ensurePurgeSweepScheduled();
     await ensureFxRefreshScheduled();
     await expireReservations();
+    await cancelUnpaidOrders();
     return NextResponse.json({ processed: await runJobs() });
   } finally {
     leaveRequest();

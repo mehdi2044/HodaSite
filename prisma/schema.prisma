@@ -120,6 +120,7 @@ enum ReservationStatus {
 }
 
 model User {
+  orderViews       Json                     @default("{}")
   id               String                   @id @default(cuid())
   email            String                   @unique
   passwordHash     String
@@ -333,6 +334,12 @@ model ThemeSettings {
 }
 
 model Market {
+  paymentMethods String[]            @default(["OFFLINE_BANK_TRANSFER"])
+  bankAccounts   MarketBankAccount[]
+  carts          Cart[]
+  orders         Order[]
+  orderSequence  OrderSequence?
+
   id                   String        @id @default(cuid())
   code                 String        @unique
   name                 String
@@ -422,6 +429,7 @@ model MarketPrice {
 }
 
 model FeeRule {
+  selectable   Boolean   @default(false)
   id           String    @id @default(cuid())
   marketId     String
   market       Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
@@ -526,6 +534,9 @@ model StockMovement {
 }
 
 model Reservation {
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
   id          String            @id @default(cuid())
   stockItemId String
   stockItem   StockItem         @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
@@ -542,6 +553,7 @@ model Reservation {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  @@index([orderId, status])
   @@index([status, expiresAt])
   @@index([variantId, warehouseId, status])
 }
@@ -567,6 +579,8 @@ model MediaFolder {
 }
 
 model Media {
+  receipts Receipt[]
+
   id              String             @id @default(cuid())
   kind            String
   storageKey      String             @unique
@@ -870,6 +884,9 @@ model ProductAttribute {
 }
 
 model Variant {
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
   id               String          @id @default(cuid())
   productId        String
   product          Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -941,4 +958,399 @@ model SizeGuide {
 
   @@unique([scope, refId])
   @@index([scope, deletedAt])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  AWAITING_VERIFICATION
+  NEEDS_REVIEW
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  RETURN_REQUESTED
+  RETURNED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+  VOIDED
+  FAILED
+}
+
+enum OrderKind {
+  SALE
+  EXCHANGE
+}
+
+enum ReturnedItemCondition {
+  RESTOCK
+  QUARANTINE
+  DAMAGED
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  IN_TRANSIT
+  RECEIVED
+  RESOLVED
+}
+
+model Customer {
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  firstName           String          @default("")
+  lastName            String          @default("")
+  phone               String          @default("")
+  locale              String          @default("en")
+  preferredMarketId   String?
+  isGuest             Boolean         @default(true)
+  isActive            Boolean         @default(true)
+  birthDate           DateTime?       @db.Timestamptz(3)
+  gender              String?
+  marketingConsent    Json            @default("{}")
+  notes               String          @default("")
+  deletionRequestedAt DateTime?       @db.Timestamptz(3)
+  sessionVersion      Int             @default(0)
+  addresses           Address[]
+  carts               Cart[]
+  orders              Order[]
+  returns             ReturnRequest[]
+  credits             StoreCredit[]
+  createdAt           DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @db.Timestamptz(3)
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String
+  country    String
+  province   String
+  city       String
+  line1      String
+  line2      String   @default("")
+  postalCode String   @default("")
+  phone      String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([customerId])
+}
+
+model AuthOtp {
+  id        String    @id @default(cuid())
+  email     String
+  codeHash  String
+  linkHash  String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  attempts  Int       @default(0)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([email, createdAt])
+}
+
+model AuthThrottle {
+  id          String   @id
+  attempts    Int      @default(0)
+  windowStart DateTime @default(now()) @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model MarketBankAccount {
+  id               String    @id @default(cuid())
+  marketId         String
+  market           Market    @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  label            String
+  bankName         String
+  holder           String
+  accountNumber    String    @default("")
+  iban             String    @default("")
+  cardNumber       String    @default("")
+  instructionsI18n Json      @default("{}")
+  isActive         Boolean   @default(true)
+  sortOrder        Int       @default(0)
+  payments         Payment[]
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([marketId])
+}
+
+model Cart {
+  id          String     @id @default(cuid())
+  tokenHash   String     @unique
+  customerId  String?
+  customer    Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId    String
+  market      Market     @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  locale      String
+  currency    String
+  checkout    Json       @default("{}")
+  revision    Int        @default(0)
+  expiresAt   DateTime   @db.Timestamptz(3)
+  completedAt DateTime?  @db.Timestamptz(3)
+  items       CartItem[]
+  order       Order?
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@index([customerId, marketId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  quantity  Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([cartId, variantId])
+  @@index([variantId])
+}
+
+model OrderSequence {
+  id        String   @id
+  market    Market   @relation(fields: [id], references: [id], onDelete: Restrict)
+  value     Int      @default(100000)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model Order {
+  id                String          @id @default(cuid())
+  number            String          @unique
+  marketId          String
+  market            Market          @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  customerId        String
+  customer          Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cartId            String          @unique
+  cart              Cart            @relation(fields: [cartId], references: [id], onDelete: Restrict)
+  guestTokenHash    String
+  status            OrderStatus     @default(PENDING_PAYMENT)
+  locale            String
+  currency          String
+  subtotalAmount    Decimal         @db.Decimal(18, 4)
+  feeTotalAmount    Decimal         @db.Decimal(18, 4)
+  discountAmount    Decimal         @default(0) @db.Decimal(18, 4)
+  totalAmount       Decimal         @db.Decimal(18, 4)
+  totalAmountTry    Decimal         @db.Decimal(18, 4)
+  totalAmountUsd    Decimal         @db.Decimal(18, 4)
+  fxSnapshot        Json
+  bankSnapshot      Json
+  contactSnapshot   Json
+  holdExpiresAt     DateTime        @db.Timestamptz(3)
+  paymentDeadlineAt DateTime        @db.Timestamptz(3)
+  shippingAddress   Json
+  billingAddress    Json
+  customerNote      String          @default("")
+  adminNote         String          @default("")
+  placedAt          DateTime        @default(now()) @db.Timestamptz(3)
+  paidAt            DateTime?       @db.Timestamptz(3)
+  shippedAt         DateTime?       @db.Timestamptz(3)
+  deliveredAt       DateTime?       @db.Timestamptz(3)
+  cancelledAt       DateTime?       @db.Timestamptz(3)
+  cancelReason      String?
+  parentOrderId     String?
+  parent            Order?          @relation("ExchangeOrders", fields: [parentOrderId], references: [id], onDelete: Restrict)
+  exchanges         Order[]         @relation("ExchangeOrders")
+  kind              OrderKind       @default(SALE)
+  items             OrderItem[]
+  fees              OrderFee[]
+  events            OrderEvent[]
+  payments          Payment[]
+  reservations      Reservation[]
+  returns           ReturnRequest[]
+  refunds           Refund[]
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@index([marketId, status])
+  @@index([customerId])
+  @@index([parentOrderId])
+  @@index([status, paymentDeadlineAt])
+}
+
+model OrderItem {
+  id                    String       @id @default(cuid())
+  orderId               String
+  order                 Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  variantId             String
+  variant               Variant      @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  productSnapshot       Json
+  unitPriceAmount       Decimal      @db.Decimal(18, 4)
+  currency              String
+  quantity              Int
+  lineTotalAmount       Decimal      @db.Decimal(18, 4)
+  weightGrams           Int
+  exchangeOfOrderItemId String?
+  originalItem          OrderItem?   @relation("ExchangeItems", fields: [exchangeOfOrderItemId], references: [id], onDelete: Restrict)
+  exchanges             OrderItem[]  @relation("ExchangeItems")
+  returnItems           ReturnItem[]
+  createdAt             DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime     @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@index([variantId])
+  @@index([exchangeOfOrderItemId])
+}
+
+model OrderFee {
+  id           String   @id @default(cuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  type         FeeType
+  label        String
+  ruleId       String?
+  amount       Decimal  @db.Decimal(18, 4)
+  currency     String
+  absorbed     Boolean
+  ruleSnapshot Json
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId])
+}
+
+model OrderEvent {
+  id         String       @id @default(cuid())
+  orderId    String
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  type       String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus?
+  note       String       @default("")
+  userId     String?
+  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime     @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId, createdAt])
+}
+
+model Payment {
+  id            String             @id @default(cuid())
+  orderId       String
+  order         Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  provider      String             @default("offline")
+  method        String             @default("OFFLINE_BANK_TRANSFER")
+  status        PaymentStatus      @default(PENDING)
+  amount        Decimal            @db.Decimal(18, 4)
+  currency      String
+  bankAccountId String?
+  bankAccount   MarketBankAccount? @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  reference     String             @default("")
+  submittedAt   DateTime?          @db.Timestamptz(3)
+  reviewedBy    String?
+  reviewedAt    DateTime?          @db.Timestamptz(3)
+  rejectReason  String?
+  receipts      Receipt[]
+  refunds       Refund[]
+  createdAt     DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime           @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId, status])
+  @@index([bankAccountId])
+}
+
+model Receipt {
+  id        String   @id @default(cuid())
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  mediaId   String   @unique
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  note      String   @default("")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([paymentId])
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  amount    Decimal  @db.Decimal(18, 4)
+  currency  String
+  method    String
+  reason    String
+  status    String   @default("PENDING")
+  createdBy String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@index([paymentId])
+}
+
+model ReturnRequest {
+  id              String        @id @default(cuid())
+  orderId         String
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  type            String
+  reasonCode      String
+  note            String        @default("")
+  status          ReturnStatus  @default(REQUESTED)
+  resolution      String?
+  refundId        String?
+  exchangeOrderId String?
+  items           ReturnItem[]
+  credits         StoreCredit[]
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@index([customerId])
+}
+
+model ReturnItem {
+  id                String                @id @default(cuid())
+  returnRequestId   String
+  returnRequest     ReturnRequest         @relation(fields: [returnRequestId], references: [id], onDelete: Restrict)
+  orderItemId       String
+  orderItem         OrderItem             @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity          Int
+  condition         ReturnedItemCondition
+  exchangeVariantId String?
+  createdAt         DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime              @updatedAt @db.Timestamptz(3)
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+}
+
+model StoreCredit {
+  id             String         @id @default(cuid())
+  customerId     String
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  amount         Decimal        @db.Decimal(18, 4)
+  balance        Decimal        @db.Decimal(18, 4)
+  currency       String
+  expiresAt      DateTime?      @db.Timestamptz(3)
+  sourceReturnId String?
+  sourceReturn   ReturnRequest? @relation(fields: [sourceReturnId], references: [id], onDelete: Restrict)
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([customerId])
+  @@index([sourceReturnId])
 }

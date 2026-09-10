@@ -178,6 +178,14 @@ export default async function FeesPage({
             />
             {t("active")}
           </label>
+          <label className="flex min-h-11 items-center gap-2">
+            <input
+              name="selectable"
+              type="checkbox"
+              defaultChecked={edit?.selectable}
+            />
+            {(await getTranslations("commerce"))("selectableShipping")}
+          </label>
           <span className="md:col-span-3" />
         </CatalogActionForm>
       </Card>
