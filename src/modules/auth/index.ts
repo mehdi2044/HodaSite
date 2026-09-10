@@ -1,9 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import authConfig from "./config";
-import { authenticateAdmin, validAdminSession } from "./security";
+import {
+  authenticateAdmin,
+  validAdminSession,
+  revokeAdminSession,
+} from "./security";
 import { getClientIp } from "@/lib/net";
-import { db } from "@/lib/db";
 const nextAuth = NextAuth({
   ...authConfig,
   providers: [
@@ -20,10 +23,7 @@ const nextAuth = NextAuth({
   events: {
     signOut: async (event) => {
       if ("token" in event && typeof event.token?.adminSessionId === "string")
-        await db.adminSession.updateMany({
-          where: { id: event.token.adminSessionId },
-          data: { revokedAt: new Date() },
-        });
+        await revokeAdminSession(event.token.adminSessionId);
     },
   },
 });

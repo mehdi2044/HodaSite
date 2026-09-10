@@ -79,8 +79,8 @@ async function clearLoginAttempts(email: string) {
     where: { id: signValue(`admin-limit:login:${email}`) },
   });
 }
-// Caller holds the User row lock. Both TOTP and recovery consumption commit
-// even when authentication is rejected elsewhere; never catch inside an aborted tx.
+// Caller holds the User row lock; successful authentication and token
+// consumption commit together in the same transaction.
 export async function consumeMfa(
   tx: Tx,
   user: Pick<Identity, "id" | "mfaEnabled" | "mfaSecret" | "mfaLastStep">,
@@ -226,10 +226,10 @@ export async function beginMfaEnrollment(
   password: string,
   issuer: string,
 ) {
-  if (!(await takeSecurityAttempt(`enroll:${userId}`)))
-    throw new Error("SECURITY_DENIED");
-  return withMutation(() =>
-    db.$transaction(async (tx) => {
+  return withMutation(async () => {
+    if (!(await takeSecurityAttempt(`enroll:${userId}`)))
+      throw new Error("SECURITY_DENIED");
+    return db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "User" WHERE id=${userId} FOR UPDATE`;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       if (
@@ -246,14 +246,14 @@ export async function beginMfaEnrollment(
         },
       });
       return { secret, uri: totpFor(secret, issuer, user.email).toString() };
-    }),
-  );
+    });
+  });
 }
 export async function finishMfaEnrollment(userId: string, token: string) {
-  if (!(await takeSecurityAttempt(`enroll-confirm:${userId}`)))
-    throw new Error("SECURITY_DENIED");
-  return withMutation(() =>
-    db.$transaction(async (tx) => {
+  return withMutation(async () => {
+    if (!(await takeSecurityAttempt(`enroll-confirm:${userId}`)))
+      throw new Error("SECURITY_DENIED");
+    return db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "User" WHERE id=${userId} FOR UPDATE`;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       if (!user.isActive || user.mfaEnabled || !user.mfaPendingSecret)
@@ -301,22 +301,35 @@ export async function finishMfaEnrollment(userId: string, token: string) {
         },
       });
       return codes;
-    }),
-  );
+    });
+  });
 }
 export async function requireFreshMfa(
   userId: string,
   password: string,
   token: string,
 ) {
-  if (!(await takeSecurityAttempt(`step-up:${userId}`)))
-    throw new Error("SECURITY_DENIED");
-  const ok = await db.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "User" WHERE id=${userId} FOR UPDATE`;
-    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!user.isActive || !(await bcrypt.compare(password, user.passwordHash)))
-      return false;
-    return consumeMfa(tx, user, token, false);
+  return withMutation(async () => {
+    if (!(await takeSecurityAttempt(`step-up:${userId}`)))
+      throw new Error("SECURITY_DENIED");
+    const ok = await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "User" WHERE id=${userId} FOR UPDATE`;
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+      if (
+        !user.isActive ||
+        !(await bcrypt.compare(password, user.passwordHash))
+      )
+        return false;
+      return consumeMfa(tx, user, token, false);
+    });
+    if (!ok) throw new Error("SECURITY_DENIED");
   });
-  if (!ok) throw new Error("SECURITY_DENIED");
+}
+export async function revokeAdminSession(sessionId: string) {
+  return withMutation(() =>
+    db.adminSession.updateMany({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    }),
+  );
 }
