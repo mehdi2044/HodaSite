@@ -67,7 +67,7 @@ export async function lockOrder(tx: Prisma.TransactionClient, id: string) {
     include: { items: true, payments: { orderBy: { createdAt: "desc" } } },
   });
 }
-async function transition(
+export async function transition(
   tx: Prisma.TransactionClient,
   order: { id: string; status: OrderStatus },
   to: OrderStatus,

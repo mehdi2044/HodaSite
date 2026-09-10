@@ -11,6 +11,7 @@ export async function AdminShell({
 }) {
   const t = await getTranslations("contentAdmin");
   const security = await getTranslations("security");
+  const shipping = await getTranslations("shipping");
   const commerce = await getTranslations("commerce");
   return (
     <div className="admin" dir="rtl">
@@ -40,6 +41,7 @@ export async function AdminShell({
         <Link href="/admin/settings/contact">تماس</Link>
         <Link href="/admin/settings/social">شبکه‌های اجتماعی</Link>
         <Link href="/admin/settings/legal">حقوقی</Link>
+        <Link href="/admin/settings/shipping">{shipping("settings")}</Link>
         <Link href="/admin/settings/checkout">پرداخت</Link>
         <Link href="/admin/settings/maintenance">حالت تعمیرات</Link>
         <Link href="/admin/settings/notifications">{t("notifications")}</Link>
