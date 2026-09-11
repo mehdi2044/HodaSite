@@ -409,5 +409,43 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).rejects.toThrow();
     });
+    it("can pay from multiple separate store credits without allowing duplicate credit payments", async () => {
+      const f = await returnFixture(db, { pending: true });
+      for (let i = 0; i < 2; i++)
+        await db.storeCredit.create({
+          data: {
+            customerId: f.customer.id,
+            currency: f.market.currency,
+            amount: "10",
+            balance: "10",
+          },
+        });
+      await db.$transaction(async (tx) => {
+        await reserveCredit(
+          tx,
+          f.customer.id,
+          f.order.id,
+          f.market.currency,
+          "20",
+        );
+        await consumeCredit(tx, f.order.id);
+      });
+      const payments = await db.payment.findMany({
+        where: { orderId: f.order.id, status: "APPROVED" },
+      });
+      expect(payments).toHaveLength(2);
+      await expect(
+        db.payment.create({
+          data: {
+            orderId: f.order.id,
+            amount: payments[0].amount,
+            currency: f.market.currency,
+            method: "STORE_CREDIT",
+            status: "APPROVED",
+            reference: payments[0].reference,
+          },
+        }),
+      ).rejects.toThrow();
+    });
   },
 );

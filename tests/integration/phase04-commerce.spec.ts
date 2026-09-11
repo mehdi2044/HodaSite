@@ -584,6 +584,16 @@ describe.skipIf(!hasDb)(
           });
         }
         expect(order.status).toBe("PAID");
+        await expect(
+          db.payment.create({
+            data: {
+              orderId: order.id,
+              amount: "0.0001",
+              currency: order.currency,
+              status: "APPROVED",
+            },
+          }),
+        ).rejects.toThrow();
         const approved = order.payments.filter((p) => p.status === "APPROVED");
         expect(
           approved
