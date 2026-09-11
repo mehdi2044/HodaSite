@@ -896,5 +896,33 @@
     "description": "Public description",
     "eventAt": "Event time",
     "cancelShipment": "Cancel unshipped parcel"
+  },
+  "invoice": {
+    "title": "Invoice",
+    "order": "Order",
+    "version": "Version",
+    "placedAt": "Order date",
+    "paidAt": "Payment date",
+    "customer": "Customer",
+    "item": "Item",
+    "quantity": "Quantity",
+    "unit": "Unit price",
+    "amount": "Amount",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Total",
+    "absorbed": "Covered by seller",
+    "payment": "Payment information",
+    "cash": "Cash",
+    "transfer": "Bank transfer",
+    "download": "Download invoice",
+    "generate": "Issue a new version",
+    "pending": "Invoice generation pending",
+    "failed": "Generation failed; an administrator can issue a new version",
+    "settings": "Invoice settings",
+    "taxId": "Seller tax ID",
+    "taxLabel": "Tax ID label",
+    "save": "Save",
+    "empty": "No invoice has been issued yet"
   }
 }

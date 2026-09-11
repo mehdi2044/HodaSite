@@ -13,3 +13,6 @@ test-results
 
 # build
 *.tsbuildinfo
+
+public/invoice-fonts/
+tmp/pdfs/

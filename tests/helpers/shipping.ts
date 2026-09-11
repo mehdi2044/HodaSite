@@ -5,6 +5,7 @@ export async function shippingFixture(
   db: PrismaClient,
   code = "IR",
   quantity = 2,
+  locale = "en",
 ) {
   const suffix = randomUUID();
   const market = await db.market.findUniqueOrThrow({ where: { code } });
@@ -16,7 +17,7 @@ export async function shippingFixture(
     data: {
       tokenHash: createHash("sha256").update(suffix).digest("hex"),
       marketId: market.id,
-      locale: "en",
+      locale,
       currency: market.currency,
       expiresAt: new Date(Date.now() + 86400000),
     },
@@ -32,7 +33,7 @@ export async function shippingFixture(
       status: "PAID",
       paidAt: new Date(Date.now() - 1800000),
       placedAt: new Date(Date.now() - 3600000),
-      locale: "en",
+      locale,
       currency: market.currency,
       subtotalAmount: total,
       feeTotalAmount: "0",

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { getMarkets } from "@/modules/settings";
 import { Card, Table, TH, TD, Badge } from "@/components/ui";
@@ -13,6 +14,7 @@ export default async function MarketsPage() {
 
   return (
     <>
+      <a className="underline" href="/admin/settings/invoices">{(await getTranslations("invoice"))("settings")}</a>
       <h1 className="text-2xl font-semibold">بازارها</h1>
       <Card className="mt-4">
         <Table>

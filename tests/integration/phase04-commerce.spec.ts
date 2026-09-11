@@ -313,6 +313,18 @@ describe.skipIf(!hasDb)("phase 04 transactional commerce", () => {
         approvePayment(f.order.id, f.user.id),
       ]),
     ).toEqual(["PAID", "PAID"]);
+    const invoices = await db.invoice.findMany({
+      where: { orderId: f.order.id },
+    });
+    expect(invoices).toHaveLength(1);
+    expect(
+      await db.job.count({
+        where: {
+          type: "invoice-generate",
+          payload: { path: ["invoiceId"], equals: invoices[0].id },
+        },
+      }),
+    ).toBe(1);
     const stock = await db.stockItem.findUniqueOrThrow({
       where: { id: f.stock.id },
     });
