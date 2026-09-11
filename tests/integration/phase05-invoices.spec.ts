@@ -105,6 +105,26 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("private invoices", () => {
     );
     expect(target.objects.size).toBe(1);
   });
+  it("rolls back both invoice and job when the enclosing payment transaction aborts", async () => {
+    const { order } = await shippingFixture(db);
+    let invoiceId = "";
+    await expect(
+      db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "Order" WHERE id=${order.id} FOR UPDATE`;
+        invoiceId = (await queueInvoice(tx, order.id)).id;
+        throw new Error("rollback fixture");
+      }),
+    ).rejects.toThrow("rollback fixture");
+    expect(await db.invoice.count({ where: { orderId: order.id } })).toBe(0);
+    expect(
+      await db.job.count({
+        where: {
+          type: "invoice-generate",
+          payload: { path: ["invoiceId"], equals: invoiceId },
+        },
+      }),
+    ).toBe(0);
+  });
   it("keeps a failed renderer retryable without exposing its error data", async () => {
     const { order } = await shippingFixture(db);
     const owner = await shippingActor(db);

@@ -1505,20 +1505,26 @@ model TrackingEvent {
   @@index([legId, at])
 }
 
+enum InvoiceStatus {
+  PENDING
+  READY
+  FAILED
+}
+
 model Invoice {
-  id              String    @id @default(cuid())
+  id              String        @id @default(cuid())
   orderId         String
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
   version         Int
   snapshot        Json
-  status          String    @default("PENDING")
-  mediaId         String?   @unique
-  media           Media?    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  status          InvoiceStatus @default(PENDING)
+  mediaId         String?       @unique
+  media           Media?        @relation(fields: [mediaId], references: [id], onDelete: Restrict)
   generationToken String?
-  generationUntil DateTime? @db.Timestamptz(3)
+  generationUntil DateTime?     @db.Timestamptz(3)
   requestedBy     String?
-  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
 
   @@unique([orderId, version])
 }

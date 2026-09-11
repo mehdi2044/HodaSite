@@ -1,13 +1,16 @@
 -- AlterTable
 ALTER TABLE "Market" ADD COLUMN     "invoiceSettings" JSONB NOT NULL DEFAULT '{}';
 
+-- CreateEnum
+CREATE TYPE "InvoiceStatus" AS ENUM ('PENDING', 'READY', 'FAILED');
+
 -- CreateTable
 CREATE TABLE "Invoice" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "version" INTEGER NOT NULL,
     "snapshot" JSONB NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "status" "InvoiceStatus" NOT NULL DEFAULT 'PENDING',
     "mediaId" TEXT,
     "generationToken" TEXT,
     "generationUntil" TIMESTAMPTZ(3),

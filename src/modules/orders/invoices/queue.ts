@@ -155,7 +155,7 @@ export async function queueInvoice(
           : locale === "tr"
             ? "taxLabelTr"
             : "taxLabelEn"
-      ],
+      ] || labels.taxId,
     taxId: settings.taxId,
     logoMediaId: theme?.emailLogoMediaId || theme?.logoMediaId || null,
     labels,
