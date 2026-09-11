@@ -91,3 +91,41 @@ validate_media_dir() {
 
 # sanitize_label <text> → only [A-Za-z0-9._-], max 40 chars
 sanitize_label() { printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40; }
+
+# S3 generation is operational state, not a user-provided path (D56).
+s3_active_prefix() {
+  local pointer="${S3_PREFIX_FILE:-/data/s3-prefix}" prefix=""
+  if [[ -e "$pointer" ]]; then prefix=$(cat -- "$pointer") || return 1; fi
+  [[ -z "$prefix" || "$prefix" =~ ^_hoda_restore/[a-f0-9-]{36}/$ ]] || { echo '[s3] invalid generation pointer' >&2; return 1; }
+  printf '%s' "$prefix"
+}
+s3_backup_alias() {
+  : "${S3_ENDPOINT:?}" "${S3_ACCESS_KEY:?}" "${S3_SECRET_KEY:?}" "${S3_BUCKET:?}"
+  mc alias set backupsource "$S3_ENDPOINT" "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null
+}
+snapshot_s3_media() {
+  local destination="$1" prefix
+  prefix=$(s3_active_prefix) || return 1
+  s3_backup_alias || return 1
+  mkdir -p -- "$destination" || return 1
+  # Internal retained generations are not part of the legacy logical root.
+  mc mirror --overwrite --exclude '_hoda_restore/*' "backupsource/$S3_BUCKET/$prefix" "$destination" >/dev/null
+}
+publish_s3_media() {
+  local source="$1" pointer="${S3_PREFIX_FILE:-/data/s3-prefix}" generation verify pointer_tmp
+  generation="_hoda_restore/$(python3 -c 'import uuid;print(uuid.uuid4())')/"
+  s3_backup_alias || return 1
+  # Do not alter the old prefix. A failed/interrupted upload leaves it intact.
+  mc mirror --overwrite "$source" "backupsource/$S3_BUCKET/$generation" >/dev/null || return 1
+  verify=$(mktemp -d) || return 1
+  if ! mc mirror "backupsource/$S3_BUCKET/$generation" "$verify" >/dev/null || ! diff -qr "$source" "$verify" >/dev/null; then
+    rm -rf -- "$verify"; echo '[s3] staged objects differ from archive' >&2; return 1
+  fi
+  rm -rf -- "$verify"
+  mkdir -p -- "$(dirname "$pointer")" || return 1
+  pointer_tmp=$(mktemp "${pointer}.XXXXXX") || return 1
+  printf '%s\n' "$generation" > "$pointer_tmp" || return 1
+  chmod 644 "$pointer_tmp" || return 1
+  mv -f -- "$pointer_tmp" "$pointer" || return 1
+  echo '[s3] verified generation activated; previous objects retained'
+}

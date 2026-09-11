@@ -3,7 +3,14 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 : "${DATABASE_URL:?}"
-if [[ "${1:-}" == "--live" ]]; then TARGET="$DATABASE_URL"; SRC=""; validate_media_dir "${MEDIA_DIR:-/data/media}" "$TARGET" 25 || exit 9; else
+if [[ "${1:-}" == "--live" ]]; then
+  TARGET="$DATABASE_URL"; SRC=""; LIVE_MEDIA="${MEDIA_DIR:-/data/media}"
+  if [[ "${STORAGE_PROVIDER:-local}" == s3 ]]; then
+    LIVE_MEDIA=$(mktemp -d); trap 'rm -rf -- "$LIVE_MEDIA"' EXIT
+    snapshot_s3_media "$LIVE_MEDIA"
+  fi
+  validate_media_dir "$LIVE_MEDIA" "$TARGET" 25 || exit 9
+else
   SRC="${1:?}"; ADMIN_URL="${DATABASE_URL%/*}/postgres"; SCRATCH="restore_check_$(date +%s)"
   psql "$ADMIN_URL" -qc "create database $SCRATCH"; trap 'psql "$ADMIN_URL" -qc "drop database if exists $SCRATCH"' EXIT
   TARGET="${DATABASE_URL%/*}/$SCRATCH"

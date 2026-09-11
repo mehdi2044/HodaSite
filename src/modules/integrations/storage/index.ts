@@ -1,3 +1,4 @@
+import { activeStoragePrefix } from "./prefix";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -56,7 +57,7 @@ export class S3Storage implements StorageProvider {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucket,
-        Key: key,
+        Key: (await activeStoragePrefix()) + key,
         Body: data,
         ContentType: mime,
       }),
@@ -66,14 +67,20 @@ export class S3Storage implements StorageProvider {
   async getSignedUrl(key: string) {
     return getSignedUrl(
       this.client,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: (await activeStoragePrefix()) + key,
+      }),
       { expiresIn: 900 },
     );
   }
   async getBytes(key: string) {
     try {
       const res = await this.client.send(
-        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+        new GetObjectCommand({
+          Bucket: this.bucket,
+          Key: (await activeStoragePrefix()) + key,
+        }),
       );
       const bytes = await res.Body?.transformToByteArray();
       return bytes ? Buffer.from(bytes) : null;
@@ -83,7 +90,10 @@ export class S3Storage implements StorageProvider {
   }
   async delete(key: string) {
     await this.client.send(
-      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+      new DeleteObjectCommand({
+        Bucket: this.bucket,
+        Key: (await activeStoragePrefix()) + key,
+      }),
     );
   }
 }

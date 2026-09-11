@@ -154,7 +154,6 @@ if [[ "$STORAGE_MODE" == "s3" ]]; then
     "select count(*) from \"Media\" where id='${MEDIA_ID}'")
   [[ "${PURGED//[[:space:]]/}" == "0" ]] || fail "S3 purge did not remove media row"
   ok "S3 provider put/get/delete, optimize and stream passed"
-  exit 0
 fi
 
 step "ops has NO docker socket"
@@ -164,6 +163,12 @@ ok "no docker socket in ops"
 step "full backup -> verify -> restore cycle inside ops"
 "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/ops-restore-cycle.sh
 ok "backup / verify / restore cycle passed"
+if [[ "$STORAGE_MODE" == s3 ]]; then
+  "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/s3-interrupted-restore.sh
+  KEY=$("${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -tAc "select url from \"Media\" where kind='image' and status='READY' and \"deletedAt\" is null limit 1")
+  "${COMPOSE[@]}" exec -T app node -e "fetch('http://127.0.0.1:3000'+process.argv[1]).then(async r=>{if(!r.ok || !(await r.arrayBuffer()).byteLength)throw Error('restored media is unavailable')}).catch(e=>{console.error(e);process.exit(1)})" "$KEY"
+  ok "S3 restored generation serves media; interrupted staging preserves active generation"
+fi
 
 step "negative guard cases inside ops"
 "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/ops-negative-guards.sh

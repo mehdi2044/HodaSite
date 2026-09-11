@@ -90,8 +90,13 @@ if [[ $MEDIA -eq 1 ]]; then
   # DB is already restored at this point → sampled Media.storageKey rows must exist in $TMP; sampled files must be non-empty with correct MIME
   validate_media_dir "$TMP" "$DATABASE_URL" 25 || { log "media validation failed — NOT swapping"; exit 31; }
   STAGE="media-swap"
-  rm -rf "$MEDIA_DIR.prev"; [[ -d "$MEDIA_DIR" ]] && mv "$MEDIA_DIR" "$MEDIA_DIR.prev"
-  mv "$TMP" "$MEDIA_DIR"; log "media validated and swapped"
+  if [[ "${STORAGE_PROVIDER:-local}" == s3 ]]; then
+    publish_s3_media "$TMP" || { log "S3 staging/activation failed; previous objects retained"; exit 32; }
+    rm -rf -- "$TMP"
+  else
+    rm -rf "$MEDIA_DIR.prev"; [[ -d "$MEDIA_DIR" ]] && mv "$MEDIA_DIR" "$MEDIA_DIR.prev"
+    mv "$TMP" "$MEDIA_DIR"; log "media validated and swapped"
+  fi
 fi
 
 # ---------- 6. migrate (directly from ops, no docker socket) + verify ----------

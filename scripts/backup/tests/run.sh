@@ -12,3 +12,18 @@ with zipfile.ZipFile(sys.argv[1],'w') as z:z.writestr('../evil','no')
 PY
 ! check_zip_archive "$T/evil.zip" 10 1000
 echo 'backup guard tests: OK'
+
+# Fail closed on corrupted operational state; no caller-controlled prefix/path.
+export S3_PREFIX_FILE="$T/s3-prefix" S3_BUCKET=test-bucket
+[[ "$(s3_active_prefix)" == "" ]]
+printf '%s\n' '_hoda_restore/12345678-1234-1234-1234-123456789abc/' > "$S3_PREFIX_FILE"
+[[ "$(s3_active_prefix)" == '_hoda_restore/12345678-1234-1234-1234-123456789abc/' ]]
+printf '../bad\n' > "$S3_PREFIX_FILE"
+! s3_active_prefix
+# A failed upload may not activate or erase a generation.
+printf '%s\n' '_hoda_restore/12345678-1234-1234-1234-123456789abc/' > "$S3_PREFIX_FILE"
+s3_backup_alias(){ return 0; }
+mc(){ return 1; }
+! publish_s3_media "$T/tar"
+[[ "$(s3_active_prefix)" == '_hoda_restore/12345678-1234-1234-1234-123456789abc/' ]]
+echo 'S3 generation guard tests: OK'
