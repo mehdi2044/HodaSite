@@ -61,6 +61,7 @@ const roles = [
 // what each role must NOT have.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   admin: [
+    "return.manage",
     "order.invoice.view",
     "order.shipment.manage",
     "shipping.workflow.manage",
@@ -121,6 +122,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "content.homepage.read",
   ],
   warehouse: [
+    "return.manage",
     "order.shipment.manage",
     "catalog.product.view",
     "inventory.view",
@@ -129,6 +131,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "order.view",
   ],
   accountant: [
+    "return.manage",
     "order.invoice.view",
     "order.view",
     "pricing.cost.view",

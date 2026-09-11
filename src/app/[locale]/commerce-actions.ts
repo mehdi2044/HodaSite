@@ -91,6 +91,7 @@ export async function placeOrderAction(locale: string, form: FormData) {
         .string()
         .regex(/^\d+(\.\d+)?$/)
         .parse(form.get("expectedTotal")),
+      form.get("useCredit") === "on",
     );
     if (token)
       (await cookies()).set(`hoda.order.${order.number}`, token, {

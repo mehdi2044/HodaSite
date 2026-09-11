@@ -1,3 +1,5 @@
+import { consumeCredit, releaseCredit } from "@/modules/credits";
+import Decimal from "decimal.js";
 import { queueInvoice } from "./invoices/queue";
 import { Prisma, type OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -14,6 +16,7 @@ import { queueEmail } from "@/modules/notifications";
 import { CommerceError, assertOrderTransition } from "./state";
 
 export const orderInclude = {
+  creditUses: true,
   items: true,
   fees: true,
   events: { orderBy: { createdAt: "asc" as const } },
@@ -133,7 +136,8 @@ export async function approvePayment(
         throw new CommerceError("INVALID_TRANSITION");
       let payment = order.payments.find((p) => p.status === "SUBMITTED");
       if (!payment && !cash) throw new CommerceError("RECEIPT_REQUIRED");
-      if (!payment && order.paymentDeadlineAt <= new Date()) throw new CommerceError("INVALID_TRANSITION");
+      if (!payment && order.paymentDeadlineAt <= new Date())
+        throw new CommerceError("INVALID_TRANSITION");
       if (!(await verifyOrderInventory(tx, order.id, order.items))) {
         if (order.status !== "NEEDS_REVIEW")
           await transition(tx, order, "NEEDS_REVIEW", userId);
@@ -146,7 +150,18 @@ export async function approvePayment(
         });
         return "NEEDS_REVIEW" as const;
       }
+      const creditUses = await tx.creditUse.findMany({
+        where: { orderId: order.id, status: "RESERVED" },
+      });
+      const creditTotal = creditUses.reduce(
+        (n, c) => n.add(c.amount.toString()),
+        new Decimal(0),
+      );
+      const due = new Decimal(order.totalAmount.toString()).sub(creditTotal);
+      if (due.lt(0) || (payment && !due.eq(payment.amount.toString())))
+        throw new CommerceError("PRICE_CHANGED");
       await consumeOrderInventory(tx, order.id, userId);
+      await consumeCredit(tx, order.id, userId);
       if (cash && !payment) {
         await tx.payment.updateMany({
           where: { orderId: order.id, status: "PENDING" },
@@ -155,7 +170,7 @@ export async function approvePayment(
         payment = await tx.payment.create({
           data: {
             orderId: order.id,
-            amount: order.totalAmount,
+            amount: due.toFixed(),
             currency: order.currency,
             method: "CASH",
             status: "PENDING",
@@ -256,6 +271,7 @@ export async function cancelOrder(
     )
       return;
     await releaseOrderInventory(tx, order.id);
+    await releaseCredit(tx, order.id);
     await tx.payment.updateMany({
       where: { orderId, status: { in: ["PENDING", "SUBMITTED"] } },
       data: { status: "VOIDED" },

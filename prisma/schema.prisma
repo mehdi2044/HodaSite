@@ -339,6 +339,7 @@ model ThemeSettings {
 }
 
 model Market {
+  returnSettings  Json                @default("{}")
   invoiceSettings Json                @default("{}")
   paymentMethods  String[]            @default(["OFFLINE_BANK_TRANSFER"])
   bankAccounts    MarketBankAccount[]
@@ -1142,6 +1143,7 @@ model OrderSequence {
 }
 
 model Order {
+  creditUses        CreditUse[]
   invoices          Invoice[]
   id                String          @id @default(cuid())
   number            String          @unique
@@ -1293,6 +1295,9 @@ model Receipt {
 }
 
 model Refund {
+  returnRequestId String?
+  returnRequest   ReturnRequest? @relation(fields: [returnRequestId], references: [id], onDelete: Restrict)
+
   id        String   @id @default(cuid())
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
@@ -1312,6 +1317,15 @@ model Refund {
 }
 
 model ReturnRequest {
+  refunds Refund[]
+
+  requestKey      String?
+  version         Int           @default(0)
+  policySnapshot  Json          @default("{}")
+  decisionNote    String        @default("")
+  receivedAt      DateTime?     @db.Timestamptz(3)
+  resolvedAt      DateTime?     @db.Timestamptz(3)
+  refundAmount    Decimal       @default(0) @db.Decimal(18, 4)
   id              String        @id @default(cuid())
   orderId         String
   order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
@@ -1329,11 +1343,13 @@ model ReturnRequest {
   createdAt       DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
 
+  @@unique([orderId, requestKey])
   @@index([orderId])
   @@index([customerId])
 }
 
 model ReturnItem {
+  refundAmount      Decimal               @default(0) @db.Decimal(18, 4)
   id                String                @id @default(cuid())
   returnRequestId   String
   returnRequest     ReturnRequest         @relation(fields: [returnRequestId], references: [id], onDelete: Restrict)
@@ -1350,6 +1366,7 @@ model ReturnItem {
 }
 
 model StoreCredit {
+  uses           CreditUse[]
   id             String         @id @default(cuid())
   customerId     String
   customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -1527,4 +1544,18 @@ model Invoice {
   updatedAt       DateTime      @updatedAt @db.Timestamptz(3)
 
   @@unique([orderId, version])
+}
+
+model CreditUse {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  creditId  String
+  credit    StoreCredit @relation(fields: [creditId], references: [id], onDelete: Restrict)
+  amount    Decimal     @db.Decimal(18, 4)
+  status    String      @default("RESERVED")
+  createdAt DateTime    @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime    @updatedAt @db.Timestamptz(3)
+
+  @@unique([orderId, creditId])
 }

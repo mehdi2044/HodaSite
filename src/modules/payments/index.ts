@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { z } from "zod";
 import { fileTypeFromBuffer } from "file-type";
 import { db } from "@/lib/db";
@@ -65,14 +66,23 @@ export async function submitReceipt(
           throw new CommerceError("INVALID_TRANSITION");
         await verifyOrderInventory(tx, order.id, order.items, now);
         let payment = order.payments.find((p) => p.status === "PENDING");
-        if (!payment)
+        if (!payment) {
+          const reserved = await tx.creditUse.aggregate({
+            where: { orderId: order.id, status: "RESERVED" },
+            _sum: { amount: true },
+          });
+          const due = new Decimal(order.totalAmount.toString()).sub(
+            reserved._sum.amount?.toString() ?? "0",
+          );
+          if (due.lte(0)) throw new CommerceError("INVALID_TRANSITION");
           payment = await tx.payment.create({
             data: {
               orderId: order.id,
-              amount: order.totalAmount,
+              amount: due.toFixed(),
               currency: order.currency,
             },
           });
+        }
         await tx.payment.update({
           where: { id: payment.id },
           data: {

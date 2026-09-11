@@ -1,5 +1,7 @@
 # Phase 08 — Technical SEO, PWA, Performance, Wishlist, Basic Reviews, Accessibility, Launch Checklist
 
+> D54: Initial PWA implementation and mobile visual acceptance move to Phase 05b. This phase retains final performance/SEO/accessibility and release checks, and verifies PWA regressions.
+
 ## Goal
 Launch-quality storefront: indexable, installable, fast, accessible.
 

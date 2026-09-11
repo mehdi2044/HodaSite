@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { InvoicePanel } from "@/components/invoices/panel";
 import { ShippingPanel } from "@/components/shipping/admin-panel";
 import { notFound } from "next/navigation";
@@ -66,6 +67,13 @@ export default async function OrderPage({
             </p>
           ))}
           <h2 className="text-xl font-semibold">{t("returns")}</h2>
+          {(await can(session!.user!.id!, "return.manage", {
+            marketId: order.marketId,
+          })) && (
+            <Link className="underline" href="/admin/returns">
+              {t("returns")}
+            </Link>
+          )}
           {returns.length ? (
             returns.map((r) => <p key={r.id}>{r.reasonCode}</p>)
           ) : (
@@ -151,7 +159,13 @@ export default async function OrderPage({
         </section>
       </div>
       <ShippingPanel orderId={order.id} userId={session!.user.id} />
-      <InvoicePanel orderId={order.id} number={order.number} marketId={order.marketId} paidAt={order.paidAt} adminId={session!.user.id} />
+      <InvoicePanel
+        orderId={order.id}
+        number={order.number}
+        marketId={order.marketId}
+        paidAt={order.paidAt}
+        adminId={session!.user.id}
+      />
     </main>
   );
 }

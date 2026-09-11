@@ -57,6 +57,28 @@ export default async function AccountPage({
           <p className="text-muted">{t("noOrders")}</p>
         )}
       </section>
+      <section className="grid gap-3">
+        <h2 className="text-xl font-semibold">
+          {(await getTranslations("returns"))("creditBalance")}
+        </h2>
+        {(
+          await db.storeCredit.groupBy({
+            by: ["currency"],
+            where: {
+              customerId: customer.id,
+              balance: { gt: 0 },
+              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+            },
+            _sum: { balance: true },
+          })
+        ).map((c) => (
+          <p key={c.currency}>
+            <bdi dir="ltr">
+              {c._sum.balance?.toString()} {c.currency}
+            </bdi>
+          </p>
+        ))}
+      </section>
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="rounded-token bg-surface p-6">
           <h2 className="mb-5 text-xl font-semibold">{t("profile")}</h2>

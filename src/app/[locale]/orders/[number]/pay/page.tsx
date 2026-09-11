@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+import { CustomerReturns } from "@/components/returns/customer-panel";
 import { InvoicePanel } from "@/components/invoices/panel";
 import { TrackingTimeline } from "@/components/shipping/tracking-timeline";
 import { trackingView } from "@/modules/shipping/tracking";
@@ -85,6 +87,41 @@ export default async function PaymentPage({
               {order.totalAmount.toString()} {order.currency}
             </span>
           </h2>
+          {order.creditUses.some((c) => c.status !== "RELEASED") && (
+            <div className="grid gap-2">
+              <p>
+                {(await getTranslations("returns"))("creditApplied")}:{" "}
+                <bdi dir="ltr">
+                  {order.creditUses
+                    .filter((c) => c.status !== "RELEASED")
+                    .reduce(
+                      (n, c) => n.add(c.amount.toString()),
+                      new Decimal(0),
+                    )
+                    .toFixed()}{" "}
+                  {order.currency}
+                </bdi>
+              </p>
+              <p className="font-semibold">
+                {(await getTranslations("returns"))("due")}:{" "}
+                <bdi dir="ltr">
+                  {order.paidAt
+                    ? "0"
+                    : new Decimal(order.totalAmount.toString())
+                        .sub(
+                          order.creditUses
+                            .filter((c) => c.status === "RESERVED")
+                            .reduce(
+                              (n, c) => n.add(c.amount.toString()),
+                              new Decimal(0),
+                            ),
+                        )
+                        .toFixed()}{" "}
+                  {order.currency}
+                </bdi>
+              </p>
+            </div>
+          )}
           <p className="text-muted">
             {t("holdExplanation", {
               hours: Math.max(
@@ -251,7 +288,13 @@ export default async function PaymentPage({
       <Link className="underline" href={`/${locale}/account`}>
         {t("account")}
       </Link>
-      <InvoicePanel orderId={order.id} number={order.number} marketId={order.marketId} paidAt={order.paidAt} />
+      <CustomerReturns orderId={order.id} locale={locale} />
+      <InvoicePanel
+        orderId={order.id}
+        number={order.number}
+        marketId={order.marketId}
+        paidAt={order.paidAt}
+      />
     </main>
   );
 }
