@@ -288,7 +288,11 @@ export default async function PaymentPage({
       <Link className="underline" href={`/${locale}/account`}>
         {t("account")}
       </Link>
-      <CustomerReturns orderId={order.id} locale={locale} />
+      <CustomerReturns
+        orderId={order.id}
+        orderNumber={order.number}
+        locale={locale}
+      />
       <InvoicePanel
         orderId={order.id}
         number={order.number}

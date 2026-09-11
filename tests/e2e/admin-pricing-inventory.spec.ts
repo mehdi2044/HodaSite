@@ -50,7 +50,13 @@ test("seeded Canadian simulator reproduces CP2-03", async ({ page }) => {
   await login(page);
   await page.goto("/admin/pricing/fees/simulator");
   await page.locator('select[name="marketId"]').selectOption({ label: "CA" });
-  await page.locator('select[name="variantId1"]').selectOption({ index: 1 });
+  const variant = page
+    .locator('select[name="variantId1"] option')
+    .filter({ hasText: /^SH-001-/ })
+    .first();
+  await page
+    .locator('select[name="variantId1"]')
+    .selectOption((await variant.getAttribute("value"))!);
   await page.getByRole("button", { name: "محاسبه" }).click();
   const quote = page.getByTestId("fee-quote");
   await expect(quote).toBeVisible();

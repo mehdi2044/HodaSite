@@ -47,7 +47,7 @@ export async function returnFixture(
         productId: product.id,
         colorId: template.colorId,
         sizeId: sizes[i].id,
-        sku: `RETURN-${id}-${i}`,
+        sku: `ZZ-RETURN-${id}-${i}`,
       },
     });
     await db.marketPrice.create({
@@ -109,9 +109,14 @@ export async function returnFixture(
   });
   const subtotal = new Prisma.Decimal(price).mul(quantity),
     total = subtotal.sub(discount);
+  const sequence = await db.orderSequence.upsert({
+    where: { id: market.id },
+    create: { id: market.id, value: 100001 },
+    update: { value: { increment: 1 } },
+  });
   const order = await db.order.create({
     data: {
-      number: `${market.code}-RETURN-${id}`,
+      number: `${market.code}-${sequence.value}`,
       marketId: market.id,
       customerId: customer.id,
       cartId: cart.id,

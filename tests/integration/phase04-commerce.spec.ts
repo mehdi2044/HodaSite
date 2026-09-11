@@ -575,7 +575,7 @@ describe.skipIf(!hasDb)(
             total.sub(amount).toFixed(),
           );
           await submitReceipt(order.number, receipt(), "", "credit-test");
-          await rejectPayment(order.id, "Try again", f.user.id);
+          await rejectPayment(order.id, f.user.id, "Try again");
           await submitReceipt(order.number, receipt(), "", "credit-test");
           expect(await approvePayment(order.id, f.user.id)).toBe("PAID");
           order = await db.order.findUniqueOrThrow({

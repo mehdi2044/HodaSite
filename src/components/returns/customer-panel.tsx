@@ -9,15 +9,20 @@ import { requestReturnAction } from "@/app/[locale]/returns/actions";
 export async function CustomerReturns({
   orderId,
   locale,
+  orderNumber,
 }: {
   orderId: string;
   locale: string;
+  orderNumber: string;
 }) {
   const t = await getTranslations("returns"),
     customer = await currentCustomer();
   if (!customer)
     return (
-      <Link className="underline" href={`/${locale}/account/login`}>
+      <Link
+        className="underline"
+        href={`/${locale}/account/login?next=${encodeURIComponent(`/${locale}/orders/${orderNumber}/pay`)}`}
+      >
         {t("login")}
       </Link>
     );
