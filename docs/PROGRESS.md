@@ -531,3 +531,5 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - Phase 05b mobile storefront/PWA and Phase 06 finance are not implemented by this change. Full RBAC matrix, full S3 restore proof and remaining operational acceptance remain open. No hosting/domain purchase or production deployment.
 
 - CI 110 runtime stopped before app startup because Docker Hub denied pulling `minio/mc`. Switched the bucket-init helper to the official `quay.io/minio/mc` registry with release `RELEASE.2025-08-13T08-35-41Z`; official registry provenance: https://github.com/minio/minio/blob/master/helm/minio/values.yaml ; release: https://github.com/minio/mc/releases/tag/RELEASE.2025-08-13T08-35-41Z . Runtime validation of that image remains pending. Storage provider and bucket/data layout are unchanged.
+
+- The same CI run also exposed HTTP 410 from the old `dl.min.io` mc download in the ops Docker build. Ops now copies mc from the same official, digest-pinned client image; PostgreSQL and existing backup commands remain unchanged.
