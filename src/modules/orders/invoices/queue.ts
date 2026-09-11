@@ -122,7 +122,7 @@ export async function queueInvoice(
         payment: order.payments
           .map(
             (p) =>
-              `${labels[p.method === "CASH" ? "cash" : "transfer"]} · ${p.amount.toString()} ${p.currency}${p.reference ? ` · ${p.reference}` : ""}`,
+              `${labels[p.method === "CASH" ? "cash" : p.method === "STORE_CREDIT" ? "storeCredit" : "transfer"]} · ${p.amount.toString()} ${p.currency}${p.reference ? ` · ${p.reference}` : ""}`,
           )
           .join("\n"),
         items: order.items.map((i) => {

@@ -1,7 +1,9 @@
+import Decimal from "decimal.js";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const context = vi.hoisted(() => ({
+  customerId: null as string | null,
   cookies: new Map<string, string>(),
   requests: undefined as
     | import("node:async_hooks").AsyncLocalStorage<Map<string, string>>
@@ -17,7 +19,12 @@ vi.mock("next/headers", () => ({
       (context.requests?.getStore() ?? context.cookies).set(key, value),
   }),
 }));
-vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
+vi.mock("@/modules/customers", () => ({
+  currentCustomer: async () =>
+    context.customerId
+      ? db.customer.findUnique({ where: { id: context.customerId } })
+      : null,
+}));
 vi.mock("@/modules/integrations/storage", () => ({
   storage: { put: vi.fn(async () => ""), delete: vi.fn(async () => {}) },
 }));
@@ -128,6 +135,7 @@ beforeEach(() => {
   vi.stubEnv("AUTH_SECRET", "phase04-test-secret");
   vi.stubEnv("APP_URL", "http://127.0.0.1:3000");
   context.cookies.clear();
+  context.customerId = null;
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -526,3 +534,87 @@ describe.skipIf(!hasDb)("customer OTP abuse and replay protection", () => {
     expect((await requestCustomerOtp(f.email, "en", "test-ip")).ok).toBe(false);
   });
 });
+
+describe.skipIf(!hasDb)(
+  "phase05 credit through real checkout and payment services",
+  () => {
+    it.each(["partial", "full"])(
+      "%s store-credit payment preserves order total and invoice payment history",
+      async (mode) => {
+        const f = await fixture();
+        const customer = await db.customer.create({
+          data: { email: f.address.email },
+        });
+        context.customerId = customer.id;
+        const quoted = await quoteCart({
+          marketId: f.market.id,
+          locale: "tr",
+          items: [{ variantId: f.variant.id, quantity: 1 }],
+          address: f.address,
+        });
+        const total = new Decimal(quoted.total),
+          amount = mode === "full" ? total : total.div(2).toDecimalPlaces(4);
+        const credit = await db.storeCredit.create({
+          data: {
+            customerId: customer.id,
+            currency: "TRY",
+            amount: amount.toFixed(),
+            balance: amount.toFixed(),
+          },
+        });
+        const placed = await placeOrder(f.address, true, 0, quoted.total, true);
+        let order = await db.order.findUniqueOrThrow({
+          where: { number: placed.number },
+          include: { payments: true, creditUses: true },
+        });
+        expect(order.totalAmount.toString()).toBe(total.toFixed());
+        expect(order.discountAmount.toString()).toBe("0");
+        if (mode === "partial") {
+          expect(order.status).toBe("PENDING_PAYMENT");
+          expect(order.payments[0].amount.toString()).toBe(
+            total.sub(amount).toFixed(),
+          );
+          await submitReceipt(order.number, receipt(), "", "credit-test");
+          await rejectPayment(order.id, f.user.id, "Try again");
+          await submitReceipt(order.number, receipt(), "", "credit-test");
+          expect(await approvePayment(order.id, f.user.id)).toBe("PAID");
+          order = await db.order.findUniqueOrThrow({
+            where: { id: order.id },
+            include: { payments: true, creditUses: true },
+          });
+        }
+        expect(order.status).toBe("PAID");
+        await expect(
+          db.payment.create({
+            data: {
+              orderId: order.id,
+              amount: "0.0001",
+              currency: order.currency,
+              status: "APPROVED",
+            },
+          }),
+        ).rejects.toThrow();
+        const approved = order.payments.filter((p) => p.status === "APPROVED");
+        expect(
+          approved
+            .reduce((n, p) => n.add(p.amount.toString()), new Decimal(0))
+            .toFixed(),
+        ).toBe(total.toFixed());
+        expect(order.creditUses[0].status).toBe("CONSUMED");
+        expect(
+          (
+            await db.storeCredit.findUniqueOrThrow({ where: { id: credit.id } })
+          ).balance.toString(),
+        ).toBe("0");
+        expect(await db.invoice.count({ where: { orderId: order.id } })).toBe(
+          1,
+        );
+        expect(
+          await db.stockMovement.count({
+            where: { referenceId: order.id, type: "OUT" },
+          }),
+        ).toBe(1);
+      },
+    );
+  },
+);

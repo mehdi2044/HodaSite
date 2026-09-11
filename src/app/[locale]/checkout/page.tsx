@@ -188,6 +188,13 @@ export default async function CheckoutPage({
               value={JSON.stringify(parsed.data)}
             />
             <input type="hidden" name="revision" value={cart.revision} />
+            {customer && (
+              <label className="flex items-center gap-3">
+                <input type="checkbox" name="useCredit" />
+                <span>{(await getTranslations("returns"))("useCredit")}</span>
+              </label>
+            )}
+
             <label className="flex items-center gap-3">
               <input type="checkbox" name="terms" required />
               <span>

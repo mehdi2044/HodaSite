@@ -1,3 +1,7 @@
+import { reserveCredit, consumeCredit } from "@/modules/credits";
+import { consumeOrderInventory } from "@/modules/inventory";
+import { transition } from "@/modules/orders/service";
+import { queueInvoice } from "@/modules/orders/invoices/queue";
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
@@ -21,6 +25,7 @@ export async function placeOrder(
   acceptedTerms: boolean,
   expectedRevision: number,
   expectedTotal?: string,
+  useCredit = false,
 ) {
   const address = addressSchema.parse(raw);
   if (!acceptedTerms) throw new CommerceError("TERMS_REQUIRED");
@@ -222,13 +227,6 @@ export async function placeOrder(
                 ),
               })),
             },
-            payments: {
-              create: {
-                amount: quote.total,
-                currency: quote.currency,
-                bankAccountId: banks[0].id,
-              },
-            },
             events: { create: { type: "placed", toStatus: "PENDING_PAYMENT" } },
           },
         });
@@ -239,6 +237,31 @@ export async function placeOrder(
           "HOLD",
           holdUntil,
         );
+        const credit =
+          useCredit && customer
+            ? await reserveCredit(
+                tx,
+                customer.id,
+                order.id,
+                order.currency,
+                order.totalAmount.toString(),
+              )
+            : { due: order.totalAmount.toString(), amount: "0" };
+        if (new Decimal(credit.due).gt(0)) {
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              amount: credit.due,
+              currency: order.currency,
+              bankAccountId: banks[0].id,
+            },
+          });
+        } else {
+          await consumeOrderInventory(tx, order.id);
+          await consumeCredit(tx, order.id);
+          await transition(tx, order, "PAID");
+          await queueInvoice(tx, order.id);
+        }
         await tx.cart.update({
           where: { id: cart.id },
           data: { completedAt: now },
@@ -246,13 +269,13 @@ export async function placeOrder(
         const origin = process.env.APP_URL ?? process.env.AUTH_URL ?? "";
         await queueEmail(
           tx,
-          "order.placed",
+          new Decimal(credit.due).isZero() ? "order.paid" : "order.placed",
           address.email,
           locale,
           {
             customerName: address.firstName,
             orderNumber: order.number,
-            total: `${quote.total} ${quote.currency}`,
+            total: `${new Decimal(credit.due).isZero() ? quote.total : credit.due} ${quote.currency}`,
             paymentUrl: `${origin}/${locale}/orders/${order.number}/pay`,
             holdUntil: holdUntil.toISOString(),
             deadline: deadline.toISOString(),

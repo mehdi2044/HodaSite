@@ -731,7 +731,13 @@
       "SHIPPING_LAST_LEG": "En az bir aşama bırakın veya gönderilmemiş paketi iptal edin.",
       "SHIPPING_SEQUENCE": "Önce önceki aşamanın teslimatını kaydedin.",
       "SHIPPING_DATE": "Tarihler veya sıralamaları geçersiz.",
-      "SHIPPING_COST_LOCKED": "Gönderilmiş aşamanın maliyeti değiştirilemez."
+      "SHIPPING_COST_LOCKED": "Gönderilmiş aşamanın maliyeti değiştirilemez.",
+      "RETURN_INELIGIBLE": "İade süresi veya koşulları uygun değil.",
+      "RETURN_QUANTITY": "Adet iade edilebilir miktarı aşıyor.",
+      "RETURN_VARIANT": "Yeni seçenek geçerli değil.",
+      "RETURN_STALE": "Talep değişti; sayfayı yenileyin.",
+      "RETURN_STOCK_HISTORY": "Stok çıkış kaydı yeterli değil.",
+      "RETURN_PAYMENT_HISTORY": "Geri ödeme için ödeme kaydı yeterli değil."
     },
     "dashboard": "Kontrol paneli",
     "todaySales": "Bugünkü satışlar (UTC)",
@@ -923,6 +929,65 @@
     "taxId": "Satıcı vergi numarası",
     "taxLabel": "Vergi numarası etiketi",
     "save": "Kaydet",
-    "empty": "Henüz fatura oluşturulmadı"
+    "empty": "Henüz fatura oluşturulmadı",
+    "storeCredit": "Mağaza kredisi"
+  },
+  "returns": {
+    "title": "İade ve değişim",
+    "login": "İade talebi için müşteri hesabınıza giriş yapın",
+    "policy": "Teslimattan sonra {days} gün içinde talep açabilirsiniz. Otomatik iade, ürünün net değerini kapsar; ilk kargo ve hizmet ücretlerini kapsamaz.",
+    "value": "İade ürün değeri",
+    "exchangeOrder": "Değişim siparişi",
+    "unavailable": "Bu sipariş için yeni talep açılamıyor.",
+    "type": "Talep türü",
+    "exchange": "Beden veya renk değişimi",
+    "quantity": "Adet",
+    "reason": "Neden",
+    "replacement": "Yeni seçenek, yalnızca değişim için",
+    "none": "Yeni seçenek yok",
+    "note": "Açıklama",
+    "request": "Talep oluştur",
+    "settings": "İade ayarları",
+    "empty": "İade talebi yok.",
+    "refundReference": "Tamamlanan geri ödemenin açıklaması ve referansı",
+    "manualRefund": "Bu işlem banka transferi yapmaz; geri ödemeyi tamamladıktan sonra kaydedin. Mağaza kredisiyle ödenen kısım kredi olarak iade edilir.",
+    "exchangeNotice": "Yeni seçeneğin güncel fiyatı kullanılır. Stok kontrol edilir; fiyat farkı müşteriden alınır ve kalan kredi hesabında tutulur.",
+    "enabled": "Talepler açık",
+    "days": "Teslimat sonrası süre, gün",
+    "excluded": "Politika dışındaki kategoriler",
+    "save": "Kaydet",
+    "creditApplied": "Kullanılan mağaza kredisi",
+    "due": "Ödenecek bakiye",
+    "useCredit": "Bu para birimindeki kullanılabilir hesap kredimi ödeme için kullan",
+    "creditBalance": "Kullanılabilir mağaza kredisi",
+    "return": "İade",
+    "statuses": {
+      "REQUESTED": "Talep edildi",
+      "APPROVED": "Onaylandı",
+      "REJECTED": "Reddedildi",
+      "IN_TRANSIT": "Yolda",
+      "RECEIVED": "Teslim alındı",
+      "RESOLVED": "Tamamlandı"
+    },
+    "operations": {
+      "APPROVE": "Talebi onayla",
+      "REJECT": "Talebi reddet",
+      "IN_TRANSIT": "Gönderimi kaydet",
+      "RECEIVE": "Ürün teslimini kaydet",
+      "REFUND": "Tamamlanan geri ödemeyi kaydet",
+      "CREDIT": "Mağaza kredisi ver",
+      "EXCHANGE": "Değişim siparişi oluştur"
+    },
+    "reasons": {
+      "SIZE": "Beden",
+      "COLOR": "Renk",
+      "DEFECT": "Kusurlu ürün",
+      "OTHER": "Diğer"
+    },
+    "conditions": {
+      "RESTOCK": "Satılabilir",
+      "QUARANTINE": "Karantina",
+      "DAMAGED": "Hasarlı"
+    }
   }
 }

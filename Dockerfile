@@ -36,6 +36,8 @@ COPY --from=build /app/prisma ./prisma
 COPY entrypoint.sh ./
 CMD ["./entrypoint.sh"]
 
+FROM quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727 AS minio-client
+
 FROM base AS ops
 # postgresql-client-16 from PGDG — the Debian 12 package is v15 and cannot
 # pg_dump a Postgres 16 server (docs/phase-00 §10 requires client 16).
@@ -49,10 +51,9 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
          postgresql-client-16 zstd jq zip unzip file python3 \
-    && rm -rf /var/lib/apt/lists/* \
-    # mc (MinIO client) for the off-site backup mirror (docs/phase-00 §10)
-    && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
-    && chmod +x /usr/local/bin/mc
+    && rm -rf /var/lib/apt/lists/*
+# Use the same digest-verified upstream client as minio-init; dl.min.io now returns 410.
+COPY --from=minio-client /usr/bin/mc /usr/local/bin/mc
 COPY --from=deps /app/node_modules ./node_modules
 # Separate COPY lines: with multiple sources Docker copies the *contents* of
 # each directory into ./, so `COPY package.json prisma scripts ./` would put

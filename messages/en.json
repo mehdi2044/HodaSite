@@ -731,7 +731,13 @@
       "SHIPPING_LAST_LEG": "Keep at least one leg, or cancel the unshipped parcel.",
       "SHIPPING_SEQUENCE": "Record delivery of the previous leg first.",
       "SHIPPING_DATE": "The dates or their order are invalid.",
-      "SHIPPING_COST_LOCKED": "The cost of a dispatched leg cannot be changed."
+      "SHIPPING_COST_LOCKED": "The cost of a dispatched leg cannot be changed.",
+      "RETURN_INELIGIBLE": "Return window or eligibility is invalid.",
+      "RETURN_QUANTITY": "Quantity exceeds the remaining return allowance.",
+      "RETURN_VARIANT": "Replacement option is invalid.",
+      "RETURN_STALE": "Request changed; refresh the page.",
+      "RETURN_STOCK_HISTORY": "Original inventory history is insufficient.",
+      "RETURN_PAYMENT_HISTORY": "Payment history is insufficient for this refund."
     },
     "dashboard": "Dashboard",
     "todaySales": "Today's sales (UTC)",
@@ -923,6 +929,65 @@
     "taxId": "Seller tax ID",
     "taxLabel": "Tax ID label",
     "save": "Save",
-    "empty": "No invoice has been issued yet"
+    "empty": "No invoice has been issued yet",
+    "storeCredit": "Store credit"
+  },
+  "returns": {
+    "title": "Returns and exchanges",
+    "login": "Sign in to your customer account to request a return",
+    "policy": "Request within {days} days of delivery. Automatic reimbursement covers net merchandise value and excludes the original shipping and service charges.",
+    "value": "Returned merchandise value",
+    "exchangeOrder": "Replacement order",
+    "unavailable": "New requests are unavailable for this order.",
+    "type": "Request type",
+    "exchange": "Size or colour exchange",
+    "quantity": "Quantity",
+    "reason": "Reason",
+    "replacement": "Replacement option, for exchanges only",
+    "none": "No replacement",
+    "note": "Notes",
+    "request": "Submit request",
+    "settings": "Return settings",
+    "empty": "No return requests.",
+    "refundReference": "Completed refund description and reference",
+    "manualRefund": "This records a refund; it does not send a bank transfer. Record it after repayment. The portion paid with store credit is restored as credit.",
+    "exchangeNotice": "The replacement uses its current price. Stock is checked; the customer pays any extra amount and retains unused credit.",
+    "enabled": "Accept requests",
+    "days": "Days after delivery",
+    "excluded": "Categories outside this policy",
+    "save": "Save",
+    "creditApplied": "Store credit applied",
+    "due": "Remaining amount to pay",
+    "useCredit": "Use my available account credit in this currency towards payment",
+    "creditBalance": "Available store credit",
+    "return": "Return",
+    "statuses": {
+      "REQUESTED": "Requested",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "IN_TRANSIT": "In transit",
+      "RECEIVED": "Received",
+      "RESOLVED": "Resolved"
+    },
+    "operations": {
+      "APPROVE": "Approve request",
+      "REJECT": "Reject request",
+      "IN_TRANSIT": "Record shipment",
+      "RECEIVE": "Record receipt",
+      "REFUND": "Record completed refund",
+      "CREDIT": "Issue store credit",
+      "EXCHANGE": "Create replacement order"
+    },
+    "reasons": {
+      "SIZE": "Size",
+      "COLOR": "Colour",
+      "DEFECT": "Defect",
+      "OTHER": "Other"
+    },
+    "conditions": {
+      "RESTOCK": "Restock",
+      "QUARANTINE": "Quarantine",
+      "DAMAGED": "Damaged"
+    }
   }
 }

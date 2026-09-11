@@ -126,7 +126,7 @@ export async function verifyOrderInventory(
 export async function consumeOrderInventory(
   tx: Tx,
   orderId: string,
-  userId: string,
+  userId?: string,
 ) {
   const rows = await activeReservations(tx, orderId);
   for (const row of rows) {
