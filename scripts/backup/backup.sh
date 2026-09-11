@@ -11,13 +11,20 @@ while [[ $# -gt 0 ]]; do case "$1" in
 : "${DATABASE_URL:?DATABASE_URL required}"; : "${PROJECT_ID:?PROJECT_ID required}"
 BACKUP_ROOT="${BACKUP_ROOT:-/backups}"; MEDIA_DIR="${MEDIA_DIR:-/data/media}"
 LABEL="$(sanitize_label "$LABEL")"; case "$BACKUP_KIND" in manual|scheduled|safety) ;; *) echo "bad kind"; exit 1;; esac
-STAMP="$(date -u +%Y-%m-%d_%H%M)"; DIR="$BACKUP_ROOT/${STAMP}_${LABEL}"; mkdir -p "$DIR"
+STAMP="$(date -u +%Y-%m-%d_%H%M%S_%N)"; DIR="$BACKUP_ROOT/${STAMP}_${LABEL}"; mkdir -p "$DIR"
 q(){ psql "$DATABASE_URL" -Atc "$1"; }
 log(){ echo "[backup][$(date -u +%T)] $*"; }
 
 log "db → $DIR/db.dump"
 pg_dump --format=custom --compress=6 --no-owner --no-privileges "$DATABASE_URL" > "$DIR/db.dump"
 
+MEDIA_STAGE=""
+trap '[[ -z "$MEDIA_STAGE" ]] || rm -rf -- "$MEDIA_STAGE"' EXIT
+if [[ $WITH_MEDIA -eq 1 && "${STORAGE_PROVIDER:-local}" == s3 ]]; then
+  MEDIA_STAGE=$(mktemp -d)
+  snapshot_s3_media "$MEDIA_STAGE"
+  MEDIA_DIR="$MEDIA_STAGE"
+fi
 MEDIA_COUNT=0
 if [[ $WITH_MEDIA -eq 1 && -d "$MEDIA_DIR" ]]; then
   log "media → $DIR/media.tar.zst"
