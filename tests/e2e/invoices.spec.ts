@@ -117,7 +117,10 @@ test("market invoice tax labels can be edited from settings", async ({
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/settings/invoices");
-  const form = page.locator("form").first();
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('[name="taxLabelFa"]') })
+    .first();
   await form.locator('[name="taxLabelFa"]').fill("شناسه مالیاتی آزمایشی");
   await form.locator('[name="taxId"]').fill("TEST-123");
   await form.getByRole("button", { name: fa.invoice.save }).click();
