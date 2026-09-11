@@ -48,8 +48,8 @@ beforeEach(() => {
 
 describe("private media download authorization", () => {
   it("rejects an uploader without backup.view before reading storage", async () => {
-    mocks.can.mockImplementation(async (_id: string, permission: string) =>
-      permission === "media.upload",
+    mocks.can.mockImplementation(
+      async (_id: string, permission: string) => permission === "media.upload",
     );
     const response = await request();
     expect(response.status).toBe(404);
@@ -70,45 +70,48 @@ describe("private media download authorization", () => {
   );
 
   it("does not require upload permission from an authorized backup reader", async () => {
-    mocks.can.mockImplementation(async (_id: string, permission: string) =>
-      permission === "backup.view",
+    mocks.can.mockImplementation(
+      async (_id: string, permission: string) => permission === "backup.view",
     );
     const response = await request();
     expect(response.status).toBe(200);
     expect(mocks.can).toHaveBeenCalledExactlyOnceWith("staff", "backup.view");
     expect(Buffer.from(await response.arrayBuffer())).toEqual(bytes);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("content-disposition")).toBe(
-      'attachment',
-    );
+    expect(response.headers.get("content-disposition")).toBe("attachment");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("content-security-policy")).toBe("sandbox");
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
   });
 
-  it("keeps receipt bytes inaccessible even to a backup reader", async () => {
-    mocks.findMedia.mockResolvedValue(media("receipt"));
-    mocks.can.mockResolvedValue(true);
-    const response = await request();
-    expect(response.status).toBe(404);
-    expect(mocks.auth).not.toHaveBeenCalled();
-    expect(mocks.getBytes).not.toHaveBeenCalled();
-  });
+  it.each(["receipt", "invoice"])(
+    "keeps %s bytes inaccessible even to a backup reader",
+    async (kind) => {
+      mocks.findMedia.mockResolvedValue(media(kind));
+      mocks.can.mockResolvedValue(true);
+      const response = await request();
+      expect(response.status).toBe(404);
+      expect(mocks.auth).not.toHaveBeenCalled();
+      expect(mocks.getBytes).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(["legacy", "replacement"])(
     "checks backup permission for a registered %s variant",
     async (kind) => {
-      const key = kind === "legacy"
-        ? "media/variants/fixture-media/640.webp"
-        : "media/replacements/fixture-replacement/640.webp";
+      const key =
+        kind === "legacy"
+          ? "media/variants/fixture-media/640.webp"
+          : "media/replacements/fixture-replacement/640.webp";
       const record = {
         ...media(),
         variants: { webp: { "640": { key, bytes: 8 } } },
       };
       mocks.findMedia.mockResolvedValue(record);
       mocks.findReplacement.mockResolvedValue({ media: record });
-      mocks.can.mockImplementation(async (_id: string, permission: string) =>
-        permission === "media.upload",
+      mocks.can.mockImplementation(
+        async (_id: string, permission: string) =>
+          permission === "media.upload",
       );
       const response = await request(key);
       expect(response.status).toBe(404);
@@ -146,12 +149,17 @@ describe("private media download authorization", () => {
 
   it("does not serve an unregistered variant even to a backup reader", async () => {
     mocks.can.mockResolvedValue(true);
-    expect((await request("media/variants/fixture-media/640.webp")).status).toBe(404);
+    expect(
+      (await request("media/variants/fixture-media/640.webp")).status,
+    ).toBe(404);
     expect(mocks.getBytes).not.toHaveBeenCalled();
   });
 
   it("preserves anonymous public image streaming and cache behavior", async () => {
-    mocks.findMedia.mockResolvedValue({ ...media("image"), mime: "image/jpeg" });
+    mocks.findMedia.mockResolvedValue({
+      ...media("image"),
+      mime: "image/jpeg",
+    });
     mocks.auth.mockResolvedValue(null);
     const response = await request();
     expect(response.status).toBe(200);

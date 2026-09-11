@@ -58,6 +58,22 @@ export async function mediaReplaceHandler(
   const replacement = await db.mediaReplacement.findUniqueOrThrow({
     where: { id: replacementId },
   });
+  const protectedMedia = await db.media.findUniqueOrThrow({
+    where: { id: replacement.mediaId },
+    select: { kind: true },
+  });
+  if (
+    protectedMedia.kind === "invoice" ||
+    protectedMedia.kind === "receipt" ||
+    [
+      replacement.storageKey,
+      replacement.baseStorageKey,
+      replacement.oldStorageKey,
+    ].some(
+      (key) => key?.startsWith("invoices/") || key?.startsWith("receipts/"),
+    )
+  )
+    throw new Error("Financial media cannot be replaced");
   if (replacement.status === "DONE") {
     revalidateMediaPaths();
     return;

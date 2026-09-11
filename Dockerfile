@@ -17,12 +17,13 @@ RUN pnpm prisma generate && pnpm build
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000
+ENV INVOICE_CHROMIUM_PATH=/usr/bin/chromium
 # bookworm-slim ships no libssl, so Prisma can't detect the OpenSSL version
 # and falls back to the 1.1.x engine (which isn't bundled — the client is
 # generated for debian-openssl-3.0.x). Install openssl so it picks the right
 # engine.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && apt-get install -y --no-install-recommends openssl ca-certificates chromium \
     && rm -rf /var/lib/apt/lists/*
 # `output: "standalone"` already traces @prisma/client and its query engine
 # into .next/standalone/node_modules (with pnpm the generated client lives in

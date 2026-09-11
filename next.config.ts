@@ -13,7 +13,7 @@ const config: NextConfig = {
   // fail to detect it through sharp's dynamic require()-based platform
   // resolution. serverExternalPackages copies the whole package into the
   // standalone bundle instead of trace-analyzing it (Phase 01b, D21 worker).
-  serverExternalPackages: ["sharp"],
+  serverExternalPackages: ["sharp", "playwright-core"],
 };
 
 export default withNextIntl(config);

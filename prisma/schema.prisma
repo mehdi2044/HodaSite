@@ -339,11 +339,12 @@ model ThemeSettings {
 }
 
 model Market {
-  paymentMethods String[]            @default(["OFFLINE_BANK_TRANSFER"])
-  bankAccounts   MarketBankAccount[]
-  carts          Cart[]
-  orders         Order[]
-  orderSequence  OrderSequence?
+  invoiceSettings Json                @default("{}")
+  paymentMethods  String[]            @default(["OFFLINE_BANK_TRANSFER"])
+  bankAccounts    MarketBankAccount[]
+  carts           Cart[]
+  orders          Order[]
+  orderSequence   OrderSequence?
 
   id                   String             @id @default(cuid())
   code                 String             @unique
@@ -585,6 +586,7 @@ model MediaFolder {
 }
 
 model Media {
+  invoices Invoice[]
   receipts Receipt[]
 
   id              String             @id @default(cuid())
@@ -1140,6 +1142,7 @@ model OrderSequence {
 }
 
 model Order {
+  invoices          Invoice[]
   id                String          @id @default(cuid())
   number            String          @unique
   marketId          String
@@ -1500,4 +1503,22 @@ model TrackingEvent {
   updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
 
   @@index([legId, at])
+}
+
+model Invoice {
+  id              String    @id @default(cuid())
+  orderId         String
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  version         Int
+  snapshot        Json
+  status          String    @default("PENDING")
+  mediaId         String?   @unique
+  media           Media?    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  generationToken String?
+  generationUntil DateTime? @db.Timestamptz(3)
+  requestedBy     String?
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([orderId, version])
 }

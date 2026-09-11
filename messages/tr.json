@@ -896,5 +896,33 @@
     "description": "Herkese açık açıklama",
     "eventAt": "Olay zamanı",
     "cancelShipment": "Gönderilmemiş paketi iptal et"
+  },
+  "invoice": {
+    "title": "Fatura",
+    "order": "Sipariş",
+    "version": "Sürüm",
+    "placedAt": "Sipariş tarihi",
+    "paidAt": "Ödeme tarihi",
+    "customer": "Müşteri",
+    "item": "Ürün",
+    "quantity": "Adet",
+    "unit": "Birim fiyat",
+    "amount": "Tutar",
+    "subtotal": "Ara toplam",
+    "discount": "İndirim",
+    "total": "Genel toplam",
+    "absorbed": "Satıcı tarafından karşılandı",
+    "payment": "Ödeme bilgileri",
+    "cash": "Nakit",
+    "transfer": "Banka havalesi",
+    "download": "Faturayı indir",
+    "generate": "Yeni sürüm oluştur",
+    "pending": "Fatura hazırlanıyor",
+    "failed": "Oluşturulamadı; yönetici yeni bir sürüm oluşturabilir",
+    "settings": "Fatura ayarları",
+    "taxId": "Satıcı vergi numarası",
+    "taxLabel": "Vergi numarası etiketi",
+    "save": "Kaydet",
+    "empty": "Henüz fatura oluşturulmadı"
   }
 }

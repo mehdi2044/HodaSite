@@ -1,3 +1,4 @@
+import { InvoicePanel } from "@/components/invoices/panel";
 import { TrackingTimeline } from "@/components/shipping/tracking-timeline";
 import { trackingView } from "@/modules/shipping/tracking";
 import { currentCustomer } from "@/modules/customers";
@@ -250,6 +251,7 @@ export default async function PaymentPage({
       <Link className="underline" href={`/${locale}/account`}>
         {t("account")}
       </Link>
+      <InvoicePanel orderId={order.id} number={order.number} marketId={order.marketId} paidAt={order.paidAt} />
     </main>
   );
 }

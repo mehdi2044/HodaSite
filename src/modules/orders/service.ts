@@ -1,3 +1,4 @@
+import { queueInvoice } from "./invoices/queue";
 import { Prisma, type OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
@@ -170,6 +171,7 @@ export async function approvePayment(
         },
       });
       await transition(tx, order, "PAID", userId);
+      await queueInvoice(tx, order.id, userId);
       const contact = order.contactSnapshot as {
         email: string;
         firstName: string;

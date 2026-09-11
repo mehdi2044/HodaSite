@@ -1,3 +1,4 @@
+import { InvoicePanel } from "@/components/invoices/panel";
 import { ShippingPanel } from "@/components/shipping/admin-panel";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -150,6 +151,7 @@ export default async function OrderPage({
         </section>
       </div>
       <ShippingPanel orderId={order.id} userId={session!.user.id} />
+      <InvoicePanel orderId={order.id} number={order.number} marketId={order.marketId} paidAt={order.paidAt} adminId={session!.user.id} />
     </main>
   );
 }
