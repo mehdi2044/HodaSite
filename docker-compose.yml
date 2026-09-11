@@ -19,7 +19,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   minio:
-    image: minio/minio
+    build:
+      context: .
+      dockerfile: docker/minio/Dockerfile
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
