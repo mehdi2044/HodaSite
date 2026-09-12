@@ -26,3 +26,7 @@ SEO, reviews/wishlist, final launch performance and operational launch checks st
 3. Cart, checkout/payment instructions, customer account and order/tracking/return states.
 4. Install help, manifest/icons, safe-area/standalone behavior and safe offline/update flow.
 5. Cross-language/width checks and physical Android/iPhone HTTPS acceptance; measure performance against the recorded baseline.
+
+
+## First navigation slice
+The first implementation provides a compact header/search, language and market disclosure, and a four-item bottom navigation below 1024px. It preserves DB-controlled branding/theme/menus, adds safe-area/content spacing and offsets sticky purchase controls. Keyboard closing and a skip-content target are included. `tests/e2e/mobile-navigation.spec.ts` records actual 390px screenshots and navigation timing in fa/tr/en and checks 360/390/430px, large text and desktop. CI preserves `storefront-mobile-proof` for visual review. This is not PWA installation acceptance: manifest, offline/update policies, phone installation and the remaining shopping-flow design slices still follow.

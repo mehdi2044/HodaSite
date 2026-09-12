@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
@@ -21,6 +21,11 @@ import { GeoSuggestionBanner } from "@/components/storefront/geo-suggestion-bann
 // next load without a rebuild (Phase 00 acceptance criteria); market/locale
 // resolution also depends on the request's cookies.
 export const dynamic = "force-dynamic";
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 // <title>, <meta description>, favicon and og:site_name come from settings +
 // the current market's SEO defaults (Phase 01a §2). A page further down the
@@ -74,6 +79,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   const messages = await getMessages();
+  const t = await getTranslations("mobileStorefront");
 
   const [site, theme, { market, markets }] = await Promise.all([
     getSiteSettings(),
@@ -85,24 +91,34 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <AnnouncementBar market={market} locale={locale} />
-      <Header
-        locale={locale}
-        market={market}
-        markets={markets}
-        siteName={siteName}
-        logoMediaId={theme?.logoMediaId}
-        headerStyle={theme?.headerStyle ?? "minimal"}
-      />
-      <GeoSuggestionBanner currentMarketCode={market.code} markets={markets} />
-      {children}
-      <Footer
-        locale={locale}
-        market={market}
-        contact={(site?.contact ?? {}) as Contact}
-        social={normalizeSocial(site?.social)}
-        legal={(site?.legal ?? {}) as Legal}
-      />
+      <div className="storefront-app">
+        <a className="storefront-skip-link" href="#storefront-content">
+          {t("skipContent")}
+        </a>
+        <AnnouncementBar market={market} locale={locale} />
+        <Header
+          locale={locale}
+          market={market}
+          markets={markets}
+          siteName={siteName}
+          logoMediaId={theme?.logoMediaId}
+          headerStyle={theme?.headerStyle ?? "minimal"}
+        />
+        <GeoSuggestionBanner
+          currentMarketCode={market.code}
+          markets={markets}
+        />
+        <div id="storefront-content" tabIndex={-1}>
+          {children}
+        </div>
+        <Footer
+          locale={locale}
+          market={market}
+          contact={(site?.contact ?? {}) as Contact}
+          social={normalizeSocial(site?.social)}
+          legal={(site?.legal ?? {}) as Legal}
+        />
+      </div>
     </NextIntlClientProvider>
   );
 }

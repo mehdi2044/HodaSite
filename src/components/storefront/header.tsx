@@ -1,3 +1,6 @@
+import { MobileMenu } from "./mobile-menu";
+import { MobileNavigation } from "./mobile-navigation";
+import { StorefrontIcon } from "./storefront-icon";
 import Link from "next/link";
 import { readCart } from "@/modules/cart";
 import { CartDrawer } from "./cart-drawer";
@@ -43,85 +46,78 @@ export async function Header({
 
   const cart = await readCart();
   return (
-    <header
-      data-header-style={headerStyle}
-      className="sticky top-0 z-40 border-b border-black/5 bg-bg/95 backdrop-blur-md"
-    >
-      <div className="shell flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
-        <Link
-          href={`/${locale}`}
-          className="flex min-h-11 items-center gap-2 text-lg font-semibold tracking-tight text-text"
-        >
-          {logo ? (
-            <ResponsiveImage
-              media={{
-                url: logo.url,
-                variants: logo.variants,
-                width: logo.width,
-                height: logo.height,
-                blurDataUrl: logo.blurDataUrl,
-                altI18n: { fa: siteName, tr: siteName, en: siteName },
-              }}
-              locale={locale as "fa" | "tr" | "en"}
-              sizes="120px"
-              priority
-              className="h-8"
-              imgClassName="h-8 w-auto object-contain"
-            />
-          ) : (
-            siteName
-          )}
-        </Link>
-        <nav
-          aria-label={t("contentNavigation.main")}
-          className="hidden items-center gap-5 md:flex"
-        >
-          {desktopMenu.map((item) => (
-            <MenuLink
-              key={item.id}
-              item={item}
-              placeholderLabel={t("contentNavigation.phase02Placeholder")}
-            />
-          ))}
-        </nav>
-        <div className="flex items-center gap-4">
-          <CartDrawer
-            locale={locale}
-            currency={cart?.currency ?? market.currency}
-            items={
-              cart?.items.map((i) => ({
-                title:
-                  (i.variant.product.titleI18n as Record<string, string>)[
-                    locale
-                  ] ?? "",
-                quantity: i.quantity,
-              })) ?? []
-            }
-          />
-          <Link className="min-h-11 py-3" href={`/${locale}/account`}>
-            {t("commerce.account")}
+    <>
+      <header
+        data-header-style={headerStyle}
+        className="sticky top-0 z-40 border-b border-black/5 bg-bg/95 backdrop-blur-md"
+      >
+        <div className="shell storefront-header-grid">
+          <Link
+            href={`/${locale}`}
+            className="storefront-brand flex min-h-11 min-w-0 items-center gap-2 text-lg font-semibold tracking-tight text-text"
+          >
+            {logo ? (
+              <ResponsiveImage
+                media={{
+                  url: logo.url,
+                  variants: logo.variants,
+                  width: logo.width,
+                  height: logo.height,
+                  blurDataUrl: logo.blurDataUrl,
+                  altI18n: { fa: siteName, tr: siteName, en: siteName },
+                }}
+                locale={locale as "fa" | "tr" | "en"}
+                sizes="120px"
+                priority
+                className="h-8"
+                imgClassName="h-8 w-auto object-contain"
+              />
+            ) : (
+              siteName
+            )}
           </Link>
-          <LocaleSwitcher
-            current={locale}
-            enabledLocales={market.enabledLocales}
-            ariaLabel={t("locale.switchTo")}
-          />
-          <MarketSwitcher
-            current={market.code}
-            markets={markets}
-            ariaLabel={t("market.chooseMarket")}
-          />
-          <details className="relative md:hidden">
-            <summary
-              className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full border border-black/10 bg-surface shadow-sm"
-              aria-label={t("contentNavigation.mobile")}
-            >
-              ☰
-            </summary>
-            <nav
-              className="absolute end-0 top-14 z-30 grid min-w-72 gap-1 rounded-token border border-black/5 bg-surface p-3 shadow-2xl"
-              aria-label={t("contentNavigation.mobile")}
-            >
+          <nav
+            aria-label={t("contentNavigation.main")}
+            className="hidden min-w-0 flex-wrap items-center justify-center gap-x-5 lg:flex"
+          >
+            {desktopMenu.map((item) => (
+              <MenuLink
+                key={item.id}
+                item={item}
+                placeholderLabel={t("contentNavigation.phase02Placeholder")}
+              />
+            ))}
+          </nav>
+          <div className="flex min-w-0 items-center gap-2">
+            <CartDrawer
+              locale={locale}
+              currency={cart?.currency ?? market.currency}
+              items={
+                cart?.items.map((i) => ({
+                  title:
+                    (i.variant.product.titleI18n as Record<string, string>)[
+                      locale
+                    ] ?? "",
+                  quantity: i.quantity,
+                })) ?? []
+              }
+            />
+            <div className="hidden items-center gap-2 lg:flex">
+              <Link className="min-h-11 py-3" href={`/${locale}/account`}>
+                {t("commerce.account")}
+              </Link>
+              <LocaleSwitcher
+                current={locale}
+                enabledLocales={market.enabledLocales}
+                ariaLabel={t("locale.switchTo")}
+              />
+              <MarketSwitcher
+                current={market.code}
+                markets={markets}
+                ariaLabel={t("market.chooseMarket")}
+              />
+            </div>
+            <MobileMenu label={t("contentNavigation.mobile")}>
               {(mobileMenu.length ? mobileMenu : desktopMenu).map((item) => (
                 <MenuLink
                   key={item.id}
@@ -130,11 +126,63 @@ export async function Header({
                   placeholderLabel={t("contentNavigation.phase02Placeholder")}
                 />
               ))}
-            </nav>
-          </details>
+              <div className="grid gap-3 border-t border-black/10 pt-4 mt-2">
+                <span className="text-sm text-muted">
+                  {t("mobileStorefront.language")}
+                </span>
+                <LocaleSwitcher
+                  current={locale}
+                  enabledLocales={market.enabledLocales}
+                  ariaLabel={t("mobileStorefront.language")}
+                  mobile
+                />
+                <label className="grid gap-2 text-sm text-muted">
+                  {t("mobileStorefront.market")}
+                  <MarketSwitcher
+                    current={market.code}
+                    markets={markets}
+                    ariaLabel={t("mobileStorefront.market")}
+                  />
+                </label>
+              </div>
+            </MobileMenu>
+          </div>
+          <form
+            className="storefront-search"
+            role="search"
+            action={`/${locale}/search`}
+            method="get"
+            aria-label={t("mobileStorefront.search")}
+          >
+            <label className="sr-only" htmlFor="storefront-search">
+              {t("mobileStorefront.search")}
+            </label>
+            <input
+              id="storefront-search"
+              name="q"
+              type="search"
+              dir="auto"
+              enterKeyHint="search"
+              placeholder={t("mobileStorefront.searchPlaceholder")}
+              autoComplete="off"
+            />
+            <button type="submit" aria-label={t("catalog.search")}>
+              <StorefrontIcon name="search" />
+            </button>
+          </form>
         </div>
-      </div>
-    </header>
+      </header>
+      <MobileNavigation
+        locale={locale}
+        labels={{
+          navigation: t("mobileStorefront.navigation"),
+          home: t("mobileStorefront.home"),
+          search: t("catalog.search"),
+          cart: t("commerce.cart"),
+          account: t("commerce.account"),
+        }}
+      />
+    </>
   );
 }
 

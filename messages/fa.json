@@ -1082,5 +1082,14 @@
     "tr": "Türkçe",
     "en": "English",
     "languageError": "تغییر زبان انجام نشد. دوباره تلاش کنید."
+  },
+  "mobileStorefront": {
+    "navigation": "دسترسی سریع فروشگاه",
+    "home": "خانه",
+    "search": "جستجوی فروشگاه",
+    "searchPlaceholder": "دنبال چه چیزی می‌گردید؟",
+    "language": "زبان فروشگاه",
+    "market": "بازار خرید شما",
+    "skipContent": "رفتن به محتوای صفحه"
   }
 }
