@@ -62,7 +62,7 @@ control() {
   "${compose[@]}" run --rm --no-deps -T --entrypoint node ops --input-type=module - "$2" \
     < "$ROOT/scripts/deploy/maintenance.mjs"
 }
-BACKUP_KEY= CHANGED=0 OPENED=0
+BACKUP_KEY= CHANGED=0 OPENED=0 WORKERS=0
 APP_CONFIG=$("${OLD[@]}" exec -T app node --input-type=module - fingerprint < "$ROOT/scripts/deploy/maintenance.mjs")
 OPS_CONFIG=$(control OLD fingerprint)
 [[ $APP_CONFIG =~ ^[a-f0-9]{64}$ && $APP_CONFIG == "$OPS_CONFIG" ]] || {
@@ -73,8 +73,8 @@ recover() {
   trap - EXIT INT TERM
   if ((rc == 0)); then return; fi
   if ((OPENED == 1)); then
-    printf 'WORKER_START_FAILED\n' > "$RELEASE/status"
-    echo 'New release is serving traffic; keep its data and retry worker startup. Automatic restore is forbidden after reopening sales.' >&2
+    if ((WORKERS == 1)); then printf 'WORKER_START_FAILED\n' > "$RELEASE/status"; else printf 'REOPEN_UNCONFIRMED\n' > "$RELEASE/status"; fi
+    echo 'Reopening may have reached the server; keep the new release and its data. Inspect maintenance and retry worker startup; automatic restore is forbidden.' >&2
     exit "$rc"
   fi
   if ((CHANGED == 0)); then
@@ -120,9 +120,12 @@ CHANGED=1
 control NEXT health
 cp "$RELEASE/next.yml" "$ROOT/.deploy/active.yml.tmp"
 mv "$ROOT/.deploy/active.yml.tmp" "$ROOT/.deploy/active.yml"
-control NEXT off
+# The off request can reach the server even when its response is lost.
+# Cross the no-restore boundary BEFORE sending it to protect new orders.
 OPENED=1
 CHANGED=0
+control NEXT off
+WORKERS=1
 "${NEXT[@]}" up -d --no-build --no-deps ops cron
 printf 'SUCCEEDED\n' > "$RELEASE/status"
 echo "Deployment succeeded: $REVISION. Previous images and safety backup retained."

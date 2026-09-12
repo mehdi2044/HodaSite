@@ -39,6 +39,7 @@ fi
 if [[ $1 == run && $* == *'--entrypoint node'* ]]; then
   cat >/dev/null
   if [[ $SCENARIO == drain-failure && ${*: -1} == drain ]]; then exit 1; fi
+  if [[ $SCENARIO == reopen-unconfirmed && $generation == new && ${*: -1} == off ]]; then exit 1; fi
   exit
 fi
 if [[ $1 == run && $* == *'ops -s --'* ]]; then
@@ -48,7 +49,7 @@ if [[ $1 == run && $* == *'ops -s --'* ]]; then
   exit
 fi
 if [[ $1 == run && ${*: -1} == migrate && $SCENARIO == migrate-failure ]]; then exit 1; fi
-if [[ $1 == up && $generation == new && $* == *'--wait '* && $SCENARIO != success && $SCENARIO != workers-fail ]]; then exit 1; fi
+if [[ $1 == up && $generation == new && $* == *'--wait '* && $SCENARIO != success && $SCENARIO != workers-fail && $SCENARIO != reopen-unconfirmed ]]; then exit 1; fi
 if [[ $1 == run && $* == *'/restore.sh'* && $SCENARIO == restore-failure ]]; then exit 1; fi
 if [[ $1 == up && $generation == new && $* == *'ops cron' && $SCENARIO == workers-fail ]]; then exit 1; fi
 SH
@@ -84,6 +85,11 @@ done
 run_case workers-fail 1
 ! grep -q '/restore.sh' "$TRACE"
 grep -q 'WORKER_START_FAILED' "$T/project/.deploy/releases/"*/status
+run_case reopen-unconfirmed 1
+! grep -q '/restore.sh' "$TRACE"
+grep -q 'REOPEN_UNCONFIRMED' "$T/project/.deploy/releases/"*/status
+! grep -q '^new up .*ops cron' "$TRACE"
+grep -q "$NEW_APP" "$T/project/.deploy/active.yml"
 # Mutable tags and half-specified image pairs are rejected before Docker use.
 ! bash "$T/project/scripts/deploy.sh" --app-image latest --ops-image "$NEW_OPS" >/dev/null 2>&1
 ! bash "$T/project/scripts/deploy.sh" --app-image "$NEW_APP" >/dev/null 2>&1
