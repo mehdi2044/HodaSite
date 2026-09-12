@@ -14,7 +14,8 @@
 | 04  | Cart / Auth / Checkout / Payment           | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11) |
 | 05  | Shipping / Returns / RBAC / Backup-Restore | 🟡 در حال انجام              |            |                                                    |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
-| 06  | Finance Core                               | ⬜              |            |                                                    |
+| 05b | Mobile Storefront / Installable PWA         | ⬜ طراحی و اجرا باقی است | | [شرح فاز](phases/phase-05b.md) |
+| 06  | Finance Core                               | 🟡 محاسبات پایه ادغام شد؛ اتصال و داشبورد باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20) |
 | 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
@@ -559,3 +560,5 @@ Order reads and payment/cancel/hold/note/address operations now apply market aut
 Read-only role preview now displays each permission for an assigned versus requested market/category/section scope. It never impersonates a role or changes session grants. The shared access evaluator is unchanged in semantics and used by real guards and the preview. A reviewed permission/seeded-grant snapshot pins namespace additions; 2,612 generated decision tests cover seven roles, an override subject, anonymous access and five scope cases. Real DB preview/direct-guard checks and a mobile browser scope preview were added. This is decision-matrix coverage plus concrete endpoint regressions, not a claim that every existing/future endpoint has the complete Cartesian UI/forged-payload coverage requested by V-4; that broader gate remains open.
 
 - Panel CI #118: all DB/browser/build checks passed; Docker round trip exposed a CLI label length mismatch. UUID labels now stay within the existing 40-character limit with a regression test against the real shell sanitizer. Retained backup/safety files are reconciled into the restored catalog; this path is now asserted in the Docker test. Final runtime acceptance remains pending.
+
+- Phase 06 calculation foundation merged as PR #20 (`4be1a3b`): CI #120 checks/docker/docker-runtime passed. D57 clarifies that preparation can start while Phase 05 closes; storefront/PWA delivery still comes before the finance dashboard. No production financial postings are active.
