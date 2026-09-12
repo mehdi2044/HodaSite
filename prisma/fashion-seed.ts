@@ -72,7 +72,7 @@ export async function seedFashionStorefront(
         .resize({ width, withoutEnlargement: true })
         .webp({ quality: 80 })
         .toBuffer();
-      const storageKey = `${prefix}-${width}.webp`;
+      const storageKey = `media/variants/${id}/${width}.webp`;
       variants[String(width)] = {
         url: await put(storageKey, data),
         key: storageKey,
