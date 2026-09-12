@@ -8,8 +8,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "role preview and direct persisted permission decisions",
   () => {
     it("every seeded role matches the reviewed contract in preview and direct guards for TR/IR", async () => {
-      const owner = await db.user.findFirstOrThrow({
-        where: { roles: { some: { role: { key: "owner" } } }, isActive: true },
+      const ownerRole = await db.role.findUniqueOrThrow({
+        where: { key: "owner" },
+      });
+      // Other suites intentionally create scoped owners and denied overrides.
+      // A random owner is therefore not a valid fixture for this global action.
+      const owner = await db.user.create({
+        data: {
+          email: `preview-owner-${randomUUID()}@example.com`,
+          name: "Preview owner",
+          passwordHash: "unused",
+          roles: { create: { roleId: ownerRole.id } },
+        },
       });
       const tr = await db.market.findUniqueOrThrow({ where: { code: "TR" } }),
         ir = await db.market.findUniqueOrThrow({ where: { code: "IR" } });
