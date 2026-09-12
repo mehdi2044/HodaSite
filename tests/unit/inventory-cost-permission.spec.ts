@@ -6,6 +6,9 @@ vi.mock("@/modules/auth", () => ({
   auth: async () => ({ user: { id: "warehouse-user" } }),
 }));
 vi.mock("@/modules/access", () => ({
+  assertCan: async () => {
+    if (!mock.cost) throw new Error("FORBIDDEN");
+  },
   can: async (_id: string, permission: string) =>
     permission === "pricing.cost.view" ? mock.cost : true,
 }));
