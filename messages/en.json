@@ -815,7 +815,13 @@
     "scope": "Access scope",
     "category": "Category",
     "allCategories": "All categories",
-    "section": "Section (optional)"
+    "section": "Section (optional)",
+    "previewTitle": "Preview role permissions",
+    "previewHint": "Read-only simulation of one role and its assigned scope. Your session and permissions do not change; user-specific overrides are not included.",
+    "grantScope": "Assigned scope",
+    "targetScope": "Requested resource scope",
+    "categoryScope": "Category",
+    "sectionScope": "Section"
   },
   "healthAdmin": {
     "title": "System health",

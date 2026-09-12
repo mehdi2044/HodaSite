@@ -815,7 +815,13 @@
     "scope": "Erişim kapsamı",
     "category": "Kategori",
     "allCategories": "Tüm kategoriler",
-    "section": "Bölüm (isteğe bağlı)"
+    "section": "Bölüm (isteğe bağlı)",
+    "previewTitle": "Rol yetkilerini önizle",
+    "previewHint": "Bir rol ve atanmış kapsamı için salt okunur simülasyon. Oturumunuz ve yetkileriniz değişmez; kullanıcıya özel istisnalar dahil değildir.",
+    "grantScope": "Atanan kapsam",
+    "targetScope": "İstenen kaynak kapsamı",
+    "categoryScope": "Kategori",
+    "sectionScope": "Bölüm"
   },
   "healthAdmin": {
     "title": "Sistem sağlığı",

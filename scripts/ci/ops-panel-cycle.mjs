@@ -31,6 +31,8 @@ if((await db.backupUpload.findUniqueOrThrow({where:{id:upload.id}})).status!=='R
 const restore=await task('RESTORE',{uploadId:upload.id,mode:'FULL'},{authorizedAt:new Date()});
 if((await db.restoreRequest.findUniqueOrThrow({where:{id:restore.id}})).status!=='DONE')throw Error('restore journal missing');
 if((await db.opsTask.findUniqueOrThrow({where:{id:backupTask.id}})).status!=='DONE')throw Error('restored running task was not reconciled');
+if(!(await db.backup.findFirst({where:{fileKey:backup.fileKey}})))throw Error('backup catalog not reconciled');
+if(!(await db.backup.count({where:{kind:'safety'}})))throw Error('safety backup not visible');
 await db.user.update({where:{id:owner.id},data:{mfaEnabled:owner.mfaEnabled}});
 console.log('OPS PANEL CYCLE OK: backup/export/verify/upload validation/restore, durable journal, no replay');
 await db.$disconnect();

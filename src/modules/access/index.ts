@@ -50,6 +50,19 @@ export async function can(
       roles: { include: { role: { include: { permissions: true } } } },
     },
   });
+  return evaluateAccess(user, permission, scope);
+}
+export type AccessSubject = {
+  isActive: boolean;
+  overrides: { permission: string; allow: boolean; scope: unknown }[];
+  roles: { scope: unknown; role: { permissions: { permission: string }[] } }[];
+};
+export function evaluateAccess(
+  user: AccessSubject | null,
+  permission: string,
+  scope?: Scope,
+): boolean {
+  if (!isPermission(permission)) return false;
   if (!user?.isActive) return false;
 
   // Overrides win. A matching deny blocks outright; a matching allow grants.

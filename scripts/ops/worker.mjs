@@ -1,3 +1,4 @@
+import { backupLabel } from './contracts.mjs';
 import { retainedBackups } from './retention.mjs';
 import { PrismaClient } from '@prisma/client';
 import { spawn } from 'node:child_process';
@@ -34,7 +35,7 @@ async function execute(command, args, task, label) {
   });
 }
 async function record(task, status, result = {}) {
-  const data = { status, result, log: status, finishedAt: new Date() };
+  const data = { status, result, log: result.stage || status, finishedAt: new Date() };
   await db.opsTask.upsert({ where: { id: task.id }, create: { id: task.id, requestKey: task.requestKey, type: task.type, requestedBy: task.requestedBy, authorizedAt: task.authorizedAt, payload: task.payload, ...data }, update: data });
   if (task.type === 'RESTORE') await db.restoreRequest.upsert({ where: { id: task.id }, create: { id: task.id, requestedBy: task.requestedBy, backupId: task.payload.backupId, uploadedFileKey: task.payload.uploadId ? `${task.payload.uploadId}.zip` : null, mode: task.payload.mode, mfaVerifiedAt: task.authorizedAt, status, log: status, finishedAt: new Date() }, update: { status, log: status, finishedAt: new Date() } });
 }
@@ -62,7 +63,7 @@ async function processTask(task) {
     await db.opsTask.update({ where: { id: task.id }, data: { status: 'RUNNING', startedAt: new Date(), log: 'RUNNING' } });
     const p = task.payload;
     if (task.type === 'BACKUP') {
-      const label = `panel-${task.id}`;
+      const label = backupLabel(task.id);
       await execute('bash', [path.join(scripts,'backup/backup.sh'),'--label',label,'--kind',task.requestedBy ? 'manual' : 'scheduled',...(p.includeMedia === false ? ['--no-media'] : [])], task, 'BACKUP');
       const backup = await db.backup.findFirstOrThrow({ where: { fileKey: { endsWith: `_${label}` } }, orderBy: { createdAt: 'desc' } });
       await db.backup.update({ where: { id: backup.id }, data: { createdBy: task.requestedBy } });
@@ -98,7 +99,7 @@ async function processTask(task) {
       await execute('bash',[path.join(scripts,'backup/restore.sh'),source,'--yes',...(p.mode==='DB_ONLY'?['--db-only']:p.mode==='MEDIA_ONLY'?['--media-only']:[])],task,'RESTORE');
     } else throw Error('INVALID_REQUEST');
     status='DONE';
-  } catch { result={reason:'OPERATION_FAILED'}; }
+  } catch { const row=await db.opsTask.findUnique({where:{id:task.id}}).catch(()=>null); result={reason:'OPERATION_FAILED',stage:row?.log || 'RUNNING'}; }
   // Persist terminal status before recreating task rows lost by pg_restore.
   const temp=`${marker}.tmp`;
   await writeFile(temp,JSON.stringify({...task,state:status,result})); await rename(temp,marker);
@@ -106,7 +107,22 @@ async function processTask(task) {
   if(task.type==='RESTORE' && status==='DONE') await recover();
   if(status==='FAILED') await db.systemAlert.create({data:{severity:'CRITICAL',code:'BACKUP_OPERATION_FAILED',message:`Backup operation ${task.type} failed (${task.id})`}});
 }
+async function reconcileBackupCatalog() {
+  for(const entry of await readdir(root,{withFileTypes:true})) {
+    if(!entry.isDirectory() || !key.test(entry.name)) continue;
+    if(await db.backup.findFirst({where:{fileKey:entry.name}})) continue;
+    const directory=path.join(root,entry.name);
+    const manifest=await readFile(path.join(directory,'manifest.json'),'utf8').then(JSON.parse).catch(()=>null);
+    if(!manifest || manifest.projectId!==process.env.PROJECT_ID || !['manual','scheduled','safety'].includes(manifest.kind)) continue;
+    const names=['db.dump','manifest.json','checksums.sha256',...(manifest.withMedia?['media.tar.zst']:[])];
+    const files=await Promise.all(names.map(n=>stat(path.join(directory,n)).catch(()=>null)));
+    if(files.some(f=>!f?.isFile())) continue;
+    const bytes=files.reduce((n,f)=>n+BigInt(f.size),0n);
+    await db.backup.create({data:{kind:manifest.kind,status:'DONE',fileKey:entry.name,sizeBytes:bytes,mediaIncluded:Boolean(manifest.withMedia),offsiteStatus:process.env.BACKUP_OFFSITE_ENDPOINT?'PENDING':'NOT_CONFIGURED',createdAt:new Date(manifest.createdAt),finishedAt:new Date(manifest.createdAt)}});
+  }
+}
 async function recover() {
+  await reconcileBackupCatalog();
   for(const name of await readdir(journal)) {
     if(!/^[0-9a-f-]+\.json$/i.test(name)) continue;
     const task=JSON.parse(await readFile(path.join(journal,name),'utf8'));

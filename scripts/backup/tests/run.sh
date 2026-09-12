@@ -27,3 +27,5 @@ mc(){ return 1; }
 ! publish_s3_media "$T/tar"
 [[ "$(s3_active_prefix)" == '_hoda_restore/12345678-1234-1234-1234-123456789abc/' ]]
 echo 'S3 generation guard tests: OK'
+
+node --test "$(dirname "$0")/../../ops/retention.test.mjs"
