@@ -80,6 +80,14 @@ for (const locale of ["fa", "tr", "en"] as const) {
       .locator("article")
       .first();
     await card.scrollIntoViewIfNeeded();
+    // Verify the real mobile viewport, independently of full-page capture.
+    expect(
+      await card.evaluate(
+        (element) =>
+          element.getBoundingClientRect().width /
+          element.parentElement!.getBoundingClientRect().width,
+      ),
+    ).toBeGreaterThan(0.4);
     await expect
       .poll(() =>
         card
@@ -89,6 +97,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
           ),
       )
       .toBe(true);
+    await shoppingProof(page, info, `fashion-rail-${locale}`);
     await card.getByRole("link").click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/p/`));
     const image = page.locator(".shop-gallery-slide").first();
