@@ -2,6 +2,7 @@
 import { useOnline } from "@/components/pwa/online";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { useTranslations } from "next-intl";
 export type CommerceResult = {
   error?: string;
@@ -25,7 +26,8 @@ export function CommerceForm({
         if (!navigator.onLine) return { error: "OFFLINE" };
         try {
           return await action(form);
-        } catch {
+        } catch (error) {
+          if (isRedirectError(error)) throw error;
           return { error: "REQUEST_FAILED" };
         }
       },

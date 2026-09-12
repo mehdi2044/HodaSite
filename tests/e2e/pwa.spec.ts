@@ -78,9 +78,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
       expect(new URL(key).pathname).toMatch(
         /^\/(pwa\/(fa|tr|en)\/offline$|_next\/static\/)/,
       );
-    expect(keys.join()).not.toMatch(
-      /private-proof|do-not-cache|account|checkout|api\//,
-    );
+    expect(keys.join()).not.toMatch(/private-proof|do-not-cache/);
     await context.setOffline(false);
     await page.getByRole("link", { name: t.pwa.retry }).click();
     await expect(page.locator('header input[name="q"]')).toBeVisible();

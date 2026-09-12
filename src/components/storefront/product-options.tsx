@@ -62,7 +62,12 @@ export function ProductOptions({
   return (
     <div className="grid gap-5">
       <fieldset>
-        <legend className="mb-2 font-medium">{labels.color}</legend>
+        <legend className="mb-2 font-medium">
+          {labels.color}
+          <span className="ms-2 font-normal text-muted">
+            {colors.find(([id]) => id === color)?.[1].name}
+          </span>
+        </legend>
         <div className="flex flex-wrap gap-2">
           {colors.map(([id, item]) => (
             <button

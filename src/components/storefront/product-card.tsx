@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { LinkPending } from "./link-pending";
 import { ResponsiveImage } from "./responsive-image";
 import {
   catalogText,
@@ -71,6 +72,7 @@ export async function ProductCard({
             {formatCatalogCurrency(price.amount, currency, locale)}
           </p>
         </div>
+        <LinkPending />
       </Link>
     </article>
   );

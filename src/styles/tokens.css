@@ -795,24 +795,16 @@ html[lang="fa"] body,
   font-size: 2rem;
   font-weight: 600;
 }
-.shop-loading {
-  padding-block: 2rem;
-}
-.shop-skeleton {
-  height: 12rem;
-  margin-block: 1rem;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--text) 8%, var(--background));
-}
-.shop-skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-.shop-skeleton-grid > div {
-  height: 18rem;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--text) 8%, var(--background));
+.shop-link-pending {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  color: var(--text);
+  border-bottom: 2px solid var(--primary);
+  font-size: 1rem;
 }
 .pwa-connection {
   position: sticky;
@@ -939,4 +931,8 @@ html[lang="fa"] body,
   inset-inline: 0;
   top: 0;
   padding-block-start: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+.storefront-app button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

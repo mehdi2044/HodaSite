@@ -73,7 +73,7 @@ test("market-restricted product is hidden outside its market", async ({
 
 test("filters update the URL through client navigation", async ({ page }) => {
   await page.goto("/en/c/women");
-  await page.getByRole("button", { name: /Filters/ }).click();
+  await page.getByRole("button", { name: /filters/i }).click();
   await page.getByLabel("Brand").selectOption({ index: 1 });
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/brand=/);

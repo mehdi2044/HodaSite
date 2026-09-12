@@ -24,9 +24,12 @@ for (const locale of ["fa", "tr", "en"] as const) {
       .click();
     await page.goto(`/${locale}/p/${encodeURIComponent(slug)}`);
     const add = page.locator(".shop-add-button");
+    await expect(add).toBeVisible();
     await expect(add).toBeEnabled();
     const box = await add.boundingBox(),
       nav = await page.getByTestId("mobile-bottom-navigation").boundingBox();
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
     await shoppingProof(page, info, `${locale}-webkit-product`);
     await page.locator(".shop-gallery-slide").first().click();

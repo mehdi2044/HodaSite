@@ -86,8 +86,16 @@ export default async function CartPage({
                   }
                 </Link>
                 <p className="my-2 text-muted">
-                  <Iso>{item.variant.sku}</Iso> ·{" "}
-                  <Iso>{item.variant.size.value}</Iso>
+                  {
+                    (item.variant.color.nameI18n as Record<string, string>)[
+                      locale
+                    ]
+                  }{" "}
+                  · <Iso>{item.variant.size.value}</Iso>
+                  <br />
+                  <small>
+                    <Iso>{item.variant.sku}</Iso>
+                  </small>
                 </p>
                 <CommerceForm
                   action={updateCartAction.bind(null, locale)}

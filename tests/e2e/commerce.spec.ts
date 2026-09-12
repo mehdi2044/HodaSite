@@ -205,7 +205,10 @@ for (const [locale, slug, province, city, postal] of [
         )
       ).flat(),
     );
-    expect(cached.join()).not.toMatch(/\/account|\/orders|\/checkout|\/api\//);
+    for (const key of cached)
+      expect(new URL(key).pathname).toMatch(
+        /^\/(pwa\/(fa|tr|en)\/offline$|_next\/static\/)/,
+      );
   });
 }
 test.afterAll(async () => db.$disconnect());

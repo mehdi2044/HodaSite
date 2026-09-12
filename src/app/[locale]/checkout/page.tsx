@@ -134,7 +134,7 @@ export default async function CheckoutPage({
                       dir={
                         ["phone", "email", "postalCode"].includes(key)
                           ? "ltr"
-                          : undefined
+                          : "auto"
                       }
                       type={
                         key === "email"

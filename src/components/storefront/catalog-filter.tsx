@@ -52,6 +52,7 @@ export function CatalogFilter({
   return (
     <ShopSheet title={labels.filters}>
       <form
+        key={current.toString()}
         action={submit}
         className="shop-filter-form"
         aria-label={labels.filters}
