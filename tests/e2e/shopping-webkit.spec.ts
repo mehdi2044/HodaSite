@@ -41,7 +41,16 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(
       page.getByRole("status").filter({ hasText: t.commerce.saved }),
     ).toBeVisible();
-    await page.goto(`/${locale}/cart`);
+    // Follow the app navigation immediately after success, as a customer does.
+    // A forced document goto races Next's in-flight refresh in WebKit.
+    await page
+      .getByTestId("mobile-bottom-navigation")
+      .locator(`a[href="/${locale}/cart"]`)
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/cart$`));
+    await expect(
+      page.locator('main input[type="number"][name="quantity"]'),
+    ).toHaveValue("1");
     await shoppingProof(page, info, `${locale}-webkit-cart`);
     await page
       .locator("main")

@@ -190,7 +190,9 @@ export default async function CheckoutPage({
             <h2 className="mb-4 text-xl">{t("review")}</h2>
             <QuoteSummary cart={cart} address={parsed.data!} locale={locale} />
             <p className="my-5 text-muted">
-              {draft.line1} · {draft.city} · {draft.province}
+              <bdi dir="auto">{draft.line1}</bdi> ·{" "}
+              <bdi dir="auto">{draft.city}</bdi> ·{" "}
+              <bdi dir="auto">{draft.province}</bdi>
             </p>
             <div className="flex flex-wrap gap-3">
               <ShippingSelection cart={cart} locale={locale} />
