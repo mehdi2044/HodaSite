@@ -170,6 +170,10 @@ if [[ "$STORAGE_MODE" == s3 ]]; then
   ok "S3 restored generation serves media; interrupted staging preserves active generation"
 fi
 
+step "typed ops panel backup/export/verify/upload/restore cycle"
+"${COMPOSE[@]}" exec -T ops node /app/scripts/ci/ops-panel-cycle.mjs
+ok "ops panel cycle passed"
+
 step "negative guard cases inside ops"
 "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/ops-negative-guards.sh
 ok "negative guard cases passed"

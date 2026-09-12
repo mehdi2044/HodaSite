@@ -1559,3 +1559,49 @@ model CreditUse {
 
   @@unique([orderId, creditId])
 }
+
+/// Typed requests executed only by the isolated ops worker, never the web process.
+model OpsTask {
+  id           String    @id @default(uuid())
+  requestKey   String    @unique
+  type         String
+  status       String    @default("PENDING")
+  requestedBy  String?
+  authorizedAt DateTime? @db.Timestamptz(3)
+  payload      Json      @default("{}")
+  result       Json      @default("{}")
+  log          String    @default("")
+  startedAt    DateTime? @db.Timestamptz(3)
+  finishedAt   DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+}
+
+model BackupUpload {
+  id            String   @id @default(uuid())
+  ownerId       String
+  originalName  String
+  expectedBytes BigInt
+  receivedBytes BigInt   @default(0)
+  status        String   @default("OPEN")
+  error         String   @default("")
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+  expiresAt     DateTime @db.Timestamptz(3)
+
+  @@index([ownerId, status])
+}
+
+model BackupSettings {
+  id            String   @id @default("default")
+  enabled       Boolean  @default(false)
+  hourUtc       Int      @default(3)
+  includeMedia  Boolean  @default(true)
+  keepDaily     Int      @default(7)
+  keepWeekly    Int      @default(4)
+  keepMonthly   Int      @default(6)
+  verifyWeekday Int      @default(0)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+}

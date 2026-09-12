@@ -29,7 +29,7 @@ services:
     environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, MEDIA_DIR: /data/media, EMAIL_PROVIDER: smtp, SMTP_HOST: mailpit, SMTP_PORT: 1025, EMAIL_FROM: shop@example.com, APP_URL: http://localhost:3000}
     # media volume mounts at /data (not /data/media) so restore.sh's atomic
     # `mv /data/media /data/media.prev` isn't operating on a mount point.
-    volumes: ['.:/app', 'node_modules:/app/node_modules', 'media:/data']
+    volumes: ['.:/app', 'node_modules:/app/node_modules', 'media:/data', 'backups:/backups:ro', 'backup_uploads:/backup-uploads']
     depends_on: {postgres: {condition: service_healthy}}
   cron:
     image: curlimages/curl
@@ -41,5 +41,6 @@ services:
     build: {context: ., target: ops}
     env_file: [.env]
     environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, APP_URL: http://app:3000, APP_SRC: /app, MEDIA_DIR: /data/media, BACKUP_ROOT: /backups}
-    volumes: [media:/data, backups:/backups]
-volumes: {postgres_data: {}, media: {}, minio_data: {}, backups: {}, node_modules: {}}
+    restart: unless-stopped
+    volumes: [media:/data, backups:/backups, backup_uploads:/backup-uploads]
+volumes: {postgres_data: {}, media: {}, minio_data: {}, backups: {}, backup_uploads: {}, node_modules: {}}

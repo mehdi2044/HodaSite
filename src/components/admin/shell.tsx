@@ -10,6 +10,7 @@ export async function AdminShell({
   user: { name: string; email: string };
 }) {
   const t = await getTranslations("contentAdmin");
+  const backups = await getTranslations("backups");
   const security = await getTranslations("security");
   const returns = await getTranslations("returns");
   const shipping = await getTranslations("shipping");
@@ -48,6 +49,7 @@ export async function AdminShell({
         <Link href="/admin/settings/maintenance">حالت تعمیرات</Link>
         <Link href="/admin/settings/notifications">{t("notifications")}</Link>
         <Link href="/admin/design">طراحی</Link>
+        <Link href="/admin/system/backups">{backups("title")}</Link>
         <Link href="/admin/system/health">سلامت</Link>
         <div className="sidebar-user">
           <span className="muted">{user.name}</span>

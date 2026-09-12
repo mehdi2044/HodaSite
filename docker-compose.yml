@@ -64,6 +64,8 @@ services:
       MEDIA_DIR: /data/media
     volumes:
       - media:/data
+      - backups:/backups:ro
+      - backup_uploads:/backup-uploads
     healthcheck:
       test:
         - CMD
@@ -93,6 +95,7 @@ services:
     depends_on: [app]
 
   ops:
+    restart: unless-stopped
     build:
       context: .
       target: ops
@@ -106,6 +109,7 @@ services:
     volumes:
       - media:/data
       - backups:/backups
+      - backup_uploads:/backup-uploads
 
   caddy:
     image: caddy:2-alpine
@@ -124,5 +128,6 @@ volumes:
   media: {}
   minio_data: {}
   backups: {}
+  backup_uploads: {}
   caddy_data: {}
   caddy_config: {}
