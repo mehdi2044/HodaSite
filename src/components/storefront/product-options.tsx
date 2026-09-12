@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { CommerceForm } from "./commerce-form";
 import { updateCartAction } from "@/app/[locale]/commerce-actions";
@@ -50,6 +50,9 @@ export function ProductOptions({
   const selected = variants.find(
     (variant) => variant.colorId === color && variant.sizeId === size,
   );
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("catalog-color", { detail: color }));
+  }, [color]);
   const announcePrice = (variant?: Variant) =>
     window.dispatchEvent(
       new CustomEvent("catalog-price", {
@@ -108,20 +111,27 @@ export function ProductOptions({
           ))}
         </div>
       </fieldset>
-      <p className="text-sm font-medium" data-testid="stock-status">
+      <p
+        className="shop-stock-status text-sm font-medium"
+        role="status"
+        data-testid="stock-status"
+      >
         {!selected || selected.available <= 0
           ? labels.outOfStock
           : selected.available <= selected.lowStockThreshold
             ? labels.lowStock
             : labels.inStock}
       </p>
-      <CommerceForm action={updateCartAction.bind(null, locale)}>
+      <CommerceForm
+        action={updateCartAction.bind(null, locale)}
+        className="shop-product-submit grid gap-4"
+      >
         <input type="hidden" name="variantId" value={selected?.id ?? ""} />
         <input type="hidden" name="quantity" value="1" />
         <input type="hidden" name="mode" value="add" />
         <button
-          className="button w-full"
-          disabled={!selected || selected.available <= 0}
+          className="shop-add-button button w-full"
+          disabled={!selected || !selected.isActive || selected.available <= 0}
         >
           {labels.add}
         </button>

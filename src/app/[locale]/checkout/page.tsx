@@ -1,3 +1,4 @@
+import { Iso } from "@/components/storefront/iso";
 import { provinces } from "@/modules/checkout/regions";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -52,18 +53,19 @@ export default async function CheckoutPage({
   const parsed = addressSchema.safeParse(draft);
   if (step > 1 && !parsed.success) redirect(`/${locale}/checkout`);
   return (
-    <main className="shell max-w-3xl py-10">
+    <main className="shell shop-checkout max-w-3xl py-10">
       <h1 className="text-3xl font-semibold">{t("checkout")}</h1>
-      <ol className="my-8 flex justify-between gap-3">
+      <ol className="shop-checkout-steps">
         {["contact", "review", "payment"].map((key, i) => (
           <li
             key={key}
             aria-current={step === i + 1 ? "step" : undefined}
-            className={
-              step === i + 1 ? "font-semibold text-primary" : "text-muted"
-            }
+            className={step === i + 1 ? "shop-step-current" : "text-muted"}
           >
-            {i + 1}. {t(key)}
+            <span className="shop-step-number">
+              {new Intl.NumberFormat(locale).format(i + 1)}
+            </span>
+            <span>{t(key)}</span>
           </li>
         ))}
       </ol>
@@ -72,7 +74,7 @@ export default async function CheckoutPage({
           <>
             <p className="mb-5">
               {customer ? (
-                customer.email
+                <Iso>{customer.email}</Iso>
               ) : (
                 <Link
                   className="underline"
@@ -105,6 +107,34 @@ export default async function CheckoutPage({
                       name={key}
                       list={
                         key === "province" ? "checkout-provinces" : undefined
+                      }
+                      autoComplete={
+                        (
+                          {
+                            firstName: "given-name",
+                            lastName: "family-name",
+                            email: "email",
+                            phone: "tel",
+                            province: "address-level1",
+                            city: "address-level2",
+                            line1: "address-line1",
+                            line2: "address-line2",
+                            postalCode: "postal-code",
+                            birthDate: "bday",
+                          } as Record<string, string>
+                        )[key]
+                      }
+                      inputMode={
+                        key === "phone"
+                          ? "tel"
+                          : key === "email"
+                            ? "email"
+                            : undefined
+                      }
+                      dir={
+                        ["phone", "email", "postalCode"].includes(key)
+                          ? "ltr"
+                          : undefined
                       }
                       type={
                         key === "email"
@@ -162,7 +192,7 @@ export default async function CheckoutPage({
             <p className="my-5 text-muted">
               {draft.line1} · {draft.city} · {draft.province}
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <ShippingSelection cart={cart} locale={locale} />
               <Link
                 className="px-4 py-3 underline"
@@ -248,21 +278,27 @@ async function QuoteSummary({
       <div className="flex justify-between">
         <dt>{t("subtotal")}</dt>
         <dd>
-          {quote.subtotal} {cart.currency}
+          <Iso>
+            {quote.subtotal} {cart.currency}
+          </Iso>
         </dd>
       </div>
       {quote.lines.map((l) => (
         <div className="flex justify-between" key={l.ruleId}>
           <dt>{l.label}</dt>
           <dd>
-            {l.chargedAmount} {cart.currency}
+            <Iso>
+              {l.chargedAmount} {cart.currency}
+            </Iso>
           </dd>
         </div>
       ))}
       <div className="flex justify-between border-t pt-3 text-lg font-semibold">
         <dt>{t("total")}</dt>
         <dd>
-          {quote.total} {cart.currency}
+          <Iso>
+            {quote.total} {cart.currency}
+          </Iso>
         </dd>
       </div>
     </dl>

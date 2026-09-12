@@ -150,6 +150,10 @@ function isMaintenanceExempt(pathname: string): boolean {
 export default auth(async (req) => {
   const { pathname, search } = req.nextUrl;
 
+  // Public, identity-free installation assets; exact namespace, no locale redirect.
+  if (pathname === "/sw.js" || pathname.startsWith("/pwa/"))
+    return NextResponse.next();
+
   // --- Admin: JWT guard, no locale routing ---
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     const isLogin = pathname === "/admin/login";
@@ -213,7 +217,8 @@ export default auth(async (req) => {
     const markets = await fetchMarkets(req);
     if (markets.length) {
       const cookieCode = req.cookies.get("market")?.value;
-      const market = resolveMarket(markets, cookieCode, urlLocale);
+      const queryCode = req.nextUrl.searchParams.get("market") ?? undefined;
+      const market = resolveMarket(markets, cookieCode || queryCode, urlLocale);
       if (market && !market.enabledLocales.includes(urlLocale)) {
         const url = req.nextUrl.clone();
         url.pathname =
@@ -243,5 +248,7 @@ export default auth(async (req) => {
 export const config = {
   // Run on everything except Next internals, static assets and /media/*
   // (served by its own route handler with its own access checks — B10).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts/|media/).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|fonts/|media/|pwa/|sw[.]js$).*)",
+  ],
 };

@@ -41,7 +41,7 @@ jobs:
       - run: mkdir -p "$MEDIA_DIR" && pnpm prisma migrate deploy && pnpm prisma db seed
       - run: pnpm lint && pnpm typecheck && pnpm test:coverage && pnpm build
       - run: bash scripts/backup/tests/run.sh
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright install --with-deps chromium webkit
       - name: Render invoice proof in all three languages
         run: |
           pnpm exec tsx scripts/invoice-proof.ts
@@ -61,6 +61,7 @@ jobs:
           name: storefront-mobile-proof
           path: |
             test-results/**/home-*.png
+            test-results/**/shopping-*.png
             test-results/**/measurements-*.json
           if-no-files-found: ignore
       - name: Preserve failed browser diagnostics

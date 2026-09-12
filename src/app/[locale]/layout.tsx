@@ -1,3 +1,6 @@
+import { normalizeThemeColors, safeColorMap } from "@/lib/theme-validation";
+import { DEFAULT_LIGHT_COLORS } from "@/lib/theme-defaults";
+import { PwaControls } from "@/components/pwa/controls";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -21,11 +24,19 @@ import { GeoSuggestionBanner } from "@/components/storefront/geo-suggestion-bann
 // next load without a rebuild (Phase 00 acceptance criteria); market/locale
 // resolution also depends on the request's cookies.
 export const dynamic = "force-dynamic";
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = await getThemeSettings();
+  const colors = safeColorMap(
+    normalizeThemeColors(theme?.colors).light,
+    DEFAULT_LIGHT_COLORS,
+  );
+  return {
+    width: "device-width",
+    initialScale: 1,
+    viewportFit: "cover",
+    themeColor: colors.background,
+  };
+}
 
 // <title>, <meta description>, favicon and og:site_name come from settings +
 // the current market's SEO defaults (Phase 01a §2). A page further down the
@@ -63,8 +74,16 @@ export async function generateMetadata({
 
   return {
     title: seo.title?.[locale] || siteName,
+    applicationName: siteName,
+    manifest: `/pwa/${locale}/manifest.webmanifest${market ? `?market=${encodeURIComponent(market.code)}` : ""}`,
+    appleWebApp: { capable: true, title: siteName, statusBarStyle: "default" },
     description: seo.description?.[locale] || undefined,
-    icons: favicon ? { icon: favicon.url } : undefined,
+    icons: {
+      ...(favicon ? { icon: favicon.url } : {}),
+      apple: [
+        { url: `/pwa/${locale}/icon/180`, sizes: "180x180", type: "image/png" },
+      ],
+    },
     openGraph: { siteName },
   };
 }
@@ -111,6 +130,7 @@ export default async function LocaleLayout({
         <div id="storefront-content" tabIndex={-1}>
           {children}
         </div>
+        <PwaControls />
         <Footer
           locale={locale}
           market={market}

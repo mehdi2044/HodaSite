@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { ResponsiveImage } from "./responsive-image";
 import {
@@ -35,6 +36,7 @@ export async function ProductCard({
     roundingRule: unknown;
   };
 }) {
+  const t = await getTranslations("shopping");
   const title = catalogText(product.titleI18n, locale);
   const slug = catalogText(product.slugI18n, locale);
   const variant = product.variants[0] ?? null;
@@ -46,7 +48,7 @@ export async function ProductCard({
   ) as "IRT" | "TRY" | "CAD" | "USD";
   const image = product.media[0]?.media;
   return (
-    <article className="group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
+    <article className="shop-product-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
       <Link href={`/${locale}/p/${encodeURIComponent(slug)}`} className="block">
         <div className="aspect-[3/4] overflow-hidden bg-black/5">
           {image ? (
@@ -59,7 +61,7 @@ export async function ProductCard({
             />
           ) : (
             <div className="grid h-full place-items-center text-sm text-muted">
-              STYLE HUB
+              {t("noImage")}
             </div>
           )}
         </div>

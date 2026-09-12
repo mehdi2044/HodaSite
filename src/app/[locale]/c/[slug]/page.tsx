@@ -80,7 +80,10 @@ export default async function CategoryPage({
     page: Number(one(query.page) || 1),
   });
   return (
-    <main className="shell py-10 md:py-16" dir={safe === "fa" ? "rtl" : "ltr"}>
+    <main
+      className="shell shop-page py-10 md:py-16"
+      dir={safe === "fa" ? "rtl" : "ltr"}
+    >
       <header className="mb-8">
         <h1 className="text-4xl font-semibold">
           {catalogText(category.titleI18n, safe)}

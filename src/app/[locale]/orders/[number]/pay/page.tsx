@@ -69,7 +69,7 @@ export default async function PaymentPage({
   const pending =
     order.status === "PENDING_PAYMENT" && order.paymentDeadlineAt > new Date();
   return (
-    <main className="shell grid gap-7 py-10">
+    <main className="shell shop-page grid gap-7 py-10">
       <div>
         <p className="text-muted">{t("order")}</p>
         <h1 className="text-3xl font-semibold" dir="ltr">

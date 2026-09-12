@@ -1,4 +1,5 @@
 "use client";
+import { useOnline } from "@/components/pwa/online";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -17,8 +18,17 @@ export function CommerceForm({
   children: React.ReactNode;
   className?: string;
 }) {
+  const online = useOnline(),
+    pwa = useTranslations("pwa");
   const [state, submit, pending] = useActionState(
-      async (_: CommerceResult, form: FormData) => action(form),
+      async (_: CommerceResult, form: FormData) => {
+        if (!navigator.onLine) return { error: "OFFLINE" };
+        try {
+          return await action(form);
+        } catch {
+          return { error: "REQUEST_FAILED" };
+        }
+      },
       {},
     ),
     router = useRouter(),
@@ -29,9 +39,10 @@ export function CommerceForm({
   }, [state, router]);
   return (
     <form action={submit} className={className}>
-      <fieldset disabled={pending} className="contents">
+      <fieldset disabled={pending || !online} className="contents">
         {children}
       </fieldset>
+      {!online && <p role="status">{pwa("onlineRequired")}</p>}
       {pending && <p role="status">{t("working")}</p>}
       {state.partial && <p role="status">{t("bulkResult", state.partial)}</p>}
       {state.error && (

@@ -1,3 +1,4 @@
+import { shoppingProof } from "./helpers/shopping-proof";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
@@ -52,15 +53,19 @@ for (const [locale, slug, province, city, postal] of [
   test(`${locale} passwordless purchase, private receipt and payment approval`, async ({
     page,
     context,
-  }) => {
+  }, info) => {
     test.setTimeout(120000);
+    await page.setViewportSize({ width: 390, height: 844 });
     const email = `e2e-${randomUUID()}@example.com`;
     await page.context().clearCookies();
     await page.goto(`/${locale}/p/${encodeURIComponent(slug)}`);
+    await shoppingProof(page, info, `${locale}-product`);
     await submit(page, "variantId");
     await expect(
       page.getByRole("status").filter({ hasText: t.saved }),
     ).toBeVisible();
+    await page.goto(`/${locale}/cart`);
+    await shoppingProof(page, info, `${locale}-cart`);
     await page.goto(`/${locale}/account/login?next=/${locale}/checkout`);
     await page.locator('main [name="email"]').fill(email);
     await submit(page, "email");
@@ -105,13 +110,17 @@ for (const [locale, slug, province, city, postal] of [
       postalCode: postal,
     }))
       await page.locator(`[name="${key}"]`).fill(value);
+    await shoppingProof(page, info, `${locale}-checkout-address`);
     await submit(page, "firstName");
     await expect(page).toHaveURL(/step=2/);
+    await shoppingProof(page, info, `${locale}-checkout-review`);
     await page.getByRole("button", { name: t.next, exact: true }).click();
     await expect(page).toHaveURL(/step=3/);
+    await shoppingProof(page, info, `${locale}-checkout-payment`);
     await page.locator('[name="terms"]').check();
     await submit(page, "terms");
     await expect(page).toHaveURL(/\/orders\/[A-Z]{2}-\d+\/pay$/);
+    await shoppingProof(page, info, `${locale}-payment-instructions`);
     const number = new URL(page.url()).pathname.split("/")[3];
     const before = await db.order.findUniqueOrThrow({
       where: { number },
@@ -179,6 +188,24 @@ for (const [locale, slug, province, city, postal] of [
       ),
     ).toBe(true);
     await admin.close();
+    await page.goto(`/${locale}/account`);
+    await shoppingProof(page, info, `${locale}-account`);
+    await page.getByRole("button", { name: t.logout, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}$`));
+    await page.goto(`/${locale}/account`);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/account/login$`));
+    const cached = await page.evaluate(async () =>
+      (
+        await Promise.all(
+          (await caches.keys())
+            .filter((n) => n.startsWith("hoda-public-pwa-"))
+            .map(async (n) =>
+              (await (await caches.open(n)).keys()).map((r) => r.url),
+            ),
+        )
+      ).flat(),
+    );
+    expect(cached.join()).not.toMatch(/\/account|\/orders|\/checkout|\/api\//);
   });
 }
 test.afterAll(async () => db.$disconnect());
