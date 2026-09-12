@@ -1159,8 +1159,8 @@
     "day": "Gün (UTC)",
     "daily": "Günlük döküm",
     "definitions": "Raporu okuma rehberi",
-    "basis": "Ödenmiş siparişler ilk ödeme tarihini ve ücretler ile indirimleri içeren sabit sipariş toplamını kullanır. Ödemeler onay tarihine, tamamlanan iadeler iade kaydının oluşturulma tarihine göre hesaplanır; eski siparişlerin iadeleri de kendi döneminde yer alır. Mağaza kredisi ayrı gösterilir ve nakit / banka hareketine girmez. İade ve değişim kredileri, verildikleri tarihteki ilk tutarıyla sayılır; sonraki harcamalar bu toplamı değiştirmez.",
-    "notProfit": "Net hareket bu dönemin ödemeleri eksi iadeleridir; banka bakiyesi veya kâr değildir. Bu rapor döviz dönüşümü, satılan mal maliyeti, giderler, vergi borçları veya ortak sermayesi hesaplamaz. Muhasebe defteri ve kâr paneli Faz 06 kapsamında devam eder.",
+    "basis": "Ödenmiş siparişler siparişin ödendi olarak işaretlendiği tarihi ve ücretler ile indirimleri içeren sabit sipariş toplamını kullanır. Ödemeler onay tarihine, tamamlanan iadeler iade kaydının oluşturulma tarihine göre hesaplanır; eski siparişlerin iadeleri de kendi döneminde yer alır. Mağaza kredisi ayrı gösterilir ve nakit / banka hareketine girmez. İade ve değişim kredileri, verildikleri tarihteki ilk tutarıyla sayılır; sonraki harcamalar bu toplamı değiştirmez.",
+    "notProfit": "Net hareket bu dönemin ödemeleri eksi iadeleridir; banka bakiyesi veya kâr değildir. Bu rapor döviz dönüşümü, satılan mal maliyeti, giderler, vergi borçları veya ortak sermayesi hesaplamaz.",
     "error": "Rapor yüklenemedi. Tekrar deneyin.",
     "retry": "Tekrar dene"
   }
