@@ -136,7 +136,7 @@ html[lang="fa"] body,
 }
 .admin {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
 }
 .sidebar {
@@ -175,7 +175,7 @@ html[lang="fa"] body,
 }
 @media (max-width: 700px) {
   .admin {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .sidebar {
     display: flex;
@@ -193,3 +193,8 @@ html[lang="fa"] body,
     padding: 20px;
   }
 }
+
+/* Keep intrinsic form/table widths inside the admin's mobile grid column.
+   Tables own horizontal scrolling; they must not widen the document viewport. */
+.admin .shell { width: 100%; min-width: 0; }
+.admin fieldset, .admin .grid > * { min-width: 0; }
