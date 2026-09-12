@@ -55,15 +55,39 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             reviewedAt: new Date("2001-01-01T00:00:00Z"),
           },
         });
+        const sourceCredit = await db.storeCredit.create({
+          data: {
+            customerId: f.customer.id,
+            amount: "39.9999",
+            balance: "39.9999",
+            currency: f.market.currency,
+          },
+        });
+        const use = await db.creditUse.create({
+          data: {
+            orderId: f.order.id,
+            creditId: sourceCredit.id,
+            amount: "39.9999",
+          },
+        });
         const credit = await db.payment.create({
           data: {
             orderId: f.order.id,
             amount: "39.9999",
             currency: f.market.currency,
             method: "STORE_CREDIT",
+            reference: use.id,
             status: "APPROVED",
             reviewedAt: new Date("2001-01-02T23:59:59.999Z"),
           },
+        });
+        await db.creditUse.update({
+          where: { id: use.id },
+          data: { status: "CONSUMED" },
+        });
+        await db.storeCredit.update({
+          where: { id: sourceCredit.id },
+          data: { balance: "0" },
         });
         const refundReturn = await db.returnRequest.create({
           data: {
@@ -117,9 +141,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             createdAt: new Date("2001-01-02T12:00:00Z"),
           },
         });
+        const undated = await returnFixture(db, {
+          code,
+          pending: true,
+          quantity: 1,
+          price: "999",
+        });
         await db.payment.create({
           data: {
-            orderId: f.order.id,
+            orderId: undated.order.id,
             currency: f.market.currency,
             amount: "999",
             status: "APPROVED",
