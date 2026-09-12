@@ -17,3 +17,15 @@ Owner sees true profit per product/order/market and partner capital, with alerts
 - Landed cost: PO 100 pcs at 1000 TRY + 2000 TRY inbound shipping → unit cost 1020 TRY → USD at PO-date rate.
 - Margin dashboard equals hand-calculated example in tests; refund adjusts margin.
 - Accountant role sees finance but cannot edit products/prices.
+
+
+## First delivery slice — transaction reports (2026-09-12)
+After the merged Phase 05b shopping/PWA implementation and automated checks, build the readonly report surface first. Physical phone/HTTPS acceptance remains a pre-release gate under D51/D54; it is not claimed by this slice.
+
+- Route `/admin/finance`; permission `finance.report.view`, checked against each market before reading transactions. CSV is the same authorized dataset with no customer records. D58 moves this permission from reserved to the operational role/scope matrix.
+- Group by market and original currency; preserve numeric(18,4) exactly. Paid-order total includes frozen fees and discounts, counted once at `paidAt`. Approved payments use `reviewedAt`. Completed refunds use their record `createdAt`, including refunds of older orders. Store credit is separate from external payment/refund movement.
+- Inclusive UTC dates, at most 366 days; no silent row cap. Missing approval dates are excluded from period totals and surfaced as an all-time count. Daily breakdown, private CSV, fa/tr/en and 390px mobile layout are included.
+- Net external movement is approved external payments minus completed external refunds for the selected period. It is not profit or bank balance. COGS, functional/reporting equivalents, journals and the remainder of this phase retain their separate acceptance criteria above.
+- Verification includes hand-calculated fractional amounts, inclusive/exclusive date boundaries, earlier-order refunds, original-currency separation, large-value precision, formula-safe CSV, real PostgreSQL authorization matrix and three-language accountant browser flows.
+
+- Credit-report basis clarification: return/exchange credits come from `StoreCredit.amount` at `createdAt`, linked through the source return to its original market. A credit-method Refund and its issued StoreCredit count once; direct return credit and exchange credit without a Refund are included. Mutable credit balance and unrelated credits are not substituted. PostgreSQL fixtures verify all three paths and spent balances.
