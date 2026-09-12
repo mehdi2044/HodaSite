@@ -1,3 +1,4 @@
+import { backupLabel } from './contracts.mjs';
 import { retainedBackups } from './retention.mjs';
 import { PrismaClient } from '@prisma/client';
 import { spawn } from 'node:child_process';
@@ -34,7 +35,7 @@ async function execute(command, args, task, label) {
   });
 }
 async function record(task, status, result = {}) {
-  const data = { status, result, log: status, finishedAt: new Date() };
+  const data = { status, result, log: result.stage || status, finishedAt: new Date() };
   await db.opsTask.upsert({ where: { id: task.id }, create: { id: task.id, requestKey: task.requestKey, type: task.type, requestedBy: task.requestedBy, authorizedAt: task.authorizedAt, payload: task.payload, ...data }, update: data });
   if (task.type === 'RESTORE') await db.restoreRequest.upsert({ where: { id: task.id }, create: { id: task.id, requestedBy: task.requestedBy, backupId: task.payload.backupId, uploadedFileKey: task.payload.uploadId ? `${task.payload.uploadId}.zip` : null, mode: task.payload.mode, mfaVerifiedAt: task.authorizedAt, status, log: status, finishedAt: new Date() }, update: { status, log: status, finishedAt: new Date() } });
 }
@@ -62,7 +63,7 @@ async function processTask(task) {
     await db.opsTask.update({ where: { id: task.id }, data: { status: 'RUNNING', startedAt: new Date(), log: 'RUNNING' } });
     const p = task.payload;
     if (task.type === 'BACKUP') {
-      const label = `panel-${task.id}`;
+      const label = backupLabel(task.id);
       await execute('bash', [path.join(scripts,'backup/backup.sh'),'--label',label,'--kind',task.requestedBy ? 'manual' : 'scheduled',...(p.includeMedia === false ? ['--no-media'] : [])], task, 'BACKUP');
       const backup = await db.backup.findFirstOrThrow({ where: { fileKey: { endsWith: `_${label}` } }, orderBy: { createdAt: 'desc' } });
       await db.backup.update({ where: { id: backup.id }, data: { createdBy: task.requestedBy } });
@@ -98,7 +99,7 @@ async function processTask(task) {
       await execute('bash',[path.join(scripts,'backup/restore.sh'),source,'--yes',...(p.mode==='DB_ONLY'?['--db-only']:p.mode==='MEDIA_ONLY'?['--media-only']:[])],task,'RESTORE');
     } else throw Error('INVALID_REQUEST');
     status='DONE';
-  } catch { result={reason:'OPERATION_FAILED'}; }
+  } catch { const row=await db.opsTask.findUnique({where:{id:task.id}}).catch(()=>null); result={reason:'OPERATION_FAILED',stage:row?.log || 'RUNNING'}; }
   // Persist terminal status before recreating task rows lost by pg_restore.
   const temp=`${marker}.tmp`;
   await writeFile(temp,JSON.stringify({...task,state:status,result})); await rename(temp,marker);
