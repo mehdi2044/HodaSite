@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+bash "$(dirname "$0")/maintenance.sh"
+bash "$(dirname "$0")/restore-handshake.sh"
 source "$(dirname "$0")/../lib.sh"
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 [[ "$(sanitize_label '../hello world')" == '.._hello_world' ]]

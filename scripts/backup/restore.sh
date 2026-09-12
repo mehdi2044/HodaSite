@@ -4,6 +4,7 @@
 # Order: validate → maintenance ON (mandatory) → drain → safety backup → DB → atomic media → migrate → verify → maintenance OFF
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
+source "$(dirname "$0")/maintenance.sh"
 SRC_IN="${1:?backup path required}"; shift || true
 YES=0; DB=1; MEDIA=1
 for a in "$@"; do case "$a" in --yes) YES=1;; --db-only) MEDIA=0;; --media-only) DB=0;; esac; done
@@ -16,24 +17,12 @@ WORK="$(mktemp -d /tmp/restore.XXXXXX)"; MAINT_ON=0; STAGE="init"
 log(){ echo "[restore][$(date -u +%T)][$STAGE] $*"; }
 q(){ psql "$DATABASE_URL" -Atc "$1"; }
 
-maintenance(){ # $1 = on|off ; the app MUST confirm, otherwise we abort
-  local r; r=$(curl -fsS --max-time 15 -X POST "$APP_URL/api/system/maintenance" -H "x-maintenance-secret: $MAINTENANCE_SECRET" -d "state=$1&reason=restore") || return 1
-  [[ "$r" == *"\"state\":\"$1\""* ]] || return 1
-}
-drain(){ # wait until the app reports no in-flight requests (max 60s)
-  for _ in $(seq 1 30); do
-    local r; r=$(curl -fsS --max-time 5 "$APP_URL/api/system/maintenance" -H "x-maintenance-secret: $MAINTENANCE_SECRET" 2>/dev/null || echo "")
-    [[ "$r" == *'"inFlight":0'* ]] && return 0; sleep 2
-  done; log "drain timeout — continuing (app is in maintenance, writes are rejected)"
-}
 cleanup(){
   local rc=$?
-  if [[ $rc -ne 0 ]]; then
+  if [[ $rc -ne 0 && $MAINT_ON -eq 1 ]]; then
     log "FAILED at stage '$STAGE' (rc=$rc). Maintenance stays ON. Previous media (if swapped) kept at $MEDIA_DIR.prev"
     curl -fsS --max-time 10 -X POST "$APP_URL/api/system/maintenance" -H "x-maintenance-secret: $MAINTENANCE_SECRET" -d "state=on&reason=restore_failed" >/dev/null 2>&1 || true
     q "insert into \"SystemAlert\"(id,severity,code,message,\"createdAt\",\"updatedAt\") values (gen_random_uuid()::text,'CRITICAL','RESTORE_FAILED','Restore failed at stage $STAGE',now(),now())" >/dev/null 2>&1 || true
-  elif [[ $MAINT_ON -eq 1 ]]; then
-    maintenance off || log "WARNING: could not turn maintenance off — do it manually"
   fi
   rm -rf "$WORK"
 }
@@ -68,8 +57,9 @@ if [[ $MEDIA -eq 1 ]]; then check_tar_archive "$SRC/media.tar.zst" "$MAX_FILES" 
 log "validated (project=$PROJECT_ID, migrations in backup: $(wc -l < "$WORK/bak_migs.txt" 2>/dev/null || echo 0))"
 
 # ---------- 2. maintenance ON + drain (before ANY change and before the safety backup) ----------
-STAGE="maintenance-on"; maintenance on || { log "app did not confirm maintenance mode — aborting"; exit 20; }; MAINT_ON=1
-STAGE="drain"; drain
+STAGE="maintenance-on"; MAINT_ON=1
+maintenance on || { log "app did not confirm maintenance mode — aborting"; exit 20; }
+STAGE="drain"; drain || { log "writes did not drain — aborting before safety backup or live restore"; exit 21; }
 
 # ---------- 3. safety backup (now a true point-in-time snapshot: no writes possible) ----------
 STAGE="safety-backup"; BACKUP_KIND=safety "$(dirname "$0")/backup.sh" --label pre-restore
@@ -105,4 +95,7 @@ if [[ $DB -eq 1 ]]; then
 fi
 STAGE="verify"; "$(dirname "$0")/verify.sh" --live || { log "post-restore verification failed"; exit 40; }
 [[ $MEDIA -eq 1 ]] && rm -rf "$MEDIA_DIR.prev"
+STAGE="maintenance-off"
+maintenance off || { log "app did not confirm leaving maintenance mode"; exit 41; }
+MAINT_ON=0
 STAGE="done"; log "restore completed successfully"
