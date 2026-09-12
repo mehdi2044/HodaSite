@@ -190,7 +190,7 @@ const rows: Row[] = [
           target: "_self",
           enabled: "on",
           sortOrder: "0",
-          visibleIn: ["fa", "tr", "en"],
+          visibleIn: ["IR", "TR", "CA"],
         },
         f,
       ),
@@ -399,7 +399,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         })
       ).id;
       menuId = (
-        await db.menu.create({ data: { key: `matrix-${randomUUID()}` } })
+        await db.menu.findFirstOrThrow({
+          where: { key: "header", marketId: null, deletedAt: null },
+        })
       ).id;
       feeId = (
         await db.feeRule.create({
@@ -446,6 +448,19 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     }, 60000);
     afterAll(async () => {
       acting.userId = null;
+      if (menuId)
+        await db.menuItem.deleteMany({
+          where: {
+            menuId,
+            labelI18n: {
+              equals: {
+                fa: "Matrix link",
+                tr: "Matrix link",
+                en: "Matrix link",
+              },
+            },
+          },
+        });
       if (settings)
         await db.siteSettings.update({
           where: { id: "default" },
@@ -546,6 +561,19 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                   ok: false,
                   code: name === "anonymous" ? "UNAUTHORIZED" : "FORBIDDEN",
                 });
+                if (row.permission === "security.session.revoke") {
+                  let hidden: unknown;
+                  try {
+                    await revokeSession(
+                      form({ id: "unknown-session" }, forged),
+                    );
+                  } catch (error) {
+                    hidden = errorCode(error);
+                  }
+                  expect(hidden).toBe(
+                    name === "anonymous" ? "UNAUTHORIZED" : "FORBIDDEN",
+                  );
+                }
                 expect(await auditCount()).toBe(before);
                 expect(await fingerprint(tables)).toEqual(dataBefore);
               }

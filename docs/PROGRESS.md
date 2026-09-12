@@ -595,3 +595,9 @@ Read-only role preview now displays each permission for an assigned versus reque
 - فاز ۵ هنوز پایان‌یافته نیست: ماتریس کامل V-4 برای UI/action و درخواست مستقیم همهٔ عملیات باز است. فاز ۶ با محاسبات پایه شروع شده؛ فاز 05b طراحی فروشگاه و وب‌اپ قابل نصب، پیش از رابط و داشبورد مالی قرار دارد. نصب واقعی Android/iPhone و آزمون HTTPS در محیط نهایی انجام نشده‌اند.
 
 - CI مرورگر یک ایراد عرض واقعی در جدول طبقه‌بندی پنل پیدا کرد: اندازهٔ ذاتی fieldset/grid از ستون موبایل بیرون می‌زد و محل کلیک دکمه را خراب می‌کرد. ستون و فرم‌ها داخل عرض پنل محدود شدند، عملیات جدول قابلیت رفتن به خط بعد دارند و آزمون ۳۹۰px اکنون نبود اسکرول افقی کل صفحه و کلیک عادی «ویرایش» را بررسی می‌کند؛ آزمون دوباره لازم است.
+
+### 2026-09-12 — Phase 05 operational permission acceptance (PR #24)
+- Added 3,492 real-operation matrix cases: seven seeded roles, explicit override and anonymous sessions; global and market-scoped targets; UI/server-action payload and direct crafted request. Denials compare PostgreSQL row digests, including unaudited writes. Positive cases must perform the operation successfully.
+- Fixed session-ID existence leakage and moved inventory cost reads behind their own permission guard. Global actions, actual server pages, order/payment/shipping/return/invoice resources, upload routes and fresh-MFA restore requests are covered.
+- D58 records 54 implemented permissions and four reserved names for phases 06/09. Namespace-to-operational-test registry fails CI when a new implementation remains untested. The detailed scope and existence policy are in `phases/phase-05-permission-acceptance.md`.
+- Local lint/typecheck and unit tests passed. PostgreSQL integration and required checks/docker/docker-runtime are being run on the PR; completion depends on latest-head success. Phone installation, owner visual review and production/off-site acceptance remain pre-launch gates under D51.

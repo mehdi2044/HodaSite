@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/modules/auth";
-import { can, ForbiddenError } from "@/modules/access";
+import { can, assertCan, ForbiddenError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { cookies } from "next/headers";
@@ -29,6 +29,8 @@ export async function revokeSession(form: FormData) {
     where: { id, ...(mayRevokeOthers ? {} : { userId: session.user.id }) },
   });
   if (!row) throw new ForbiddenError("security.session.revoke");
+  if (row.userId !== session.user.id)
+    await assertCan(session.user.id, "security.session.revoke");
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await tx.adminSession.updateMany({

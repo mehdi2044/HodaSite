@@ -32,7 +32,13 @@ import Notifications from "@/app/admin/(dashboard)/settings/notifications/page";
 import Health from "@/app/admin/(dashboard)/system/health/page";
 import Users from "@/app/admin/(dashboard)/users/page";
 import { adminInventoryCosts } from "@/modules/inventory/admin-costs";
-import { db } from "@/lib/db";
+function textNodes(node: React.ReactNode): string[] {
+  if (typeof node === "string") return [node];
+  if (Array.isArray(node)) return node.flatMap(textNodes);
+  if (React.isValidElement<{ children?: React.ReactNode }>(node))
+    return textNodes(node.props.children);
+  return [];
+}
 const query = (forged: boolean) => ({
   searchParams: Promise.resolve(
     forged
@@ -109,23 +115,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                   adminInventoryCosts(acting.userId ?? ""),
                 ).rejects.toThrow("FORBIDDEN");
             } else {
-              // Observe the real query; never stub its result or access decision.
-              const lots = vi.spyOn(db.lot, "findMany");
-              try {
-                if (scope === "in" && granted(name, "inventory.view")) {
-                  expect(
-                    React.isValidElement(await Inventory(query(true))),
-                  ).toBe(true);
-                  expect(lots).toHaveBeenCalledTimes(allowed ? 1 : 0);
-                } else {
-                  await expect(Inventory(query(true))).rejects.toThrow(
-                    /NEXT_REDIRECT|FORBIDDEN/,
-                  );
-                  expect(lots).not.toHaveBeenCalled();
-                }
-              } finally {
-                lots.mockRestore();
-              }
+              if (scope === "in" && granted(name, "inventory.view")) {
+                const content = textNodes(await Inventory(query(true)));
+                expect(content.includes("originalCost")).toBe(allowed);
+              } else
+                await expect(Inventory(query(true))).rejects.toThrow(
+                  /NEXT_REDIRECT|FORBIDDEN/,
+                );
             }
           });
         }
