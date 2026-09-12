@@ -19,6 +19,7 @@ A server action invocation is the UI/server-action boundary specified by V-4; th
 
 ## Resource existence policy
 
+- Bank-account changes scope the database lookup by both ID and authorized market; a forged TR market cannot reassign an IR account. Unknown and inaccessible targets both return `FORBIDDEN`.
 - Admin order/shipping/return services throw the same `ForbiddenError` for inaccessible and nonexistent records. Actions either propagate it or return the stable `FORBIDDEN` error, never a successful response containing filtered private data.
 - Admin server pages stop rendering via Next redirect or not-found before exposing private content. A redirect is not counted as a successful authorized read.
 - Private invoice download returns an empty 404 with `private, no-store` for missing and unauthorized records. Authorized downloads return the exact private bytes with no-store. Customer/guest ownership remains separately tested.

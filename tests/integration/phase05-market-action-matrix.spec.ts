@@ -121,11 +121,22 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               let run: () => Promise<unknown>,
                 verify: () => Promise<void> = async () => {};
               if (permission === "markets.edit") {
+                const bank = await db.marketBankAccount.create({
+                  data: {
+                    marketId: market.id,
+                    label: "Matrix bank",
+                    bankName: "Matrix",
+                    holder: "Fixture",
+                    accountNumber: randomUUID(),
+                    isActive: false,
+                  },
+                });
                 run = () =>
                   bankAccountAction(
                     form(
                       {
-                        marketId: market.id,
+                        id: bank.id,
+                        marketId: direct ? forgedMarketId : market.id,
                         label: "Matrix bank",
                         bankName: "Matrix",
                         holder: "Test shop",
@@ -355,6 +366,25 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                           : "UNAUTHORIZED"
                       : "FORBIDDEN",
                   );
+                if (permission === "markets.edit") {
+                  const missing = await bankAccountAction(
+                    form(
+                      {
+                        id: "unknown-bank",
+                        marketId: forgedMarketId,
+                        label: "Matrix bank",
+                        bankName: "Matrix",
+                        holder: "Fixture",
+                        accountNumber: "test-account",
+                      },
+                      true,
+                    ),
+                  );
+                  expect(missing).toEqual({
+                    error:
+                      name === "anonymous" ? "LOGIN_REQUIRED" : "FORBIDDEN",
+                  });
+                }
                 expect(await fingerprint(tables)).toEqual(before);
               }
             }, 30000);

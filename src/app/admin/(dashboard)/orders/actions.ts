@@ -165,13 +165,15 @@ export async function bankAccountAction(form: FormData) {
     });
     await withMutation(() =>
       db.$transaction(async (tx) => {
+        await assertCan(session.user.id, "markets.edit", {
+          marketId: data.marketId,
+        });
         const before = data.id
-          ? await tx.marketBankAccount.findUniqueOrThrow({
-              where: { id: data.id },
+          ? await tx.marketBankAccount.findFirst({
+              where: { id: data.id, marketId: data.marketId },
             })
           : null;
-        if (before && before.marketId !== data.marketId)
-          throw new CommerceError("FORBIDDEN");
+        if (data.id && !before) throw new ForbiddenError("markets.edit");
         const { id, ...values } = data;
         const after = id
           ? await tx.marketBankAccount.update({ where: { id }, data: values })
