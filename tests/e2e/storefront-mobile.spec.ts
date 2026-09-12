@@ -12,7 +12,10 @@ test("390px Persian navigation is RTL, reachable and touch sized", async ({
   expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(box?.height).toBeGreaterThanOrEqual(44);
   await toggle.click();
-  const mobileNavigation = page.locator("details nav");
+  const mobileNavigation = page.getByRole("navigation", {
+    name: "ناوبری موبایل",
+    exact: true,
+  });
   await expect(mobileNavigation).toBeVisible();
   await expect(mobileNavigation.getByRole("link").first()).toBeVisible();
 });

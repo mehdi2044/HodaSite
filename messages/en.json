@@ -1082,5 +1082,14 @@
     "tr": "Türkçe",
     "en": "English",
     "languageError": "Could not change language. Please try again."
+  },
+  "mobileStorefront": {
+    "navigation": "Shop shortcuts",
+    "home": "Home",
+    "search": "Search the shop",
+    "searchPlaceholder": "What are you looking for?",
+    "language": "Shop language",
+    "market": "Your shopping market",
+    "skipContent": "Skip to content"
   }
 }

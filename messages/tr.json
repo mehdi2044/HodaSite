@@ -1082,5 +1082,14 @@
     "tr": "Türkçe",
     "en": "English",
     "languageError": "Dil değiştirilemedi. Tekrar deneyin."
+  },
+  "mobileStorefront": {
+    "navigation": "Mağaza kısayolları",
+    "home": "Ana sayfa",
+    "search": "Mağazada ara",
+    "searchPlaceholder": "Ne arıyorsunuz?",
+    "language": "Mağaza dili",
+    "market": "Alışveriş bölgeniz",
+    "skipContent": "İçeriğe geç"
   }
 }

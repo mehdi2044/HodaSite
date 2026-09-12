@@ -12,9 +12,9 @@
 | —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق          | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
 | 03  | Pricing / FX / Fees / Inventory / Lot      | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#9](https://github.com/mehdi2044/HodaSite/pull/9) |
 | 04  | Cart / Auth / Checkout / Payment           | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11) |
-| 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ توسعه و پذیرش عملیاتی؛ ادغام مشروط به CI | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
+| 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
-| 05b | Mobile Storefront / Installable PWA         | ⬜ طراحی و اجرا باقی است | | [شرح فاز](phases/phase-05b.md) |
+| 05b | Mobile Storefront / Installable PWA         | 🟡 سربرگ، جست‌وجو و ناوبری موبایل آماده؛ ادامهٔ PWA باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
 | 06  | Finance Core                               | 🟡 محاسبات پایه ادغام شد؛ اتصال و داشبورد باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20) |
 | 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
@@ -601,3 +601,11 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Fixed session-ID existence leakage, made denied bank-account changes return a stable FORBIDDEN result, and moved inventory cost reads behind their own permission guard. Global actions, actual server pages, order/payment/shipping/return/invoice resources, upload routes and fresh-MFA restore requests are covered.
 - D58 records 54 implemented permissions and four reserved names for phases 06/09. Namespace-to-operational-test registry fails CI when a new implementation remains untested. The detailed scope and existence policy are in `phases/phase-05-permission-acceptance.md`.
 - Local lint/typecheck and unit tests passed. Merging this acceptance change requires successful latest-head PostgreSQL integration and checks/docker/docker-runtime; the PR records the exact run. Phase 05 development acceptance closes with that gated merge. Phone installation, owner visual review and production/off-site acceptance remain pre-launch gates under D51.
+
+
+### 2026-09-12 — Phase 05b first mobile navigation slice
+- Phase 05 acceptance merged in PR #24 (123c2d4) after CI #140 passed checks/docker/docker-runtime on 520f5f2: 6,669 unit/database tests, 67 browser tests, and LocalStorage/S3 backup/restore. Phase 06 calculation foundations remain merged in PR #20; financial postings/dashboard follow the mobile storefront delivery (D54/D57).
+- Compact mobile header with visible search, accessible language/market controls in the menu, and four bottom destinations: home, search, cart, account. Persian RTL and Turkish/English labels use runtime translations; merchant brand, menu and theme settings remain authoritative.
+- Touch targets, keyboard Escape/outside-click menu closing, skip-content link and safe-area spacing are implemented. Sticky product purchase controls sit above the bottom navigation. Desktop keeps its full navigation; tablets use the mobile controls below 1024px.
+- Browser acceptance covers fa/tr/en at 360/390/430px, 200% text and desktop. Actual 390px route screenshots and navigation timing measurements are preserved in the `storefront-mobile-proof` CI artifact; these establish a baseline, not a claim of measured performance improvement. Visual acceptance remains subject to those images and the owner's review.
+- This is the first slice of 05b. Full product/cart/account design polish, manifest/icons, Android/iPhone installation help, safe offline/update behavior and physical-device HTTPS acceptance remain in the phase. No completed installation or native application is claimed.

@@ -12,16 +12,25 @@ export function LocaleSwitcher({
   current,
   enabledLocales,
   ariaLabel,
+  mobile = false,
 }: {
   current: string;
   enabledLocales: string[];
   ariaLabel: string;
+  mobile?: boolean;
 }) {
   const pathname = usePathname();
   const rest = pathname.split("/").slice(2).join("/");
 
   return (
-    <nav aria-label={ariaLabel} className="hidden gap-1 text-sm sm:flex">
+    <nav
+      aria-label={ariaLabel}
+      className={
+        mobile
+          ? "flex flex-wrap gap-1 text-base"
+          : "hidden gap-1 text-sm lg:flex"
+      }
+    >
       {enabledLocales.map((locale) => (
         <Link
           key={locale}

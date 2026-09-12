@@ -54,6 +54,15 @@ jobs:
           path: test-results/invoice-proof/
           if-no-files-found: ignore
       - run: pnpm e2e
+      - name: Preserve mobile storefront proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-mobile-proof
+          path: |
+            test-results/**/home-*.png
+            test-results/**/measurements-*.json
+          if-no-files-found: ignore
       - name: Preserve failed browser diagnostics
         if: failure()
         uses: actions/upload-artifact@v4

@@ -196,5 +196,194 @@ html[lang="fa"] body,
 
 /* Keep intrinsic form/table widths inside the admin's mobile grid column.
    Tables own horizontal scrolling; they must not widen the document viewport. */
-.admin .shell { width: 100%; min-width: 0; }
-.admin fieldset, .admin .grid > * { min-width: 0; }
+.admin .shell {
+  width: 100%;
+  min-width: 0;
+}
+.admin fieldset,
+.admin .grid > * {
+  min-width: 0;
+}
+
+/* Phase 05b: mobile app navigation uses the merchant's existing theme tokens. */
+.storefront-app {
+  --storefront-nav-height: 5.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-inline: max(
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+  padding-block-end: calc(
+    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
+  );
+}
+.storefront-header-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding-block: 0.625rem;
+  padding-inline: 1.25rem;
+}
+.storefront-brand {
+  overflow-wrap: anywhere;
+}
+.storefront-search {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+.storefront-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.625rem 0.875rem;
+  border: 0;
+  border-radius: inherit;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+}
+.storefront-search input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.storefront-search button,
+.storefront-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  color: var(--text);
+  cursor: pointer;
+}
+.storefront-search button {
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+}
+.storefront-menu-toggle {
+  list-style: none;
+  border-radius: var(--radius);
+}
+.storefront-menu-toggle::-webkit-details-marker {
+  display: none;
+}
+.storefront-mobile-menu[open] .storefront-menu-toggle {
+  background: var(--surface);
+}
+.storefront-menu-panel {
+  position: absolute;
+  inset-inline: 1rem;
+  inset-block-start: 100%;
+  z-index: 50;
+  display: grid;
+  gap: 0.25rem;
+  max-height: min(70dvh, 32rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 16px 40px #0002;
+}
+.mobile-bottom-nav {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: var(--storefront-nav-height);
+  padding-inline: max(
+    0.5rem,
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+  padding-block: 0.375rem calc(0.375rem + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  color: var(--muted);
+  border-block-start: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: 0 -4px 20px #00000005;
+}
+.mobile-bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 48px;
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+.mobile-nav-symbol {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  min-height: 1.875rem;
+  border-radius: 999px;
+}
+.mobile-bottom-nav a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
+}
+.mobile-bottom-nav a[aria-current="page"] .mobile-nav-symbol {
+  background: color-mix(in srgb, var(--primary) 20%, var(--surface));
+}
+.storefront-app .storefront-purchase {
+  bottom: calc(
+    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px) + 0.75rem
+  );
+}
+.storefront-skip-link {
+  position: fixed;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius);
+}
+.storefront-skip-link:focus {
+  transform: none;
+}
+#storefront-content {
+  min-width: 0;
+  scroll-margin-block-start: 9rem;
+}
+@media (min-width: 1024px) {
+  .storefront-app {
+    --storefront-nav-height: 0px;
+    padding-block-end: 0;
+  }
+  .storefront-header-grid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-block: 0.75rem;
+  }
+  .storefront-search,
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+.storefront-menu-panel select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}

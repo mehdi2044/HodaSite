@@ -258,7 +258,7 @@ export default async function ProductPage({
           <p className="my-7 whitespace-pre-wrap leading-8 text-muted">
             {catalogText(product.descriptionI18n, safe)}
           </p>
-          <div className="sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl backdrop-blur">
+          <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl backdrop-blur">
             <ProductOptions
               variants={product.variants.map((v) => ({
                 id: v.id,
