@@ -1,7 +1,7 @@
 # Phase 05b — Mobile storefront design and installable web app
 
 ## Placement and purpose
-After Phase 05 acceptance and before Phase 06 implementation (D54). Finish the fashion storefront/customer account design obligations and deliver a practical trilingual PWA for the predominantly mobile audience.
+After Phase 05 acceptance and before Phase 06 dashboard/workflow delivery (D54/D57). Independent financial calculation preparation may start earlier; it does not bypass Phase 05 acceptance. Finish the fashion storefront/customer account design obligations and deliver a practical trilingual PWA for the predominantly mobile audience.
 
 ## Scope
 - Design from 390px; verify 360/390/430px, tablet and desktop. No horizontal overflow; content works with large text, safe-area insets, software keyboard and portrait/landscape. Persian RTL and mixed-code isolation; Turkish/English LTR. DB theme/content controls remain authoritative.
@@ -19,3 +19,10 @@ After Phase 05 acceptance and before Phase 06 implementation (D54). Finish the f
 
 ## Remaining in Phase 08 / 11
 SEO, reviews/wishlist, final launch performance and operational launch checks stay in 08. Native app wrapper and optional camera/voice/try-on integrations stay in 11.
+
+## Delivery slices
+1. Mobile homepage, header/search and bottom navigation; approve representative 390px screenshots first.
+2. Product listing/filtering and product gallery/variant selection with clear stock and sizing.
+3. Cart, checkout/payment instructions, customer account and order/tracking/return states.
+4. Install help, manifest/icons, safe-area/standalone behavior and safe offline/update flow.
+5. Cross-language/width checks and physical Android/iPhone HTTPS acceptance; measure performance against the recorded baseline.

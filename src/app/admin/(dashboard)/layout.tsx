@@ -19,6 +19,7 @@ export default async function DashboardLayout({
   return (
     <AdminShell
       user={{
+        id: session.user.id,
         name: session.user.name ?? session.user.email ?? "",
         email: session.user.email ?? "",
       }}

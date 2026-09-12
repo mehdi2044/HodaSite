@@ -50,7 +50,7 @@ RUN apt-get update \
          > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-         postgresql-client-16 zstd jq zip unzip file python3 \
+         postgresql-client-16 zstd jq zip unzip file python3 util-linux \
     && rm -rf /var/lib/apt/lists/*
 # Use the same digest-verified upstream client as minio-init; dl.min.io now returns 410.
 COPY --from=minio-client /usr/bin/mc /usr/local/bin/mc
@@ -62,4 +62,4 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY prisma ./prisma
 COPY scripts ./scripts
-CMD ["sleep", "infinity"]
+CMD ["bash", "/app/scripts/ops/run.sh"]

@@ -5,6 +5,21 @@ import { auth } from "@/modules/auth";
 import { assertCan } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
+import { cookies } from "next/headers";
+/** Own display preference only; does not impersonate a user or grant access. */
+export async function setAdminLocale(form: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("UNAUTHENTICATED");
+  const locale = z.enum(["fa", "tr", "en"]).parse(form.get("locale"));
+  (await cookies()).set("hoda.admin.locale", locale, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 365 * 86400,
+  });
+  revalidatePath("/admin", "layout");
+}
 export async function revokeSession(form: FormData) {
   const session = await auth();
   if (!session) throw new Error("UNAUTHENTICATED");

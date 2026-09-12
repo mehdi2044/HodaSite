@@ -16,3 +16,4 @@ test-results
 
 public/invoice-fonts/
 tmp/pdfs/
+.deploy/

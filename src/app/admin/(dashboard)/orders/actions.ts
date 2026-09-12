@@ -12,6 +12,10 @@ import {
   extendOrderHold,
   CommerceError,
 } from "@/modules/orders";
+import {
+  scopedAdminOrder,
+  visibleOrderMarkets,
+} from "@/modules/orders/service";
 import { bankAccountSchema } from "@/modules/payments";
 const input = z.object({
   orderId: z.string().min(1),
@@ -49,8 +53,8 @@ export async function orderAction(form: FormData) {
       if (data.operation === "extend")
         await extendOrderHold(data.orderId, userId, data.hours);
       if (data.operation === "note" || data.operation === "address") {
-        const order = await db.order.findUniqueOrThrow({
-          where: { id: data.orderId },
+        const order = await scopedAdminOrder(userId, "order.edit", {
+          id: data.orderId,
         });
         await assertCan(userId, "order.edit", { marketId: order.marketId });
         await db.$transaction(async (tx) => {
@@ -195,6 +199,8 @@ export async function saveOrderViewAction(form: FormData) {
   try {
     const userId = (await auth())?.user?.id;
     if (!userId) return { error: "LOGIN_REQUIRED" };
+    if (!(await visibleOrderMarkets(userId)).length)
+      throw new ForbiddenError("order.view");
     const data = z
       .object({
         name: z.string().trim().min(1).max(60),

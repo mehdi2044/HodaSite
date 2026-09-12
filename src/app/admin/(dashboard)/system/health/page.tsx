@@ -2,7 +2,8 @@ import { getActiveRate } from "@/modules/pricing";
 import { statfs } from "node:fs/promises";
 import { requireAdminPage } from "@/modules/auth/page";
 import { db } from "@/lib/db";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
+import { offsiteHealthy, recentBackup } from "@/modules/health";
 export const dynamic = "force-dynamic";
 function bytes(value: bigint | number) {
   return `${(Number(value) / 1048576).toFixed(1)} MiB`;
@@ -10,29 +11,55 @@ function bytes(value: bigint | number) {
 export default async function Health() {
   await requireAdminPage("system.health.view");
   const t = await getTranslations("healthAdmin");
-  const [size, media, last, alerts, queued, failed, fx, migration, space] =
-    await Promise.all([
-      db.$queryRaw<
-        { bytes: bigint }[]
-      >`SELECT pg_database_size(current_database()) AS bytes`,
-      db.media.aggregate({ _sum: { bytes: true } }),
-      db.backup.findFirst({
-        where: { status: "DONE" },
-        orderBy: { finishedAt: "desc" },
-      }),
-      db.systemAlert.findMany({
-        where: { resolvedAt: null },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-      }),
-      db.job.count({ where: { status: "PENDING" } }),
-      db.job.count({ where: { status: "FAILED" } }),
-      db.market.findMany({ select: { id: true, code: true } }),
-      db.$queryRaw<
-        { migration_name: string; finished_at: Date }[]
-      >`SELECT migration_name,finished_at FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1`,
-      statfs(process.env.MEDIA_DIR ?? "/tmp").catch(() => null),
-    ]);
+  const locale = await getLocale();
+  const now = new Date();
+  const since = new Date(now.getTime() - 86400000);
+  const [
+    size,
+    media,
+    last,
+    alerts,
+    queued,
+    failed,
+    fx,
+    migration,
+    space,
+    failures24h,
+    opsFailures24h,
+    verified,
+  ] = await Promise.all([
+    db.$queryRaw<
+      { bytes: bigint }[]
+    >`SELECT pg_database_size(current_database()) AS bytes`,
+    db.media.aggregate({ _sum: { bytes: true } }),
+    db.backup.findFirst({
+      where: { status: "DONE" },
+      orderBy: { finishedAt: "desc" },
+    }),
+    db.systemAlert.findMany({
+      where: { resolvedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    db.job.count({ where: { status: "PENDING" } }),
+    db.job.count({ where: { status: "FAILED" } }),
+    db.market.findMany({ select: { id: true, code: true } }),
+    db.$queryRaw<
+      { migration_name: string; finished_at: Date }[]
+    >`SELECT migration_name,finished_at FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1`,
+    statfs(process.env.MEDIA_DIR ?? "/tmp").catch(() => null),
+    db.job.count({ where: { status: "FAILED", updatedAt: { gte: since } } }),
+    db.opsTask.count({
+      where: { status: "FAILED", finishedAt: { gte: since } },
+    }),
+    db.backup.findFirst({
+      where: {
+        verifiedAt: { not: null },
+        verifyResult: { path: ["ok"], equals: true },
+      },
+      orderBy: { verifiedAt: "desc" },
+    }),
+  ]);
   const rates = await Promise.all(
     fx.map(async (market) => ({
       code: market.code,
@@ -57,12 +84,20 @@ export default async function Health() {
           [t("storage"), process.env.STORAGE_PROVIDER ?? "local"],
           [t("queued"), String(queued)],
           [t("failed"), String(failed)],
+          [t("failures24h"), String(failures24h + opsFailures24h)],
           [
             t("email"),
             `${provider} · ${emailConfigured ? t("configured") : t("notConfigured")}`,
           ],
-          [t("backup"), last?.finishedAt?.toLocaleString("fa") ?? t("none")],
-          [t("verified"), last?.verifiedAt?.toLocaleString("fa") ?? t("none")],
+          [t("backup"), last?.finishedAt?.toLocaleString(locale) ?? t("none")],
+          [
+            t("verified"),
+            verified?.verifiedAt?.toLocaleString(locale) ?? t("none"),
+          ],
+          [
+            t("backupFreshness"),
+            recentBackup(last?.finishedAt, now) ? t("ok") : t("backupStale"),
+          ],
         ].map(([label, value]) => (
           <div className="card" key={label}>
             <h2 className="text-sm text-muted">{label}</h2>
@@ -76,11 +111,12 @@ export default async function Health() {
       <section className="card">
         <h2>{t("offsite")}</h2>
         <p
-          className={
-            last?.offsiteStatus === "OK" ? "text-success" : "text-error"
-          }
+          className={offsiteHealthy(last, now) ? "text-success" : "text-error"}
         >
-          {last?.offsiteStatus === "OK" ? t("ok") : t("offsiteMissing")}
+          {offsiteHealthy(last, now) ? t("ok") : t("offsiteStale")}
+        </p>
+        <p className="text-sm text-muted">
+          {last?.offsiteSyncedAt?.toLocaleString(locale) ?? t("none")}
         </p>
       </section>
       <section className="card grid gap-3">
@@ -88,7 +124,7 @@ export default async function Health() {
         {rates.map((m) => (
           <p key={m.code}>
             <bdi>{m.code}</bdi> ·{" "}
-            {m.rate?.at?.toLocaleString("fa") ?? t("none")}
+            {m.rate?.at?.toLocaleString(locale) ?? t("none")}
           </p>
         ))}
       </section>
@@ -105,9 +141,13 @@ export default async function Health() {
           alerts.map((a) => (
             <div key={a.id} className="border-t border-black/10 pt-3">
               <bdi>{a.code}</bdi> · <bdi>{a.severity}</bdi>
-              <p>{a.message}</p>
+              <p>
+                {a.code.startsWith("HEALTH_") && t.has(a.message)
+                  ? t(a.message)
+                  : a.message}
+              </p>
               <time className="text-sm text-muted">
-                {a.createdAt.toLocaleString("fa")}
+                {a.createdAt.toLocaleString(locale)}
               </time>
             </div>
           ))

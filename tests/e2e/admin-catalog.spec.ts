@@ -36,6 +36,7 @@ test("admin catalog lists products and opens the complete editor", async ({
 });
 
 test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   await page.goto("/admin/catalog/taxonomy");
   for (const heading of [
@@ -47,6 +48,11 @@ test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
     "راهنمای سایز",
   ])
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   await page.getByRole("link", { name: "ویرایش" }).first().click();
   await expect(page).toHaveURL(/editKind=brand/);
   const editForm = page

@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
+bash "$(dirname "$0")/maintenance.sh"
+bash "$(dirname "$0")/restore-handshake.sh"
+bash "$(dirname "$0")/../../deploy/tests/run.sh"
 source "$(dirname "$0")/../lib.sh"
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 [[ "$(sanitize_label '../hello world')" == '.._hello_world' ]]
@@ -27,3 +30,6 @@ mc(){ return 1; }
 ! publish_s3_media "$T/tar"
 [[ "$(s3_active_prefix)" == '_hoda_restore/12345678-1234-1234-1234-123456789abc/' ]]
 echo 'S3 generation guard tests: OK'
+
+node --test "$(dirname "$0")/../../ops/retention.test.mjs"
+node --test "$(dirname "$0")/../../ops/review.test.mjs"

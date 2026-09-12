@@ -349,9 +349,9 @@ async function Rows({
               <bdi dir="ltr">{row.code}</bdi>
             </TD>
             <TD>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <a
-                  className="button"
+                  className="button inline-flex items-center justify-center whitespace-nowrap"
                   href={`/admin/catalog/taxonomy?editKind=${kind}&editId=${row.id}`}
                 >
                   {t("edit")}

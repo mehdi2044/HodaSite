@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { requireAdminPage } from "@/modules/auth/page";
 import { PERMISSIONS } from "@/modules/access";
@@ -20,6 +21,9 @@ export default async function RolesPage() {
   return (
     <div className="grid gap-5">
       <h1>{t("roles")}</h1>
+      <Link className="button" href="/admin/security/roles/preview">
+        {t("previewTitle")}
+      </Link>
       <p>{t("roleHint")}</p>
       {[
         ...roles,
