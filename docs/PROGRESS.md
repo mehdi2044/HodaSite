@@ -15,7 +15,7 @@
 | 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 05b | Mobile Storefront / Installable PWA         | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
-| 06  | Finance Core                               | 🟡 محاسبات پایه ادغام شد؛ گزارش تراکنش‌ها پیاده‌سازی شد، دفتر کل و سود باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20) |
+| 06  | Finance Core                               | 🟡 محاسبات پایه ادغام شد؛ گزارش تراکنش‌ها پیاده‌سازی شد، دفتر کل و سود باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20)، [#27](https://github.com/mehdi2044/HodaSite/pull/27) |
 | 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
@@ -635,3 +635,5 @@ Read-only role preview now displays each permission for an assigned versus reque
 - باقی فاز ۶: اتصال ثبت‌های متوازن دفتر کل، خرید/هزینهٔ تمام‌شده/COGS، هزینه‌ها، سرمایهٔ شرکا، سود و هشدارها، سایر گزارش‌ها و XLSX. این تحویل به معنی اتمام فاز ۶ نیست. خرید زیرساخت و نصب واقعی طبق D51 پیش از انتشار انجام می‌شود؛ پیش‌نیاز محیطی آن‌ها حذف نشده است.
 
 - Credit-report basis clarification: return/exchange credits come from `StoreCredit.amount` at `createdAt`, linked through the source return to its original market. A credit-method Refund and its issued StoreCredit count once; direct return credit and exchange credit without a Refund are included. Mutable credit balance and unrelated credits are not substituted. PostgreSQL fixtures verify all three paths and spent balances.
+
+- CI run `34697121424` verified all 6,824 unit/PostgreSQL tests and 85 existing browser tests. All three new accountant flows reached and verified the report, daily rows, exact CSV, market denial and invalid date screen; their final alert assertion also matched Next's route announcer. The assertion is now scoped to the actual report alert, preserving the invalid-date check. Actual fa/tr/en mobile screenshots were inspected; CSV link alignment was centered, and amount-card screenshots added. Final latest-head CI evidence remains on PR #27.

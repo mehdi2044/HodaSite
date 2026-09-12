@@ -1058,3 +1058,9 @@ html[lang="fa"] body,
   margin-block: 0.75rem;
   line-height: 1.8;
 }
+
+.finance-page a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

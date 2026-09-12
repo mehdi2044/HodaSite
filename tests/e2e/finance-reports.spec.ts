@@ -93,6 +93,8 @@ for (const locale of ["fa", "tr", "en"] as const) {
       );
       await panel.scrollIntoViewIfNeeded();
       await shoppingProof(page, info, `finance-${locale}`);
+      await row.locator(".finance-metrics").scrollIntoViewIfNeeded();
+      await shoppingProof(page, info, `finance-metrics-${locale}`);
       await row.locator("summary").click();
       await expect(row.locator("tbody tr")).toHaveCount(1);
       expect(
@@ -121,7 +123,9 @@ for (const locale of ["fa", "tr", "en"] as const) {
       ).toBe(404);
       await expect(page.getByTestId("finance-report")).toHaveCount(0);
       await page.goto(`/admin/finance?from=${day}&to=2001-01-01`);
-      await expect(page.getByRole("alert")).toHaveText(t.invalid);
+      await expect(
+        page.getByTestId("finance-report").getByRole("alert"),
+      ).toHaveText(t.invalid);
       await expect(
         page
           .getByTestId("finance-report")
