@@ -107,7 +107,22 @@ async function processTask(task) {
   if(task.type==='RESTORE' && status==='DONE') await recover();
   if(status==='FAILED') await db.systemAlert.create({data:{severity:'CRITICAL',code:'BACKUP_OPERATION_FAILED',message:`Backup operation ${task.type} failed (${task.id})`}});
 }
+async function reconcileBackupCatalog() {
+  for(const entry of await readdir(root,{withFileTypes:true})) {
+    if(!entry.isDirectory() || !key.test(entry.name)) continue;
+    if(await db.backup.findFirst({where:{fileKey:entry.name}})) continue;
+    const directory=path.join(root,entry.name);
+    const manifest=await readFile(path.join(directory,'manifest.json'),'utf8').then(JSON.parse).catch(()=>null);
+    if(!manifest || manifest.projectId!==process.env.PROJECT_ID || !['manual','scheduled','safety'].includes(manifest.kind)) continue;
+    const names=['db.dump','manifest.json','checksums.sha256',...(manifest.withMedia?['media.tar.zst']:[])];
+    const files=await Promise.all(names.map(n=>stat(path.join(directory,n)).catch(()=>null)));
+    if(files.some(f=>!f?.isFile())) continue;
+    const bytes=files.reduce((n,f)=>n+BigInt(f.size),0n);
+    await db.backup.create({data:{kind:manifest.kind,status:'DONE',fileKey:entry.name,sizeBytes:bytes,mediaIncluded:Boolean(manifest.withMedia),offsiteStatus:process.env.BACKUP_OFFSITE_ENDPOINT?'PENDING':'NOT_CONFIGURED',createdAt:new Date(manifest.createdAt),finishedAt:new Date(manifest.createdAt)}});
+  }
+}
 async function recover() {
+  await reconcileBackupCatalog();
   for(const name of await readdir(journal)) {
     if(!/^[0-9a-f-]+\.json$/i.test(name)) continue;
     const task=JSON.parse(await readFile(path.join(journal,name),'utf8'));

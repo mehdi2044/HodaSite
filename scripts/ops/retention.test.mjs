@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { backupLabel } from './contracts.mjs';
 import { execFileSync } from 'node:child_process';
 import { test } from 'node:test';
@@ -11,6 +12,6 @@ test('retention keeps separate daily/week/month buckets and never selects manual
 test('panel task labels preserve UUID uniqueness within the backup CLI 40-character contract',()=>{
  const id='12345678-1234-1234-1234-123456789abc';
  const label=backupLabel(id);
- assert.equal(execFileSync('bash',['-c','source scripts/backup/lib.sh; sanitize_label "$1"','label-test',label],{encoding:'utf8'}).trimEnd(),label);
+ assert.equal(execFileSync('bash',['-c','source scripts/backup/lib.sh; sanitize_label "$1"','label-test',label],{encoding:'utf8',cwd:fileURLToPath(new URL('../../',import.meta.url))}).trimEnd(),label);
  assert.equal(label.length,38);assert.match(label,/^[a-z0-9-]+$/);
 });
