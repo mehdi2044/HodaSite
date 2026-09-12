@@ -82,6 +82,7 @@ const tables = [
   "Job",
   "AuditLog",
 ];
+let existingJobIds: string[] | undefined;
 let subjects: MatrixSubject[] = [],
   setupOwner = "",
   forgedMarketId = "";
@@ -91,6 +92,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
   () => {
     beforeAll(async () => {
       vi.stubGlobal("React", React);
+      existingJobIds = (await db.job.findMany({ select: { id: true } })).map(
+        (job) => job.id,
+      );
       subjects = await matrixSubjects(false);
       setupOwner = (await shippingActor(db)).id;
       forgedMarketId = (
@@ -99,6 +103,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     }, 60000);
     afterAll(async () => {
       acting.userId = null;
+      // Assertions above verify enqueued work. Retire only this serial suite's
+      // queue fixtures so subsequent worker/browser tests do not inherit them.
+      // Job is ephemeral; financial records and immutable audit remain intact.
+      if (existingJobIds)
+        await db.job.deleteMany({ where: { id: { notIn: existingJobIds } } });
       await db.marketBankAccount.updateMany({
         where: { bankName: "Matrix", label: "Matrix bank" },
         data: { isActive: false },
