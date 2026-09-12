@@ -5,8 +5,8 @@ import { Prisma, type OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { currentCustomer } from "@/modules/customers";
-import { equalSecret, tokenHash } from "@/lib/secure-tokens";
-import { assertCan, can } from "@/modules/access";
+import { tokenHash } from "@/lib/secure-tokens";
+import { assertCan, can, ForbiddenError } from "@/modules/access";
 import {
   verifyOrderInventory,
   consumeOrderInventory,
@@ -27,20 +27,46 @@ export const orderInclude = {
   market: true,
 } satisfies Prisma.OrderInclude;
 export async function authorizedOrder(number: string) {
-  const order = await db.order.findUnique({
-    where: { number },
-    include: orderInclude,
-  });
-  if (!order) throw new CommerceError("NOT_FOUND");
   const customer = await currentCustomer(),
     jar = await cookies();
   const token =
     jar.get(`hoda.order.${number}`)?.value ?? jar.get("hoda.cart")?.value;
-  if (
-    customer?.id !== order.customerId &&
-    (!token || !equalSecret(tokenHash(token), order.guestTokenHash))
-  )
-    throw new CommerceError("NOT_FOUND");
+  const access: Prisma.OrderWhereInput[] = [];
+  if (customer?.id) access.push({ customerId: customer.id });
+  if (token) access.push({ guestTokenHash: tokenHash(token) });
+  if (!access.length) throw new CommerceError("NOT_FOUND");
+  const order = await db.order.findFirst({
+    where: { number, OR: access },
+    include: orderInclude,
+  });
+  if (!order) throw new CommerceError("NOT_FOUND");
+  return order;
+}
+export async function visibleOrderMarkets(
+  userId: string,
+  permission = "order.view",
+) {
+  const markets = await db.market.findMany({ select: { id: true } }),
+    ids: string[] = [];
+  for (const market of markets)
+    if (await can(userId, permission, { marketId: market.id }))
+      ids.push(market.id);
+  return ids;
+}
+/** Uniform denial for absent and outside-scope IDs; first order query is scoped. */
+export async function scopedAdminOrder(
+  userId: string,
+  permission: string,
+  where: { id: string } | { number: string },
+) {
+  const ids = await visibleOrderMarkets(userId, permission);
+  if (!ids.length) throw new ForbiddenError(permission);
+  const order = await db.order.findFirst({
+    where: { ...where, marketId: { in: ids } },
+    include: orderInclude,
+  });
+  if (!order) throw new ForbiddenError(permission);
+  await assertCan(userId, permission, { marketId: order.marketId });
   return order;
 }
 export async function adminOrder(
@@ -48,21 +74,7 @@ export async function adminOrder(
   userId: string,
   permission = "order.view",
 ) {
-  const order = await db.order.findUnique({
-    where: { number },
-    include: orderInclude,
-  });
-  if (!order) throw new CommerceError("NOT_FOUND");
-  await assertCan(userId, permission, { marketId: order.marketId });
-  return order;
-}
-export async function visibleOrderMarkets(userId: string) {
-  const markets = await db.market.findMany({ select: { id: true } }),
-    ids: string[] = [];
-  for (const market of markets)
-    if (await can(userId, "order.view", { marketId: market.id }))
-      ids.push(market.id);
-  return ids;
+  return scopedAdminOrder(userId, permission, { number });
 }
 export async function lockOrder(tx: Prisma.TransactionClient, id: string) {
   await tx.$queryRaw`SELECT id FROM "Order" WHERE id=${id} FOR UPDATE`;
@@ -118,11 +130,10 @@ export async function approvePayment(
   userId: string,
   cash = false,
 ) {
-  const target = await db.order.findUniqueOrThrow({ where: { id: orderId } });
-  await assertCan(
+  await scopedAdminOrder(
     userId,
     cash ? "payment.mark_paid" : "payment.receipt.approve",
-    { marketId: target.marketId },
+    { id: orderId },
   );
   return db.$transaction(
     async (tx) => {
@@ -213,10 +224,7 @@ export async function rejectPayment(
   reason: string,
 ) {
   if (!reason.trim()) throw new CommerceError("REASON_REQUIRED");
-  const target = await db.order.findUniqueOrThrow({ where: { id: orderId } });
-  await assertCan(userId, "payment.receipt.approve", {
-    marketId: target.marketId,
-  });
+  await scopedAdminOrder(userId, "payment.receipt.approve", { id: orderId });
   await db.$transaction(async (tx) => {
     const order = await lockOrder(tx, orderId),
       payment = order.payments.find((p) => p.status === "SUBMITTED");
@@ -255,9 +263,7 @@ export async function cancelOrder(
   userId?: string,
   now = new Date(),
 ) {
-  const target = await db.order.findUniqueOrThrow({ where: { id: orderId } });
-  if (userId)
-    await assertCan(userId, "order.cancel", { marketId: target.marketId });
+  if (userId) await scopedAdminOrder(userId, "order.cancel", { id: orderId });
   await db.$transaction(async (tx) => {
     const order = await lockOrder(tx, orderId);
     if (order.status === "CANCELLED") return;
@@ -306,8 +312,7 @@ export async function extendOrderHold(
   userId: string,
   hours: number,
 ) {
-  const target = await db.order.findUniqueOrThrow({ where: { id: orderId } });
-  await assertCan(userId, "order.edit", { marketId: target.marketId });
+  await scopedAdminOrder(userId, "order.edit", { id: orderId });
   if (!Number.isInteger(hours) || hours < 1 || hours > 168)
     throw new CommerceError("INVALID_QUANTITY");
   await db.$transaction(async (tx) => {
