@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { storefrontHref } from "@/modules/content/storefront-links";
 import { db } from "@/lib/db";
-import { ResponsiveImage } from "./responsive-image";
+import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import { localizedValue, type HomepageBlock } from "@/modules/content/homepage";
 import { listCatalogProducts } from "@/modules/catalog";
 import { ProductCard } from "./product-card";
@@ -22,6 +24,7 @@ export async function HomepageBlocks({
     roundingRule: unknown;
   };
 }) {
+  const t = await getTranslations("shopping");
   const mediaIds = [
     ...new Set(
       blocks.flatMap((block) =>
@@ -58,7 +61,7 @@ export async function HomepageBlocks({
       ),
     ),
     db.category.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null, parentId: null },
       orderBy: { sortOrder: "asc" },
       take: 12,
       include: { media: true },
@@ -75,18 +78,24 @@ export async function HomepageBlocks({
           return (
             <section
               key={index}
-              className={`shop-hero ${image ? "shop-hero-with-image" : "shop-hero-text"}`}
+              className={`shop-hero ${image ? "shop-hero-with-image" : "shop-hero-text"} ${block.type === "Hero" ? "shop-editorial-hero" : ""}`}
+              data-testid={
+                block.type === "Hero" ? "storefront-hero" : undefined
+              }
             >
               {image && (
                 <ResponsiveImage
                   media={image}
                   locale={locale}
-                  sizes="100vw"
+                  sizes="(min-width:1024px) 50vw, 100vw"
                   priority={index === 0}
                   className="shop-hero-image"
                 />
               )}
               <div className="shell shop-hero-content">
+                {isDemoFashionMedia(image) && (
+                  <p className="shop-eyebrow">{t("collectionPreview")}</p>
+                )}
                 {block.type === "Hero" && index === 0 ? (
                   <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-7xl">
                     {localizedValue(block.title, locale)}
@@ -102,10 +111,13 @@ export async function HomepageBlocks({
                 {block.ctaUrl && localizedValue(block.ctaLabel, locale) && (
                   <Link
                     className="button mt-7 inline-flex w-fit items-center font-semibold shadow-lg"
-                    href={block.ctaUrl}
+                    href={storefrontHref(block.ctaUrl, locale)}
                   >
                     {localizedValue(block.ctaLabel, locale)}
                   </Link>
+                )}
+                {isDemoFashionMedia(image) && (
+                  <span className="shop-demo-caption">{t("demoImage")}</span>
                 )}
               </div>
             </section>
@@ -113,11 +125,29 @@ export async function HomepageBlocks({
         }
         if (block.type === "ProductStrip")
           return (
-            <section key={index} className="shell shop-home-section">
-              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {localizedValue(block.title, locale)}
-              </h2>
-              <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <section
+              key={index}
+              className="shell shop-home-section"
+              data-testid="home-product-strip"
+            >
+              <div className="shop-section-heading">
+                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                  {localizedValue(block.title, locale)}
+                </h2>
+                {block.source.mode === "latest" && (
+                  <Link
+                    className="shop-section-link"
+                    href={`/${locale}/search`}
+                  >
+                    {t("viewAll")}
+                    <span aria-hidden="true">↗</span>
+                  </Link>
+                )}
+              </div>
+              {!productRows[index]?.items.length && (
+                <p className="shop-inline-empty">{t("emptyCollection")}</p>
+              )}
+              <div className="shop-product-rail">
                 {productRows[index]?.items
                   .slice(0, block.source.limit)
                   .map((product) => (
@@ -133,27 +163,36 @@ export async function HomepageBlocks({
           );
         if (block.type === "CategoryCards")
           return (
-            <section key={index} className="shell shop-home-section">
+            <section
+              key={index}
+              className="shell shop-home-section shop-category-section"
+              data-testid="home-categories"
+            >
               <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {localizedValue(block.title, locale)}
               </h2>
-              <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+              {!categories.length && (
+                <p className="shop-inline-empty">{t("emptyCategories")}</p>
+              )}
+              <div className="shop-category-grid">
                 {categories.slice(0, block.source.limit).map((category) => (
                   <Link
                     key={category.id}
                     href={`/${locale}/c/${encodeURIComponent(localizedValue(category.slugI18n as Record<Locale, string>, locale))}`}
                     className="shop-category-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
                   >
-                    {category.media && (
-                      <ResponsiveImage
-                        media={category.media}
-                        locale={locale}
-                        sizes="(max-width:640px) 50vw,25vw"
-                        className="aspect-[4/5] overflow-hidden bg-black/5"
-                        imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                      />
-                    )}
-                    <h3 className="p-4 text-lg font-semibold">
+                    {category.media &&
+                      category.media.status === "READY" &&
+                      !category.media.deletedAt && (
+                        <ResponsiveImage
+                          media={category.media}
+                          locale={locale}
+                          sizes="(max-width:640px) 25vw,25vw"
+                          className="shop-category-image"
+                          imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      )}
+                    <h3 className="shop-category-name">
                       {localizedValue(
                         category.titleI18n as Record<Locale, string>,
                         locale,

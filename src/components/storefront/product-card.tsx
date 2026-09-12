@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { LinkPending } from "./link-pending";
-import { ResponsiveImage } from "./responsive-image";
+import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import {
   catalogText,
   formatCatalogCurrency,
@@ -17,6 +17,7 @@ type CardProduct = {
   compareAtPriceAmount: { toString(): string } | null;
   variants: Array<{
     id: string;
+    color?: { hex: string; nameI18n: unknown };
     priceOverrideUsd: { toString(): string } | null;
   }>;
   media: Array<{ media: Parameters<typeof ResponsiveImage>[0]["media"] }>;
@@ -48,10 +49,17 @@ export async function ProductCard({
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
   const image = product.media[0]?.media;
+  const colors = [
+    ...new Map(
+      product.variants.flatMap((v) =>
+        v.color ? [[v.color.hex, v.color] as const] : [],
+      ),
+    ).values(),
+  ];
   return (
     <article className="shop-product-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
       <Link href={`/${locale}/p/${encodeURIComponent(slug)}`} className="block">
-        <div className="aspect-[3/4] overflow-hidden bg-black/5">
+        <div className="shop-card-image aspect-[3/4] overflow-hidden bg-black/5">
           {image ? (
             <ResponsiveImage
               media={image}
@@ -65,8 +73,16 @@ export async function ProductCard({
               {t("noImage")}
             </div>
           )}
+          {isDemoFashionMedia(image) && (
+            <span className="shop-demo-badge">{t("demoImage")}</span>
+          )}
         </div>
         <div className="p-4">
+          <div className="shop-card-colors" aria-hidden="true">
+            {colors.slice(0, 5).map((color) => (
+              <span key={color.hex} style={{ background: color.hex }} />
+            ))}
+          </div>
           <h3 className="font-medium">{title}</h3>
           <p className="mt-2 text-sm font-semibold" dir="ltr">
             {formatCatalogCurrency(price.amount, currency, locale)}

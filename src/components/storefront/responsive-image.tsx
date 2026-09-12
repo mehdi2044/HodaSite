@@ -1,6 +1,7 @@
 import type { MediaVariants } from "@/modules/media/constants";
 
 export type ResponsiveImageMedia = {
+  originalName?: string;
   url: string;
   variants: unknown;
   width: number | null;
@@ -8,6 +9,13 @@ export type ResponsiveImageMedia = {
   blurDataUrl: string | null;
   altI18n: unknown;
 };
+
+/** Seed artwork is visibly disclosed and never presented as exact merchandise. */
+export function isDemoFashionMedia(media?: ResponsiveImageMedia) {
+  return /^demo-fashion-v1-(coat|shirt|kids|bag)\.webp$/.test(
+    media?.originalName ?? "",
+  );
+}
 
 function srcSet(byWidth: MediaVariants[keyof MediaVariants]): string {
   return Object.entries(byWidth ?? {})

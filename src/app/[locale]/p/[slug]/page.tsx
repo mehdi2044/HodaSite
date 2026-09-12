@@ -196,7 +196,7 @@ export default async function ProductPage({
         }}
       />
       <nav
-        className="mb-7 flex flex-wrap gap-2 text-sm text-muted"
+        className="shop-breadcrumbs mb-7 flex flex-wrap gap-2 text-sm text-muted"
         aria-label={t("breadcrumbs")}
       >
         <Link href={`/${safe}`}>{t("home")}</Link>
@@ -209,7 +209,7 @@ export default async function ProductPage({
         <span>/</span>
         <span>{catalogText(product.titleI18n, safe)}</span>
       </nav>
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="shop-product-layout grid gap-10 lg:grid-cols-2">
         <ProductGallery
           base={product.media.map((item) => ({
             id: item.id,
@@ -224,8 +224,8 @@ export default async function ProductPage({
           }))}
           locale={safe}
         />
-        <section>
-          <p className="text-sm text-muted">
+        <section className="shop-product-information">
+          <p className="shop-eyebrow text-sm text-muted">
             {product.brand ? catalogText(product.brand.nameI18n, safe) : ""}
           </p>
           <h1 className="shop-product-title mt-2 text-4xl font-semibold">

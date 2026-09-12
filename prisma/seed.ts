@@ -1,8 +1,10 @@
+import { legacyHomepageBlocks } from "./demo-homepage";
+import { seedFashionStorefront } from "./fashion-seed";
 import { seedShipping } from "./shipping-seed";
 import { PrismaClient, FxMode } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
@@ -25,6 +27,17 @@ async function putLocalMediaFile(key: string, data: Buffer): Promise<string> {
 async function putMediaFile(key: string, data: Buffer): Promise<string> {
   if (process.env.STORAGE_PROVIDER !== "s3")
     return putLocalMediaFile(key, data);
+  // Mirror the generation-pointer contract in storage/prefix.ts; seed also runs in ops without src.
+  let prefix = "";
+  try {
+    prefix = (
+      await readFile(process.env.S3_PREFIX_FILE ?? "/data/s3-prefix", "utf8")
+    ).trim();
+    if (prefix && !/^_hoda_restore\/[a-f0-9-]{36}\/$/.test(prefix))
+      throw new Error("Invalid S3 generation pointer");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
   const client = new S3Client({
     endpoint: process.env.S3_ENDPOINT,
     region: process.env.S3_REGION ?? "us-east-1",
@@ -37,9 +50,9 @@ async function putMediaFile(key: string, data: Buffer): Promise<string> {
   await client.send(
     new PutObjectCommand({
       Bucket: process.env.S3_BUCKET ?? "media",
-      Key: key,
+      Key: prefix + key,
       Body: data,
-      ContentType: "image/jpeg",
+      ContentType: key.endsWith(".webp") ? "image/webp" : "image/jpeg",
     }),
   );
   return `/media/${key}`;
@@ -341,6 +354,7 @@ async function main() {
 
   await seedDemoMedia();
   await seedCatalog();
+  await seedFashionStorefront(db, putMediaFile);
   await seedPhase03(user.id);
   await seedPhase04();
 }
@@ -476,40 +490,7 @@ async function seedContent() {
     update: {},
     create: {
       id: "seed-homepage-global",
-      blocks: [
-        {
-          type: "Hero",
-          title: {
-            fa: "سبک خودت را پیدا کن",
-            tr: "Tarzını keşfet",
-            en: "Find your style",
-          },
-          body: {
-            fa: "انتخاب‌های آرام و ماندگار",
-            tr: "Sade ve kalıcı seçimler",
-            en: "Quiet, enduring choices",
-          },
-          ctaLabel: { fa: "مشاهده", tr: "Keşfet", en: "Explore" },
-          ctaUrl: "/",
-        },
-        {
-          type: "CategoryCards",
-          title: { fa: "دسته‌بندی‌ها", tr: "Kategoriler", en: "Categories" },
-          source: { mode: "category", limit: 4 },
-        },
-        {
-          type: "ProductStrip",
-          title: { fa: "تازه‌ها", tr: "Yeni gelenler", en: "New arrivals" },
-          source: { mode: "latest", limit: 4 },
-        },
-        {
-          type: "TrustBar",
-          items: [
-            { fa: "خرید امن", tr: "Güvenli alışveriş", en: "Secure shopping" },
-            { fa: "پشتیبانی شفاف", tr: "Şeffaf destek", en: "Clear support" },
-          ],
-        },
-      ],
+      blocks: legacyHomepageBlocks,
     },
   });
 
@@ -958,7 +939,10 @@ async function seedCatalog() {
         },
       });
     }
-    if (media.length) {
+    if (
+      media.length &&
+      !(await db.productMedia.count({ where: { productId: product.id } }))
+    ) {
       const item = media[(index - 1) % media.length];
       await db.productMedia.upsert({
         where: {
