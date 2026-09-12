@@ -190,8 +190,15 @@ export async function bankAccountAction(form: FormData) {
     );
     revalidatePath("/admin/payments/banks");
     return { ok: true };
-  } catch {
-    return { error: "REQUEST_FAILED" };
+  } catch (error) {
+    return {
+      error:
+        error instanceof ForbiddenError
+          ? "FORBIDDEN"
+          : error instanceof CommerceError
+            ? error.code
+            : "REQUEST_FAILED",
+    };
   }
 }
 

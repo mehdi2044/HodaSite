@@ -68,6 +68,7 @@ const call = (
   values: Record<string, string | string[]>,
   forged: boolean,
 ) => action(null, form(values, forged));
+let snapshotsReady = false;
 let subjects: MatrixSubject[] = [],
   marketId = "",
   productId = "",
@@ -173,7 +174,7 @@ const rows: Row[] = [
     run: (f) =>
       call(
         saveUiTranslation,
-        { locale: "en", key: "common.save", value: "Save" },
+        { locale: "en", key: "catalogAdmin.save", value: "Save" },
         f,
       ),
   },
@@ -233,7 +234,16 @@ const rows: Row[] = [
     permission: "fees.manage",
     run: (f) => call(toggleFeeRule, { id: feeId }, f),
   },
-  { permission: "users.manage", run: () => setUserActive(targetUserId, true) },
+  {
+    permission: "users.manage",
+    prepare: async () => {
+      await db.user.update({
+        where: { id: targetUserId },
+        data: { isActive: false },
+      });
+    },
+    run: () => setUserActive(targetUserId, true),
+  },
   {
     permission: "security.role.manage",
     run: (f) =>
@@ -441,13 +451,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         where: {
           entityType: "ui",
           entityId: "global",
-          field: "common.save",
+          field: "catalogAdmin.save",
           locale: "en",
         },
       });
+      snapshotsReady = true;
     }, 60000);
     afterAll(async () => {
       acting.userId = null;
+      if (!snapshotsReady) return;
       if (menuId)
         await db.menuItem.deleteMany({
           where: {
@@ -506,7 +518,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: {
             entityType: "ui",
             entityId: "global",
-            field: "common.save",
+            field: "catalogAdmin.save",
             locale: "en",
           },
         });

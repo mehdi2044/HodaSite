@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { seal } from "@/lib/secure-tokens";
 import contract from "../fixtures/phase05-permission-contract.json";
+export let forgedOwnerId = "";
 export const MATRIX_SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
 export const MATRIX_PASSWORD = "MatrixTest123!";
 export const SUBJECTS = [
@@ -29,6 +30,12 @@ export function granted(name: string, permission: string) {
   return grants.includes("*") || grants.includes(permission);
 }
 export async function matrixSubjects(global = true) {
+  forgedOwnerId = (
+    await db.user.findUniqueOrThrow({
+      where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
+      select: { id: true },
+    })
+  ).id;
   const tr = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
   const category = await db.category.findFirstOrThrow();
   const hash = await bcrypt.hash(MATRIX_PASSWORD, 4);
@@ -84,8 +91,8 @@ export function form(
       f.append(key, item);
   if (forged)
     for (const [key, value] of Object.entries({
-      userId: "seed-owner",
-      actorId: "seed-owner",
+      userId: forgedOwnerId,
+      actorId: forgedOwnerId,
       permission: "*",
       role: "owner",
       scope: "{}",

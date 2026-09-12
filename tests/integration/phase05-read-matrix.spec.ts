@@ -14,6 +14,7 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
 }));
 import {
+  forgedOwnerId,
   SUBJECTS,
   GLOBAL_SCOPES,
   granted,
@@ -43,7 +44,7 @@ const query = (forged: boolean) => ({
   searchParams: Promise.resolve(
     forged
       ? {
-          userId: "seed-owner",
+          userId: forgedOwnerId,
           permission: "*",
           scope: "{}",
           market: "IR",

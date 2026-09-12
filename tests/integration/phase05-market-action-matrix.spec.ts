@@ -15,6 +15,7 @@ vi.mock("next-intl/server", () => ({
 }));
 import { db } from "@/lib/db";
 import {
+  forgedOwnerId,
   SUBJECTS,
   granted,
   matrixSubjects,
@@ -42,6 +43,8 @@ import {
 import { manageReturnAction } from "@/app/admin/(dashboard)/returns/actions";
 import { requestReturn, manageReturn } from "@/modules/returns/service";
 import { GET as downloadInvoice } from "@/app/api/orders/[number]/invoices/[id]/route";
+import { queueInvoice } from "@/modules/orders/invoices/queue";
+import { invoiceWorker } from "@/modules/orders/invoices/worker";
 import { storage } from "@/modules/integrations/storage";
 const permissions = [
   "markets.edit",
@@ -80,7 +83,8 @@ const tables = [
   "AuditLog",
 ];
 let subjects: MatrixSubject[] = [],
-  setupOwner = "";
+  setupOwner = "",
+  forgedMarketId = "";
 const invoiceBytes = Buffer.from("%PDF-1.4\nPrivate permission fixture\n%%EOF");
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "V-4 market operations × real subjects × TR/IR × UI/direct forged payload",
@@ -89,9 +93,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       vi.stubGlobal("React", React);
       subjects = await matrixSubjects(false);
       setupOwner = (await shippingActor(db)).id;
+      forgedMarketId = (
+        await db.market.findUniqueOrThrow({ where: { code: "TR" } })
+      ).id;
     }, 60000);
-    afterAll(() => {
+    afterAll(async () => {
       acting.userId = null;
+      await db.marketBankAccount.updateMany({
+        where: { bankName: "Matrix", label: "Matrix bank" },
+        data: { isActive: false },
+      });
     });
     for (const permission of permissions)
       for (const name of SUBJECTS)
@@ -151,7 +162,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                         orderId: f.order.id,
                         operation: "create",
                         [`qty:${f.order.items[0].id}`]: "1",
-                        marketId: subjects[0].id ?? "forged",
+                        marketId: forgedMarketId,
                       },
                       direct,
                     ),
@@ -171,32 +182,23 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                       });
               } else if (permission === "order.invoice.view") {
                 const f = await shippingFixture(db, code);
-                const key = `invoices/matrix-${randomUUID()}.pdf`;
-                await storage.put(key, invoiceBytes, "application/pdf");
-                const media = await db.media.create({
-                  data: {
-                    kind: "invoice",
-                    storageKey: key,
-                    originalName: "matrix.pdf",
-                    url: "",
-                    bytes: invoiceBytes.length,
-                    mime: "application/pdf",
-                    status: "READY",
+                const invoice = await db.$transaction((tx) =>
+                  queueInvoice(tx, f.order.id),
+                );
+                await invoiceWorker(
+                  {
+                    id: randomUUID(),
+                    type: "invoice-generate",
+                    payload: { invoiceId: invoice.id },
+                    attempts: 0,
                   },
-                });
-                const invoice = await db.invoice.create({
-                  data: {
-                    orderId: f.order.id,
-                    version: 1,
-                    snapshot: {},
-                    status: "READY",
-                    mediaId: media.id,
-                  },
-                });
+                  storage,
+                  async () => invoiceBytes,
+                );
                 run = async () => {
                   const response = await downloadInvoice(
                     new Request(
-                      `http://localhost/api/orders/${f.order.number}/invoices/${invoice.id}${direct ? "?userId=seed-owner&permission=*" : ""}`,
+                      `http://localhost/api/orders/${f.order.number}/invoices/${invoice.id}${direct ? `?userId=${forgedOwnerId}&permission=*` : ""}`,
                     ),
                     {
                       params: Promise.resolve({
@@ -258,7 +260,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                             ? "REFUND"
                             : "APPROVE",
                         note: "Matrix refund verification",
-                        marketId: "forged-market",
+                        marketId: forgedMarketId,
                       },
                       direct,
                     ),
@@ -300,7 +302,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                         orderId: f.order.id,
                         operation,
                         reason: "Matrix note",
-                        marketId: "forged-market",
+                        marketId: forgedMarketId,
                       },
                       direct,
                     ),
