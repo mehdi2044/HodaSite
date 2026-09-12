@@ -53,6 +53,7 @@ describe("backup command boundary", () => {
     const base = {
       enabled: true,
       hourUtc: 3,
+      minuteUtc: 30,
       includeMedia: true,
       keepDaily: 7,
       keepWeekly: 4,
@@ -62,6 +63,8 @@ describe("backup command boundary", () => {
     expect(backupSettingsSchema.safeParse(base).success).toBe(true);
     for (const patch of [
       { hourUtc: 24 },
+      { minuteUtc: 60 },
+      { minuteUtc: -1 },
       { keepDaily: 0 },
       { verifyWeekday: 7 },
     ])
@@ -69,4 +72,23 @@ describe("backup command boundary", () => {
         backupSettingsSchema.safeParse({ ...base, ...patch }).success,
       ).toBe(false);
   });
+});
+
+it("provides translated validation reasons in all supported languages", async () => {
+  for (const locale of ["fa", "tr", "en"]) {
+    const { default: messages } = await import(`../../messages/${locale}.json`);
+    for (const code of [
+      "VALIDATION_FAILED",
+      "ARCHIVE_INVALID",
+      "ARCHIVE_MEMBERS",
+      "ARCHIVE_PROJECT",
+      "ARCHIVE_CHECKSUM",
+      "ARCHIVE_MIGRATIONS",
+      "ARCHIVE_RESTORE",
+    ]) {
+      expect(messages.backups[code], `${locale}:${code}`).toEqual(
+        expect.any(String),
+      );
+    }
+  }
 });

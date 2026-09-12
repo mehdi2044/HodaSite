@@ -3,10 +3,10 @@
 set -euo pipefail
 source "$(dirname "$0")/../backup/lib.sh"
 SRC=${1:?}; DEST=${2:?}
-check_zip_archive "$SRC" "${RESTORE_MAX_FILES:-200000}" "${RESTORE_MAX_UNCOMPRESSED_BYTES:-53687091200}"
+check_zip_archive "$SRC" "${RESTORE_MAX_FILES:-200000}" "${RESTORE_MAX_UNCOMPRESSED_BYTES:-53687091200}" || exit 51
 # The panel accepts only the four generated root members, never arbitrary names,
 # links, duplicate entries, nested archives, or extra database command files.
-python3 - "$SRC" <<'PY'
+python3 - "$SRC" <<'PY' || exit 52
 import stat, sys, zipfile
 with zipfile.ZipFile(sys.argv[1]) as z:
     names=z.namelist()
@@ -16,9 +16,9 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     assert all(not stat.S_ISLNK(i.external_attr >> 16) for i in z.infolist())
 PY
 mkdir -p "$DEST"
-unzip -q -n "$SRC" -d "$DEST"
-[[ $(jq -r .projectId "$DEST/manifest.json") == "${PROJECT_ID:?}" ]]
-python3 - "$DEST" <<'PY'
+unzip -q -n "$SRC" -d "$DEST" || exit 51
+[[ $(jq -r .projectId "$DEST/manifest.json") == "${PROJECT_ID:?}" ]] || exit 53
+python3 - "$DEST" <<'PY' || exit 54
 import hashlib, pathlib, re, sys
 p=pathlib.Path(sys.argv[1]); records={}
 for line in (p/'checksums.sha256').read_text().splitlines():
@@ -29,8 +29,9 @@ assert set(records)=={x.name for x in p.iterdir() if x.name!='checksums.sha256'}
 for name,digest in records.items():
     with (p/name).open('rb') as f: assert hashlib.file_digest(f,'sha256').hexdigest()==digest
 PY
-jq -r '.migrations[]?' "$DEST/manifest.json" | sort > "$DEST/migrations.tmp"
-ls "${APP_SRC:-/app}/prisma/migrations" | grep -v migration_lock | sort > "$DEST/code.tmp"
-[[ -z $(comm -23 "$DEST/migrations.tmp" "$DEST/code.tmp") ]]
+jq -e '.migrations | type == "array" and all(.[]; type == "string")' "$DEST/manifest.json" >/dev/null || exit 55
+jq -r '.migrations[]' "$DEST/manifest.json" | sort > "$DEST/migrations.tmp" || exit 55
+ls "${APP_SRC:-/app}/prisma/migrations" | grep -v migration_lock | sort > "$DEST/code.tmp" || exit 55
+[[ -z $(comm -23 "$DEST/migrations.tmp" "$DEST/code.tmp") ]] || exit 55
 rm "$DEST/migrations.tmp" "$DEST/code.tmp"
-bash "$(dirname "$0")/../backup/verify.sh" "$DEST"
+bash "$(dirname "$0")/../backup/verify.sh" "$DEST" || exit 56

@@ -6,5 +6,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div dir="rtl">{children}</div>;
+  return <div>{children}</div>;
 }

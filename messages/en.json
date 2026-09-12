@@ -845,7 +845,16 @@
     "fx": "Latest market FX updates",
     "migration": "Database migration",
     "alerts": "Open alerts",
-    "noAlerts": "No open alerts"
+    "noAlerts": "No open alerts",
+    "alertCount": "{count} active system alerts",
+    "backupStale": "No successful backup was recorded within 36 hours.",
+    "offsiteStale": "Off-site backup is missing or its last sync is older than 36 hours.",
+    "lowStock": "Some stock has reached its configured warning threshold.",
+    "unpaidBacklog": "An unpaid order has passed its configured deadline.",
+    "failedJobsAlert": "Some queued jobs have failed.",
+    "staleFx": "This market’s FX rate has exceeded its configured freshness window.",
+    "failures24h": "Failed jobs and operations in the last 24 hours",
+    "backupFreshness": "Backup freshness"
   },
   "shipping": {
     "settings": "Shipping settings",
@@ -1041,6 +1050,37 @@
     "OK": "Successful",
     "NOT_CONFIGURED": "Not configured",
     "VALIDATE_UPLOAD": "Validate upload",
-    "VALIDATE": "Validate"
+    "VALIDATE": "Validate",
+    "minuteUtc": "Minute (UTC)",
+    "ARCHIVE_INVALID": "The ZIP file is damaged or contains unsafe paths.",
+    "ARCHIVE_MEMBERS": "The archive contains missing, duplicate or unsupported files.",
+    "ARCHIVE_PROJECT": "This backup belongs to another project.",
+    "ARCHIVE_CHECKSUM": "A backup file failed its integrity check. Please upload the original download.",
+    "ARCHIVE_MIGRATIONS": "This backup needs a compatible application version.",
+    "ARCHIVE_RESTORE": "The backup could not be restored in the isolated validation database.",
+    "VALIDATION_FAILED": "The backup could not be validated."
+  },
+  "adminShell": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "markets": "Markets",
+    "media": "Media",
+    "products": "Products",
+    "taxonomy": "Catalog taxonomy",
+    "brand": "Brand",
+    "theme": "Theme",
+    "contact": "Contact",
+    "social": "Social channels",
+    "legal": "Legal",
+    "checkout": "Checkout",
+    "maintenance": "Maintenance",
+    "design": "Design",
+    "health": "System health",
+    "signOut": "Sign out",
+    "language": "Admin language",
+    "fa": "فارسی",
+    "tr": "Türkçe",
+    "en": "English",
+    "languageError": "Could not change language. Please try again."
   }
 }

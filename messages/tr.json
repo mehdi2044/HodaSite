@@ -845,7 +845,16 @@
     "fx": "Pazarların son kur güncellemeleri",
     "migration": "Veritabanı geçişi",
     "alerts": "Açık uyarılar",
-    "noAlerts": "Açık uyarı yok"
+    "noAlerts": "Açık uyarı yok",
+    "alertCount": "{count} etkin sistem uyarısı",
+    "backupStale": "Son 36 saat içinde başarılı bir yedek kaydedilmedi.",
+    "offsiteStale": "Harici yedek yok veya son eşitleme 36 saatten eski.",
+    "lowStock": "Bazı stoklar yapılandırılan uyarı eşiğine ulaştı.",
+    "unpaidBacklog": "Ödenmemiş bir siparişin belirlenen süresi doldu.",
+    "failedJobsAlert": "Bazı kuyruk işleri başarısız oldu.",
+    "staleFx": "Bu pazarın döviz kuru belirlenen güncellik süresini aştı.",
+    "failures24h": "Son 24 saatte başarısız işler ve işlemler",
+    "backupFreshness": "Yedek güncelliği"
   },
   "shipping": {
     "settings": "Gönderim ayarları",
@@ -1041,6 +1050,37 @@
     "OK": "Başarılı",
     "NOT_CONFIGURED": "Yapılandırılmadı",
     "VALIDATE_UPLOAD": "Yüklemeyi doğrula",
-    "VALIDATE": "Doğrula"
+    "VALIDATE": "Doğrula",
+    "minuteUtc": "Dakika (UTC)",
+    "ARCHIVE_INVALID": "ZIP dosyası bozuk veya güvenli olmayan yollar içeriyor.",
+    "ARCHIVE_MEMBERS": "Arşivde eksik, yinelenen veya desteklenmeyen dosyalar var.",
+    "ARCHIVE_PROJECT": "Bu yedek başka bir projeye ait.",
+    "ARCHIVE_CHECKSUM": "Bir dosyanın bütünlük denetimi başarısız oldu. İndirilen özgün dosyayı yükleyin.",
+    "ARCHIVE_MIGRATIONS": "Bu yedek uyumlu bir uygulama sürümü gerektiriyor.",
+    "ARCHIVE_RESTORE": "Yedek, ayrı doğrulama veritabanında geri yüklenemedi.",
+    "VALIDATION_FAILED": "Yedek doğrulanamadı."
+  },
+  "adminShell": {
+    "dashboard": "Pano",
+    "users": "Kullanıcılar",
+    "markets": "Pazarlar",
+    "media": "Medya",
+    "products": "Ürünler",
+    "taxonomy": "Katalog sınıflandırması",
+    "brand": "Marka",
+    "theme": "Tema",
+    "contact": "İletişim",
+    "social": "Sosyal kanallar",
+    "legal": "Yasal",
+    "checkout": "Ödeme",
+    "maintenance": "Bakım",
+    "design": "Tasarım",
+    "health": "Sistem sağlığı",
+    "signOut": "Çıkış",
+    "language": "Yönetim dili",
+    "fa": "فارسی",
+    "tr": "Türkçe",
+    "en": "English",
+    "languageError": "Dil değiştirilemedi. Tekrar deneyin."
   }
 }

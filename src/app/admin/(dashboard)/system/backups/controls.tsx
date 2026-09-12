@@ -204,6 +204,7 @@ export function BackupSettingsForm({
   settings: {
     enabled: boolean;
     hourUtc: number;
+    minuteUtc: number;
     includeMedia: boolean;
     keepDaily: number;
     keepWeekly: number;
@@ -227,6 +228,7 @@ export function BackupSettingsForm({
             ...Object.fromEntries(
               [
                 "hourUtc",
+                "minuteUtc",
                 "keepDaily",
                 "keepWeekly",
                 "keepMonthly",
@@ -247,6 +249,7 @@ export function BackupSettingsForm({
       {(
         [
           "hourUtc",
+          "minuteUtc",
           "keepDaily",
           "keepWeekly",
           "keepMonthly",
@@ -262,15 +265,17 @@ export function BackupSettingsForm({
             defaultValue={settings[k]}
             min={k === "keepDaily" ? 1 : 0}
             max={
-              k === "hourUtc"
-                ? 23
-                : k === "verifyWeekday"
-                  ? 6
-                  : k === "keepDaily"
-                    ? 365
-                    : k === "keepWeekly"
-                      ? 104
-                      : 120
+              k === "minuteUtc"
+                ? 59
+                : k === "hourUtc"
+                  ? 23
+                  : k === "verifyWeekday"
+                    ? 6
+                    : k === "keepDaily"
+                      ? 365
+                      : k === "keepWeekly"
+                        ? 104
+                        : 120
             }
             required
           />

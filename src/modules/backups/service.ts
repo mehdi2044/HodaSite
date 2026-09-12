@@ -49,7 +49,7 @@ export async function queueBackupOperation(userId: string, raw: unknown) {
     const payload: Record<string, string | boolean> = {};
     if ("backupId" in input && input.backupId) {
       const backup = await db.backup.findFirst({
-        where: { id: input.backupId, status: "DONE" },
+        where: { id: input.backupId, status: "DONE", localPrunedAt: null },
       });
       if (!backup) throw new Error("BACKUP_UNAVAILABLE");
       payload.backupId = backup.id;

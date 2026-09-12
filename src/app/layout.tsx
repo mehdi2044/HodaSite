@@ -26,7 +26,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // For /admin/* there is no locale in the URL, so next-intl resolves the
-  // default (fa) — the admin panel is RTL.
+  // saved admin preference (fa by default), independent of storefront URLs.
   const locale = await getLocale();
   const messages = await getMessages();
   const theme = await getThemeSettings();

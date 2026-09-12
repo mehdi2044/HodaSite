@@ -32,3 +32,4 @@ mc(){ return 1; }
 echo 'S3 generation guard tests: OK'
 
 node --test "$(dirname "$0")/../../ops/retention.test.mjs"
+node --test "$(dirname "$0")/../../ops/review.test.mjs"

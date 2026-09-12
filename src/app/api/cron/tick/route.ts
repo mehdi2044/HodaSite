@@ -17,6 +17,7 @@ import {
 import { cancelUnpaidOrders } from "@/modules/orders";
 import { registerNotificationJobs } from "@/modules/notifications";
 import { expireReservations } from "@/modules/inventory";
+import { syncOperationalAlerts } from "@/modules/health";
 
 // Registers the media job handlers once, when this route module first loads
 // (D21 — DB-backed queue, no Redis/BullMQ). Deliberately NOT in
@@ -54,7 +55,9 @@ export async function POST(req: Request) {
     await ensureFxRefreshScheduled();
     await expireReservations();
     await cancelUnpaidOrders();
-    return NextResponse.json({ processed: await runJobs() });
+    const processed = await runJobs();
+    await syncOperationalAlerts();
+    return NextResponse.json({ processed });
   } finally {
     leaveRequest();
   }

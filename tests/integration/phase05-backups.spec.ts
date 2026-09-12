@@ -101,6 +101,24 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(task.authorizedAt).not.toBeNull();
       expect(JSON.stringify(task.payload)).not.toContain("BackupTest");
       expect(task.payload).not.toHaveProperty("token");
+      await db.backup.update({
+        where: { id: backup.id },
+        data: { localPrunedAt: new Date() },
+      });
+      for (const type of ["VERIFY", "EXPORT", "RESTORE"])
+        expect(
+          (
+            await backupAction({
+              ...(type === "RESTORE" ? restore : { type, backupId: backup.id }),
+              type,
+              requestKey: randomUUID(),
+            })
+          ).error,
+        ).toBe("FAILED");
+      expect(
+        (await db.backup.findUniqueOrThrow({ where: { id: backup.id } }))
+          .status,
+      ).toBe("DONE");
       expect(
         (await backupAction({ ...restore, requestKey: randomUUID() })).error,
       ).toBe("FAILED");

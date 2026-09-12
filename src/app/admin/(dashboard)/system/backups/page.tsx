@@ -5,7 +5,7 @@ import { requireAdminPage } from "@/modules/auth/page";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
 import { assertBackupOwner, downloadLink } from "@/modules/backups/service";
-import { backupKey } from "@/modules/backups/validation";
+import { backupKey, UPLOAD_FAILURE_CODES } from "@/modules/backups/validation";
 import {
   BackupButton,
   BackupSettingsForm,
@@ -23,7 +23,11 @@ export default async function BackupsPage() {
   const create = await can(userId, "backup.create");
   const upload = owner && (await can(userId, "backup.upload"));
   const [backups, tasks, uploaded, settings] = await Promise.all([
-    db.backup.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
+    db.backup.findMany({
+      where: { localPrunedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
     db.opsTask.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
     upload
       ? db.backupUpload.findMany({
@@ -76,20 +80,24 @@ export default async function BackupsPage() {
               <p>
                 {t("verified")}: {b.verifiedAt?.toISOString() ?? t("none")}
               </p>
-              <div className="flex flex-wrap gap-3 mt-3">
-                {ready.has(b.id) ? (
-                  <a
-                    className="button min-h-11"
-                    href={downloadLink(userId, b.fileKey)}
-                  >
-                    {t("download")}
-                  </a>
-                ) : (
-                  <BackupButton type="EXPORT" backupId={b.id} />
-                )}
-                <BackupButton type="VERIFY" backupId={b.id} />
-              </div>
-              {owner && <RestoreControl backupId={b.id} />}
+              {b.status === "DONE" && (
+                <div className="flex flex-wrap gap-3 mt-3">
+                  {ready.has(b.id) ? (
+                    <a
+                      className="button min-h-11"
+                      href={downloadLink(userId, b.fileKey)}
+                    >
+                      {t("download")}
+                    </a>
+                  ) : (
+                    <BackupButton type="EXPORT" backupId={b.id} />
+                  )}
+                  <BackupButton type="VERIFY" backupId={b.id} />
+                </div>
+              )}
+              {owner && b.status === "DONE" && (
+                <RestoreControl backupId={b.id} />
+              )}
             </article>
           ))
         ) : (
@@ -104,6 +112,14 @@ export default async function BackupsPage() {
               <p className="break-all">
                 {u.originalName} · {status(u.status)}
               </p>
+              {u.error && (
+                <p className="text-error">
+                  {t(
+                    UPLOAD_FAILURE_CODES.find((code) => code === u.error) ??
+                      "VALIDATION_FAILED",
+                  )}
+                </p>
+              )}
               {u.status === "READY" && <RestoreControl uploadId={u.id} />}
             </article>
           ))}
@@ -126,6 +142,7 @@ export default async function BackupsPage() {
               settings ?? {
                 enabled: false,
                 hourUtc: 3,
+                minuteUtc: 30,
                 includeMedia: true,
                 keepDaily: 7,
                 keepWeekly: 4,
