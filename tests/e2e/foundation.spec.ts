@@ -21,7 +21,9 @@ for (const locale of ["fa", "tr", "en"] as const)
 test("admin login flow is localized", async ({ page }) => {
   await page.goto("/admin/login");
   await expect(page.getByRole("heading")).toContainText("ورود مدیر");
-  await expect(page.getByRole("button")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "ورود امن", exact: true }),
+  ).toBeVisible();
 });
 test("Persian BiDi code is isolated (V-2, /admin/design)", async ({ page }) => {
   // The storefront never shows raw SKU/order/IBAN codes to visitors; this
