@@ -184,7 +184,10 @@ export default async function ProductPage({
   const guideTable = guide?.tableI18n as
     { columns?: string[]; rows?: string[][] } | undefined;
   return (
-    <main className="shell py-10 md:py-16" dir={safe === "fa" ? "rtl" : "ltr"}>
+    <main
+      className="shell shop-page py-10 md:py-16"
+      dir={safe === "fa" ? "rtl" : "ltr"}
+    >
       <RecentlyViewed productId={product.id} />
       <script
         type="application/ld+json"
@@ -225,7 +228,7 @@ export default async function ProductPage({
           <p className="text-sm text-muted">
             {product.brand ? catalogText(product.brand.nameI18n, safe) : ""}
           </p>
-          <h1 className="mt-2 text-4xl font-semibold">
+          <h1 className="shop-product-title mt-2 text-4xl font-semibold">
             {catalogText(product.titleI18n, safe)}
           </h1>
           <ProductPrice
@@ -258,7 +261,7 @@ export default async function ProductPage({
           <p className="my-7 whitespace-pre-wrap leading-8 text-muted">
             {catalogText(product.descriptionI18n, safe)}
           </p>
-          <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl backdrop-blur">
+          <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl">
             <ProductOptions
               variants={product.variants.map((v) => ({
                 id: v.id,

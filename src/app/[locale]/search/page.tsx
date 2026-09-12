@@ -19,7 +19,10 @@ export default async function SearchPage({
   ]);
   const result = await listCatalogProducts(market.id, safe, { q, limit: 24 });
   return (
-    <main className="shell py-10 md:py-16" dir={safe === "fa" ? "rtl" : "ltr"}>
+    <main
+      className="shell shop-page py-10 md:py-16"
+      dir={safe === "fa" ? "rtl" : "ltr"}
+    >
       <h1 className="text-4xl font-semibold">{t("search")}</h1>
       <SearchBox
         locale={safe}
@@ -31,6 +34,11 @@ export default async function SearchPage({
       <p className="mb-5 text-sm text-muted">
         {t("results", { count: result.total })}
       </p>
+      {!result.items.length && (
+        <div className="shop-empty">
+          <p>{(await getTranslations("shopping"))("emptySearch")}</p>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {result.items.map((product) => (
           <ProductCard

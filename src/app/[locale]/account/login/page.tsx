@@ -8,7 +8,7 @@ export default async function LoginPage({
   const { locale } = await params,
     t = await getTranslations("commerce");
   return (
-    <main className="shell py-12">
+    <main className="shell shop-page py-12">
       <section className="mx-auto max-w-md rounded-token border border-black/10 bg-surface p-6 shadow-sm">
         <h1 className="mb-5 text-2xl font-semibold">{t("login")}</h1>
         <CustomerLogin locale={locale} />

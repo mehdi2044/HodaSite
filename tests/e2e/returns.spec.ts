@@ -1,3 +1,4 @@
+import { shoppingProof } from "./helpers/shopping-proof";
 import { PrismaClient } from "@prisma/client";
 import { test, expect, type Page, type Locator } from "@playwright/test";
 import { returnFixture } from "../helpers/returns";
@@ -65,7 +66,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
   test(`${locale} mobile customer return, warehouse receipt and settlement`, async ({
     page,
     context,
-  }) => {
+  }, info) => {
     test.setTimeout(120000);
     await page.setViewportSize({ width: 390, height: 844 });
     const f = await returnFixture(db, { locale }),
@@ -82,6 +83,8 @@ for (const locale of ["fa", "tr", "en"] as const) {
         .selectOption(f.variants[1].id);
     }
     await form.locator('[name="note"]').fill("Size does not fit");
+    await panel.scrollIntoViewIfNeeded();
+    await shoppingProof(page, info, `${locale}-return-request`);
     await submit(form);
     await expect(
       panel.getByText(t.statuses.REQUESTED, { exact: false }),

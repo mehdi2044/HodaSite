@@ -22,9 +22,8 @@ export default defineConfig({
   workers: isCI ? 1 : undefined,
   use: {
     baseURL: "http://127.0.0.1:3000",
-    // Mobile-first viewport on Chromium — CI installs only the chromium
-    // browser (`playwright install --with-deps chromium`); iPhone devices
-    // pull in WebKit, which isn't downloaded.
+    // Chromium mobile default; the Safari shopping spec overrides this with
+    // iPhone 13 / WebKit. CI installs both browser engines.
     ...devices["Pixel 7"],
     trace: "retain-on-failure",
   },

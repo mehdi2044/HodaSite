@@ -30,3 +30,7 @@ SEO, reviews/wishlist, final launch performance and operational launch checks st
 
 ## First navigation slice
 The first implementation provides a compact header/search, language and market disclosure, and a four-item bottom navigation below 1024px. It preserves DB-controlled branding/theme/menus, adds safe-area/content spacing and offsets sticky purchase controls. Keyboard closing and a skip-content target are included. `tests/e2e/mobile-navigation.spec.ts` records actual 390px screenshots and navigation timing in fa/tr/en and checks 360/390/430px, large text and desktop. CI preserves `storefront-mobile-proof` for visual review. This is not PWA installation acceptance: manifest, offline/update policies, phone installation and the remaining shopping-flow design slices still follow.
+
+
+## Shopping / installation implementation
+The next delivery implements the remaining shopping surfaces and install/offline/update foundation. Installation branding is derived from the existing Brand/Theme panel, with translated UI overrides. `pwa/[locale]` documents are intentionally public and outside session middleware. The worker caches only bounded public static code and generic offline HTML, not product images or personalized server output. Build-specific cache cleanup and safe waiting-worker activation are covered by regression tests. Physical-device acceptance is recorded separately in [device acceptance](phase-05b-device-acceptance.md); do not close the full phase based on emulation alone.

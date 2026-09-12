@@ -75,7 +75,7 @@ export async function HomepageBlocks({
           return (
             <section
               key={index}
-              className="relative isolate min-h-[32rem] overflow-hidden bg-text text-bg md:min-h-[42rem]"
+              className={`shop-hero ${image ? "shop-hero-with-image" : "shop-hero-text"}`}
             >
               {image && (
                 <ResponsiveImage
@@ -83,10 +83,10 @@ export async function HomepageBlocks({
                   locale={locale}
                   sizes="100vw"
                   priority={index === 0}
-                  className="absolute inset-0 -z-10 h-full w-full opacity-75"
+                  className="shop-hero-image"
                 />
               )}
-              <div className="shell flex min-h-[32rem] max-w-4xl flex-col justify-end py-16 md:min-h-[42rem] md:py-24">
+              <div className="shell shop-hero-content">
                 {block.type === "Hero" && index === 0 ? (
                   <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-7xl">
                     {localizedValue(block.title, locale)}
@@ -113,7 +113,7 @@ export async function HomepageBlocks({
         }
         if (block.type === "ProductStrip")
           return (
-            <section key={index} className="shell py-16 md:py-24">
+            <section key={index} className="shell shop-home-section">
               <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {localizedValue(block.title, locale)}
               </h2>
@@ -133,7 +133,7 @@ export async function HomepageBlocks({
           );
         if (block.type === "CategoryCards")
           return (
-            <section key={index} className="shell py-16 md:py-24">
+            <section key={index} className="shell shop-home-section">
               <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {localizedValue(block.title, locale)}
               </h2>
@@ -142,7 +142,7 @@ export async function HomepageBlocks({
                   <Link
                     key={category.id}
                     href={`/${locale}/c/${encodeURIComponent(localizedValue(category.slugI18n as Record<Locale, string>, locale))}`}
-                    className="group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
+                    className="shop-category-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
                   >
                     {category.media && (
                       <ResponsiveImage
@@ -180,7 +180,7 @@ export async function HomepageBlocks({
             </section>
           );
         return (
-          <section key={index} className="shell py-16 md:py-24">
+          <section key={index} className="shell shop-home-section">
             <p className="mx-auto max-w-3xl whitespace-pre-wrap text-lg leading-9 text-muted md:text-xl">
               {localizedValue(block.text, locale)}
             </p>

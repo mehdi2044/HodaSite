@@ -24,13 +24,17 @@ export function AddressForm({
     <div
       onChange={(e) => {
         const form = (e.target as HTMLElement).closest("form");
-        if (!form) return;
+        if (!form || !navigator.onLine) return;
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(() => {
           const data = new FormData(form);
-          pending.current = pending.current.then(() =>
-            autosaveAddressAction(data),
-          );
+          if (!navigator.onLine) return;
+          pending.current = pending.current
+            .catch(() => {})
+            .then(() =>
+              navigator.onLine ? autosaveAddressAction(data) : undefined,
+            )
+            .catch(() => {});
         }, 700);
       }}
     >

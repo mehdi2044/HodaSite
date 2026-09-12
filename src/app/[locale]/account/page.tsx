@@ -1,3 +1,4 @@
+import { Iso } from "@/components/storefront/iso";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -30,11 +31,11 @@ export default async function AccountPage({
     db.market.findMany({ where: { isActive: true } }),
   ]);
   return (
-    <main className="shell grid gap-8 py-10">
-      <div className="flex items-center justify-between">
+    <main className="shell shop-page shop-account grid gap-8 py-10">
+      <div className="flex flex-wrap gap-3 items-center justify-between">
         <h1 className="text-3xl font-semibold">{t("account")}</h1>
         <form action={logoutCustomerAction.bind(null, locale)}>
-          <button className="underline">{t("logout")}</button>
+          <button className="shop-text-button underline">{t("logout")}</button>
         </form>
       </div>
       <section className="grid gap-4">
@@ -43,14 +44,15 @@ export default async function AccountPage({
           orders.map((order) => (
             <Link
               className="flex flex-wrap justify-between gap-3 rounded-token border border-black/10 bg-surface p-5"
+              prefetch={false}
               key={order.id}
               href={`/${locale}/orders/${order.number}/pay`}
             >
-              <span dir="ltr">{order.number}</span>
+              <Iso>{order.number}</Iso>
               <span>{t(`statuses.${order.status}`)}</span>
-              <span>
+              <Iso>
                 {order.totalAmount.toString()} {order.currency}
-              </span>
+              </Iso>
             </Link>
           ))
         ) : (
