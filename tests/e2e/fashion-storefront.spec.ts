@@ -81,13 +81,19 @@ for (const locale of ["fa", "tr", "en"] as const) {
       .first();
     await card.scrollIntoViewIfNeeded();
     // Verify the real mobile viewport, independently of full-page capture.
-    expect(
-      await card.evaluate(
-        (element) =>
-          element.getBoundingClientRect().width /
-          element.parentElement!.getBoundingClientRect().width,
-      ),
-    ).toBeGreaterThan(0.4);
+    const sizing = await card.evaluate((element) => {
+      const rail = element.parentElement!;
+      const cardWidth = element.getBoundingClientRect().width;
+      const railWidth = rail.getBoundingClientRect().width;
+      return {
+        ratio: cardWidth / railWidth,
+        cardWidth,
+        railWidth,
+        viewport: innerWidth,
+        display: getComputedStyle(rail).display,
+      };
+    });
+    expect(sizing.ratio, JSON.stringify(sizing)).toBeGreaterThan(0.4);
     await expect
       .poll(() =>
         card

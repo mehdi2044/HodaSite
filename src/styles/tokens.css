@@ -1174,9 +1174,7 @@ html[lang="fa"] body,
   transform: scaleX(-1);
 }
 .shop-product-rail {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 45%);
+  display: flex;
   gap: 0.85rem;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
@@ -1187,6 +1185,8 @@ html[lang="fa"] body,
   padding: 2px 2px 1rem;
 }
 .shop-product-rail > article {
+  flex: 0 0 45%;
+  min-width: 0;
   scroll-snap-align: start;
 }
 .shop-category-grid {
@@ -1339,7 +1339,7 @@ html[lang="fa"] body,
     font-size: 1.1rem;
   }
   .shop-product-rail {
-    grid-auto-flow: unset;
+    display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.5rem;
   }
