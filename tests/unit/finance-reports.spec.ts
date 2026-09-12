@@ -87,7 +87,13 @@ describe("finance transaction report contracts", () => {
     });
     expect(csv.startsWith("\uFEFF")).toBe(true);
     expect(csv).toContain('"\' =HYPERLINK(""bad"")"');
-    expect(csv).toContain('"\'-2.0001"');
+    expect(csv).toContain('"-2.0001"');
+    expect(csv).not.toContain('"\'-2.0001"');
+    const formula = reportCsv(rows, [{ id: "TR", code: "-SUM(1,2)" }], {
+      from: "2026-09-01",
+      to: "2026-09-02",
+    });
+    expect(formula).toContain('"\'-SUM(1,2)"');
     expect(csv.split("\r\n")).toHaveLength(2);
   });
 });

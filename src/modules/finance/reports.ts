@@ -146,7 +146,11 @@ export function reportCsv(
 ) {
   const cell = (value: string) =>
     '"' +
-    (/^[\s]*[=+@-]/.test(value) ? "'" : "") +
+    // A strict decimal literal is safe and must remain numeric in spreadsheets.
+    // All other formula-like text (including -SUM(...)) stays neutralized.
+    (/^[\s]*[=+@-]/.test(value) && !/^-?\d+(?:\.\d+)?$/.test(value)
+      ? "'"
+      : "") +
     value.replace(/"/g, '""') +
     '"';
   return (
