@@ -786,7 +786,7 @@
     "loading": "Signing in…",
     "loginError": "Invalid email, password or verification code.",
     "token": "Authenticator or recovery code",
-    "tokenHint": "Leave blank if you have not set up two-step verification yet.",
+    "tokenHint": "If two-step verification is enabled, enter the six-digit code from your authenticator or an unused recovery code. Leave this blank only before activation.",
     "roles": "Roles and permissions",
     "audit": "Change history",
     "roleHint": "Editing a role revokes its users’ sessions.",
@@ -821,7 +821,12 @@
     "grantScope": "Assigned scope",
     "targetScope": "Requested resource scope",
     "categoryScope": "Category",
-    "sectionScope": "Section"
+    "sectionScope": "Section",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "loginConnectionError": "Could not connect to the server. Check your connection and try again.",
+    "loginHelpTitle": "Need help signing in?",
+    "loginHelp": "This page is for an administrator account; customer accounts are separate. Check the saved administrator email and password. After repeated failed attempts, wait 15 minutes. Use automatic time on your phone for authenticator codes."
   },
   "healthAdmin": {
     "title": "System health",

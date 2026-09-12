@@ -786,7 +786,7 @@
     "loading": "Giriş yapılıyor…",
     "loginError": "E-posta, şifre veya doğrulama kodu geçersiz.",
     "token": "Doğrulayıcı veya kurtarma kodu",
-    "tokenHint": "İki adımlı doğrulamayı henüz kurmadıysanız boş bırakın.",
+    "tokenHint": "İki adımlı doğrulama açıksa doğrulama uygulamasındaki altı haneli kodu veya kullanılmamış bir kurtarma kodunu girin. Yalnızca etkinleştirmeden önce boş bırakın.",
     "roles": "Roller ve izinler",
     "audit": "Değişiklik geçmişi",
     "roleHint": "Rolü düzenlemek kullanıcıların oturumlarını iptal eder.",
@@ -821,7 +821,12 @@
     "grantScope": "Atanan kapsam",
     "targetScope": "İstenen kaynak kapsamı",
     "categoryScope": "Kategori",
-    "sectionScope": "Bölüm"
+    "sectionScope": "Bölüm",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle",
+    "loginConnectionError": "Sunucuya bağlanılamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    "loginHelpTitle": "Giriş için yardım mı gerekiyor?",
+    "loginHelp": "Bu sayfa yönetici hesabı içindir; müşteri hesapları ayrıdır. Kayıtlı yönetici e-postasını ve şifresini kontrol edin. Art arda başarısız denemelerden sonra 15 dakika bekleyin. Doğrulama kodları için telefonunuzda otomatik saati kullanın."
   },
   "healthAdmin": {
     "title": "Sistem sağlığı",
