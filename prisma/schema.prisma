@@ -267,6 +267,7 @@ model Backup {
   fileKey         String
   sizeBytes       BigInt
   dbSizeBytes     BigInt?
+  localPrunedAt   DateTime?     @db.Timestamptz(3)
   mediaIncluded   Boolean       @default(true)
   verifiedAt      DateTime?
   verifyResult    Json?
@@ -1598,6 +1599,7 @@ model BackupSettings {
   id            String   @id @default("default")
   enabled       Boolean  @default(false)
   hourUtc       Int      @default(3)
+  minuteUtc     Int      @default(30)
   includeMedia  Boolean  @default(true)
   keepDaily     Int      @default(7)
   keepWeekly    Int      @default(4)

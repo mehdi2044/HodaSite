@@ -1,4 +1,4 @@
-import { backupLabel } from './contracts.mjs';
+import { backupLabel, scheduleDue, uploadFailureCode } from './contracts.mjs';
 import { retainedBackups } from './retention.mjs';
 import { PrismaClient } from '@prisma/client';
 import { spawn } from 'node:child_process';
@@ -31,7 +31,7 @@ async function execute(command, args, task, label) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: ['ignore', 'ignore', 'ignore'], env: process.env });
     child.on('error', () => reject(Error('COMMAND_FAILED')));
-    child.on('exit', code => code === 0 ? resolve() : reject(Error('COMMAND_FAILED')));
+    child.on('exit', code => code === 0 ? resolve() : reject(Object.assign(Error('COMMAND_FAILED'), { exitCode: code })));
   });
 }
 async function record(task, status, result = {}) {
@@ -69,7 +69,7 @@ async function processTask(task) {
       await db.backup.update({ where: { id: backup.id }, data: { createdBy: task.requestedBy } });
       await exportBackup(backup.fileKey,task); result = { backupId: backup.id };
     } else if (['VERIFY','EXPORT'].includes(task.type)) {
-      const backup = await db.backup.findFirstOrThrow({ where: { id: p.backupId, status: 'DONE' } });
+      const backup = await db.backup.findFirstOrThrow({ where: { id: p.backupId, status: 'DONE', localPrunedAt: null } });
       const source = path.join(root, checked(backup.fileKey,key));
       if (task.type === 'EXPORT') await exportBackup(backup.fileKey,task);
       else {
@@ -83,7 +83,7 @@ async function processTask(task) {
       const directory = path.join(root,'validated',id);
       await rm(directory,{recursive:true,force:true});
       try { await execute('bash',[path.join(scripts,'ops/validate-upload.sh'),path.join(uploads,`${id}.zip`),directory],task,'VALIDATE'); await db.backupUpload.update({where:{id},data:{status:'READY'}}); }
-      catch(e) { await db.backupUpload.update({where:{id},data:{status:'FAILED',error:'VALIDATION_FAILED'}}); await rm(directory,{recursive:true,force:true}); throw e; }
+      catch(e) { await db.backupUpload.update({where:{id},data:{status:'FAILED',error:uploadFailureCode(e.exitCode)}}); await rm(directory,{recursive:true,force:true}); throw e; }
     } else if (task.type === 'RESTORE') {
       let source;
       if (!['FULL','DB_ONLY','MEDIA_ONLY'].includes(p.mode)) throw Error('INVALID_REQUEST');
@@ -92,7 +92,7 @@ async function processTask(task) {
         await db.backupUpload.findFirstOrThrow({where:{id,ownerId:task.requestedBy,status:'READY',expiresAt:{gt:new Date()}}});
         source=path.join(root,'validated',id);
       } else if(p.backupId && !p.uploadId) {
-        const backup=await db.backup.findFirstOrThrow({where:{id:p.backupId,status:'DONE'}});
+        const backup=await db.backup.findFirstOrThrow({where:{id:p.backupId,status:'DONE',localPrunedAt:null}});
         source=path.join(root,checked(backup.fileKey,key));
       } else throw Error('INVALID_REQUEST');
       await db.restoreRequest.update({where:{id:task.id},data:{status:'RUNNING',startedAt:new Date()}});
@@ -140,13 +140,13 @@ async function cleanExpired() {
   }
 }
 async function prune(settings) {
-  const rows=await db.backup.findMany({where:{kind:'scheduled',status:'DONE'}});
+  const rows=await db.backup.findMany({where:{kind:'scheduled',status:'DONE',localPrunedAt:null}});
   const keep=retainedBackups(rows,settings);
   for(const row of rows) {
     if(keep.has(row.id) || !key.test(row.fileKey)) continue;
     await rm(path.join(root,row.fileKey),{recursive:true,force:true});
     await rm(path.join(root,'exports',`${row.fileKey}.zip`),{force:true});
-    await db.backup.update({where:{id:row.id},data:{status:'FAILED',error:'RETENTION_PRUNED'}});
+    await db.backup.update({where:{id:row.id},data:{localPrunedAt:new Date()}});
   }
 }
 async function schedule() {
@@ -154,7 +154,7 @@ async function schedule() {
   await cleanExpired();
   if(!settings?.enabled) return;
   await prune(settings);
-  const now=new Date(); if(now.getUTCHours()<settings.hourUtc) return;
+  const now=new Date(); if(!scheduleDue(now,settings)) return;
   const date=now.toISOString().slice(0,10);
   await db.opsTask.upsert({where:{requestKey:`schedule:backup:${date}`},create:{requestKey:`schedule:backup:${date}`,type:'BACKUP',payload:{includeMedia:settings.includeMedia}},update:{}});
   if(now.getUTCDay()===settings.verifyWeekday) {

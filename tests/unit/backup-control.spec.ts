@@ -53,6 +53,7 @@ describe("backup command boundary", () => {
     const base = {
       enabled: true,
       hourUtc: 3,
+      minuteUtc: 30,
       includeMedia: true,
       keepDaily: 7,
       keepWeekly: 4,
@@ -62,6 +63,8 @@ describe("backup command boundary", () => {
     expect(backupSettingsSchema.safeParse(base).success).toBe(true);
     for (const patch of [
       { hourUtc: 24 },
+      { minuteUtc: 60 },
+      { minuteUtc: -1 },
       { keepDaily: 0 },
       { verifyWeekday: 7 },
     ])

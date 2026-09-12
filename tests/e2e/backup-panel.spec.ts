@@ -37,6 +37,22 @@ test("mobile owner can open backup controls and queue a backup; anonymous downlo
     page.getByRole("status").filter({ hasText: fa.backups.queued }),
   ).toBeVisible();
   await expect(page.locator('input[type="file"]')).toBeVisible();
+  await page.locator('[name="hourUtc"]').fill("3");
+  await page.locator('[name="minuteUtc"]').fill("30");
+  await page
+    .getByRole("button", { name: fa.backups.save, exact: true })
+    .click();
+  await expect
+    .poll(
+      async () =>
+        (await db.backupSettings.findUnique({ where: { id: "default" } }))
+          ?.minuteUtc,
+    )
+    .toBe(30);
+  const settings = await db.backupSettings.findUniqueOrThrow({
+    where: { id: "default" },
+  });
+  expect(settings.hourUtc).toBe(3);
   expect(
     (
       await page.request.get("/api/admin/backups/download?key=unknown")

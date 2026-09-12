@@ -6,6 +6,7 @@ export const backupSettingsSchema = z
   .object({
     enabled: z.boolean(),
     hourUtc: z.number().int().min(0).max(23),
+    minuteUtc: z.number().int().min(0).max(59),
     includeMedia: z.boolean(),
     keepDaily: z.number().int().min(1).max(365),
     keepWeekly: z.number().int().min(0).max(104),
@@ -53,3 +54,13 @@ export const uploadInitSchema = z
   })
   .strict();
 export const CHUNK_BYTES = 5 * 1024 ** 2;
+
+export const UPLOAD_FAILURE_CODES = [
+  "ARCHIVE_INVALID",
+  "ARCHIVE_MEMBERS",
+  "ARCHIVE_PROJECT",
+  "ARCHIVE_CHECKSUM",
+  "ARCHIVE_MIGRATIONS",
+  "ARCHIVE_RESTORE",
+  "VALIDATION_FAILED",
+] as const;

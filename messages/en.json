@@ -1035,6 +1035,14 @@
     "OK": "Successful",
     "NOT_CONFIGURED": "Not configured",
     "VALIDATE_UPLOAD": "Validate upload",
-    "VALIDATE": "Validate"
+    "VALIDATE": "Validate",
+    "minuteUtc": "Minute (UTC)",
+    "ARCHIVE_INVALID": "The ZIP file is damaged or contains unsafe paths.",
+    "ARCHIVE_MEMBERS": "The archive contains missing, duplicate or unsupported files.",
+    "ARCHIVE_PROJECT": "This backup belongs to another project.",
+    "ARCHIVE_CHECKSUM": "A backup file failed its integrity check. Please upload the original download.",
+    "ARCHIVE_MIGRATIONS": "This backup needs a compatible application version.",
+    "ARCHIVE_RESTORE": "The backup could not be restored in the isolated validation database.",
+    "VALIDATION_FAILED": "The backup could not be validated."
   }
 }

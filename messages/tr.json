@@ -1035,6 +1035,14 @@
     "OK": "Başarılı",
     "NOT_CONFIGURED": "Yapılandırılmadı",
     "VALIDATE_UPLOAD": "Yüklemeyi doğrula",
-    "VALIDATE": "Doğrula"
+    "VALIDATE": "Doğrula",
+    "minuteUtc": "Dakika (UTC)",
+    "ARCHIVE_INVALID": "ZIP dosyası bozuk veya güvenli olmayan yollar içeriyor.",
+    "ARCHIVE_MEMBERS": "Arşivde eksik, yinelenen veya desteklenmeyen dosyalar var.",
+    "ARCHIVE_PROJECT": "Bu yedek başka bir projeye ait.",
+    "ARCHIVE_CHECKSUM": "Bir dosyanın bütünlük denetimi başarısız oldu. İndirilen özgün dosyayı yükleyin.",
+    "ARCHIVE_MIGRATIONS": "Bu yedek uyumlu bir uygulama sürümü gerektiriyor.",
+    "ARCHIVE_RESTORE": "Yedek, ayrı doğrulama veritabanında geri yüklenemedi.",
+    "VALIDATION_FAILED": "Yedek doğrulanamadı."
   }
 }
