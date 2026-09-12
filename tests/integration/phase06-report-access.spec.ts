@@ -65,6 +65,68 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             reviewedAt: new Date("2001-01-02T23:59:59.999Z"),
           },
         });
+        const refundReturn = await db.returnRequest.create({
+          data: {
+            orderId: f.order.id,
+            customerId: f.customer.id,
+            type: "RETURN",
+            reasonCode: "SIZE",
+            status: "RESOLVED",
+            resolution: "REFUND",
+            refundAmount: "14.0002",
+          },
+        });
+        // Refund-to-credit, direct return credit and exchange credit each issue once.
+        for (const [type, resolution, amount] of [
+          ["RETURN", "REFUND", "4"],
+          ["RETURN", "STORE_CREDIT", "5.5"],
+          ["EXCHANGE", "EXCHANGE", "2.5"],
+        ] as const) {
+          const source =
+            resolution === "REFUND"
+              ? refundReturn
+              : await db.returnRequest.create({
+                  data: {
+                    orderId: f.order.id,
+                    customerId: f.customer.id,
+                    type,
+                    reasonCode: "SIZE",
+                    status: "RESOLVED",
+                    resolution,
+                    refundAmount: amount,
+                  },
+                });
+          await db.storeCredit.create({
+            data: {
+              customerId: f.customer.id,
+              sourceReturnId: source.id,
+              amount,
+              balance: "0",
+              currency: f.market.currency,
+              createdAt: new Date("2001-01-02T12:00:00Z"),
+            },
+          });
+        }
+        // Unrelated credit is not labeled as a return; undated approvals are not dated by creation.
+        await db.storeCredit.create({
+          data: {
+            customerId: f.customer.id,
+            amount: "7",
+            balance: "7",
+            currency: f.market.currency,
+            createdAt: new Date("2001-01-02T12:00:00Z"),
+          },
+        });
+        await db.payment.create({
+          data: {
+            orderId: f.order.id,
+            currency: f.market.currency,
+            amount: "999",
+            status: "APPROVED",
+            reviewedAt: null,
+            createdAt: new Date("2001-01-01T12:00:00Z"),
+          },
+        });
         for (const [payment, amount] of [
           [cash, "10.0002"],
           [credit, "4"],
@@ -73,6 +135,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             data: {
               orderId: f.order.id,
               paymentId: payment.id,
+              returnRequestId: refundReturn.id,
               currency: f.market.currency,
               amount,
               method: payment.method,
@@ -177,7 +240,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                 externalPayments: "60.0001",
                 creditPayments: "39.9999",
                 externalRefunds: "12.0002",
-                creditRefunds: "4.0000",
+                creditRefunds: "12.0000",
                 netExternal: "47.9999",
               });
               expect(
@@ -191,6 +254,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                   }),
                 ),
               ).toBe(true);
+              expect(BigInt(row.totals.undated)).toBeGreaterThan(0n);
               const res = await GET(request);
               expect(res.status).toBe(200);
               expect(res.headers.get("cache-control")).toBe(

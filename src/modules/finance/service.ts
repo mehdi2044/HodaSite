@@ -25,6 +25,8 @@ export async function financeReport(raw: unknown) {
   const ids = filter.marketId ? [filter.marketId] : markets.map((m) => m.id);
   // A single SQL statement gives one MVCC snapshot, avoids joined-row duplication,
   // and aggregates in PostgreSQL without limiting or loading individual customers.
+  // Return/exchange credits use the issuance amount, never the mutable balance.
+  // Exclude credit Refund rows: the corresponding StoreCredit is already counted.
   const rows = await db.$queryRaw<ReportEvent[]>(Prisma.sql`
     WITH events AS (
       SELECT o."marketId", o.currency, 'paidOrders'::text AS kind, o."paidAt" AS at, o."totalAmount" AS amount
@@ -34,9 +36,13 @@ export async function financeReport(raw: unknown) {
       FROM "Payment" p JOIN "Order" o ON o.id=p."orderId"
       WHERE o."marketId" IN (${Prisma.join(ids)}) AND p.status='APPROVED' AND p."reviewedAt" >= ${filter.start} AND p."reviewedAt" < ${filter.end}
       UNION ALL
-      SELECT o."marketId", r.currency, CASE WHEN r.method='STORE_CREDIT' THEN 'creditRefunds' ELSE 'externalRefunds' END, r."createdAt", r.amount
+      SELECT o."marketId", r.currency, 'externalRefunds', r."createdAt", r.amount
       FROM "Refund" r JOIN "Order" o ON o.id=r."orderId"
-      WHERE o."marketId" IN (${Prisma.join(ids)}) AND r.status='COMPLETED' AND r."createdAt" >= ${filter.start} AND r."createdAt" < ${filter.end}
+      WHERE o."marketId" IN (${Prisma.join(ids)}) AND r.status='COMPLETED' AND r.method<>'STORE_CREDIT' AND r."createdAt" >= ${filter.start} AND r."createdAt" < ${filter.end}
+      UNION ALL
+      SELECT o."marketId", c.currency, 'creditRefunds', c."createdAt", c.amount
+      FROM "StoreCredit" c JOIN "ReturnRequest" rr ON rr.id=c."sourceReturnId" JOIN "Order" o ON o.id=rr."orderId"
+      WHERE o."marketId" IN (${Prisma.join(ids)}) AND c."createdAt" >= ${filter.start} AND c."createdAt" < ${filter.end}
       UNION ALL
       SELECT o."marketId", p.currency, 'undated', NULL::timestamptz, 0::numeric
       FROM "Payment" p JOIN "Order" o ON o.id=p."orderId"
