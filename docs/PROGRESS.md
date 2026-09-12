@@ -12,7 +12,7 @@
 | —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق          | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
 | 03  | Pricing / FX / Fees / Inventory / Lot      | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#9](https://github.com/mehdi2044/HodaSite/pull/9) |
 | 04  | Cart / Auth / Checkout / Payment           | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11) |
-| 05  | Shipping / Returns / RBAC / Backup-Restore | 🟡 در حال انجام              |            |                                                    |
+| 05  | Shipping / Returns / RBAC / Backup-Restore | 🟡 عملیات آماده؛ آزمون جامع دسترسی باز است | ۲۰۲۶-۰۹-۱۲ | [#23](https://github.com/mehdi2044/HodaSite/pull/23) |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 05b | Mobile Storefront / Installable PWA         | ⬜ طراحی و اجرا باقی است | | [شرح فاز](phases/phase-05b.md) |
 | 06  | Finance Core                               | 🟡 محاسبات پایه ادغام شد؛ اتصال و داشبورد باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20) |
@@ -586,3 +586,10 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Health shows the last successful verification and job/ops failures in the past 24 hours; email status explicitly describes configuration rather than a delivery probe.
 - Admin locale selector persists fa/tr/en, updates direction and navigation translations, and keeps storefront URL language authoritative. Brand name comes from settings. Browser acceptance covers the 390px viewport, persistence and storefront/admin isolation.
 - Local lint/typecheck and 2,942 tests passed before locale tests; added two authenticated locale action tests. Database/browser/Docker evidence is pending CI for this branch. This does not close the full V-4 endpoint matrix or real-device PWA acceptance.
+
+### وضعیت تجمیعی پس از مجوز مالک — ۲۰۲۶-۰۹-۱۲
+- مالک انتشار و اقدامات لازم پروژه را صریحاً مجاز کرد؛ مانع مجوز گزارش‌شده در یادداشت قبلی رفع شد. تغییرات PRهای ۱۸، ۱۹، ۲۱ و ۲۲ با حفظ تاریخچه در PR ۲۳ جمع شدند تا پذیرش روی یک نسخه انجام شود. ادغام فقط پس از موفقیت checks/docker/docker-runtime همین نسخه انجام می‌شود.
+- پنل بکاپ، اصلاح دامنهٔ سفارش، توقف امن برای بازیابی، بازگشت image و دادهٔ نسخهٔ ناموفق، هشدارهای سلامت و انتخاب زبان پنل پیاده‌سازی شده‌اند. ارسال درخواست بازکردن فروش، حتی با پاسخ نامعلوم، مرز ممنوعیت restore خودکار است تا سفارش تازه از بین نرود.
+- آخرین اجرای محلی: ۲٬۹۴۷ تست موفق؛ ۱۷۱ تست نیازمند دیتابیس محلی اجرا نشده‌اند و در CI اجرا می‌شوند. lint/typecheck و تمام محافظ‌های shell موفق‌اند. شواهد نهایی دیتابیس، مرورگر و Docker در PR ۲۳ ثبت می‌شوند؛ این یادداشت نتیجهٔ در حال اجرا را موفق اعلام نمی‌کند.
+- تست دستی ساده: با حساب مالک وارد شوید، زبان پنل را به ترکی/انگلیسی تغییر دهید و صفحه را تازه کنید؛ جهت و انتخاب زبان باید حفظ شوند. صفحهٔ فارسی فروشگاه باید همچنان فارسی باشد. در «سلامت سیستم»، هشدارها، آخرین بررسی بکاپ، وضعیت نسخهٔ خارج سرور و شکست‌های ۲۴ ساعت اخیر را ببینید. این بررسی را در عرض موبایل هم تکرار کنید.
+- فاز ۵ هنوز پایان‌یافته نیست: ماتریس کامل V-4 برای UI/action و درخواست مستقیم همهٔ عملیات باز است. فاز ۶ با محاسبات پایه شروع شده؛ فاز 05b طراحی فروشگاه و وب‌اپ قابل نصب، پیش از رابط و داشبورد مالی قرار دارد. نصب واقعی Android/iPhone و آزمون HTTPS در محیط نهایی انجام نشده‌اند.
