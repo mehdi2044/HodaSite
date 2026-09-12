@@ -14,10 +14,12 @@ export function CommerceForm({
   action,
   children,
   className = "grid gap-4",
+  navigation = "client",
 }: {
   action: (form: FormData) => Promise<CommerceResult>;
   children: React.ReactNode;
   className?: string;
+  navigation?: "client" | "document";
 }) {
   const online = useOnline(),
     pwa = useTranslations("pwa");
@@ -36,9 +38,11 @@ export function CommerceForm({
     router = useRouter(),
     t = useTranslations("commerce");
   useEffect(() => {
-    if (state.url) router.push(state.url);
-    else if (state.ok) router.refresh();
-  }, [state, router]);
+    if (state.url) {
+      if (navigation === "document") window.location.assign(state.url);
+      else router.push(state.url);
+    } else if (state.ok) router.refresh();
+  }, [state, router, navigation]);
   return (
     <form action={submit} className={className}>
       <fieldset disabled={pending || !online} className="contents">

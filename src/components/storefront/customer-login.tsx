@@ -21,7 +21,12 @@ export function CustomerLogin({ locale }: { locale: string }) {
     }
   }, []);
   return challenge ? (
-    <CommerceForm action={verifyOtpAction.bind(null, locale)}>
+    // Authentication changes the cart's ownership and session cookies. Start a
+    // fresh document so the shared header cannot retain the pre-login cart.
+    <CommerceForm
+      navigation="document"
+      action={verifyOtpAction.bind(null, locale)}
+    >
       <input type="hidden" name="next" value={next} />
       <input type="hidden" name="challengeId" value={challenge} />
       {token ? (
