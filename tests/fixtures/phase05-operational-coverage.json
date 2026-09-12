@@ -1,0 +1,176 @@
+{
+  "audit.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "backup.create": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "backup.restore": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "backup.upload": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "backup.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "catalog.product.create": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "catalog.product.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "catalog.product.publish": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "catalog.product.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "content.homepage.read": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "content.homepage.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "content.menu.read": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "content.menu.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "content.page.delete": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "content.page.publish": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "content.page.read": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "content.page.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "content.translation.read": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "content.translation.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "crm.customer.export": {
+    "reservedPhase": 9
+  },
+  "fees.manage": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "finance.expense.create": {
+    "reservedPhase": 6
+  },
+  "finance.report.view": {
+    "reservedPhase": 6
+  },
+  "inventory.receive": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "inventory.stock.adjust": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "inventory.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "marketing.campaign.publish": {
+    "reservedPhase": 9
+  },
+  "markets.edit": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "media.delete": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "media.upload": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "media.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "order.cancel": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "order.edit": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "order.invoice.view": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "order.shipment.manage": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "order.view": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "payment.mark_paid": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "payment.receipt.approve": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "payment.refund": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "pricing.cost.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "pricing.fx.manage": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "pricing.sale_price.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "return.manage": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "security.role.manage": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "security.session.revoke": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.brand.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.contact.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.legal.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.maintenance.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.notification.read": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "settings.notification.test": {
+    "tests": ["tests/integration/phase05-privileged-matrix.spec.ts"]
+  },
+  "settings.notification.write": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.social.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "settings.theme.edit": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "shipping.workflow.manage": {
+    "tests": ["tests/integration/phase05-market-action-matrix.spec.ts"]
+  },
+  "system.health.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "users.manage": {
+    "tests": ["tests/integration/phase05-global-action-matrix.spec.ts"]
+  },
+  "users.view": {
+    "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  }
+}

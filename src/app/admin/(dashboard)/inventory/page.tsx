@@ -1,3 +1,4 @@
+import { adminInventoryCosts } from "@/modules/inventory/admin-costs";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
@@ -47,13 +48,7 @@ export default async function InventoryPage({
       orderBy: { updatedAt: "desc" },
       take: 300,
     }),
-    mayViewCost
-      ? db.lot.findMany({
-          include: { variant: true, warehouse: true },
-          orderBy: { receivedAt: "desc" },
-          take: 100,
-        })
-      : Promise.resolve([]),
+    mayViewCost ? adminInventoryCosts(session.user.id) : Promise.resolve([]),
     db.stockMovement.findMany({
       include: { variant: true, warehouse: true },
       orderBy: { createdAt: "desc" },
