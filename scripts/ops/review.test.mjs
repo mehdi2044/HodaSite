@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, copyFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -16,7 +16,7 @@ test('schedule preserves UTC minutes and fails closed on invalid time values', (
   assert.equal(scheduleDue(new Date('2026-09-12T03:10:00Z'),{hourUtc:3}),false);
   for(const minuteUtc of [-1,60,1.5,'30']) assert.equal(scheduleDue(new Date(),{hourUtc:3,minuteUtc}),false);
 });
-test('validator emits bounded, translated reason codes at the actual process boundary', () => {
+test('validator emits bounded reason codes at the actual process boundary', () => {
   const dir=mkdtempSync(path.join(tmpdir(),'backup-validation-'));
   try {
     mkdirSync(path.join(dir,'scripts/ops'),{recursive:true});
@@ -43,10 +43,7 @@ with zipfile.ZipFile(p,'w') as archive:
       assert.equal(created.status,0,created.stderr);
       const result=spawnSync('bash',[path.join(dir,'scripts/ops/validate-upload.sh'),zip,path.join(dir,kind)],{env:{...process.env,PROJECT_ID:'test-project',APP_SRC:dir,VALIDATOR_CASE:kind},encoding:'utf8'});
       assert.equal(result.status,expected,`${kind}: ${result.stderr}`);
-      if(expected) for(const locale of ['fa','tr','en']) {
-        const messages=JSON.parse(readFileSync(path.join(root,`messages/${locale}.json`),'utf8'));
-        assert.equal(typeof messages.backups[uploadFailureCode(expected)],'string');
-      }
+      if(expected) assert.match(uploadFailureCode(expected), /^ARCHIVE_[A-Z_]+$/);
     }
     assert.equal(uploadFailureCode(null),'VALIDATION_FAILED');
     assert.equal(uploadFailureCode(137),'VALIDATION_FAILED');

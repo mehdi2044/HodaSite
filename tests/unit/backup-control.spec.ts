@@ -73,3 +73,12 @@ describe("backup command boundary", () => {
       ).toBe(false);
   });
 });
+
+it("provides translated validation reasons in all supported languages", async () => {
+  for (const locale of ["fa", "tr", "en"]) {
+    const { default: messages } = await import(`../../messages/${locale}.json`);
+    for (const code of ["VALIDATION_FAILED", "ARCHIVE_INVALID", "ARCHIVE_MEMBERS", "ARCHIVE_PROJECT", "ARCHIVE_CHECKSUM", "ARCHIVE_MIGRATIONS", "ARCHIVE_RESTORE"]) {
+      expect(messages.backups[code], `${locale}:${code}`).toEqual(expect.any(String));
+    }
+  }
+});
