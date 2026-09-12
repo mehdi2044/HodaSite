@@ -1134,7 +1134,17 @@
     "errorBody": "Please try again. If you placed an order, check its status before repeating a payment.",
     "retry": "Try again",
     "home": "Back to the shop",
-    "emptySearch": "No products match your search. Try a shorter phrase or another name."
+    "emptySearch": "No products match your search. Try a shorter phrase or another name.",
+    "viewAll": "View all",
+    "browseCategories": "Where will you start?",
+    "demoImage": "Demo image",
+    "demoImageNote": "This AI-generated image illustrates the design; it does not represent the exact item or selected colour.",
+    "galleryHint": "Tap the image for a closer look",
+    "selectionSummary": "Your selection",
+    "galleryCount": "{current} of {total}",
+    "emptyCollection": "There are no products in this selection yet.",
+    "emptyCategories": "Categories will appear here soon.",
+    "collectionPreview": "A look at everyday style"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",

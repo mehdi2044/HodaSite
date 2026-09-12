@@ -1134,7 +1134,17 @@
     "errorBody": "Lütfen tekrar deneyin. Sipariş verdiyseniz ödemeyi tekrarlamadan önce durumunu kontrol edin.",
     "retry": "Tekrar dene",
     "home": "Mağazaya dön",
-    "emptySearch": "Aramanızla eşleşen ürün bulunamadı. Daha kısa bir ifade veya başka bir ad deneyin."
+    "emptySearch": "Aramanızla eşleşen ürün bulunamadı. Daha kısa bir ifade veya başka bir ad deneyin.",
+    "viewAll": "Tümünü gör",
+    "browseCategories": "Nereden başlamak istersin?",
+    "demoImage": "Örnek görsel",
+    "demoImageNote": "Bu yapay zekâ görseli tasarımı örnekler; ürünün veya seçilen rengin birebir görüntüsü değildir.",
+    "galleryHint": "Yakından görmek için görsele dokunun",
+    "selectionSummary": "Seçiminiz",
+    "galleryCount": "{current} / {total}",
+    "emptyCollection": "Bu seçkide henüz ürün yok.",
+    "emptyCategories": "Kategoriler yakında burada görünecek.",
+    "collectionPreview": "Günlük stile bir bakış"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",

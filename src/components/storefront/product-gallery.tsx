@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
+import {
+  ResponsiveImage,
+  isDemoFashionMedia,
+  type ResponsiveImageMedia,
+} from "./responsive-image";
 type Entry = { id: string; media: ResponsiveImageMedia };
 export function ProductGallery({
   base,
@@ -58,7 +62,27 @@ export function ProductGallery({
   const current = items[active] || items[0];
   return (
     <section className="shop-gallery" aria-label={t("gallery")}>
-      <div className="shop-gallery-track" ref={track} tabIndex={0}>
+      <div
+        className="shop-gallery-track"
+        ref={track}
+        tabIndex={0}
+        onKeyDown={(event) => {
+          const direction = locale === "fa" ? -1 : 1;
+          if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+            event.preventDefault();
+            move(
+              Math.max(
+                0,
+                Math.min(
+                  items.length - 1,
+                  active +
+                    (event.key === "ArrowRight" ? direction : -direction),
+                ),
+              ),
+            );
+          }
+        }}
+      >
         {items.length ? (
           items.map((item, index) => (
             <button
@@ -89,6 +113,20 @@ export function ProductGallery({
           <div className="shop-image-empty">{t("noImage")}</div>
         )}
       </div>
+      {items.length > 0 && (
+        <div className="shop-gallery-meta">
+          <span>{t("galleryHint")}</span>
+          <span>
+            {t("galleryCount", {
+              current: new Intl.NumberFormat(locale).format(active + 1),
+              total: new Intl.NumberFormat(locale).format(items.length),
+            })}
+          </span>
+        </div>
+      )}
+      {isDemoFashionMedia(current?.media) && (
+        <p className="shop-demo-note">{t("demoImageNote")}</p>
+      )}
       {items.length > 1 && (
         <div className="shop-gallery-dots">
           {items.map((item, index) => (
@@ -102,7 +140,12 @@ export function ProductGallery({
               aria-pressed={index === active}
               onClick={() => move(index)}
             >
-              <span />
+              <ResponsiveImage
+                media={item.media}
+                locale={locale}
+                sizes="64px"
+                className="shop-gallery-thumbnail"
+              />
             </button>
           ))}
         </div>
