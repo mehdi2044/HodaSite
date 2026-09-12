@@ -178,4 +178,9 @@ step "negative guard cases inside ops"
 "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/ops-negative-guards.sh
 ok "negative guard cases passed"
 
+if [[ "$STORAGE_MODE" == local ]]; then
+  step "failed deployment restores previous image and pre-deployment data"
+  bash scripts/ci/deploy-rollback.sh
+fi
+
 ok "RUNTIME SMOKE PASSED"
