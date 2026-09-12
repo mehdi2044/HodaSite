@@ -1,5 +1,40 @@
 import { test, expect } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 import { shoppingProof } from "./helpers/shopping-proof";
+
+const db = new PrismaClient();
+let originalDates: Array<{ id: string; createdAt: Date; updatedAt: Date }> = [];
+test.beforeAll(async () => {
+  // Other database suites leave newer, imageless TR products. Give the four
+  // known illustrated fixtures deterministic placement without changing the
+  // real catalog query or hiding valid products from the storefront.
+  originalDates = await db.product.findMany({
+    where: { id: { in: [26, 27, 28, 29].map((n) => `seed-product-${n}`) } },
+    select: { id: true, createdAt: true, updatedAt: true },
+    orderBy: { id: "asc" },
+  });
+  expect(originalDates).toHaveLength(4);
+  const start = Date.now() + 86400000;
+  await db.$transaction(
+    originalDates.map((product, index) =>
+      db.product.update({
+        where: { id: product.id },
+        data: { createdAt: new Date(start + index) },
+      }),
+    ),
+  );
+});
+test.afterAll(async () => {
+  try {
+    await db.$transaction(
+      originalDates.map(({ id, createdAt, updatedAt }) =>
+        db.product.update({ where: { id }, data: { createdAt, updatedAt } }),
+      ),
+    );
+  } finally {
+    await db.$disconnect();
+  }
+});
 
 for (const locale of ["fa", "tr", "en"] as const) {
   test(`${locale}: editorial home and product imagery stay usable across widths`, async ({
