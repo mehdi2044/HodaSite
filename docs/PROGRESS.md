@@ -35,11 +35,11 @@ _کارهایی که هیچ فازی را بلاک نمی‌کنند ولی نب
 
 - **هشدار Edge Runtime از JOSE / Auth.js:** هنگام بیلد، `jose` (وابستهٔ Auth.js) دربارهٔ APIهای Node در Edge Runtime هشدار می‌دهد. `middleware` فعلاً فقط امضای JWT را verify می‌کند و درست کار می‌کند؛ پیش از اینکه منطق سنگین‌تری به middleware اضافه شود باید بررسی شود. (فاز ۰۰، بخش A1.)
 - **مهاجرت از `package.json#prisma` به `prisma.config.ts`:** Prisma این کلید را در نسخه‌های بعدی deprecate می‌کند. الان کار می‌کند؛ در یک فاز آینده منتقل شود.
-- **چهار ناحیهٔ هنوز اصلاً راستی‌آزمایی‌نشده** (از «وضعیت راستی‌آزمایی» فاز ۰۰):
+- **پذیرش‌های محیط نهایی و وضعیت تکمیل امنیت** (از «وضعیت راستی‌آزمایی» فاز ۰۰):
   - `S3Storage` روی مقصد staging/R2 واقعی — مسیر `s3` و سازگاری S3 روی MinIO واقعی در `docker-runtime` اثبات شده است؛ فقط اتصال به مقصد بیرونی نهایی staging/R2 هنوز آزموده نشده.
   - mirror off-site بکاپ — `mc` نصب است ولی `BACKUP_OFFSITE_ENDPOINT` هرگز با یک مقصد واقعی تست نشده (OB6).
   - auto-HTTPS واقعی Caddy روی یک دامنهٔ واقعی.
-  - اجباری‌کردن MFA / TOTP — طبق برنامه فاز ۰۵.
+  - MFA / TOTP در فاز ۰۵ پیاده و آزموده شده؛ مورد باز نیست.
 - **فلاکی‌بودن e2e موازی محلی:** `playwright.config.ts` فقط در CI (`isCI`) ورکرها را به ۱ محدود می‌کند؛ محلی به‌صورت پیش‌فرض موازی اجرا می‌شود و specهایی که وضعیت global (مثل maintenance) را toggle می‌کنند می‌توانند با تست‌های دیگر تداخل کنند. جدا از این، اولین برخورد با هر route روی `next dev` (کامپایل lazy) گاهی از تایم‌اوت پیش‌فرض ۵s در `expect(page).toHaveURL` عبور می‌کند و تست را قرمز نشان می‌دهد در حالی که ورود واقعاً موفق بوده (چند ثانیه دیرتر). راه‌حل فعلی: هر spec را جدا/سریال اجرا کنید، یا یک‌بار همهٔ route های مربوطه را گرم کنید. اصلاح واقعی (فاز آینده): `workers` محلی هم برای specهای toggle‌کننده به ۱ محدود شود یا آن specها با `test.describe.configure({ mode: "serial" })` ایزوله شوند.
 - **تداخل `pnpm typecheck` با `next dev` زنده:** وقتی `next dev` در حال اجراست (مثلاً داخل کانتینر `app` با bind mount)، فایل تولیدی `.next/types/validator.ts` به مسیرهای `.js` کامپایل‌شده اشاره می‌کند که `tsc --noEmit` مستقیم (بدون زیرساخت resolve خود Next) نمی‌تواند پیدا کند، پس `pnpm typecheck` وقتی `.next/` تازه توسط یک `next dev` زنده ساخته شده fail می‌کند. غیرمرتبط با ویندوز یا این PR؛ یا قبل از typecheck دستی `.next` را پاک کنید، یا typecheck را وقتی dev server خاموش است اجرا کنید.
 
@@ -657,3 +657,13 @@ Read-only role preview now displays each permission for an assigned versus reque
 - CI run `34718321051` passed all 6,838 unit/database and 92 existing browser tests. The three new image-loading checks exposed seed variant URLs outside the media route's recognized variant namespace. Seed variants now use the established `media/variants/<media-id>/<width>.webp` path; public media validation is unchanged. Final latest-head acceptance remains required before merge.
 - Follow-up `34719022450`: 6,838 unit/database and 94 browser cases passed; all demo image requests returned 200. The remaining Turkish case selected newer imageless products left by unrelated database fixtures. The visual suite now temporarily dates four known illustrated fixtures for deterministic latest-product placement and restores their timestamps afterward; production catalog behavior and all image assertions are retained. Actual Persian/English home and product screenshots were reviewed.
 - Visual follow-up added a direct mobile card-width assertion and rail screenshot. Run `34720100091` showed the grid rail compressing cards to about 22% of its width, so mobile now uses explicit non-shrinking 45% flex cards; tablet/desktop retain the four-column grid. Hero crops keep the subject's face visible and headings balance across lines. The regression remains mandatory in each language.
+
+## ادامهٔ 05b — اصلاح ویرایشگر صفحهٔ اصلی (۲۰۲۶-۰۹-۱۳)
+
+- انتخاب دسته/مجموعه و تعداد ۱ تا ۱۲ برای ProductStrip، کنترل تعداد کارت‌های دستهٔ اصلی، ترجمهٔ کنترل‌ها و حذف وعدهٔ قدیمی «فاز ۰۲» از پیش‌نمایش.
+- منبع محصول ناموجود/حذف‌شده در ذخیره رد می‌شود و در فروشگاه نتیجهٔ خالی دارد؛ هرگز به نمایش همهٔ محصولات تبدیل نمی‌شود. ساختارهای قدیمی هنگام خواندن حفظ می‌شوند.
+- پرفروش‌ها: مجموع تعداد اقلام سفارش SALE پرداخت‌شده در همان بازار، منهای مرجوعی دریافت‌شده؛ سفارش لغوشده/کاملاً بازپرداخت‌شده و سفارش تعویض کنار گذاشته می‌شود. رتبهٔ برابر با شناسهٔ محصول مرتب می‌شود. فقط محصول فعال، حذف‌نشده و قابل‌نمایش در بازار؛ بدون فروش، خروجی خالی. این شاخص محبوبیت است، نه گزارش درآمد یا سود.
+- ویرایش هر آیتم TrustBar تمام آیتم‌ها و ترجمه‌های دیگر را حفظ می‌کند؛ افزودن/حذف در محدودیت ۱ تا ۶.
+- بنر بی‌تصویر مالک: از تصویر صفحه نمی‌توان وضعیت دیتابیس محلی را اثبات کرد. در مدیریت صفحهٔ اصلی، چیدمان بازار فعال بر سراسری مقدم است؛ تصویر Hero باید انتخاب‌شده و READY باشد. هیچ چیدمان سفارشی یا بازار اختصاصی به‌طور خودکار بازنویسی نمی‌شود.
+- آزمون پذیرش: در یک بازار آزمایشی سه آیتم اعتماد بسازید، فقط متن فارسی اول را تغییر دهید و ذخیره/بارگذاری کنید؛ سایر متن‌ها باید باقی بمانند. منبع دسته و مجموعه را جداگانه انتخاب و تعداد را تغییر دهید. در بازار بدون فروش، پرفروش‌ها باید خالی باشد.
+- ترتیب ادامه: پایان بررسی این اصلاحات → مرور محتوای واقعی و مسیر خرید موبایل → دفتر کل پایدار فاز ۰۶ و ثبت جبرانی/idempotent → خرید و بهای تمام‌شده → هزینه/سرمایهٔ شرکا → داشبورد سود. آزمون نصب HTTPS روی Android/iPhone واقعی و تأیید عکس‌های واقعی پیش از انتشار باز می‌ماند.

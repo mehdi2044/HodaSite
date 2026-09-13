@@ -6,6 +6,7 @@ import type { HomepageBlock } from "@/modules/content/homepage";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { Button, Card, Input } from "@/components/ui";
 
+type SourceOption = { id: string; title: string };
 type Locale = "fa" | "tr" | "en";
 type Labels = Record<
   | "title"
@@ -21,7 +22,19 @@ type Labels = Record<
   | "moveDown"
   | "remove"
   | "empty"
-  | "phase2"
+  | "latest"
+  | "bestseller"
+  | "category"
+  | "collection"
+  | "limit"
+  | "chooseSource"
+  | "missingSource"
+  | "rootCategories"
+  | "catalogPreview"
+  | "scopeHelp"
+  | "heroHelp"
+  | "trustItem"
+  | "addTrustItem"
   | "selectImage"
   | "fieldTitle"
   | "body"
@@ -51,12 +64,16 @@ function fresh(type: HomepageBlock["type"]): HomepageBlock {
 
 export function HomepageBuilder({
   action,
+  categories,
+  collections,
   compositions,
   mediaUrls,
   markets,
   labels,
 }: {
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>;
+  categories: SourceOption[];
+  collections: SourceOption[];
   compositions: Record<string, HomepageBlock[]>;
   mediaUrls: Record<string, string>;
   markets: { id: string; code: string }[];
@@ -72,8 +89,8 @@ export function HomepageBuilder({
   const [newType, setNewType] = useState<HomepageBlock["type"]>("Hero");
   const [urls, setUrls] = useState(mediaUrls);
   const preview = useMemo(
-    () => previewHtml(blocks, locale, urls),
-    [blocks, locale, urls],
+    () => previewHtml(blocks, locale, urls, labels),
+    [blocks, locale, urls, labels],
   );
   function setScopeValue(value: string) {
     setScope(value);
@@ -121,6 +138,7 @@ export function HomepageBuilder({
                 ))}
               </select>
             </label>
+            <p className="text-sm text-muted">{labels.scopeHelp}</p>
             <input
               type="hidden"
               name="marketId"
@@ -190,6 +208,8 @@ export function HomepageBuilder({
                 </div>
               </div>
               <BlockFields
+                categories={categories}
+                collections={collections}
                 block={block}
                 index={index}
                 labels={labels}
@@ -295,6 +315,8 @@ export function HomepageBuilder({
 }
 
 function BlockFields({
+  categories,
+  collections,
   block,
   index,
   labels,
@@ -302,6 +324,8 @@ function BlockFields({
   update,
   setUrls,
 }: {
+  categories: SourceOption[];
+  collections: SourceOption[];
   block: HomepageBlock;
   index: number;
   labels: Labels;
@@ -361,6 +385,7 @@ function BlockFields({
             }
           />
         </label>
+        <p className="text-sm text-muted">{labels.heroHelp}</p>
         <MediaPicker
           name={`unused-${index}`}
           label={labels.selectImage}
@@ -373,53 +398,150 @@ function BlockFields({
         />
       </>
     );
-  if (block.type === "CategoryCards" || block.type === "ProductStrip")
+  if (block.type === "CategoryCards" || block.type === "ProductStrip") {
+    const options = block.source.mode === "category" ? categories : collections;
+    const needsReference =
+      block.type === "ProductStrip" &&
+      (block.source.mode === "category" || block.source.mode === "collection");
     return (
       <>
         {localized("title")}
-        <label>
-          {labels.source}
-          <select
-            className="input"
-            value={block.source.mode}
-            onChange={(event) =>
-              update(index, {
-                ...block,
-                source: {
-                  ...block.source,
-                  mode: event.target.value as typeof block.source.mode,
-                },
-              })
-            }
-          >
-            <option value="latest">latest</option>
-            <option value="bestseller">bestseller</option>
-            <option value="category">category</option>
-            <option value="collection">collection</option>
-          </select>
-        </label>
-        <p className="rounded-token bg-muted/10 p-3 text-sm text-muted">
-          {labels.phase2}
-        </p>
-      </>
-    );
-  if (block.type === "TrustBar")
-    return (
-      <>
-        {locales.map((locale) => (
-          <label key={locale}>
-            {labels.body} ({locale})
-            <Input
-              value={block.items[0]?.[locale] ?? ""}
+        {block.type === "ProductStrip" ? (
+          <label>
+            {labels.source}
+            <select
+              className="input"
+              value={block.source.mode}
               onChange={(event) =>
                 update(index, {
                   ...block,
-                  items: [{ ...block.items[0], [locale]: event.target.value }],
+                  source: {
+                    ...block.source,
+                    mode: event.target.value as typeof block.source.mode,
+                    referenceId: undefined,
+                  },
                 })
               }
-            />
+            >
+              {(
+                ["latest", "bestseller", "category", "collection"] as const
+              ).map((mode) => (
+                <option key={mode} value={mode}>
+                  {labels[mode]}
+                </option>
+              ))}
+            </select>
           </label>
+        ) : (
+          <p className="text-sm text-muted">{labels.rootCategories}</p>
+        )}
+        {needsReference && (
+          <label>
+            {labels.chooseSource}
+            <select
+              className="input"
+              required
+              value={block.source.referenceId ?? ""}
+              onChange={(event) =>
+                update(index, {
+                  ...block,
+                  source: { ...block.source, referenceId: event.target.value },
+                })
+              }
+            >
+              <option value="">{labels.chooseSource}</option>
+              {block.source.referenceId &&
+                !options.some(
+                  (item) => item.id === block.source.referenceId,
+                ) && (
+                  <option value={block.source.referenceId} disabled>
+                    {labels.missingSource}
+                  </option>
+                )}
+              {options.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label>
+          {labels.limit}
+          <Input
+            type="number"
+            min={1}
+            max={12}
+            step={1}
+            value={block.source.limit}
+            required
+            onChange={(event) =>
+              update(index, {
+                ...block,
+                source: { ...block.source, limit: Number(event.target.value) },
+              })
+            }
+          />
+        </label>
+        <p className="text-sm text-muted">{labels.catalogPreview}</p>
+      </>
+    );
+  }
+  if (block.type === "TrustBar")
+    return (
+      <>
+        {block.items.map((item, itemIndex) => (
+          <fieldset
+            key={itemIndex}
+            className="grid gap-3 rounded-token border border-black/10 p-3"
+            data-testid={`trust-item-${itemIndex}`}
+          >
+            <legend>
+              {labels.trustItem} {itemIndex + 1}
+            </legend>
+            {locales.map((locale) => (
+              <label key={locale}>
+                {labels.body} ({locale})
+                <Input
+                  value={item[locale] ?? ""}
+                  onChange={(event) =>
+                    update(index, {
+                      ...block,
+                      items: block.items.map((value, i) =>
+                        i === itemIndex
+                          ? { ...value, [locale]: event.target.value }
+                          : value,
+                      ),
+                    })
+                  }
+                />
+              </label>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={block.items.length === 1}
+              onClick={() =>
+                update(index, {
+                  ...block,
+                  items: block.items.filter((_, i) => i !== itemIndex),
+                })
+              }
+            >
+              {labels.remove} {labels.trustItem} {itemIndex + 1}
+            </Button>
+          </fieldset>
         ))}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={block.items.length >= 6}
+          onClick={() =>
+            update(index, { ...block, items: [...block.items, text()] })
+          }
+        >
+          {labels.addTrustItem}
+        </Button>
       </>
     );
   return <>{localized("text")}</>;
@@ -429,6 +551,7 @@ function previewHtml(
   blocks: HomepageBlock[],
   locale: Locale,
   urls: Record<string, string>,
+  labels: Labels,
 ) {
   const esc = (value: string) =>
     value.replace(
@@ -449,7 +572,7 @@ function previewHtml(
       if (block.type === "Hero" || block.type === "Banner")
         return `<section class="hero">${block.mediaId && urls[block.mediaId] ? `<img src="${esc(urls[block.mediaId])}" alt="">` : ""}<div><h2>${local(block.title)}</h2><p>${local(block.body)}</p><span>${local(block.ctaLabel)}</span></div></section>`;
       if (block.type === "CategoryCards" || block.type === "ProductStrip")
-        return `<section><h2>${local(block.title)}</h2><div class="placeholder">Phase 02 · ${esc(block.source.mode)}</div></section>`;
+        return `<section><h2>${local(block.title)}</h2><div class="placeholder">${esc(labels.catalogPreview)}</div></section>`;
       if (block.type === "TrustBar")
         return `<section class="trust">${block.items.map((item) => `<span>${local(item)}</span>`).join("")}</section>`;
       return `<section><p>${local(block.text)}</p></section>`;

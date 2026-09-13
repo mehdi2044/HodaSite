@@ -307,7 +307,20 @@
     "body": "Metin",
     "ctaLabel": "Düğme etiketi",
     "ctaUrl": "Düğme adresi",
-    "source": "Kaynak"
+    "source": "Kaynak",
+    "latest": "Yeni ürünler",
+    "bestseller": "Çok satanlar",
+    "category": "Kategori",
+    "collection": "Koleksiyon",
+    "limit": "Gösterilecek adet",
+    "chooseSource": "Kategori veya koleksiyon seçin",
+    "missingSource": "Kaynak silindi; yeniden seçin",
+    "rootCategories": "Kategori kartları, ana kategorileri yönetim sırasıyla gösterir.",
+    "catalogPreview": "Yalnızca düzen önizlemesi; kaydettikten sonra gerçek ürünleri ve kategorileri mağazada görüntüleyin.",
+    "scopeHelp": "Pazara özel düzen genel düzenin önüne geçer. Mağazayı güncellerken etkin pazarı kontrol edin.",
+    "heroHelp": "Fotoğraflı afiş için hazır bir görsel seçin. Görsel yoksa afiş yalnızca metin gösterir.",
+    "trustItem": "Güven öğesi",
+    "addTrustItem": "Güven öğesi ekle"
   },
   "translationAdmin": {
     "title": "Arayüz çevirileri",

@@ -307,7 +307,20 @@
     "body": "Text",
     "ctaLabel": "Button label",
     "ctaUrl": "Button URL",
-    "source": "Source"
+    "source": "Source",
+    "latest": "Latest",
+    "bestseller": "Bestsellers",
+    "category": "Category",
+    "collection": "Collection",
+    "limit": "Display count",
+    "chooseSource": "Choose category or collection",
+    "missingSource": "Source removed; choose again",
+    "rootCategories": "Category cards show top-level categories in their admin sort order.",
+    "catalogPreview": "Layout preview only; view live products and categories in the storefront after saving.",
+    "scopeHelp": "A market composition overrides the global composition. Check the active market when updating its storefront.",
+    "heroHelp": "Select a ready image for a photo banner. Without an image, the banner displays text only.",
+    "trustItem": "Trust item",
+    "addTrustItem": "Add trust item"
   },
   "translationAdmin": {
     "title": "UI translations",
