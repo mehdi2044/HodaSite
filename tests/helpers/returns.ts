@@ -13,6 +13,12 @@ export async function returnFixture(
     customerId?: string;
     pending?: boolean;
     kind?: "SALE" | "EXCHANGE";
+    fxSnapshot?: {
+      marketPerUsd: string;
+      tryPerUsd: string;
+      quotedAt: string;
+      terms?: string;
+    };
   } = {},
 ) {
   const id = randomUUID(),
@@ -132,9 +138,16 @@ export async function returnFixture(
       discountAmount: discount,
       feeTotalAmount: "0",
       totalAmount: total,
-      totalAmountTry: total,
-      totalAmountUsd: total,
-      fxSnapshot: {},
+      totalAmountTry: options.fxSnapshot
+        ? total
+            .div(options.fxSnapshot.marketPerUsd)
+            .mul(options.fxSnapshot.tryPerUsd)
+            .toFixed(4)
+        : total,
+      totalAmountUsd: options.fxSnapshot
+        ? total.div(options.fxSnapshot.marketPerUsd).toFixed(4)
+        : total,
+      fxSnapshot: options.fxSnapshot ?? {},
       bankSnapshot: [],
       contactSnapshot: { email: customer.email, firstName: "Return test" },
       shippingAddress: { line1: "Test address" },

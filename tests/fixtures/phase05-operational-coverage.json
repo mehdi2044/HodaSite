@@ -68,7 +68,8 @@
   "finance.report.view": {
     "tests": [
       "tests/integration/phase06-report-access.spec.ts",
-      "tests/integration/phase06-ledger-admin.spec.ts"
+      "tests/integration/phase06-ledger-admin.spec.ts",
+      "tests/integration/phase06-reconciliation.spec.ts"
     ]
   },
   "inventory.receive": {
