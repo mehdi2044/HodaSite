@@ -104,6 +104,10 @@
 
 Later phases add: Finance (`Account`, `JournalEntry`, `JournalLine`, `Expense`, `Partner`, `CapitalTransaction`, `LandedCost`), CRM (`Segment`, `Campaign`, `LoyaltyAccount`, `PointsTransaction`, `Coupon`, `Promotion`, `Review`), AI (`AiConversation`, `AiUsage`, `PromptVersion`, `Embedding`).
 
+Phase 06/D59 implements `LedgerAccount`, `JournalEntry` and `JournalLine`; the existing `Account` remains an Auth.js model. Other finance models above remain planned. Migration `20260913060000_phase06_ledger` only adds tables/constraints/triggers, inserts missing translated chart accounts for existing markets, and grants accountant `finance.journal.post`. The ordinary seed inserts missing accounts for fresh markets without changing existing account names or activation. No historic commerce records are rewritten or posted. No credential, storage-provider, backup script or archive format changes.
+
+Ledger tables are included in ordinary whole-database pg_dump. Restore into the isolated ops workflow restores rows before post-data triggers and indexes, then runs migrations as before; newer archives require matching migrations. After posting any ledger entry, rollback must retain these tables/history or use the existing isolated safety-backup recovery procedure. Never drop ledger tables or disable their immutability triggers to downgrade the app. Existing orders, payments and Auth.js account/session data remain intact. Production-image/runtime backup-and-restore CI remains a required gate for this migration.
+
 ## 3. Backup & restore system (D23)
 
 ### 3.1 What gets backed up

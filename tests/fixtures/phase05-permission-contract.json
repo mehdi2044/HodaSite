@@ -22,6 +22,7 @@
     "crm.customer.export",
     "fees.manage",
     "finance.expense.create",
+    "finance.journal.post",
     "finance.report.view",
     "inventory.receive",
     "inventory.stock.adjust",
@@ -60,9 +61,7 @@
     "users.view"
   ],
   "roles": {
-    "owner": [
-      "*"
-    ],
+    "owner": ["*"],
     "admin": [
       "return.manage",
       "order.invoice.view",
@@ -141,7 +140,8 @@
       "payment.receipt.approve",
       "payment.refund",
       "finance.report.view",
-      "finance.expense.create"
+      "finance.expense.create",
+      "finance.journal.post"
     ],
     "support": [
       "order.view",

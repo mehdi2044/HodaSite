@@ -161,7 +161,9 @@ step "ops has NO docker socket"
 ok "no docker socket in ops"
 
 step "full backup -> verify -> restore cycle inside ops"
+"${COMPOSE[@]}" exec -T ops node /app/scripts/ci/ledger-restore-proof.mjs prepare
 "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/ops-restore-cycle.sh
+"${COMPOSE[@]}" exec -T ops node /app/scripts/ci/ledger-restore-proof.mjs verify
 ok "backup / verify / restore cycle passed"
 if [[ "$STORAGE_MODE" == s3 ]]; then
   "${COMPOSE[@]}" exec -T ops bash /app/scripts/ci/s3-interrupted-restore.sh
