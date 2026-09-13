@@ -1,3 +1,4 @@
+import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
 import { seedFashionStorefront } from "./fashion-seed";
 import { seedShipping } from "./shipping-seed";
@@ -152,6 +153,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "payment.refund",
     "finance.report.view",
     "finance.expense.create",
+    "finance.journal.post",
   ],
   support: ["order.view", "order.cancel", "users.view", "crm.customer.export"],
   marketing: [
@@ -357,6 +359,7 @@ async function main() {
   await seedFashionStorefront(db, putMediaFile);
   await seedPhase03(user.id);
   await seedPhase04();
+  await seedLedgerAccounts(db);
 }
 
 const SEEDED_PAGES = [

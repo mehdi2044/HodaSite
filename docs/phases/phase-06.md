@@ -18,6 +18,15 @@ Owner sees true profit per product/order/market and partner capital, with alerts
 - Margin dashboard equals hand-calculated example in tests; refund adjusts margin.
 - Accountant role sees finance but cannot edit products/prices.
 
+## Persistent ledger foundation — D59
+The next delivery adds LedgerAccount (separate from Auth.js Account), JournalEntry and JournalLine with additive migrations. Internal application services post manual journals, reverse a posted journal once, and read an authorized entry. They derive the actor from the real session, apply market permissions, and write audit records in the posting transaction. `finance.journal.post` is an operational accountant permission; the real PostgreSQL role/scope matrix covers post, reverse and read.
+
+Each line retains exact original amounts, TRY/USD equivalents and positive original-to-TRY/USD rates (12 decimal places). Conversion uses four-decimal HALF_UP; a rounding imbalance fails rather than adding a hidden adjustment. Header `fxAsOf` records the supplied manual snapshot time. Account currency/market and per-currency rates must agree. A journal is balanced by original currency and in both equivalent currencies. DRAFT only exists within the creation transaction; deferred database constraints require POSTED at commit. Posted entries/lines cannot be edited, extended or deleted, including direct SQL. A reversal retains the original FX snapshot and exactly swaps every debit/credit; the original stays unchanged. Account deactivation blocks new manual entries but permits exact compensating reversals.
+
+Idempotency is per market/request key with a canonical content-and-actor hash, transaction advisory locking and a unique constraint. A retry rechecks current authorization; a different request/actor using the same key fails. Reversals additionally serialize on the original entry, have a unique original-entry link, and cannot precede it or reverse another reversal.
+
+This is a backend foundation delivery, not a new admin form or automatic accounting recognition. Next slice adds manual-entry/reversal UI and payment/refund posting policy with explicit historical opening/cutover handling. Do not backfill old payments, infer missing exchange rates, or call the transaction report a profit/bank-balance report. Procurement, cost, expenses and partners retain their remaining acceptance criteria.
+
 
 ## First delivery slice — transaction reports (2026-09-12)
 After the merged Phase 05b shopping/PWA implementation and automated checks, build the readonly report surface first. Physical phone/HTTPS acceptance remains a pre-release gate under D51/D54; it is not claimed by this slice.

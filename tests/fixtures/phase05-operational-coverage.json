@@ -172,5 +172,8 @@
   },
   "users.view": {
     "tests": ["tests/integration/phase05-read-matrix.spec.ts"]
+  },
+  "finance.journal.post": {
+    "tests": ["tests/integration/phase06-ledger.spec.ts"]
   }
 }

@@ -21,6 +21,7 @@ export const PERMISSIONS = [
   "crm.customer.export",
   "fees.manage",
   "finance.expense.create",
+  "finance.journal.post",
   "finance.report.view",
   "inventory.receive",
   "inventory.stock.adjust",
