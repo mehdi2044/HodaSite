@@ -13,6 +13,19 @@ import {
 } from "@/modules/finance/journal-display";
 import { JournalLines } from "./journal-lines";
 
+// A later permission/maintenance error cannot establish that an earlier request
+// did not commit. Once uncertain, keep the reviewed payload locked until success.
+function usePostingError() {
+  const [error, setMessage] = useState("");
+  const [locked, setLocked] = useState(false);
+  function setError(code: string) {
+    setMessage(code);
+    if (code === "UNKNOWN" || code === "JOURNAL_REQUEST_CONFLICT")
+      setLocked(true);
+  }
+  return { error, setError, locked };
+}
+
 type Options = {
   markets: { id: string; code: string }[];
   accounts: {
@@ -52,14 +65,13 @@ export function JournalForm({
     lines: DisplayLine[];
     summary: { memo: string; effectiveAt: string; fxAsOf: string };
   } | null>(null);
-  const [error, setError] = useState(""),
-    [confirmed, setConfirmed] = useState(false),
+  const { error, setError, locked } = usePostingError();
+  const [confirmed, setConfirmed] = useState(false),
     [entryId, setEntryId] = useState("");
   const [pending, start] = useTransition();
   const accounts = options.accounts.filter(
     (a) => a.marketId === marketId && a.currency === currency,
   );
-  const locked = error === "UNKNOWN" || error === "JOURNAL_REQUEST_CONFLICT";
   function clearAccounts() {
     setLines((old) => old.map((l) => ({ ...l, accountId: "" })));
   }
@@ -407,9 +419,8 @@ export function ReversalForm({
     memo: string;
     effectiveAt: string;
   } | null>(null);
-  const [error, setError] = useState(""),
-    [resultId, setResultId] = useState("");
-  const locked = error === "UNKNOWN" || error === "JOURNAL_REQUEST_CONFLICT";
+  const { error, setError, locked } = usePostingError();
+  const [resultId, setResultId] = useState("");
   return (
     <section className="journal-form" data-testid="journal-reversal">
       <h2>{t("reverse")}</h2>

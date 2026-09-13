@@ -15,7 +15,7 @@
 | 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 05b | Mobile Storefront / Installable PWA         | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
-| 06  | Finance Core                               | 🟡 گزارش تراکنش‌ها و زیرساخت دفتر کل ادغام شد؛ فرم‌های دفتر کل در حال بررسی؛ سود باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20)، [#27](https://github.com/mehdi2044/HodaSite/pull/27)، [#31](https://github.com/mehdi2044/HodaSite/pull/31) |
+| 06  | Finance Core                               | 🟡 گزارش تراکنش و دفتر کل دستی پیاده‌سازی شد؛ ثبت خودکار و سود باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20)، [#27](https://github.com/mehdi2044/HodaSite/pull/27)، [#31](https://github.com/mehdi2044/HodaSite/pull/31) |
 | 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |

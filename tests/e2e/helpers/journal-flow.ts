@@ -48,16 +48,20 @@ export function journalBrowserFlows() {
         await page.getByRole("button", { name: "ورود امن" }).click();
         await expect(page).toHaveURL(/\/admin$/);
         await page.locator('[name="adminLocale"]').selectOption(locale);
-        await page.locator('aside a[href="/admin/finance/journal"]').click();
+        const ledgerLink = page.locator(
+          'aside a[href="/admin/finance/journal"]',
+        );
+        await expect(ledgerLink).toHaveText(t.title);
+        await ledgerLink.click();
         const list = page.getByTestId("journal-list");
         await expect(
           list.getByRole("heading", { name: t.title }),
         ).toBeVisible();
         await list.getByRole("link", { name: t.new }).click();
         const form = page.getByTestId("journal-form");
-        expect(
-          await form.locator('[name="marketId"] option').allTextContents(),
-        ).toEqual(["TR"]);
+        await expect(form.locator('[name="marketId"] option')).toHaveText([
+          "TR",
+        ]);
         await form.locator('[name="memo"]').fill(memo);
         await form.locator('[name="effectiveAt"]').fill("2005-01-15");
         await form.locator('[name="fxAsOf"]').fill("2005-01-15T00:00");
@@ -122,6 +126,19 @@ export function journalBrowserFlows() {
             review.getByRole("button", { name: t.editDraft }),
           ).toBeDisabled();
           expect(await db.journalEntry.count({ where: { memo } })).toBe(1);
+          await db.userRole.deleteMany({ where: { userId: user.id } });
+          await review.getByRole("button", { name: t.retrySame }).click();
+          await expect(form.getByRole("alert")).toHaveText(t.errors.FORBIDDEN);
+          await expect(
+            review.getByRole("button", { name: t.editDraft }),
+          ).toBeDisabled();
+          await db.userRole.create({
+            data: {
+              userId: user.id,
+              roleId: role.id,
+              scope: { marketId: market.id },
+            },
+          });
           await review.getByRole("button", { name: t.retrySame }).click();
         }
         await form.getByRole("link", { name: t.openEntry }).click();
