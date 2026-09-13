@@ -7,6 +7,7 @@ import { assertCan, UnauthorizedError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
+import { homepageSourceExists } from "@/modules/content/homepage-products";
 import { homepageBlocksSchema } from "@/modules/content/homepage";
 
 export async function saveHomepage(
@@ -27,6 +28,14 @@ export async function saveHomepage(
     );
     if (marketId && !(await db.market.findUnique({ where: { id: marketId } })))
       throw new z.ZodError([]);
+
+    for (const block of blocks) {
+      if (
+        block.type === "ProductStrip" &&
+        !(await homepageSourceExists(block.source))
+      )
+        throw new z.ZodError([]);
+    }
 
     const mediaIds = [
       ...new Set(

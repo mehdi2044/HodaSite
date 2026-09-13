@@ -4,7 +4,7 @@ import { storefrontHref } from "@/modules/content/storefront-links";
 import { db } from "@/lib/db";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import { localizedValue, type HomepageBlock } from "@/modules/content/homepage";
-import { listCatalogProducts } from "@/modules/catalog";
+import { homepageProducts } from "@/modules/content/homepage-products";
 import { ProductCard } from "./product-card";
 
 type Locale = "fa" | "tr" | "en";
@@ -48,15 +48,7 @@ export async function HomepageBlocks({
     Promise.all(
       blocks.map((block) =>
         block.type === "ProductStrip"
-          ? listCatalogProducts(market.id, locale, {
-              limit: block.source.limit,
-              ...(block.source.mode === "category" && block.source.referenceId
-                ? { categoryId: block.source.referenceId }
-                : {}),
-              ...(block.source.mode === "collection" && block.source.referenceId
-                ? { collectionId: block.source.referenceId }
-                : {}),
-            })
+          ? homepageProducts(market.id, locale, block.source)
           : Promise.resolve(null),
       ),
     ),

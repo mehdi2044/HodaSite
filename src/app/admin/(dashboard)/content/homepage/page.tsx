@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
-import { homepageBlocksSchema } from "@/modules/content/homepage";
+import {
+  localizedValue,
+  homepageBlocksSchema,
+} from "@/modules/content/homepage";
 import { HomepageBuilder } from "@/components/admin/homepage-builder";
 import { saveHomepage } from "./actions";
 
@@ -15,12 +18,23 @@ export default async function HomepageAdmin() {
   )
     redirect("/admin");
   const t = await getTranslations("homepageAdmin");
-  const [rows, markets] = await Promise.all([
+  const locale = (await getLocale()) as "fa" | "tr" | "en";
+  const [rows, markets, categories, collections] = await Promise.all([
     db.homepage.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: "asc" },
     }),
     db.market.findMany({ orderBy: { code: "asc" } }),
+    db.category.findMany({
+      where: { deletedAt: null },
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      select: { id: true, titleI18n: true },
+    }),
+    db.collection.findMany({
+      where: { deletedAt: null },
+      orderBy: { slug: "asc" },
+      select: { id: true, titleI18n: true },
+    }),
   ]);
   const compositions = Object.fromEntries(
     rows.map((row) => {
@@ -52,6 +66,20 @@ export default async function HomepageAdmin() {
   return (
     <HomepageBuilder
       action={saveHomepage}
+      categories={categories.map((item) => ({
+        id: item.id,
+        title: localizedValue(
+          item.titleI18n as Record<typeof locale, string>,
+          locale,
+        ),
+      }))}
+      collections={collections.map((item) => ({
+        id: item.id,
+        title: localizedValue(
+          item.titleI18n as Record<typeof locale, string>,
+          locale,
+        ),
+      }))}
       compositions={compositions}
       mediaUrls={Object.fromEntries(
         media.map((item) => [item.id, `/media/${item.storageKey}`]),
@@ -71,7 +99,19 @@ export default async function HomepageAdmin() {
         moveDown: t("moveDown"),
         remove: t("remove"),
         empty: t("empty"),
-        phase2: t("phase2"),
+        latest: t("latest"),
+        bestseller: t("bestseller"),
+        category: t("category"),
+        collection: t("collection"),
+        limit: t("limit"),
+        chooseSource: t("chooseSource"),
+        missingSource: t("missingSource"),
+        rootCategories: t("rootCategories"),
+        catalogPreview: t("catalogPreview"),
+        scopeHelp: t("scopeHelp"),
+        heroHelp: t("heroHelp"),
+        trustItem: t("trustItem"),
+        addTrustItem: t("addTrustItem"),
         selectImage: t("selectImage"),
         fieldTitle: t("fieldTitle"),
         body: t("body"),

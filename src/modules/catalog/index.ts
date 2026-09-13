@@ -1,5 +1,6 @@
 export { normalizeSearchText, buildProductSearchText } from "./search";
 export { generateSku } from "./sku";
+export { listBestsellers } from "./bestsellers";
 export {
   formatCatalogCurrency,
   formatCatalogDate,
