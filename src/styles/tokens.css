@@ -1065,6 +1065,125 @@ html[lang="fa"] body,
   justify-content: center;
 }
 
+/* Ledger: readable line cards on a phone, aligned amounts on larger screens. */
+.journal-form,
+.journal-form > fieldset,
+.journal-form form,
+.journal-lines,
+.journal-review,
+.journal-list,
+.journal-totals {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.journal-form[hidden],
+.journal-form form[hidden] {
+  display: none;
+}
+.journal-form label {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.journal-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+.journal-line,
+.journal-totals {
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 1.25rem;
+  min-width: 0;
+}
+.journal-line {
+  display: grid;
+  gap: 1rem;
+}
+.journal-line legend,
+.journal-line h3,
+.journal-totals h3 {
+  font-weight: 600;
+}
+.journal-amounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.journal-amounts dt,
+.journal-meta dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.journal-amounts dd {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-block-start: 0.25rem;
+}
+.journal-meta {
+  display: grid;
+  gap: 1rem;
+}
+.journal-id {
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.journal-totals {
+  background: var(--background);
+  border-color: var(--text);
+}
+.journal-totals h3 {
+  margin-block-end: 0.5rem;
+}
+.journal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.journal-text-button {
+  min-height: 48px;
+  padding: 0.75rem 0.25rem;
+  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+}
+.journal-text-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.journal-confirm {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 48px;
+}
+.journal-confirm input {
+  flex-shrink: 0;
+  width: 24px;
+  accent-color: var(--primary);
+}
+.journal-form textarea {
+  font-size: 1rem;
+  min-width: 0;
+  resize: vertical;
+}
+@media (min-width: 700px) {
+  .journal-amounts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .journal-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .journal-line {
+    padding: 1.5rem;
+  }
+}
+
 /* Login stays usable with password managers, mixed scripts and touch controls. */
 .admin-login-form .input {
   min-height: 48px;

@@ -7,18 +7,20 @@ export function FinanceFilters({
   to,
   marketId,
   markets,
+  actionPath = "/admin/finance",
 }: {
   from: string;
   to: string;
   marketId?: string;
   markets: Array<{ id: string; code: string }>;
+  actionPath?: string;
 }) {
   const t = useTranslations("finance"),
     router = useRouter(),
     [pending, start] = useTransition();
   return (
     <form
-      action="/admin/finance"
+      action={actionPath}
       className="finance-filters"
       onSubmit={(e) => {
         e.preventDefault();
@@ -26,7 +28,7 @@ export function FinanceFilters({
         const query = new URLSearchParams();
         for (const key of ["from", "to", "marketId"])
           query.set(key, String(data.get(key) || ""));
-        start(() => router.push(`/admin/finance?${query}`));
+        start(() => router.push(`${actionPath}?${query}`));
       }}
     >
       <fieldset disabled={pending}>

@@ -26,6 +26,7 @@ export async function AdminShell({
   const commerce = await getTranslations("commerce");
   const health = await getTranslations("healthAdmin");
   const finance = await getTranslations("finance");
+  const journal = await getTranslations("journal");
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
   const alertCount = showHealth
@@ -50,7 +51,10 @@ export async function AdminShell({
         <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
         <Link href="/admin/orders">{commerce("orders")}</Link>
         {financeMarkets.length > 0 && (
-          <Link href="/admin/finance">{finance("title")}</Link>
+          <>
+            <Link href="/admin/finance">{finance("title")}</Link>
+            <Link href="/admin/finance/journal">{journal("title")}</Link>
+          </>
         )}
         <Link href="/admin/returns">{returns("title")}</Link>
         <Link href="/admin/payments/banks">{commerce("bankAccounts")}</Link>
