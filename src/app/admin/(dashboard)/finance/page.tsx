@@ -10,6 +10,7 @@ import {
   displayReportAmount,
 } from "@/modules/finance";
 import { FinanceFilters } from "@/components/finance/filters";
+import Link from "next/link";
 export default async function FinancePage({
   searchParams,
 }: {
@@ -17,6 +18,7 @@ export default async function FinancePage({
 }) {
   const query = await searchParams,
     t = await getTranslations("finance"),
+    rt = await getTranslations("reconciliation"),
     locale = await getLocale();
   const raw = { from: query.from, to: query.to, marketId: query.marketId };
   let report: Awaited<ReturnType<typeof financeReport>> | undefined,
@@ -77,6 +79,12 @@ export default async function FinancePage({
         )}
       </div>
       <p className="text-muted">{t("intro")}</p>
+      <Link
+        className="journal-text-button"
+        href="/admin/finance/reconciliation"
+      >
+        {rt("title")}
+      </Link>
       <FinanceFilters
         key={exportQuery.toString()}
         from={filter.from}
