@@ -109,18 +109,22 @@ test("homepage source selections and every trust translation survive save and re
     await login(page);
     await page.goto("/admin/content/homepage");
     await page
-      .getByLabel("دامنهٔ بازار", { exact: true })
+      .getByRole("combobox", { name: "دامنهٔ بازار", exact: true })
       .selectOption(market.id);
     await page
       .getByTestId("trust-item-0")
       .getByLabel("متن (fa)")
       .fill("ارسال ویرایش‌شده");
-    await page.getByLabel("منبع", { exact: true }).selectOption("category");
     await page
-      .getByLabel("انتخاب دسته یا مجموعه", { exact: true })
+      .getByRole("combobox", { name: "منبع", exact: true })
+      .selectOption("category");
+    await page
+      .getByRole("combobox", { name: "انتخاب دسته یا مجموعه", exact: true })
       .selectOption(category.id);
     await page.getByLabel("تعداد نمایش", { exact: true }).fill("3");
-    await page.getByLabel("منبع", { exact: true }).scrollIntoViewIfNeeded();
+    await page
+      .getByRole("combobox", { name: "منبع", exact: true })
+      .scrollIntoViewIfNeeded();
     await shoppingProof(page, info, "homepage-source-editor");
     const save = page.getByRole("button", {
       name: "ذخیرهٔ چیدمان",
@@ -145,14 +149,16 @@ test("homepage source selections and every trust translation survive save and re
     });
     await page.reload();
     await page
-      .getByLabel("دامنهٔ بازار", { exact: true })
+      .getByRole("combobox", { name: "دامنهٔ بازار", exact: true })
       .selectOption(market.id);
     await expect(
       page.getByTestId("trust-item-2").getByLabel("متن (en)"),
     ).toHaveValue("Three");
-    await page.getByLabel("منبع", { exact: true }).selectOption("collection");
     await page
-      .getByLabel("انتخاب دسته یا مجموعه", { exact: true })
+      .getByRole("combobox", { name: "منبع", exact: true })
+      .selectOption("collection");
+    await page
+      .getByRole("combobox", { name: "انتخاب دسته یا مجموعه", exact: true })
       .selectOption(collection.id);
     await save.click();
     await expect
@@ -163,7 +169,9 @@ test("homepage source selections and every trust translation survive save and re
         ),
       )
       .toContain(collection.id);
-    await page.getByLabel("منبع", { exact: true }).selectOption("bestseller");
+    await page
+      .getByRole("combobox", { name: "منبع", exact: true })
+      .selectOption("bestseller");
     await save.click();
     await expect
       .poll(async () =>
