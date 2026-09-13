@@ -141,7 +141,6 @@ export function journalBrowserFlows() {
           });
           await review.getByRole("button", { name: t.retrySame }).click();
         }
-        await form.getByRole("link", { name: t.openEntry }).click();
         const detail = page.getByTestId("journal-detail");
         await expect(detail).toContainText(memo);
         const original = await db.journalEntry.findFirstOrThrow({
@@ -165,7 +164,6 @@ export function journalBrowserFlows() {
           await db.journalEntry.count({ where: { reversalOfId: original.id } }),
         ).toBe(0);
         await reversal.getByRole("button", { name: t.confirmReverse }).click();
-        await reversal.getByRole("link", { name: t.openEntry }).click();
         await expect(
           detail.getByRole("link", { name: t.originalEntry }),
         ).toBeVisible();

@@ -6,6 +6,17 @@ import { can, assertCan, ForbiddenError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { cookies } from "next/headers";
+function localHttpPreview() {
+  try {
+    const origin = new URL(process.env.APP_URL ?? "");
+    return (
+      origin.protocol === "http:" &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
 /** Own display preference only; does not impersonate a user or grant access. */
 export async function setAdminLocale(form: FormData) {
   const session = await auth();
@@ -13,7 +24,10 @@ export async function setAdminLocale(form: FormData) {
   const locale = z.enum(["fa", "tr", "en"]).parse(form.get("locale"));
   (await cookies()).set("hoda.admin.locale", locale, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // WebKit rejects Secure cookies on an HTTP loopback preview. This exception
+    // is only for the display preference and a configured local origin; public
+    // production origins (and missing/invalid config) retain Secure.
+    secure: process.env.NODE_ENV === "production" && !localHttpPreview(),
     sameSite: "lax",
     path: "/",
     maxAge: 365 * 86400,

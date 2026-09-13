@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   auth: vi.fn(),
   set: vi.fn(),
@@ -15,6 +15,36 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.auth.mockResolvedValue({ user: { id: "admin" } });
 });
+afterEach(() => vi.unstubAllEnvs());
+it.each([
+  ["http://127.0.0.1:3000", false],
+  ["http://localhost:3000", false],
+  ["http://[::1]:3000", false],
+  ["https://shop.example.com", true],
+  ["http://shop.example.com", true],
+  ["", true],
+  ["invalid", true],
+  ["http://localhost.example.com", true],
+])(
+  "production display cookie at %s retains the correct Secure flag",
+  async (origin, secure) => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_URL", origin);
+    const form = new FormData();
+    form.set("locale", "tr");
+    await setAdminLocale(form);
+    expect(state.set).toHaveBeenCalledWith(
+      "hoda.admin.locale",
+      "tr",
+      expect.objectContaining({
+        secure,
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      }),
+    );
+  },
+);
 it("rejects anonymous and invalid locale before writing a cookie", async () => {
   const form = new FormData();
   form.set("locale", "en");

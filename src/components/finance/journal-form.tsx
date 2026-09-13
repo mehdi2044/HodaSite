@@ -1,6 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   postJournal,
@@ -53,7 +54,8 @@ export function JournalForm({
   today: string;
 }) {
   const t = useTranslations("journal"),
-    locale = useLocale();
+    locale = useLocale(),
+    router = useRouter();
   const [marketId, setMarket] = useState(options.markets[0].id),
     [currency, setCurrency] = useState("TRY");
   const [lines, setLines] = useState<DraftLine[]>([
@@ -372,8 +374,10 @@ export function JournalForm({
                           request: preview.request,
                           confirm: confirmed,
                         });
-                        if (result.ok) setEntryId(result.value);
-                        else setError(result.code);
+                        if (result.ok) {
+                          setEntryId(result.value);
+                          router.push(`/admin/finance/journal/${result.value}`);
+                        } else setError(result.code);
                       } catch {
                         setError("UNKNOWN");
                       }
@@ -412,6 +416,7 @@ export function ReversalForm({
   minimum: string;
 }) {
   const t = useTranslations("journal"),
+    router = useRouter(),
     [pending, start] = useTransition();
   const [request, setRequest] = useState<{
     entryId: string;
@@ -503,8 +508,10 @@ export function ReversalForm({
                           request,
                           confirm: true,
                         });
-                        if (result.ok) setResultId(result.value);
-                        else setError(result.code);
+                        if (result.ok) {
+                          setResultId(result.value);
+                          router.push(`/admin/finance/journal/${result.value}`);
+                        } else setError(result.code);
                       } catch {
                         setError("UNKNOWN");
                       }
