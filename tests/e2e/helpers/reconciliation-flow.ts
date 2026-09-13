@@ -149,7 +149,9 @@ export function reconciliationBrowserFlows() {
         await page.goto(
           `/admin/finance/reconciliation?from=${day}&to=2000-01-01`,
         );
-        await expect(page.getByRole("alert")).toHaveText(t.invalidFilter);
+        await expect(
+          page.locator(".finance-page").getByRole("alert"),
+        ).toHaveText(t.invalidFilter);
         expect(await evidence()).toEqual(before);
         expect(
           await db.journalEntry.count({ where: { createdById: user.id } }),

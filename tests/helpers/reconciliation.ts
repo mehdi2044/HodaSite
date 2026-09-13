@@ -20,13 +20,6 @@ export async function reconciliationFixture(
       terms: "private-quote-terms",
     },
   });
-  await db.order.update({
-    where: { id: f.order.id },
-    data: {
-      status: "PAID",
-      paidAt: at,
-    },
-  });
   await db.payment.create({
     data: {
       orderId: f.order.id,
@@ -42,7 +35,7 @@ export async function reconciliationFixture(
     data: {
       customerId: f.customer.id,
       amount: "40",
-      balance: "0",
+      balance: "40",
       currency: f.market.currency,
     },
   });
@@ -51,7 +44,7 @@ export async function reconciliationFixture(
       orderId: f.order.id,
       creditId: credit.id,
       amount: "40",
-      status: "CONSUMED",
+      status: "RESERVED",
     },
   });
   await db.payment.create({
@@ -64,6 +57,18 @@ export async function reconciliationFixture(
       reviewedAt: at,
       reference: use.id,
     },
+  });
+  await db.creditUse.update({
+    where: { id: use.id },
+    data: { status: "CONSUMED" },
+  });
+  await db.storeCredit.update({
+    where: { id: credit.id },
+    data: { balance: "0" },
+  });
+  await db.order.update({
+    where: { id: f.order.id },
+    data: { status: "PAID", paidAt: at },
   });
   return f;
 }
