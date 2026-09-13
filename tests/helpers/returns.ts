@@ -12,6 +12,7 @@ export async function returnFixture(
     code?: string;
     customerId?: string;
     pending?: boolean;
+    kind?: "SALE" | "EXCHANGE";
   } = {},
 ) {
   const id = randomUUID(),
@@ -123,6 +124,7 @@ export async function returnFixture(
       guestTokenHash: cart.tokenHash,
       locale,
       currency: market.currency,
+      kind: options.kind ?? "SALE",
       status: options.pending ? "PENDING_PAYMENT" : "DELIVERED",
       paidAt: options.pending ? null : new Date(),
       deliveredAt: options.pending ? null : new Date(),

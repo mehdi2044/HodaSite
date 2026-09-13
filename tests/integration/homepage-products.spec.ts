@@ -76,9 +76,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           productIds[0],
         ]);
       }
-      await db.order.update({
-        where: { id: second.order.id },
-        data: { status: "PAID", paidAt: new Date(), kind: "EXCHANGE" },
+      const exchange = await returnFixture(db, {
+        code,
+        quantity: 9,
+        kind: "EXCHANGE",
+      });
+      await db.product.update({
+        where: { id: exchange.variants[0].productId },
+        data: { marketIds: [marketId] },
       });
       expect((await listBestsellers(marketId)).map((p) => p.id)).toEqual([
         productIds[0],
