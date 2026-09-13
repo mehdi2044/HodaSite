@@ -1,4 +1,4 @@
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { type PrismaClient } from "@prisma/client";
 import { returnFixture } from "./returns";
 
 /** Only synthetic isolated orders; setup is complete before any review executes. */
@@ -6,28 +6,25 @@ export async function reconciliationFixture(
   db: PrismaClient,
   { code = "TR", day = "2006-01-15", mismatch = false } = {},
 ) {
+  const marketPerUsd = code === "TR" ? "40" : "500000";
+  const at = new Date(`${day}T12:00:00Z`);
   const f = await returnFixture(db, {
     code,
     pending: true,
     quantity: 1,
     price: "100.0001",
+    fxSnapshot: {
+      marketPerUsd,
+      tryPerUsd: "40",
+      quotedAt: at.toISOString(),
+      terms: "private-quote-terms",
+    },
   });
-  const marketPerUsd = code === "TR" ? "40" : "500000";
-  const usd = new Prisma.Decimal("100.0001").div(marketPerUsd);
-  const at = new Date(`${day}T12:00:00Z`);
   await db.order.update({
     where: { id: f.order.id },
     data: {
       status: "PAID",
       paidAt: at,
-      totalAmountTry: usd.mul(40).toFixed(4),
-      totalAmountUsd: usd.toFixed(4),
-      fxSnapshot: {
-        marketPerUsd,
-        tryPerUsd: "40",
-        quotedAt: at.toISOString(),
-        terms: "private-quote-terms",
-      },
     },
   });
   await db.payment.create({
