@@ -12,7 +12,7 @@ Implement `docs/phases/phase-01c.md` completely on branch `phase/01c-cms-storefr
 6. If a requirement conflicts with a binding decision, stop and report the exact conflict; do not silently choose.
 7. Update `docs/PROGRESS.md`: mark 01b merged with PR #5 and merge commit `61eb4f3`; document 01c implementation, raw test counts, manual Persian verification steps, limitations, and questions.
 8. After local verification, push the branch and open PR `Phase 01c: CMS and Storefront Design`. Wait for all three CI jobs. Fix failures on the same branch without force-push.
-9. Do not merge. Report the PR URL, exact head SHA, test output summary, CI links/status, and any residual risk to Vee for independent review.
+9. Review and merge under D50/D63 after the required CI passes on the latest head. Report the PR URL, head and merge SHA, verification evidence and residual risks; separate owner/Pixel approval is not required.
 
 The notification-template scope here is the authoring/provider foundation from the v1.2 roadmap. Real provider configuration and SMS delivery remain Phase 04 even though the templates are editable now.
 

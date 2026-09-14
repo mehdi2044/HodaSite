@@ -1,5 +1,7 @@
 # Phase 00 — Fix Order (Review Round 1)
 
+> دستور تاریخی فاز ۰۰؛ قواعد همکاری و مرج آن با [D63](../02_DECISIONS.md#current-policy) جایگزین شده است.
+
 **PR:** #1 · **Branch:** `codex/implement-phase-00-foundation` · **Status:** ❌ NO MERGE
 **Reviewed by:** Pixel (architecture owner) and Vee (independent quality gate). Both agree on every item below.
 **Rules:** fix only what is listed. Do not add scope from later phases. Do not modify `docs/02_DECISIONS.md`. Implement against docs v1.2.
