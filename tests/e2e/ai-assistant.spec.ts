@@ -16,6 +16,7 @@ for (const locale of ["fa", "tr", "en"] as const)
     test.setTimeout(120000);
     const t = { fa, tr, en }[locale].aiAdmin,
       id = randomUUID(),
+      approvedTitle = `Approved ${locale} wool coat`,
       email = `ai-browser-${id}@example.com`,
       password = "AiFixture123!";
     const role = await db.role.findUniqueOrThrow({
@@ -112,9 +113,7 @@ for (const locale of ["fa", "tr", "en"] as const)
       await expect(
         review.getByRole("button", { name: t.apply, exact: true }),
       ).toBeDisabled();
-      await review
-        .getByLabel("title.en", { exact: true })
-        .fill("Approved wool coat");
+      await review.getByLabel("title.en", { exact: true }).fill(approvedTitle);
       await review.locator('input[type="checkbox"]').first().check();
       await review.getByLabel(t.confirm, { exact: true }).check();
       if (locale === "fa") {
@@ -142,7 +141,7 @@ for (const locale of ["fa", "tr", "en"] as const)
       const updated = await db.product.findUniqueOrThrow({
         where: { id: productId },
       });
-      expect(updated.titleI18n).toMatchObject({ en: "Approved wool coat" });
+      expect(updated.titleI18n).toMatchObject({ en: approvedTitle });
       expect(updated.descriptionI18n).toEqual(p.descriptionI18n);
       expect(updated.basePriceAmount.toString()).toBe(
         p.basePriceAmount.toString(),
