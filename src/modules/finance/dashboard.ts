@@ -78,7 +78,13 @@ export async function financeWorkspace(marketId: string) {
       }),
       tx.warehouse.findMany({ select: { id: true, nameI18n: true } }),
     ]);
+    const alerts = await tx.systemAlert.findMany({
+      where: { code: { startsWith: `FINANCE:${marketId}:` }, resolvedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
     return {
+      alerts,
       config,
       suppliers,
       purchases,

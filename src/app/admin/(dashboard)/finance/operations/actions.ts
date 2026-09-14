@@ -11,6 +11,8 @@ export async function financialOperation(
 ): Promise<{ ok: true; id: string } | { ok: false; code: string }> {
   const handlers: Record<string, (v: unknown) => Promise<string>> = {
     config: operations.saveFinanceConfig,
+    alerts: operations.refreshFinancialAlerts,
+    opening: operations.openDefaultCosts,
     supplier: operations.createSupplier,
     purchase: operations.createPurchase,
     receive: operations.receivePurchase,

@@ -1,8 +1,12 @@
 import { apportion } from "@/modules/finance/apportion";
-import { costSnapshot } from "@/modules/finance/cost-snapshot";
+import {
+  allocatedMovementCost,
+  costSnapshot,
+} from "@/modules/finance/cost-snapshot";
 import { describe, it, expect } from "vitest";
 import { profitTotals } from "@/modules/finance/profit";
 import {
+  nextExpenseDate,
   snapshot,
   equivalents,
   purchaseInput,
@@ -156,4 +160,24 @@ describe("exact attribution and source FX", () => {
     expect(() => costSnapshot("TRY", {}, at)).toThrow();
     expect(() => costSnapshot("USD", rates, at)).toThrow();
   });
+});
+
+it("conserves landed totals when unit rounding would otherwise lose the entire cost", () => {
+  expect(allocatedMovementCost("1", 1000000, 0, -1)).toBe("0.0000");
+  expect(allocatedMovementCost("1", 1000000, 0, -999999)).toBe("1.0000");
+  expect(allocatedMovementCost("1", 1000000, 999999, -1)).toBe("0.0000");
+  expect(allocatedMovementCost("1", 3, 0, -1)).toBe("0.3333");
+  expect(allocatedMovementCost("1", 3, 1, -1)).toBe("0.3334");
+  expect(allocatedMovementCost("1", 3, 2, -1)).toBe("0.3333");
+  expect(allocatedMovementCost("1", 3, 3, 3)).toBe("1.0000");
+});
+
+it("clamps recurring expenses at month ends, including leap years", () => {
+  expect(
+    nextExpenseDate(new Date("2008-01-31T12:00:00Z"), 1).toISOString(),
+  ).toBe("2008-02-29T12:00:00.000Z");
+  expect(
+    nextExpenseDate(new Date("2009-01-31T12:00:00Z"), 1).toISOString(),
+  ).toBe("2009-02-28T12:00:00.000Z");
+  expect(() => nextExpenseDate(new Date(), 0)).toThrow();
 });

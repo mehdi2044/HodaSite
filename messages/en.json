@@ -1451,6 +1451,21 @@
     "closing": "Closing balance",
     "movement": "Period movement",
     "purchaseOrderId": "Purchase funded (optional)",
-    "attachment": "Expense document (optional)"
+    "attachment": "Expense document (optional)",
+    "operationalMetrics": "Operations",
+    "metricsHelp": "Approved payments and delivered orders in this period. Missing or inconsistent timestamps are excluded from averages. Returns are grouped by request date and original currency.",
+    "verificationMinutes": "Average payment verification (minutes)",
+    "fulfillmentMinutes": "Average paid-to-delivered time (minutes)",
+    "metricCount": "{count} records; {missing} missing or inconsistent dates",
+    "returnMetrics": "Return requests",
+    "alerts": "Finance alerts",
+    "BELOW_COST": "Sale below landed cost",
+    "LOW_MARGIN": "Low margin",
+    "SLOW_STOCK": "Slow-moving stock",
+    "PRICE_OUTLIER": "Price needs review",
+    "nextExpense": "Create next installment",
+    "recurringHelp": "Next date: {date}. Review the amount and FX rates; this installment requires its own posting and approval.",
+    "openingCosts": "Opening inventory costs",
+    "openingHelp": "Only existing units without a lot receive the product default cost and your explicit FX snapshot. Stock counts and existing lot costs stay intact. Choose the accounting opening date and rates; this does not reconstruct historical cost."
   }
 }

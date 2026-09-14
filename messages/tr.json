@@ -1451,6 +1451,21 @@
     "closing": "Kapanış bakiyesi",
     "movement": "Dönem hareketi",
     "purchaseOrderId": "Finanse edilen alım (isteğe bağlı)",
-    "attachment": "Gider belgesi (isteğe bağlı)"
+    "attachment": "Gider belgesi (isteğe bağlı)",
+    "operationalMetrics": "Operasyonlar",
+    "metricsHelp": "Bu dönemde onaylanan ödemeler ve teslim edilen siparişler. Eksik veya tutarsız tarihler ortalamaya katılmaz. İadeler talep tarihi ve özgün para birimiyle gruplanır.",
+    "verificationMinutes": "Ortalama ödeme doğrulama (dakika)",
+    "fulfillmentMinutes": "Ödemeden teslimata ortalama süre (dakika)",
+    "metricCount": "{count} kayıt; {missing} eksik veya tutarsız tarih",
+    "returnMetrics": "İade talepleri",
+    "alerts": "Finans uyarıları",
+    "BELOW_COST": "Maliyetin altında satış",
+    "LOW_MARGIN": "Düşük kâr marjı",
+    "SLOW_STOCK": "Yavaş hareket eden stok",
+    "PRICE_OUTLIER": "Fiyat kontrolü gerekli",
+    "nextExpense": "Sonraki gideri oluştur",
+    "recurringHelp": "Sonraki tarih: {date}. Tutarı ve kurları kontrol edin; bu gider ayrı kayıt ve onay gerektirir.",
+    "openingCosts": "Açılış stok maliyetleri",
+    "openingHelp": "Yalnızca lotu olmayan mevcut birimlere ürün varsayılan maliyeti ve girdiğiniz kur uygulanır. Stok miktarı ve mevcut lot maliyetleri korunur. Açılış tarihini ve kurları seçin; geçmiş maliyetler yeniden hesaplanmaz."
   }
 }

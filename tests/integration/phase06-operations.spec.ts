@@ -1,3 +1,4 @@
+import { operationsMetrics } from "@/modules/finance/metrics";
 import { POST as uploadExpense } from "@/app/api/admin/finance/attachments/route";
 import { GET as downloadExpense } from "@/app/api/admin/finance/attachments/[id]/route";
 import { GET as publicMedia } from "@/app/media/[...key]/route";
@@ -220,6 +221,34 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             expect(result.ok).toBe(allowed);
             if (!allowed) expect(await fingerprint(tables)).toEqual(before);
           });
+          it(`finance configuration operations ${name}/${scope}/${target}`, async () => {
+            acting.id = subjects.find(
+              (s) => s.name === name && s.scope === scope,
+            )!.id;
+            const marketId = target === "TR" ? tr : ir;
+            const allowed =
+              granted(name, "finance.journal.post") &&
+              (scope === "in" || (scope === "market-out" && target === "TR"));
+            const before = await fingerprint([...tables, "SystemAlert"]);
+            const alerts = await financialOperation("alerts", {
+              marketId,
+              confirm: true,
+            });
+            expect(alerts.ok).toBe(allowed);
+            const opening = await financialOperation("opening", {
+              marketId,
+              warehouseId: warehouse,
+              requestKey: randomUUID(),
+              memo: "Opening matrix",
+              snapshot: rates,
+              confirm: true,
+            });
+            expect(opening.ok).toBe(allowed);
+            if (!allowed)
+              expect(await fingerprint([...tables, "SystemAlert"])).toEqual(
+                before,
+              );
+          });
           it(`finance.report.view ${name}/${scope}/${target} workspace and profit`, async () => {
             acting.id = subjects.find(
               (s) => s.name === name && s.scope === scope,
@@ -229,6 +258,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               (scope === "in" || (scope === "market-out" && target === "TR"));
             const id = target === "TR" ? tr : ir;
             if (allowed) {
+              expect(await operationsMetrics({ marketId: id })).toHaveProperty(
+                "payments",
+              );
               expect(await marginReport({ marketId: id })).toHaveProperty(
                 "rows",
               );
@@ -250,6 +282,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                 }),
               ).toHaveProperty("totals");
             } else {
+              await expect(
+                operationsMetrics({ marketId: id }),
+              ).rejects.toThrow();
               await expect(marginReport({ marketId: id })).rejects.toThrow();
               expect(
                 (
@@ -267,6 +302,43 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             }
           });
         }
+    it("creates a recurring installment once with explicit new FX and date", async () => {
+      acting.id = owner;
+      const source = await createExpense({
+        ...expense(),
+        recurrenceMonths: 1,
+        snapshot: { ...rates, effectiveAt: "2008-01-31T00:00:00Z" },
+      });
+      await approveExpense({ id: source, confirm: true });
+      const input = {
+        ...expense(),
+        recurringSourceId: source,
+        recurrenceMonths: 1,
+        snapshot: {
+          ...rates,
+          effectiveAt: "2008-02-29T00:00:00Z",
+          fxAsOf: "2008-02-29T00:00:00Z",
+          rateUsd: "0.03",
+        },
+      };
+      const [a, b] = await Promise.all([
+        createExpense(input),
+        createExpense({ ...input, requestKey: randomUUID() }),
+      ]);
+      expect(a).toBe(b);
+      expect(
+        (
+          await db.expense.findUniqueOrThrow({ where: { id: a } })
+        ).rateUsd.toString(),
+      ).toBe("0.03");
+      await expect(
+        createExpense({
+          ...input,
+          requestKey: randomUUID(),
+          snapshot: { ...input.snapshot, effectiveAt: "2008-03-02T00:00:00Z" },
+        }),
+      ).rejects.toThrow();
+    });
     it("receives exactly once under concurrency and protects finalized purchase/stock/history", async () => {
       acting.id = owner;
       const input = {

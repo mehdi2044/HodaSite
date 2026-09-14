@@ -37,6 +37,11 @@ export function ExpenseAttachment({ marketId }: { marketId: string }) {
           }}
         />
       </label>
+      <input
+        type="hidden"
+        name="attachmentState"
+        value={pending ? "pending" : failed ? "failed" : "ready"}
+      />
       <input type="hidden" name="attachmentId" value={id} />
       {pending && <p role="status">{t("working")}</p>}
       {failed && <p role="alert">{t("invalid")}</p>}

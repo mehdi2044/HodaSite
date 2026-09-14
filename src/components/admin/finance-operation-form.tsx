@@ -24,6 +24,12 @@ export function FinanceOperationForm({
     if (pending) return;
     setPending(true);
     setCode("");
+    if (["pending", "failed"].includes(String(data.get("attachmentState")))) {
+      setCode("VALIDATION");
+      setPending(false);
+      return;
+    }
+    data.delete("attachmentState");
     const fields = Object.fromEntries(data.entries());
     const raw: Record<string, unknown> = { ...fields };
     delete raw.confirm;
@@ -31,6 +37,8 @@ export function FinanceOperationForm({
     if (
       [
         "config",
+        "alerts",
+        "opening",
         "purchase",
         "expense",
         "capital",
@@ -39,7 +47,7 @@ export function FinanceOperationForm({
       ].includes(kind)
     )
       raw.confirm = data.get("confirm") === "on";
-    if (["purchase", "expense", "capital"].includes(kind)) {
+    if (["purchase", "expense", "capital", "opening"].includes(kind)) {
       raw.requestKey = key;
       raw.snapshot = Object.fromEntries(
         ["currency", "rateTry", "rateUsd", "fxAsOf", "effectiveAt"].map((k) => [
@@ -80,6 +88,7 @@ export function FinanceOperationForm({
     if (kind === "expense") {
       raw.recurrenceMonths = Number(data.get("recurrenceMonths") || 0);
       if (!raw.attachmentId) delete raw.attachmentId;
+      if (!raw.recurringSourceId) delete raw.recurringSourceId;
     }
     if (kind === "capital" && !raw.purchaseOrderId) delete raw.purchaseOrderId;
     if (kind === "config") {

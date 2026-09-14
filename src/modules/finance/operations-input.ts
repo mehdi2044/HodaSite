@@ -55,6 +55,7 @@ export const purchaseInput = operationBase
     (v) => new Set(v.items.map((i) => i.variantId)).size === v.items.length,
   );
 export const expenseInput = operationBase.extend({
+  recurringSourceId: identifier.optional(),
   snapshot,
   amount: positive,
   category: z.string().trim().min(1).max(100),
@@ -78,4 +79,19 @@ export function equivalents(
   if ([a, tr, usd].some((v) => v.abs().gte("100000000000000")))
     throw new Error("AMOUNT_OVERFLOW");
   return { amountTry: tr.toFixed(4), amountUsd: usd.toFixed(4) };
+}
+
+/** Preserve month-end cycles without overflowing into the following month. */
+export function nextExpenseDate(date: Date, months: number) {
+  if (!Number.isInteger(months) || months < 1 || months > 12)
+    throw new Error("RECURRENCE_INPUT");
+  const result = new Date(date);
+  const day = date.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const last = new Date(
+    Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  result.setUTCDate(Math.min(day, last));
+  return result;
 }

@@ -1,3 +1,4 @@
+import { scanStockAlerts } from "./alerts";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -13,6 +14,8 @@ import { allocateLandedCost } from "./calculations";
 import { journalHash } from "./journal-input";
 import { postPair } from "./posting";
 import {
+  snapshot,
+  nextExpenseDate,
   capitalInput,
   expenseInput,
   purchaseInput,
@@ -298,6 +301,7 @@ export async function receivePurchase(raw: unknown) {
 }
 export async function createExpense(raw: unknown) {
   const v = expenseInput.parse(raw);
+  if (v.recurringSourceId) v.requestKey = `recurring:${v.recurringSourceId}`;
   return withMutation(() =>
     db.$transaction(async (tx) => {
       const actor = await financeActor(
@@ -318,6 +322,23 @@ export async function createExpense(raw: unknown) {
       if (old) {
         if (old.requestHash !== hash) invalid();
         return old.id;
+      }
+      if (v.recurringSourceId) {
+        const source = await tx.expense.findFirst({
+          where: {
+            id: v.recurringSourceId,
+            marketId: v.marketId,
+            status: "APPROVED",
+            recurrenceMonths: { gt: 0 },
+          },
+        });
+        if (
+          !source ||
+          nextExpenseDate(source.effectiveAt, source.recurrenceMonths)
+            .toISOString()
+            .slice(0, 10) !== v.snapshot.effectiveAt.slice(0, 10)
+        )
+          invalid();
       }
       equivalents(v.amount, v.snapshot);
       // Only privately uploaded expense documents owned by this actor can be attached.
@@ -345,6 +366,7 @@ export async function createExpense(raw: unknown) {
           amount: v.amount,
           attachmentId: v.attachmentId,
           recurrenceMonths: v.recurrenceMonths,
+          recurringSourceId: v.recurringSourceId,
           ...v.snapshot,
           effectiveAt: new Date(v.snapshot.effectiveAt),
           fxAsOf: new Date(v.snapshot.fxAsOf),
@@ -503,5 +525,152 @@ export async function createCapital(raw: unknown) {
       });
       return row.id;
     }),
+  );
+}
+
+export async function refreshFinancialAlerts(raw: unknown) {
+  const v = z
+    .object({ marketId: identifier, confirm: z.literal(true) })
+    .strict()
+    .parse(raw);
+  return withMutation(() =>
+    db.$transaction(
+      async (tx) => {
+        const actor = await financeActor(
+          tx,
+          "finance.journal.post",
+          v.marketId,
+        );
+        const config = await tx.financeConfig.findUnique({
+          where: { id: v.marketId },
+        });
+        await scanStockAlerts(
+          tx,
+          v.marketId,
+          config?.slowDays ?? 90,
+          config?.deviationPercent.toString() ?? "50",
+        );
+        await audit(tx, actor, "finance.alerts.scan", v.marketId, {});
+        return v.marketId;
+      },
+      { timeout: 30000 },
+    ),
+  );
+}
+
+/** Assign explicit opening cost evidence to existing, un-lotted units only. */
+export async function openDefaultCosts(raw: unknown) {
+  const v = z
+    .object({
+      marketId: identifier,
+      warehouseId: identifier,
+      requestKey: identifier,
+      memo: z.string().trim().min(1).max(500),
+      snapshot,
+      confirm: z.literal(true),
+    })
+    .strict()
+    .parse(raw);
+  return withMutation(() =>
+    db.$transaction(
+      async (tx) => {
+        const actor = await financeActor(
+          tx,
+          "finance.journal.post",
+          v.marketId,
+        );
+        const hash = journalHash({ actor, ...v }),
+          key = `opening:${v.marketId}:${v.requestKey}`;
+        await lock(tx, key);
+        const prior = await tx.auditLog.findFirst({
+          where: { entityType: "FinanceOpening", entityId: key },
+          select: { after: true },
+        });
+        if (prior) {
+          const data = prior.after as { hash: string; id: string };
+          if (data.hash !== hash) invalid();
+          return data.id;
+        }
+        await tx.$queryRaw`SELECT id FROM "StockItem" WHERE "warehouseId"=${v.warehouseId} ORDER BY "variantId",id FOR UPDATE`;
+        const stocks = await tx.stockItem.findMany({
+          where: {
+            warehouseId: v.warehouseId,
+            onHand: { gt: 0 },
+            variant: {
+              product: {
+                deletedAt: null,
+                defaultPurchaseCostAmount: { gt: 0 },
+                defaultPurchaseCostCurrency: v.snapshot.currency,
+                OR: [
+                  { marketIds: { isEmpty: true } },
+                  { marketIds: { has: v.marketId } },
+                ],
+              },
+            },
+          },
+          include: { variant: { include: { product: true } } },
+        });
+        let amount = new Exact(0);
+        const lots: string[] = [];
+        for (const stock of stocks) {
+          const sum = await tx.lot.aggregate({
+            where: {
+              warehouseId: stock.warehouseId,
+              variantId: stock.variantId,
+            },
+            _sum: { qtyRemaining: true },
+          });
+          const quantity = stock.onHand - (sum._sum.qtyRemaining ?? 0);
+          if (quantity <= 0) continue;
+          const unit =
+              stock.variant.product.defaultPurchaseCostAmount!.toFixed(4),
+            eq = equivalents(unit, v.snapshot);
+          const lot = await tx.lot.create({
+            data: {
+              warehouseId: stock.warehouseId,
+              variantId: stock.variantId,
+              qtyReceived: quantity,
+              qtyRemaining: quantity,
+              unitCostAmount: unit,
+              unitCostCurrency: v.snapshot.currency,
+              unitCostAmountTry: eq.amountTry,
+              unitCostAmountUsd: eq.amountUsd,
+              fxRateSnapshot: v.snapshot,
+              receivedAt: new Date(v.snapshot.effectiveAt),
+            },
+          });
+          lots.push(lot.id);
+          amount = amount.add(new Exact(unit).mul(quantity));
+        }
+        const entry = await postPair(tx, {
+          marketId: v.marketId,
+          key: `opening:${v.requestKey}`,
+          memo: v.memo,
+          amount: amount.toFixed(4),
+          debit: "inventory",
+          credit: "clearing",
+          rates: v.snapshot,
+          actor,
+        });
+        const id = entry?.id ?? v.requestKey;
+        await tx.auditLog.create({
+          data: {
+            userId: actor,
+            action: "finance.opening.cost",
+            entityType: "FinanceOpening",
+            entityId: key,
+            after: {
+              hash,
+              id,
+              lots,
+              amount: amount.toFixed(4),
+              marketId: v.marketId,
+            },
+          },
+        });
+        return id;
+      },
+      { timeout: 30000 },
+    ),
   );
 }

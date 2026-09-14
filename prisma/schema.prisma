@@ -1740,26 +1740,27 @@ model PurchaseOrderItem {
 }
 
 model Expense {
-  id               String   @id @default(cuid())
-  marketId         String
-  requestKey       String
-  requestHash      String
-  category         String
-  memo             String
-  currency         String
-  amount           Decimal  @db.Decimal(18, 4)
-  rateTry          Decimal  @db.Decimal(30, 12)
-  rateUsd          Decimal  @db.Decimal(30, 12)
-  fxAsOf           DateTime @db.Timestamptz(3)
-  effectiveAt      DateTime @db.Timestamptz(3)
-  attachmentId     String?
-  recurrenceMonths Int      @default(0)
-  status           String   @default("PENDING")
-  journalId        String?  @unique
-  createdById      String
-  approvedById     String?
-  createdAt        DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+  recurringSourceId String?  @unique
+  id                String   @id @default(cuid())
+  marketId          String
+  requestKey        String
+  requestHash       String
+  category          String
+  memo              String
+  currency          String
+  amount            Decimal  @db.Decimal(18, 4)
+  rateTry           Decimal  @db.Decimal(30, 12)
+  rateUsd           Decimal  @db.Decimal(30, 12)
+  fxAsOf            DateTime @db.Timestamptz(3)
+  effectiveAt       DateTime @db.Timestamptz(3)
+  attachmentId      String?
+  recurrenceMonths  Int      @default(0)
+  status            String   @default("PENDING")
+  journalId         String?  @unique
+  createdById       String
+  approvedById      String?
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
 
   @@unique([marketId, requestKey])
   @@index([createdById])

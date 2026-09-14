@@ -1,3 +1,5 @@
+import { movementCost } from "./movement-cost";
+import { raiseOrderAlerts } from "./alerts";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { Exact, snapshot, equivalents } from "./operations-input";
@@ -174,19 +176,44 @@ export async function recognizePaidOrder(
   for (const m of movements) {
     if (!m.lot) throw new Error("FINANCE_COST_MISSING");
     const l = m.lot;
-    const amount = new Exact(l.unitCostAmount.toString()).mul(-m.quantity);
-    if (amount.isZero()) continue;
+    const amount = await movementCost(tx, m, l);
+    if (new Exact(amount).isZero()) continue;
     const lr = costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, order.paidAt);
     await postPair(tx, {
       ...base,
       rates: lr,
       key: `cogs:${m.id}`,
       variantId: m.variantId,
-      amount: amount.toFixed(4),
+      amount,
       debit: "cogs",
       credit: "inventory",
     });
   }
+  if (
+    !(await tx.auditLog.findFirst({
+      where: {
+        action: "finance.order.recognized",
+        entityType: "Order",
+        entityId: orderId,
+      },
+      select: { id: true },
+    }))
+  )
+    await tx.auditLog.create({
+      data: {
+        userId: actor,
+        action: "finance.order.recognized",
+        entityType: "Order",
+        entityId: orderId,
+        after: { marketId: order.marketId },
+      },
+    });
+  await raiseOrderAlerts(
+    tx,
+    orderId,
+    order.marketId,
+    config.marginPercent.toString(),
+  );
 }
 
 /** Historical orders without recognized sales are intentionally excluded. */
@@ -203,7 +230,18 @@ export async function recognizeReturn(tx: Tx, returnId: string, actor: string) {
       },
     },
   });
-  if (!recognized) return;
+  if (
+    !recognized &&
+    !(await tx.auditLog.findFirst({
+      where: {
+        action: "finance.order.recognized",
+        entityType: "Order",
+        entityId: row.orderId,
+      },
+      select: { id: true },
+    }))
+  )
+    return;
   const base = {
     marketId: row.order.marketId,
     orderId: row.orderId,
@@ -258,14 +296,12 @@ export async function recognizeReturn(tx: Tx, returnId: string, actor: string) {
     for (const m of moves) {
       if (!m.lot) throw new Error("FINANCE_COST_MISSING");
       const l = m.lot;
-      if (l.unitCostAmount.isZero()) continue;
+
       await postPair(tx, {
         ...base,
         key: `restock:${m.id}`,
         variantId: m.variantId,
-        amount: new Exact(l.unitCostAmount.toString())
-          .mul(m.quantity)
-          .toFixed(4),
+        amount: await movementCost(tx, m, l),
         debit: "inventory",
         credit: "cogs",
         rates: costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, m.createdAt),

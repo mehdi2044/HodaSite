@@ -715,3 +715,12 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Original lot FX evidence is read directly; rounded equivalent amounts are never divided to invent a historical rate.
 - CI for initial operations commit: 7,439 tests passed; eight test expectations incorrectly named the anonymous-action error and are corrected in the next commit. Docker build passed; complete runtime/browser evidence is still pending. No phase-complete claim.
 - Local XLSX output opened independently with openpyxl: full precision, inert formula cells and RTL verified. TypeScript and targeted unit tests passed before the latest extensions; all gates are rerun on the updated commit.
+
+### Phase 06 ongoing validation
+- Added shipment-cost accounting with explicit accepted database FX evidence and compensating entries for permitted pre-shipment cost changes; partner statements include opening/movement/closing balances.
+- Added payment-verification and paid-to-delivered duration metrics, return request breakdowns, finance alerts and product-editor warnings. Stock/price scans require finance authorization; threshold warnings do not reject sales.
+- Recurring expenses generate an explicitly reviewed next installment, with month-end handling, fresh rates and server-side deduplication. No unattended spending is introduced.
+- Opening-cost action creates Lots only for existing units with no Lot, using default purchase cost and explicitly supplied opening FX; it does not change stock quantities or rewrite old lots.
+- Cumulative landed-cost allocation conserves the full total even if the displayed rounded unit cost is zero. Recognized lot cost is protected against later edits.
+- CI 4ad8f20: 7,519 passed / four failures traced to the expense-media BEFORE DELETE trigger returning NEW for unrelated media. Applied migrations remain unchanged; a following migration returns OLD for ordinary deletion while preserving expense-document protection. Prior runtime backup/restore and both Docker builds passed; updated browser and full regression gates remain required.
+- Still under implementation: average-cost setting, global-expense handling, absorbed-fee reporting, expanded workbook metrics, final UI/permission/rounding proofs and phase 07. Neither phase is marked complete.

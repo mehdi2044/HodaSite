@@ -1,3 +1,4 @@
+import { nextExpenseDate } from "@/modules/finance/operations-input";
 import { ExpenseAttachment } from "@/components/admin/expense-attachment";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
@@ -43,6 +44,15 @@ export default async function OperationsPage({
     expense = await can(user, "finance.expense.create", {
       marketId: market.id,
     });
+  const recurring = w.expenses.find(
+    (e) =>
+      e.id === q.recurring && e.status === "APPROVED" && e.recurrenceMonths > 0,
+  );
+  const nextDate = recurring
+    ? nextExpenseDate(recurring.effectiveAt, recurring.recurrenceMonths)
+        .toISOString()
+        .slice(0, 16)
+    : null;
   const now = new Date().toISOString().slice(0, 16);
   const field = (name: string, value = "", type = "text") => (
     <label className="grid gap-1">
@@ -63,7 +73,7 @@ export default async function OperationsPage({
       {t("confirm")}
     </label>
   );
-  const rates = (
+  const rates = (effectiveAt = now) => (
     <div className="grid gap-3 sm:grid-cols-2">
       <label>
         {t("currency")}
@@ -76,12 +86,13 @@ export default async function OperationsPage({
       {field("rateTry", "1")}
       {field("rateUsd")}
       {field("fxAsOf", now, "datetime-local")}
-      {field("effectiveAt", now, "datetime-local")}
+      {field("effectiveAt", effectiveAt, "datetime-local")}
       <p className="muted sm:col-span-2">{t("ratesHelp")}</p>
     </div>
   );
   const form = (kind: string, children: React.ReactNode) => (
     <FinanceOperationForm
+      key={kind === "expense" ? `expense:${recurring?.id ?? "new"}` : kind}
       kind={kind}
       marketId={market.id}
       requestKey={randomUUID()}
@@ -147,6 +158,22 @@ export default async function OperationsPage({
           ))}
         </div>
       </section>
+      <section className="card grid gap-3">
+        <h2>{t("alerts")}</h2>
+        <p className="muted">{t("recentLimit")}</p>
+        {write && form("alerts", confirm)}
+        {w.alerts.map((a) => (
+          <p key={a.id}>
+            {t(a.code.split(":")[2])}{" "}
+            <Link
+              className="underline"
+              href={`/admin/catalog/products/${a.code.split(":")[3]}`}
+            >
+              {t("product")}
+            </Link>
+          </p>
+        ))}
+      </section>
       {write && (
         <details className="card">
           <summary className="cursor-pointer text-xl">{t("config")}</summary>
@@ -195,6 +222,32 @@ export default async function OperationsPage({
           )}
         </details>
       )}
+      {write && (
+        <details className="card">
+          <summary>{t("openingCosts")}</summary>
+          {form(
+            "opening",
+            <>
+              <p className="muted">{t("openingHelp")}</p>
+              <label>
+                {t("warehouse")}
+                <select className="input" name="warehouseId" required>
+                  {w.warehouses.map((a) => (
+                    <option value={a.id} key={a.id}>
+                      {String(
+                        (a.nameI18n as Record<string, string>)[locale] ?? a.id,
+                      )}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {field("memo")}
+              {rates()}
+              {confirm}
+            </>,
+          )}
+        </details>
+      )}
       <section className="card grid gap-4">
         {title("purchases")}
         {write &&
@@ -224,7 +277,7 @@ export default async function OperationsPage({
                 </select>
               </label>
               {field("memo")}
-              {rates}
+              {rates()}
               {field("additionalCost", "0")}
               <label>
                 {t("allocation")}
@@ -270,11 +323,19 @@ export default async function OperationsPage({
           form(
             "expense",
             <>
-              {field("category")}
+              <input
+                type="hidden"
+                name="recurringSourceId"
+                value={recurring?.id ?? ""}
+              />
+              {recurring && (
+                <p>{t("recurringHelp", { date: nextDate!.slice(0, 10) })}</p>
+              )}
+              {field("category", recurring?.category ?? "")}
               <ExpenseAttachment marketId={market.id} />
-              {field("memo")}
-              {field("amount")}
-              {rates}
+              {field("memo", recurring?.memo ?? "")}
+              {field("amount", recurring?.amount.toFixed(4) ?? "")}
+              {rates(nextDate ?? now)}
               <label>
                 {t("recurrenceMonths")}
                 <input
@@ -283,7 +344,7 @@ export default async function OperationsPage({
                   type="number"
                   min="0"
                   max="12"
-                  defaultValue="0"
+                  defaultValue={recurring?.recurrenceMonths ?? 0}
                 />
               </label>
               {confirm}
@@ -298,6 +359,14 @@ export default async function OperationsPage({
               {e.amount.toFixed(4)} {e.currency}
             </span>
             <span>{t(e.status)}</span>
+            {e.status === "APPROVED" && e.recurrenceMonths > 0 && expense && (
+              <Link
+                className="underline"
+                href={`/admin/finance/operations?marketId=${market.id}&recurring=${e.id}`}
+              >
+                {t("nextExpense")}
+              </Link>
+            )}
             {e.attachmentId && (
               <a
                 className="underline"
@@ -339,7 +408,13 @@ export default async function OperationsPage({
           )}
         {w.partners.map((p) => (
           <p key={p.id}>
-            {p.name} — {p.ownershipPercent.toString()}%
+            {p.name} — {p.ownershipPercent.toString()}%{" "}
+            <Link
+              className="underline"
+              href={`/admin/finance/partners/${p.id}`}
+            >
+              {t("statement")}
+            </Link>
           </p>
         ))}
         {write &&
@@ -379,7 +454,7 @@ export default async function OperationsPage({
               </label>
               {field("memo")}
               {field("amount")}
-              {rates}
+              {rates()}
               {confirm}
             </>,
           )}

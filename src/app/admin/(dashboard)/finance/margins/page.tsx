@@ -1,3 +1,4 @@
+import { operationsMetrics } from "@/modules/finance/metrics";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations, getLocale } from "next-intl/server";
@@ -27,6 +28,12 @@ export default async function MarginsPage({
     { marketId: market.id, from: q.from, to: q.to },
     q.dimension ?? "order",
   );
+  const returnText = await getTranslations("returns");
+  const metrics = await operationsMetrics({
+    marketId: market.id,
+    from: report.filter.from,
+    to: report.filter.to,
+  });
   const ids = report.rows.map((r) => r.key);
   const labels: Record<string, string> = {};
   // Only retrieve display names for already-authorized, immutable classification IDs.
@@ -146,6 +153,33 @@ export default async function MarginsPage({
         ))}
       </div>
       <p className="muted">{t("exactExport")}</p>
+      <section className="card grid gap-3">
+        <h2 className="text-xl">{t("operationalMetrics")}</h2>
+        <p className="muted">{t("metricsHelp")}</p>
+        {(["payments", "fulfillment"] as const).map((k) => (
+          <div key={k}>
+            <h3>
+              {t(
+                k === "payments" ? "verificationMinutes" : "fulfillmentMinutes",
+              )}
+            </h3>
+            <p dir="ltr">{metrics[k].minutes ?? "—"}</p>
+            <p>
+              {t("metricCount", {
+                count: metrics[k].count,
+                missing: metrics[k].missing,
+              })}
+            </p>
+          </div>
+        ))}
+        <h3>{t("returnMetrics")}</h3>
+        {metrics.returns.map((r) => (
+          <p key={r.status + r.currency}>
+            {returnText(`statuses.${r.status}`)}: {r.count} · {r.amount}{" "}
+            {r.currency}
+          </p>
+        ))}
+      </section>
       {!report.rows.length && <p className="card">{t("empty")}</p>}
       {report.rows.map((r) => (
         <article className="card grid gap-3" key={r.key}>

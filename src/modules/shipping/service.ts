@@ -1,3 +1,4 @@
+import { recognizeShipmentCost } from "@/modules/finance/events";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -264,6 +265,21 @@ export async function changeShipment(
                 deliveredAt,
               },
             });
+            if (
+              !leg.costAmount.equals(data.costAmount) ||
+              leg.costCurrency !== data.costCurrency
+            ) {
+              await recognizeShipmentCost(tx, {
+                orderId,
+                marketId: order.marketId,
+                legId: leg.id,
+                version: shipment.version,
+                amount: data.costAmount,
+                currency: data.costCurrency,
+                actor: userId,
+                at: now,
+              });
+            }
             if (data.status !== leg.status)
               await tx.trackingEvent.create({
                 data: {
