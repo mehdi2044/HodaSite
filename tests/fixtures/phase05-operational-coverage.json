@@ -294,5 +294,25 @@
       "tests/integration/phase06-ledger-admin.spec.ts",
       "tests/integration/phase06-operations.spec.ts"
     ]
+  },
+  "ai.settings.manage": {
+    "tests": [
+      "tests/integration/phase07-ai.spec.ts"
+    ]
+  },
+  "ai.product.generate": {
+    "tests": [
+      "tests/integration/phase07-ai.spec.ts"
+    ]
+  },
+  "ai.finance.analyze": {
+    "tests": [
+      "tests/integration/phase07-ai.spec.ts"
+    ]
+  },
+  "ai.usage.view": {
+    "tests": [
+      "tests/integration/phase07-ai.spec.ts"
+    ]
   }
 }

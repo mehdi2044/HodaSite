@@ -126,6 +126,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "marketing.campaign.publish",
   ],
   data_entry: [
+    "ai.product.generate",
     "catalog.product.view",
     "catalog.product.create",
     "catalog.product.edit",
@@ -145,6 +146,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "order.view",
   ],
   accountant: [
+    "ai.finance.analyze",
+    "ai.usage.view",
     "return.manage",
     "order.invoice.view",
     "order.view",

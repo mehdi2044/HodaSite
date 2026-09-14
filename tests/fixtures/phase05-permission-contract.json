@@ -1,5 +1,9 @@
 {
   "permissions": [
+    "ai.settings.manage",
+    "ai.product.generate",
+    "ai.finance.analyze",
+    "ai.usage.view",
     "audit.view",
     "backup.create",
     "backup.restore",
@@ -61,7 +65,9 @@
     "users.view"
   ],
   "roles": {
-    "owner": ["*"],
+    "owner": [
+      "*"
+    ],
     "admin": [
       "return.manage",
       "order.invoice.view",
@@ -114,6 +120,7 @@
       "marketing.campaign.publish"
     ],
     "data_entry": [
+      "ai.product.generate",
       "catalog.product.view",
       "catalog.product.create",
       "catalog.product.edit",
@@ -133,6 +140,8 @@
       "order.view"
     ],
     "accountant": [
+      "ai.finance.analyze",
+      "ai.usage.view",
       "return.manage",
       "order.invoice.view",
       "order.view",

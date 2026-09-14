@@ -1870,3 +1870,67 @@ model StockValuation {
 
   @@index([stockItemId])
 }
+
+model PromptVersion {
+  id              String   @id @default(cuid())
+  feature         String
+  version         Int
+  style           String
+  forbiddenClaims String
+  createdBy       String
+  createdAt       DateTime @default(now())
+
+  @@unique([feature, version])
+}
+
+model AiUsage {
+  id              String    @id @default(cuid())
+  requestKey      String    @unique
+  requestHash     String
+  userId          String
+  marketId        String?
+  feature         String
+  provider        String
+  model           String
+  promptVersionId String
+  status          String    @default("PENDING")
+  inputTokens     Int?
+  outputTokens    Int?
+  costUsd         Decimal   @db.Decimal(18, 4)
+  reservedUsd     Decimal   @db.Decimal(18, 4)
+  pricing         Json
+  errorCode       String?
+  result          Json?
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([createdAt, status])
+  @@index([userId, createdAt])
+  @@index([marketId, createdAt])
+}
+
+model AiCache {
+  id        String   @id
+  result    Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model AiDraft {
+  id             String    @id @default(cuid())
+  requestKey     String    @unique
+  userId         String
+  productId      String?
+  marketId       String?
+  productVersion DateTime?
+  status         String    @default("REVIEW")
+  facts          Json
+  proposal       Json
+  appliedHash    String?
+  createdAt      DateTime  @default(now())
+  appliedAt      DateTime?
+
+  @@index([userId, status, createdAt])
+  @@index([productId])
+}

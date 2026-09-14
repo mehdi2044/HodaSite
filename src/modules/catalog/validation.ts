@@ -74,6 +74,7 @@ export const productInputSchema = z
     weightGrams: z.number().int().positive().max(100000),
     seoTitleI18n: localizedOptionalSchema,
     seoDescriptionI18n: localizedOptionalSchema,
+    seoKeywordsI18n: localizedOptionalSchema.optional(),
     seoOgMediaId: z.string().optional().or(z.literal("")),
     marketIds: z.array(z.string()).min(1).max(3),
     mediaIds: z.array(z.string()).max(24).default([]),
@@ -82,7 +83,7 @@ export const productInputSchema = z
       .array(
         z.object({
           key: z.string().trim().min(1).max(60),
-          valueI18n: localizedRequiredSchema,
+          valueI18n: localizedOptionalSchema,
         }),
       )
       .max(40)

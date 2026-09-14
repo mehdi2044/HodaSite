@@ -1,5 +1,6 @@
 "use server";
 
+import { persistVariants } from "@/modules/catalog/persist-variants";
 import { Prisma } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
@@ -37,6 +38,9 @@ export async function saveProduct(
       careI18n: localized(data, "care"),
       seoTitleI18n: localized(data, "seoTitle"),
       seoDescriptionI18n: localized(data, "seoDescription"),
+      seoKeywordsI18n: data.has("seoKeywordsFa")
+        ? localized(data, "seoKeywords")
+        : undefined,
       seoOgMediaId: optional(data, "seoOgMediaId"),
       brandId: optional(data, "brandId"),
       categoryId: String(data.get("categoryId") || ""),
@@ -112,6 +116,14 @@ export async function saveProduct(
             : null,
           weightGrams: input.weightGrams,
           seoI18n: {
+            ...(current?.seoI18n &&
+            typeof current.seoI18n === "object" &&
+            !Array.isArray(current.seoI18n)
+              ? current.seoI18n
+              : {}),
+            ...(input.seoKeywordsI18n
+              ? { keywords: input.seoKeywordsI18n }
+              : {}),
             title: input.seoTitleI18n,
             description: input.seoDescriptionI18n,
             ogMediaId: input.seoOgMediaId || null,
@@ -135,35 +147,12 @@ export async function saveProduct(
                 },
               },
             });
-        await tx.variant.deleteMany({ where: { productId: product.id } });
+
         await tx.productMedia.deleteMany({ where: { productId: product.id } });
         await tx.productAttribute.deleteMany({
           where: { productId: product.id },
         });
-        for (const variant of input.variants) {
-          const created = await tx.variant.create({
-            data: {
-              productId: product.id,
-              sku: variant.sku,
-              barcode: variant.barcode || null,
-              colorId: variant.colorId,
-              sizeId: variant.sizeId,
-              priceOverrideUsd: variant.priceOverrideUsd
-                ? new Prisma.Decimal(variant.priceOverrideUsd)
-                : null,
-              weightGrams: variant.weightGrams ?? null,
-              isActive: variant.isActive,
-            },
-          });
-          if (variant.mediaIds.length)
-            await tx.variantMedia.createMany({
-              data: variant.mediaIds.map((mediaId, sortOrder) => ({
-                variantId: created.id,
-                mediaId,
-                sortOrder,
-              })),
-            });
-        }
+        await persistVariants(tx, product.id, input.variants);
         if (input.mediaIds.length)
           await tx.productMedia.createMany({
             data: input.mediaIds.map((mediaId, sortOrder) => ({
@@ -180,6 +169,41 @@ export async function saveProduct(
               valueI18n: attribute.valueI18n,
             })),
           });
+        const aiAlts = z
+          .array(
+            z.object({ key: z.string().max(130), value: z.string().max(5000) }),
+          )
+          .max(6)
+          .parse(parseJson(data.get("aiAlts"), []));
+        if (aiAlts.length) await assertCan(session.user.id, "media.write");
+        for (const alt of aiAlts) {
+          const [kind, mediaId, locale, ...extra] = alt.key.split(".");
+          if (
+            kind !== "alt" ||
+            extra.length ||
+            !["fa", "tr", "en"].includes(locale) ||
+            !input.mediaIds.includes(mediaId)
+          )
+            throw new z.ZodError([]);
+          const media = await tx.media.findFirst({
+            where: {
+              id: mediaId,
+              kind: "image",
+              status: "READY",
+              deletedAt: null,
+            },
+          });
+          if (!media) throw new z.ZodError([]);
+          await tx.media.update({
+            where: { id: mediaId },
+            data: {
+              altI18n: {
+                ...(media.altI18n as Record<string, string>),
+                [locale]: alt.value,
+              },
+            },
+          });
+        }
         await tx.auditLog.create({
           data: {
             userId: session.user.id,
