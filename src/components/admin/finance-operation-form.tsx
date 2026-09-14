@@ -32,68 +32,73 @@ export function FinanceOperationForm({
     data.delete("attachmentState");
     const fields = Object.fromEntries(data.entries());
     const raw: Record<string, unknown> = { ...fields };
-    delete raw.confirm;
-    if (!["receive", "approve"].includes(kind)) raw.marketId = marketId;
-    if (
-      [
-        "config",
-        "alerts",
-        "opening",
-        "purchase",
-        "expense",
-        "capital",
-        "receive",
-        "approve",
-      ].includes(kind)
-    )
-      raw.confirm = data.get("confirm") === "on";
-    if (["purchase", "expense", "capital", "opening"].includes(kind)) {
-      raw.requestKey = key;
-      raw.snapshot = Object.fromEntries(
-        ["currency", "rateTry", "rateUsd", "fxAsOf", "effectiveAt"].map((k) => [
-          k,
-          String(data.get(k)),
-        ]),
-      );
-      for (const k of [
-        "currency",
-        "rateTry",
-        "rateUsd",
-        "fxAsOf",
-        "effectiveAt",
-      ])
-        delete raw[k];
-      for (const k of ["fxAsOf", "effectiveAt"]) {
-        try {
-          (raw.snapshot as Record<string, string>)[k] = new Date(
-            String(data.get(k)) + "Z",
-          ).toISOString();
-        } catch {
-          setCode("VALIDATION");
-          setPending(false);
-          return;
+    if (!locked) {
+      delete raw.confirm;
+      if (!["receive", "approve"].includes(kind)) raw.marketId = marketId;
+      if (
+        [
+          "config",
+          "alerts",
+          "opening",
+          "costMethod",
+          "purchase",
+          "expense",
+          "capital",
+          "receive",
+          "approve",
+        ].includes(kind)
+      )
+        raw.confirm = data.get("confirm") === "on";
+      if (["purchase", "expense", "capital", "opening"].includes(kind)) {
+        raw.requestKey = key;
+        raw.snapshot = Object.fromEntries(
+          ["currency", "rateTry", "rateUsd", "fxAsOf", "effectiveAt"].map(
+            (k) => [k, String(data.get(k))],
+          ),
+        );
+        for (const k of [
+          "currency",
+          "rateTry",
+          "rateUsd",
+          "fxAsOf",
+          "effectiveAt",
+        ])
+          delete raw[k];
+        for (const k of ["fxAsOf", "effectiveAt"]) {
+          try {
+            (raw.snapshot as Record<string, string>)[k] = new Date(
+              String(data.get(k)) + "Z",
+            ).toISOString();
+          } catch {
+            setCode("VALIDATION");
+            setPending(false);
+            return;
+          }
         }
       }
-    }
-    if (kind === "purchase") {
-      raw.items = data.getAll("variantId").map((v, i) => ({
-        variantId: String(v),
-        quantity: Number(data.getAll("quantity")[i]),
-        purchaseTotal: String(data.getAll("purchaseTotal")[i]),
-        weight: String(data.getAll("weight")[i]),
-      }));
-      for (const k of ["variantId", "quantity", "purchaseTotal", "weight"])
-        delete raw[k];
-    }
-    if (kind === "expense") {
-      raw.recurrenceMonths = Number(data.get("recurrenceMonths") || 0);
-      if (!raw.attachmentId) delete raw.attachmentId;
-      if (!raw.recurringSourceId) delete raw.recurringSourceId;
-    }
-    if (kind === "capital" && !raw.purchaseOrderId) delete raw.purchaseOrderId;
-    if (kind === "config") {
-      raw.enabled = data.get("enabled") === "on";
-      raw.slowDays = Number(data.get("slowDays"));
+      if (["supplier", "partner"].includes(kind)) raw.requestKey = key;
+      if (kind === "purchase") {
+        raw.items = data.getAll("variantId").map((v, i) => ({
+          variantId: String(v),
+          quantity: Number(data.getAll("quantity")[i]),
+          purchaseTotal: String(data.getAll("purchaseTotal")[i]),
+          weight: String(data.getAll("weight")[i]),
+        }));
+        for (const k of ["variantId", "quantity", "purchaseTotal", "weight"])
+          delete raw[k];
+      }
+      if (kind === "expense") {
+        raw.isGlobal = data.get("isGlobal") === "on";
+        raw.recurrenceMonths = Number(data.get("recurrenceMonths") || 0);
+        if (!raw.attachmentId) delete raw.attachmentId;
+        if (!raw.recurringSourceId) delete raw.recurringSourceId;
+      }
+      if (kind === "capital" && !raw.purchaseOrderId)
+        delete raw.purchaseOrderId;
+      if (kind === "config") {
+        raw.enabled = data.get("enabled") === "on";
+        raw.slowDays = Number(data.get("slowDays"));
+      }
     }
     const request = locked ?? raw;
     try {
@@ -213,6 +218,81 @@ export function PurchaseLines({
       >
         {t("addLine")}
       </button>
+    </div>
+  );
+}
+
+export function FinanceRates({
+  effectiveAt,
+  fxAsOf,
+  initialCurrency = "TRY",
+}: {
+  effectiveAt: string;
+  fxAsOf: string;
+  initialCurrency?: string;
+}) {
+  const t = useTranslations("financeOps"),
+    [currency, setCurrency] = useState(initialCurrency);
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label>
+        {t("currency")}
+        <select
+          name="currency"
+          className="input"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+        >
+          {["TRY", "USD", "CAD", "IRT"].map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {t("rateTry")}
+        <input
+          key={`tr:${currency}`}
+          className="input"
+          name="rateTry"
+          defaultValue={currency === "TRY" ? "1" : ""}
+          readOnly={currency === "TRY"}
+          required
+          inputMode="decimal"
+        />
+      </label>
+      <label>
+        {t("rateUsd")}
+        <input
+          key={`usd:${currency}`}
+          className="input"
+          name="rateUsd"
+          defaultValue={currency === "USD" ? "1" : ""}
+          readOnly={currency === "USD"}
+          required
+          inputMode="decimal"
+        />
+      </label>
+      <label>
+        {t("fxAsOf")}
+        <input
+          className="input"
+          name="fxAsOf"
+          type="datetime-local"
+          defaultValue={fxAsOf}
+          required
+        />
+      </label>
+      <label>
+        {t("effectiveAt")}
+        <input
+          className="input"
+          name="effectiveAt"
+          type="datetime-local"
+          defaultValue={effectiveAt}
+          required
+        />
+      </label>
+      <p className="muted sm:col-span-2">{t("ratesHelp")}</p>
     </div>
   );
 }

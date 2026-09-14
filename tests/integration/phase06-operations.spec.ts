@@ -1,7 +1,10 @@
+import { Exact } from "@/modules/finance/operations-input";
 import { operationsMetrics } from "@/modules/finance/metrics";
 import { POST as uploadExpense } from "@/app/api/admin/finance/attachments/route";
 import { GET as downloadExpense } from "@/app/api/admin/finance/attachments/[id]/route";
 import { GET as publicMedia } from "@/app/media/[...key]/route";
+import { reversePostedJournal } from "@/modules/finance/ledger";
+import { partnerStatement } from "@/modules/finance/margins";
 import { marginReport } from "@/modules/finance/margins";
 import { GET as marginExport } from "@/app/admin/(dashboard)/finance/margins/export/route";
 import { randomUUID } from "node:crypto";
@@ -302,6 +305,88 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             }
           });
         }
+    for (const name of SUBJECTS)
+      for (const scope of GLOBAL_SCOPES) {
+        it(`shared cost method ${name}/${scope}`, async () => {
+          acting.id = subjects.find(
+            (s) => s.name === name && s.scope === scope,
+          )!.id;
+          const allowed =
+            granted(name, "finance.journal.post") && scope === "in";
+          const before = await fingerprint([
+            ...tables,
+            "StockCostPolicy",
+            "StockValue",
+            "StockValuation",
+          ]);
+          const result = await financialOperation("costMethod", {
+            marketId: tr,
+            warehouseId: warehouse,
+            variantId: variant,
+            method: "FIFO",
+            confirm: true,
+          });
+          expect(result.ok).toBe(allowed);
+          if (!allowed)
+            expect(
+              await fingerprint([
+                ...tables,
+                "StockCostPolicy",
+                "StockValue",
+                "StockValuation",
+              ]),
+            ).toEqual(before);
+        });
+      }
+    for (const name of SUBJECTS)
+      for (const scope of GLOBAL_SCOPES) {
+        it(`organization expense ${name}/${scope}`, async () => {
+          acting.id = subjects.find(
+            (s) => s.name === name && s.scope === scope,
+          )!.id;
+          const allowed =
+            granted(name, "finance.expense.create") && scope === "in";
+          const before = await fingerprint(tables);
+          expect(
+            (
+              await financialOperation("expense", {
+                ...expense(),
+                isGlobal: true,
+              })
+            ).ok,
+          ).toBe(allowed);
+          if (!allowed) expect(await fingerprint(tables)).toEqual(before);
+        });
+      }
+    it("general expense affects consolidated profit, not market profit", async () => {
+      acting.id = owner;
+      const filter = { from: "2009-01-01", to: "2009-01-01" };
+      const before = (await financeDashboard(filter)).totals.profitTry;
+      const marketBefore = (await financeDashboard({ ...filter, marketId: tr }))
+        .totals.profitTry;
+      const id = await createExpense({
+        ...expense(),
+        isGlobal: true,
+        amount: "100",
+        snapshot: { ...rates, effectiveAt: "2009-01-01T12:00:00Z" },
+      });
+      await approveExpense({ id, confirm: true });
+      expect(
+        new Exact((await financeDashboard(filter)).totals.profitTry)
+          .sub(before)
+          .toFixed(4),
+      ).toBe("-100.0000");
+      expect(
+        (await financeDashboard({ ...filter, marketId: tr })).totals.profitTry,
+      ).toBe(marketBefore);
+      acting.id = subjects.find(
+        (s) => s.name === "accountant" && s.scope === "market-out",
+      )!.id;
+      expect(
+        (await financeWorkspace(tr)).expenses.some((e) => e.id === id),
+      ).toBe(false);
+      await expect(approveExpense({ id, confirm: true })).rejects.toThrow();
+    });
     it("creates a recurring installment once with explicit new FX and date", async () => {
       acting.id = owner;
       const source = await createExpense({
@@ -393,6 +478,36 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         createPurchase({ ...input, memo: "changed" }),
       ).rejects.toThrow();
     });
+    it("deduplicates supplier/partner creation and refuses changed retry content", async () => {
+      acting.id = owner;
+      const supplier = {
+        marketId: tr,
+        name: "Retry supplier",
+        requestKey: randomUUID(),
+      };
+      const [a, b] = await Promise.all([
+        createSupplier(supplier),
+        createSupplier(supplier),
+      ]);
+      expect(a).toBe(b);
+      await expect(
+        createSupplier({ ...supplier, name: "Changed" }),
+      ).rejects.toThrow();
+      const partner = {
+        marketId: tr,
+        name: "Retry partner",
+        ownershipPercent: "0.0001",
+        requestKey: randomUUID(),
+      };
+      const [c, d] = await Promise.all([
+        createPartner(partner),
+        createPartner(partner),
+      ]);
+      expect(c).toBe(d);
+      await expect(
+        createPartner({ ...partner, ownershipPercent: "0.0002" }),
+      ).rejects.toThrow();
+    });
     it("requires explicit approval and preserves expense/capital journals", async () => {
       acting.id = owner;
       const id = await createExpense(expense());
@@ -419,6 +534,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const input = { ...expense(), partnerId: partner, kind: "CONTRIBUTION" };
       const capital = await createCapital(input);
       expect(await createCapital(input)).toBe(capital);
+      const transaction = await db.capitalTransaction.findUniqueOrThrow({
+        where: { id: capital },
+      });
+      await reversePostedJournal({
+        entryId: transaction.journalId,
+        requestKey: randomUUID(),
+        memo: "Fixture correction",
+        effectiveAt: new Date().toISOString(),
+      });
+      const statement = await partnerStatement({ marketId: tr }, partner);
+      expect(statement.totals.every((r) => r.closing === "0.0000")).toBe(true);
+      expect(statement.rows.some((r) => r.reversal)).toBe(true);
       await expect(
         db.$executeRaw`DELETE FROM "CapitalTransaction" WHERE id=${capital}`,
       ).rejects.toThrow();

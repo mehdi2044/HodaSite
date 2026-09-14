@@ -1,3 +1,5 @@
+import { calculateDisplayPrice } from "@/modules/pricing/price";
+import type { Currency, RoundingRule } from "@/lib/money";
 import { createHash } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { Exact } from "./operations-input";
@@ -63,9 +65,70 @@ export async function scanStockAlerts(
       categoryId: true,
       basePriceAmount: true,
       basePriceCurrency: true,
-      variants: { select: { id: true } },
+      variants: { select: { id: true, priceOverrideUsd: true } },
     },
   });
+  const at = new Date(),
+    market = await tx.market.findUniqueOrThrow({ where: { id: marketId } });
+  const override = await tx.fxOverride.findFirst({
+    where: {
+      marketId,
+      validFrom: { lte: at },
+      OR: [{ validUntil: null }, { validUntil: { gt: at } }],
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
+  const quote = override
+    ? null
+    : await tx.fxQuote.findFirst({
+        where: { marketId, status: "ACTIVE" },
+        orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
+      });
+  const rate = override?.rate.toString() ?? quote?.rate.toString();
+  const manual = await tx.marketPrice.findMany({
+    where: {
+      marketId,
+      isActive: true,
+      validFrom: { lte: at },
+      OR: [{ validUntil: null }, { validUntil: { gt: at } }],
+    },
+    orderBy: { validFrom: "desc" },
+  });
+  if (!rate)
+    await alert(
+      tx,
+      marketId,
+      "PRICE_UNAVAILABLE",
+      "config",
+      at.toISOString().slice(0, 10),
+    );
+  const prices: {
+    productId: string;
+    categoryId: string;
+    amount: InstanceType<typeof Exact>;
+  }[] = [];
+  if (rate && ["TRY", "USD", "CAD", "IRT"].includes(market.currency))
+    for (const p of products)
+      for (const v of p.variants) {
+        const chosen =
+          manual.find((m) => m.variantId === v.id) ??
+          manual.find((m) => m.productId === p.id && !m.variantId);
+        const value = calculateDisplayPrice({
+          baseAmount:
+            v.priceOverrideUsd?.toString() ?? p.basePriceAmount.toString(),
+          baseCurrency: "USD",
+          marketCurrency: market.currency as Currency,
+          activeRate: rate,
+          markupPercent: market.markupPercent.toString(),
+          roundingRule: market.roundingRule as RoundingRule,
+          manualAmount: chosen?.amount.toString(),
+        });
+        prices.push({
+          productId: p.id,
+          categoryId: p.categoryId,
+          amount: new Exact(value.amount),
+        });
+      }
   const cutoff = new Date(Date.now() - slowDays * 86400000),
     day = new Date().toISOString().slice(0, 10);
   for (const p of products) {
@@ -89,27 +152,30 @@ export async function scanStockAlerts(
       }),
     ]);
     if (oldStock && !sale) await alert(tx, marketId, "SLOW_STOCK", p.id, day);
-    const peers = products
+    const peers = prices
       .filter(
-        (other) =>
-          other.id !== p.id &&
-          other.categoryId === p.categoryId &&
-          other.basePriceCurrency === p.basePriceCurrency &&
-          other.basePriceAmount.gt(0),
+        (price) =>
+          price.productId !== p.id &&
+          price.categoryId === p.categoryId &&
+          price.amount.gt(0),
       )
-      .map((other) => new Exact(other.basePriceAmount.toString()))
+      .map((price) => price.amount)
       .sort((a, b) => a.cmp(b));
     if (peers.length >= 2) {
       const mid = Math.floor(peers.length / 2),
         median =
           peers.length % 2 ? peers[mid] : peers[mid - 1].add(peers[mid]).div(2);
       if (
-        new Exact(p.basePriceAmount.toString())
-          .sub(median)
-          .abs()
-          .div(median)
-          .mul(100)
-          .gt(deviationPercent)
+        prices.some(
+          (price) =>
+            price.productId === p.id &&
+            price.amount
+              .sub(median)
+              .abs()
+              .div(median)
+              .mul(100)
+              .gt(deviationPercent),
+        )
       )
         await alert(tx, marketId, "PRICE_OUTLIER", p.id, day);
     }

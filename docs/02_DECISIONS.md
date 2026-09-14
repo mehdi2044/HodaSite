@@ -102,3 +102,8 @@
 - OB3: سرویس پیامک برای ایران/ترکیه (فاز ۹).
 - OB4: مدل‌های AI (OpenAI / Anthropic / Gemini) پشت Gateway — فاز ۸.
 - OB5: عددهای واقعی مالیات/گمرک هر کشور — از حسابدار محلی.
+
+### D61 — Cost method and safe financial cutover (owner-delegated implementation)
+Physical variant/warehouse stock is shared across markets. FIFO remains the default. An unscoped accountant/owner may explicitly select moving weighted average for a stock item before its first valuation/recognized COGS. Once valuation starts the method cannot change or rewrite historical cost. Average pools retain quantity and original/TRY/USD balances; each receipt, sale, adjustment and restock records immutable valuation evidence. Returns restore original sale valuation. Remaining stock in an average pool must use one original purchase currency; mixed-currency procurement uses FIFO, without an invented conversion. An amount whose rounded equivalents cannot be represented by the ledger's positive 12-decimal rates is rejected atomically rather than silently adjusted. The interface explains these limits. D04, D24 and D32 remain binding.
+
+Opening cost is an explicit, audited action on existing units lacking a Lot, with supplied date/FX and the product default cost. It does not change physical quantities, infer historical quotes, or replace existing Lots. Cumulative FIFO allocation conserves the full landed original amount including the displayed unit-cost rounding remainder. All financial tables and expense storage objects remain within the existing backup/restore workflow; no hosting or provider change is introduced.

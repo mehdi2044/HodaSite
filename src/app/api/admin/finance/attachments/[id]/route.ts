@@ -26,10 +26,15 @@ export async function GET(
     .find((t) => t.startsWith("expense-market:"))
     ?.slice(15);
   if (!row || !marketId) return new Response(null, { status: 404, headers });
+  const linked = await db.expense.findMany({
+    where: { attachmentId: row.id },
+    select: { isGlobal: true },
+  });
+  const scope = linked.some((e) => e.isGlobal) ? {} : { marketId };
   const allowed =
-    (await can(user, "finance.report.view", { marketId })) ||
+    (linked.length > 0 && (await can(user, "finance.report.view", scope))) ||
     (row.uploadedBy === user &&
-      (await can(user, "finance.expense.create", { marketId })));
+      (await can(user, "finance.expense.create", scope)));
   if (!allowed) return new Response(null, { status: 404, headers });
   const bytes = await storage.getBytes(row.storageKey);
   if (!bytes) return new Response(null, { status: 404, headers });

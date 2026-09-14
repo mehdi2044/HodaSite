@@ -102,3 +102,62 @@ export async function postDomainJournal(
     insert(tx, input, userId, hash)
   );
 }
+
+/** Compensate an internal event exactly once; caller owns domain authorization. */
+export async function reverseDomainEntry(
+  tx: Tx,
+  entryId: string,
+  requestKey: string,
+  memo: string,
+  at: Date,
+  actor: string | null,
+) {
+  const original = await tx.journalEntry.findUniqueOrThrow({
+    where: { id: entryId },
+    include,
+  });
+  await lockRequest(tx, original.marketId, requestKey);
+  await tx.$queryRaw`SELECT id FROM "JournalEntry" WHERE id=${entryId} FOR UPDATE`;
+  const previous = await tx.journalEntry.findUnique({
+    where: { reversalOfId: entryId },
+  });
+  if (previous) return previous;
+  const value = normalizeJournal({
+    marketId: original.marketId,
+    requestKey,
+    memo,
+    effectiveAt: at.toISOString(),
+    fxAsOf: original.fxAsOf.toISOString(),
+    lines: original.lines.map((l) => ({
+      accountId: l.accountId,
+      currency: l.currency,
+      debit: l.credit.toFixed(4),
+      credit: l.debit.toFixed(4),
+      rateTry: l.rateTry.toFixed(12),
+      rateUsd: l.rateUsd.toFixed(12),
+    })),
+  });
+  const hash = journalHash({ kind: "DOMAIN_REVERSAL", entryId, ...value });
+  const prior = await replay(tx, original.marketId, requestKey, hash);
+  if (prior) return prior;
+  const reversed = await insert(tx, value, actor, hash, entryId);
+  for (const a of await tx.financeAttribution.findMany({
+    where: { entryId },
+  })) {
+    const { id, ...data } = a;
+    void id;
+    await tx.financeAttribution.create({
+      data: {
+        ...data,
+        entryId: reversed.id,
+        revenueTry: a.revenueTry.negated(),
+        revenueUsd: a.revenueUsd.negated(),
+        costTry: a.costTry.negated(),
+        costUsd: a.costUsd.negated(),
+        expenseTry: a.expenseTry.negated(),
+        expenseUsd: a.expenseUsd.negated(),
+      },
+    });
+  }
+  return reversed;
+}

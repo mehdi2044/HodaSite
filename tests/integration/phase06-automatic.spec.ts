@@ -1,3 +1,6 @@
+import { recognizeShipmentCost } from "@/modules/finance/shipment-posting";
+import { configureCostMethod } from "@/modules/finance/operations";
+import { receiveStock } from "@/modules/inventory";
 vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -98,6 +101,160 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await db.financeAttribution.count({ where: { orderId: f.order.id } }),
       ).toBe(2);
+    });
+    it("replaces absorbed shipping estimates once, with actual expense and its original FX", async () => {
+      const f = await fixture(true);
+      await db.orderFee.create({
+        data: {
+          orderId: f.order.id,
+          type: "SHIPPING",
+          label: "Fixture shipping",
+          amount: "5",
+          currency: "TRY",
+          absorbed: true,
+          ruleSnapshot: {},
+        },
+      });
+      await db.$transaction((tx) =>
+        reserveOrderInventory(
+          tx,
+          f.order.id,
+          f.order.items,
+          "HOLD",
+          new Date(Date.now() + 60000),
+        ),
+      );
+      await approvePayment(f.order.id, f.owner.id, true);
+      await db.fxOverride.create({
+        data: {
+          marketId,
+          rate: "40",
+          validFrom: new Date(Date.now() - 1000),
+          note: "Fixture",
+          createdBy: f.owner.id,
+        },
+      });
+      const input = {
+        orderId: f.order.id,
+        marketId,
+        legId: randomUUID(),
+        version: 1,
+        amount: "9",
+        currency: "TRY",
+        actor: f.owner.id,
+        at: new Date(),
+      };
+      await db.$transaction((tx) => recognizeShipmentCost(tx, input));
+      await db.$transaction((tx) => recognizeShipmentCost(tx, input));
+      const report = await marginReport({ marketId }, "order");
+      expect(report.rows.find((r) => r.key === f.order.id)).toMatchObject({
+        expenseTry: "9.0000",
+        absorbedTry: "0.0000",
+      });
+      expect(
+        await db.journalEntry.count({
+          where: { requestKey: `shipment-cost:${input.legId}:1` },
+        }),
+      ).toBe(1);
+    });
+    it("uses moving average for sale and restores that exact cost on return", async () => {
+      const f = await fixture(true),
+        stock = f.stocks[0];
+      await configureCostMethod({
+        marketId,
+        warehouseId: stock.warehouseId,
+        variantId: stock.variantId,
+        method: "AVERAGE",
+        confirm: true,
+      });
+      const now = new Date();
+      await receiveStock({
+        warehouseId: stock.warehouseId,
+        variantId: stock.variantId,
+        quantity: 10,
+        unitCostAmount: "4",
+        unitCostCurrency: "TRY",
+        unitCostAmountTry: "4",
+        unitCostAmountUsd: "0.1",
+        fxRateSnapshot: {
+          currency: "TRY",
+          rateTry: "1",
+          rateUsd: "0.025",
+          fxAsOf: now.toISOString(),
+          effectiveAt: now.toISOString(),
+        },
+        receivedAt: now,
+      });
+      await db.$transaction((tx) =>
+        reserveOrderInventory(
+          tx,
+          f.order.id,
+          f.order.items,
+          "HOLD",
+          new Date(Date.now() + 60000),
+        ),
+      );
+      await approvePayment(f.order.id, f.owner.id, true);
+      let pool = await db.stockValue.findUniqueOrThrow({
+        where: { stockItemId: stock.id },
+      });
+      expect(pool.quantity).toBe(18);
+      expect(pool.amount.toFixed(4)).toBe("54.0000");
+      expect(
+        (
+          await db.financeAttribution.findFirstOrThrow({
+            where: { orderId: f.order.id, costTry: { gt: 0 } },
+          })
+        ).costTry.toFixed(4),
+      ).toBe("6.0000");
+      await db.order.update({
+        where: { id: f.order.id },
+        data: { status: "DELIVERED", deliveredAt: new Date() },
+      });
+      const r = await requestReturn(f.customer.id, {
+        orderId: f.order.id,
+        requestKey: randomUUID(),
+        type: "RETURN",
+        reasonCode: "SIZE",
+        items: [{ orderItemId: f.order.items[0].id, quantity: 1 }],
+      });
+      await manageReturn(f.owner.id, {
+        returnId: r.id,
+        version: 0,
+        operation: "APPROVE",
+      });
+      const item = await db.returnItem.findFirstOrThrow({
+        where: { returnRequestId: r.id },
+      });
+      await manageReturn(f.owner.id, {
+        returnId: r.id,
+        version: 1,
+        operation: "RECEIVE",
+        conditions: [{ itemId: item.id, condition: "RESTOCK" }],
+      });
+      pool = await db.stockValue.findUniqueOrThrow({
+        where: { stockItemId: stock.id },
+      });
+      expect(pool.quantity).toBe(19);
+      expect(pool.amount.toFixed(4)).toBe("57.0000");
+      await expect(
+        configureCostMethod({
+          marketId,
+          warehouseId: stock.warehouseId,
+          variantId: stock.variantId,
+          method: "FIFO",
+          confirm: true,
+        }),
+      ).rejects.toThrow();
+      const value = await db.stockValuation.findFirstOrThrow({
+        where: { stockItemId: stock.id },
+      });
+      await expect(
+        db.stockValuation.update({
+          where: { movementId: value.movementId },
+          data: { amount: "1" },
+        }),
+      ).rejects.toThrow();
     });
     it("restock followed by another staff member's refund is idempotent and reduces margin exactly", async () => {
       const f = await fixture();

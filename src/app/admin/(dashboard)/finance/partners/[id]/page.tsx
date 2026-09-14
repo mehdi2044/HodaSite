@@ -61,7 +61,9 @@ export default async function Statement({
       ))}
       {report.rows.map((r) => (
         <article className="card" key={r.id}>
-          <h2>{t(r.kind)}</h2>
+          <h2>
+            {r.reversal && t("REVERSAL")} {t(r.kind)}
+          </h2>
           <p>{r.memo}</p>
           <p dir="ltr">
             {r.effectiveAt.toISOString().slice(0, 10)} · {r.amount.toFixed(4)}{" "}

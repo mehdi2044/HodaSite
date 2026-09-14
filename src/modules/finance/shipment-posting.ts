@@ -1,21 +1,27 @@
 import { Prisma } from "@prisma/client";
 import { snapshot, Exact } from "./operations-input";
 import { postPair } from "./posting";
-import { insert, lockRequest, replay } from "./persistence";
-import { normalizeJournal, journalHash } from "./journal-input";
+import { reverseDomainEntry } from "./persistence";
 
 /** Resolve only accepted database quotes/overrides inside the caller's transaction. */
 async function ratesAt(
   tx: Prisma.TransactionClient,
   currency: string,
   at: Date,
+  marketId: string,
 ) {
   const quote = async (currency: string) => {
     if (currency === "USD") return { rate: "1", at };
-    const market = await tx.market.findFirst({
-      where: { currency },
-      select: { id: true },
-    });
+    const market =
+      (await tx.market.findFirst({
+        where: { currency, id: marketId },
+        select: { id: true },
+      })) ??
+      (await tx.market.findFirst({
+        where: { currency },
+        orderBy: { id: "asc" },
+        select: { id: true },
+      }));
     if (!market) throw new Error("FINANCE_FX_MISSING");
     const override = await tx.fxOverride.findFirst({
       where: {
@@ -74,59 +80,47 @@ export async function recognizeShipmentCost(
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: { lines: true },
   });
-  if (
-    previous &&
-    !(await tx.journalEntry.findUnique({
-      where: { reversalOfId: previous.id },
-    }))
-  ) {
-    await tx.$queryRaw`SELECT id FROM "JournalEntry" WHERE id=${previous.id} FOR UPDATE`;
-    const requestKey = `shipment-reverse:${input.legId}:${input.version}`;
-    const raw = {
-      marketId: input.marketId,
-      requestKey,
-      memo: `shipment:${input.legId}`,
-      effectiveAt: input.at.toISOString(),
-      fxAsOf: previous.fxAsOf.toISOString(),
-      lines: previous.lines.map((l) => ({
-        accountId: l.accountId,
-        currency: l.currency,
-        debit: l.credit.toFixed(4),
-        credit: l.debit.toFixed(4),
-        rateTry: l.rateTry.toFixed(12),
-        rateUsd: l.rateUsd.toFixed(12),
-      })),
-    };
-    const normalized = normalizeJournal(raw),
-      hash = journalHash({ kind: "DOMAIN_SHIPMENT_REVERSAL", ...normalized });
-    await lockRequest(tx, input.marketId, requestKey);
-    if (!(await replay(tx, input.marketId, requestKey, hash))) {
-      const reversed = await insert(
+  if (previous?.requestKey === `${prefix}${input.version}`) {
+    const line = previous.lines.find((l) => l.debit.gt(0));
+    if (
+      !line ||
+      line.currency !== input.currency ||
+      !line.debit.equals(input.amount)
+    )
+      throw new Error("JOURNAL_REQUEST_CONFLICT");
+    return;
+  }
+  if (previous)
+    await reverseDomainEntry(
+      tx,
+      previous.id,
+      `shipment-reverse:${input.legId}:${input.version}`,
+      `shipment:${input.legId}`,
+      input.at,
+      input.actor,
+    );
+  const estimates = await tx.orderFee.findMany({
+    where: { orderId: input.orderId, type: "SHIPPING", absorbed: true },
+    select: { id: true },
+  });
+  for (const fee of estimates) {
+    const entry = await tx.journalEntry.findUnique({
+      where: {
+        marketId_requestKey: {
+          marketId: input.marketId,
+          requestKey: `absorbed-fee:${fee.id}`,
+        },
+      },
+    });
+    if (entry)
+      await reverseDomainEntry(
         tx,
-        normalized,
+        entry.id,
+        `shipping-estimate:${fee.id}`,
+        `shipment:${input.legId}`,
+        input.at,
         input.actor,
-        hash,
-        previous.id,
       );
-      for (const a of await tx.financeAttribution.findMany({
-        where: { entryId: previous.id },
-      })) {
-        const { id, ...values } = a;
-        void id;
-        await tx.financeAttribution.create({
-          data: {
-            ...values,
-            entryId: reversed.id,
-            revenueTry: a.revenueTry.negated(),
-            revenueUsd: a.revenueUsd.negated(),
-            costTry: a.costTry.negated(),
-            costUsd: a.costUsd.negated(),
-            expenseTry: a.expenseTry.negated(),
-            expenseUsd: a.expenseUsd.negated(),
-          },
-        });
-      }
-    }
   }
   if (new Exact(input.amount).isZero()) return;
   await postPair(tx, {
@@ -137,7 +131,7 @@ export async function recognizeShipmentCost(
     amount: input.amount,
     debit: "shipping_expense",
     credit: "payables",
-    rates: await ratesAt(tx, input.currency, input.at),
+    rates: await ratesAt(tx, input.currency, input.at, input.marketId),
     actor: input.actor,
   });
 }

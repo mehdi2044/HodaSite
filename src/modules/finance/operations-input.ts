@@ -56,6 +56,7 @@ export const purchaseInput = operationBase
   );
 export const expenseInput = operationBase.extend({
   recurringSourceId: identifier.optional(),
+  isGlobal: z.boolean().default(false),
   snapshot,
   amount: positive,
   category: z.string().trim().min(1).max(100),

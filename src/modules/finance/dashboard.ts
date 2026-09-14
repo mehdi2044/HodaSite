@@ -1,3 +1,4 @@
+import { can } from "@/modules/access";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { financeActor } from "./operations";
@@ -15,8 +16,11 @@ export async function financeDashboard(raw: unknown) {
       const scope = filter.marketId
         ? Prisma.sql`AND j."marketId"=${filter.marketId}`
         : Prisma.empty;
+      const expenseScope = filter.marketId
+        ? Prisma.sql`AND (e.id IS NULL OR e."isGlobal"=false)`
+        : Prisma.empty;
       const rows = await tx.$queryRaw<ProfitRow[]>(
-        Prisma.sql`SELECT j."marketId", a.code,a.kind,sum(l."debitTry"-l."creditTry")::text AS "amountTry",sum(l."debitUsd"-l."creditUsd")::text AS "amountUsd" FROM "JournalEntry" j JOIN "JournalLine" l ON l."entryId"=j.id JOIN "LedgerAccount" a ON a.id=l."accountId" WHERE j.status='POSTED' AND j."effectiveAt">=${filter.start} AND j."effectiveAt"<${filter.end} ${scope} GROUP BY j."marketId",a.code,a.kind ORDER BY j."marketId",a.code`,
+        Prisma.sql`SELECT j."marketId", a.code,a.kind,sum(l."debitTry"-l."creditTry")::text AS "amountTry",sum(l."debitUsd"-l."creditUsd")::text AS "amountUsd" FROM "JournalEntry" j JOIN "JournalLine" l ON l."entryId"=j.id JOIN "LedgerAccount" a ON a.id=l."accountId" LEFT JOIN "Expense" e ON e."journalId"=coalesce(j."reversalOfId",j.id) WHERE j.status='POSTED' AND j."effectiveAt">=${filter.start} AND j."effectiveAt"<${filter.end} ${scope} ${expenseScope} GROUP BY j."marketId",a.code,a.kind ORDER BY j."marketId",a.code`,
       );
       return { filter, rows, totals: profitTotals(rows) };
     },
@@ -25,7 +29,8 @@ export async function financeDashboard(raw: unknown) {
 }
 export async function financeWorkspace(marketId: string) {
   return db.$transaction(async (tx) => {
-    await financeActor(tx, "finance.report.view", marketId);
+    const actor = await financeActor(tx, "finance.report.view", marketId);
+    const global = await can(actor, "finance.report.view");
     const [
       config,
       suppliers,
@@ -48,7 +53,7 @@ export async function financeWorkspace(marketId: string) {
         take: 100,
       }),
       tx.expense.findMany({
-        where: { marketId },
+        where: { marketId, ...(!global ? { isGlobal: false } : {}) },
         orderBy: { createdAt: "desc" },
         take: 100,
       }),

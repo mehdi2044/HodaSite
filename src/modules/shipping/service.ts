@@ -267,7 +267,8 @@ export async function changeShipment(
             });
             if (
               !leg.costAmount.equals(data.costAmount) ||
-              leg.costCurrency !== data.costCurrency
+              leg.costCurrency !== data.costCurrency ||
+              (!leg.shippedAt && !!shippedAt)
             ) {
               await recognizeShipmentCost(tx, {
                 orderId,

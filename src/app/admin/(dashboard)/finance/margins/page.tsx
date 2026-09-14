@@ -89,6 +89,7 @@ export default async function MarginsPage({
       <header>
         <h1 className="text-2xl">{t("margins")}</h1>
         <p className="muted">{t("attributionHelp")}</p>
+        <p className="muted">{t("absorbedHelp")}</p>
         <Link
           href={`/admin/finance/operations?marketId=${market.id}`}
           className="underline"
@@ -155,6 +156,17 @@ export default async function MarginsPage({
       <p className="muted">{t("exactExport")}</p>
       <section className="card grid gap-3">
         <h2 className="text-xl">{t("operationalMetrics")}</h2>
+        <div className="flex gap-3">
+          {["csv", "xlsx"].map((format) => (
+            <a
+              key={format}
+              className="underline"
+              href={`/admin/finance/margins/export?${query}&report=operations&format=${format}`}
+            >
+              {t("export", { format: format.toUpperCase() })}
+            </a>
+          ))}
+        </div>
         <p className="muted">{t("metricsHelp")}</p>
         {(["payments", "fulfillment"] as const).map((k) => (
           <div key={k}>
@@ -205,6 +217,8 @@ export default async function MarginsPage({
                 "grossUsd",
                 "expenseTry",
                 "expenseUsd",
+                "absorbedTry",
+                "absorbedUsd",
                 "contributionTry",
                 "contributionUsd",
                 "marginPercent",

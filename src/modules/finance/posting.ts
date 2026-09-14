@@ -1,11 +1,10 @@
-import { movementCost } from "./movement-cost";
+import { movementCost, movementRates } from "./movement-cost";
 import { raiseOrderAlerts } from "./alerts";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { Exact, snapshot, equivalents } from "./operations-input";
 import { postDomainJournal } from "./persistence";
 import { attributeEntry } from "./attribution";
-import { costSnapshot } from "./cost-snapshot";
 type Tx = Prisma.TransactionClient;
 export type Rates = z.infer<typeof snapshot>;
 
@@ -118,6 +117,12 @@ export async function recognizePaidOrder(
   )
     return;
   const rates = orderRates(order.currency, order.fxSnapshot, order.paidAt);
+  const stored = equivalents(order.totalAmount.toFixed(4), rates);
+  if (
+    stored.amountTry !== order.totalAmountTry.toFixed(4) ||
+    stored.amountUsd !== order.totalAmountUsd.toFixed(4)
+  )
+    throw new Error("FINANCE_FX_PRECISION");
   const base = {
     marketId: order.marketId,
     rates,
@@ -169,6 +174,21 @@ export async function recognizePaidOrder(
             ? "shipping_income"
             : "fees",
     });
+  for (const f of order.fees.filter((f) => f.absorbed)) {
+    if (f.currency !== order.currency) throw new Error("FINANCE_CURRENCY");
+    await postPair(tx, {
+      ...base,
+      key: `absorbed-fee:${f.id}`,
+      amount: f.amount.toFixed(4),
+      debit:
+        f.type === "SHIPPING"
+          ? "shipping_expense"
+          : f.type === "CUSTOMS"
+            ? "customs"
+            : "expenses",
+      credit: "payables",
+    });
+  }
   const movements = await tx.stockMovement.findMany({
     where: { referenceId: orderId, type: "OUT" },
     include: { lot: true },
@@ -178,7 +198,7 @@ export async function recognizePaidOrder(
     const l = m.lot;
     const amount = await movementCost(tx, m, l);
     if (new Exact(amount).isZero()) continue;
-    const lr = costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, order.paidAt);
+    const lr = await movementRates(tx, m, l, order.paidAt);
     await postPair(tx, {
       ...base,
       rates: lr,
@@ -304,7 +324,7 @@ export async function recognizeReturn(tx: Tx, returnId: string, actor: string) {
         amount: await movementCost(tx, m, l),
         debit: "inventory",
         credit: "cogs",
-        rates: costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, m.createdAt),
+        rates: await movementRates(tx, m, l, m.createdAt),
       });
     }
   }

@@ -13,6 +13,7 @@ export async function financialOperation(
     config: operations.saveFinanceConfig,
     alerts: operations.refreshFinancialAlerts,
     opening: operations.openDefaultCosts,
+    costMethod: operations.configureCostMethod,
     supplier: operations.createSupplier,
     purchase: operations.createPurchase,
     receive: operations.receivePurchase,
@@ -53,7 +54,18 @@ export async function financialOperation(
       id = await handlers[kind](raw);
     });
     return result.ok ? { ok: true, id } : { ok: false, code: result.code };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "AVERAGE_MIXED_CURRENCY",
+        "AVERAGE_PRECISION",
+        "AVERAGE_QUANTITY",
+        "FINANCE_COST_CURRENCY",
+        "FINANCE_FX_MISSING",
+      ].includes(error.message)
+    )
+      return { ok: false, code: "COST_INPUT" };
     return { ok: false, code: "UNKNOWN" };
   }
 }

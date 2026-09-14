@@ -1,3 +1,4 @@
+import { initializeAverage } from "./average-cost";
 import { scanStockAlerts } from "./alerts";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -14,6 +15,7 @@ import { allocateLandedCost } from "./calculations";
 import { journalHash } from "./journal-input";
 import { postPair } from "./posting";
 import {
+  positive,
   snapshot,
   nextExpenseDate,
   capitalInput,
@@ -105,6 +107,7 @@ export async function createSupplier(raw: unknown) {
   const v = z
     .object({
       marketId: identifier,
+      requestKey: identifier.optional(),
       name: z.string().trim().min(1).max(150),
       notes: z.string().max(2000).default(""),
     })
@@ -113,7 +116,25 @@ export async function createSupplier(raw: unknown) {
   return withMutation(() =>
     db.$transaction(async (tx) => {
       const actor = await financeActor(tx, "finance.journal.post", v.marketId);
-      const row = await tx.supplier.create({ data: v });
+      const hash = journalHash({ actor, ...v });
+      if (v.requestKey) {
+        await lock(tx, `supplier:${v.marketId}:${v.requestKey}`);
+        const prior = await tx.supplier.findUnique({
+          where: {
+            marketId_requestKey: {
+              marketId: v.marketId,
+              requestKey: v.requestKey,
+            },
+          },
+        });
+        if (prior) {
+          if (prior.requestHash !== hash) invalid();
+          return prior.id;
+        }
+      }
+      const row = await tx.supplier.create({
+        data: { ...v, requestHash: hash },
+      });
       await audit(tx, actor, "finance.supplier", row.id, {
         marketId: v.marketId,
       });
@@ -255,6 +276,7 @@ export async function receivePurchase(raw: unknown) {
             variantId: item.variantId,
             quantity: item.quantity,
             unitCostAmount: item.unitCost.toFixed(4),
+            totalCostAmount: item.landedTotal.toFixed(4),
             unitCostCurrency: rates.currency,
             unitCostAmountTry: eq.amountTry,
             unitCostAmountUsd: eq.amountUsd,
@@ -271,20 +293,20 @@ export async function receivePurchase(raw: unknown) {
             where: { id: result.lot.id },
             data: { landedCostAmount: item.allocatedCost },
           });
+          await postPair(tx, {
+            marketId: row.marketId,
+            key: `purchase:${row.id}:${item.id}`,
+            memo: row.memo,
+            amount: item.landedTotal.toFixed(4),
+            debit: "inventory",
+            credit: "payables",
+            rates,
+            actor,
+          });
         }
         const amount = row.items
           .reduce((n, i) => n.add(i.landedTotal.toString()), new Exact(0))
           .toFixed(4);
-        await postPair(tx, {
-          marketId: row.marketId,
-          key: `purchase:${row.id}`,
-          memo: row.memo,
-          amount,
-          debit: "inventory",
-          credit: "payables",
-          rates,
-          actor,
-        });
         await tx.purchaseOrder.update({
           where: { id: row.id },
           data: { status: "RECEIVED", receivedAt: new Date() },
@@ -309,6 +331,7 @@ export async function createExpense(raw: unknown) {
         "finance.expense.create",
         v.marketId,
       );
+      if (v.isGlobal) await financeActor(tx, "finance.expense.create");
       await lock(tx, `expense:${v.marketId}:${v.requestKey}`);
       const hash = journalHash({ actor, ...v });
       const old = await tx.expense.findUnique({
@@ -332,8 +355,10 @@ export async function createExpense(raw: unknown) {
             recurrenceMonths: { gt: 0 },
           },
         });
+        if (source?.isGlobal) await financeActor(tx, "finance.expense.create");
         if (
           !source ||
+          source.isGlobal !== v.isGlobal ||
           nextExpenseDate(source.effectiveAt, source.recurrenceMonths)
             .toISOString()
             .slice(0, 10) !== v.snapshot.effectiveAt.slice(0, 10)
@@ -367,6 +392,7 @@ export async function createExpense(raw: unknown) {
           attachmentId: v.attachmentId,
           recurrenceMonths: v.recurrenceMonths,
           recurringSourceId: v.recurringSourceId,
+          isGlobal: v.isGlobal,
           ...v.snapshot,
           effectiveAt: new Date(v.snapshot.effectiveAt),
           fxAsOf: new Date(v.snapshot.fxAsOf),
@@ -399,14 +425,33 @@ export async function approveExpense(raw: unknown) {
       );
       await tx.$queryRaw`SELECT id FROM "Expense" WHERE id=${v.id} FOR UPDATE`;
       const row = await tx.expense.findUniqueOrThrow({ where: { id: v.id } });
+      if (row.isGlobal) await financeActor(tx, "finance.journal.post");
       if (row.status === "APPROVED") return row.id;
       if (row.status !== "PENDING") invalid();
+      const expenseCode = `expense_${journalHash({ category: row.category }).slice(0, 20)}`;
+      await tx.ledgerAccount.upsert({
+        where: {
+          marketId_currency_code: {
+            marketId: row.marketId,
+            currency: row.currency,
+            code: expenseCode,
+          },
+        },
+        create: {
+          marketId: row.marketId,
+          currency: row.currency,
+          code: expenseCode,
+          kind: "EXPENSE",
+          nameI18n: { fa: row.category, tr: row.category, en: row.category },
+        },
+        update: {},
+      });
       const entry = await postPair(tx, {
         marketId: row.marketId,
         key: `expense:${row.id}`,
         memo: row.memo,
         amount: row.amount.toFixed(4),
-        debit: "expenses",
+        debit: expenseCode,
         credit: "bank",
         actor,
         rates: {
@@ -432,10 +477,9 @@ export async function createPartner(raw: unknown) {
   const v = z
     .object({
       marketId: identifier,
+      requestKey: identifier.optional(),
       name: z.string().trim().min(1).max(150),
-      ownershipPercent: z
-        .string()
-        .refine((v) => new Exact(v).gt(0) && new Exact(v).lte(100)),
+      ownershipPercent: positive.refine((v) => new Exact(v).lte(100)),
     })
     .strict()
     .parse(raw);
@@ -443,6 +487,21 @@ export async function createPartner(raw: unknown) {
     db.$transaction(async (tx) => {
       const actor = await financeActor(tx, "finance.journal.post", v.marketId);
       await lock(tx, `partners:${v.marketId}`);
+      const hash = journalHash({ actor, ...v });
+      if (v.requestKey) {
+        const prior = await tx.partner.findUnique({
+          where: {
+            marketId_requestKey: {
+              marketId: v.marketId,
+              requestKey: v.requestKey,
+            },
+          },
+        });
+        if (prior) {
+          if (prior.requestHash !== hash) invalid();
+          return prior.id;
+        }
+      }
       const total = await tx.partner.aggregate({
         where: { marketId: v.marketId, isActive: true },
         _sum: { ownershipPercent: true },
@@ -453,7 +512,9 @@ export async function createPartner(raw: unknown) {
           .gt(100)
       )
         invalid();
-      const row = await tx.partner.create({ data: v });
+      const row = await tx.partner.create({
+        data: { ...v, requestHash: hash },
+      });
       await audit(tx, actor, "finance.partner.create", row.id, {
         marketId: v.marketId,
       });
@@ -669,6 +730,85 @@ export async function openDefaultCosts(raw: unknown) {
           },
         });
         return id;
+      },
+      { timeout: 30000 },
+    ),
+  );
+}
+
+export async function configureCostMethod(raw: unknown) {
+  const v = z
+    .object({
+      marketId: identifier,
+      warehouseId: identifier,
+      variantId: identifier,
+      method: z.enum(["FIFO", "AVERAGE"]),
+      confirm: z.literal(true),
+    })
+    .strict()
+    .parse(raw);
+  return withMutation(() =>
+    db.$transaction(
+      async (tx) => {
+        // Physical stock is shared across markets; only an unscoped accountant/owner can change its method.
+        const actor = await financeActor(tx, "finance.journal.post");
+        const variant = await tx.variant.findFirst({
+          where: {
+            id: v.variantId,
+            product: {
+              deletedAt: null,
+              OR: [
+                { marketIds: { isEmpty: true } },
+                { marketIds: { has: v.marketId } },
+              ],
+            },
+          },
+        });
+        if (!variant) invalid();
+        const stock = await tx.stockItem.upsert({
+          where: {
+            warehouseId_variantId: {
+              warehouseId: v.warehouseId,
+              variantId: v.variantId,
+            },
+          },
+          create: {
+            warehouseId: v.warehouseId,
+            variantId: v.variantId,
+            onHand: 0,
+          },
+          update: {},
+        });
+        await tx.$queryRaw`SELECT id FROM "StockItem" WHERE id=${stock.id} FOR UPDATE`;
+        const previous = await tx.stockCostPolicy.findUnique({
+          where: { stockItemId: stock.id },
+        });
+        if (previous?.method === v.method) return stock.id;
+        if (
+          await tx.stockValuation.findFirst({
+            where: { stockItemId: stock.id },
+            select: { movementId: true },
+          })
+        )
+          invalid();
+        const posted = await tx.$queryRaw<
+          { id: string }[]
+        >`SELECT j.id FROM "JournalEntry" j JOIN "StockMovement" m ON j."requestKey"='cogs:'||m.id WHERE m."stockItemId"=${stock.id} LIMIT 1`;
+        if (posted.length) invalid();
+        if (v.method === "AVERAGE") {
+          const value = await initializeAverage(tx, stock.id);
+          if (value.quantity !== stock.onHand) invalid();
+        } else
+          await tx.stockValue.deleteMany({ where: { stockItemId: stock.id } });
+        await tx.stockCostPolicy.upsert({
+          where: { stockItemId: stock.id },
+          create: { stockItemId: stock.id, method: v.method },
+          update: { method: v.method },
+        });
+        await audit(tx, actor, "finance.cost.method", stock.id, {
+          method: v.method,
+        });
+        return stock.id;
       },
       { timeout: 30000 },
     ),

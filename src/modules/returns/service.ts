@@ -1,3 +1,4 @@
+import { averageReturn } from "@/modules/finance/average-cost";
 import { recognizeReturn } from "@/modules/finance/events";
 import { exchangeReturn } from "./exchange";
 import Decimal from "decimal.js";
@@ -233,7 +234,7 @@ async function receiveItems(
           data: { qtyRemaining: { increment: quantity } },
         });
       }
-      await tx.stockMovement.create({
+      const movement = await tx.stockMovement.create({
         data: {
           stockItemId: source.stockItemId,
           warehouseId: source.warehouseId,
@@ -246,6 +247,8 @@ async function receiveItems(
           createdBy: userId,
         },
       });
+      if (condition === "RESTOCK")
+        await averageReturn(tx, movement, row.orderId);
       needed -= quantity;
     }
     if (needed) throw new CommerceError("RETURN_STOCK_HISTORY");

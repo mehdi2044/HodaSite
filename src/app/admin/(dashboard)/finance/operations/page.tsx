@@ -12,6 +12,7 @@ import {
   financeDashboard,
 } from "@/modules/finance/dashboard";
 import {
+  FinanceRates,
   FinanceOperationForm,
   PurchaseLines,
 } from "@/components/admin/finance-operation-form";
@@ -44,6 +45,11 @@ export default async function OperationsPage({
     expense = await can(user, "finance.expense.create", {
       marketId: market.id,
     });
+  const globalExpense = await can(user, "finance.expense.create");
+  const consolidated = (await can(user, "finance.report.view"))
+    ? await financeDashboard({ from: q.from, to: q.to })
+    : null;
+  const globalFinance = await can(user, "finance.journal.post");
   const recurring = w.expenses.find(
     (e) =>
       e.id === q.recurring && e.status === "APPROVED" && e.recurrenceMonths > 0,
@@ -73,22 +79,12 @@ export default async function OperationsPage({
       {t("confirm")}
     </label>
   );
-  const rates = (effectiveAt = now) => (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <label>
-        {t("currency")}
-        <select className="input w-full" name="currency">
-          {["TRY", "USD", "CAD", "IRT"].map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
-      </label>
-      {field("rateTry", "1")}
-      {field("rateUsd")}
-      {field("fxAsOf", now, "datetime-local")}
-      {field("effectiveAt", effectiveAt, "datetime-local")}
-      <p className="muted sm:col-span-2">{t("ratesHelp")}</p>
-    </div>
+  const rates = (effectiveAt = now, currency = "TRY") => (
+    <FinanceRates
+      effectiveAt={effectiveAt}
+      fxAsOf={now}
+      initialCurrency={currency}
+    />
   );
   const form = (kind: string, children: React.ReactNode) => (
     <FinanceOperationForm
@@ -144,6 +140,15 @@ export default async function OperationsPage({
         </label>
         <button className="button">{t("filter")}</button>
       </form>
+      {consolidated && (
+        <section className="card">
+          <h2>{t("consolidatedProfit")}</h2>
+          <p dir="ltr">
+            {consolidated.totals.profitTry} TRY ·{" "}
+            {consolidated.totals.profitUsd} USD
+          </p>
+        </section>
+      )}
       <section className="card grid gap-3">
         {title("profit")}
         <p className="muted">{t("profitHelp")}</p>
@@ -165,15 +170,58 @@ export default async function OperationsPage({
         {w.alerts.map((a) => (
           <p key={a.id}>
             {t(a.code.split(":")[2])}{" "}
-            <Link
-              className="underline"
-              href={`/admin/catalog/products/${a.code.split(":")[3]}`}
-            >
-              {t("product")}
-            </Link>
+            {a.code.split(":")[3] !== "config" && (
+              <Link
+                className="underline"
+                href={`/admin/catalog/products/${a.code.split(":")[3]}`}
+              >
+                {t("product")}
+              </Link>
+            )}
           </p>
         ))}
       </section>
+      {globalFinance && (
+        <details className="card">
+          <summary>{t("costMethod")}</summary>
+          {form(
+            "costMethod",
+            <>
+              <p className="muted">{t("averageHelp")}</p>
+              <label>
+                {t("warehouse")}
+                <select className="input" name="warehouseId">
+                  {w.warehouses.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {String(
+                        (a.nameI18n as Record<string, string>)[locale] ?? a.id,
+                      )}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("variant")}
+                <select className="input" name="variantId">
+                  {w.variants.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.sku}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("costMethod")}
+                <select name="method" className="input">
+                  <option value="FIFO">{t("FIFO")}</option>
+                  <option value="AVERAGE">{t("AVERAGE")}</option>
+                </select>
+              </label>
+              {confirm}
+            </>,
+          )}
+        </details>
+      )}
       {write && (
         <details className="card">
           <summary className="cursor-pointer text-xl">{t("config")}</summary>
@@ -332,10 +380,21 @@ export default async function OperationsPage({
                 <p>{t("recurringHelp", { date: nextDate!.slice(0, 10) })}</p>
               )}
               {field("category", recurring?.category ?? "")}
+              {globalExpense && (
+                <label>
+                  <input
+                    type="checkbox"
+                    name="isGlobal"
+                    defaultChecked={recurring?.isGlobal}
+                  />
+                  {t("globalExpense")}
+                </label>
+              )}
+              <p className="muted">{t("globalExpenseHelp")}</p>
               <ExpenseAttachment marketId={market.id} />
               {field("memo", recurring?.memo ?? "")}
               {field("amount", recurring?.amount.toFixed(4) ?? "")}
-              {rates(nextDate ?? now)}
+              {rates(nextDate ?? now, recurring?.currency ?? "TRY")}
               <label>
                 {t("recurrenceMonths")}
                 <input
@@ -353,7 +412,7 @@ export default async function OperationsPage({
         {w.expenses.map((e) => (
           <article key={e.id} className="grid gap-2 rounded border p-3">
             <strong>
-              {e.category} — {e.memo}
+              {e.category} — {e.memo} {e.isGlobal && `(${t("globalExpense")})`}
             </strong>
             <span dir="ltr">
               {e.amount.toFixed(4)} {e.currency}

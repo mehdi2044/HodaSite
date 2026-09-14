@@ -1,3 +1,4 @@
+import { operationsMetrics } from "@/modules/finance/metrics";
 import { ZodError } from "zod";
 import { getTranslations, getLocale } from "next-intl/server";
 import { marginReport } from "@/modules/finance/margins";
@@ -16,6 +17,55 @@ export async function GET(request: Request) {
       !["csv", "xlsx"].includes(q.get("format") ?? "csv")
     )
       return new Response(null, { status: 400, headers });
+    if (q.get("report") === "operations") {
+      const raw = Object.fromEntries(
+        ["from", "to", "marketId"].map((k) => [k, q.get(k) ?? undefined]),
+      );
+      const m = await operationsMetrics(raw),
+        t = await getTranslations("financeOps"),
+        rt = await getTranslations("returns"),
+        locale = await getLocale();
+      const rows = [
+        [t("key"), t("quantity"), t("amount"), t("currency")],
+        [
+          t("verificationMinutes"),
+          m.payments.count,
+          m.payments.minutes ?? "",
+          "",
+        ],
+        [t("missingDates"), m.payments.missing, "", ""],
+        [
+          t("fulfillmentMinutes"),
+          m.fulfillment.count,
+          m.fulfillment.minutes ?? "",
+          "",
+        ],
+        [t("missingDates"), m.fulfillment.missing, "", ""],
+        ...m.returns.map((r) => [
+          rt(`statuses.${r.status}`),
+          r.count,
+          r.amount,
+          r.currency,
+        ]),
+      ];
+      const xlsx = q.get("format") === "xlsx";
+      return new Response(
+        xlsx
+          ? new Uint8Array(financeWorkbook(rows, locale === "fa"))
+          : tableCsv(rows),
+        {
+          headers: {
+            ...headers,
+            "Content-Type": xlsx
+              ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              : "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="operations.${xlsx ? "xlsx" : "csv"}"`,
+          },
+        },
+      );
+    }
+    if (q.has("report") && q.get("report") !== "margins")
+      return new Response(null, { status: 400, headers });
     const report = await marginReport(
       Object.fromEntries(
         ["from", "to", "marketId"].map((k) => [k, q.get(k) ?? undefined]),
@@ -32,6 +82,8 @@ export async function GET(request: Request) {
       "costUsd",
       "expenseTry",
       "expenseUsd",
+      "absorbedTry",
+      "absorbedUsd",
       "grossTry",
       "grossUsd",
       "contributionTry",

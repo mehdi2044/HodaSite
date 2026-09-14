@@ -25,7 +25,7 @@ export async function attributeEntry(
         ? 1
         : input.credit === "cogs"
           ? -1
-          : input.debit === "shipping_expense"
+          : ["shipping_expense", "expenses", "customs"].includes(input.debit)
             ? 1
             : 0;
   if (!sign) return;
@@ -39,7 +39,7 @@ export async function attributeEntry(
   const kind =
     income.includes(input.credit) || income.includes(input.debit)
       ? "revenue"
-      : input.debit === "shipping_expense"
+      : ["shipping_expense", "expenses", "customs"].includes(input.debit)
         ? "expense"
         : "cost";
   const items = await tx.orderItem.findMany({

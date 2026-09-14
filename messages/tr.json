@@ -1391,7 +1391,7 @@
     "variant": "Varyant",
     "quantity": "Adet",
     "purchaseTotal": "Satır toplam satın alma tutarı",
-    "weight": "Satır toplam ağırlığı",
+    "weight": "Dağıtım için satır toplam ağırlığı",
     "addLine": "Ürün ekle",
     "remove": "Satırı kaldır",
     "confirm": "Bilgileri kontrol ettim ve onaylıyorum.",
@@ -1466,6 +1466,19 @@
     "nextExpense": "Sonraki gideri oluştur",
     "recurringHelp": "Sonraki tarih: {date}. Tutarı ve kurları kontrol edin; bu gider ayrı kayıt ve onay gerektirir.",
     "openingCosts": "Açılış stok maliyetleri",
-    "openingHelp": "Yalnızca lotu olmayan mevcut birimlere ürün varsayılan maliyeti ve girdiğiniz kur uygulanır. Stok miktarı ve mevcut lot maliyetleri korunur. Açılış tarihini ve kurları seçin; geçmiş maliyetler yeniden hesaplanmaz."
+    "openingHelp": "Yalnızca lotu olmayan mevcut birimlere ürün varsayılan maliyeti ve girdiğiniz kur uygulanır. Stok miktarı ve mevcut lot maliyetleri korunur. Açılış tarihini ve kurları seçin; geçmiş maliyetler yeniden hesaplanmaz.",
+    "costMethod": "Maliyet yöntemi",
+    "FIFO": "İlk giren ilk çıkar (FIFO)",
+    "AVERAGE": "Hareketli ağırlıklı ortalama",
+    "averageHelp": "Yöntem ortak varyant/depo bazındadır ve değerleme başladıktan sonra kilitlenir. Ortalama için kalan stokta tek alış para birimi gerekir; farklı para birimleri için FIFO kullanın. Geçmiş kayıtlar yeniden hesaplanmaz.",
+    "globalExpense": "Şirket genel gideri",
+    "globalExpenseHelp": "Genel gider pazar kârına dağıtılmaz. Ödeyen hesap seçili pazara aittir; gider toplam kâra dahil edilir.",
+    "consolidatedProfit": "Genel giderler dahil toplam kâr",
+    "absorbedTry": "Mağazanın üstlendiği ücretler (TRY)",
+    "absorbedUsd": "Mağazanın üstlendiği ücretler (USD)",
+    "absorbedHelp": "Mağazanın ödediği ücretler giderlere dahildir. Gerçek kargo maliyeti girildiğinde tahmini kargo tahakkuku ters kayıtla kapatılır.",
+    "REVERSAL": "Ters kayıt",
+    "missingDates": "Eksik veya tutarsız tarihler",
+    "PRICE_UNAVAILABLE": "Fiyat kontrolü için onaylı pazar kuru gerekli."
   }
 }

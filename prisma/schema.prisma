@@ -1680,15 +1680,18 @@ model FinanceConfig {
 }
 
 model Supplier {
-  id        String          @id @default(cuid())
-  marketId  String
-  name      String
-  notes     String          @default("")
-  isActive  Boolean         @default(true)
-  createdAt DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime        @updatedAt @db.Timestamptz(3)
-  orders    PurchaseOrder[]
+  requestKey  String?
+  requestHash String?
+  id          String          @id @default(cuid())
+  marketId    String
+  name        String
+  notes       String          @default("")
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  orders      PurchaseOrder[]
 
+  @@unique([marketId, requestKey])
   @@index([marketId])
 }
 
@@ -1740,6 +1743,7 @@ model PurchaseOrderItem {
 }
 
 model Expense {
+  isGlobal          Boolean  @default(false)
   recurringSourceId String?  @unique
   id                String   @id @default(cuid())
   marketId          String
@@ -1769,6 +1773,8 @@ model Expense {
 }
 
 model Partner {
+  requestKey       String?
+  requestHash      String?
   id               String               @id @default(cuid())
   marketId         String
   name             String
@@ -1778,6 +1784,7 @@ model Partner {
   updatedAt        DateTime             @updatedAt @db.Timestamptz(3)
   transactions     CapitalTransaction[]
 
+  @@unique([marketId, requestKey])
   @@index([marketId])
 }
 
@@ -1828,4 +1835,38 @@ model FinanceAttribution {
   @@unique([entryId, orderItemId])
   @@index([marketId, orderId])
   @@index([variantId])
+}
+
+/// Cost method belongs to shared physical stock, not to a selling market.
+model StockCostPolicy {
+  stockItemId String   @id
+  method      String   @default("FIFO")
+  updatedAt   DateTime @updatedAt
+}
+
+model StockValue {
+  stockItemId String   @id
+  quantity    Int
+  currency    String?
+  amount      Decimal  @db.Decimal(18, 4)
+  amountTry   Decimal  @db.Decimal(18, 4)
+  amountUsd   Decimal  @db.Decimal(18, 4)
+  updatedAt   DateTime @updatedAt
+}
+
+/// Immutable cost evidence for moving-average stock movements.
+model StockValuation {
+  movementId  String   @id
+  stockItemId String
+  quantity    Int
+  currency    String
+  amount      Decimal  @db.Decimal(18, 4)
+  amountTry   Decimal  @db.Decimal(18, 4)
+  amountUsd   Decimal  @db.Decimal(18, 4)
+  rateTry     Decimal  @db.Decimal(30, 12)
+  rateUsd     Decimal  @db.Decimal(30, 12)
+  evidence    Json
+  createdAt   DateTime @default(now())
+
+  @@index([stockItemId])
 }

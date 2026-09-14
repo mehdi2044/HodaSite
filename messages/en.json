@@ -1391,7 +1391,7 @@
     "variant": "Variant",
     "quantity": "Quantity",
     "purchaseTotal": "Total purchase amount for this line",
-    "weight": "Total line weight",
+    "weight": "Total row weight for allocation",
     "addLine": "Add line",
     "remove": "Remove line",
     "confirm": "I reviewed the details and confirm this operation.",
@@ -1466,6 +1466,19 @@
     "nextExpense": "Create next installment",
     "recurringHelp": "Next date: {date}. Review the amount and FX rates; this installment requires its own posting and approval.",
     "openingCosts": "Opening inventory costs",
-    "openingHelp": "Only existing units without a lot receive the product default cost and your explicit FX snapshot. Stock counts and existing lot costs stay intact. Choose the accounting opening date and rates; this does not reconstruct historical cost."
+    "openingHelp": "Only existing units without a lot receive the product default cost and your explicit FX snapshot. Stock counts and existing lot costs stay intact. Choose the accounting opening date and rates; this does not reconstruct historical cost.",
+    "costMethod": "Cost method",
+    "FIFO": "First in, first out (FIFO)",
+    "AVERAGE": "Moving weighted average",
+    "averageHelp": "The method belongs to each shared variant/warehouse and locks after valuation starts. Average costing requires one original purchase currency in the remaining stock; use FIFO for mixed currencies. Historical records are not recalculated.",
+    "globalExpense": "Organization-wide expense",
+    "globalExpenseHelp": "A general expense is not allocated to a market profit. The funding account belongs to the selected market; the cost is included in consolidated profit.",
+    "consolidatedProfit": "Consolidated profit including general expenses",
+    "absorbedTry": "Absorbed fees (TRY)",
+    "absorbedUsd": "Absorbed fees (USD)",
+    "absorbedHelp": "Merchant-paid fees are included in expenses. Estimated shipping accruals are reversed when actual shipment costs are recorded.",
+    "REVERSAL": "Reversal",
+    "missingDates": "Missing or inconsistent dates",
+    "PRICE_UNAVAILABLE": "An accepted market FX rate is needed for price checks."
   }
 }

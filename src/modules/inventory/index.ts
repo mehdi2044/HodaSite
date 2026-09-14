@@ -1,3 +1,4 @@
+import { averageReceipt, averageOut } from "@/modules/finance/average-cost";
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -78,6 +79,7 @@ export type ReceiveStockInput = {
   variantId: string;
   quantity: number;
   unitCostAmount: string;
+  totalCostAmount?: string;
   unitCostCurrency: string;
   unitCostAmountTry: string;
   unitCostAmountUsd: string;
@@ -182,6 +184,14 @@ export async function receiveStockInTransaction(
       quantity: input.quantity,
       createdBy: input.createdBy,
     },
+  });
+  await averageReceipt(tx, movement, {
+    currency: input.unitCostCurrency,
+    amount:
+      input.totalCostAmount ??
+      new Decimal(input.unitCostAmount).mul(input.quantity).toFixed(4),
+    rates: input.fxRateSnapshot,
+    at: input.receivedAt,
   });
   if (input.createdBy)
     await tx.auditLog.create({
@@ -376,7 +386,7 @@ export async function adjustStock(input: {
         where: { id: lot.id },
         data: { qtyRemaining: { decrement: quantity } },
       });
-      await tx.stockMovement.create({
+      const movement = await tx.stockMovement.create({
         data: {
           stockItemId: stock.id,
           warehouseId: stock.warehouseId,
@@ -388,6 +398,7 @@ export async function adjustStock(input: {
           createdBy: input.createdBy,
         },
       });
+      await averageOut(tx, movement);
       remaining -= quantity;
     }
     if (remaining) throw new Error("Insufficient lots for adjustment");

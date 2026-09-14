@@ -43,13 +43,17 @@ export async function marginReport(
           costUsd: string;
           expenseTry: string;
           expenseUsd: string;
+          absorbedTry: string;
+          absorbedUsd: string;
         }[]
       >(Prisma.sql`
       SELECT ${columns[dimension]} AS key,
       sum(f."revenueTry")::text AS "revenueTry",sum(f."revenueUsd")::text AS "revenueUsd",
       sum(f."costTry")::text AS "costTry",sum(f."costUsd")::text AS "costUsd",
-      sum(f."expenseTry")::text AS "expenseTry",sum(f."expenseUsd")::text AS "expenseUsd"
-      FROM "FinanceAttribution" f JOIN "JournalEntry" j ON j.id=f."entryId"
+      sum(f."expenseTry")::text AS "expenseTry",sum(f."expenseUsd")::text AS "expenseUsd",
+      sum(CASE WHEN source."requestKey" LIKE 'absorbed-fee:%' THEN f."expenseTry" ELSE 0 END)::text AS "absorbedTry",
+      sum(CASE WHEN source."requestKey" LIKE 'absorbed-fee:%' THEN f."expenseUsd" ELSE 0 END)::text AS "absorbedUsd"
+      FROM "FinanceAttribution" f JOIN "JournalEntry" j ON j.id=f."entryId" JOIN "JournalEntry" source ON source.id=coalesce(j."reversalOfId",j.id)
       WHERE j."effectiveAt">=${filter.start} AND j."effectiveAt"<${filter.end} ${scope}
       GROUP BY ${columns[dimension]} ORDER BY ${columns[dimension]}`);
       const calculated = rows.map((r) => ({
@@ -91,10 +95,36 @@ export async function partnerStatement(raw: unknown, partnerId: string) {
       );
       if (!partner || (filter.marketId && partner.marketId !== filter.marketId))
         throw new Error("NOT_FOUND");
-      const rows = await tx.capitalTransaction.findMany({
+      const originals = await tx.capitalTransaction.findMany({
         where: { partnerId, effectiveAt: { lt: filter.end } },
         orderBy: [{ effectiveAt: "asc" }, { id: "asc" }],
       });
+      const reversals = await tx.journalEntry.findMany({
+        where: {
+          reversalOfId: { in: originals.map((r) => r.journalId) },
+          effectiveAt: { lt: filter.end },
+        },
+        select: { id: true, reversalOfId: true, effectiveAt: true },
+      });
+      const rows = originals.map((r) => ({ ...r, reversal: false }));
+      for (const reversal of reversals) {
+        const original = originals.find(
+          (r) => r.journalId === reversal.reversalOfId,
+        )!;
+        rows.push({
+          ...original,
+          id: reversal.id,
+          journalId: reversal.id,
+          effectiveAt: reversal.effectiveAt,
+          amount: original.amount.negated(),
+          reversal: true,
+        });
+      }
+      rows.sort(
+        (a, b) =>
+          a.effectiveAt.getTime() - b.effectiveAt.getTime() ||
+          a.id.localeCompare(b.id),
+      );
       const opening = { TRY: new Exact(0), USD: new Exact(0) },
         movement = { TRY: new Exact(0), USD: new Exact(0) };
       for (const r of rows) {

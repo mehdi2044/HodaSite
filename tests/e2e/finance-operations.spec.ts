@@ -37,6 +37,9 @@ for (const locale of ["fa", "tr", "en"] as const)
       await page.getByRole("button", { name: "ورود امن" }).click();
       await expect(page).toHaveURL(/\/admin$/);
       await page.locator('[name="adminLocale"]').selectOption(locale);
+      await expect(page.locator('aside a[href="/admin/finance"]')).toHaveText(
+        { fa, tr, en }[locale].finance.title,
+      );
       await page.goto(`/admin/finance/operations?marketId=${market.id}`);
       await expect(
         page.getByRole("heading", { name: t.title, exact: true }),
@@ -47,7 +50,7 @@ for (const locale of ["fa", "tr", "en"] as const)
         });
       const rates = async (form: Locator) => {
         await form.locator('[name="currency"]').selectOption("TRY");
-        await form.locator('[name="rateTry"]').fill("1");
+        await expect(form.locator('[name="rateTry"]')).toHaveValue("1");
         await form.locator('[name="rateUsd"]').fill("0.025");
       };
       const submit = async (form: Locator) => {
@@ -81,7 +84,37 @@ for (const locale of ["fa", "tr", "en"] as const)
       await expense.locator('[name="memo"]').fill(`Expense ${id}`);
       await expense.locator('[name="amount"]').fill("50.0001");
       await rates(expense);
-      await submit(expense);
+      await expense.locator('input[type="file"]').setInputFiles({
+        name: "expense.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4\nFixture PDF\n%%EOF"),
+      });
+      await expect(
+        expense.getByRole("link", { name: t.attachment, exact: true }),
+      ).toBeVisible();
+      if (locale === "fa") {
+        let lost = false;
+        await page.route("**/admin/finance/operations*", async (route) => {
+          if (!lost && route.request().method() === "POST") {
+            lost = true;
+            await route.fetch();
+            await route.abort("failed");
+          } else await route.continue();
+        });
+        await expense.locator('[name="confirm"]').check();
+        await expense
+          .getByRole("button", { name: t.submit, exact: true })
+          .click();
+        await expect(expense.getByRole("status")).toHaveText(t.unknown);
+        await expense
+          .getByRole("button", { name: t.retry, exact: true })
+          .click();
+        await expect(expense.getByRole("status")).toHaveText(t.saved);
+        expect(
+          await db.expense.count({ where: { memo: `Expense ${id}` } }),
+        ).toBe(1);
+        await page.unroute("**/admin/finance/operations*");
+      } else await submit(expense);
       const expenseRow = section(t.expenses)
         .locator("article")
         .filter({ hasText: `Expense ${id}` });
@@ -118,6 +151,22 @@ for (const locale of ["fa", "tr", "en"] as const)
         .getByRole("heading", { name: t.title, exact: true })
         .scrollIntoViewIfNeeded();
       await shoppingProof(page, info, `operations-overview-${locale}`);
+      await page.getByRole("link", { name: t.margins, exact: true }).click();
+      await expect(
+        page.getByRole("heading", { name: t.margins, exact: true }),
+      ).toBeVisible();
+      await page.locator('[name="dimension"]').selectOption("product");
+      await page.getByRole("button", { name: t.filter, exact: true }).click();
+      const download = page.waitForEvent("download");
+      await page
+        .getByRole("link", {
+          name: t.export.replace("{format}", "XLSX"),
+          exact: true,
+        })
+        .first()
+        .click();
+      expect((await download).suggestedFilename()).toBe("margins.xlsx");
+      await shoppingProof(page, info, `operations-margins-${locale}`);
     } finally {
       await db.user.update({
         where: { id: user.id },
