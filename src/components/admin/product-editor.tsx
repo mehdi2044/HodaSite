@@ -108,6 +108,10 @@ export function ProductEditor({
   );
 
   function applyAiFields(fields: Proposal["fields"], form: HTMLFormElement) {
+    // Validate complex values before changing any field in the editor.
+    for (const f of fields)
+      if (f.key === "attributes")
+        attributesSchema.parse(JSON.parse(f.value || "[]"));
     let next = [...attributes];
     for (const field of fields) {
       const [key, locale] = field.key.split(".");
@@ -180,6 +184,7 @@ export function ProductEditor({
         <ProductAi
           productId={initial.id}
           mediaIds={mediaIds}
+          categories={categories}
           onApply={applyAiFields}
         />
       )}

@@ -59,9 +59,6 @@ export async function applyAi(raw: unknown) {
   return action("ai.product.generate", async () => {
     const id = await applyProposal(raw);
     try {
-      revalidatePath("/admin/catalog/products");
-      revalidatePath(`/admin/catalog/products/${id}`);
-      revalidatePath("/admin/ai/review");
       revalidatePath("/[locale]", "layout");
     } catch {}
     return id;

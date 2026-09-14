@@ -49,11 +49,20 @@ export async function productFacts(id: string) {
   };
 }
 /** Internal worker entry point; every run rechecks the original actor's current permission. */
-export async function generateForActor(actor: string, raw: unknown) {
+export async function generateForActor(
+  actor: string,
+  raw: unknown,
+  expectedVersion?: string,
+) {
   const v = generationSchema.parse(raw);
   await aiAccess(actor, "ai.product.generate");
   await aiAccess(actor, "catalog.product.edit");
   const existing = v.productId ? await productFacts(v.productId) : null;
+  if (
+    expectedVersion &&
+    existing?.product.updatedAt.toISOString() !== expectedVersion
+  )
+    throw new AiError("CONFLICT", true);
   if (!existing) await aiAccess(actor, "catalog.product.create");
   if (Buffer.byteLength(JSON.stringify(v.facts)) > 45000)
     throw new AiError("INPUT", true);

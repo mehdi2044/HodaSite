@@ -117,7 +117,27 @@ for (const locale of ["fa", "tr", "en"] as const)
         .fill("Approved wool coat");
       await review.locator('input[type="checkbox"]').first().check();
       await review.getByLabel(t.confirm, { exact: true }).check();
+      if (locale === "fa") {
+        let lost = false;
+        await page.route("**/admin/ai/review", async (route) => {
+          if (!lost && route.request().method() === "POST") {
+            lost = true;
+            await route.fetch();
+            await route.abort("failed");
+          } else await route.continue();
+        });
+      }
       await review.getByRole("button", { name: t.apply, exact: true }).click();
+      if (locale === "fa") {
+        await expect(review.getByRole("status")).toHaveText(t.errors.UNKNOWN);
+        await expect(
+          review.getByLabel("title.en", { exact: true }),
+        ).toBeDisabled();
+        await review
+          .getByRole("button", { name: t.retry, exact: true })
+          .click();
+        await page.unroute("**/admin/ai/review");
+      }
       await expect(review.getByRole("status")).toHaveText(t.applied);
       const updated = await db.product.findUniqueOrThrow({
         where: { id: productId },
@@ -129,15 +149,46 @@ for (const locale of ["fa", "tr", "en"] as const)
       );
       expect(updated.status).toBe("DRAFT");
       await shoppingProof(page, info, `ai-review-${locale}`);
+      const bulk = page
+        .locator("section")
+        .filter({
+          has: page.getByRole("heading", { name: t.bulk, exact: true }),
+        });
+      await bulk
+        .getByLabel((p.titleI18n as Record<string, string>)[locale], {
+          exact: true,
+        })
+        .check();
+      await bulk
+        .getByRole("button", { name: t.queueGenerate, exact: true })
+        .click();
+      await expect(bulk.getByRole("status")).toHaveText(
+        t.queued.replace("{count}", "1"),
+      );
+      const jobs = await db.job.findMany({
+        where: {
+          type: "ai-product",
+          payload: { path: ["actor"], equals: user.id },
+        },
+      });
+      expect(jobs).toHaveLength(1);
+      expect(jobs[0].payload).toMatchObject({
+        productId,
+        productVersion: updated.updatedAt.toISOString(),
+      });
+      expect(await db.aiDraft.count({ where: { userId: user.id } })).toBe(1);
+      // Queue execution is proven in the database suite; keep browser fixtures isolated.
+      await db.job.update({
+        where: { id: jobs[0].id },
+        data: { status: "DONE" },
+      });
       await page.goto(`/admin/catalog/products/${productId}`);
       await expect(
         page.getByRole("heading", { name: t.assistant, exact: true }),
       ).toBeVisible();
-      const assistant = page
-        .locator("section")
-        .filter({
-          has: page.getByRole("heading", { name: t.assistant, exact: true }),
-        });
+      const assistant = page.locator("section").filter({
+        has: page.getByRole("heading", { name: t.assistant, exact: true }),
+      });
       await assistant
         .getByRole("button", { name: t.generate, exact: true })
         .click();

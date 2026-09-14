@@ -20,7 +20,9 @@ export const lockAi = (tx: Prisma.TransactionClient) =>
   tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('hoda-ai-budget'))::text`;
 export async function readConfig(tx: Prisma.TransactionClient = db) {
   const row = await tx.integration.findUnique({ where: { key: "ai" } });
-  return row ? configSchema.parse(row.config) : defaultConfig;
+  if (!row) return defaultConfig;
+  const config = configSchema.parse(row.config);
+  return { ...config, enabled: row.isActive && config.enabled };
 }
 export function costEstimate(
   input: number,

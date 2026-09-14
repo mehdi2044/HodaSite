@@ -22,11 +22,14 @@ vi.mock("next-intl/server", () => ({
     Object.assign((k: string) => k, { has: () => true }),
 }));
 import { db } from "@/lib/db";
+import { ForbiddenError } from "@/modules/access";
+import { digest } from "@/modules/ai/gateway";
 import { AiError, defaultConfig } from "@/modules/ai/contracts";
 import {
   generateProduct,
   applyProposal,
   reviewDrafts,
+  discardDraft,
 } from "@/modules/ai/products";
 import { aiSettings, saveAiSettings, usageReport } from "@/modules/ai/settings";
 import { financialSummary } from "@/modules/ai/financial";
@@ -75,6 +78,7 @@ const tables = [
   "JournalEntry",
   "AuditLog",
   "Integration",
+  "Job",
 ];
 async function setupConfig() {
   await db.integration.upsert({
@@ -133,12 +137,64 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           const before = await fingerprint(tables),
             calls = state.complete.mock.calls.length;
           if (allowed) {
-            const r = await generateProduct(request());
+            const f = await fixture();
+            const productId = f.variants[0].productId;
+            const r = await generateProduct(request(productId));
             expect(r.result.fields).toHaveLength(1);
             expect(await reviewDrafts()).toBeInstanceOf(Array);
+            await expect(
+              applyProposal({
+                draftId: r.draftId,
+                fields: r.result.fields,
+                confirm: true,
+              }),
+            ).resolves.toBe(productId);
+            const key = randomUUID();
+            await expect(
+              queueProducts({
+                productIds: [productId],
+                requestKey: key,
+                confirm: true,
+              }),
+            ).resolves.toBe(1);
+            // Matrix proves enqueue access; the dedicated worker tests execute jobs.
+            await db.job.update({
+              where: {
+                id: `ai:${digest({ actor: state.actor, key, productId })}`,
+              },
+              data: { status: "DONE" },
+            });
+            const unused = await generateProduct(request());
+            await discardDraft(unused.draftId);
+            expect(
+              (
+                await db.aiDraft.findUniqueOrThrow({
+                  where: { id: unused.draftId },
+                })
+              ).status,
+            ).toBe("DISCARDED");
           } else {
-            await expect(generateProduct(request())).rejects.toThrow();
-            await expect(reviewDrafts()).rejects.toThrow();
+            await expect(generateProduct(request())).rejects.toThrow(
+              ForbiddenError,
+            );
+            await expect(reviewDrafts()).rejects.toThrow(ForbiddenError);
+            await expect(
+              applyProposal({
+                draftId: "denied-draft",
+                fields: response.fields,
+                confirm: true,
+              }),
+            ).rejects.toThrow(ForbiddenError);
+            await expect(
+              queueProducts({
+                productIds: ["denied-product"],
+                requestKey: randomUUID(),
+                confirm: true,
+              }),
+            ).rejects.toThrow(ForbiddenError);
+            await expect(discardDraft("denied-draft")).rejects.toThrow(
+              ForbiddenError,
+            );
             expect(await fingerprint(tables)).toEqual(before);
             expect(state.complete.mock.calls.length).toBe(calls);
           }
@@ -221,6 +277,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           state.complete.mockReset().mockImplementation(good);
         });
       }
+    it("integration kill switch blocks new provider calls even with an enabled feature config", async () => {
+      state.actor = owner;
+      await setupConfig();
+      await db.integration.update({
+        where: { key: "ai" },
+        data: { isActive: false },
+      });
+      const before = await fingerprint(tables);
+      await expect(generateProduct(request())).rejects.toMatchObject({
+        code: "DISABLED",
+      });
+      expect(state.complete).not.toHaveBeenCalled();
+      expect(await fingerprint(tables)).toEqual(before);
+      await setupConfig();
+    });
     it("generation does not alter products; per-field Apply is idempotent and preserves stock and prices", async () => {
       state.actor = owner;
       await setupConfig();
@@ -418,6 +489,29 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           })
         ).status,
       ).toBe("DRAFT");
+    });
+    it("a queued proposal refuses a changed product before spending", async () => {
+      state.actor = owner;
+      await setupConfig();
+      const f = await fixture();
+      await queueProducts({
+        productIds: [f.variants[0].productId],
+        requestKey: randomUUID(),
+        confirm: true,
+      });
+      await db.product.update({
+        where: { id: f.variants[0].productId },
+        data: { material: "Manual change after queue" },
+      });
+      const calls = state.complete.mock.calls.length;
+      registerAiJobs();
+      await runJobs(["ai-product"]);
+      expect(state.complete.mock.calls.length).toBe(calls);
+      expect(
+        await db.aiDraft.count({
+          where: { productId: f.variants[0].productId },
+        }),
+      ).toBe(0);
     });
     it("saving a product preserves sold variant identities and deactivates removed variants", async () => {
       const f = await returnFixture(db);

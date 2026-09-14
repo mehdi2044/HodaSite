@@ -1,17 +1,19 @@
 "use client";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui";
+import { Button, Select, Input } from "@/components/ui";
 import {
   applyAi,
   discardAi,
 } from "@/app/admin/(dashboard)/settings/ai/actions";
-import type { Proposal } from "@/modules/ai/proposals";
+import { attributesSchema, type Proposal } from "@/modules/ai/proposals";
 export function AiReview({
   draftId,
   proposal,
   onApply,
+  categories = [],
 }: {
+  categories?: { id: string; label: string }[];
   draftId: string;
   proposal: Proposal;
   onApply?: (fields: Proposal["fields"]) => void;
@@ -23,6 +25,9 @@ export function AiReview({
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [done, setDone] = useState(false);
+  const [pendingFields, setPendingFields] = useState<Proposal["fields"] | null>(
+    null,
+  );
   return (
     <section
       className="grid min-w-0 gap-4 rounded-token border border-black/10 bg-surface p-4"
@@ -40,7 +45,7 @@ export function AiReview({
           <label className="flex gap-2">
             <input
               type="checkbox"
-              disabled={busy || done}
+              disabled={busy || done || !!pendingFields}
               checked={selected.includes(f.key)}
               onChange={(e) =>
                 setSelected((old) =>
@@ -58,25 +63,57 @@ export function AiReview({
               {f.key.split(".").at(-1)}
             </bdi>
           </label>
-          <textarea
-            aria-label={f.key}
-            dir={f.key.endsWith(".fa") ? "rtl" : "auto"}
-            className="input min-h-28 w-full"
-            value={f.value}
-            disabled={busy || done}
-            onChange={(e) =>
-              setFields((old) =>
-                old.map((x) =>
-                  x.key === f.key ? { ...x, value: e.target.value } : x,
-                ),
-              )
-            }
-          />
+          {f.key === "categoryId" ? (
+            <Select
+              aria-label={f.key}
+              disabled={busy || done || !!pendingFields}
+              value={f.value}
+              onChange={(e) =>
+                setFields((old) =>
+                  old.map((x) =>
+                    x.key === f.key ? { ...x, value: e.target.value } : x,
+                  ),
+                )
+              }
+            >
+              <option value="">—</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </Select>
+          ) : f.key === "attributes" ? (
+            <AttributeReview
+              value={f.value}
+              disabled={busy || done || !!pendingFields}
+              onChange={(value) =>
+                setFields((old) =>
+                  old.map((x) => (x.key === f.key ? { ...x, value } : x)),
+                )
+              }
+            />
+          ) : (
+            <textarea
+              aria-label={f.key}
+              dir={f.key.endsWith(".fa") ? "rtl" : "auto"}
+              className="input min-h-28 w-full"
+              value={f.value}
+              disabled={busy || done || !!pendingFields}
+              onChange={(e) =>
+                setFields((old) =>
+                  old.map((x) =>
+                    x.key === f.key ? { ...x, value: e.target.value } : x,
+                  ),
+                )
+              }
+            />
+          )}
           <Button
             type="button"
             size="sm"
             variant="ghost"
-            disabled={busy || done}
+            disabled={busy || done || !!pendingFields}
             onClick={() => {
               setFields((old) => old.filter((x) => x.key !== f.key));
               setSelected((old) => old.filter((x) => x !== f.key));
@@ -100,7 +137,7 @@ export function AiReview({
         <input
           type="checkbox"
           checked={confirmed}
-          disabled={busy || done}
+          disabled={busy || done || !!pendingFields}
           onChange={(e) => setConfirmed(e.target.checked)}
         />
         {t("confirm")}
@@ -112,33 +149,38 @@ export function AiReview({
           onClick={async () => {
             setBusy(true);
             try {
-              const chosen = fields.filter((f) => selected.includes(f.key));
+              const chosen =
+                pendingFields ?? fields.filter((f) => selected.includes(f.key));
               if (onApply) {
                 onApply(chosen);
                 setDone(true);
                 setMessage(t("localApplied"));
               } else {
+                setPendingFields(chosen);
                 const r = await applyAi({
                   draftId,
                   fields: chosen,
                   confirm: true,
                 });
                 setMessage(r.ok ? t("applied") : r.message);
-                if (r.ok) setDone(true);
+                if (r.ok) {
+                  setDone(true);
+                  setPendingFields(null);
+                } else if (r.code !== "UNKNOWN") setPendingFields(null);
               }
             } catch {
-              setMessage(t("errors.UNKNOWN"));
+              setMessage(t(onApply ? "errors.INPUT" : "errors.UNKNOWN"));
             } finally {
               setBusy(false);
             }
           }}
         >
-          {busy ? t("working") : t("apply")}
+          {busy ? t("working") : pendingFields ? t("retry") : t("apply")}
         </Button>
         <Button
           type="button"
           variant="ghost"
-          disabled={busy || done}
+          disabled={busy || done || !!pendingFields}
           onClick={async () => {
             setBusy(true);
             try {
@@ -161,5 +203,76 @@ export function AiReview({
         {message}
       </p>
     </section>
+  );
+}
+
+function AttributeReview({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const t = useTranslations("aiAdmin");
+  const attrs = JSON.parse(value || "[]") as ReturnType<
+    typeof attributesSchema.parse
+  >;
+  return (
+    <div className="grid gap-3">
+      {attrs.map((a, index) => (
+        <div
+          className="grid gap-2 rounded-token border border-black/10 p-3"
+          key={index}
+        >
+          <label>
+            {t("fields.attributes")}
+            <Input
+              value={a.key}
+              disabled={disabled}
+              onChange={(e) =>
+                onChange(
+                  JSON.stringify(
+                    attrs.map((v, i) =>
+                      i === index ? { ...v, key: e.target.value } : v,
+                    ),
+                  ),
+                )
+              }
+            />
+          </label>
+          {(["fa", "tr", "en"] as const).map((locale) => (
+            <label key={locale}>
+              <bdi>
+                {a.key} · {locale}
+              </bdi>
+              <Input
+                value={a.valueI18n[locale]}
+                dir={locale === "fa" ? "rtl" : "ltr"}
+                disabled={disabled}
+                onChange={(e) =>
+                  onChange(
+                    JSON.stringify(
+                      attrs.map((v, i) =>
+                        i === index
+                          ? {
+                              ...v,
+                              valueI18n: {
+                                ...v.valueI18n,
+                                [locale]: e.target.value,
+                              },
+                            }
+                          : v,
+                      ),
+                    ),
+                  )
+                }
+              />
+            </label>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }

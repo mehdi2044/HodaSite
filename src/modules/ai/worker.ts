@@ -24,12 +24,14 @@ export async function queueProducts(raw: unknown) {
       id: string;
       facts: Awaited<ReturnType<typeof productFacts>>["facts"];
       mediaIds: string[];
+      productVersion: string;
     }[] = [];
     for (const id of [...new Set(v.productIds)]) {
       const p = await productFacts(id);
       if (p.product.status !== "DRAFT") throw new AiError("DRAFT_ONLY", true);
       inputs.push({
         id,
+        productVersion: p.product.updatedAt.toISOString(),
         facts: p.facts,
         mediaIds: p.product.media.slice(0, 2).map((m) => m.mediaId),
       });
@@ -50,6 +52,7 @@ export async function queueProducts(raw: unknown) {
             type: "ai-product",
             payload: {
               actor,
+              productVersion: p.productVersion,
               productId: p.id,
               requestKey,
               facts: p.facts as Prisma.InputJsonValue,
@@ -69,6 +72,7 @@ export function registerAiJobs() {
       .object({
         actor: z.string(),
         productId: z.string(),
+        productVersion: z.iso.datetime(),
         requestKey: z.string(),
         facts: z.record(z.string(), z.unknown()),
         mediaIds: z.array(z.string()),
@@ -79,14 +83,18 @@ export function registerAiJobs() {
     const p = await productFacts(v.productId);
     if (p.product.status !== "DRAFT") throw new AiError("DRAFT_ONLY", true);
     try {
-      await generateForActor(v.actor, {
-        productId: v.productId,
-        requestKey: v.requestKey,
-        facts: v.facts,
-        mediaIds: v.mediaIds,
-        vision: false,
-        task: "generate",
-      });
+      await generateForActor(
+        v.actor,
+        {
+          productId: v.productId,
+          requestKey: v.requestKey,
+          facts: v.facts,
+          mediaIds: v.mediaIds,
+          vision: false,
+          task: "generate",
+        },
+        v.productVersion,
+      );
     } catch (error) {
       if (error instanceof AiError && error.code === "BUSY")
         throw new JobDeferredError("AI_BUSY");

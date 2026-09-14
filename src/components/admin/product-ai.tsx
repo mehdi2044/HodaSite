@@ -9,7 +9,9 @@ export function ProductAi({
   productId,
   mediaIds,
   onApply,
+  categories,
 }: {
+  categories: { id: string; label: string }[];
   productId?: string;
   mediaIds: string[];
   onApply: (fields: Proposal["fields"], form: HTMLFormElement) => void;
@@ -154,6 +156,7 @@ export function ProductAi({
           key={review.draftId}
           draftId={review.draftId}
           proposal={review.proposal}
+          categories={categories}
           onApply={(fields) => {
             const form = root.current?.closest("form");
             if (form) onApply(fields, form);

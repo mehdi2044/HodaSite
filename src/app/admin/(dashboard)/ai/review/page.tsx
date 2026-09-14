@@ -14,6 +14,15 @@ export default async function Page() {
     orderBy: { updatedAt: "desc" },
     take: 50,
   });
+  const categories = await db.category.findMany({
+    where: { deletedAt: null },
+    select: { id: true, titleI18n: true },
+    take: 200,
+  });
+  const options = categories.map((c) => ({
+    id: c.id,
+    label: String((c.titleI18n as Record<string, string>)[locale] ?? c.id),
+  }));
   return (
     <div className="grid max-w-5xl gap-6">
       <h1 className="text-2xl font-semibold">{t("queue")}</h1>
@@ -38,6 +47,7 @@ export default async function Page() {
           <AiReview
             draftId={d.id}
             proposal={proposalSchema.parse(d.proposal)}
+            categories={options}
           />
         </article>
       ))}
