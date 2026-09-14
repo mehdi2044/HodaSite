@@ -109,7 +109,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
 
     it("seeds all four currencies per market and preserves configured names", async () => {
-      const rows = await db.ledgerAccount.findMany({ where: { marketId: tr } });
+      const rows = await db.ledgerAccount.findMany({
+        where: { marketId: tr, code: { in: LEDGER_CHART.map((a) => a.code) } },
+      });
       expect(rows).toHaveLength(4 * LEDGER_CHART.length);
       const a = rows[0];
       await db.ledgerAccount.update({
