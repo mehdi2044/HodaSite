@@ -114,7 +114,7 @@ export async function fingerprint(tables: string[]) {
     Prisma.join(
       tables.map(
         (table) => Prisma.sql`
- SELECT ${table}::text AS name, md5(coalesce(string_agg(to_jsonb(t)::text, ',' ORDER BY t.id::text), '')) AS digest
+ SELECT ${table}::text AS name, md5(coalesce(string_agg(to_jsonb(t)::text, ',' ORDER BY to_jsonb(t)::text), '')) AS digest
  FROM ${Prisma.raw('"' + table + '"')} t
  `,
       ),

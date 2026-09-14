@@ -92,6 +92,9 @@
 مجوز `finance.journal.post` به namespace اضافه و برای owner (wildcard) و accountant فعال می‌شود؛ نقش‌های دیگر خودکار این مجوز را نمی‌گیرند. سرویس‌های ثبت/معکوس از نشست واقعی و مجوز بازار استفاده می‌کنند؛ خواندن از `finance.report.view`. این تحویل فقط زیرساخت و سرویس‌های داخلی آزموده‌شده است؛ رابط ثبت دستی، اتصال پرداخت/مرجوعی و اسناد افتتاحیهٔ تاریخی در تحویل بعدی ساخته می‌شوند. هیچ سابقهٔ فروش یا پرداخت خودکار backfill نمی‌شود و گزارش موجود سود/ماندهٔ بانک نامیده نمی‌شود.
 
 ## تصمیم‌های باز (مانع شروع نیستند)
+### تکمیل مالی و حفظ داده — D60 (۲۰۲۶-۰۹-۱۴)
+مالک تأیید کرد داده‌های فعلی آزمایشی‌اند؛ این اجازه سیاست نگهداری داده‌های آینده را تغییر نمی‌دهد. مهاجرت‌ها افزایشی‌اند و هیچ reset، حذف سفارش یا بازنویسی نرخ تاریخی اجرا نمی‌شود. تنظیم حسابداری هر بازار به‌طور پیش‌فرض غیرفعال است؛ مالک/حسابدار آن را برای رویدادهای جدید فعال می‌کند. فعال‌سازی سوابق گذشته را backfill نمی‌کند. ثبت خودکار در همان تراکنش رویداد انجام می‌شود؛ رویدادهای مشتری/سیستم عامل ادمین جعلی ندارند. هر جزء درآمد/مالیات/تسویه با حساب واسط یک جفت متوازن دارد تا گردکردن مستقل باعث تعدیل پنهانی نشود. مبنای مدیریتی درآمد، پرداخت تأییدشده است؛ اعتبار فروشگاه بدهی است و درآمد تازه محسوب نمی‌شود. بهای موجودی با نرخ خرید ثبت می‌شود. خرید و هزینه و سرمایه، شناسهٔ درخواست یکتا و snapshot دارند؛ اصلاح سوابق نهایی فقط سند جبرانی است. بکاپ کامل دیتابیس و رسانه و بازیابی ops از پنل مالک معیار اجباری باقی می‌ماند. توسعه بدون انتشار/هاست/دامنه ادامه می‌یابد.
+
 - OB1: نام نهایی برند و دامنه.
 - OB2: سرویس ایمیل (Resend / Brevo) — تست رسیدن به ایمیل‌های ایرانی.
 - OB6: انتخاب ارائه‌دهندهٔ Off-site backup مستقل از هاست (Backblaze B2 / Cloudflare R2 / Wasabi) — شرط Launch.
@@ -99,3 +102,8 @@
 - OB3: سرویس پیامک برای ایران/ترکیه (فاز ۹).
 - OB4: مدل‌های AI (OpenAI / Anthropic / Gemini) پشت Gateway — فاز ۸.
 - OB5: عددهای واقعی مالیات/گمرک هر کشور — از حسابدار محلی.
+
+### D61 — Cost method and safe financial cutover (owner-delegated implementation)
+Physical variant/warehouse stock is shared across markets. FIFO remains the default. An unscoped accountant/owner may explicitly select moving weighted average for a stock item before its first valuation/recognized COGS. Once valuation starts the method cannot change or rewrite historical cost. Average pools retain quantity and original/TRY/USD balances; each receipt, sale, adjustment and restock records immutable valuation evidence. Returns restore original sale valuation. Remaining stock in an average pool must use one original purchase currency; mixed-currency procurement uses FIFO, without an invented conversion. An amount whose rounded equivalents cannot be represented by the ledger's positive 12-decimal rates is rejected atomically rather than silently adjusted. The interface explains these limits. D04, D24 and D32 remain binding.
+
+Opening cost is an explicit, audited action on existing units lacking a Lot, with supplied date/FX and the product default cost. It does not change physical quantities, infer historical quotes, or replace existing Lots. Cumulative FIFO allocation conserves the full landed original amount including the displayed unit-cost rounding remainder. All financial tables and expense storage objects remain within the existing backup/restore workflow; no hosting or provider change is introduced.

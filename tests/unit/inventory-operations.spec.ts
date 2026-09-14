@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 const m = vi.hoisted(() => {
   const db = {
     market: { findMany: vi.fn() },
+    stockCostPolicy: { findUnique: vi.fn() },
     stockItem: { upsert: vi.fn(), update: vi.fn(), aggregate: vi.fn() },
     lot: { create: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     stockMovement: { create: vi.fn() },
@@ -60,6 +61,7 @@ const lots = [
 ];
 beforeEach(() => {
   vi.resetAllMocks();
+  m.db.stockCostPolicy.findUnique.mockResolvedValue(null);
   m.db.$transaction.mockImplementation(
     async (fn: (db: typeof m.db) => Promise<unknown>) => fn(m.db),
   );

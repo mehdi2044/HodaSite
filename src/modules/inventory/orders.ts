@@ -1,3 +1,4 @@
+import { averageOut } from "@/modules/finance/average-cost";
 import { Prisma } from "@prisma/client";
 
 export class InsufficientOrderStock extends Error {}
@@ -151,7 +152,7 @@ export async function consumeOrderInventory(
         where: { id: lot.id },
         data: { qtyRemaining: { decrement: take } },
       });
-      await tx.stockMovement.create({
+      const movement = await tx.stockMovement.create({
         data: {
           stockItemId: stock.id,
           warehouseId: stock.warehouseId,
@@ -163,6 +164,7 @@ export async function consumeOrderInventory(
           createdBy: userId,
         },
       });
+      await averageOut(tx, movement);
       remaining -= take;
     }
     if (remaining) throw new InsufficientOrderStock();

@@ -63,6 +63,7 @@ export async function mediaReplaceHandler(
     select: { kind: true },
   });
   if (
+    protectedMedia.kind === "expense" ||
     protectedMedia.kind === "invoice" ||
     protectedMedia.kind === "receipt" ||
     [

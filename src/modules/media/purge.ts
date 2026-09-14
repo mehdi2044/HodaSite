@@ -76,7 +76,7 @@ export async function mediaPurgeHandler(): Promise<void> {
   const toPurge = await db.media.findMany({
     where: {
       deletedAt: { lte: cutoff },
-      kind: { notIn: ["receipt", "backup", "invoice"] },
+      kind: { notIn: ["receipt", "backup", "invoice", "expense"] },
     },
     select: { id: true, storageKey: true, variants: true },
   });

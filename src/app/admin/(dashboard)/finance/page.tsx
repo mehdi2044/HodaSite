@@ -70,6 +70,9 @@ export default async function FinancePage({
       <div className="finance-heading">
         <div>
           <p className="text-muted">{t("eyebrow")}</p>
+          <a className="btn" href="/admin/finance/operations">
+            {(await getTranslations("financeOps"))("title")}
+          </a>
           <h1 id="finance-title">{t("title")}</h1>
         </div>
         {report && (

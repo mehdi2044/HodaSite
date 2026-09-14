@@ -1,3 +1,4 @@
+import { recognizePaidOrder } from "@/modules/finance/events";
 import { consumeCredit, releaseCredit } from "@/modules/credits";
 import Decimal from "decimal.js";
 import { queueInvoice } from "./invoices/queue";
@@ -113,6 +114,7 @@ export async function transition(
       userId,
     },
   });
+  if (to === "PAID") await recognizePaidOrder(tx, order.id, userId ?? null);
   if (userId)
     await tx.auditLog.create({
       data: {

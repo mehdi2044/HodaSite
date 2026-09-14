@@ -98,6 +98,17 @@ export default async function ProductEditorPage({
   ]);
   if (id !== "new" && !product) notFound();
   const initial = product ? toEditor(product) : EMPTY;
+  const financeText = await getTranslations("financeOps");
+  const financeAlerts = product
+    ? await db.systemAlert.findMany({
+        where: {
+          code: { startsWith: "FINANCE:", endsWith: `:${product.id}` },
+          resolvedAt: null,
+        },
+        select: { id: true, code: true },
+        take: 20,
+      })
+    : [];
   const option = (
     item: { id: string },
     label: string,
@@ -112,6 +123,16 @@ export default async function ProductEditorPage({
         </h1>
         <p className="muted">{t("editorSubtitle")}</p>
       </div>
+      {financeAlerts.length > 0 && (
+        <aside className="card" role="status">
+          <h2>{financeText("alerts")}</h2>
+          {[...new Set(financeAlerts.map((a) => a.code.split(":")[2]))].map(
+            (k) => (
+              <p key={k}>{financeText(k)}</p>
+            ),
+          )}
+        </aside>
+      )}
       <ProductEditor
         initial={initial}
         brands={brands.map((x) => option(x, local(x.nameI18n), x.slug))}

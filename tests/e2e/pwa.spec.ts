@@ -106,25 +106,27 @@ test("install promotion is dismissible and absent in standalone", async ({
     localStorage.removeItem("hoda.install.dismissed");
   });
   await page.reload();
-  await page.evaluate(() => {
-    const e = new Event("beforeinstallprompt", { cancelable: true });
-    Object.assign(e, {
-      prompt: async () => {},
-      userChoice: Promise.resolve({ outcome: "dismissed" }),
-    });
-    window.dispatchEvent(e);
-  });
+  // A synthetic event must wait for React's effect to register its handler.
+  // The real handler prevents this cancelable event; false proves receipt.
+  const offerInstall = async () => {
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const e = new Event("beforeinstallprompt", { cancelable: true });
+          Object.assign(e, {
+            prompt: async () => {},
+            userChoice: Promise.resolve({ outcome: "dismissed" }),
+          });
+          return window.dispatchEvent(e);
+        }),
+      )
+      .toBe(false);
+  };
+  await offerInstall();
   await expect(page.locator(".pwa-install-prompt")).toBeVisible();
   await page.getByRole("button", { name: en.pwa.later, exact: true }).click();
   await page.reload();
-  await page.evaluate(() =>
-    window.dispatchEvent(
-      Object.assign(new Event("beforeinstallprompt", { cancelable: true }), {
-        prompt: async () => {},
-        userChoice: Promise.resolve({ outcome: "dismissed" }),
-      }),
-    ),
-  );
+  await offerInstall();
   await expect(page.locator(".pwa-install-prompt")).not.toBeVisible();
   await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
   await expect(page.locator(".pwa-install")).not.toBeVisible();
