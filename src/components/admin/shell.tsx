@@ -26,6 +26,7 @@ export async function AdminShell({
   const commerce = await getTranslations("commerce");
   const health = await getTranslations("healthAdmin");
   const finance = await getTranslations("finance");
+  const ai = await getTranslations("aiAdmin");
   const journal = await getTranslations("journal");
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
@@ -63,6 +64,18 @@ export async function AdminShell({
         <Link href="/admin/content/pages">{t("pages")}</Link>
         <Link href="/admin/content/homepage">{t("homepage")}</Link>
         <Link href="/admin/content/translations">{t("translations")}</Link>
+        {(await can(user.id, "ai.settings.manage")) && (
+          <Link href="/admin/settings/ai">{ai("settings")}</Link>
+        )}
+        {(await can(user.id, "ai.product.generate")) && (
+          <Link href="/admin/ai/review">{ai("queue")}</Link>
+        )}
+        {(await can(user.id, "ai.usage.view")) && (
+          <Link href="/admin/ai/usage">{ai("usage")}</Link>
+        )}
+        {(await can(user.id, "ai.finance.analyze")) && (
+          <Link href="/admin/finance/analyst">{ai("analyst")}</Link>
+        )}
         <Link href="/admin/settings/brand">{nav("brand")}</Link>
         <Link href="/admin/settings/theme">{nav("theme")}</Link>
         <Link href="/admin/settings/contact">{nav("contact")}</Link>

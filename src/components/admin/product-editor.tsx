@@ -1,5 +1,7 @@
 "use client";
 
+import { ProductAi } from "./product-ai";
+import { attributesSchema, type Proposal } from "@/modules/ai/proposals";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Card, Input, Select } from "@/components/ui";
@@ -30,6 +32,7 @@ export type ProductEditorValue = {
   careI18n: Localized;
   seoTitleI18n: Localized;
   seoDescriptionI18n: Localized;
+  seoKeywordsI18n?: Localized;
   seoOgMediaId: string;
   brandId: string;
   categoryId: string;
@@ -65,6 +68,7 @@ const TABS = [
 
 export function ProductEditor({
   initial,
+  aiAllowed = false,
   brands,
   categories,
   collections,
@@ -75,6 +79,7 @@ export function ProductEditor({
   stockByVariant,
 }: {
   initial: ProductEditorValue;
+  aiAllowed?: boolean;
   brands: Option[];
   categories: Option[];
   collections: Option[];
@@ -89,6 +94,7 @@ export function ProductEditor({
   const [mediaIds, setMediaIds] = useState(initial.mediaIds);
   const [variants, setVariants] = useState(initial.variants);
   const [attributes, setAttributes] = useState(initial.attributes);
+  const [aiAlts, setAiAlts] = useState<Proposal["fields"]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [prefix, setPrefix] = useState("STYLE");
@@ -100,6 +106,51 @@ export function ProductEditor({
     () => new Map(sizes.map((item) => [item.id, item])),
     [sizes],
   );
+
+  function applyAiFields(fields: Proposal["fields"], form: HTMLFormElement) {
+    // Validate complex values before changing any field in the editor.
+    for (const f of fields)
+      if (f.key === "attributes")
+        attributesSchema.parse(JSON.parse(f.value || "[]"));
+    let next = [...attributes];
+    for (const field of fields) {
+      const [key, locale] = field.key.split(".");
+      if (key === "attributes") {
+        for (const a of attributesSchema.parse(
+          JSON.parse(field.value || "[]"),
+        )) {
+          next = next.filter((x) => x.key !== a.key);
+          next.push(a);
+        }
+      } else if (key === "specs") {
+        const old = next.find((x) => x.key === "specs") ?? {
+          key: "specs",
+          valueI18n: { fa: "", tr: "", en: "" },
+        };
+        next = next.filter((x) => x.key !== "specs");
+        next.push({
+          ...old,
+          valueI18n: { ...old.valueI18n, [locale]: field.value },
+        });
+      } else if (key === "alt")
+        setAiAlts((old) => [...old.filter((x) => x.key !== field.key), field]);
+      else {
+        const name = locale
+          ? key + locale[0].toUpperCase() + locale.slice(1)
+          : key;
+        const input = form.elements.namedItem(name);
+        if (
+          input instanceof HTMLInputElement ||
+          input instanceof HTMLTextAreaElement ||
+          input instanceof HTMLSelectElement
+        ) {
+          input.value = field.value;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+    }
+    setAttributes(next);
+  }
 
   function generateMatrix() {
     const existing = new Set(
@@ -128,6 +179,15 @@ export function ProductEditor({
 
   return (
     <CatalogActionForm action={saveProduct} className="grid gap-5">
+      <input type="hidden" name="aiAlts" value={JSON.stringify(aiAlts)} />
+      {aiAllowed && (
+        <ProductAi
+          productId={initial.id}
+          mediaIds={mediaIds}
+          categories={categories}
+          onApply={applyAiFields}
+        />
+      )}
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       <input type="hidden" name="mediaIds" value={JSON.stringify(mediaIds)} />
       <input type="hidden" name="variants" value={JSON.stringify(variants)} />
@@ -566,6 +626,11 @@ export function ProductEditor({
             prefix="seoTitle"
             label={t("seoTitle")}
             value={initial.seoTitleI18n}
+          />
+          <LocalizedFields
+            prefix="seoKeywords"
+            label={t("seoKeywords")}
+            value={initial.seoKeywordsI18n ?? { fa: "", tr: "", en: "" }}
           />
           <LocalizedAreas
             prefix="seoDescription"

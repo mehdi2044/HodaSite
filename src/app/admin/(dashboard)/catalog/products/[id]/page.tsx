@@ -135,6 +135,7 @@ export default async function ProductEditorPage({
       )}
       <ProductEditor
         initial={initial}
+        aiAllowed={await can(session.user.id, "ai.product.generate")}
         brands={brands.map((x) => option(x, local(x.nameI18n), x.slug))}
         categories={categories.map((x) => option(x, local(x.titleI18n)))}
         collections={collections.map((x) => option(x, local(x.titleI18n)))}
@@ -185,6 +186,7 @@ function toEditor(
     title?: unknown;
     description?: unknown;
     ogMediaId?: string;
+    keywords?: unknown;
   };
   return {
     id: product.id,
@@ -194,6 +196,7 @@ function toEditor(
     careI18n: localized(product.careI18n),
     seoTitleI18n: localized(seo.title),
     seoDescriptionI18n: localized(seo.description),
+    seoKeywordsI18n: localized(seo.keywords),
     seoOgMediaId: seo.ogMediaId ?? "",
     brandId: product.brandId ?? "",
     categoryId: product.categoryId,

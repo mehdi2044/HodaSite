@@ -1,3 +1,4 @@
+import { registerAiJobs } from "@/modules/ai/worker";
 import { registerInvoiceJobs } from "@/modules/orders/invoices/worker";
 import { equalSecret } from "@/lib/secure-tokens";
 import { runJobs } from "@/modules/jobs";
@@ -36,6 +37,7 @@ registerMediaReplaceHandler();
 registerPricingJobHandlers();
 registerNotificationJobs();
 registerInvoiceJobs();
+registerAiJobs();
 
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;

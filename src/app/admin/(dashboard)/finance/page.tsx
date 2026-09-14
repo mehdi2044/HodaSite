@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import { ZodError } from "zod";
 import { auth } from "@/modules/auth";
-import { ForbiddenError, UnauthorizedError } from "@/modules/access";
+import { can, ForbiddenError, UnauthorizedError } from "@/modules/access";
 import {
   financeReport,
   visibleFinanceMarkets,
@@ -61,6 +61,12 @@ export default async function FinancePage({
     to: filter.to,
     ...(filter.marketId ? { marketId: filter.marketId } : {}),
   });
+  const actorId = (await auth())?.user?.id ?? "";
+  const ai = await getTranslations("aiAdmin");
+  const aiScope = filter.marketId ? { marketId: filter.marketId } : {};
+  const aiQuery = filter.marketId
+    ? `?marketId=${encodeURIComponent(filter.marketId)}`
+    : "";
   return (
     <section
       className="finance-page"
@@ -73,6 +79,16 @@ export default async function FinancePage({
           <a className="btn" href="/admin/finance/operations">
             {(await getTranslations("financeOps"))("title")}
           </a>
+          {(await can(actorId, "ai.finance.analyze", aiScope)) && (
+            <Link className="button" href={`/admin/finance/analyst${aiQuery}`}>
+              {ai("analyst")}
+            </Link>
+          )}
+          {(await can(actorId, "ai.usage.view", aiScope)) && (
+            <Link className="button" href={`/admin/ai/usage${aiQuery}`}>
+              {ai("usage")}
+            </Link>
+          )}
           <h1 id="finance-title">{t("title")}</h1>
         </div>
         {report && (

@@ -1,4 +1,8 @@
 export const PERMISSIONS = [
+  "ai.settings.manage",
+  "ai.product.generate",
+  "ai.finance.analyze",
+  "ai.usage.view",
   "audit.view",
   "backup.create",
   "backup.restore",
