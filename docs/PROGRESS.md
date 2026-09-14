@@ -708,3 +708,10 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Automatic order payment/return journals use original rate snapshots. New accounting is explicitly enabled per market; old unrecognized orders remain excluded. Domain event posting has an auth-free internal entry point; HTTP operations independently verify session and scope.
 - Existing owner backup, download, upload and ops restore remain at `/admin/system/backups`. Whole-database backups include the added models. No hosting, domain or publication.
 - Local TypeScript and targeted unit checks passed. Real PostgreSQL, mobile browser and backup runtime results must be verified on the final PR head. This entry is not a claim of completed Phase 06 or Phase 07. Remaining scope and correctness review continue in this branch.
+
+### Phase 06 continuation — draft, not complete
+- Immutable per-item attribution now preserves order/product/variant/category/brand classification when automatic journals are posted; refunds/restocks and explicit journal reversals adjust it. Margin reports filter UTC periods and export CSV/XLSX. Excel uses text cells for exact four-decimal amounts, with inert formula-like content.
+- Expense PDF uploads use a dedicated permission-scoped endpoint and private download. Expense documents are excluded from generic media listing/replacement/purge/public delivery and protected when attached. Capital records can reference a purchase.
+- Original lot FX evidence is read directly; rounded equivalent amounts are never divided to invent a historical rate.
+- CI for initial operations commit: 7,439 tests passed; eight test expectations incorrectly named the anonymous-action error and are corrected in the next commit. Docker build passed; complete runtime/browser evidence is still pending. No phase-complete claim.
+- Local XLSX output opened independently with openpyxl: full precision, inert formula cells and RTL verified. TypeScript and targeted unit tests passed before the latest extensions; all gates are rerun on the updated commit.

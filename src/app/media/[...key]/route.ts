@@ -50,7 +50,12 @@ export async function GET(
   }
 
   const isPrivate = PRIVATE_KINDS.has(media.kind);
-  if (media.kind === "receipt" || media.kind === "invoice") return new NextResponse(null, { status: 404 });
+  if (
+    media.kind === "receipt" ||
+    media.kind === "invoice" ||
+    media.kind === "expense"
+  )
+    return new NextResponse(null, { status: 404 });
   if (isPrivate) {
     // Backup contents require their own permission; media upload is unrelated.
     // Receipts always use their dedicated capability-protected endpoint above.
@@ -69,7 +74,7 @@ export async function GET(
       "content-length": String(bytes.length),
       ...(isPrivate
         ? {
-            "content-disposition": 'attachment',
+            "content-disposition": "attachment",
             "x-content-type-options": "nosniff",
             "referrer-policy": "no-referrer",
             "content-security-policy": "sandbox",

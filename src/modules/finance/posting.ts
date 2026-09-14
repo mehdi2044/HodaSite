@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { Exact, snapshot, equivalents } from "./operations-input";
 import { postDomainJournal } from "./persistence";
+import { attributeEntry } from "./attribution";
+import { costSnapshot } from "./cost-snapshot";
 type Tx = Prisma.TransactionClient;
 export type Rates = z.infer<typeof snapshot>;
 
@@ -17,6 +19,9 @@ export async function postPair(
     credit: string;
     rates: Rates;
     actor: string | null;
+    orderId?: string;
+    variantId?: string;
+    returnId?: string;
   },
 ) {
   const { rates } = input;
@@ -36,7 +41,7 @@ export async function postPair(
     if (!row) throw new Error("INVALID_LEDGER_ACCOUNT");
     return row.id;
   };
-  return postDomainJournal(
+  const entry = await postDomainJournal(
     tx,
     {
       marketId: input.marketId,
@@ -65,6 +70,14 @@ export async function postPair(
     },
     input.actor,
   );
+  if (input.orderId)
+    await attributeEntry(tx, {
+      ...input,
+      orderId: input.orderId,
+      entryId: entry.id,
+      ...equivalents(input.amount, rates),
+    });
+  return entry;
 }
 const quote = z.object({
   marketPerUsd: z.string().refine((v) => new Exact(v).gt(0)),
@@ -103,8 +116,16 @@ export async function recognizePaidOrder(
   )
     return;
   const rates = orderRates(order.currency, order.fxSnapshot, order.paidAt);
-  const base = { marketId: order.marketId, rates, actor, memo: order.number };
+  const base = {
+    marketId: order.marketId,
+    rates,
+    actor,
+    memo: order.number,
+    orderId: order.id,
+  };
   for (const p of order.payments.filter((p) => p.status === "APPROVED")) {
+    if (!["OFFLINE_BANK_TRANSFER", "CASH", "STORE_CREDIT"].includes(p.method))
+      throw new Error("FINANCE_PAYMENT_METHOD");
     if (p.currency !== order.currency) throw new Error("FINANCE_CURRENCY");
     await postPair(tx, {
       ...base,
@@ -155,21 +176,12 @@ export async function recognizePaidOrder(
     const l = m.lot;
     const amount = new Exact(l.unitCostAmount.toString()).mul(-m.quantity);
     if (amount.isZero()) continue;
-    const lr = {
-      currency: l.unitCostCurrency as Rates["currency"],
-      rateTry: new Exact(l.unitCostAmountTry.toString())
-        .div(l.unitCostAmount.toString())
-        .toFixed(12),
-      rateUsd: new Exact(l.unitCostAmountUsd.toString())
-        .div(l.unitCostAmount.toString())
-        .toFixed(12),
-      fxAsOf: l.receivedAt.toISOString(),
-      effectiveAt: order.paidAt.toISOString(),
-    };
+    const lr = costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, order.paidAt);
     await postPair(tx, {
       ...base,
       rates: lr,
       key: `cogs:${m.id}`,
+      variantId: m.variantId,
       amount: amount.toFixed(4),
       debit: "cogs",
       credit: "inventory",
@@ -194,6 +206,8 @@ export async function recognizeReturn(tx: Tx, returnId: string, actor: string) {
   if (!recognized) return;
   const base = {
     marketId: row.order.marketId,
+    orderId: row.orderId,
+    returnId,
     rates: orderRates(
       row.order.currency,
       row.order.fxSnapshot,
@@ -248,23 +262,13 @@ export async function recognizeReturn(tx: Tx, returnId: string, actor: string) {
       await postPair(tx, {
         ...base,
         key: `restock:${m.id}`,
+        variantId: m.variantId,
         amount: new Exact(l.unitCostAmount.toString())
           .mul(m.quantity)
           .toFixed(4),
         debit: "inventory",
         credit: "cogs",
-        rates: {
-          ...base.rates,
-          currency: l.unitCostCurrency as Rates["currency"],
-          rateTry: new Exact(l.unitCostAmountTry.toString())
-            .div(l.unitCostAmount.toString())
-            .toFixed(12),
-          rateUsd: new Exact(l.unitCostAmountUsd.toString())
-            .div(l.unitCostAmount.toString())
-            .toFixed(12),
-          fxAsOf: l.receivedAt.toISOString(),
-          effectiveAt: m.createdAt.toISOString(),
-        },
+        rates: costSnapshot(l.unitCostCurrency, l.fxRateSnapshot, m.createdAt),
       });
     }
   }

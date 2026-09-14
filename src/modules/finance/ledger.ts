@@ -104,7 +104,27 @@ export async function reversePostedJournal(raw: unknown) {
           rateUsd: line.rateUsd.toFixed(12),
         })),
       });
-      return insert(tx, input, userId, hash, original.id);
+      const reversed = await insert(tx, input, userId, hash, original.id);
+      const allocations = await tx.financeAttribution.findMany({
+        where: { entryId: original.id },
+      });
+      for (const a of allocations) {
+        const { id: _id, ...data } = a;
+        void _id;
+        await tx.financeAttribution.create({
+          data: {
+            ...data,
+            entryId: reversed.id,
+            revenueTry: a.revenueTry.negated(),
+            revenueUsd: a.revenueUsd.negated(),
+            costTry: a.costTry.negated(),
+            costUsd: a.costUsd.negated(),
+            expenseTry: a.expenseTry.negated(),
+            expenseUsd: a.expenseUsd.negated(),
+          },
+        });
+      }
+      return reversed;
     },
     { timeout: 15000 },
   );

@@ -326,7 +326,8 @@ export async function createExpense(raw: unknown) {
         !(await tx.media.findFirst({
           where: {
             id: v.attachmentId,
-            kind: "document",
+            kind: "expense",
+            tags: { has: `expense-market:${v.marketId}` },
             uploadedBy: actor,
             status: "READY",
             deletedAt: null,

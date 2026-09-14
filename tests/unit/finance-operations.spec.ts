@@ -1,3 +1,5 @@
+import { apportion } from "@/modules/finance/apportion";
+import { costSnapshot } from "@/modules/finance/cost-snapshot";
 import { describe, it, expect } from "vitest";
 import { profitTotals } from "@/modules/finance/profit";
 import {
@@ -105,5 +107,53 @@ describe("phase06 financial operations", () => {
     expect(() =>
       purchaseInput.parse({ ...input, additionalCost: "-1", items: [item] }),
     ).toThrow();
+  });
+});
+
+describe("exact attribution and source FX", () => {
+  it("apportions credits and debits without losing the final fractional unit", () => {
+    const rows = [
+      { id: "c", weight: "1" },
+      { id: "a", weight: "1" },
+      { id: "b", weight: "1" },
+    ];
+    expect(apportion("1.0000", rows)).toEqual({
+      a: "0.3334",
+      b: "0.3333",
+      c: "0.3333",
+    });
+    expect(apportion("-1.0000", rows)).toEqual({
+      a: "-0.3334",
+      b: "-0.3333",
+      c: "-0.3333",
+    });
+    expect(
+      apportion(
+        "0.0001",
+        rows.map((r) => ({ ...r, weight: "0" })),
+      ),
+    ).toEqual({ a: "0.0001", b: "0.0000", c: "0.0000" });
+    expect(() => apportion("1.00001", rows)).toThrow();
+  });
+  it("reads the exact purchase snapshot and rejects missing FX rather than inferring a rate", () => {
+    const at = new Date("2026-01-02T00:00:00Z");
+    expect(
+      costSnapshot("TRY", { ...rates, rateUsd: "0.023456789" }, at).rateUsd,
+    ).toBe("0.023456789");
+    expect(
+      costSnapshot(
+        "TRY",
+        {
+          base: "USD",
+          originalCurrency: "TRY",
+          originalPerUsd: "40",
+          tryPerUsd: "40",
+          capturedAt: rates.fxAsOf,
+        },
+        at,
+      ).rateUsd,
+    ).toBe("0.025000000000");
+    expect(() => costSnapshot("TRY", {}, at)).toThrow();
+    expect(() => costSnapshot("USD", rates, at)).toThrow();
   });
 });

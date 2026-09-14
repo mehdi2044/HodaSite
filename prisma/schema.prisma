@@ -1805,3 +1805,26 @@ model CapitalTransaction {
   @@index([purchaseOrderId])
   @@index([createdById])
 }
+
+/// Frozen product/order classification and exact journal allocation. Never edited.
+model FinanceAttribution {
+  id          String  @id @default(cuid())
+  entryId     String
+  orderId     String
+  orderItemId String
+  marketId    String
+  productId   String
+  variantId   String
+  categoryId  String
+  brandId     String?
+  revenueTry  Decimal @db.Decimal(18, 4)
+  revenueUsd  Decimal @db.Decimal(18, 4)
+  costTry     Decimal @db.Decimal(18, 4)
+  costUsd     Decimal @db.Decimal(18, 4)
+  expenseTry  Decimal @db.Decimal(18, 4)
+  expenseUsd  Decimal @db.Decimal(18, 4)
+
+  @@unique([entryId, orderItemId])
+  @@index([marketId, orderId])
+  @@index([variantId])
+}

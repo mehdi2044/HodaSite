@@ -1,3 +1,4 @@
+import { ExpenseAttachment } from "@/components/admin/expense-attachment";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -100,6 +101,12 @@ export default async function OperationsPage({
           {t("reports")}
         </Link>
       </header>
+      <Link
+        className="underline"
+        href={`/admin/finance/margins?marketId=${market.id}`}
+      >
+        {t("margins")}
+      </Link>
       <form className="flex flex-wrap gap-3">
         <label>
           {t("market")}
@@ -124,7 +131,7 @@ export default async function OperationsPage({
           {t("to")}
           <input type="date" name="to" defaultValue={q.to} className="input" />
         </label>
-        <button className="btn">{t("filter")}</button>
+        <button className="button">{t("filter")}</button>
       </form>
       <section className="card grid gap-3">
         {title("profit")}
@@ -264,6 +271,7 @@ export default async function OperationsPage({
             "expense",
             <>
               {field("category")}
+              <ExpenseAttachment marketId={market.id} />
               {field("memo")}
               {field("amount")}
               {rates}
@@ -290,6 +298,14 @@ export default async function OperationsPage({
               {e.amount.toFixed(4)} {e.currency}
             </span>
             <span>{t(e.status)}</span>
+            {e.attachmentId && (
+              <a
+                className="underline"
+                href={`/api/admin/finance/attachments/${e.attachmentId}`}
+              >
+                {t("attachment")}
+              </a>
+            )}
             {e.journalId && (
               <Link
                 className="underline"
@@ -346,6 +362,17 @@ export default async function OperationsPage({
                   {["CONTRIBUTION", "WITHDRAWAL", "PROFIT_SHARE"].map((k) => (
                     <option key={k} value={k}>
                       {t(k)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("purchaseOrderId")}
+                <select name="purchaseOrderId" className="input">
+                  <option value="">—</option>
+                  {w.purchases.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.memo}
                     </option>
                   ))}
                 </select>

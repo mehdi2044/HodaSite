@@ -124,7 +124,7 @@ export function FinanceOperationForm({
         </p>
       )}
       <button
-        className="btn"
+        className="button"
         type="submit"
         disabled={pending || code === "DONE"}
       >
@@ -188,7 +188,7 @@ export function PurchaseLines({
           {rows.length > 1 && (
             <button
               type="button"
-              className="btn"
+              className="button"
               onClick={() => setRows(rows.filter((r) => r !== id))}
             >
               {t("remove")}
@@ -198,7 +198,7 @@ export function PurchaseLines({
       ))}
       <button
         type="button"
-        className="btn"
+        className="button"
         disabled={rows.length >= 100}
         onClick={() => setRows([...rows, Math.max(...rows) + 1])}
       >

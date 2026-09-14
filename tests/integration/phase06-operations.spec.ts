@@ -1,8 +1,17 @@
+import { POST as uploadExpense } from "@/app/api/admin/finance/attachments/route";
+import { GET as downloadExpense } from "@/app/api/admin/finance/attachments/[id]/route";
+import { GET as publicMedia } from "@/app/media/[...key]/route";
+import { marginReport } from "@/modules/finance/margins";
+import { GET as marginExport } from "@/app/admin/(dashboard)/finance/margins/export/route";
 import { randomUUID } from "node:crypto";
 import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 const acting = vi.hoisted(() => ({
   id: null as string | null,
   maintenance: false,
+}));
+vi.mock("next-intl/server", () => ({
+  getTranslations: async () => (key: string) => key,
+  getLocale: async () => "en",
 }));
 vi.mock("@/modules/auth", () => ({
   auth: async () => (acting.id ? { user: { id: acting.id } } : null),
@@ -131,10 +140,70 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               ).toBe(1);
             } else {
               expect(result).toMatchObject({
-                code: name === "anonymous" ? "UNAUTHENTICATED" : "FORBIDDEN",
+                code: name === "anonymous" ? "UNAUTHORIZED" : "FORBIDDEN",
               });
               expect(await fingerprint(tables)).toEqual(before);
             }
+          });
+          it(`finance expense document ${name}/${scope}/${target}`, async () => {
+            acting.id = subjects.find(
+              (s) => s.name === name && s.scope === scope,
+            )!.id;
+            const marketId = target === "TR" ? tr : ir;
+            const allowed =
+              granted(name, "finance.expense.create") &&
+              (scope === "in" || (scope === "market-out" && target === "TR"));
+            const form = new FormData();
+            form.set(
+              "file",
+              new File(["%PDF-1.4\nFixture PDF\n%%EOF"], "fixture.pdf", {
+                type: "application/pdf",
+              }),
+            );
+            const before = await fingerprint(["Media", "AuditLog"]);
+            const result = await uploadExpense(
+              new Request(
+                `https://example.com/api/admin/finance/attachments?marketId=${marketId}`,
+                { method: "POST", body: form },
+              ),
+            );
+            expect(result.status).toBe(
+              allowed ? 201 : name === "anonymous" ? 401 : 403,
+            );
+            if (!allowed) {
+              expect(await fingerprint(["Media", "AuditLog"])).toEqual(before);
+              return;
+            }
+            const { id } = (await result.json()) as { id: string };
+            expect(
+              (
+                await downloadExpense(new Request("https://example.com"), {
+                  params: Promise.resolve({ id }),
+                })
+              ).status,
+            ).toBe(200);
+            const media = await db.media.findUniqueOrThrow({ where: { id } });
+            expect(
+              (
+                await publicMedia(new Request("https://example.com"), {
+                  params: Promise.resolve({ key: media.storageKey.split("/") }),
+                })
+              ).status,
+            ).toBe(404);
+            await createExpense({ ...expense(marketId), attachmentId: id });
+            await expect(
+              db.media.update({ where: { id }, data: { kind: "document" } }),
+            ).rejects.toThrow();
+            const previous = acting.id;
+            acting.id = null;
+            expect(
+              (
+                await downloadExpense(new Request("https://example.com"), {
+                  params: Promise.resolve({ id }),
+                })
+              ).status,
+            ).toBe(404);
+            acting.id = previous;
           });
           it(`finance.journal.post ${name}/${scope}/${target} supplier and direct forbidden write`, async () => {
             acting.id = subjects.find(
@@ -160,6 +229,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               (scope === "in" || (scope === "market-out" && target === "TR"));
             const id = target === "TR" ? tr : ir;
             if (allowed) {
+              expect(await marginReport({ marketId: id })).toHaveProperty(
+                "rows",
+              );
+              const exported = await marginExport(
+                new Request(
+                  `https://example.com/admin/finance/margins/export?marketId=${id}&format=xlsx`,
+                ),
+              );
+              expect(exported.status).toBe(200);
+              expect(exported.headers.get("Cache-Control")).toBe(
+                "private, no-store",
+              );
               expect(await financeWorkspace(id)).toHaveProperty("purchases");
               expect(
                 await financeDashboard({
@@ -169,6 +250,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                 }),
               ).toHaveProperty("totals");
             } else {
+              await expect(marginReport({ marketId: id })).rejects.toThrow();
+              expect(
+                (
+                  await marginExport(
+                    new Request(
+                      `https://example.com/admin/finance/margins/export?marketId=${id}`,
+                    ),
+                  )
+                ).status,
+              ).toBe(name === "anonymous" ? 401 : 403);
               await expect(financeWorkspace(id)).rejects.toThrow();
               await expect(
                 financeDashboard({ marketId: id }),
