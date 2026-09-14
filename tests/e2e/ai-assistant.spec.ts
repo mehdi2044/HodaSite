@@ -149,13 +149,11 @@ for (const locale of ["fa", "tr", "en"] as const)
       );
       expect(updated.status).toBe("DRAFT");
       await shoppingProof(page, info, `ai-review-${locale}`);
-      const bulk = page
-        .locator("section")
-        .filter({
-          has: page.getByRole("heading", { name: t.bulk, exact: true }),
-        });
+      const bulk = page.locator("section").filter({
+        has: page.getByRole("heading", { name: t.bulk, exact: true }),
+      });
       await bulk
-        .getByLabel((p.titleI18n as Record<string, string>)[locale], {
+        .getByLabel((updated.titleI18n as Record<string, string>)[locale], {
           exact: true,
         })
         .check();

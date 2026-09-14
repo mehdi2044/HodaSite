@@ -16,7 +16,7 @@
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 05b | Mobile Storefront / Installable PWA         | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
 | 06 | Finance Core | ✅ توسعه، آزمون خودکار و ادغام تکمیل شد | ۲۰۲۶-۰۹-۱۴ | [#34](https://github.com/mehdi2044/HodaSite/pull/34) |
-| 07 | AI Gateway / Data Entry | 🔍 پیاده‌سازی شده؛ بررسی نهایی PR و پذیرش اتصال واقعی باقی است | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35) |
+| 07 | AI Gateway / Data Entry | 🔍 پیاده‌سازی شده؛ نتیجهٔ نهایی CI و ادغام در PR، پذیرش اتصال واقعی معوق | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35) |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
 | 09  | CRM / Promotions / Loyalty                 | ⬜              |            |                                                    |
@@ -756,3 +756,10 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Updated-head CI is required before PR #35 is marked ready or merged. Live provider keys, real API latency and the two-photo trilingual acceptance remain unverified; they require the owner's configured local environment. Manual product entry remains available with AI disabled.
 
 - Follow-up run 34837454614 passed 7,980 tests; four expanded matrix assertions expected ForbiddenError for anonymous sessions, which correctly return UnauthorizedError. The test now distinguishes authentication from authorization; no access guard was relaxed. Anthropic raw HTTP schema constraints are adapted to its documented supported subset, while original Zod response validation remains enforced. Final updated-head gates remain required.
+
+- Framework source review confirmed that any revalidation currently refreshes the action's page, including storefront-only revalidation. The private review list now keeps its active client review session mounted while server caches refresh; a full page reload loads the current queue. This preserves success feedback and identical lost-response retries without suppressing product/storefront invalidation.
+
+### Phase 07 delivery scope and acceptance record
+Implementation is complete in PR #35: gateway/adapters/settings/usage, versioned prompts, budget/kill switches, reviewed trilingual product assistance, bulk queue and read-only financial narrative. Final CI and merge evidence are recorded on [PR #35](https://github.com/mehdi2044/HodaSite/pull/35); a code change is not accepted solely because this document exists. The implementation plan and earlier phase acceptance items are in `PHASE07_IMPLEMENTATION_PLAN.md`, and local setup/manual checks are in `07_SETUP_GUIDE_FA.md`.
+
+Existing data is preserved by additive migrations, immutable finance evidence and stable variant references. Manual backup/download/upload/restore remains in the admin panel. No publication, hosting, domain work or laptop `.env` access occurred. Live API provider switching and timed two-photo generation, CP1/CP2 owner acceptance and real-phone/HTTPS tests remain explicitly unverified.

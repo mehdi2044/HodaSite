@@ -7,6 +7,38 @@ import {
   discardAi,
 } from "@/app/admin/(dashboard)/settings/ai/actions";
 import { attributesSchema, type Proposal } from "@/modules/ai/proposals";
+// Keep this page's review session mounted across action-triggered server refreshes.
+// A full page reload starts a new session from the current private review queue.
+export function AiReviewQueue({
+  drafts,
+  categories,
+}: {
+  drafts: { id: string; productId: string | null; proposal: Proposal }[];
+  categories: { id: string; label: string }[];
+}) {
+  const [items] = useState(drafts);
+  const t = useTranslations("aiAdmin");
+  return (
+    <div className="grid gap-6">
+      {items.length === 0 && <p>{t("empty")}</p>}
+      {items.map((d) => (
+        <article key={d.id} className="grid gap-2">
+          <a
+            className="underline"
+            href={`/admin/catalog/products/${d.productId}`}
+          >
+            {t("openProduct")}
+          </a>
+          <AiReview
+            draftId={d.id}
+            proposal={d.proposal}
+            categories={categories}
+          />
+        </article>
+      ))}
+    </div>
+  );
+}
 export function AiReview({
   draftId,
   proposal,

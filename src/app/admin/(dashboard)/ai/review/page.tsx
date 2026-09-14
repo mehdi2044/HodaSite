@@ -2,7 +2,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { reviewDrafts } from "@/modules/ai/products";
 import { proposalSchema } from "@/modules/ai/proposals";
-import { AiReview } from "@/components/admin/ai-review";
+import { AiReviewQueue } from "@/components/admin/ai-review";
 import { AiBulk } from "@/components/admin/ai-bulk";
 export default async function Page() {
   const drafts = await reviewDrafts(),
@@ -35,22 +35,14 @@ export default async function Page() {
         }))}
       />
       <p className="text-sm text-muted">{t("queueHelp")}</p>
-      {drafts.length === 0 && <p>{t("empty")}</p>}
-      {drafts.map((d) => (
-        <article key={d.id} className="grid gap-2">
-          <a
-            className="underline"
-            href={`/admin/catalog/products/${d.productId}`}
-          >
-            {t("openProduct")}
-          </a>
-          <AiReview
-            draftId={d.id}
-            proposal={proposalSchema.parse(d.proposal)}
-            categories={options}
-          />
-        </article>
-      ))}
+      <AiReviewQueue
+        drafts={drafts.map((d) => ({
+          id: d.id,
+          productId: d.productId,
+          proposal: proposalSchema.parse(d.proposal),
+        }))}
+        categories={options}
+      />
     </div>
   );
 }
