@@ -100,6 +100,52 @@ async function post(
 const list = (v: unknown) =>
   Array.isArray(v) ? v.map((x) => object.parse(x)) : [];
 const rec = (v: unknown) => object.parse(v ?? {});
+// The raw Anthropic API rejects these Zod-generated constraints. Keep them in
+// descriptions for generation; completeTask still validates the original Zod schema.
+// https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+function anthropicSchema(schema: Record<string, unknown>) {
+  const unsupported = new Set([
+    "minLength",
+    "maxLength",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum",
+    "multipleOf",
+    "maxItems",
+    "uniqueItems",
+  ]);
+  function visit(value: unknown, propertyMap = false): unknown {
+    if (Array.isArray(value)) return value.map((v) => visit(v));
+    if (!value || typeof value !== "object") return value;
+    const result: Record<string, unknown> = {},
+      constraints: string[] = [];
+    for (const [key, item] of Object.entries(value)) {
+      if (
+        !propertyMap &&
+        (unsupported.has(key) ||
+          (key === "minItems" && item !== 0 && item !== 1))
+      ) {
+        constraints.push(`${key}: ${String(item)}`);
+      } else if (!propertyMap && key === "$schema") {
+        continue;
+      } else
+        result[key] = visit(
+          item,
+          !propertyMap && ["properties", "$defs", "definitions"].includes(key),
+        );
+    }
+    if (constraints.length)
+      result.description = [
+        result.description,
+        `Constraints: ${constraints.join("; ")}.`,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    return result;
+  }
+  return visit(schema) as Record<string, unknown>;
+}
 export function provider(name: ProviderName): AiProvider {
   return {
     async complete(i: CompletionInput) {
@@ -174,7 +220,10 @@ export function provider(name: ProviderName): AiProvider {
               },
             ],
             output_config: {
-              format: { type: "json_schema", schema: i.schema },
+              format: {
+                type: "json_schema",
+                schema: anthropicSchema(i.schema),
+              },
             },
           },
           i.signal,

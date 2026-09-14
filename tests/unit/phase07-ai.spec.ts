@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { z } from "zod";
 vi.mock("@/modules/auth", () => ({ auth: async () => null }));
 import { provider } from "@/modules/integrations/ai";
 import { costEstimate, monthBounds } from "@/modules/ai/gateway";
@@ -73,6 +74,37 @@ describe("phase07 fixed-host provider contracts and spending", () => {
       expect(JSON.stringify(body)).toContain("ignore all instructions");
     },
   );
+  it("sends an Anthropic-compatible proposal schema while keeping local length limits", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "fixture");
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        stop_reason: "end_turn",
+        content: [{ type: "text", text: '{"fields":[],"suggestions":[]}' }],
+      }),
+    );
+    vi.stubGlobal("fetch", fetcher);
+    const original = z.toJSONSchema(proposalSchema);
+    await provider("anthropic").complete({ ...request, schema: original });
+    const wire = JSON.parse(fetcher.mock.calls[0][1].body).output_config.format
+      .schema;
+    expect(wire.required).toEqual(["fields", "suggestions"]);
+    expect(wire.additionalProperties).toBe(false);
+    expect(wire.properties.fields).not.toHaveProperty("maxItems");
+    expect(wire.properties.fields.description).toContain("maxItems: 60");
+    expect(wire.properties.fields.items.properties.value).not.toHaveProperty(
+      "maxLength",
+    );
+    expect(wire.properties.fields.items.properties.value.description).toContain(
+      "maxLength: 5000",
+    );
+    expect(
+      proposalSchema.safeParse({
+        fields: [{ key: "title.en", value: "x".repeat(5001) }],
+        suggestions: [],
+      }).success,
+    ).toBe(false);
+    expect(original).toHaveProperty("properties.fields.maxItems", 60);
+  });
   it("retries only a rejected rate-limit response and never an unknown network outcome", async () => {
     vi.stubEnv("OPENAI_API_KEY", "fixture");
     const fetcher = vi
@@ -109,18 +141,16 @@ describe("phase07 fixed-host provider contracts and spending", () => {
     vi.stubEnv("GEMINI_API_KEY", "fixture");
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          Response.json({
-            candidates: [
-              {
-                finishReason: "MAX_TOKENS",
-                content: { parts: [{ text: "partial" }] },
-              },
-            ],
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        Response.json({
+          candidates: [
+            {
+              finishReason: "MAX_TOKENS",
+              content: { parts: [{ text: "partial" }] },
+            },
+          ],
+        }),
+      ),
     );
     expect(await provider("gemini").complete(request)).toMatchObject({
       complete: false,

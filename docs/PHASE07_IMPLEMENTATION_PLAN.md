@@ -1,6 +1,6 @@
 # Phase 07 implementation plan
 
-Implemented against docs v1.2 / D25, D31, D35, D50, D51. Development only; no publication, hosting or domain work.
+Implemented against docs v1.2 / D25, D31, D35, D50, D51, D62. Development only; no publication, hosting or domain work.
 
 1. Gateway: fixed-host OpenAI, Anthropic and Gemini adapters; keys from environment only. Admin chooses provider, cheap/smart task routes, model identifiers and USD price estimates. Disabled until explicitly configured. Completion returns validated JSON plus normalized token usage; embeddings expose supported capabilities, never fabricated vectors. Optional vision stays off until separately enabled.
 2. Persistence and spending: additive PromptVersion, AiUsage, AiCache and AiDraft models; immutable prompt versions and terminal usage evidence. Serialize budget reservation across workers, include pending/unknown costs in the monthly cap, limit concurrent requests. Bound time and output; only a rejected rate-limit response is retryable automatically. Record cache hits and show cost estimates, soft alerts and hard refusals.
@@ -20,3 +20,13 @@ The existing product save path deletes and recreates variants. Replace this with
 - [Gemini structured output](https://ai.google.dev/gemini-api/docs/structured-output)
 - [Anthropic Messages](https://platform.claude.com/docs/en/api/messages/create)
 - [Anthropic embedding capability](https://platform.claude.com/docs/en/build-with-claude/embeddings)
+
+- [Anthropic structured-output schema limits](https://platform.claude.com/docs/en/build-with-claude/structured-outputs): raw HTTP schema constraints unsupported by Anthropic are expressed in descriptions; the original Zod limits still validate every response before storage/use.
+
+## Remaining acceptance through Phase 07
+- Phases 00–05: implementations are merged and covered by regression CI. CP1/CP2 owner acceptance remains recorded separately in `08_TEST_CHECKPOINTS_FA.md`; no fabricated completion of real-email, external FX, destination storage or regional reachability checks.
+- Phase 05b: mobile/PWA implementation is merged; final product photos and installation/update on real Android/iPhone with HTTPS remain pre-launch acceptance.
+- Phase 06: development and automated acceptance merged in PR #34, run 34836072353 (7,674 unit/database, 111 browser, all three jobs green). Financial cutover, original rates and opening evidence must be configured before real accounting use.
+- Phase 07: implementation is in PR #35. Final exact-head CI remains mandatory before merge. Real-key provider switching and timed two-photo trilingual generation are not proven by mocks and remain local acceptance.
+- Backup creation/download/upload/restore exists in the admin panel. Local and MinIO restore are proven; the final independent off-site destination is a separate pre-launch check. Updates use additive migrations and preserve variant identities; never use reset or volume deletion to update the owner's application.
+- No hosting, domain purchase, Sites transfer or publication has been performed. `.env` on the owner's laptop has not been read from this workspace.

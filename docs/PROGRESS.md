@@ -15,8 +15,8 @@
 | 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
 | —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
 | 05b | Mobile Storefront / Installable PWA         | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
-| 06  | Finance Core                               | 🟡 گزارش تراکنش و دفتر کل دستی پیاده‌سازی شد؛ ثبت خودکار و سود باقی است | ۲۰۲۶-۰۹-۱۲ | [#20](https://github.com/mehdi2044/HodaSite/pull/20)، [#27](https://github.com/mehdi2044/HodaSite/pull/27)، [#31](https://github.com/mehdi2044/HodaSite/pull/31) |
-| 07  | AI Gateway / Data Entry                    | ⬜              |            |                                                    |
+| 06 | Finance Core | ✅ توسعه، آزمون خودکار و ادغام تکمیل شد | ۲۰۲۶-۰۹-۱۴ | [#34](https://github.com/mehdi2044/HodaSite/pull/34) |
+| 07 | AI Gateway / Data Entry | 🔍 پیاده‌سازی شده؛ بررسی نهایی PR و پذیرش اتصال واقعی باقی است | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35) |
 | 08  | SEO / PWA / Performance / Launch Checklist | ⬜              |            |                                                    |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
 | 09  | CRM / Promotions / Loyalty                 | ⬜              |            |                                                    |
@@ -754,3 +754,5 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Phase 07 initial head `cea4e184beef019395ccf98779a6c2111988ca5a`, run 34836180646: all 7,982 unit/database tests passed; Docker and runtime backup/restore passed. Browser 112/114; two new review tests exposed premature admin revalidation removing the success panel. The current correction preserves the panel and explicitly tests a lost response followed by the same Apply request.
 - Bulk jobs now bind to the queued product version and refuse changed products before spending. Apply retries lock the accepted field values. Category and attribute review use labeled controls; editor attribute validation happens before any field is changed. Generation, Apply, discard, review and enqueue permissions are covered for every role/scope matrix case. The integration-level kill switch also blocks calls.
 - Updated-head CI is required before PR #35 is marked ready or merged. Live provider keys, real API latency and the two-photo trilingual acceptance remain unverified; they require the owner's configured local environment. Manual product entry remains available with AI disabled.
+
+- Follow-up run 34837454614 passed 7,980 tests; four expanded matrix assertions expected ForbiddenError for anonymous sessions, which correctly return UnauthorizedError. The test now distinguishes authentication from authorization; no access guard was relaxed. Anthropic raw HTTP schema constraints are adapted to its documented supported subset, while original Zod response validation remains enforced. Final updated-head gates remain required.

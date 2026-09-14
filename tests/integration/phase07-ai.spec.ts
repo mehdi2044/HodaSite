@@ -22,7 +22,7 @@ vi.mock("next-intl/server", () => ({
     Object.assign((k: string) => k, { has: () => true }),
 }));
 import { db } from "@/lib/db";
-import { ForbiddenError } from "@/modules/access";
+import { ForbiddenError, UnauthorizedError } from "@/modules/access";
 import { digest } from "@/modules/ai/gateway";
 import { AiError, defaultConfig } from "@/modules/ai/contracts";
 import {
@@ -174,26 +174,28 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               ).status,
             ).toBe("DISCARDED");
           } else {
+            const rejectedError =
+              name === "anonymous" ? UnauthorizedError : ForbiddenError;
             await expect(generateProduct(request())).rejects.toThrow(
-              ForbiddenError,
+              rejectedError,
             );
-            await expect(reviewDrafts()).rejects.toThrow(ForbiddenError);
+            await expect(reviewDrafts()).rejects.toThrow(rejectedError);
             await expect(
               applyProposal({
                 draftId: "denied-draft",
                 fields: response.fields,
                 confirm: true,
               }),
-            ).rejects.toThrow(ForbiddenError);
+            ).rejects.toThrow(rejectedError);
             await expect(
               queueProducts({
                 productIds: ["denied-product"],
                 requestKey: randomUUID(),
                 confirm: true,
               }),
-            ).rejects.toThrow(ForbiddenError);
+            ).rejects.toThrow(rejectedError);
             await expect(discardDraft("denied-draft")).rejects.toThrow(
-              ForbiddenError,
+              rejectedError,
             );
             expect(await fingerprint(tables)).toEqual(before);
             expect(state.complete.mock.calls.length).toBe(calls);
