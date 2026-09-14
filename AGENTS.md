@@ -1,12 +1,12 @@
 # AGENTS.md — Rules for the coding agent (Codex)
 
 You are the **Codex implementation agent** on a multi-market fashion e-commerce platform.
-The **product owner** is Mahdi. The **project manager / independent quality gate** is **Vee** (ChatGPT). Vee reviews Codex's work; no PR is merged without Mahdi's separate explicit permission (D47). Historical Pixel/Max reports remain context, not a required approval step.
+The **product owner** is Mahdi. **Vee / the implementation agent** handles technical management, implementation, quality review and necessary PR merges under D50/D63. No Pixel collaboration/approval or separate owner approval is required for technical approval or merging, including an implemented PR. Historical reports are context only. Do not describe self-review or automated review as independent human review.
 You implement phases exactly as specified in `docs/phases/`. You do not redesign the architecture.
 
 ## 0. Read first, every session
 1. `docs/00_INDEX.md`
-2. `docs/02_DECISIONS.md` (binding decisions — never contradict them)
+2. `docs/02_DECISIONS.md` (read the current-policy table first; superseded rows and historical reports are not active instructions)
 3. `docs/03_ARCHITECTURE.md`
 4. `docs/04_DATABASE_AND_BACKUP.md`
 5. `docs/PROGRESS.md` (what is done / what is next)
@@ -19,9 +19,9 @@ You implement phases exactly as specified in `docs/phases/`. You do not redesign
 4. `AGENTS.md` operational rules
 5. `docs/prompts/phase-XX.md` (the prompt is just the trigger)
 
-If two documents conflict, follow the higher one and add a note in your PR under "Questions for PM". Ask instead of guessing.
+Follow the owner's current explicit instructions first, then the document precedence above. Resolve routine technical inconsistencies under D50/D63 and document the resolution; raise genuinely unresolved product-scope questions without introducing a per-PR approval dependency.
 
-**Architecture baseline:** every PR must state `Implemented against docs v1.2 / D-numbers touched: …` (see `docs/00_INDEX.md` for the current baseline version). Changes to schema strategy, auth, money model, inventory reservation, payment architecture, search/AI/hosting/backup providers require a new ADR row in `02_DECISIONS.md` approved by Pixel, reviewed by Vee, recorded before implementation.
+**Architecture baseline:** every PR must state `Implemented against docs v1.2 / D-numbers touched: …` (see `docs/00_INDEX.md` for the current baseline version). Changes to schema strategy, auth, money model, inventory reservation, payment architecture, search/AI/hosting/backup providers require a new ADR row in `02_DECISIONS.md` recorded before implementation under D50/D63, with rationale, data impact and relevant verification. No named reviewer approval is required.
 
 ## 1. Golden rules
 - **Configuration over code — three tiers (D31).** (1) *Business settings* (site name, logo, colors, fonts, menus, footer, banners, texts, fees, FX policy, payment instructions, shipping legs, email templates, translation strings) MUST be editable from the admin panel and stored in the database; hard-coding them is a bug. (2) *Application configuration & secrets* (DB URL, encryption keys, API keys, S3/SMTP credentials, cron secret) live ONLY in environment variables — never in the DB, never editable from admin (admin may show connection status and on/off toggles). (3) *Code contracts* (permission namespace, schema conventions, order state machine) live in the repo and change only via PR.
@@ -77,12 +77,14 @@ If two documents conflict, follow the higher one and add a note in your PR under
 
 ### Branch discipline (D44) — hard rules
 
-GitHub does **not** enforce branch protection or rulesets on a private repo on the Free plan (confirmed: the ruleset exists but is inert). Nothing automated will stop a bad push to `main` — the rules live here and must be honoured. **Breaking any of these is a serious error, not a shortcut:**
+The repository is public (D45). Respect the actual main-branch protections; do not bypass them. The current merge authority is D50/D63, not archived D44/D47 wording.
 
-- **Never commit or push directly to `main`.** Every change goes through a branch and a PR — even a one-line docs fix. (The one and only exception: the Phase 00 housekeeping commit, which Mahdi authorized explicitly. There is no standing exception for "trivial" changes.)
-- **Never merge your own PR.** Vee performs the independent review and may execute the merge only after Mahdi gives separate explicit permission for that PR (D47).
-- **Never ask for review while any CI job is red or still running.**
-- **Never force-push to a shared branch, and never rewrite history that has been pushed.**
+- **Never commit or push directly to `main`.** Every change goes through a branch and PR, including documentation.
+- **The implementation agent may review and merge its own PR** without separate owner or Pixel approval, after the required technical checks pass.
+- **Never merge while required CI is red, pending or absent.** Verify `checks`, `docker` and `docker-runtime` against the latest PR head; resolve blocking findings and required conversations.
+- **Never force-push to a shared branch or rewrite published history.**
+- **Sensitive changes need evidence:** money, inventory, authentication and backup changes must document relevant negative/concurrency/restore tests as applicable, data impact and migration/recovery plans. This is a technical quality requirement, not an additional person-approval gate.
+- Accurately label self-review, automated checks and any actual independent review.
 
 ## 6. Definition of Done (each phase)
 - Acceptance criteria in the phase file all pass.
@@ -91,5 +93,5 @@ GitHub does **not** enforce branch protection or rulesets on a private repo on t
 - `scripts/backup/backup.sh` and `restore.sh` still work (run them once).
 - PROGRESS.md updated. Lint/typecheck/tests green.
 
-## Owner delegation — D50/D51 (2026-09-10)
+## Owner delegation — D50/D51/D63 (current)
 The owner explicitly delegated technical decisions and necessary PR merges to the implementation agent. Separate per-PR permission and the prohibition on merging an implemented PR are superseded by D50. Keep branch + PR, security review, green checks/docker/docker-runtime, no force push, and evidence-based reporting. Do not claim independent human review when only automated or self-review occurred. Hosting/domain purchase may wait until pre-launch under D51; real-environment acceptance gates remain required before release.

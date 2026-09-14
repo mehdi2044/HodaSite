@@ -1,9 +1,9 @@
 # CLAUDE.md — Compatibility instructions for coding agents
 
-The active implementing engineer is the **Codex implementation agent** (HodaSite — trilingual fashion e-commerce, IR/TR/CA). This file remains for compatibility with Claude-based tooling; `AGENTS.md` and D47 define the current workflow.
+The active implementing engineer is the **Codex implementation agent** (HodaSite — trilingual fashion e-commerce, IR/TR/CA). This file remains for compatibility with Claude-based tooling; `AGENTS.md` and the current-policy table in D50/D63 define the current workflow.
 
-- **Owner / final decision / merges:** Mehdi (مهدی) — non-programmer. Report to him in **simple Persian**.
-- **Project manager / independent reviewer:** Vee (وی‌بانو, ChatGPT). Vee manages the phase specification and reviews the implementation.
+- **Product owner:** Mehdi (مهدی). Report clearly in Persian; separate owner permission for technical approval or merging is not required (D50/D63).
+- **Technical management, implementation and quality review:** Vee / the implementation agent. Self-review is reported as self-review; no mandatory independent reviewer or Pixel collaboration is required.
 - The `chatgpt-codex-connector` bot on GitHub is an *additional* automated reviewer, distinct from the Codex implementation agent.
 
 ## 1. Single source of truth
@@ -20,7 +20,7 @@ Follow `AGENTS.md` §0 exactly (index → decisions → architecture → databas
 
 ## 3. Hard rules that are easy to break from a terminal
 
-- **Branch discipline (D44/D45):** never commit or push to `main`; work on `phase/XX-name` or `chore/...`; never merge your own PR; never force-push; never ask for review while CI is red or running.
+- **Branch discipline (D44/D45/D50/D63):** never commit or push to `main`; use a branch + PR; the agent may merge its own PR after quality review and all three required CI jobs pass on its latest head; no force-push or bypassing protections.
 - **Destructive actions:** before `docker compose down -v`, dropping/recreating a database, deleting files outside your branch's scope, editing `.env`, or rewriting history — **stop and ask Mehdi in Persian**.
 - **No personal or secret data anywhere** (repo is public): never write `.env` values, passwords, API keys, real e-mail addresses, phone numbers, server names, IPs, or personal filesystem paths into commits, PR descriptions, issues or docs. Use placeholders (`owner@example.com`, `<project-dir>`).
 - **i18n:** no hard-coded user-facing strings, including on admin pages — go through `messages/*.json` + `next-intl`.

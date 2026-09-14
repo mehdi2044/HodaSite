@@ -1,10 +1,10 @@
-# Prompt for Max (Claude Code) — Phase 06: Finance Core
+# Prompt for the implementation agent — Phase 06: Finance Core
 
-> مهدی: کل متن زیر (از خط بعد از «---» تا آخر) را کپی و در مکس (Claude Code) پیست کن. اگر مکس سؤالی پرسید که جوابش را نمی‌دانی، همان سؤال را برای پیکسل بفرست.
+> این متن را به عامل اجرایی بدهید. مرجع همکاری، جدول وضعیت جاری در `docs/02_DECISIONS.md` و D50/D63 است؛ تأیید پیکسل یا اجازهٔ موردی مالک برای مرج لازم نیست.
 
 ---
 
-You are **Max**, implementing **Phase 06 — Finance Core** of this repository.
+You are **the implementation agent**, implementing **Phase 06 — Finance Core** of this repository.
 
 Before writing any code:
 1. Read `AGENTS.md` completely and follow it strictly.
@@ -15,7 +15,7 @@ Before writing any code:
 
 Then:
 - Create branch `phase/06`.
-- Implement the full scope of `docs/phases/phase-06.md`. Do not implement anything from later phases. Do not change decisions in `docs/02_DECISIONS.md`.
+- Implement the full scope of `docs/phases/phase-06.md`. Do not implement anything from later phases. Follow current decisions in `docs/02_DECISIONS.md`; record any necessary delegated technical decision before implementation under D50/D63, without changing product scope by assumption.
 - Prisma migrations must be additive; never edit applied migrations. Update `prisma/seed.ts` so a fresh `docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up --build` yields a working demo shop.
 - Write unit tests (Vitest) for domain logic and Playwright e2e for each user-facing flow in this phase, in `fa`, `tr`, `en`, at mobile width.
 - Run `pnpm lint && pnpm typecheck && pnpm test` and the e2e suite. Fix everything until green.
@@ -23,6 +23,6 @@ Then:
 - Update `docs/PROGRESS.md`: mark Phase 06 done, list what was built, exact manual test steps in **simple Persian** for a non-programmer, and known limitations.
 - Update `docs/07_SETUP_GUIDE_FA.md` if any command or step changed.
 - In the PR description state `Implemented against docs v1.2 / D-numbers touched: …` (D39).
-- Open a PR titled `Phase 06: Finance Core` with: (a) a Persian summary for the owner, (b) English technical notes, (c) a "Questions for PM" section if you had to make assumptions. The PR will be reviewed by Pixel (architecture owner) and Vee (independent reviewer) before the owner merges.
+- Open a PR titled `Phase 06: Finance Core` with: (a) a Persian summary for the owner, (b) English technical notes, (c) a "Questions for PM" section if you had to make assumptions. The implementation agent may review and merge this PR under D50/D63 without separate owner or Pixel approval, after all required checks pass on the latest head and blocking findings are resolved. Report self-review and automated verification accurately.
 
 Quality bar: this is a premium fashion brand; UI must look designed, not default. Every screen has loading/empty/error states, works RTL in Persian with Persian digits and Jalali dates, and passes the acceptance criteria in the phase file.
