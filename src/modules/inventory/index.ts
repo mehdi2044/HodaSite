@@ -139,7 +139,7 @@ export async function receiveStock(input: ReceiveStockInput) {
   return db.$transaction((tx) => receiveStockInTransaction(tx, input));
 }
 
-async function receiveStockInTransaction(
+export async function receiveStockInTransaction(
   tx: Prisma.TransactionClient,
   input: ReceiveStockInput,
 ) {
@@ -408,4 +408,10 @@ export async function adjustStock(input: {
   });
 }
 
-export { reserveOrderInventory, releaseOrderInventory, verifyOrderInventory, consumeOrderInventory, InsufficientOrderStock } from "./orders";
+export {
+  reserveOrderInventory,
+  releaseOrderInventory,
+  verifyOrderInventory,
+  consumeOrderInventory,
+  InsufficientOrderStock,
+} from "./orders";

@@ -2,6 +2,20 @@ import { Prisma } from "@prisma/client";
 
 export const LEDGER_CHART = [
   {
+    code: "store_credit",
+    kind: "LIABILITY",
+    nameI18n: {
+      fa: "اعتبار مشتریان",
+      tr: "Müşteri kredisi",
+      en: "Store credit liability",
+    },
+  },
+  {
+    code: "payables",
+    kind: "LIABILITY",
+    nameI18n: { fa: "حساب پرداختنی", tr: "Borçlar", en: "Accounts payable" },
+  },
+  {
     code: "cash",
     kind: "ASSET",
     nameI18n: {

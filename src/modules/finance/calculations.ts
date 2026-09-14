@@ -9,9 +9,7 @@ const currency = z.enum(["TRY", "USD", "CAD", "IRT"]);
 const side = z
   .object({ debit: amount, credit: amount })
   .strict()
-  .refine(
-    (v) => new Exact(v.debit).isZero() || new Exact(v.credit).isZero(),
-  );
+  .refine((v) => new Exact(v.debit).isZero() || new Exact(v.credit).isZero());
 export const journalLineSchema = z
   .object({
     accountId: z.string().min(1).max(100),

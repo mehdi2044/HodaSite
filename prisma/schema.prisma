@@ -1636,8 +1636,8 @@ model JournalEntry {
   effectiveAt  DateTime      @db.Timestamptz(3)
   fxAsOf       DateTime      @db.Timestamptz(3)
   createdAt    DateTime      @default(now()) @db.Timestamptz(3)
-  createdById  String
-  createdBy    User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById  String?
+  createdBy    User?         @relation(fields: [createdById], references: [id], onDelete: Restrict)
   status       String        @default("DRAFT")
   reversalOfId String?       @unique
   reversalOf   JournalEntry? @relation("JournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
@@ -1667,4 +1667,141 @@ model JournalLine {
 
   @@unique([entryId, position])
   @@index([accountId, entryId])
+}
+
+model FinanceConfig {
+  id               String    @id
+  enabled          Boolean   @default(false)
+  enabledAt        DateTime? @db.Timestamptz(3)
+  marginPercent    Decimal   @default(10) @db.Decimal(18, 4)
+  slowDays         Int       @default(90)
+  deviationPercent Decimal   @default(50) @db.Decimal(18, 4)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+}
+
+model Supplier {
+  id        String          @id @default(cuid())
+  marketId  String
+  name      String
+  notes     String          @default("")
+  isActive  Boolean         @default(true)
+  createdAt DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime        @updatedAt @db.Timestamptz(3)
+  orders    PurchaseOrder[]
+
+  @@index([marketId])
+}
+
+model PurchaseOrder {
+  id             String              @id @default(cuid())
+  marketId       String
+  supplierId     String
+  supplier       Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  warehouseId    String
+  requestKey     String
+  requestHash    String
+  status         String              @default("DRAFT")
+  currency       String
+  rateTry        Decimal             @db.Decimal(30, 12)
+  rateUsd        Decimal             @db.Decimal(30, 12)
+  fxAsOf         DateTime            @db.Timestamptz(3)
+  effectiveAt    DateTime            @db.Timestamptz(3)
+  additionalCost Decimal             @db.Decimal(18, 4)
+  allocation     String
+  memo           String
+  createdById    String
+  receivedAt     DateTime?           @db.Timestamptz(3)
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime            @updatedAt @db.Timestamptz(3)
+  items          PurchaseOrderItem[]
+
+  @@unique([marketId, requestKey])
+  @@index([supplierId])
+  @@index([warehouseId])
+  @@index([createdById])
+}
+
+model PurchaseOrderItem {
+  id                String        @id @default(cuid())
+  purchaseOrderId   String
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  variantId         String
+  quantity          Int
+  purchaseTotal     Decimal       @db.Decimal(18, 4)
+  weight            Decimal       @db.Decimal(18, 4)
+  allocatedCost     Decimal       @db.Decimal(18, 4)
+  landedTotal       Decimal       @db.Decimal(18, 4)
+  unitCost          Decimal       @db.Decimal(18, 4)
+  roundingRemainder Decimal       @db.Decimal(18, 4)
+  lotId             String?       @unique
+
+  @@index([purchaseOrderId])
+  @@index([variantId])
+}
+
+model Expense {
+  id               String   @id @default(cuid())
+  marketId         String
+  requestKey       String
+  requestHash      String
+  category         String
+  memo             String
+  currency         String
+  amount           Decimal  @db.Decimal(18, 4)
+  rateTry          Decimal  @db.Decimal(30, 12)
+  rateUsd          Decimal  @db.Decimal(30, 12)
+  fxAsOf           DateTime @db.Timestamptz(3)
+  effectiveAt      DateTime @db.Timestamptz(3)
+  attachmentId     String?
+  recurrenceMonths Int      @default(0)
+  status           String   @default("PENDING")
+  journalId        String?  @unique
+  createdById      String
+  approvedById     String?
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([marketId, requestKey])
+  @@index([createdById])
+  @@index([approvedById])
+  @@index([attachmentId])
+}
+
+model Partner {
+  id               String               @id @default(cuid())
+  marketId         String
+  name             String
+  ownershipPercent Decimal              @db.Decimal(18, 4)
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime             @updatedAt @db.Timestamptz(3)
+  transactions     CapitalTransaction[]
+
+  @@index([marketId])
+}
+
+model CapitalTransaction {
+  id              String   @id @default(cuid())
+  marketId        String
+  partnerId       String
+  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  requestKey      String
+  requestHash     String
+  kind            String
+  memo            String
+  currency        String
+  amount          Decimal  @db.Decimal(18, 4)
+  rateTry         Decimal  @db.Decimal(30, 12)
+  rateUsd         Decimal  @db.Decimal(30, 12)
+  fxAsOf          DateTime @db.Timestamptz(3)
+  effectiveAt     DateTime @db.Timestamptz(3)
+  purchaseOrderId String?
+  journalId       String   @unique
+  createdById     String
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([marketId, requestKey])
+  @@index([partnerId])
+  @@index([purchaseOrderId])
+  @@index([createdById])
 }

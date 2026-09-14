@@ -1,3 +1,4 @@
+import { recognizeReturn } from "@/modules/finance/events";
 import { exchangeReturn } from "./exchange";
 import Decimal from "decimal.js";
 import { Prisma, type ReturnStatus } from "@prisma/client";
@@ -388,6 +389,7 @@ export async function manageReturn(userId: string, raw: unknown) {
           where: { id: row.id },
           data,
         });
+        await recognizeReturn(tx, row.id, userId);
         await tx.auditLog.create({
           data: {
             userId,

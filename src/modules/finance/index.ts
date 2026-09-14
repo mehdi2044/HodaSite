@@ -11,3 +11,5 @@ export {
   reversePostedJournal,
   readJournalEntry,
 } from "./ledger";
+
+export { recognizePaidOrder, recognizeReturn } from "./posting";
