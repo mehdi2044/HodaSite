@@ -1,12 +1,10 @@
 "use client";
 import { useLocale, useTranslations } from "next-intl";
 import { useTransition, useState } from "react";
-import { useRouter } from "next/navigation";
 import { setAdminLocale } from "@/app/admin/(dashboard)/security/actions";
 export function AdminLocaleSwitcher() {
   const locale = useLocale();
   const t = useTranslations("adminShell");
-  const router = useRouter();
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
   return (
@@ -18,13 +16,17 @@ export function AdminLocaleSwitcher() {
         value={locale}
         disabled={pending}
         onChange={(event) => {
+          if (event.target.value === locale) return;
           const form = new FormData();
           form.set("locale", event.target.value);
           start(async () => {
             setError(false);
             try {
               await setAdminLocale(form);
-              router.refresh();
+              // The cookie action already revalidates the layout. A second
+              // RSC refresh can leave streamed children pending with old copy.
+              // Load one document using the saved preference for the whole UI.
+              window.location.reload();
             } catch {
               setError(true);
             }

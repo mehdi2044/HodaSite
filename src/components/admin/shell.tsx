@@ -28,6 +28,7 @@ export async function AdminShell({
   const finance = await getTranslations("finance");
   const ai = await getTranslations("aiAdmin");
   const journal = await getTranslations("journal");
+  const launch = await getTranslations("launch");
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
   const alertCount = showHealth
@@ -88,6 +89,9 @@ export async function AdminShell({
         <Link href="/admin/design">{nav("design")}</Link>
         <Link href="/admin/system/backups">{backups("title")}</Link>
         <Link href="/admin/system/health">{nav("health")}</Link>
+        {showHealth && (
+          <Link href="/admin/system/launch">{launch("title")}</Link>
+        )}
         <div className="sidebar-user">
           <span className="muted">{user.name}</span>
           <bdi dir="ltr">{user.email}</bdi>

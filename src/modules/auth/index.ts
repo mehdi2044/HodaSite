@@ -7,6 +7,7 @@ import {
   revokeAdminSession,
 } from "./security";
 import { getClientIp } from "@/lib/net";
+export { requiresMfa } from "./security";
 const nextAuth = NextAuth({
   ...authConfig,
   providers: [
