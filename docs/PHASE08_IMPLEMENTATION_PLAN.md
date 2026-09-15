@@ -14,9 +14,17 @@ This increment is read-only: no migrations, new permissions, data reset, provide
 
 Verify absent, failed, future-dated and stale backup evidence; no-op/misconfigured email; empty or stale markets; missing privileged-user MFA; maintenance; denied access before database lookup. Browser acceptance covers fa/tr/en at 390px, private access, navigation and visible unverified gates. Existing required CI remains mandatory before merge.
 
-## Remaining increments (not completed by 08a)
+## 08b — crawlable URLs, metadata and SEO settings
 
-1. Technical SEO: canonical/hreflang, sitemaps, robots, structured data, slug redirects, branded social previews and editable settings.
+D64 introduces canonical `/{locale}/m/{marketCode}/...` URLs for home/product/category/CMS pages. The explicit route market wins over cookies; invalid/inactive markets or disabled locales are rejected. Existing URLs remain usable; an explicit valid `?market` on a public GET redirects to the stable path. Canonical/hreflang uses the configured HTTPS origin and exact available slugs, excludes inactive markets/disabled languages, and preserves category pagination without inventing alternate paginated results.
+
+SEO settings reuse `SiteSettings.seo`, the existing `settings.brand.edit` permission and audit trail. Indexing is off by default; robots and sitemap respect it. The sitemap index splits active markets and public entity types into 1,000-row chunks. No admin/account/order/preview URL is listed. Private paths receive X-Robots-Tag; preview and multi-facet listings remain noindex. All three admin languages are supported. No schema/data migration, reset, hosting or DNS operation occurs.
+
+Testing includes URL/metadata invariants, real database visibility and save authorization/audit, and browser acceptance for language/market routes, private headers, robots/sitemap and the mobile settings form. Real search engine indexing and real-host acceptance are not claimed.
+
+## Remaining increments (not completed by 08b)
+
+1. Remaining SEO: complete structured data (including currency/offer and moderated-rating rules), slug history/redirects, dynamic branded social previews and verification of real search-engine behavior. Analytics IDs/loaders remain coupled to consent in the next increment. Existing product social-image overrides are preserved.
 2. Consent and privacy controls for analytics, guest/customer wishlist, recently viewed, back-in-stock subscriptions and moderated reviews with permission/privacy tests.
 3. Accessibility and performance measurements/fixes; PWA regression checks. Record bundle and local/CI results separately from staging measurements.
 4. Audited, dated, environment-specific acceptance evidence in the launch checklist. Complete the real HTTPS/device/email/off-site/payment/reachability gates when infrastructure is available; do not treat mocks or the first dashboard as evidence.

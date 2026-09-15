@@ -1,7 +1,23 @@
+import { publicMetadata } from "@/modules/seo";
+import type { SeoLocale } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { getRequestContext } from "@/lib/request-context";
 import { getHomepage } from "@/modules/content/homepage";
 import { HomepageBlocks } from "@/components/storefront/homepage-blocks";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const { market } = await getRequestContext(locale);
+  return publicMetadata({
+    locale: locale as SeoLocale,
+    marketId: market.id,
+    kind: "home",
+  });
+}
 
 export default async function Home({
   params,

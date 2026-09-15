@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/modules/seo";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRequestContext } from "@/lib/request-context";
@@ -10,12 +11,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const { market } = await getRequestContext(locale);
   const page = await getPublishedPage(slug, locale, market.id);
-  if (!page) return {};
+  if (!page) return { robots: { index: false, follow: false } };
   const seo = page.seoI18n as { title?: Localized; description?: Localized };
   const title =
     (seo.title?.[locale] || (page.titleI18n as Localized)[locale]) ?? undefined;
   const description = seo.description?.[locale] || undefined;
-  return { title, description };
+  return publicMetadata({
+    locale,
+    marketId: market.id,
+    kind: "pages",
+    slugs: page.slugI18n,
+    marketIds: page.marketIds.length ? page.marketIds : undefined,
+    title,
+    description,
+  });
 }
 
 export default async function CmsPage({ params }: Props) {

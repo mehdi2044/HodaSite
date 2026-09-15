@@ -1,3 +1,4 @@
+import { publicMetadata } from "@/modules/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,45 +23,46 @@ import { getDisplayPrice } from "@/modules/pricing";
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<{ preview?: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const safe = locale as CatalogLocale;
   const { market } = await getRequestContext(locale);
   const product = await findProductBySlug(market.id, safe, slug);
-  if (!product) return {};
-  const seo = product.seoI18n as {
+  if (!product) return { robots: { index: false, follow: false } };
+  const seo = (product.seoI18n ?? {}) as {
     title?: unknown;
     description?: unknown;
     ogMediaId?: string;
   };
-  const og = seo.ogMediaId
-    ? await db.media.findFirst({
-        where: {
-          id: seo.ogMediaId,
-          kind: "image",
-          status: "READY",
-          deletedAt: null,
-        },
-        select: { url: true },
-      })
-    : null;
-  return {
+  const og =
+    typeof seo.ogMediaId === "string"
+      ? await db.media.findFirst({
+          where: {
+            id: seo.ogMediaId,
+            kind: "image",
+            status: "READY",
+            deletedAt: null,
+          },
+          select: { url: true },
+        })
+      : null;
+  return publicMetadata({
+    locale: safe,
+    marketId: market.id,
+    kind: "p",
+    images: og ? [og.url] : undefined,
+    slugs: product.slugI18n,
+    marketIds: product.marketIds,
+    noindex: (await searchParams).preview !== undefined,
     title: catalogText(seo.title, safe) || catalogText(product.titleI18n, safe),
     description:
       catalogText(seo.description, safe) ||
       catalogText(product.descriptionI18n, safe),
-    openGraph: og ? { images: [og.url] } : undefined,
-    alternates: {
-      languages: Object.fromEntries(
-        (["fa", "tr", "en"] as const).map((item) => [
-          item,
-          `/${item}/p/${encodeURIComponent(catalogText(product.slugI18n, item))}`,
-        ]),
-      ),
-    },
-  };
+  });
 }
 
 export default async function ProductPage({

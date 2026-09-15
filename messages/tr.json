@@ -1665,5 +1665,23 @@
     "accessCAHint": "Ana sayfa, görseller, giriş, ödeme ve dekont yükleme VPN olmadan test edilip kaydedilmelidir.",
     "providersTitle": "Aktif hizmetlerin deneme modundan çıkarılması",
     "providersHint": "Hiçbir aktif hizmet gönderimsiz modda olmamalıdır. Bu kontrol tek başına gerçek sağlayıcı bağlantısını doğrulamaz."
+  },
+  "seoAdmin": {
+    "title": "SEO ayarları",
+    "intro": "Sayfa varsayılanlarını ve mağazanın arama motorlarında dizine eklenmesini yönetin.",
+    "origin": "Ana site adresi",
+    "originHint": "Yol, sorgu veya kullanıcı bilgisi içermeyen bir HTTPS adresi. Bu ayar alan adını bağlamaz veya siteyi yayımlamaz.",
+    "indexing": "Herkese açık sayfaların dizine eklenmesine izin ver",
+    "indexingHint": "Varsayılan olarak kapalıdır. Yayın kabul testleri tamamlanana kadar kapalı tutun. Hesaplar, siparişler ve yönetim sayfaları her zaman kapsam dışıdır.",
+    "defaultTitle": "Varsayılan başlık",
+    "description": "Varsayılan açıklama",
+    "googleVerification": "Google sahiplik doğrulama kodu",
+    "verificationHint": "Yalnızca doğrulama değerini girin; HTML veya betik girmeyin.",
+    "fa": "Farsça",
+    "tr": "Türkçe",
+    "en": "İngilizce",
+    "save": "Ayarları kaydet",
+    "saving": "Kaydediliyor…",
+    "saved": "Ayarlar kaydedildi."
   }
 }
