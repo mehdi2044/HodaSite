@@ -1,17 +1,34 @@
+import Link from "next/link";
+import { z } from "zod";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAdminPage } from "@/modules/auth/page";
 import { db } from "@/lib/db";
 import { localized } from "@/lib/seo";
 import { EngagementForm } from "@/components/engagement/form";
 import { moderateReviewAction } from "./actions";
-export default async function ReviewModeration() {
+export default async function ReviewModeration({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; after?: string }>;
+}) {
   await requireAdminPage("content.page.publish");
-  const [t, locale, reviews] = await Promise.all([
+  const query = await searchParams;
+  const status = z
+    .enum(["PENDING", "APPROVED", "REJECTED", "ALL"])
+    .catch("PENDING")
+    .parse(query.status);
+  const after = z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,100}$/)
+    .safeParse(query.after);
+  const [t, locale, rows] = await Promise.all([
     getTranslations("engagement"),
     getLocale(),
     db.review.findMany({
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take: 100,
+      where: status === "ALL" ? {} : { status },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      ...(after.success ? { cursor: { id: after.data }, skip: 1 } : {}),
+      take: 101,
       include: {
         product: { select: { titleI18n: true } },
         market: { select: { code: true } },
@@ -19,10 +36,34 @@ export default async function ReviewModeration() {
       },
     }),
   ]);
+  const reviews = rows.slice(0, 100);
   return (
     <div className="grid gap-5">
       <h1>{t("moderation")}</h1>
       <p>{t("allReviews")}</p>
+      <form className="flex flex-wrap gap-3" method="get">
+        <label>
+          {t("status")}
+          <select className="input" name="status" defaultValue={status}>
+            {(["PENDING", "APPROVED", "REJECTED", "ALL"] as const).map(
+              (value) => (
+                <option key={value} value={value}>
+                  {t(
+                    value === "PENDING"
+                      ? "pending"
+                      : value === "APPROVED"
+                        ? "approve"
+                        : value === "REJECTED"
+                          ? "reject"
+                          : "all",
+                  )}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <button className="button">{t("filter")}</button>
+      </form>
       {reviews.map((r) => (
         <article key={r.id} className="card grid gap-3">
           <h2>{localized(r.product.titleI18n, locale)}</h2>
@@ -80,6 +121,14 @@ export default async function ReviewModeration() {
           </EngagementForm>
         </article>
       ))}
+      {rows.length > 100 && (
+        <Link
+          className="button w-fit"
+          href={`?${new URLSearchParams({ status, after: reviews.at(-1)!.id })}`}
+        >
+          {t("next")}
+        </Link>
+      )}
     </div>
   );
 }

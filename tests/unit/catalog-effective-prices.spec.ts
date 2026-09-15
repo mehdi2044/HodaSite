@@ -65,3 +65,13 @@ it("supports descending prices and lower bounds", async () => {
     "expensive-base",
   ]);
 });
+
+it("continues an effective-price listing after its cursor", async () => {
+  const result = await listCatalogProducts("CA", "en", {
+    sort: "price-asc",
+    limit: 1,
+    after: "expensive-base",
+  });
+  expect(result.items.map((p) => p.id)).toEqual(["cheap-base"]);
+  expect(result.nextCursor).toBeNull();
+});

@@ -1158,7 +1158,8 @@
     "galleryCount": "{current} / {total}",
     "emptyCollection": "Bu seçkide henüz ürün yok.",
     "emptyCategories": "Kategoriler yakında burada görünecek.",
-    "collectionPreview": "Günlük stile bir bakış"
+    "collectionPreview": "Günlük stile bir bakış",
+    "carousel": "Kayan galeri"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",
@@ -1715,7 +1716,11 @@
     "reject": "Reddet",
     "moderation": "Yorum yönetimi",
     "pending": "İnceleme bekliyor",
-    "allReviews": "Son 100 yorum"
+    "allReviews": "Sayfa başına en fazla 100 yorum; en eski önce",
+    "status": "Durum",
+    "all": "Tümü",
+    "filter": "Filtrele",
+    "next": "Sonraki sayfa"
   },
   "consent": {
     "title": "Gizlilik tercihiniz",

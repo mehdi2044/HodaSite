@@ -267,7 +267,7 @@ export async function catalogFacets() {
       orderBy: { sortOrder: "asc" },
     }),
     db.product.findMany({
-      where: { deletedAt: null, material: { not: null } },
+      where: { deletedAt: null, status: "ACTIVE", material: { not: null } },
       distinct: ["material"],
       select: { material: true },
       orderBy: { material: "asc" },

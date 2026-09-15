@@ -46,7 +46,10 @@ export async function generateMetadata({
     slugs: category.slugI18n,
     page: Number.isSafeInteger(page) && page > 1 && page <= 100000 ? page : 1,
     facetQuery: singleFacetQuery(filters),
-    noindex: filteredListing(filters) || filters.preview !== undefined,
+    noindex:
+      filteredListing(filters) ||
+      filters.preview !== undefined ||
+      filters.after !== undefined,
     title:
       catalogText(seo.title, safe) || catalogText(category.titleI18n, safe),
     description:

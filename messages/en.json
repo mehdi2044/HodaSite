@@ -1158,7 +1158,8 @@
     "galleryCount": "{current} of {total}",
     "emptyCollection": "There are no products in this selection yet.",
     "emptyCategories": "Categories will appear here soon.",
-    "collectionPreview": "A look at everyday style"
+    "collectionPreview": "A look at everyday style",
+    "carousel": "Carousel"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",
@@ -1715,7 +1716,11 @@
     "reject": "Reject",
     "moderation": "Review moderation",
     "pending": "Pending moderation",
-    "allReviews": "Latest 100 reviews"
+    "allReviews": "Up to 100 reviews per page, oldest first",
+    "status": "Status",
+    "all": "All",
+    "filter": "Filter",
+    "next": "Next page"
   },
   "consent": {
     "title": "Your privacy choice",

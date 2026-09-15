@@ -1158,7 +1158,8 @@
     "galleryCount": "{current} از {total}",
     "emptyCollection": "هنوز محصولی در این مجموعه قرار نگرفته است.",
     "emptyCategories": "دسته‌بندی‌ها به‌زودی اضافه می‌شوند.",
-    "collectionPreview": "نگاهی به استایل روزمره"
+    "collectionPreview": "نگاهی به استایل روزمره",
+    "carousel": "گالری پیمایشی"
   },
   "finance": {
     "eyebrow": "امور مالی · گزارش تراکنش‌ها",
@@ -1715,7 +1716,11 @@
     "reject": "رد",
     "moderation": "بررسی نظرات",
     "pending": "در انتظار بررسی",
-    "allReviews": "آخرین ۱۰۰ نظر"
+    "allReviews": "تا ۱۰۰ نظر در هر صفحه؛ قدیمی‌ترین ابتدا",
+    "status": "وضعیت",
+    "all": "همه",
+    "filter": "فیلتر",
+    "next": "صفحه بعد"
   },
   "consent": {
     "title": "انتخاب حریم خصوصی",

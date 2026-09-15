@@ -99,6 +99,17 @@ for (const [locale, market, slug] of [
       .getByRole("button", { name: copy.consent.reject, exact: true })
       .click();
     expect(external).toEqual([]);
+    const slide = page.locator(".shop-gallery-slide").first();
+    await slide.focus();
+    await page.keyboard.press("Enter");
+    const zoom = page.locator("dialog.shop-gallery-zoom");
+    await expect(zoom).toBeVisible();
+    await expect(
+      zoom.getByRole("button", { name: copy.shopping.close }),
+    ).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(zoom).not.toBeVisible();
+    await expect(slide).toBeFocused();
     const result = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();

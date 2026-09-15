@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDisplayPrices } from "@/modules/pricing";
 import { getTranslations } from "next-intl/server";
 import { ProductCard } from "@/components/storefront/product-card";
@@ -10,15 +11,23 @@ export default async function SearchPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ locale }, { q = "" }] = await Promise.all([params, searchParams]);
+  const [{ locale }, query] = await Promise.all([params, searchParams]);
+  const one = (value: string | string[] | undefined) =>
+    Array.isArray(value) ? value[0] : value;
+  const q = (one(query.q) ?? "").slice(0, 200);
   const safe = locale as CatalogLocale;
   const [{ market }, t] = await Promise.all([
     getRequestContext(locale),
     getTranslations("catalog"),
   ]);
-  const result = await listCatalogProducts(market.id, safe, { q, limit: 24 });
+  const result = await listCatalogProducts(market.id, safe, {
+    q,
+    limit: 24,
+    after: one(query.after),
+    page: Number(one(query.page) ?? 1),
+  });
   const prices = await getDisplayPrices(result.items, market);
   return (
     <main
@@ -51,6 +60,14 @@ export default async function SearchPage({
           />
         ))}
       </div>
+      {result.nextCursor && (
+        <Link
+          className="button mt-8 inline-block"
+          href={`?${new URLSearchParams({ q, after: result.nextCursor, page: String(result.page + 1) })}`}
+        >
+          {t("loadMore")}
+        </Link>
+      )}
     </main>
   );
 }
