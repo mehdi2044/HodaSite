@@ -165,8 +165,8 @@ test("SEO settings control public metadata, stable market URLs and private crawl
       { maxRedirects: 0 },
     );
     expect(redirected.status()).toBe(301);
-    expect(new URL(redirected.headers().location).pathname).toBe(
-      seoPath("tr", "TR", "p", slugs.tr),
+    expect(new URL(redirected.headers().location, redirected.url()).href).toBe(
+      new URL(seoPath("tr", "TR", "p", slugs.tr), redirected.url()).href,
     );
     expect((await page.request.get("/fa/m/TR")).status()).toBe(404);
     expect((await page.request.get("/en/m/CA/account")).status()).toBe(404);
