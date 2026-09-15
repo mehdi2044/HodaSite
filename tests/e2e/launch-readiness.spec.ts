@@ -61,27 +61,32 @@ test("launch readiness stays private and shows unverified gates in all locales o
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/system/launch");
+  // Streaming locale transitions can temporarily keep a hidden React copy.
+  // Assert the single visible dashboard, which is what the user can access.
+  const dashboard = page.locator('[data-testid="launch-page"]:visible');
   for (const [locale, messages] of [
     ["fa", fa],
     ["tr", tr],
     ["en", en],
   ] as const) {
     await page.locator('[name="adminLocale"]').selectOption(locale);
+    await expect(dashboard).toHaveCount(1);
     await expect(
-      page.getByRole("heading", { name: messages.launch.title, exact: true }),
+      dashboard.getByRole("heading", {
+        name: messages.launch.title,
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: messages.launch.notReady }),
+      dashboard.getByRole("heading", { name: messages.launch.notReady }),
     ).toBeVisible();
     await expect(
-      page.getByTestId("launch-offsite").locator('[data-status="blocked"]'),
+      dashboard
+        .getByTestId("launch-offsite")
+        .locator('[data-status="blocked"]'),
     ).toBeVisible();
-    await expect(
-      page.getByTestId("launch-page").locator('[data-status="pending"]'),
-    ).toHaveCount(14);
-    await expect(
-      page.getByTestId("launch-page").getByRole("checkbox"),
-    ).toHaveCount(0);
+    await expect(dashboard.locator('[data-status="pending"]')).toHaveCount(14);
+    await expect(dashboard.getByRole("checkbox")).toHaveCount(0);
     await expect(page.locator(".admin")).toHaveAttribute(
       "dir",
       locale === "fa" ? "rtl" : "ltr",
@@ -92,14 +97,16 @@ test("launch readiness stays private and shows unverified gates in all locales o
     }));
     expect(width.total).toBeLessThanOrEqual(width.viewport + 1);
   }
-  await page
+  await dashboard
     .getByRole("link", { name: en.launch.refresh, exact: true })
     .click();
   await expect(
-    page.getByTestId("launch-restoreDrill").locator('[data-status="pending"]'),
+    dashboard
+      .getByTestId("launch-restoreDrill")
+      .locator('[data-status="pending"]'),
   ).toBeVisible();
   await page.locator('[name="adminLocale"]').selectOption("fa");
   await expect(
-    page.getByRole("heading", { name: fa.launch.title, exact: true }),
+    dashboard.getByRole("heading", { name: fa.launch.title, exact: true }),
   ).toBeVisible();
 });
