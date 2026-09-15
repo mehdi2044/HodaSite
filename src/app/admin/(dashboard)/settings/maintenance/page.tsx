@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getSiteSettings } from "@/modules/settings";
 import { saveMaintenance } from "./actions";
 import {
@@ -16,6 +17,8 @@ function toLocalInput(iso?: string) {
 }
 
 export default async function MaintenanceSettings() {
+  const legacy = await getTranslations("foundationAdmin");
+
   const site = await getSiteSettings();
   const maintenance = (site?.maintenance ?? { state: "off" }) as {
     state?: string;
@@ -27,27 +30,26 @@ export default async function MaintenanceSettings() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">حالت تعمیرات</h1>
+      <h1 className="text-2xl font-semibold">{legacy("maintenance")}</h1>
       <Card className="mt-4 max-w-lg">
-        <SettingsForm action={saveMaintenance} submitLabel="ذخیره">
-          <CardTitle>وضعیت</CardTitle>
-          <CardDescription>
-            وقتی روشن باشد، فروشگاه (به‌جز ادمین و آی‌پی‌های مجاز) صفحهٔ تعمیرات
-            (۵۰۳) می‌بیند.
-          </CardDescription>
+        <SettingsForm action={saveMaintenance} submitLabel={legacy("save")}>
+          <CardTitle>{legacy("status")}</CardTitle>
+          <CardDescription> {legacy("maintenanceHelp")} </CardDescription>
           <label className="grid gap-1">
-            حالت
+            {" "}
+            {legacy("mode")}{" "}
             <Select name="state" defaultValue={maintenance.state ?? "off"}>
-              <option value="off">خاموش</option>
-              <option value="on">روشن</option>
-              <option value="scheduled">زمان‌بندی‌شده</option>
+              <option value="off">{legacy("off")}</option>
+              <option value="on">{legacy("on")}</option>
+              <option value="scheduled">{legacy("scheduled")}</option>
             </Select>
           </label>
 
-          <CardTitle className="mt-2">پیام</CardTitle>
+          <CardTitle className="mt-2">{legacy("message")}</CardTitle>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              پیام ({locale})
+              {" "}
+              {legacy("messageLocale", { locale })}
               <Input
                 name={`message${cap(locale)}`}
                 defaultValue={maintenance.message?.[locale]}
@@ -56,11 +58,9 @@ export default async function MaintenanceSettings() {
           ))}
 
           <label className="grid gap-1">
-            آی‌پی‌های مجاز
-            <CardDescription>
-              هر خط یک IP یا CIDR (مثل ۱۹۲.۱۶۸.۱.۱ یا ۱۰.۰.۰.۰/۲۴) — این‌ها
-              صفحهٔ تعمیرات را نمی‌بینند.
-            </CardDescription>
+            {" "}
+            {legacy("allowedIps")}{" "}
+            <CardDescription> {legacy("allowedIpsHelp")} </CardDescription>
             <textarea
               name="allowlistIps"
               defaultValue={(maintenance.allowlistIps ?? []).join("\n")}
@@ -70,11 +70,10 @@ export default async function MaintenanceSettings() {
             />
           </label>
 
-          <CardTitle className="mt-2">
-            زمان‌بندی (فقط برای حالت «زمان‌بندی‌شده»)
-          </CardTitle>
+          <CardTitle className="mt-2"> {legacy("schedule")} </CardTitle>
           <label className="grid gap-1">
-            شروع
+            {" "}
+            {legacy("start")}{" "}
             <Input
               name="startsAt"
               type="datetime-local"
@@ -82,7 +81,8 @@ export default async function MaintenanceSettings() {
             />
           </label>
           <label className="grid gap-1">
-            پایان
+            {" "}
+            {legacy("end")}{" "}
             <Input
               name="endsAt"
               type="datetime-local"

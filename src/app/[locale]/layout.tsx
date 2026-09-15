@@ -1,3 +1,6 @@
+import { jsonLdText } from "@/modules/seo/structured";
+import { Consent } from "@/components/engagement/consent";
+import { EngagementProvider } from "@/components/engagement/wishlist";
 import { normalizeSeo } from "@/lib/seo";
 import { normalizeThemeColors, safeColorMap } from "@/lib/theme-validation";
 import { DEFAULT_LIGHT_COLORS } from "@/lib/theme-defaults";
@@ -118,35 +121,54 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="storefront-app">
-        <a className="storefront-skip-link" href="#storefront-content">
-          {t("skipContent")}
-        </a>
-        <AnnouncementBar market={market} locale={locale} />
-        <Header
-          locale={locale}
-          market={market}
-          markets={markets}
-          siteName={siteName}
-          logoMediaId={theme?.logoMediaId}
-          headerStyle={theme?.headerStyle ?? "minimal"}
-        />
-        <GeoSuggestionBanner
-          currentMarketCode={market.code}
-          markets={markets}
-        />
-        <div id="storefront-content" tabIndex={-1}>
-          {children}
+      <EngagementProvider context={{ marketId: market.id, locale }}>
+        <div className="storefront-app">
+          <a className="storefront-skip-link" href="#storefront-content">
+            {t("skipContent")}
+          </a>
+          {normalizeSeo(site?.seo).origin && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: jsonLdText({
+                  "@context": "https://schema.org",
+                  "@type": "Organization",
+                  name: siteName,
+                  url: normalizeSeo(site?.seo).origin,
+                }),
+              }}
+            />
+          )}
+          <AnnouncementBar market={market} locale={locale} />
+          <Header
+            locale={locale}
+            market={market}
+            markets={markets}
+            siteName={siteName}
+            logoMediaId={theme?.logoMediaId}
+            headerStyle={theme?.headerStyle ?? "minimal"}
+          />
+          <GeoSuggestionBanner
+            currentMarketCode={market.code}
+            markets={markets}
+          />
+          <div id="storefront-content" tabIndex={-1}>
+            {children}
+          </div>
+          <PwaControls />
+          <Consent
+            marketId={market.id}
+            ids={normalizeSeo(site?.seo).analytics}
+          />
+          <Footer
+            locale={locale}
+            market={market}
+            contact={(site?.contact ?? {}) as Contact}
+            social={normalizeSocial(site?.social)}
+            legal={(site?.legal ?? {}) as Legal}
+          />
         </div>
-        <PwaControls />
-        <Footer
-          locale={locale}
-          market={market}
-          contact={(site?.contact ?? {}) as Contact}
-          social={normalizeSocial(site?.social)}
-          legal={(site?.legal ?? {}) as Legal}
-        />
-      </div>
+      </EngagementProvider>
     </NextIntlClientProvider>
   );
 }

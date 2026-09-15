@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 import { useActionState, useState } from "react";
 import { Button, Card, CardTitle, Input, Select } from "@/components/ui";
 import { saveSocial } from "./actions";
@@ -9,22 +11,22 @@ import {
   type MarketCode,
 } from "@/lib/social";
 
-const MARKET_NAMES: Record<MarketCode, string> = {
-  IR: "ایران",
-  TR: "ترکیه",
-  CA: "کانادا",
-};
-const LABELS: Record<string, string> = {
-  instagram: "اینستاگرام",
-  telegram: "تلگرام",
-  whatsapp: "واتساپ",
-  x: "X (توییتر)",
-  tiktok: "تیک‌تاک",
-  youtube: "یوتیوب",
-  linkedin: "لینکدین",
-};
-
 export function SocialEditor({ initial }: { initial: SocialByMarket }) {
+  const legacy = useTranslations("foundationAdmin");
+  const MARKET_NAMES: Record<MarketCode, string> = {
+    IR: legacy("iran"),
+    TR: legacy("turkey"),
+    CA: legacy("canada"),
+  };
+  const LABELS: Record<string, string> = {
+    instagram: legacy("instagram"),
+    telegram: legacy("telegram"),
+    whatsapp: legacy("whatsapp"),
+    x: legacy("x"),
+    tiktok: legacy("tiktok"),
+    youtube: legacy("youtube"),
+    linkedin: legacy("linkedin"),
+  };
   const [state, formAction, pending] = useActionState(saveSocial, null);
   const [draft, setDraft] = useState<SocialByMarket>(initial);
 
@@ -41,9 +43,12 @@ export function SocialEditor({ initial }: { initial: SocialByMarket }) {
       {MARKET_CODES.map((market) => (
         <Card key={market} className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle>بازار {MARKET_NAMES[market]}</CardTitle>
+            <CardTitle>
+              {legacy("market")} {MARKET_NAMES[market]}
+            </CardTitle>
             <label className="flex items-center gap-2 text-sm">
-              کپی از
+              {" "}
+              {legacy("copyFrom")}{" "}
               <Select
                 defaultValue=""
                 onChange={(e) => {
@@ -54,7 +59,8 @@ export function SocialEditor({ initial }: { initial: SocialByMarket }) {
                 className="w-auto"
               >
                 <option value="" disabled>
-                  انتخاب بازار…
+                  {" "}
+                  {legacy("selectMarket")}{" "}
                 </option>
                 {MARKET_CODES.filter((m) => m !== market).map((m) => (
                   <option key={m} value={m}>
@@ -87,11 +93,12 @@ export function SocialEditor({ initial }: { initial: SocialByMarket }) {
       )}
       {state?.ok && (
         <p role="status" style={{ color: "var(--success)" }}>
-          ذخیره شد.
+          {" "}
+          {legacy("saved")}{" "}
         </p>
       )}
       <Button type="submit" disabled={pending}>
-        {pending ? "در حال ذخیره…" : "ذخیره"}
+        {pending ? legacy("saving") : legacy("save")}
       </Button>
     </form>
   );

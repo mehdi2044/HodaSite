@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getDisplayPrice } from "@/modules/pricing";
+import { getDisplayPrices } from "@/modules/pricing";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeSearchText } from "./search";
@@ -19,6 +19,7 @@ export type CatalogFilters = {
   available?: boolean;
   sort?: "newest" | "price-asc" | "price-desc" | "name";
   page?: number;
+  after?: string;
   limit?: number;
 };
 
@@ -48,7 +49,14 @@ export async function listCatalogProducts(
   locale: CatalogLocale,
   filters: CatalogFilters = {},
 ) {
-  const page = Math.max(1, filters.page ?? 1);
+  const page =
+    Number.isSafeInteger(filters.page) && filters.page! > 0
+      ? Math.min(100000, filters.page!)
+      : 1;
+  const after =
+    filters.after && /^[A-Za-z0-9_-]{1,100}$/.test(filters.after)
+      ? filters.after
+      : undefined;
   const take = Math.min(24, Math.max(1, filters.limit ?? 12));
   const query = filters.q ? normalizeSearchText(filters.q) : "";
   let matchingIds: string[] | undefined;
@@ -64,7 +72,14 @@ export async function listCatalogProducts(
       LIMIT 250
     `);
     matchingIds = rows.map((row) => row.id);
-    if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
+    if (!matchingIds.length)
+      return {
+        items: [],
+        total: 0,
+        page,
+        pages: 0,
+        nextCursor: null as string | null,
+      };
   }
 
   if (filters.available) {
@@ -78,7 +93,14 @@ export async function listCatalogProducts(
     matchingIds = matchingIds
       ? matchingIds.filter((id) => availableIds.has(id))
       : [...availableIds];
-    if (!matchingIds.length) return { items: [], total: 0, page, pages: 0 };
+    if (!matchingIds.length)
+      return {
+        items: [],
+        total: 0,
+        page,
+        pages: 0,
+        nextCursor: null as string | null,
+      };
   }
 
   const where: Prisma.ProductWhereInput = {
@@ -135,28 +157,11 @@ export async function listCatalogProducts(
     const min = bound(filters.minPrice),
       max = bound(filters.maxPrice);
     const priced: Array<{ id: string; amount: Decimal }> = [];
-    // Bound concurrent lookups and paginate only after effective pricing.
-    for (let offset = 0; offset < candidates.length; offset += 25) {
-      const batch = await Promise.all(
-        candidates.slice(offset, offset + 25).map(async (product) => ({
-          id: product.id,
-          amount: new Decimal(
-            (
-              await getDisplayPrice(
-                product,
-                product.variants[0] ?? null,
-                market,
-              )
-            ).amount,
-          ),
-        })),
-      );
-      priced.push(
-        ...batch.filter(
-          ({ amount }) =>
-            (!min || amount.gte(min)) && (!max || amount.lte(max)),
-        ),
-      );
+    const effective = await getDisplayPrices(candidates, market);
+    for (const product of candidates) {
+      const amount = new Decimal(effective.get(product.id)!.amount);
+      if ((!min || amount.gte(min)) && (!max || amount.lte(max)))
+        priced.push({ id: product.id, amount });
     }
     if (filters.sort === "price-asc" || filters.sort === "price-desc")
       priced.sort(
@@ -165,9 +170,10 @@ export async function listCatalogProducts(
             ? b.amount.comparedTo(a.amount)
             : a.amount.comparedTo(b.amount)) || a.id.localeCompare(b.id),
       );
-    const ids = priced
-      .slice((page - 1) * take, page * take)
-      .map((item) => item.id);
+    const offset = after
+      ? Math.max(0, priced.findIndex((p) => p.id === after) + 1)
+      : (page - 1) * take;
+    const ids = priced.slice(offset, offset + take).map((item) => item.id);
     const products = ids.length
       ? await db.product.findMany({
           where: { ...where, id: { in: ids } },
@@ -180,22 +186,33 @@ export async function listCatalogProducts(
       total: priced.length,
       page,
       pages: Math.ceil(priced.length / take),
+      nextCursor: offset + take < priced.length ? (ids.at(-1) ?? null) : null,
     };
   }
-  const orderBy: Prisma.ProductOrderByWithRelationInput =
-    filters.sort === "name" ? { titleI18n: "asc" } : { createdAt: "desc" };
+  const orderBy: Prisma.ProductOrderByWithRelationInput[] =
+    filters.sort === "name"
+      ? [{ titleI18n: "asc" }, { id: "asc" }]
+      : [{ createdAt: "desc" }, { id: "desc" }];
   const [items, total] = await Promise.all([
     db.product.findMany({
       where,
       include: catalogProductInclude,
       orderBy,
-      skip: (page - 1) * take,
+      ...(after
+        ? { cursor: { id: after }, skip: 1 }
+        : { skip: (page - 1) * take }),
       take,
     }),
     db.product.count({ where }),
   ]);
   void locale;
-  return { items, total, page, pages: Math.ceil(total / take) };
+  return {
+    items,
+    total,
+    page,
+    pages: Math.ceil(total / take),
+    nextCursor: items.length === take ? items.at(-1)!.id : null,
+  };
 }
 
 export async function findCategoryBySlug(
@@ -250,7 +267,7 @@ export async function catalogFacets() {
       orderBy: { sortOrder: "asc" },
     }),
     db.product.findMany({
-      where: { deletedAt: null, material: { not: null } },
+      where: { deletedAt: null, status: "ACTIVE", material: { not: null } },
       distinct: ["material"],
       select: { material: true },
       orderBy: { material: "asc" },

@@ -1,3 +1,11 @@
+import { db } from "@/lib/db";
+import { can } from "@/modules/access";
+import { getSeoSettings } from "@/modules/seo";
+import { LaunchEvidenceForm } from "@/components/admin/launch-evidence";
+import {
+  applyLaunchEvidence,
+  launchEvidenceInput,
+} from "@/modules/launch/evidence";
 import { getLocale, getTranslations } from "next-intl/server";
 import { requireAdminPage } from "@/modules/auth/page";
 import { getLaunchReadiness } from "@/modules/launch";
@@ -10,6 +18,28 @@ export default async function LaunchPage() {
     getLocale(),
     getLaunchReadiness(userId),
   ]);
+  const [records, seo, editable] = await Promise.all([
+    db.launchEvidence.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 200,
+    }),
+    getSeoSettings(),
+    can(userId, "settings.maintenance.edit"),
+  ]);
+  const e = await getTranslations("launchEvidence");
+  const revision = process.env.APP_VERSION ?? "";
+  const evidence = records.flatMap((record) => {
+    const parsed = launchEvidenceInput.safeParse(record);
+    return parsed.success
+      ? [{ ...parsed.data, id: record.id, createdAt: record.createdAt }]
+      : [];
+  });
+  snapshot.checks = applyLaunchEvidence(
+    snapshot.checks,
+    evidence,
+    { origin: seo.origin, revision },
+    snapshot.checkedAt,
+  );
   const automatic = snapshot.checks.filter((c) => c.kind === "automatic");
   const count = (status: string) =>
     snapshot.checks.filter((c) => c.status === status).length;
@@ -92,6 +122,40 @@ export default async function LaunchPage() {
           </div>
         </section>
       ))}
+      <section className="card grid gap-3">
+        <h2>{e("history")}</h2>
+        {records.map((record) => (
+          <details key={record.id}>
+            <summary>
+              {t.has(`${record.gate}Title`)
+                ? t(`${record.gate}Title`)
+                : record.gate}{" "}
+              —{" "}
+              <bdi>
+                {record.environment} / {record.result} /{" "}
+                {record.testedAt.toISOString()}
+              </bdi>
+            </summary>
+            <dl className="grid gap-2 break-words">
+              <dt>{e("origin")}</dt>
+              <dd>
+                <bdi>{record.origin}</bdi>
+              </dd>
+              <dt>{e("revision")}</dt>
+              <dd>
+                <bdi>{record.revision}</bdi>
+              </dd>
+              <dt>{e("reference")}</dt>
+              <dd>{record.reference}</dd>
+              <dt>{e("notes")}</dt>
+              <dd>{record.notes}</dd>
+            </dl>
+          </details>
+        ))}
+      </section>
+      {editable && (
+        <LaunchEvidenceForm origin={seo.origin} revision={revision} />
+      )}
     </div>
   );
 }

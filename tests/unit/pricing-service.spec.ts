@@ -11,7 +11,7 @@ const m = vi.hoisted(() => {
       update: vi.fn(),
       updateMany: vi.fn(),
     },
-    marketPrice: { findFirst: vi.fn() },
+    marketPrice: { findFirst: vi.fn(), findMany: vi.fn() },
     auditLog: { create: vi.fn() },
     systemAlert: { create: vi.fn() },
     job: { findFirst: vi.fn(), create: vi.fn() },
@@ -26,6 +26,7 @@ import {
   acceptFxQuote,
   ensureFxRefreshScheduled,
   getDisplayPrice,
+  getDisplayPrices,
   getFxConfiguration,
   isRateStale,
   persistFxRate,
@@ -238,4 +239,45 @@ it("checks stale thresholds including missing rates", () => {
   expect(isRateStale(null, 1, at)).toBe(true);
   expect(isRateStale(at, 1, at)).toBe(false);
   expect(isRateStale(at, 1, new Date("2026-01-02"))).toBe(true);
+});
+
+it("batch pricing preserves variant overrides and Decimal values with constant query count", async () => {
+  m.db.marketPrice.findMany.mockResolvedValue([
+    {
+      id: "m1",
+      variantId: "v1",
+      productId: null,
+      amount: "17.1234",
+      compareAtAmount: null,
+    },
+    {
+      id: "m2",
+      productId: "p1",
+      variantId: null,
+      amount: "999",
+      compareAtAmount: null,
+    },
+  ]);
+  const products = [
+    {
+      id: "p1",
+      basePriceAmount: "0.1",
+      compareAtPriceAmount: null,
+      variants: [{ id: "v1", priceOverrideUsd: null }],
+    },
+    {
+      id: "p2",
+      basePriceAmount: "0.2",
+      compareAtPriceAmount: null,
+      variants: [],
+    },
+  ];
+  const result = await getDisplayPrices(products, {
+    ...market,
+    roundingRule: { increment: "0.0001", mode: "HALF_UP" },
+  });
+  expect(result.get("p1")?.amount).toBe("17.1234");
+  expect(result.get("p2")?.amount).toBe("8");
+  expect(m.db.marketPrice.findMany).toHaveBeenCalledTimes(1);
+  expect(m.db.fxOverride.findFirst).toHaveBeenCalledTimes(1);
 });

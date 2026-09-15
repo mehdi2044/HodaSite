@@ -22,11 +22,11 @@ SEO settings reuse `SiteSettings.seo`, the existing `settings.brand.edit` permis
 
 Testing includes URL/metadata invariants, real database visibility and save authorization/audit, and browser acceptance for language/market routes, private headers, robots/sitemap and the mobile settings form. Real search engine indexing and real-host acceptance are not claimed.
 
-## Remaining increments (not completed by 08b)
+## Completion after 08b — implementation and acceptance separation
 
 1. Remaining SEO: complete structured data (including currency/offer and moderated-rating rules), slug history/redirects, dynamic branded social previews and verification of real search-engine behavior. Analytics IDs/loaders remain coupled to consent in the next increment. Existing product social-image overrides are preserved.
 2. Consent and privacy controls for analytics, guest/customer wishlist, recently viewed, back-in-stock subscriptions and moderated reviews with permission/privacy tests.
 3. Accessibility and performance measurements/fixes; PWA regression checks. Record bundle and local/CI results separately from staging measurements.
 4. Audited, dated, environment-specific acceptance evidence in the launch checklist. Complete the real HTTPS/device/email/off-site/payment/reachability gates when infrastructure is available; do not treat mocks or the first dashboard as evidence.
 
-The exact requirements and acceptance criteria remain in `phases/phase-08.md`. This execution order neither deletes those requirements nor marks the full phase complete.
+Development of these increments is implemented in the Phase 08 completion change under D65. See `PHASE08_COMPLETION_AUDIT.md` for tests, data impact and the remaining real-environment acceptance. D51/D54 remain active; no publication is performed.

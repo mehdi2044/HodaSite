@@ -80,6 +80,36 @@ async function fetchMaintenanceState(
   }
 }
 
+async function historicalRedirect(
+  req: NextRequest,
+  target: string,
+  market: string,
+) {
+  if (!["GET", "HEAD"].includes(req.method)) return null;
+  const match = /^\/(fa|tr|en)\/(p|c|pages)\/([^/]+)\/?$/.exec(target);
+  if (!match) return null;
+  try {
+    const url = new URL("/api/seo/redirect", req.url);
+    url.search = new URLSearchParams({
+      locale: match[1],
+      kind: match[2],
+      slug: decodeURIComponent(match[3]),
+      market,
+    }).toString();
+    const result = await fetch(url, { cache: "no-store" });
+    if (!result.ok) return null;
+    const value = await result.json();
+    if (typeof value.path !== "string" || !parseSeoPath(value.path))
+      return null;
+    const destination = new URL(value.path, req.url);
+    destination.search = new URL(req.url).search;
+    destination.searchParams.delete("market");
+    return NextResponse.redirect(destination, 301);
+  } catch {
+    return null;
+  }
+}
+
 async function fetchMarkets(req: NextRequest): Promise<MarketInfo[]> {
   try {
     const res = await fetch(
@@ -160,7 +190,11 @@ async function applicationMiddleware(req: NextAuthRequest) {
     return NextResponse.next({ request: { headers: req.headers } });
 
   // Public, identity-free installation assets; exact namespace, no locale redirect.
-  if (pathname === "/sw.js" || pathname.startsWith("/pwa/"))
+  if (
+    pathname === "/sw.js" ||
+    pathname.startsWith("/pwa/") ||
+    pathname.startsWith("/og/")
+  )
     return NextResponse.next({ request: { headers: req.headers } });
 
   // --- Admin: JWT guard, no locale routing ---
@@ -236,6 +270,12 @@ async function applicationMiddleware(req: NextAuthRequest) {
           m.enabledLocales.includes(canonical.locale),
       );
       if (!market) return new NextResponse(null, { status: 404 });
+      const historical = await historicalRedirect(
+        req,
+        canonical.target,
+        market.code,
+      );
+      if (historical) return historical;
       // NextURL normalizes 127.0.0.1 to localhost even when URL normalization
       // is disabled. A rewrite to that other origin becomes a second request,
       // losing our trusted market header and rerunning cookie-based routing.
@@ -274,6 +314,10 @@ async function applicationMiddleware(req: NextAuthRequest) {
         return NextResponse.redirect(url, 301);
       }
       const market = resolveMarket(markets, cookieCode || queryCode, urlLocale);
+      if (market) {
+        const historical = await historicalRedirect(req, pathname, market.code);
+        if (historical) return historical;
+      }
       if (market && !market.enabledLocales.includes(urlLocale)) {
         const url = new URL(req.url);
         url.pathname =
@@ -315,6 +359,6 @@ export const config = {
   // Run on everything except Next internals, static assets and /media/*
   // (served by its own route handler with its own access checks — B10).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|fonts/|media/|pwa/|sw[.]js$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|fonts/|media/|pwa/|og/|sw[.]js$).*)",
   ],
 };

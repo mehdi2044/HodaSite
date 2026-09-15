@@ -30,3 +30,13 @@ it("passes only the magic token and rejects an external return URL", async () =>
   expect(encoded.has("code")).toBe(false);
   expect(encoded.get("token")).toBe("a".repeat(64));
 });
+
+it("returns to the authenticated wishlist flow", async () => {
+  const form = new FormData();
+  form.set("challengeId", "challenge");
+  form.set("code", "012345");
+  form.set("next", "/en/account/wishlist");
+  expect(await verifyOtpAction("en", form)).toEqual({
+    url: "/en/account/wishlist",
+  });
+});

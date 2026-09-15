@@ -110,30 +110,31 @@ export async function getRateAt(
   return rate;
 }
 
-const marketPriceCached = unstable_cache(
-  async (marketId: string, productId: string, variantId: string | null) => {
-    const at = new Date();
-    const validity = {
-      marketId,
-      isActive: true,
-      validFrom: { lte: at },
-      AND: [{ OR: [{ validUntil: null }, { validUntil: { gt: at } }] }],
-    };
-    if (variantId) {
-      const variantPrice = await db.marketPrice.findFirst({
-        where: { ...validity, variantId },
-        orderBy: { validFrom: "desc" },
-      });
-      if (variantPrice) return variantPrice;
-    }
-    return db.marketPrice.findFirst({
-      where: { ...validity, productId },
+// Manual validity windows must be evaluated on every request, not frozen in a 15-minute cache.
+async function effectiveMarketPrice(
+  marketId: string,
+  productId: string,
+  variantId: string | null,
+) {
+  const at = new Date();
+  const validity = {
+    marketId,
+    isActive: true,
+    validFrom: { lte: at },
+    AND: [{ OR: [{ validUntil: null }, { validUntil: { gt: at } }] }],
+  };
+  if (variantId) {
+    const variantPrice = await db.marketPrice.findFirst({
+      where: { ...validity, variantId },
       orderBy: { validFrom: "desc" },
     });
-  },
-  ["market-price"],
-  { revalidate: 900, tags: ["pricing"] },
-);
+    if (variantPrice) return variantPrice;
+  }
+  return db.marketPrice.findFirst({
+    where: { ...validity, productId },
+    orderBy: { validFrom: "desc" },
+  });
+}
 
 export async function getDisplayPrice(
   product: {
@@ -153,7 +154,7 @@ export async function getDisplayPrice(
     roundingRule: unknown;
   },
 ) {
-  const manual = await marketPriceCached(
+  const manual = await effectiveMarketPrice(
     market.id,
     product.id,
     variant?.id ?? null,
@@ -336,4 +337,80 @@ export async function ensureFxRefreshScheduled() {
     where: { type: FX_REFRESH_JOB, status: { in: ["PENDING", "RUNNING"] } },
   });
   if (!exists) await db.job.create({ data: { type: FX_REFRESH_JOB } });
+}
+
+/** One effective FX lookup and one manual-price query for an entire listing. */
+export async function getDisplayPrices(
+  products: Array<
+    Parameters<typeof getDisplayPrice>[0] & {
+      variants: NonNullable<Parameters<typeof getDisplayPrice>[1]>[];
+    }
+  >,
+  market: Parameters<typeof getDisplayPrice>[2],
+) {
+  if (!products.length)
+    return new Map<string, ReturnType<typeof calculateDisplayPrice>>();
+  const at = new Date();
+  const [active, manuals] = await Promise.all([
+    getActiveRate(market, at),
+    db.marketPrice.findMany({
+      where: {
+        marketId: market.id,
+        isActive: true,
+        validFrom: { lte: at },
+        AND: [
+          { OR: [{ validUntil: null }, { validUntil: { gt: at } }] },
+          {
+            OR: [
+              { productId: { in: products.map((p) => p.id) } },
+              {
+                variantId: {
+                  in: products.flatMap((p) =>
+                    p.variants[0] ? [p.variants[0].id] : [],
+                  ),
+                },
+              },
+            ],
+          },
+        ],
+      },
+      orderBy: [{ validFrom: "desc" }, { id: "desc" }],
+    }),
+  ]);
+  const byProduct = new Map<string, (typeof manuals)[number]>(),
+    byVariant = new Map<string, (typeof manuals)[number]>();
+  for (const manual of manuals) {
+    if (manual.productId && !byProduct.has(manual.productId))
+      byProduct.set(manual.productId, manual);
+    if (manual.variantId && !byVariant.has(manual.variantId))
+      byVariant.set(manual.variantId, manual);
+  }
+  return new Map(
+    products.map((product) => {
+      const variant = product.variants[0],
+        manual =
+          (variant ? byVariant.get(variant.id) : undefined) ??
+          byProduct.get(product.id);
+      return [
+        product.id,
+        calculateDisplayPrice({
+          baseAmount:
+            variant?.priceOverrideUsd?.toString() ??
+            product.basePriceAmount.toString(),
+          baseCurrency: "USD",
+          marketCurrency: (["USD", "TRY", "CAD", "IRT"].includes(
+            market.currency,
+          )
+            ? market.currency
+            : "USD") as Currency,
+          activeRate: active.rate,
+          markupPercent: market.markupPercent.toString(),
+          roundingRule: market.roundingRule as RoundingRule,
+          manualAmount: manual?.amount.toString(),
+          compareAtBaseAmount: product.compareAtPriceAmount?.toString(),
+          manualCompareAtAmount: manual?.compareAtAmount?.toString(),
+        }),
+      ];
+    }),
+  );
 }

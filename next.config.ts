@@ -1,3 +1,4 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -16,4 +17,7 @@ const config: NextConfig = {
   serverExternalPackages: ["sharp", "playwright-core"],
 };
 
-export default withNextIntl(config);
+export default bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+  openAnalyzer: false,
+})(withNextIntl(config));

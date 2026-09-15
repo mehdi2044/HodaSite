@@ -80,6 +80,11 @@ export async function publicMetadata(input: {
       ) +
       pageQuery
     : undefined;
+  const images = input.images?.length
+    ? input.images
+    : [
+        `/og/${input.locale}/${market.code}/${input.kind}/${encodeURIComponent(localized(input.slugs, input.locale) || "home")}`,
+      ];
   return {
     title,
     description,
@@ -91,13 +96,13 @@ export async function publicMetadata(input: {
       siteName: brand.name[input.locale] || brand.name.fa,
       url: canonical,
       type: "website",
-      images: input.images,
+      images,
     },
     twitter: {
-      card: input.images?.length ? "summary_large_image" : "summary",
+      card: images.length ? "summary_large_image" : "summary",
       title,
       description,
-      images: input.images,
+      images,
     },
   };
 }

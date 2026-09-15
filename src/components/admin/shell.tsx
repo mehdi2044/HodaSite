@@ -29,6 +29,7 @@ export async function AdminShell({
   const ai = await getTranslations("aiAdmin");
   const journal = await getTranslations("journal");
   const launch = await getTranslations("launch");
+  const engagement = await getTranslations("engagement");
   const seo = await getTranslations("seoAdmin");
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
@@ -63,6 +64,9 @@ export async function AdminShell({
         <Link href="/admin/payments/banks">{commerce("bankAccounts")}</Link>
         <Link href="/admin/inventory">{t("inventoryLots")}</Link>
         <Link href="/admin/content/menus">{t("menus")}</Link>
+        {(await can(user.id, "content.page.publish")) && (
+          <Link href="/admin/content/reviews">{engagement("moderation")}</Link>
+        )}
         <Link href="/admin/content/pages">{t("pages")}</Link>
         <Link href="/admin/content/homepage">{t("homepage")}</Link>
         <Link href="/admin/content/translations">{t("translations")}</Link>

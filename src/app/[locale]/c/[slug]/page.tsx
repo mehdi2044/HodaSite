@@ -1,3 +1,4 @@
+import { getDisplayPrices } from "@/modules/pricing";
 import { publicMetadata } from "@/modules/seo";
 import { filteredListing, singleFacetQuery } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -45,7 +46,10 @@ export async function generateMetadata({
     slugs: category.slugI18n,
     page: Number.isSafeInteger(page) && page > 1 && page <= 100000 ? page : 1,
     facetQuery: singleFacetQuery(filters),
-    noindex: filteredListing(filters) || filters.preview !== undefined,
+    noindex:
+      filteredListing(filters) ||
+      filters.preview !== undefined ||
+      filters.after !== undefined,
     title:
       catalogText(seo.title, safe) || catalogText(category.titleI18n, safe),
     description:
@@ -82,7 +86,9 @@ export default async function CategoryPage({
     sort: one(query.sort) as
       "newest" | "price-asc" | "price-desc" | "name" | undefined,
     page: Number(one(query.page) || 1),
+    after: one(query.after),
   });
+  const prices = await getDisplayPrices(result.items, market);
   return (
     <main
       className="shell shop-page py-10 md:py-16"
@@ -131,7 +137,7 @@ export default async function CategoryPage({
           {result.items.map((product) => (
             <ProductCard
               key={product.id}
-              product={product}
+              product={{ ...product, displayPrice: prices.get(product.id) }}
               locale={safe}
               market={market}
             />
@@ -146,7 +152,7 @@ export default async function CategoryPage({
         <div className="mt-10 text-center">
           <Link
             className="button"
-            href={`?${new URLSearchParams({ ...(Object.fromEntries(Object.entries(query).filter(([, v]) => typeof v === "string")) as Record<string, string>), page: String(result.page + 1) }).toString()}`}
+            href={`?${new URLSearchParams({ ...(Object.fromEntries(Object.entries(query).filter(([, v]) => typeof v === "string")) as Record<string, string>), page: String(result.page + 1), ...(result.nextCursor ? { after: result.nextCursor } : {}) }).toString()}`}
           >
             {t("loadMore")}
           </Link>

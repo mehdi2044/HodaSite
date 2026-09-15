@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { saveMarket } from "../actions";
@@ -10,22 +11,22 @@ import {
 } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
 
-const NAMES: Record<string, string> = {
-  IR: "ایران",
-  TR: "ترکیه",
-  CA: "کانادا",
-};
-const LOCALE_LABELS: Record<string, string> = {
-  fa: "فارسی",
-  tr: "Türkçe",
-  en: "English",
-};
-
 export default async function EditMarket({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const legacy = await getTranslations("foundationAdmin");
+  const NAMES: Record<string, string> = {
+    IR: legacy("iran"),
+    TR: legacy("turkey"),
+    CA: legacy("canada"),
+  };
+  const LOCALE_LABELS: Record<string, string> = {
+    fa: legacy("persian"),
+    tr: legacy("turkish"),
+    en: legacy("english"),
+  };
   const { id } = await params;
   const market = await db.market.findUnique({ where: { id } });
   if (!market) notFound();
@@ -51,34 +52,33 @@ export default async function EditMarket({
   return (
     <>
       <h1 className="text-2xl font-semibold">
-        بازار {NAMES[market.code] ?? market.code}
+        {" "}
+        {legacy("market")} {NAMES[market.code] ?? market.code}
       </h1>
       <Card className="mt-4 max-w-lg">
-        <SettingsForm action={saveMarket} submitLabel="ذخیره">
+        <SettingsForm action={saveMarket} submitLabel={legacy("save")}>
           <input type="hidden" name="marketId" value={market.id} />
 
-          <CardTitle>وضعیت</CardTitle>
+          <CardTitle>{legacy("status")}</CardTitle>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="isActive"
               defaultChecked={market.isActive}
-            />
-            بازار فعال است
+            />{" "}
+            {legacy("marketActive")}{" "}
           </label>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="salesPaused"
               defaultChecked={market.salesPaused}
-            />
-            فروش موقتاً متوقف باشد
+            />{" "}
+            {legacy("pauseSales")}{" "}
           </label>
 
-          <CardTitle className="mt-2">زبان‌ها</CardTitle>
-          <CardDescription>
-            زبان‌های فعال این بازار و زبان پیش‌فرض آن.
-          </CardDescription>
+          <CardTitle className="mt-2">{legacy("languages")}</CardTitle>
+          <CardDescription> {legacy("languagesHelp")} </CardDescription>
           <div className="flex flex-wrap gap-4">
             {(["fa", "tr", "en"] as const).map((locale) => (
               <label key={locale} className="flex items-center gap-2">
@@ -93,17 +93,19 @@ export default async function EditMarket({
             ))}
           </div>
           <label className="grid gap-1">
-            زبان پیش‌فرض
+            {" "}
+            {legacy("defaultLocale")}{" "}
             <Select name="defaultLocale" defaultValue={market.defaultLocale}>
-              <option value="fa">فارسی</option>
-              <option value="tr">Türkçe</option>
-              <option value="en">English</option>
+              <option value="fa">{legacy("persian")}</option>
+              <option value="tr">{legacy("turkish")}</option>
+              <option value="en">{legacy("english")}</option>
             </Select>
           </label>
 
-          <CardTitle className="mt-2">کانال‌های پشتیبانی</CardTitle>
+          <CardTitle className="mt-2">{legacy("support")}</CardTitle>
           <label className="grid gap-1">
-            تلفن
+            {" "}
+            {legacy("phone")}{" "}
             <Input
               name="phone"
               dir="ltr"
@@ -111,7 +113,8 @@ export default async function EditMarket({
             />
           </label>
           <label className="grid gap-1">
-            واتساپ
+            {" "}
+            {legacy("whatsapp")}{" "}
             <Input
               name="whatsapp"
               dir="ltr"
@@ -119,7 +122,8 @@ export default async function EditMarket({
             />
           </label>
           <label className="grid gap-1">
-            تلگرام
+            {" "}
+            {legacy("telegram")}{" "}
             <Input
               name="telegram"
               dir="ltr"
@@ -127,7 +131,8 @@ export default async function EditMarket({
             />
           </label>
           <label className="grid gap-1">
-            ایمیل
+            {" "}
+            {legacy("email")}{" "}
             <Input
               name="email"
               dir="ltr"
@@ -135,19 +140,18 @@ export default async function EditMarket({
             />
           </label>
 
-          <CardTitle className="mt-2">
-            پیام بالای سایت (Announcement bar)
-          </CardTitle>
+          <CardTitle className="mt-2"> {legacy("announcement")} </CardTitle>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               name="announcementEnabled"
               defaultChecked={announcementBar.enabled}
-            />
-            نمایش داده شود
+            />{" "}
+            {legacy("visible")}{" "}
           </label>
           <label className="grid gap-1">
-            لینک (اختیاری)
+            {" "}
+            {legacy("optionalLink")}{" "}
             <Input
               name="announcementLink"
               dir="ltr"
@@ -156,7 +160,8 @@ export default async function EditMarket({
           </label>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              متن ({locale})
+              {" "}
+              {legacy("textLocale", { locale })}
               <Input
                 name={`announcement${cap(locale)}`}
                 defaultValue={announcementBar.text?.[locale]}
@@ -164,10 +169,11 @@ export default async function EditMarket({
             </label>
           ))}
 
-          <CardTitle className="mt-2">SEO پیش‌فرض</CardTitle>
+          <CardTitle className="mt-2">{legacy("seo")}</CardTitle>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              عنوان ({locale})
+              {" "}
+              {legacy("titleLocale", { locale })}
               <Input
                 name={`seoTitle${cap(locale)}`}
                 defaultValue={seo.title?.[locale]}
@@ -176,7 +182,8 @@ export default async function EditMarket({
           ))}
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              توضیح ({locale})
+              {" "}
+              {legacy("descriptionLocale", { locale })}
               <Input
                 name={`seoDescription${cap(locale)}`}
                 defaultValue={seo.description?.[locale]}
@@ -184,13 +191,15 @@ export default async function EditMarket({
             </label>
           ))}
 
-          <CardTitle className="mt-2">
-            قیمت‌گذاری (فقط نمایش — فاز ۰۳)
-          </CardTitle>
-          <p className="text-sm text-muted" dir="ltr">
-            markup: {market.markupPercent.toString()}% · rounding:{" "}
-            {roundingRule?.mode ?? "-"} / {roundingRule?.increment ?? "-"} ·
-            hold: {market.holdHours}h · deadline: {market.paymentDeadlineHours}h
+          <CardTitle className="mt-2"> {legacy("pricingReadOnly")} </CardTitle>
+          <p className="text-sm text-muted">
+            {legacy("pricingSummary", {
+              markup: market.markupPercent.toString(),
+              mode: roundingRule?.mode ?? "-",
+              increment: roundingRule?.increment ?? "-",
+              hold: market.holdHours,
+              deadline: market.paymentDeadlineHours,
+            })}
           </p>
         </SettingsForm>
       </Card>

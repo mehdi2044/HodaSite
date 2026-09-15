@@ -10,7 +10,7 @@ vi.mock("@/lib/db", () => ({
     market: { findUniqueOrThrow: mock.market },
   },
 }));
-vi.mock("@/modules/pricing", () => ({ getDisplayPrice: mock.price }));
+vi.mock("@/modules/pricing", () => ({ getDisplayPrices: mock.price }));
 import { listCatalogProducts } from "@/modules/catalog/queries";
 const products = [
   {
@@ -30,9 +30,15 @@ beforeEach(() => {
   vi.resetAllMocks();
   mock.market.mockResolvedValue({ id: "CA" });
   mock.products.mockResolvedValueOnce(products).mockResolvedValue(products);
-  mock.price.mockImplementation(async (p: { id: string }) => ({
-    amount: p.id === "expensive-base" ? "10" : "100",
-  }));
+  mock.price.mockImplementation(
+    async (products: { id: string }[]) =>
+      new Map(
+        products.map((p) => [
+          p.id,
+          { amount: p.id === "expensive-base" ? "10" : "100" },
+        ]),
+      ),
+  );
 });
 it("filters on the displayed market override, not the USD base", async () => {
   const result = await listCatalogProducts("CA", "en", { maxPrice: "20" });
@@ -58,4 +64,14 @@ it("supports descending prices and lower bounds", async () => {
     "cheap-base",
     "expensive-base",
   ]);
+});
+
+it("continues an effective-price listing after its cursor", async () => {
+  const result = await listCatalogProducts("CA", "en", {
+    sort: "price-asc",
+    limit: 1,
+    after: "expensive-base",
+  });
+  expect(result.items.map((p) => p.id)).toEqual(["cheap-base"]);
+  expect(result.nextCursor).toBeNull();
 });

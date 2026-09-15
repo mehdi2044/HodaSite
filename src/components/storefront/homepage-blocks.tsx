@@ -1,3 +1,4 @@
+import { getDisplayPrices } from "@/modules/pricing";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { storefrontHref } from "@/modules/content/storefront-links";
@@ -60,6 +61,10 @@ export async function HomepageBlocks({
     }),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
+  const prices = await getDisplayPrices(
+    productRows.flatMap((rows) => rows?.items ?? []),
+    market,
+  );
   return (
     <main dir={locale === "fa" ? "rtl" : "ltr"}>
       {blocks.map((block, index) => {
@@ -145,7 +150,10 @@ export async function HomepageBlocks({
                   .map((product) => (
                     <ProductCard
                       key={product.id}
-                      product={product}
+                      product={{
+                        ...product,
+                        displayPrice: prices.get(product.id),
+                      }}
                       locale={locale}
                       market={market}
                     />

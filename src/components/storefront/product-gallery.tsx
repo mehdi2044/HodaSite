@@ -61,7 +61,11 @@ export function ProductGallery({
     });
   const current = items[active] || items[0];
   return (
-    <section className="shop-gallery" aria-label={t("gallery")}>
+    <section
+      className="shop-gallery"
+      aria-label={t("gallery")}
+      aria-roledescription={t("carousel")}
+    >
       <div
         className="shop-gallery-track"
         ref={track}
@@ -116,7 +120,7 @@ export function ProductGallery({
       {items.length > 0 && (
         <div className="shop-gallery-meta">
           <span>{t("galleryHint")}</span>
-          <span>
+          <span aria-live="polite" aria-atomic="true">
             {t("galleryCount", {
               current: new Intl.NumberFormat(locale).format(active + 1),
               total: new Intl.NumberFormat(locale).format(items.length),

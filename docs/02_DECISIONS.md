@@ -13,6 +13,8 @@
 | معماری | baseline v1.2 با ADRهای جاری؛ تغییر فنی مهم پیش از پیاده‌سازی ثبت می‌شود. | D02، D34، D39 |
 | زیرساخت و پذیرش | توسعه بدون هاست مجاز است. زمان‌بندی D46/D49 با D51 جایگزین شده؛ پذیرش واقعی CP1/CP2، HTTPS، ایمیل، off-site، بازیابی و دسترسی سه کشور پیش از انتشار باز می‌ماند تا اجرا شود. | D46، D49، D51 |
 | دامنهٔ محصول | سه بازار IR/TR/CA و سه زبان fa/tr/en حفظ می‌شوند. پیشنهاد فروش آزمایشی در یک بازار، تصمیم اجرایی برای حذف زبان یا بازار نیست. | D09، D10، D63 |
+| بازگشت پس از ورود مشتری | فقط wishlist، محصول عمومی با مسیر canonical و anchor اعلان، و مقصدهای پرداخت قبلی؛ آدرس خارجی/مسیرهای مدیریتی/پیمایش مسیر رد می‌شوند. | D66 |
+| سئو و داده‌های فاز ۸ | آدرس‌های زبان/بازار D64؛ مهاجرت افزایشی، نظر پیش‌فرض تأییدنشده، اعلان با ایمیل تأییدشده، رضایت مستقل هر بازار و شواهد تاریخ‌دار و غیرقابل‌ویرایش. | D64، D65 |
 | مجوزهای داخل محصول | تأیید پرداخت، انتشار پیشنهاد AI، بازپرداخت، دسترسی مدیر و حفاظت از داده همچنان طبق قواعد خود محصول اجرا می‌شوند. | D12، D14، D24، D25، D60 |
 
 
@@ -148,3 +150,20 @@ Use the approved three provider adapters behind a fixed-host server gateway. Env
 این مرحله schema/migration، سیاست پول، session، موجودی یا قالب بکاپ را تغییر نمی‌دهد. `pg_dump` تنظیمات JSON را مانند قبل نگه می‌دارد؛ برای بازگشت کد، کلیدهای جدید JSON قابل چشم‌پوشی‌اند و هیچ reset لازم نیست. آزمون‌ها: بازار صریح در برابر کوکی مخالف، زبان غیرفعال، نگاشت مسیر محدود به محتوای عمومی، canonical/hreflang، غیبت محتوای خصوصی در sitemap، خاموش‌بودن پیش‌فرض و تغییر تنظیمات با مجوز/audit. JSON-LD تکمیلی، تصاویر اجتماعی پویا، تاریخچهٔ slug و consent در ادامهٔ فاز باقی‌اند.
 
 منبع معیار URL و alternates: https://developers.google.com/search/docs/specialty/international/localized-versions
+
+
+## D65 — Phase 08 customer engagement and release evidence (active)
+
+Recorded before implementation under D50/D63, against docs v1.2. Additive PostgreSQL tables retain all existing customers, products, media, orders and financial records. No reset, inferred accounting backfill or provider change. Wishlist ownership comes from the verified customer session; guest storage contains product IDs only. Reviews require an authenticated customer, default to pending, and verified purchase is derived from paid orders on the server. Review photos use generated storage keys, stripped image metadata, existing Media/backup storage and a dedicated authorization route; pending photos are never public. Moderation uses existing `content.page.publish`, consistently with publication of customer content; release evidence uses `settings.maintenance.edit` and read access remains `system.health.view`. Both mutations are audited.
+
+Stock alerts are opt-in subscriptions for the authenticated, email-verified customer; the existing email OTP flow verifies a guest's entered email before subscription. Notification delivery uses the existing queue and provider, checks live stock and cancellation, and has a stable idempotency key. This intentionally avoids unauthenticated email bombing. Push subscriptions are storage-only until Phase 09. Analytics default off in every market, require an explicit market-specific consent choice, and stay off on private commerce/account routes. Withdrawal reloads the document and removes known first-party tracking cookies.
+
+Slug history targets stable entity IDs, not another historical URL; redirect resolution rechecks publication and market visibility. JSON-LD uses Decimal prices; IRT is converted exactly to ISO IRR (×10), never emitted as an unsupported currency. Reviews contribute to structured data only when approved and visible in the current locale.
+
+Manual launch evidence is append-only, dated, versioned, scoped to an HTTPS staging/production origin and expires. Local/CI evidence never satisfies real-environment gates. Recording evidence is an attestation, not execution of the test or permission to publish. D51 and D54 remain active: no hosting/DNS changes, no personalized/offline HTML caching. Verify with migration/restore CI, ownership/visibility negative tests, consent, moderation, redirect and accessibility browser tests.
+
+Phase 08 audit correction: manual display-price validity is evaluated at request time, and listing prices use one batched manual-price query and one effective FX lookup. This fixes stale presentation around expiry boundaries; it does not rewrite order/financial snapshots.
+
+## D66 — Verified login return paths for customer engagement
+
+Decision recorded before the return-path implementation: verified email login may return to the wishlist or a canonical public product/stock-alert anchor in addition to the existing checkout/payment destinations. This is a strict same-origin path allowlist, not an arbitrary redirect; authentication, OTP expiry, session validation and payment permissions are unchanged. Reject external URLs, admin/API routes, encoded separators and normalized traversal. Guest stock-alert links preserve the chosen variant through verification; subscribing still needs the customer's subsequent explicit action.

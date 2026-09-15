@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
@@ -9,6 +10,8 @@ type UserRow = Prisma.UserGetPayload<{
 }>;
 
 export default async function Users() {
+  const legacy = await getTranslations("foundationAdmin");
+
   await requireAdminPage("users.view");
   let users: UserRow[] = [];
   let loadError = false;
@@ -31,18 +34,20 @@ export default async function Users() {
           alignItems: "center",
         }}
       >
-        <h1>کاربران</h1>
+        <h1>{legacy("users")}</h1>
         <Link className="button" href="/admin/users/new">
-          کاربر جدید
+          {" "}
+          {legacy("newUser")}{" "}
         </Link>
       </div>
 
       {loadError ? (
         <div className="card" role="alert" style={{ color: "var(--error)" }}>
-          دیتابیس در دسترس نیست — فهرست کاربران بارگذاری نشد.
+          {" "}
+          {legacy("usersLoadError")}{" "}
         </div>
       ) : users.length === 0 ? (
-        <div className="card">هنوز کاربری وجود ندارد.</div>
+        <div className="card">{legacy("noUsers")}</div>
       ) : (
         <div className="card grid">
           {users.map((u) => (
@@ -58,11 +63,12 @@ export default async function Users() {
               <span style={{ flex: 1 }}>
                 <bdi dir="ltr">{u.email}</bdi> · {u.name} ·{" "}
                 <span className="muted">
-                  {u.roles.map((r) => r.role.key).join("، ") || "بدون نقش"}
+                  {u.roles.map((r) => r.role.key).join("، ") ||
+                    legacy("noRole")}
                 </span>{" "}
-                · {u.isActive ? "فعال" : "غیرفعال"}
+                · {u.isActive ? legacy("active") : legacy("inactive")}
               </span>
-              <Link href={`/admin/users/${u.id}`}>ویرایش</Link>
+              <Link href={`/admin/users/${u.id}`}>{legacy("edit")}</Link>
               <form
                 action={async () => {
                   "use server";
@@ -70,7 +76,7 @@ export default async function Users() {
                 }}
               >
                 <button className="button" type="submit">
-                  {u.isActive ? "غیرفعال‌کردن" : "فعال‌کردن"}
+                  {u.isActive ? legacy("deactivate") : legacy("activate")}
                 </button>
               </form>
             </div>

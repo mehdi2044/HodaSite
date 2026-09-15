@@ -1,3 +1,4 @@
+import { AccountEngagement } from "@/components/engagement/account";
 import { Iso } from "@/components/storefront/iso";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -193,6 +194,7 @@ export default async function AccountPage({
           )}
         </section>
       </div>
+      <AccountEngagement />
     </main>
   );
 }

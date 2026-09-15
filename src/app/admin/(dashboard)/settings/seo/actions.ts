@@ -16,6 +16,11 @@ export async function saveSeo(
     await assertCan(session.user.id, "settings.brand.edit");
     const config = seoSettingsSchema.parse({
       origin: form.get("origin"),
+      analytics: {
+        ga4: form.get("ga4") ?? "",
+        gtm: form.get("gtm") ?? "",
+        meta: form.get("meta") ?? "",
+      },
       indexingEnabled: form.get("indexingEnabled") === "on",
       googleVerification: form.get("googleVerification"),
       title: Object.fromEntries(

@@ -8,6 +8,8 @@ import { MediaPicker } from "@/components/admin/media-picker";
 import { getTranslations } from "next-intl/server";
 
 export default async function Brand() {
+  const legacy = await getTranslations("foundationAdmin");
+
   const t = await getTranslations("media");
   const [site, theme] = await Promise.all([
     getSiteSettings(),
@@ -30,16 +32,15 @@ export default async function Brand() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">هویت برند</h1>
+      <h1 className="text-2xl font-semibold">{legacy("brand")}</h1>
       <Card className="mt-4 grid max-w-lg gap-6">
-        <SettingsForm action={saveBrand} submitLabel="ذخیره">
-          <CardTitle>نام و شعار سایت</CardTitle>
-          <CardDescription>
-            سه‌زبانه — روی فروشگاه و عنوان صفحات نمایش داده می‌شود.
-          </CardDescription>
+        <SettingsForm action={saveBrand} submitLabel={legacy("save")}>
+          <CardTitle>{legacy("brandNames")}</CardTitle>
+          <CardDescription> {legacy("brandHelp")} </CardDescription>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              نام سایت ({locale})
+              {" "}
+              {legacy("nameLocale", { locale })}
               <Input
                 name={`name${cap(locale)}`}
                 defaultValue={name[locale]}
@@ -49,7 +50,8 @@ export default async function Brand() {
           ))}
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              شعار ({locale})
+              {" "}
+              {legacy("taglineLocale", { locale })}
               <Input
                 name={`tagline${cap(locale)}`}
                 defaultValue={tagline[locale]}
@@ -57,7 +59,7 @@ export default async function Brand() {
             </label>
           ))}
 
-          <CardTitle className="mt-4">لوگو</CardTitle>
+          <CardTitle className="mt-4">{legacy("logo")}</CardTitle>
           <MediaPicker
             name="logoMediaId"
             label={t("brandLogoLight")}

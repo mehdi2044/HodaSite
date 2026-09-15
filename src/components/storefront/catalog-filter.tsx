@@ -47,6 +47,7 @@ export function CatalogFilter({
       value ? params.set(key, value) : params.delete(key);
     }
     params.delete("page");
+    params.delete("after");
     router.push(`?${params.toString()}`, { scroll: false });
   }
   return (
@@ -142,6 +143,7 @@ export function CatalogFilter({
               "available",
               "sort",
               "page",
+              "after",
             ])
               params.delete(key);
             router.push(`?${params.toString()}`);

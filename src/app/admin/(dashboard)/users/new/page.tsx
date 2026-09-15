@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { ScopeFields } from "@/components/admin/security/scope-fields";
 import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
@@ -6,30 +7,34 @@ import { createUser } from "../actions";
 import { Button, Card, Input, Select } from "@/components/ui";
 
 export default async function NewUser() {
+  const legacy = await getTranslations("foundationAdmin");
+
   await requireAdminPage("users.manage");
   const roles = await db.role.findMany({ orderBy: { key: "asc" } });
 
   return (
     <>
-      <h1>کاربر جدید</h1>
+      <h1>{legacy("newUser")}</h1>
       <Card className="mt-4 max-w-lg">
         <form action={createUser} className="grid gap-4">
           <label className="grid gap-1">
-            ایمیل
-            <Input type="email" name="email" required />
+            {" "}
+            {legacy("email")} <Input type="email" name="email" required />
           </label>
           <label className="grid gap-1">
-            نام
-            <Input name="name" required />
+            {" "}
+            {legacy("name")} <Input name="name" required />
           </label>
           <label className="grid gap-1">
-            رمز عبور (حداقل ۸ نویسه)
+            {" "}
+            {legacy("password")}{" "}
             <Input type="password" name="password" minLength={8} required />
           </label>
           <label className="grid gap-1">
-            نقش
+            {" "}
+            {legacy("role")}{" "}
             <Select
-              aria-label="نقش"
+              aria-label={legacy("role")}
               name="roleKey"
               required
               defaultValue="admin"
@@ -43,8 +48,8 @@ export default async function NewUser() {
           </label>
           <ScopeFields />
           <div className="flex items-center gap-3">
-            <Button type="submit">ساخت کاربر</Button>
-            <Link href="/admin/users">انصراف</Link>
+            <Button type="submit">{legacy("createUser")}</Button>
+            <Link href="/admin/users">{legacy("cancel")}</Link>
           </div>
         </form>
       </Card>

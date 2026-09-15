@@ -3,28 +3,30 @@ import Link from "next/link";
 import { getMarkets } from "@/modules/settings";
 import { Card, Table, TH, TD, Badge } from "@/components/ui";
 
-const NAMES: Record<string, string> = {
-  IR: "ایران",
-  TR: "ترکیه",
-  CA: "کانادا",
-};
-
 export default async function MarketsPage() {
+  const legacy = await getTranslations("foundationAdmin");
+  const NAMES: Record<string, string> = {
+    IR: legacy("iran"),
+    TR: legacy("turkey"),
+    CA: legacy("canada"),
+  };
   const markets = await getMarkets();
 
   return (
     <>
-      <a className="underline" href="/admin/settings/invoices">{(await getTranslations("invoice"))("settings")}</a>
-      <h1 className="text-2xl font-semibold">بازارها</h1>
+      <a className="underline" href="/admin/settings/invoices">
+        {(await getTranslations("invoice"))("settings")}
+      </a>
+      <h1 className="text-2xl font-semibold">{legacy("markets")}</h1>
       <Card className="mt-4">
         <Table>
           <thead>
             <tr>
-              <TH>بازار</TH>
-              <TH>ارز</TH>
-              <TH>زبان پیش‌فرض</TH>
-              <TH>زبان‌های فعال</TH>
-              <TH>وضعیت</TH>
+              <TH>{legacy("market")}</TH>
+              <TH>{legacy("currency")}</TH>
+              <TH>{legacy("defaultLocale")}</TH>
+              <TH>{legacy("enabledLocales")}</TH>
+              <TH>{legacy("status")}</TH>
               <TH></TH>
             </tr>
           </thead>
@@ -37,11 +39,12 @@ export default async function MarketsPage() {
                 <TD dir="ltr">{m.enabledLocales.join(", ")}</TD>
                 <TD>
                   <Badge tone={m.isActive ? "success" : "neutral"}>
-                    {m.isActive ? "فعال" : "غیرفعال"}
+                    {m.isActive ? legacy("active") : legacy("inactive")}
                   </Badge>
                   {m.salesPaused && (
                     <Badge tone="warning" className="ms-2">
-                      فروش متوقف
+                      {" "}
+                      {legacy("salesPaused")}{" "}
                     </Badge>
                   )}
                 </TD>
@@ -50,7 +53,8 @@ export default async function MarketsPage() {
                     href={`/admin/markets/${m.id}`}
                     className="text-primary"
                   >
-                    ویرایش
+                    {" "}
+                    {legacy("edit")}{" "}
                   </Link>
                 </TD>
               </tr>

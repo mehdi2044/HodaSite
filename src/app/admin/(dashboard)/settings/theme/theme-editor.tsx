@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+import { themeContrastFailures } from "@/lib/contrast";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Button, Card, CardTitle, Select } from "@/components/ui";
 import { saveTheme } from "./actions";
@@ -17,17 +19,6 @@ export type ThemeDraft = {
   customCss: string;
 };
 
-const LABELS: Record<string, string> = {
-  primary: "اصلی",
-  background: "پس‌زمینه",
-  surface: "سطح",
-  text: "متن",
-  muted: "متن کم‌رنگ",
-  success: "موفق",
-  error: "خطا",
-  warning: "هشدار",
-};
-
 function payloadFor(draft: ThemeDraft) {
   return {
     type: "theme-preview" as const,
@@ -41,6 +32,7 @@ function payloadFor(draft: ThemeDraft) {
 }
 
 export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
+  const t = useTranslations("themeEditor");
   const [state, formAction, pending] = useActionState(saveTheme, null);
   const [draft, setDraft] = useState<ThemeDraft>(initial);
   const iframe390 = useRef<HTMLIFrameElement>(null);
@@ -85,12 +77,29 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
       <form action={formAction} className="grid gap-6">
+        {(["light", "dark"] as const).map((mode) => {
+          const failures = themeContrastFailures(draft[mode]);
+          return failures.length ? (
+            <div key={mode} role="status" className="card">
+              <h2>{t(mode)}</h2>
+              <p>{t("contrast")}</p>
+              <ul>
+                {failures.map((pair) => (
+                  <li key={pair.foreground + pair.background}>
+                    {t(pair.foreground)} / {t(pair.background)}:{" "}
+                    <bdi>{pair.ratio}</bdi>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null;
+        })}
         <Card>
-          <CardTitle>پالت روشن</CardTitle>
+          <CardTitle>{t("light")}</CardTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {COLOR_KEYS.map((k) => (
               <label key={k} className="grid gap-1 text-sm">
-                {LABELS[k]}
+                {t(k)}
                 <input
                   type="color"
                   name={`light_${k}`}
@@ -104,11 +113,11 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
         </Card>
 
         <Card>
-          <CardTitle>پالت تیره</CardTitle>
+          <CardTitle>{t("dark")}</CardTitle>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {COLOR_KEYS.map((k) => (
               <label key={k} className="grid gap-1 text-sm">
-                {LABELS[k]}
+                {t(k)}
                 <input
                   type="color"
                   name={`dark_${k}`}
@@ -122,9 +131,9 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
         </Card>
 
         <Card className="grid gap-4">
-          <CardTitle>ظاهر</CardTitle>
+          <CardTitle>{t("appearance")}</CardTitle>
           <label className="grid gap-1">
-            حالت تیره
+            {t("darkMode")}
             <Select
               name="darkMode"
               value={draft.darkMode}
@@ -135,13 +144,13 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
                 }))
               }
             >
-              <option value="off">خاموش</option>
-              <option value="on">همیشه روشن</option>
-              <option value="system">پیرو سیستم</option>
+              <option value="off">{t("off")}</option>
+              <option value="on">{t("on")}</option>
+              <option value="system">{t("system")}</option>
             </Select>
           </label>
           <label className="grid gap-1">
-            سبک هدر
+            {t("header")}
             <Select
               name="headerStyle"
               value={draft.headerStyle}
@@ -152,13 +161,13 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
                 }))
               }
             >
-              <option value="minimal">مینیمال</option>
-              <option value="centered">وسط‌چین</option>
-              <option value="editorial">مجله‌ای</option>
+              <option value="minimal">{t("minimal")}</option>
+              <option value="centered">{t("centered")}</option>
+              <option value="editorial">{t("editorial")}</option>
             </Select>
           </label>
           <label className="grid gap-1">
-            سبک دکمه
+            {t("button")}
             <Select
               name="buttonStyle"
               value={draft.buttonStyle}
@@ -169,13 +178,13 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
                 }))
               }
             >
-              <option value="pill">بیضی (pill)</option>
-              <option value="soft">نرم</option>
-              <option value="sharp">تیز</option>
+              <option value="pill">{t("pill")}</option>
+              <option value="soft">{t("soft")}</option>
+              <option value="sharp">{t("sharp")}</option>
             </Select>
           </label>
           <label className="grid gap-1">
-            سبک قهرمان صفحه
+            {t("hero")}
             <Select
               name="heroStyle"
               value={draft.heroStyle}
@@ -183,12 +192,12 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
                 setDraft((d) => ({ ...d, heroStyle: e.target.value }))
               }
             >
-              <option value="editorial">مجله‌ای</option>
-              <option value="minimal">مینیمال</option>
+              <option value="editorial">{t("editorial")}</option>
+              <option value="minimal">{t("minimal")}</option>
             </Select>
           </label>
           <label className="grid gap-1">
-            گردی گوشه‌ها
+            {t("radius")}
             <input
               name="radius"
               value={draft.radius}
@@ -201,9 +210,9 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
         </Card>
 
         <Card className="grid gap-4">
-          <CardTitle>فونت</CardTitle>
+          <CardTitle>{t("font")}</CardTitle>
           <label className="grid gap-1">
-            فونت فارسی
+            {t("fontFa")}
             <Select
               name="fontFa"
               value={draft.fontFa}
@@ -215,7 +224,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
             </Select>
           </label>
           <label className="grid gap-1">
-            فونت لاتین
+            {t("fontLatin")}
             <Select
               name="fontLatin"
               value={draft.fontLatin}
@@ -229,8 +238,9 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
         </Card>
 
         <Card className="grid gap-2">
-          <CardTitle>CSS سفارشی</CardTitle>
+          <CardTitle>{t("css")}</CardTitle>
           <textarea
+            aria-label={t("css")}
             name="customCss"
             value={draft.customCss}
             onChange={(e) =>
@@ -238,7 +248,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
             }
             rows={6}
             className="rounded-[10px] border border-black/15 p-3 font-mono text-sm"
-            placeholder="حداکثر ۲۰ کیلوبایت. بدون @import یا url() بیرونی."
+            placeholder={t("cssHint")}
           />
         </Card>
 
@@ -249,24 +259,24 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
         )}
         {state?.ok && (
           <p role="status" style={{ color: "var(--success)" }}>
-            ذخیره شد.
+            {t("saved")}
           </p>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "در حال ذخیره…" : "ذخیره"}
+          {pending ? t("saving") : t("save")}
         </Button>
       </form>
 
       <div className="grid gap-4">
-        <CardTitle>پیش‌نمایش زنده</CardTitle>
+        <CardTitle>{t("preview")}</CardTitle>
         <div>
-          <p className="mb-1 text-sm text-muted">۳۹۰px (موبایل)</p>
+          <p className="mb-1 text-sm text-muted">{t("mobile")}</p>
           <iframe
             key={`390-${frameGen}`}
             ref={iframe390}
             src="/admin/preview/theme"
             onLoad={broadcast}
-            title="پیش‌نمایش موبایل"
+            title={t("mobilePreview")}
             style={{
               width: 390,
               maxWidth: "100%",
@@ -277,13 +287,13 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
           />
         </div>
         <div>
-          <p className="mb-1 text-sm text-muted">۱۲۸۰px (دسکتاپ)</p>
+          <p className="mb-1 text-sm text-muted">{t("desktop")}</p>
           <iframe
             key={`1280-${frameGen}`}
             ref={iframe1280}
             src="/admin/preview/theme"
             onLoad={broadcast}
-            title="پیش‌نمایش دسکتاپ"
+            title={t("desktopPreview")}
             style={{
               width: "100%",
               height: 320,
