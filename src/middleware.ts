@@ -1,6 +1,7 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { parseSeoPath, privateSeoPath } from "@/lib/seo-urls";
 import createIntlMiddleware from "next-intl/middleware";
 import { adminRedirectUrl } from "@/modules/auth/redirects";
 import authConfig from "@/modules/auth/config";
@@ -147,12 +148,20 @@ function isMaintenanceExempt(pathname: string): boolean {
   );
 }
 
-export default auth(async (req) => {
+async function applicationMiddleware(req: NextAuthRequest) {
   const { pathname, search } = req.nextUrl;
+  req.headers.delete("x-hoda-seo-market");
+  // Crawling documents are global endpoints, outside locale negotiation.
+  if (
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname.startsWith("/sitemaps/")
+  )
+    return NextResponse.next({ request: { headers: req.headers } });
 
   // Public, identity-free installation assets; exact namespace, no locale redirect.
   if (pathname === "/sw.js" || pathname.startsWith("/pwa/"))
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: req.headers } });
 
   // --- Admin: JWT guard, no locale routing ---
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -173,7 +182,7 @@ export default auth(async (req) => {
         adminRedirectUrl("/admin/security/setup", req.url),
       );
     }
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: req.headers } });
   }
 
   // --- API: maintenance write-gate, no locale routing ---
@@ -188,10 +197,13 @@ export default auth(async (req) => {
         { status: 503, headers: { "retry-after": "120" } },
       );
     }
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: req.headers } });
   }
 
   // --- Everything else: storefront ---
+  const canonical = parseSeoPath(pathname);
+  if (/^\/(fa|tr|en)\/m(?:\/|$)/.test(pathname) && !canonical)
+    return new NextResponse(null, { status: 404 });
   const seg = pathname.split("/")[1];
   const urlLocale = (routing.locales as readonly string[]).includes(seg)
     ? seg
@@ -215,12 +227,55 @@ export default auth(async (req) => {
   // Market resolution + enabledLocales gate (D10, architecture §3.1).
   if (urlLocale) {
     const markets = await fetchMarkets(req);
+    if (canonical) {
+      if (!markets.length) return new NextResponse(null, { status: 503 });
+      const market = markets.find(
+        (m) =>
+          m.code === canonical.market &&
+          m.isActive &&
+          m.enabledLocales.includes(canonical.locale),
+      );
+      if (!market) return new NextResponse(null, { status: 404 });
+      // NextURL normalizes 127.0.0.1 to localhost even when URL normalization
+      // is disabled. A rewrite to that other origin becomes a second request,
+      // losing our trusted market header and rerunning cookie-based routing.
+      const target = new URL(req.url);
+      target.pathname = canonical.target;
+      target.searchParams.delete("market");
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("X-NEXT-INTL-LOCALE", canonical.locale);
+      requestHeaders.set("x-hoda-seo-market", market.code);
+      const response = NextResponse.rewrite(target, {
+        request: { headers: requestHeaders },
+      });
+      response.cookies.set("market", market.code, {
+        path: "/",
+        maxAge: MARKET_COOKIE_MAX_AGE,
+      });
+      return response;
+    }
     if (markets.length) {
       const cookieCode = req.cookies.get("market")?.value;
       const queryCode = req.nextUrl.searchParams.get("market") ?? undefined;
+      const explicit = markets.find(
+        (m) =>
+          m.code === queryCode &&
+          m.isActive &&
+          m.enabledLocales.includes(urlLocale),
+      );
+      if (
+        explicit &&
+        ["GET", "HEAD"].includes(req.method) &&
+        /^\/(fa|tr|en)(?:\/(p|c|pages)\/[^/]+)?\/?$/.test(pathname)
+      ) {
+        const url = new URL(req.url);
+        url.pathname = `/${urlLocale}/m/${encodeURIComponent(explicit.code)}${pathname.slice(urlLocale.length + 1).replace(/\/$/, "")}`;
+        url.searchParams.delete("market");
+        return NextResponse.redirect(url, 301);
+      }
       const market = resolveMarket(markets, cookieCode || queryCode, urlLocale);
       if (market && !market.enabledLocales.includes(urlLocale)) {
-        const url = req.nextUrl.clone();
+        const url = new URL(req.url);
         url.pathname =
           pathname.replace(`/${urlLocale}`, `/${market.defaultLocale}`) ||
           `/${market.defaultLocale}`;
@@ -243,6 +298,17 @@ export default auth(async (req) => {
   }
 
   return intlMiddleware(req);
+}
+
+export default auth(async (request) => {
+  const response = await applicationMiddleware(request);
+  if (
+    response &&
+    (privateSeoPath(request.nextUrl.pathname) ||
+      request.nextUrl.searchParams.has("preview"))
+  )
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 });
 
 export const config = {

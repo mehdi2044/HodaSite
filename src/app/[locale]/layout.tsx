@@ -1,3 +1,4 @@
+import { normalizeSeo } from "@/lib/seo";
 import { normalizeThemeColors, safeColorMap } from "@/lib/theme-validation";
 import { DEFAULT_LIGHT_COLORS } from "@/lib/theme-defaults";
 import { PwaControls } from "@/components/pwa/controls";
@@ -57,6 +58,7 @@ export async function generateMetadata({
   ]);
   const brand = normalizeBrand(site?.brand);
   const siteName = brand.name[locale] ?? brand.name.fa ?? "STYLE HUB";
+  const globalSeo = normalizeSeo(site?.seo);
   const seo = (market?.seo ?? {}) as {
     title?: Record<string, string>;
     description?: Record<string, string>;
@@ -73,11 +75,17 @@ export async function generateMetadata({
     : null;
 
   return {
-    title: seo.title?.[locale] || siteName,
+    title: seo.title?.[locale] || globalSeo.title[locale] || siteName,
+    metadataBase: globalSeo.origin ? new URL(globalSeo.origin) : undefined,
+    robots: { index: globalSeo.indexingEnabled, follow: true },
+    verification: globalSeo.googleVerification
+      ? { google: globalSeo.googleVerification }
+      : undefined,
     applicationName: siteName,
     manifest: `/pwa/${locale}/manifest.webmanifest${market ? `?market=${encodeURIComponent(market.code)}` : ""}`,
     appleWebApp: { capable: true, title: siteName, statusBarStyle: "default" },
-    description: seo.description?.[locale] || undefined,
+    description:
+      seo.description?.[locale] || globalSeo.description[locale] || undefined,
     icons: {
       ...(favicon ? { icon: favicon.url } : {}),
       apple: [

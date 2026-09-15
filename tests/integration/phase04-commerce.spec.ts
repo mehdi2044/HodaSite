@@ -10,6 +10,8 @@ const context = vi.hoisted(() => ({
     | undefined,
 }));
 vi.mock("next/headers", () => ({
+  // Checkout uses the legacy route and has no canonical storefront market header.
+  headers: async () => new Headers(),
   cookies: async () => ({
     get: (key: string) =>
       (context.requests?.getStore() ?? context.cookies).has(key)

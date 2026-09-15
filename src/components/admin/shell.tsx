@@ -29,6 +29,7 @@ export async function AdminShell({
   const ai = await getTranslations("aiAdmin");
   const journal = await getTranslations("journal");
   const launch = await getTranslations("launch");
+  const seo = await getTranslations("seoAdmin");
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
   const alertCount = showHealth
@@ -76,6 +77,9 @@ export async function AdminShell({
         )}
         {(await can(user.id, "ai.finance.analyze")) && (
           <Link href="/admin/finance/analyst">{ai("analyst")}</Link>
+        )}
+        {(await can(user.id, "settings.brand.edit")) && (
+          <Link href="/admin/settings/seo">{seo("title")}</Link>
         )}
         <Link href="/admin/settings/brand">{nav("brand")}</Link>
         <Link href="/admin/settings/theme">{nav("theme")}</Link>

@@ -1665,5 +1665,23 @@
     "accessCAHint": "Test and record home, images, login, checkout and receipt uploads without VPN.",
     "providersTitle": "Active services are not set to no-op",
     "providersHint": "No active service should use a no-op provider. This check alone does not verify live provider connectivity."
+  },
+  "seoAdmin": {
+    "title": "SEO settings",
+    "intro": "Manage page defaults and whether search engines may index the store.",
+    "origin": "Primary site address",
+    "originHint": "An HTTPS address without a path, query or credentials. This does not connect a domain or publish the site.",
+    "indexing": "Allow indexing of public pages",
+    "indexingHint": "Off by default. Keep off until release acceptance is complete. Accounts, orders and admin pages always remain excluded.",
+    "defaultTitle": "Default title",
+    "description": "Default description",
+    "googleVerification": "Google ownership verification code",
+    "verificationHint": "Enter only the verification value, not HTML or a script.",
+    "fa": "Persian",
+    "tr": "Turkish",
+    "en": "English",
+    "save": "Save settings",
+    "saving": "Saving…",
+    "saved": "Settings saved."
   }
 }

@@ -6,6 +6,7 @@ export const routing = defineRouting({
   locales: ["fa", "tr", "en"],
   defaultLocale: "fa",
   localePrefix: "always",
+  alternateLinks: false, // Market-aware canonical alternates are emitted by page metadata.
 });
 
 export type Locale = (typeof routing.locales)[number];

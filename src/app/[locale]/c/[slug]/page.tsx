@@ -1,3 +1,5 @@
+import { publicMetadata } from "@/modules/seo";
+import { filteredListing, singleFacetQuery } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -25,29 +27,31 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const safe = locale as CatalogLocale;
-  const category = await findCategoryBySlug(safe, slug);
-  if (!category) return {};
-  const seo = category.seoI18n as { title?: unknown; description?: unknown };
-  const filters = await searchParams;
-  const active = Object.entries(filters).filter(
-    ([key, value]) => key !== "page" && value,
-  ).length;
-  return {
+  const [{ market }, category, filters] = await Promise.all([
+    getRequestContext(locale),
+    findCategoryBySlug(safe, slug),
+    searchParams,
+  ]);
+  if (!category) return { robots: { index: false, follow: false } };
+  const seo = (category.seoI18n ?? {}) as {
+    title?: unknown;
+    description?: unknown;
+  };
+  const page = Number(one(filters.page) || 1);
+  return publicMetadata({
+    locale: safe,
+    marketId: market.id,
+    kind: "c",
+    slugs: category.slugI18n,
+    page: Number.isSafeInteger(page) && page > 1 && page <= 100000 ? page : 1,
+    facetQuery: singleFacetQuery(filters),
+    noindex: filteredListing(filters) || filters.preview !== undefined,
     title:
       catalogText(seo.title, safe) || catalogText(category.titleI18n, safe),
     description:
       catalogText(seo.description, safe) ||
       catalogText(category.descriptionI18n, safe),
-    robots: active > 1 ? { index: false, follow: true } : undefined,
-    alternates: {
-      languages: Object.fromEntries(
-        (["fa", "tr", "en"] as const).map((item) => [
-          item,
-          `/${item}/c/${encodeURIComponent(catalogText(category.slugI18n, item))}`,
-        ]),
-      ),
-    },
-  };
+  });
 }
 
 export default async function CategoryPage({
