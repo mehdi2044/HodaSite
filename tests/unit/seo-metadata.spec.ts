@@ -82,4 +82,18 @@ describe("market-specific search metadata", () => {
       languages: {},
     });
   });
+  it("preserves an indexable single facet and its pagination in the canonical", async () => {
+    const result = await publicMetadata({
+      ...input,
+      kind: "c",
+      facetQuery: "brand=example",
+      page: 2,
+    });
+    expect(result.alternates).toEqual({
+      canonical:
+        "https://shop.example.com/tr/m/TR/c/elbise?brand=example&page=2",
+      languages: {},
+    });
+    expect(result.robots).toEqual({ index: true, follow: true });
+  });
 });

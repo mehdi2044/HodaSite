@@ -1,5 +1,5 @@
 import { publicMetadata } from "@/modules/seo";
-import { filteredListing } from "@/lib/seo";
+import { filteredListing, singleFacetQuery } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -44,6 +44,7 @@ export async function generateMetadata({
     kind: "c",
     slugs: category.slugI18n,
     page: Number.isSafeInteger(page) && page > 1 && page <= 100000 ? page : 1,
+    facetQuery: singleFacetQuery(filters),
     noindex: filteredListing(filters) || filters.preview !== undefined,
     title:
       catalogText(seo.title, safe) || catalogText(category.titleI18n, safe),

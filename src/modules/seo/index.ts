@@ -23,6 +23,7 @@ export async function publicMetadata(input: {
   description?: string;
   noindex?: boolean;
   page?: number;
+  facetQuery?: string;
   images?: string[];
 }): Promise<Metadata> {
   const [site, markets] = await Promise.all([getSiteSettings(), getMarkets()]);
@@ -50,7 +51,9 @@ export async function publicMetadata(input: {
       (input.marketIds === undefined || input.marketIds.includes(m.id)),
   );
   const languages: Record<string, string> = {};
-  const pageQuery = input.page && input.page > 1 ? `?page=${input.page}` : "";
+  const query = new URLSearchParams(input.facetQuery);
+  if (input.page && input.page > 1) query.set("page", String(input.page));
+  const pageQuery = query.size ? `?${query}` : "";
   if (settings.origin && !pageQuery)
     for (const m of visible)
       for (const locale of SEO_LOCALES) {

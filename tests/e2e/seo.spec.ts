@@ -126,6 +126,40 @@ test("SEO settings control public metadata, stable market URLs and private crawl
       expect(await sitemap.text()).toContain(config.origin + path);
       expect(await sitemap.text()).not.toContain("/admin");
     }
+    // A copied URL must retain the shopper's chosen market without its cookie.
+    await page.locator(".storefront-mobile-menu summary").click();
+    await page
+      .locator(".storefront-mobile-menu select")
+      .last()
+      .selectOption("TR");
+    await expect(page).toHaveURL(
+      new RegExp(`/en/m/TR/p/${encodeURIComponent(slugs.en)}$`),
+    );
+    await page.context().clearCookies({ name: "market" });
+    await page.reload();
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      config.origin + seoPath("en", "TR", "p", slugs.en),
+    );
+    const category = await db.category.findUniqueOrThrow({
+      where: { id: product.categoryId },
+    });
+    const categoryPath = seoPath(
+      "tr",
+      "TR",
+      "c",
+      (category.slugI18n as Record<string, string>).tr,
+    );
+    await page.goto(categoryPath + "?material=cotton&utm_source=fixture");
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      config.origin + categoryPath + "?material=cotton",
+    );
+    await page.goto(categoryPath + "?material=cotton&available=1");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
     const redirected = await page.request.get(
       `/tr/p/${encodeURIComponent(slugs.tr)}?market=TR`,
       { maxRedirects: 0 },

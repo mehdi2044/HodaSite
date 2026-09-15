@@ -31,3 +31,18 @@ export function privateSeoPath(pathname: string) {
     )
   );
 }
+export function switchedMarketPath(
+  pathname: string,
+  market: { code: string; enabledLocales: string[]; defaultLocale: string },
+) {
+  const route = parseSeoPath(pathname);
+  if (!route) return null;
+  // Without an enabled current language we cannot invent the translated slug.
+  // Open the destination market's home in its configured default language.
+  if (!market.enabledLocales.includes(route.locale))
+    return seoPath(market.defaultLocale, market.code);
+  return (
+    seoPath(route.locale, market.code) +
+    route.target.slice(route.locale.length + 1)
+  );
+}

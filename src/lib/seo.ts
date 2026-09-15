@@ -54,11 +54,30 @@ export function localized(raw: unknown, locale: string): string {
 export function filteredListing(
   query: Record<string, string | string[] | undefined>,
 ) {
-  return (
-    ["brand", "color", "size", "material", "min", "max", "available"].filter(
-      (key) => Boolean(query[key]?.length),
-    ).length >= 2
-  );
+  return listingFacets(query).length >= 2;
+}
+function listingFacets(query: Record<string, string | string[] | undefined>) {
+  return [
+    "brand",
+    "color",
+    "size",
+    "material",
+    "min",
+    "max",
+    "available",
+  ].flatMap((key) => {
+    const raw = query[key];
+    const value = (Array.isArray(raw) ? raw[0] : raw)?.trim();
+    return value && (key !== "available" || value === "1")
+      ? [[key, value]]
+      : [];
+  });
+}
+export function singleFacetQuery(
+  query: Record<string, string | string[] | undefined>,
+) {
+  const facets = listingFacets(query);
+  return facets.length === 1 ? new URLSearchParams(facets).toString() : "";
 }
 export function xmlEscape(value: string) {
   return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").replace(

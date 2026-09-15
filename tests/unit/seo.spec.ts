@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { switchedMarketPath } from "@/lib/seo-urls";
+import { singleFacetQuery } from "@/lib/seo";
 import {
   canonicalOrigin,
   filteredListing,
@@ -89,5 +91,39 @@ describe("SEO URL and indexing contracts", () => {
   });
   it("escapes untrusted XML values and removes illegal control characters", () => {
     expect(xmlEscape("a&<b>\"'\u0001")).toBe("a&amp;&lt;b&gt;&quot;&apos;");
+  });
+  it("keeps a changed market in a shareable URL and uses its home when the language is unavailable", () => {
+    expect(
+      switchedMarketPath("/en/m/CA/p/dress", {
+        code: "TR",
+        enabledLocales: ["en", "tr"],
+        defaultLocale: "tr",
+      }),
+    ).toBe("/en/m/TR/p/dress");
+    expect(
+      switchedMarketPath("/en/m/CA/p/dress", {
+        code: "IR",
+        enabledLocales: ["fa"],
+        defaultLocale: "fa",
+      }),
+    ).toBe("/fa/m/IR");
+    expect(
+      switchedMarketPath("/en/account", {
+        code: "TR",
+        enabledLocales: ["en"],
+        defaultLocale: "en",
+      }),
+    ).toBeNull();
+  });
+  it("normalizes one real facet without promoting tracking or inactive filter values", () => {
+    expect(
+      singleFacetQuery({
+        brand: ["a&b", "ignored"],
+        utm_source: "mail",
+        page: "2",
+      }),
+    ).toBe("brand=a%26b");
+    expect(singleFacetQuery({ brand: "a", color: "blue" })).toBe("");
+    expect(singleFacetQuery({ available: "0" })).toBe("");
   });
 });
