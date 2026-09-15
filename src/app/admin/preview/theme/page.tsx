@@ -1,3 +1,5 @@
+import { normalizeBrand } from "@/lib/brand";
+import { getLocale, getTranslations } from "next-intl/server";
 import { getSiteSettings } from "@/modules/settings";
 import { ThemePreviewClient } from "./preview-client";
 
@@ -6,19 +8,19 @@ import { ThemePreviewClient } from "./preview-client";
 export const dynamic = "force-dynamic";
 
 export default async function ThemePreviewPage() {
+  const legacy = await getTranslations("foundationAdmin");
+
   const site = await getSiteSettings();
-  const brand = (site?.brand ?? {}) as {
-    name?: Record<string, string>;
-    tagline?: Record<string, string>;
-  };
-  const name = brand.name?.fa ?? "STYLE HUB";
-  const tagline = brand.tagline?.fa ?? "";
+  const locale = await getLocale();
+  const brand = normalizeBrand(site?.brand);
+  const name = brand.name[locale as "fa" | "tr" | "en"] || brand.name.fa;
+  const tagline = brand.tagline[locale as "fa" | "tr" | "en"];
 
   return (
     <ThemePreviewClient>
       <main
         className="hero"
-        dir="rtl"
+        dir={locale === "fa" ? "rtl" : "ltr"}
         style={{ minHeight: "auto", padding: "32px 0" }}
       >
         <section className="shell">
@@ -30,12 +32,13 @@ export default async function ThemePreviewPage() {
           <h1 style={{ fontSize: "clamp(2rem,10vw,3.5rem)", margin: 0 }}>
             {name}
           </h1>
-          <p className="muted">پیش‌نمایش زندهٔ پوسته</p>
+          <p className="muted">{legacy("preview")}</p>
           <button className="button" type="button">
-            دکمهٔ نمونه
+            {" "}
+            {legacy("sampleButton")}{" "}
           </button>
           <div className="card mt-4" style={{ maxWidth: 320, marginTop: 16 }}>
-            <p style={{ margin: 0 }}>کارت نمونه با سطح، متن و گردی فعلی.</p>
+            <p style={{ margin: 0 }}>{legacy("sampleCard")}</p>
           </div>
         </section>
       </main>

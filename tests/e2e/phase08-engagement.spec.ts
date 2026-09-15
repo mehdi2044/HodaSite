@@ -415,3 +415,48 @@ test("changing or resetting category filters clears both pagination parameters",
     .toBe(false);
   expect(new URL(page.url()).searchParams.has("page")).toBe(false);
 });
+
+test("earlier-phase admin settings follow the saved language, including the theme preview", async ({
+  page,
+}) => {
+  test.setTimeout(150000);
+  await ensureMaintenanceOff(page.request);
+  await admin(page);
+  for (const locale of ["en", "tr", "fa"] as const) {
+    const copy = { en, tr, fa }[locale].foundationAdmin;
+    await Promise.all([
+      page.waitForEvent("load"),
+      page.locator('[name="adminLocale"]').selectOption(locale),
+    ]);
+    await expect(page.locator('[name="adminLocale"]')).toHaveValue(locale);
+    // Wait for the document reload triggered by the saved preference.
+    await expect(page.locator(".admin")).toHaveAttribute(
+      "dir",
+      locale === "fa" ? "rtl" : "ltr",
+    );
+    for (const [path, title] of [
+      ["settings/brand", copy.brand],
+      ["settings/contact", copy.contact],
+      ["settings/legal", copy.legal],
+      ["settings/social", copy.social],
+      ["settings/maintenance", copy.maintenance],
+      ["users/new", copy.newUser],
+      ["markets", copy.markets],
+    ]) {
+      await page.goto(`/admin/${path}`);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+      if (path === "settings/social") {
+        await expect(
+          page.getByRole("button", { name: copy.save, exact: true }),
+        ).toBeVisible();
+      }
+    }
+    await page.goto("/admin/preview/theme");
+    await expect(page.getByText(copy.preview, { exact: true })).toBeVisible();
+    await expect(page.locator("main")).toHaveAttribute(
+      "dir",
+      locale === "fa" ? "rtl" : "ltr",
+    );
+    await page.goto("/admin");
+  }
+});

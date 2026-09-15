@@ -1,9 +1,12 @@
+import { getTranslations } from "next-intl/server";
 import { getSiteSettings } from "@/modules/settings";
 import { saveContact } from "./actions";
 import { Card, CardTitle, Input } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
 
 export default async function ContactSettings() {
+  const legacy = await getTranslations("foundationAdmin");
+
   const site = await getSiteSettings();
   const contact = (site?.contact ?? {}) as {
     email?: string;
@@ -14,17 +17,19 @@ export default async function ContactSettings() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">تماس</h1>
+      <h1 className="text-2xl font-semibold">{legacy("contact")}</h1>
       <Card className="mt-4 max-w-lg">
-        <SettingsForm action={saveContact} submitLabel="ذخیره">
-          <CardTitle>ایمیل و تلفن</CardTitle>
+        <SettingsForm action={saveContact} submitLabel={legacy("save")}>
+          <CardTitle>{legacy("emailPhone")}</CardTitle>
           <label className="grid gap-1">
-            ایمیل
+            {" "}
+            {legacy("email")}{" "}
             <Input name="email" type="email" defaultValue={contact.email} />
           </label>
           {(["IR", "TR", "CA"] as const).map((code) => (
             <label key={code} className="grid gap-1">
-              تلفن بازار {code}
+              {" "}
+              {legacy("marketPhone", { market: code })}
               <Input
                 name={`phone${code}`}
                 defaultValue={contact.phones?.[code]}
@@ -32,20 +37,22 @@ export default async function ContactSettings() {
               />
             </label>
           ))}
-          <CardTitle className="mt-2">آدرس</CardTitle>
+          <CardTitle className="mt-2">{legacy("address")}</CardTitle>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              آدرس ({locale})
+              {" "}
+              {legacy("addressLocale", { locale })}
               <Input
                 name={`address${cap(locale)}`}
                 defaultValue={contact.address?.[locale]}
               />
             </label>
           ))}
-          <CardTitle className="mt-2">ساعت کاری</CardTitle>
+          <CardTitle className="mt-2">{legacy("hours")}</CardTitle>
           {(["fa", "tr", "en"] as const).map((locale) => (
             <label key={locale} className="grid gap-1">
-              ساعت کاری ({locale})
+              {" "}
+              {legacy("hoursLocale", { locale })}
               <Input
                 name={`hours${cap(locale)}`}
                 defaultValue={contact.hours?.[locale]}

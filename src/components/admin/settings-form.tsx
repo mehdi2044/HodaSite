@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "next-intl";
+
 import { useActionState } from "react";
 import { Button } from "@/components/ui";
 import type { ActionResult } from "@/lib/action-result";
@@ -17,6 +19,8 @@ export function SettingsForm({
   submitLabel: string;
   className?: string;
 }) {
+  const legacy = useTranslations("foundationAdmin");
+
   const [state, formAction, pending] = useActionState(action, null);
   return (
     <form action={formAction} className={className ?? "grid gap-4"}>
@@ -32,11 +36,12 @@ export function SettingsForm({
       )}
       {state?.ok && (
         <p role="status" style={{ color: "var(--success)" }}>
-          ذخیره شد.
+          {" "}
+          {legacy("saved")}{" "}
         </p>
       )}
       <Button type="submit" disabled={pending}>
-        {pending ? "در حال ذخیره…" : submitLabel}
+        {pending ? legacy("saving") : submitLabel}
       </Button>
     </form>
   );

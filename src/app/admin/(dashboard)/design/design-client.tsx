@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import {
   Badge,
@@ -18,18 +19,22 @@ import {
 } from "@/components/ui";
 
 function ToastDemo() {
+  const legacy = useTranslations("foundationAdmin");
+
   const toast = useToast();
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" onClick={() => toast("ذخیره شد", "success")}>
-        Toast موفق
+      <Button size="sm" onClick={() => toast(legacy("savedToast"), "success")}>
+        {" "}
+        {legacy("successToast")}{" "}
       </Button>
       <Button
         size="sm"
         variant="destructive"
-        onClick={() => toast("خطا در ذخیره", "error")}
+        onClick={() => toast(legacy("saveError"), "error")}
       >
-        Toast خطا
+        {" "}
+        {legacy("errorToast")}{" "}
       </Button>
     </div>
   );
@@ -44,38 +49,43 @@ type BidiText = {
 };
 
 export function DesignClient({ bidi }: { bidi: BidiText }) {
+  const legacy = useTranslations("foundationAdmin");
+
   return (
     <ToastProvider>
-      <h1>سیستم طراحی</h1>
+      <h1>{legacy("design")}</h1>
       <p className="text-muted">
-        اجزای پایه از <code>src/components/ui</code> روی Tailwind + توکن‌های تم.
+        {" "}
+        {legacy("componentsFrom")} <code>src/components/ui</code>{" "}
+        {legacy("themeTokens")}{" "}
       </p>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <Card>
           <CardTitle>Button</CardTitle>
-          <CardDescription>چهار حالت، دو اندازه</CardDescription>
+          <CardDescription>{legacy("buttonVariants")}</CardDescription>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button>اصلی</Button>
-            <Button variant="secondary">ثانویه</Button>
-            <Button variant="ghost">شفاف</Button>
-            <Button variant="destructive">حذف</Button>
-            <Button size="sm">کوچک</Button>
-            <Button disabled>غیرفعال</Button>
+            <Button>{legacy("primary")}</Button>
+            <Button variant="secondary">{legacy("secondary")}</Button>
+            <Button variant="ghost">{legacy("ghost")}</Button>
+            <Button variant="destructive">{legacy("delete")}</Button>
+            <Button size="sm">{legacy("small")}</Button>
+            <Button disabled>{legacy("inactive")}</Button>
           </div>
         </Card>
 
         <Card>
           <CardTitle>Input / Select</CardTitle>
           <div className="mt-3 grid gap-3">
-            <Input placeholder="ورودی متن" />
+            <Input placeholder={legacy("textInput")} />
             <Select defaultValue="">
               <option value="" disabled>
-                یک گزینه انتخاب کنید
+                {" "}
+                {legacy("selectOption")}{" "}
               </option>
-              <option>ایران</option>
-              <option>ترکیه</option>
-              <option>کانادا</option>
+              <option>{legacy("iran")}</option>
+              <option>{legacy("turkey")}</option>
+              <option>{legacy("canada")}</option>
             </Select>
           </div>
         </Card>
@@ -83,10 +93,10 @@ export function DesignClient({ bidi }: { bidi: BidiText }) {
         <Card>
           <CardTitle>Badge</CardTitle>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Badge>خنثی</Badge>
-            <Badge tone="success">موفق</Badge>
-            <Badge tone="warning">هشدار</Badge>
-            <Badge tone="error">خطا</Badge>
+            <Badge>{legacy("neutral")}</Badge>
+            <Badge tone="success">{legacy("success")}</Badge>
+            <Badge tone="warning">{legacy("warning")}</Badge>
+            <Badge tone="error">{legacy("error")}</Badge>
           </div>
         </Card>
 
@@ -101,20 +111,23 @@ export function DesignClient({ bidi }: { bidi: BidiText }) {
           <CardTitle>Dialog / Sheet</CardTitle>
           <div className="mt-3 flex flex-wrap gap-2">
             <Dialog
-              trigger={<Button size="sm">باز کردن Dialog</Button>}
-              title="عنوان دیالوگ"
+              trigger={<Button size="sm">{legacy("openDialog")}</Button>}
+              title={legacy("dialogTitle")}
             >
-              محتوای نمونهٔ دیالوگ.
+              {" "}
+              {legacy("dialogContent")}{" "}
             </Dialog>
             <Sheet
               trigger={
                 <Button size="sm" variant="secondary">
-                  باز کردن Sheet
+                  {" "}
+                  {legacy("openSheet")}{" "}
                 </Button>
               }
-              title="پنل کناری"
+              title={legacy("sheetTitle")}
             >
-              محتوای نمونهٔ پنل کناری.
+              {" "}
+              {legacy("sheetContent")}{" "}
             </Sheet>
           </div>
         </Card>
@@ -137,28 +150,28 @@ export function DesignClient({ bidi }: { bidi: BidiText }) {
             <Table>
               <thead>
                 <tr>
-                  <TH>بازار</TH>
-                  <TH>ارز</TH>
-                  <TH>وضعیت</TH>
+                  <TH>{legacy("market")}</TH>
+                  <TH>{legacy("currency")}</TH>
+                  <TH>{legacy("status")}</TH>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <TD>ایران</TD>
+                  <TD>{legacy("iran")}</TD>
                   <TD>
                     <bdi dir="ltr">IRT</bdi>
                   </TD>
                   <TD>
-                    <Badge tone="success">فعال</Badge>
+                    <Badge tone="success">{legacy("active")}</Badge>
                   </TD>
                 </tr>
                 <tr>
-                  <TD>ترکیه</TD>
+                  <TD>{legacy("turkey")}</TD>
                   <TD>
                     <bdi dir="ltr">TRY</bdi>
                   </TD>
                   <TD>
-                    <Badge tone="success">فعال</Badge>
+                    <Badge tone="success">{legacy("active")}</Badge>
                   </TD>
                 </tr>
               </tbody>

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { ScopeFields } from "@/components/admin/security/scope-fields";
 import { requireAdminPage } from "@/modules/auth/page";
 import Link from "next/link";
@@ -11,6 +12,8 @@ export default async function EditUser({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const legacy = await getTranslations("foundationAdmin");
+
   await requireAdminPage("users.manage");
   const { id } = await params;
   const [user, roles] = await Promise.all([
@@ -28,17 +31,24 @@ export default async function EditUser({
   return (
     <>
       <h1>
-        ویرایش کاربر: <bdi dir="ltr">{user.email}</bdi>
+        {" "}
+        {legacy("editUser")} <bdi dir="ltr">{user.email}</bdi>
       </h1>
       <Card className="mt-4 max-w-lg">
         <form action={updateThisUser} className="grid gap-4">
           <label className="grid gap-1">
-            نام
+            {" "}
+            {legacy("name")}{" "}
             <Input name="name" defaultValue={user.name} required />
           </label>
           <label className="grid gap-1">
-            نقش
-            <Select aria-label="نقش" name="roleKey" defaultValue={currentRole}>
+            {" "}
+            {legacy("role")}{" "}
+            <Select
+              aria-label={legacy("role")}
+              name="roleKey"
+              defaultValue={currentRole}
+            >
               {roles.map((r) => (
                 <option key={r.id} value={r.key}>
                   {r.key}
@@ -47,14 +57,15 @@ export default async function EditUser({
             </Select>
           </label>
           <label className="grid gap-1">
-            وضعیت
+            {" "}
+            {legacy("status")}{" "}
             <Select
-              aria-label="وضعیت"
+              aria-label={legacy("status")}
               name="isActive"
               defaultValue={String(user.isActive)}
             >
-              <option value="true">فعال</option>
-              <option value="false">غیرفعال</option>
+              <option value="true">{legacy("active")}</option>
+              <option value="false">{legacy("inactive")}</option>
             </Select>
           </label>
           <ScopeFields
@@ -63,8 +74,8 @@ export default async function EditUser({
             }
           />
           <div className="flex items-center gap-3">
-            <Button type="submit">ذخیره</Button>
-            <Link href="/admin/users">انصراف</Link>
+            <Button type="submit">{legacy("save")}</Button>
+            <Link href="/admin/users">{legacy("cancel")}</Link>
           </div>
         </form>
       </Card>

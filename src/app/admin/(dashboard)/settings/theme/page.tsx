@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getThemeSettings } from "@/modules/settings";
 import { ThemeEditor, type ThemeDraft } from "./theme-editor";
 import {
@@ -7,6 +8,8 @@ import {
 import { normalizeThemeColors } from "@/lib/theme-validation";
 
 export default async function Theme() {
+  const legacy = await getTranslations("foundationAdmin");
+
   const theme = await getThemeSettings();
   // Accepts Phase 00's legacy flat shape too (backward-compat safety net
   // alongside the data migration — PR #4 review, P1).
@@ -28,7 +31,7 @@ export default async function Theme() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">پوسته</h1>
+      <h1 className="text-2xl font-semibold">{legacy("theme")}</h1>
       <div className="mt-4">
         <ThemeEditor initial={initial} />
       </div>
