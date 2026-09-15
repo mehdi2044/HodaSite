@@ -1,4 +1,5 @@
 "use server";
+import { customerReturnPath } from "@/lib/customer-return-path";
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -138,9 +139,7 @@ export async function verifyOtpAction(locale: string, form: FormData) {
     });
     const next = String(form.get("next") ?? "");
     return {
-      url: /^\/(fa|tr|en)\/(checkout|orders\/[A-Z]{2}-[0-9]+\/pay)$/.test(next)
-        ? next
-        : `/${l}/account`,
+      url: customerReturnPath(next, l),
     };
   });
 }

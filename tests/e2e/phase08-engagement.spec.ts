@@ -27,7 +27,8 @@ async function customerLogin(page: Page, email: string) {
   await page
     .locator("main form")
     .filter({ has: page.locator('[name="email"]') })
-    .locator('button[type="submit"]')
+    .locator("button")
+    .first()
     .click();
   await expect(page.locator('[name="code"]')).toBeVisible();
   let code = "";
@@ -61,7 +62,8 @@ async function customerLogin(page: Page, email: string) {
   await page
     .locator("main form")
     .filter({ has: page.locator('[name="code"]') })
-    .locator('button[type="submit"]')
+    .locator("button")
+    .first()
     .click();
   await expect(page).toHaveURL(/\/en\/account\/wishlist$/);
 }
@@ -380,4 +382,36 @@ test("home, category and cart pass WCAG automated checks", async ({ page }) => {
       .analyze();
     expect(result.violations).toEqual([]);
   }
+});
+
+test("changing or resetting category filters clears both pagination parameters", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await ensureMaintenanceOff(page.request);
+  const product = await db.product.findFirstOrThrow({
+    where: {
+      status: "ACTIVE",
+      deletedAt: null,
+      slugI18n: { path: ["en"], equals: "product-1" },
+    },
+    include: { category: true },
+  });
+  const slug = (product.category.slugI18n as Record<string, string>).en;
+  const path = `/en/m/CA/c/${encodeURIComponent(slug)}`;
+  await page.goto(`${path}?after=${product.id}&page=2`);
+  await page.locator(".shop-filter-toggle").click();
+  await page.locator('dialog [name="sort"]').selectOption("price-desc");
+  await page.locator('dialog button[type="submit"]').click();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has("after"))
+    .toBe(false);
+  expect(new URL(page.url()).searchParams.has("page")).toBe(false);
+  await page.goto(`${path}?after=${product.id}&page=2&sort=price-desc`);
+  await page.locator(".shop-filter-toggle").click();
+  await page.locator(".shop-reset").click();
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has("after"))
+    .toBe(false);
+  expect(new URL(page.url()).searchParams.has("page")).toBe(false);
 });

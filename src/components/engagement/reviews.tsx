@@ -14,9 +14,11 @@ export async function ProductEngagement({
   context,
   productId,
   variants,
+  returnPath,
 }: {
   context: { marketId: string; locale: "fa" | "tr" | "en" };
   productId: string;
+  returnPath: string;
   variants: { id: string; sku: string; available: boolean }[];
 }) {
   const [t, c, reviews] = await Promise.all([
@@ -120,7 +122,11 @@ export async function ProductEngagement({
           {variants
             .filter((v) => !v.available)
             .map((v) => (
-              <div key={v.id} className="border-t pt-4">
+              <div
+                key={v.id}
+                id={`stock-alert-${v.id}`}
+                className="scroll-mt-32 border-t pt-4"
+              >
                 <h3>
                   {t("stockTitle")} — <bdi>{v.sku}</bdi>
                 </h3>
@@ -134,15 +140,30 @@ export async function ProductEngagement({
             ))}
         </>
       ) : (
-        <p>
-          {t("login")}{" "}
-          <Link
-            className="underline"
-            href={`/${context.locale}/account/login?next=${encodeURIComponent(`/${context.locale}/account`)}`}
-          >
-            {t("signIn")}
-          </Link>
-        </p>
+        <div className="grid gap-4">
+          <p>
+            {t("login")}{" "}
+            <Link
+              className="underline"
+              href={`/${context.locale}/account/login?next=${encodeURIComponent(returnPath)}`}
+            >
+              {t("signIn")}
+            </Link>
+          </p>
+          {variants
+            .filter((v) => !v.available)
+            .map((v) => (
+              <p key={v.id}>
+                {t("stockTitle")} — <bdi>{v.sku}</bdi>{" "}
+                <Link
+                  className="underline"
+                  href={`/${context.locale}/account/login?next=${encodeURIComponent(`${returnPath}#stock-alert-${v.id}`)}`}
+                >
+                  {t("signIn")}
+                </Link>
+              </p>
+            ))}
+        </div>
       )}
     </section>
   );

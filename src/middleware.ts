@@ -101,7 +101,10 @@ async function historicalRedirect(
     const value = await result.json();
     if (typeof value.path !== "string" || !parseSeoPath(value.path))
       return null;
-    return NextResponse.redirect(new URL(value.path, req.url), 301);
+    const destination = new URL(value.path, req.url);
+    destination.search = new URL(req.url).search;
+    destination.searchParams.delete("market");
+    return NextResponse.redirect(destination, 301);
   } catch {
     return null;
   }

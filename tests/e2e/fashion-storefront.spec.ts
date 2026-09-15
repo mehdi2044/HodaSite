@@ -105,7 +105,9 @@ for (const locale of ["fa", "tr", "en"] as const) {
       .toBe(true);
     await shoppingProof(page, info, `fashion-rail-${locale}`);
     await card.getByRole("link").click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/p/`));
+    await expect(page).toHaveURL(
+      new RegExp(`/${locale}/m/${{ fa: "IR", tr: "TR", en: "CA" }[locale]}/p/`),
+    );
     const image = page.locator(".shop-gallery-slide").first();
     await image.click();
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();

@@ -400,6 +400,12 @@ export default async function ProductPage({
         </div>
       </section>
       <ProductEngagement
+        returnPath={seoPath(
+          safe,
+          market.code,
+          "p",
+          catalogText(product.slugI18n, safe),
+        )}
         context={{ marketId: market.id, locale: safe }}
         productId={product.id}
         variants={product.variants

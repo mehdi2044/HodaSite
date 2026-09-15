@@ -92,7 +92,7 @@ export async function Header({
             <Link
               href={`/${locale}/account/wishlist`}
               aria-label={t("engagement.wishlist")}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
             >
               <span aria-hidden="true">♡</span>
             </Link>
