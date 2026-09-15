@@ -146,9 +146,13 @@ export function launchChecks(
 /** Returns booleans only; secret values and infrastructure addresses never leave this function. */
 export function configuredServices(env: Record<string, string | undefined>) {
   const present = (key: string) => Boolean(env[key]?.trim());
+  // Match SmtpEmailProvider's default; reject explicitly invalid TCP ports.
+  const smtpPort = Number(env.SMTP_PORT ?? 587);
+  const validSmtpPort =
+    Number.isInteger(smtpPort) && smtpPort >= 1 && smtpPort <= 65535;
   const emailConfigured =
     present("EMAIL_FROM") &&
-    ((env.EMAIL_PROVIDER === "smtp" && present("SMTP_HOST")) ||
+    ((env.EMAIL_PROVIDER === "smtp" && present("SMTP_HOST") && validSmtpPort) ||
       (env.EMAIL_PROVIDER === "resend" && present("RESEND_API_KEY")));
   return {
     emailConfigured,
@@ -156,7 +160,7 @@ export function configuredServices(env: Record<string, string | undefined>) {
       "BACKUP_OFFSITE_ENDPOINT",
       "BACKUP_OFFSITE_KEY",
       "BACKUP_OFFSITE_SECRET",
-      "BACKUP_OFFSITE_BUCKET",
+      // backup.sh defaults an omitted/empty bucket to "backups".
     ].every(present),
   };
 }

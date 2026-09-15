@@ -36,6 +36,46 @@ function status(snapshot: LaunchSnapshot, id: string) {
   return launchChecks(snapshot, now).find((c) => c.id === id)?.status;
 }
 describe("pre-launch evidence never fabricates real acceptance", () => {
+  it("accepts the backup script's default bucket with complete credentials", () => {
+    const env = {
+      BACKUP_OFFSITE_ENDPOINT: "https://backup.example.com",
+      BACKUP_OFFSITE_KEY: "fixture-id",
+      BACKUP_OFFSITE_SECRET: "fixture-secret",
+    };
+    expect(configuredServices(env).offsiteConfigured).toBe(true);
+    expect(
+      configuredServices({ ...env, BACKUP_OFFSITE_BUCKET: "" })
+        .offsiteConfigured,
+    ).toBe(true);
+    expect(
+      configuredServices({ ...env, BACKUP_OFFSITE_KEY: "" }).offsiteConfigured,
+    ).toBe(false);
+  });
+  it("validates SMTP port boundaries without claiming delivery", () => {
+    const env = {
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "mail.example.com",
+      EMAIL_FROM: "shop@example.com",
+    };
+    for (const SMTP_PORT of [undefined, "1", "587", "65535"])
+      expect(configuredServices({ ...env, SMTP_PORT }).emailConfigured).toBe(
+        true,
+      );
+    for (const SMTP_PORT of [
+      "",
+      " ",
+      "text",
+      "0",
+      "-1",
+      "65536",
+      "587.5",
+      "Infinity",
+      "NaN",
+    ])
+      expect(configuredServices({ ...env, SMTP_PORT }).emailConfigured).toBe(
+        false,
+      );
+  });
   it("keeps every real-world gate unverified even with fully green automatic signals", () => {
     const checks = launchChecks(healthy(), now);
     expect(

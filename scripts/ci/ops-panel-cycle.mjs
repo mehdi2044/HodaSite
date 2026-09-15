@@ -29,6 +29,19 @@ await mkdir(uploads,{recursive:true});await copyFile(zip,path.join(uploads,`${up
 await task('VALIDATE_UPLOAD',{uploadId:upload.id});
 if((await db.backupUpload.findUniqueOrThrow({where:{id:upload.id}})).status!=='READY')throw Error('upload not ready');
 const restore=await task('RESTORE',{uploadId:upload.id,mode:'FULL'},{authorizedAt:new Date()});
+// worker.mjs records RESTORE/DONE before recover() reconciles the journal and
+// catalog. Wait for those post-restore effects, retaining every assertion below.
+for(let n=0;n<30;n++) {
+ const [request,originalTask,catalog,safety]=await Promise.all([
+  db.restoreRequest.findUnique({where:{id:restore.id}}),
+  db.opsTask.findUnique({where:{id:backupTask.id}}),
+  db.backup.findFirst({where:{fileKey:backup.fileKey}}),
+  db.backup.count({where:{kind:'safety'}}),
+ ]);
+ if(request?.status==='FAILED' || originalTask?.status==='FAILED')throw Error('restore reconciliation failed');
+ if(request?.status==='DONE' && originalTask?.status==='DONE' && catalog && safety)break;
+ await new Promise(resolve=>setTimeout(resolve,1000));
+}
 if((await db.restoreRequest.findUniqueOrThrow({where:{id:restore.id}})).status!=='DONE')throw Error('restore journal missing');
 if((await db.opsTask.findUniqueOrThrow({where:{id:backupTask.id}})).status!=='DONE')throw Error('restored running task was not reconciled');
 if(!(await db.backup.findFirst({where:{fileKey:backup.fileKey}})))throw Error('backup catalog not reconciled');
