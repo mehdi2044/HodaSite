@@ -1,3 +1,4 @@
+import fa from "../../messages/fa.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 import { ensureMaintenanceOff } from "./helpers/maintenance";
@@ -58,10 +59,11 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
 
   // Enable Turkish for IR from the admin panel.
   await openIrMarketEdit(page);
-  // getByLabel("Türkçe") also matches the defaultLocale <select> (its
-  // wrapping <label>'s accessible name includes the concatenated <option>
-  // text) — target the checkbox by role instead.
-  await page.getByRole("checkbox", { name: "Türkçe" }).check();
+  // Admin labels follow its saved language; storefront language links keep
+  // their native names. Target the translated checkbox by role.
+  await page
+    .getByRole("checkbox", { name: fa.foundationAdmin.turkish, exact: true })
+    .check();
   await page.getByRole("button", { name: "ذخیره" }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
@@ -74,7 +76,9 @@ test("enabling/disabling a locale for market IR gates the switcher and the redir
 
   // Disable it again (also restores the seeded demo state).
   await openIrMarketEdit(page);
-  await page.getByRole("checkbox", { name: "Türkçe" }).uncheck();
+  await page
+    .getByRole("checkbox", { name: fa.foundationAdmin.turkish, exact: true })
+    .uncheck();
   await page.getByRole("button", { name: "ذخیره" }).click();
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
