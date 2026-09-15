@@ -236,7 +236,10 @@ async function applicationMiddleware(req: NextAuthRequest) {
           m.enabledLocales.includes(canonical.locale),
       );
       if (!market) return new NextResponse(null, { status: 404 });
-      const target = req.nextUrl.clone();
+      // NextURL normalizes 127.0.0.1 to localhost even when URL normalization
+      // is disabled. A rewrite to that other origin becomes a second request,
+      // losing our trusted market header and rerunning cookie-based routing.
+      const target = new URL(req.url);
       target.pathname = canonical.target;
       target.searchParams.delete("market");
       const requestHeaders = new Headers(req.headers);
@@ -265,14 +268,14 @@ async function applicationMiddleware(req: NextAuthRequest) {
         ["GET", "HEAD"].includes(req.method) &&
         /^\/(fa|tr|en)(?:\/(p|c|pages)\/[^/]+)?\/?$/.test(pathname)
       ) {
-        const url = req.nextUrl.clone();
+        const url = new URL(req.url);
         url.pathname = `/${urlLocale}/m/${encodeURIComponent(explicit.code)}${pathname.slice(urlLocale.length + 1).replace(/\/$/, "")}`;
         url.searchParams.delete("market");
         return NextResponse.redirect(url, 301);
       }
       const market = resolveMarket(markets, cookieCode || queryCode, urlLocale);
       if (market && !market.enabledLocales.includes(urlLocale)) {
-        const url = req.nextUrl.clone();
+        const url = new URL(req.url);
         url.pathname =
           pathname.replace(`/${urlLocale}`, `/${market.defaultLocale}`) ||
           `/${market.defaultLocale}`;
