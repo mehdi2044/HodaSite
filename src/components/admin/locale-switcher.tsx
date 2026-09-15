@@ -16,6 +16,7 @@ export function AdminLocaleSwitcher() {
         value={locale}
         disabled={pending}
         onChange={(event) => {
+          if (event.target.value === locale) return;
           const form = new FormData();
           form.set("locale", event.target.value);
           start(async () => {
