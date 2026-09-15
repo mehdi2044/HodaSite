@@ -29,7 +29,13 @@ test("a signed-in user without the health permission cannot read launch readines
     await page.locator('[name="password"]').fill(password);
     await page.getByRole("button", { name: "ورود امن" }).click();
     await expect(page).toHaveURL(/\/admin$/);
-    expect((await page.goto("/admin/system/launch"))?.status()).toBe(404);
+    // Next can send 200 after a loading boundary has started streaming:
+    // https://nextjs.org/docs/app/api-reference/file-conventions/not-found
+    const response = await page.goto("/admin/system/launch");
+    expect([200, 404]).toContain(response?.status());
+    await expect(
+      page.getByRole("heading", { name: "404", exact: true }),
+    ).toBeVisible();
     await expect(page.getByTestId("launch-page")).toHaveCount(0);
     await expect(page.locator('a[href="/admin/system/launch"]')).toHaveCount(0);
   } finally {
