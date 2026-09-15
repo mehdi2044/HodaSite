@@ -72,6 +72,19 @@ export function SeoEditor({ config }: { config: SeoSettings }) {
         />
       </label>
       <p className="text-sm text-muted">{t("verificationHint")}</p>
+      {(["ga4", "gtm", "meta"] as const).map((key) => (
+        <label key={key} className="grid gap-1">
+          {t(key)}
+          <input
+            className="input"
+            name={key}
+            dir="ltr"
+            maxLength={40}
+            defaultValue={config.analytics[key]}
+          />
+        </label>
+      ))}
+      <p>{t("analyticsHint")}</p>
       {state && (
         <p
           role={state.ok ? "status" : "alert"}

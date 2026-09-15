@@ -3,7 +3,10 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Select } from "@/components/ui";
 import { generateAi } from "@/app/admin/(dashboard)/settings/ai/actions";
-import { AiReview } from "./ai-review";
+import dynamic from "next/dynamic";
+const AiReview = dynamic(() =>
+  import("./ai-review").then((module) => module.AiReview),
+);
 import { fieldKeys, type Proposal } from "@/modules/ai/proposals";
 export function ProductAi({
   productId,

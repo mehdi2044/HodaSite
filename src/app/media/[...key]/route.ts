@@ -51,6 +51,7 @@ export async function GET(
 
   const isPrivate = PRIVATE_KINDS.has(media.kind);
   if (
+    media.kind === "review" ||
     media.kind === "receipt" ||
     media.kind === "invoice" ||
     media.kind === "expense"

@@ -1,3 +1,5 @@
+import { WishlistHeart } from "@/components/engagement/wishlist";
+import { seoPath } from "@/lib/seo-urls";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { LinkPending } from "./link-pending";
@@ -10,6 +12,7 @@ import {
 import { getDisplayPrice } from "@/modules/pricing";
 
 type CardProduct = {
+  displayPrice?: Awaited<ReturnType<typeof getDisplayPrice>>;
   id: string;
   slugI18n: unknown;
   titleI18n: unknown;
@@ -42,7 +45,8 @@ export async function ProductCard({
   const title = catalogText(product.titleI18n, locale);
   const slug = catalogText(product.slugI18n, locale);
   const variant = product.variants[0] ?? null;
-  const price = await getDisplayPrice(product, variant, market);
+  const price =
+    product.displayPrice ?? (await getDisplayPrice(product, variant, market));
   const currency = (
     ["IRT", "TRY", "CAD", "USD"].includes(market.currency)
       ? market.currency
@@ -58,7 +62,7 @@ export async function ProductCard({
   ];
   return (
     <article className="shop-product-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
-      <Link href={`/${locale}/p/${encodeURIComponent(slug)}`} className="block">
+      <Link href={seoPath(locale, market.code, "p", slug)} className="block">
         <div className="shop-card-image aspect-[3/4] overflow-hidden bg-black/5">
           {image ? (
             <ResponsiveImage
@@ -90,6 +94,7 @@ export async function ProductCard({
         </div>
         <LinkPending />
       </Link>
+      <WishlistHeart productId={product.id} />
     </article>
   );
 }

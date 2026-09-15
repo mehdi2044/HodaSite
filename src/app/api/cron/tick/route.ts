@@ -1,3 +1,7 @@
+import {
+  registerStockJobs,
+  scheduleStockAlerts,
+} from "@/modules/engagement/stock-jobs";
 import { registerAiJobs } from "@/modules/ai/worker";
 import { registerInvoiceJobs } from "@/modules/orders/invoices/worker";
 import { equalSecret } from "@/lib/secure-tokens";
@@ -38,6 +42,7 @@ registerPricingJobHandlers();
 registerNotificationJobs();
 registerInvoiceJobs();
 registerAiJobs();
+registerStockJobs();
 
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -57,6 +62,7 @@ export async function POST(req: Request) {
     await ensureFxRefreshScheduled();
     await expireReservations();
     await cancelUnpaidOrders();
+    await scheduleStockAlerts();
     const processed = await runJobs();
     await syncOperationalAlerts();
     return NextResponse.json({ processed });

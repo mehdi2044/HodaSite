@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const NOTIFICATION_TEMPLATE_KEYS = [
   "auth.otp",
+  "stock.available",
   "order.placed",
   "order.receipt_received",
   "order.paid",
@@ -19,6 +20,7 @@ export const ALLOWED_TEMPLATE_VARIABLES: Record<
   NotificationTemplateKey,
   readonly string[]
 > = {
+  "stock.available": ["productName", "productUrl", "accountUrl"],
   "auth.otp": ["code", "expiresMinutes", "loginUrl"],
   "order.placed": [
     "customerName",

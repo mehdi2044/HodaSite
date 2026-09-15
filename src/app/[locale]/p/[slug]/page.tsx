@@ -1,3 +1,12 @@
+import { getSeoSettings } from "@/modules/seo";
+import { publicReviews } from "@/modules/engagement";
+import {
+  productGraph,
+  schemaOffer,
+  jsonLdText,
+} from "@/modules/seo/structured";
+import { seoPath } from "@/lib/seo";
+import { ProductEngagement } from "@/components/engagement/reviews";
 import { publicMetadata } from "@/modules/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,7 +28,7 @@ import {
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
-import { getDisplayPrice } from "@/modules/pricing";
+import { getDisplayPrice, getDisplayPrices } from "@/modules/pricing";
 
 export async function generateMetadata({
   params,
@@ -110,6 +119,7 @@ export default async function ProductPage({
       select: { inventory: true },
     }),
   ]);
+  const relatedPrices = await getDisplayPrices(related.items, market);
   const inventorySettings = siteSettings.inventory as {
     lowStockThreshold?: unknown;
   };
@@ -145,44 +155,53 @@ export default async function ProductPage({
   );
   const amount = basePrice.amount;
   const compareAmount = basePrice.compareAtAmount;
-  const hasStock = product.variants.some((variant) =>
-    variant.stockItems.some((stock) => stock.onHand - stock.reserved > 0),
-  );
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Product",
-        name: catalogText(product.titleI18n, safe),
-        sku: product.variants[0]?.sku,
-        image: product.media.map((x) => x.media.url),
-        offers: {
-          "@type": "Offer",
-          priceCurrency: currency,
-          price: amount,
-          availability: hasStock
-            ? "https://schema.org/InStock"
-            : "https://schema.org/OutOfStock",
-        },
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: catalogText(product.category.titleI18n, safe),
-            item: `/${safe}/c/${encodeURIComponent(catalogText(product.category.slugI18n, safe))}`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: catalogText(product.titleI18n, safe),
-          },
-        ],
-      },
-    ],
-  };
+  const [seoSettings, rating] = await Promise.all([
+    getSeoSettings(),
+    publicReviews({ marketId: market.id, locale: safe }, product.id),
+  ]);
+  const publicUrl = seoSettings.origin
+    ? seoSettings.origin +
+      seoPath(safe, market.code, "p", catalogText(product.slugI18n, safe))
+    : undefined;
+  const jsonLd = productGraph({
+    name: catalogText(product.titleI18n, safe),
+    description: catalogText(product.descriptionI18n, safe),
+    brand: product.brand
+      ? catalogText(product.brand.nameI18n, safe)
+      : undefined,
+    url: publicUrl,
+    images: product.media
+      .filter((m) => !m.media.deletedAt && m.media.status === "READY")
+      .map((m) =>
+        seoSettings.origin
+          ? new URL(m.media.url, seoSettings.origin).href
+          : m.media.url,
+      ),
+    category: {
+      name: catalogText(product.category.titleI18n, safe),
+      url: seoSettings.origin
+        ? seoSettings.origin +
+          seoPath(
+            safe,
+            market.code,
+            "c",
+            catalogText(product.category.slugI18n, safe),
+          )
+        : undefined,
+    },
+    offers: product.variants
+      .filter((v) => v.isActive)
+      .map((v) =>
+        schemaOffer(
+          variantPrices.get(v.id)!.amount,
+          currency,
+          v.stockItems.some((s) => s.onHand > s.reserved),
+          publicUrl,
+          v.sku,
+        ),
+      ),
+    rating,
+  });
   const guideTable = guide?.tableI18n as
     { columns?: string[]; rows?: string[][] } | undefined;
   return (
@@ -190,11 +209,10 @@ export default async function ProductPage({
       className="shell shop-page py-10 md:py-16"
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <RecentlyViewed productId={product.id} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          __html: jsonLdText(jsonLd),
         }}
       />
       <nav
@@ -374,13 +392,25 @@ export default async function ProductPage({
             .map((x) => (
               <ProductCard
                 key={x.id}
-                product={x}
+                product={{ ...x, displayPrice: relatedPrices.get(x.id) }}
                 locale={safe}
                 market={market}
               />
             ))}
         </div>
       </section>
+      <ProductEngagement
+        context={{ marketId: market.id, locale: safe }}
+        productId={product.id}
+        variants={product.variants
+          .filter((v) => v.isActive)
+          .map((v) => ({
+            id: v.id,
+            sku: v.sku,
+            available: v.stockItems.some((s) => s.onHand > s.reserved),
+          }))}
+      />
+      <RecentlyViewed recentProductId={product.id} />
     </main>
   );
 }

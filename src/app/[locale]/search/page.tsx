@@ -1,3 +1,4 @@
+import { getDisplayPrices } from "@/modules/pricing";
 import { getTranslations } from "next-intl/server";
 import { ProductCard } from "@/components/storefront/product-card";
 import { SearchBox } from "@/components/storefront/search-box";
@@ -18,6 +19,7 @@ export default async function SearchPage({
     getTranslations("catalog"),
   ]);
   const result = await listCatalogProducts(market.id, safe, { q, limit: 24 });
+  const prices = await getDisplayPrices(result.items, market);
   return (
     <main
       className="shell shop-page py-10 md:py-16"
@@ -43,7 +45,7 @@ export default async function SearchPage({
         {result.items.map((product) => (
           <ProductCard
             key={product.id}
-            product={product}
+            product={{ ...product, displayPrice: prices.get(product.id) }}
             locale={safe}
             market={market}
           />

@@ -1,3 +1,4 @@
+import { analyticsSchema } from "./consent";
 import { z } from "zod";
 export { SEO_LOCALES, seoPath, parseSeoPath, privateSeoPath } from "./seo-urls";
 export type { SeoLocale, SeoKind } from "./seo-urls";
@@ -30,6 +31,7 @@ export const seoSettingsSchema = z
       .default("")
       .refine((v) => !v || Boolean(canonicalOrigin(v)))
       .transform((v) => canonicalOrigin(v) ?? ""),
+    analytics: analyticsSchema.default({ ga4: "", gtm: "", meta: "" }),
     indexingEnabled: z.boolean().default(false),
     title: copy.default({ fa: "", tr: "", en: "" }),
     description: copy.default({ fa: "", tr: "", en: "" }),

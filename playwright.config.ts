@@ -17,9 +17,9 @@ const ciServer =
 
 export default defineConfig({
   testDir: "tests/e2e",
-  // Some specs toggle server-global maintenance state; run serially in CI so
+  // Some specs toggle server-global maintenance state; run serially in every environment so
   // that global state is never shared across parallel workers.
-  workers: isCI ? 1 : undefined,
+  workers: 1,
   use: {
     baseURL: "http://127.0.0.1:3000",
     // Chromium mobile default; the Safari shopping spec overrides this with
