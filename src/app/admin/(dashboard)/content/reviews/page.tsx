@@ -5,6 +5,7 @@ import { requireAdminPage } from "@/modules/auth/page";
 import { db } from "@/lib/db";
 import { localized } from "@/lib/seo";
 import { EngagementForm } from "@/components/engagement/form";
+import { ModerationDecision } from "@/components/engagement/moderation-decision";
 import { moderateReviewAction } from "./actions";
 export default async function ReviewModeration({
   searchParams,
@@ -94,7 +95,7 @@ export default async function ReviewModeration({
               </a>
             ))}
           </div>
-          <EngagementForm action={moderateReviewAction}>
+          <EngagementForm action={moderateReviewAction} refresh={false}>
             <input type="hidden" name="id" value={r.id} />
             <input
               type="hidden"
@@ -110,14 +111,7 @@ export default async function ReviewModeration({
                 defaultValue={r.reply}
               />
             </label>
-            <div className="flex gap-3">
-              <button name="status" value="APPROVED" className="button">
-                {t("approve")}
-              </button>
-              <button name="status" value="REJECTED" className="button">
-                {t("reject")}
-              </button>
-            </div>
+            <ModerationDecision />
           </EngagementForm>
         </article>
       ))}

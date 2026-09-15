@@ -216,11 +216,16 @@ test("verified login merges wishlist; pending reviews/photos stay private until 
   expect(await (await request.get("/en/m/CA/p/product-1")).text()).toContain(
     body,
   );
-  // Keep later storefront captures free of synthetic review copy.
-  await db.review.update({
-    where: { id: reviewId },
-    data: { status: "REJECTED" },
-  });
+  // Exercise the other decision button and keep later captures clean.
+  await page.goto("/admin/content/reviews?status=APPROVED");
+  await card.locator('button[value="REJECTED"]').click();
+  await expect
+    .poll(
+      async () =>
+        (await db.review.findUniqueOrThrow({ where: { id: reviewId } })).status,
+    )
+    .toBe("REJECTED");
+  expect((await request.get(url)).status()).toBe(404);
 });
 test("historical slugs return HTTP 301 and branded social images reject hidden products", async ({
   request,
@@ -354,7 +359,10 @@ test("local launch evidence is recorded with history but does not satisfy real r
     .locator('[name="notes"]')
     .fill("Local fixture only; no real restore attested.");
   await form.locator("button").click();
-  await expect(form.getByRole("status")).toBeVisible();
+  await expect(form.getByRole("status")).toHaveText(fa.engagement.saved);
+  await expect
+    .poll(() => db.launchEvidence.count({ where: { reference } }))
+    .toBe(1);
   await expect(
     page.getByTestId("launch-restoreDrill").locator('[data-status="pending"]'),
   ).toBeVisible();

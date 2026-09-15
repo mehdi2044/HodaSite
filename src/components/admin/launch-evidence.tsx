@@ -15,7 +15,7 @@ export async function LaunchEvidenceForm({
     <section className="card grid gap-4">
       <h2>{t("title")}</h2>
       <p>{t("hint")}</p>
-      <EngagementForm action={recordEvidenceAction}>
+      <EngagementForm action={recordEvidenceAction} refresh={false}>
         <label>
           {t("gate")}
           <select name="gate" className="input w-full">
