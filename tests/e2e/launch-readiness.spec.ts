@@ -64,12 +64,23 @@ test("launch readiness stays private and shows unverified gates in all locales o
   // Streaming locale transitions can temporarily keep a hidden React copy.
   // Assert the single visible dashboard, which is what the user can access.
   const dashboard = page.locator('[data-testid="launch-page"]:visible');
+  const language = page.locator('[name="adminLocale"]');
+  const switchLanguage = async (locale: string) => {
+    if ((await language.inputValue()) !== locale) {
+      await Promise.all([
+        page.waitForEvent("load"),
+        language.selectOption(locale),
+      ]);
+    }
+    await expect(language).toHaveValue(locale);
+    await expect(language).toBeEnabled();
+  };
   for (const [locale, messages] of [
     ["fa", fa],
     ["tr", tr],
     ["en", en],
   ] as const) {
-    await page.locator('[name="adminLocale"]').selectOption(locale);
+    await switchLanguage(locale);
     await expect(dashboard).toHaveCount(1);
     await expect(
       dashboard.getByRole("heading", {
@@ -105,7 +116,7 @@ test("launch readiness stays private and shows unverified gates in all locales o
       .getByTestId("launch-restoreDrill")
       .locator('[data-status="pending"]'),
   ).toBeVisible();
-  await page.locator('[name="adminLocale"]').selectOption("fa");
+  await switchLanguage("fa");
   await expect(
     dashboard.getByRole("heading", { name: fa.launch.title, exact: true }),
   ).toBeVisible();
