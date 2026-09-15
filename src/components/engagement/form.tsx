@@ -13,13 +13,15 @@ export function EngagementForm({
     form: FormData,
   ) => Promise<ActionResult>;
   children: React.ReactNode;
-  refresh?: boolean;
+  refresh?: boolean | "document";
 }) {
   const t = useTranslations("engagement"),
     [state, submit, pending] = useActionState(action, null);
   const router = useRouter();
   useEffect(() => {
-    if (state?.ok && refresh) router.refresh();
+    if (!state?.ok || !refresh) return;
+    if (refresh === "document") window.location.reload();
+    else router.refresh();
   }, [state, router, refresh]);
   return (
     <form action={submit} className="grid gap-3">

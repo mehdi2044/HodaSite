@@ -359,7 +359,8 @@ test("local launch evidence is recorded with history but does not satisfy real r
     .locator('[name="notes"]')
     .fill("Local fixture only; no real restore attested.");
   await form.locator("button").click();
-  await expect(form.getByRole("status")).toHaveText(fa.engagement.saved);
+  // The successful form loads a fresh document; assert persistence and the
+  // resulting history, without manually reloading or relying on a transient toast.
   await expect
     .poll(() => db.launchEvidence.count({ where: { reference } }))
     .toBe(1);
