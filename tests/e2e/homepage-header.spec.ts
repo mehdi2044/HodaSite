@@ -14,7 +14,8 @@ for (const [locale, market, cartLabel] of [
     await page.evaluate(() => document.fonts.ready);
     const hero = page.getByTestId("storefront-hero");
     const image = hero.locator("img");
-    const brand = page.locator(".storefront-brand-name");
+    const brand = page.locator(".storefront-brand");
+    const brandName = brand.locator(".storefront-brand-name");
     const cart = page.locator("header .storefront-cart-toggle");
 
     for (const width of [300, 320, 390]) {
@@ -38,16 +39,47 @@ for (const [locale, market, cartLabel] of [
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
       await expect(cart.locator(".storefront-cart-mobile")).toBeVisible();
       await expect(cart.locator(".storefront-cart-desktop")).toBeHidden();
-      expect(
-        await brand.evaluate((element) => {
-          const range = document.createRange();
-          range.selectNodeContents(element);
-          return {
-            lines: range.getClientRects().length,
-            clipped: element.scrollWidth > element.clientWidth,
-          };
-        }),
-      ).toEqual({ lines: 1, clipped: false });
+      await expect(brand).toBeVisible();
+      // admin-media.spec configures an image logo before this spec in CI.
+      // Both branding modes are valid; do not mutate shared settings just to
+      // force the text-only configuration used by the local preview.
+      if (await brandName.count()) {
+        await expect(brandName).toBeVisible();
+        await expect(brandName).not.toBeEmpty();
+        expect(
+          await brandName.evaluate((element) => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            return {
+              lines: range.getClientRects().length,
+              clipped: element.scrollWidth > element.clientWidth,
+            };
+          }),
+        ).toEqual({ lines: 1, clipped: false });
+      } else {
+        const logo = brand.locator("img");
+        await expect(logo).toBeVisible();
+        await expect(logo).toHaveAttribute("alt", /\S/);
+        await expect
+          .poll(() =>
+            logo.evaluate(
+              (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+            ),
+          )
+          .toBe(true);
+        expect(
+          await brand.evaluate((element) => {
+            const bounds = element.getBoundingClientRect();
+            const imageBounds = element
+              .querySelector("img")!
+              .getBoundingClientRect();
+            return (
+              imageBounds.left >= bounds.left &&
+              imageBounds.right <= bounds.right
+            );
+          }),
+        ).toBe(true);
+      }
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
