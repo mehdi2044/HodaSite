@@ -11,7 +11,7 @@ async function main() {
       storage.put(key, bytes, "image/webp"),
     );
     console.log(
-      "Demo storefront checked. Eligible sample images upgraded; merchant edits preserved. Restart the app to refresh cached homepage content.",
+      "Demo storefront checked. Eligible sample images upgraded; merchant edits preserved. Homepage cache follows database revisions on the next request; no restart is needed.",
     );
   } catch {
     console.error(

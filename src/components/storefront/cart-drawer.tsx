@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { StorefrontIcon } from "./storefront-icon";
 export function CartDrawer({
   locale,
   items,
@@ -11,10 +12,21 @@ export function CartDrawer({
   currency: string;
 }) {
   const t = useTranslations("commerce");
+  const count = items.reduce((n, item) => n + item.quantity, 0);
+  const label = `${t("cart")} (${count})`;
   return (
     <details>
-      <summary className="cursor-pointer py-3">
-        {t("cart")} ({items.reduce((n, i) => n + i.quantity, 0)})
+      <summary
+        className="storefront-cart-toggle cursor-pointer py-3"
+        aria-label={label}
+      >
+        <span className="storefront-cart-mobile" aria-hidden="true">
+          <StorefrontIcon name="cart" />
+          <bdi>{count}</bdi>
+        </span>
+        <span className="storefront-cart-desktop" aria-hidden="true">
+          {label}
+        </span>
       </summary>
       <section className="absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
         <h2 className="font-semibold">

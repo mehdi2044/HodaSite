@@ -229,6 +229,40 @@ html[lang="fa"] body,
 .storefront-brand {
   overflow-wrap: anywhere;
 }
+.storefront-cart-mobile {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .storefront-header-grid {
+    padding-inline: 1rem;
+    column-gap: 0.5rem;
+  }
+  .storefront-brand-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .storefront-cart-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    list-style: none;
+  }
+  .storefront-cart-toggle::-webkit-details-marker {
+    display: none;
+  }
+  .storefront-cart-mobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+  .storefront-cart-desktop {
+    display: none;
+  }
+}
 .storefront-search {
   grid-column: 1 / -1;
   display: flex;
