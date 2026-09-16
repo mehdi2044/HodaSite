@@ -73,7 +73,7 @@ export async function Header({
                 imgClassName="h-8 w-auto object-contain"
               />
             ) : (
-              siteName
+              <span className="storefront-brand-name">{siteName}</span>
             )}
           </Link>
           <nav

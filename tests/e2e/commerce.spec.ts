@@ -100,9 +100,13 @@ for (const [locale, slug, province, city, postal] of [
     await page.locator('[name="code"]').fill(code);
     await submit(page, "code");
     await expect(page).toHaveURL(`http://127.0.0.1:3000/${locale}/checkout`);
-    await expect(
-      page.locator("header").getByText(`${t.cart} (1)`, { exact: true }),
-    ).toBeVisible();
+    const headerCart = page.locator("header .storefront-cart-toggle");
+    await expect(headerCart).toBeVisible();
+    await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);
+    await expect(headerCart.locator(".storefront-cart-mobile")).toBeVisible();
+    await expect(headerCart.locator(".storefront-cart-mobile bdi")).toHaveText(
+      "1",
+    );
     for (const [key, value] of Object.entries({
       firstName: "Test",
       lastName: "Buyer",

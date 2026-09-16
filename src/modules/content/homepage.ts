@@ -50,15 +50,23 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
 export const homepageBlocksSchema = z.array(homepageBlockSchema).max(30);
 export type HomepageBlock = z.infer<typeof homepageBlockSchema>;
 
-const getHomepageRows = unstable_cache(
-  async (marketId: string) =>
-    db.homepage.findMany({
-      where: { deletedAt: null, OR: [{ marketId }, { marketId: null }] },
-      orderBy: { createdAt: "asc" },
-    }),
-  ["homepage-composition"],
-  { tags: ["homepage"] },
-);
+async function getHomepageRows(marketId: string) {
+  const where = { deletedAt: null, OR: [{ marketId }, { marketId: null }] };
+  // Read only the revisions outside Next's persistent cache. Prisma maintains
+  // updatedAt for admin saves, seed and CLI upgrades alike, including updateMany.
+  // Row identities also invalidate a cached fallback when an override is created,
+  // removed or soft-deleted. No Next request context is required by those writers.
+  const revisions = await db.homepage.findMany({
+    where,
+    select: { id: true, marketId: true, updatedAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return unstable_cache(
+    () => db.homepage.findMany({ where, orderBy: { createdAt: "asc" } }),
+    ["homepage-composition-v2", marketId, JSON.stringify(revisions)],
+    { tags: ["homepage"] },
+  )();
+}
 
 export async function getHomepage(marketId: string) {
   const rows = await getHomepageRows(marketId);
