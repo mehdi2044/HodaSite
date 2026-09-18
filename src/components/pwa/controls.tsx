@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { isPwaHomePath } from "@/lib/pwa-home-path";
 import { useOnline } from "./online";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
@@ -19,7 +20,7 @@ export function PwaControls() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null),
     [deferred, setDeferred] = useState(false);
   const acceptedUpdate = useRef(false);
-  const home = /^\/(fa|tr|en)\/?$/.test(path);
+  const home = isPwaHomePath(path);
   useEffect(() => {
     let disposed = false;
     const display = window.matchMedia("(display-mode: standalone)");

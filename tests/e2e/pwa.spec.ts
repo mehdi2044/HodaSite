@@ -98,36 +98,86 @@ test("manifest preserves the selected market on a fresh launch without cookies",
     (await context.cookies()).find((c) => c.name === "market")?.value,
   ).toBe("TR");
 });
-test("install promotion is dismissible and absent in standalone", async ({
-  page,
-}) => {
-  await page.goto("/en");
-  await page.evaluate(() => {
-    localStorage.removeItem("hoda.install.dismissed");
+for (const path of ["/en", "/fa/m/IR", "/tr/m/TR", "/en/m/CA"]) {
+  test(`${path} install promotion is dismissible and absent in standalone`, async ({
+    page,
+  }) => {
+    const locale = path.split("/")[1] as "fa" | "tr" | "en";
+    const t = { fa, tr, en }[locale];
+    await page.goto(path);
+    await page.evaluate(() => {
+      localStorage.removeItem("hoda.install.dismissed");
+    });
+    await page.reload();
+    // A synthetic event must wait for React's effect to register its handler.
+    // The real handler prevents this cancelable event; false proves receipt.
+    const offerInstall = async () => {
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const e = new Event("beforeinstallprompt", { cancelable: true });
+            Object.assign(e, {
+              prompt: async () => {},
+              userChoice: Promise.resolve({ outcome: "dismissed" }),
+            });
+            return window.dispatchEvent(e);
+          }),
+        )
+        .toBe(false);
+    };
+    await offerInstall();
+    await expect(page.locator(".pwa-install-prompt")).toBeVisible();
+    await page.getByRole("button", { name: t.pwa.later, exact: true }).click();
+    await page.reload();
+    await offerInstall();
+    await expect(page.locator(".pwa-install-prompt")).not.toBeVisible();
+    await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
+    await expect(page.locator(".pwa-install")).not.toBeVisible();
   });
-  await page.reload();
-  // A synthetic event must wait for React's effect to register its handler.
-  // The real handler prevents this cancelable event; false proves receipt.
-  const offerInstall = async () => {
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const e = new Event("beforeinstallprompt", { cancelable: true });
-          Object.assign(e, {
-            prompt: async () => {},
-            userChoice: Promise.resolve({ outcome: "dismissed" }),
-          });
-          return window.dispatchEvent(e);
+}
+
+for (const [locale, market] of [
+  ["fa", "IR"],
+  ["tr", "TR"],
+  ["en", "CA"],
+] as const) {
+  test(`${locale} canonical home exposes waiting-worker update controls`, async ({
+    page,
+  }) => {
+    // Synthetic registration checks the real UI/action wiring. Actual worker
+    // activation and multi-window guards are separately exercised in the VM suite.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.serviceWorker, "register", {
+        value: async () => ({
+          waiting: {
+            postMessage: (data: { type: string }) => {
+              document.documentElement.dataset.pwaMessage = data.type;
+              navigator.serviceWorker.dispatchEvent(
+                new MessageEvent("message", {
+                  data: { type: "UPDATE_DEFERRED" },
+                }),
+              );
+            },
+          },
+          active: null,
+          addEventListener: () => {},
+          update: async () => {},
         }),
-      )
-      .toBe(false);
-  };
-  await offerInstall();
-  await expect(page.locator(".pwa-install-prompt")).toBeVisible();
-  await page.getByRole("button", { name: en.pwa.later, exact: true }).click();
-  await page.reload();
-  await offerInstall();
-  await expect(page.locator(".pwa-install-prompt")).not.toBeVisible();
-  await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
-  await expect(page.locator(".pwa-install")).not.toBeVisible();
-});
+      });
+    });
+    const t = { fa, tr, en }[locale];
+    await page.goto(`/${locale}/m/${market}`);
+    const update = page.locator(".pwa-update");
+    await expect(update).toBeVisible();
+    await update
+      .getByRole("button", { name: t.pwa.update, exact: true })
+      .click();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-pwa-message",
+      "ACTIVATE_UPDATE",
+    );
+    await expect(update).toContainText(t.pwa.updateDeferred);
+    await page.goto(`/${locale}/cart`);
+    await expect(page.locator(".pwa-update")).toHaveCount(0);
+  });
+}
