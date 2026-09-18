@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { PWA_HOME_PATH_SOURCE } from "@/lib/pwa-home-path";
 
 // No route HTML, RSC payload, API, media, price or user data enters CacheStorage.
 // Changing this program changes its cache namespace without a manual version bump.
@@ -7,6 +8,7 @@ const PREFIX = 'hoda-public-pwa-';
 const CACHE = PREFIX + '__VERSION__';
 const OFFLINE = ['fa', 'tr', 'en'].map(l => '/pwa/' + l + '/offline');
 const MAX_ENTRIES = 64;
+const HOME_PATH = new RegExp(${JSON.stringify(PWA_HOME_PATH_SOURCE)});
 let writes = Promise.resolve();
 function publicAsset(request) {
   const u = new URL(request.url);
@@ -61,7 +63,7 @@ self.addEventListener('message', event => {
     // A coordinated automatic reload must never replace another tab's form.
     const clients = await self.clients.matchAll({type:'window', includeUncontrolled:true});
     if (clients.length === 1 && clients[0].id === event.source.id &&
-        /^\/(fa|tr|en)\/?$/.test(new URL(clients[0].url).pathname)) await self.skipWaiting();
+        HOME_PATH.test(new URL(clients[0].url).pathname)) await self.skipWaiting();
     else event.source.postMessage({type:'UPDATE_DEFERRED'});
   })());
 });

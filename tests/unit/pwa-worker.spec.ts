@@ -241,6 +241,49 @@ describe("public-only PWA worker", () => {
     await h.dispatch("message", { source, data: { type: "ACTIVATE_UPDATE" } });
     expect(h.skipWaiting).toHaveBeenCalledOnce();
   });
+  it.each(["/fa/m/IR", "/tr/m/TR/", "/en/m/CA", "/en/m/TR"])(
+    "activates from %s only for the sole requesting window",
+    async (path) => {
+      const h = harness(sourceForBuild("market-path-regression"));
+      const source = { id: "one", postMessage: vi.fn() };
+      h.windows[0].url = origin + path;
+      h.windows.push({ id: "two", url: origin + "/en/checkout" });
+      await h.dispatch("message", {
+        source,
+        data: { type: "ACTIVATE_UPDATE" },
+      });
+      expect(h.skipWaiting).not.toHaveBeenCalled();
+      expect(source.postMessage).toHaveBeenCalledWith({
+        type: "UPDATE_DEFERRED",
+      });
+      h.windows.pop();
+      await h.dispatch("message", {
+        source: { id: "other", postMessage: vi.fn() },
+        data: { type: "ACTIVATE_UPDATE" },
+      });
+      expect(h.skipWaiting).not.toHaveBeenCalled();
+      await h.dispatch("message", {
+        source,
+        data: { type: "ACTIVATE_UPDATE" },
+      });
+      expect(h.skipWaiting).toHaveBeenCalledOnce();
+    },
+  );
+  it.each([
+    "/fa/m/IR/checkout",
+    "/en/m/CA/p/item",
+    "/tr/m/TR/c/clothes",
+    "/admin",
+  ])("keeps updates waiting on %s", async (path) => {
+    const h = harness();
+    const source = { id: "one", postMessage: vi.fn() };
+    h.windows[0].url = origin + path;
+    await h.dispatch("message", { source, data: { type: "ACTIVATE_UPDATE" } });
+    expect(h.skipWaiting).not.toHaveBeenCalled();
+    expect(source.postMessage).toHaveBeenCalledWith({
+      type: "UPDATE_DEFERRED",
+    });
+  });
   it("refreshes only fixed public documents, ignores arbitrary cache instructions", async () => {
     const h = harness(),
       source = { id: "one", postMessage: vi.fn() };
