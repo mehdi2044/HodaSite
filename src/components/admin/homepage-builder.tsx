@@ -9,6 +9,7 @@ import { Button, Card, Input } from "@/components/ui";
 type SourceOption = {
   id: string;
   title: string;
+  titleI18n?: Partial<Record<Locale, string>>;
   root?: boolean;
   mediaUrl?: string;
 };
@@ -602,7 +603,7 @@ function previewHtml(
           .slice(0, 4)
           .map(
             (c) =>
-              `<article>${c.mediaUrl ? `<img src="${esc(c.mediaUrl)}" alt="">` : ""}<b>${esc(c.title)}</b></article>`,
+              `<article>${c.mediaUrl ? `<img src="${esc(c.mediaUrl)}" alt="">` : ""}<b>${c.titleI18n ? local(c.titleI18n) : esc(c.title)}</b></article>`,
           )
           .join("")}</div></section>`;
       if (block.type === "Hero" || block.type === "Banner")

@@ -57,7 +57,7 @@ export async function HomepageBlocks({
     ),
     db.category.findMany({
       where: { deletedAt: null, parentId: null },
-      orderBy: { sortOrder: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
       take: 12,
       include: { media: true },
     }),

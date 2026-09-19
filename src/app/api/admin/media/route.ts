@@ -33,6 +33,7 @@ export async function GET(req: Request) {
       blurDataUrl: m.blurDataUrl,
       altI18n: m.altI18n,
       variants: m.variants,
+      presentation: m.presentation,
       folderName: m.folder?.name ?? null,
     })),
   });

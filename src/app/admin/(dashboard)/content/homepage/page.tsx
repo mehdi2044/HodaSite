@@ -74,6 +74,7 @@ export default async function HomepageAdmin() {
       categories={categories.map((item) => ({
         id: item.id,
         root: item.parentId === null,
+        titleI18n: item.titleI18n as Record<"fa" | "tr" | "en", string>,
         mediaUrl:
           item.media?.status === "READY" && !item.media.deletedAt
             ? item.media.url
