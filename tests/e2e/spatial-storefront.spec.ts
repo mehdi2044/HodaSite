@@ -8,6 +8,7 @@ for (const [locale, market, labels] of [
 ] as const) {
   test(`${locale}: editorial collections stay usable with depth and reduced motion`, async ({
     page,
+    browser,
   }, info) => {
     await page.goto(`/${locale}/m/${market}`);
     const categories = page.getByTestId("home-categories");
@@ -27,16 +28,38 @@ for (const [locale, market, labels] of [
         `editorial-categories-${locale}-${width}`,
       );
     }
+    // Resizing Pixel 7 does not change its coarse pointer: touch stays static.
     await cards.first().hover();
-    await expect(cards.first().locator(".shop-category-plane")).not.toHaveCSS(
-      "transform",
-      "none",
-    );
-    await page.emulateMedia({ reducedMotion: "reduce" });
     await expect(cards.first().locator(".shop-category-plane")).toHaveCSS(
       "transform",
       "none",
     );
+    const desktop = await browser.newContext({
+      baseURL: info.project.use.baseURL,
+      viewport: { width: 1280, height: 900 },
+      isMobile: false,
+      hasTouch: false,
+    });
+    try {
+      const desktopPage = await desktop.newPage();
+      await desktopPage.goto(`/${locale}/m/${market}`);
+      const desktopCard = desktopPage
+        .getByTestId("home-categories")
+        .locator(".shop-category-card")
+        .first();
+      await desktopCard.hover();
+      await expect(desktopCard.locator(".shop-category-plane")).not.toHaveCSS(
+        "transform",
+        "none",
+      );
+      await desktopPage.emulateMedia({ reducedMotion: "reduce" });
+      await expect(desktopCard.locator(".shop-category-plane")).toHaveCSS(
+        "transform",
+        "none",
+      );
+    } finally {
+      await desktop.close();
+    }
     await cards.first().focus();
     await expect(cards.first()).toBeFocused();
     await page.keyboard.press("Enter");
