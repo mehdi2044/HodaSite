@@ -57,10 +57,17 @@ for (const [locale, market, labels] of [
       "href",
       `/${locale}`,
     );
+    // Integration suites also create legitimate imageless products. Exercise
+    // the gallery through a real illustrated category card, without changing
+    // catalog ordering or mutating the shared database just for this test.
+    await departments
+      .getByRole("link", { name: labels[3], exact: true })
+      .click();
     await page
-      .getByTestId("home-product-strip")
-      .locator("article a")
+      .locator(".shop-product-card")
+      .filter({ has: page.locator("img") })
       .first()
+      .getByRole("link")
       .click();
     await expect(nav.locator('[aria-current="page"]')).toHaveAttribute(
       "href",
