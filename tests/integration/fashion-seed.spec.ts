@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { upgradeDemoComposition } from "../../prisma/fashion-seed";
-import { legacyHomepageBlocks } from "../../prisma/demo-homepage";
+import {
+  legacyHomepageBlocks,
+  spatialCampaignTitle,
+} from "../../prisma/demo-homepage";
 import type { Prisma } from "@prisma/client";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
@@ -100,6 +103,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             mediaId: "seed-fashion-v1-coat",
             ctaUrl: "/search",
             layout: "spatial",
+            title: spatialCampaignTitle,
           },
           ...legacyHomepageBlocks.slice(1),
         ]);
@@ -108,6 +112,46 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await db.homepage.findUnique({ where: { id: home.id } }),
         ).toEqual(upgraded);
         expect(await links("seed-product-1")).toEqual(["seed-fashion-v1-coat"]);
+        // A user who already installed PR43 receives this refinement as well.
+        const priorSpatial = legacyHomepageBlocks.map((block, i) =>
+          i === 0
+            ? {
+                ...block,
+                mediaId: "seed-fashion-v1-coat",
+                ctaUrl: "/search",
+                layout: "spatial",
+              }
+            : block,
+        );
+        await db.homepage.update({
+          where: { id: home.id },
+          data: { blocks: priorSpatial },
+        });
+        await upgradeDemoComposition(db);
+        expect(
+          (await db.homepage.findUniqueOrThrow({ where: { id: home.id } }))
+            .blocks,
+        ).toEqual(upgraded.blocks);
+        // Even one merchant title edit prevents automated campaign replacement.
+        const editedSpatial: Prisma.InputJsonObject[] =
+          structuredClone(priorSpatial);
+        editedSpatial[0] = {
+          ...editedSpatial[0],
+          title: {
+            fa: "عنوان فروشنده",
+            en: "Merchant title",
+            tr: "Satıcı başlığı",
+          },
+        };
+        await db.homepage.update({
+          where: { id: home.id },
+          data: { blocks: editedSpatial },
+        });
+        await upgradeDemoComposition(db);
+        expect(
+          (await db.homepage.findUniqueOrThrow({ where: { id: home.id } }))
+            .blocks,
+        ).toEqual(editedSpatial);
         const merchantBlocks = [
           {
             type: "RichText",

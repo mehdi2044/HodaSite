@@ -860,3 +860,9 @@ Implementation is complete in PR #35: gateway/adapters/settings/usage, versioned
 Existing data is preserved by additive migrations, immutable finance evidence and stable variant references. Manual backup/download/upload/restore remains in the admin panel. No publication, hosting, domain work or laptop `.env` access occurred. Live API provider switching and timed two-photo generation, CP1/CP2 owner acceptance and real-phone/HTTPS tests remain explicitly unverified.
 
 - Code head `0508acc3d744bb2c90fd662c7bb0c35d2e02b970`, run 34838117249: all 7,985 unit/database tests passed; browser 113/114 passed. Persian lost-response Apply/retry and Turkish review/bulk paths passed. The sole English failure selected by a duplicate fixture title left by the other locale tests; approved fixture titles are now distinct per locale. Product behavior is unchanged by this correction. Exact-head CI remains the merge gate.
+
+### Phase 05b — Lovable fidelity correction (2026-09-19)
+
+The owner rejected the equal-card interpretation delivered in PR43. Replaced that hero with a portrait-led layered composition, floating department images, offset three-line typography, and self-hosted Bodoni Moda italic. The header integrates category navigation in its main desktop row; utilities remain available. Storefront direction now follows its own locale even after client navigation. All four root departments keep real canonical routes, and custom branding/palette/media remain DB-owned.
+
+The homepage title accepts line breaks in the admin editor. The main selected campaign image is now actually consumed by the spatial hero. The demo upgrade also recognizes the exact unchanged PR43 composition; merchant edits prevent replacement. No schema/payment/auth/backup change. Browser component comparison and full CI evidence are tracked in `design-qa.md` and the PR. Final iPhone and production-speed acceptance remain pending, as agreed.

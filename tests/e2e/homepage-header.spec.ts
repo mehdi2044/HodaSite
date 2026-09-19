@@ -36,8 +36,7 @@ for (const [locale, market, cartLabel] of [
         hero.locator(".spatial-cta, .shop-hero-content .button"),
       ).toHaveAttribute("href", `/${locale}/search`);
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
-      await expect(cart.locator(".storefront-cart-mobile")).toBeVisible();
-      await expect(cart.locator(".storefront-cart-desktop")).toBeHidden();
+      await expect(cart.locator(".storefront-cart-content")).toBeVisible();
       await expect(brand).toBeVisible();
       // admin-media.spec configures an image logo before this spec in CI.
       // Both branding modes are valid; do not mutate shared settings just to
@@ -96,8 +95,7 @@ for (const [locale, market, cartLabel] of [
     }
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await expect(cart.locator(".storefront-cart-desktop")).toBeVisible();
-    await expect(cart.locator(".storefront-cart-mobile")).toBeHidden();
+    await expect(cart.locator(".storefront-cart-content")).toBeVisible();
     await expect(page.locator(".storefront-header-grid > nav")).toBeVisible();
     expect(
       await page.evaluate(

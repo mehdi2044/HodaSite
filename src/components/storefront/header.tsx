@@ -71,6 +71,18 @@ export async function Header({
         data-header-style={headerStyle}
         className="sticky top-0 z-40 border-b border-black/5 bg-bg/95 backdrop-blur-md"
       >
+        <div className="storefront-utility">
+          <span>{siteName}</span>
+          <nav aria-label={t("contentNavigation.main")}>
+            {desktopMenu.map((item) => (
+              <MenuLink
+                key={item.id}
+                item={item}
+                placeholderLabel={t("contentNavigation.phase02Placeholder")}
+              />
+            ))}
+          </nav>
+        </div>
         <div className="shell storefront-header-grid">
           <Link
             href={seoPath(normalizedLocale, market.code, "home")}
@@ -96,19 +108,41 @@ export async function Header({
               <span className="storefront-brand-name">{siteName}</span>
             )}
           </Link>
-          <nav
-            aria-label={t("contentNavigation.main")}
-            className="hidden min-w-0 flex-wrap items-center justify-center gap-x-5 lg:flex"
-          >
-            {desktopMenu.map((item) => (
-              <MenuLink
-                key={item.id}
-                item={item}
-                placeholderLabel={t("contentNavigation.phase02Placeholder")}
-              />
-            ))}
-          </nav>
-          <div className="flex min-w-0 items-center gap-2">
+          {departments.length > 0 && (
+            <nav
+              className="storefront-departments"
+              aria-label={t("shopping.browseCategories")}
+              data-testid="department-navigation"
+            >
+              {departments.map((department) => (
+                <Link
+                  key={department.id}
+                  href={seoPath(
+                    normalizedLocale,
+                    market.code,
+                    "c",
+                    localizedValue(
+                      department.slugI18n as Record<"fa" | "tr" | "en", string>,
+                      normalizedLocale,
+                    ),
+                  )}
+                >
+                  {localizedValue(
+                    department.titleI18n as Record<"fa" | "tr" | "en", string>,
+                    normalizedLocale,
+                  )}
+                </Link>
+              ))}
+            </nav>
+          )}
+          <div className="storefront-tools min-w-0">
+            <Link
+              href={`/${locale}/search`}
+              aria-label={t("catalog.search")}
+              className="hidden min-h-11 min-w-11 items-center justify-center lg:inline-flex"
+            >
+              <StorefrontIcon name="search" />
+            </Link>
             <Link
               href={`/${locale}/account/wishlist`}
               aria-label={t("engagement.wishlist")}
@@ -133,13 +167,18 @@ export async function Header({
               }
             />
             <div className="hidden items-center gap-2 lg:flex">
-              <Link className="min-h-11 py-3" href={`/${locale}/account`}>
-                {t("commerce.account")}
+              <Link
+                className="inline-flex min-h-11 min-w-11 items-center justify-center"
+                aria-label={t("commerce.account")}
+                href={`/${locale}/account`}
+              >
+                <StorefrontIcon name="account" />
               </Link>
               <LocaleSwitcher
                 current={locale}
                 enabledLocales={market.enabledLocales}
                 ariaLabel={t("locale.switchTo")}
+                compact
               />
               <MarketSwitcher
                 current={market.code}
@@ -201,33 +240,6 @@ export async function Header({
             </button>
           </form>
         </div>
-        {departments.length > 0 && (
-          <nav
-            className="storefront-departments shell"
-            aria-label={t("shopping.browseCategories")}
-            data-testid="department-navigation"
-          >
-            {departments.map((department) => (
-              <Link
-                key={department.id}
-                href={seoPath(
-                  normalizedLocale,
-                  market.code,
-                  "c",
-                  localizedValue(
-                    department.slugI18n as Record<"fa" | "tr" | "en", string>,
-                    normalizedLocale,
-                  ),
-                )}
-              >
-                {localizedValue(
-                  department.titleI18n as Record<"fa" | "tr" | "en", string>,
-                  normalizedLocale,
-                )}
-              </Link>
-            ))}
-          </nav>
-        )}
       </header>
       <MobileNavigation
         locale={locale}

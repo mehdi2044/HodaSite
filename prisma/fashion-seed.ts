@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import path from "node:path";
 import sharp from "sharp";
-import { legacyHomepageBlocks } from "./demo-homepage";
+import { legacyHomepageBlocks, spatialCampaignTitle } from "./demo-homepage";
 
 export const fashionAssets = [
   {
@@ -184,7 +184,20 @@ export async function upgradeDemoComposition(db: PrismaClient) {
         !home.deletedAt &&
         home.marketId === null &&
         hero &&
-        (isDeepStrictEqual(home.blocks, legacyHomepageBlocks) ||
+        (isDeepStrictEqual(
+          home.blocks,
+          legacyHomepageBlocks.map((block, i) =>
+            i === 0
+              ? {
+                  ...block,
+                  mediaId: hero.id,
+                  ctaUrl: "/search",
+                  layout: "spatial",
+                }
+              : block,
+          ),
+        ) ||
+          isDeepStrictEqual(home.blocks, legacyHomepageBlocks) ||
           isDeepStrictEqual(
             home.blocks,
             legacyHomepageBlocks.map((block, i) =>
@@ -202,6 +215,7 @@ export async function upgradeDemoComposition(db: PrismaClient) {
           mediaId: hero.id,
           ctaUrl: "/search",
           layout: "spatial",
+          title: spatialCampaignTitle,
         };
         await tx.homepage.updateMany({
           where: { id: home.id, updatedAt: home.updatedAt },

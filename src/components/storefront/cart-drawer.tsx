@@ -29,12 +29,9 @@ export function CartDrawer({
         className="storefront-cart-toggle cursor-pointer py-3"
         aria-label={label}
       >
-        <span className="storefront-cart-mobile" aria-hidden="true">
+        <span className="storefront-cart-content" aria-hidden="true">
           <StorefrontIcon name="cart" />
           <bdi>{count}</bdi>
-        </span>
-        <span className="storefront-cart-desktop" aria-hidden="true">
-          {label}
         </span>
       </summary>
       <section className="storefront-mini-cart-panel absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">

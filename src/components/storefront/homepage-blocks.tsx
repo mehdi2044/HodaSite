@@ -80,6 +80,9 @@ export async function HomepageBlocks({
               key={index}
               block={block}
               departments={categories.slice(0, 4)}
+              campaignImage={
+                block.mediaId ? mediaById.get(block.mediaId) : undefined
+              }
               locale={locale}
               marketCode={market.code}
               first={index === 0}

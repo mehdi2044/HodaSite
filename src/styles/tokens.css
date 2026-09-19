@@ -229,9 +229,6 @@ html[lang="fa"] body,
 .storefront-brand {
   overflow-wrap: anywhere;
 }
-.storefront-cart-mobile {
-  display: none;
-}
 @media (max-width: 1023px) {
   .storefront-header-grid {
     padding-inline: 1rem;
@@ -253,14 +250,11 @@ html[lang="fa"] body,
   .storefront-cart-toggle::-webkit-details-marker {
     display: none;
   }
-  .storefront-cart-mobile {
+  .storefront-cart-content {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
     white-space: nowrap;
-  }
-  .storefront-cart-desktop {
-    display: none;
   }
 }
 .storefront-search {
@@ -1531,15 +1525,18 @@ html[lang="fa"] body,
   }
 }
 
-/* Spatial fashion direction, adapted from the owner's Lovable reference.
-   Equal department planes; no photo zoom, parallax JS or identity-based crops. */
+/* Lovable editorial composition: one portrait, floating objects and offset type.
+   Palette, content and imagery remain merchant-owned. No parallax dependency. */
+.storefront-utility {
+  display: none;
+}
 .storefront-departments {
+  grid-column: 1/-1;
   display: flex;
   align-items: center;
-  gap: clamp(0.8rem, 3vw, 2.5rem);
+  gap: 0.75rem;
   overflow-x: auto;
   scrollbar-width: none;
-  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
 }
 .storefront-departments a {
   display: inline-flex;
@@ -1547,107 +1544,103 @@ html[lang="fa"] body,
   justify-content: center;
   flex: 1 0 auto;
   min-height: 44px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   white-space: nowrap;
   text-underline-offset: 0.45em;
 }
 .storefront-departments a:hover {
   text-decoration: underline;
 }
+.storefront-languages {
+  display: flex;
+  border: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
+  padding: 3px;
+}
+.storefront-languages a {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 0.7rem;
+}
+.storefront-languages [aria-current] {
+  background: var(--text);
+  color: var(--background);
+}
+.storefront-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.storefront-cart-toggle {
+  list-style: none;
+}
+.storefront-cart-toggle::-webkit-details-marker {
+  display: none;
+}
+.storefront-cart-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 44px;
+}
 .spatial-storefront {
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
   color: var(--background);
   background: var(--text);
 }
 .spatial-composition {
-  display: grid;
-  gap: 2rem;
-  padding-block: 2.5rem 2rem;
-}
-.spatial-copy {
   position: relative;
-  z-index: 2;
-  min-width: 0;
-}
-.spatial-eyebrow {
-  font-size: 0.75rem;
-  line-height: 2;
-  margin-block-end: 1rem;
-  opacity: 0.85;
-}
-.spatial-copy h1,
-.spatial-copy h2 {
-  font-size: clamp(2.4rem, 6vw, 5.8rem);
-  font-weight: 650;
-  line-height: 1.15;
-  letter-spacing: -0.045em;
-  text-wrap: balance;
-}
-[dir="rtl"] .spatial-copy h1,
-[dir="rtl"] .spatial-copy h2 {
-  line-height: 1.5;
-  letter-spacing: 0;
-}
-.spatial-description {
-  margin-block-start: 1rem;
-  line-height: 1.9;
-  opacity: 0.8;
-  max-width: 34ch;
-}
-.spatial-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2.5rem;
-  margin-block-start: 1.5rem;
-  min-height: 48px;
-  border-radius: 0;
-}
-.spatial-planes {
-  position: relative;
-  min-width: 0;
-  padding: 0.5rem;
+  min-height: 670px;
+  max-width: 1920px;
+  margin-inline: auto;
 }
 .spatial-frames {
   position: absolute;
-  inset: 0;
+  inset-block: 4% 12%;
+  inset-inline: 22% 5%;
   pointer-events: none;
 }
 .spatial-frames i {
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in srgb, var(--background) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--background) 26%, transparent);
 }
 .spatial-frames i:nth-child(2) {
-  inset: -0.4rem 0.6rem 0.5rem -0.5rem;
+  inset: 10px -7px -10px 7px;
 }
 .spatial-frames i:nth-child(3) {
-  inset: 0.75rem -0.35rem -0.5rem 0.8rem;
-  border-color: var(--primary);
+  inset: 20px -14px -20px 14px;
+}
+.spatial-frames i:nth-child(4) {
+  inset: 30px -21px -30px 21px;
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
 }
 .spatial-departments {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  inset: 0;
 }
 .spatial-department {
+  position: absolute;
   display: block;
-  min-width: 0;
-  background: var(--background);
   color: var(--text);
-  box-shadow: 0 14px 28px #0003;
-  transition: transform 0.25s ease;
+  background: var(--background);
+  box-shadow: 0 20px 45px #0005;
+  transition: translate 0.25s ease;
+}
+.spatial-department:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 5px;
+  z-index: 9;
 }
 .spatial-department-image,
 .spatial-image-placeholder {
   display: block;
-  aspect-ratio: 4/5;
   width: 100%;
+  height: 100%;
   overflow: hidden;
-  background: var(--surface);
 }
 .spatial-department-image img {
   display: block;
@@ -1657,31 +1650,287 @@ html[lang="fa"] body,
 .spatial-image-placeholder {
   display: grid;
   place-items: center;
-  font-size: 4rem;
+  background: var(--surface);
   color: var(--muted);
+  font-size: 3rem;
+}
+.spatial-plane-1 {
+  inset-block-start: 36px;
+  inset-inline-start: 27%;
+  width: 64%;
+  height: 380px;
+  z-index: 1;
+}
+.spatial-plane-2 {
+  inset-block-start: 26px;
+  inset-inline-end: 3%;
+  width: 25%;
+  height: 150px;
+  z-index: 3;
+  rotate: 4deg;
+}
+.spatial-plane-3 {
+  inset-block-start: 200px;
+  inset-inline-start: 5%;
+  width: 26%;
+  height: 155px;
+  z-index: 3;
+  rotate: -5deg;
+}
+.spatial-plane-4 {
+  inset-block-start: 335px;
+  inset-inline-end: 5%;
+  width: 25%;
+  height: 128px;
+  z-index: 3;
+  rotate: 5deg;
 }
 .spatial-department-label {
+  position: absolute;
+  inset-block-end: -0.6rem;
+  inset-inline-start: -0.5rem;
   display: flex;
+  gap: 0.4rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.55rem 0.7rem;
+  padding: 0.35rem 0.55rem;
   min-height: 44px;
-  font-size: 0.85rem;
+  background: var(--background);
+  box-shadow: 0 6px 20px #0002;
+  font-size: 0.65rem;
+  white-space: nowrap;
 }
 .spatial-department-label > span:first-child {
-  overflow-wrap: anywhere;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
 }
-[dir="rtl"] .spatial-department-label > span:last-child,
-[dir="rtl"] .spatial-cta > span {
-  transform: scaleX(-1);
+.spatial-plane-1 .spatial-department-label {
+  inset-block: auto 1rem;
+  inset-inline-start: 0.75rem;
+}
+.spatial-copy {
+  position: relative;
+  z-index: 5;
+  padding: 435px 1rem 1.5rem;
+  pointer-events: none;
+}
+.spatial-eyebrow {
+  margin-block-end: 1.25rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.spatial-copy h1,
+.spatial-copy h2 {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(2.6rem, 12vw, 4rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  text-shadow: 0 3px 28px #0005;
+}
+.spatial-display-title .spatial-copy h1,
+.spatial-display-title .spatial-copy h2 {
+  max-width: none;
+}
+.spatial-copy h1 > *,
+.spatial-copy h2 > * {
+  display: block;
+}
+.spatial-copy em {
+  font-family: "Bodoni Moda Variable", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  text-transform: none;
+  color: var(--primary);
+  margin-inline-start: 8%;
+}
+.spatial-copy h1 > span:last-child,
+.spatial-copy h2 > span:last-child {
+  margin-inline-start: 12%;
+}
+.spatial-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 48px;
+  margin-block-start: 1.75rem;
+  font-size: 0.95rem;
+  pointer-events: auto;
+}
+.spatial-cta:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.4em;
+}
+.spatial-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding-block: 0.8rem;
+  border-top: 1px solid color-mix(in srgb, var(--background) 18%, transparent);
+  font-size: 0.65rem;
 }
 .spatial-demo {
-  position: relative;
-  margin-block-start: 1.25rem;
-  font-size: 0.7rem;
-  opacity: 0.7;
-  text-align: end;
+  opacity: 0.75;
+}
+.spatial-storefront[dir="rtl"] .spatial-copy h1,
+.spatial-storefront[dir="rtl"] .spatial-copy h2 {
+  font-family: Vazirmatn, sans-serif;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.spatial-storefront[dir="rtl"] .spatial-copy em {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 300;
+}
+.spatial-storefront[dir="rtl"] .spatial-cta > span,
+.spatial-storefront[dir="rtl"] .spatial-department-label > span:last-child {
+  transform: scaleX(-1);
+}
+@media (min-width: 768px) {
+  .spatial-composition {
+    min-height: 0;
+    height: clamp(650px, 56vw, 840px);
+  }
+  .spatial-frames {
+    inset-block: 3% 5%;
+    inset-inline: 34% 7%;
+  }
+  .spatial-plane-1 {
+    inset-block-start: 6%;
+    inset-inline-start: 41%;
+    width: 43%;
+    height: 87%;
+  }
+  .spatial-plane-2 {
+    inset-block-start: 5%;
+    inset-inline-end: 3%;
+    width: 16%;
+    height: 34%;
+  }
+  .spatial-plane-3 {
+    inset-block-start: 51%;
+    inset-inline-start: 83%;
+    width: 14%;
+    height: 29%;
+  }
+  .spatial-plane-4 {
+    inset-block-start: auto;
+    inset-block-end: 3%;
+    inset-inline-end: 20%;
+    width: 15%;
+    height: 27%;
+    rotate: -5deg;
+  }
+  .spatial-department-label {
+    padding-inline: 0.8rem;
+    font-size: 0.7rem;
+    gap: 0.6rem;
+  }
+  .spatial-plane-2 .spatial-department-label {
+    inset-inline-start: -12%;
+    inset-block-end: 8%;
+  }
+  .spatial-plane-3 .spatial-department-label {
+    inset-inline-start: -12%;
+  }
+  .spatial-plane-4 .spatial-department-label {
+    inset-block: -0.75rem auto;
+    inset-inline: auto -10%;
+  }
+  .spatial-copy {
+    position: absolute;
+    inset-inline-start: max(2rem, calc((100% - 1408px) / 2));
+    inset-block-end: 10%;
+    padding: 0;
+    width: 66%;
+  }
+  .spatial-copy h1,
+  .spatial-copy h2 {
+    font-size: clamp(4rem, 7.5vw, 8rem);
+    line-height: 0.87;
+  }
+  .spatial-eyebrow {
+    font-size: 0.72rem;
+  }
+  .spatial-flow-title .spatial-copy {
+    position: relative;
+    inset: auto;
+    padding: 20rem 2rem 4rem;
+    width: 55%;
+  }
+  .spatial-flow-title {
+    height: auto;
+    min-height: 750px;
+  }
+  .spatial-flow-title .spatial-copy h1,
+  .spatial-flow-title .spatial-copy h2 {
+    font-size: clamp(2.5rem, 4.5vw, 5rem);
+    line-height: 1.15;
+  }
+}
+@media (min-width: 1024px) {
+  .storefront-utility {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 28px;
+    padding-inline: max(2rem, calc((100% - 1408px) / 2));
+    background: var(--text);
+    color: var(--background);
+    font-size: 0.65rem;
+  }
+  .storefront-utility nav {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .storefront-utility a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .storefront-header-grid {
+    min-height: 80px;
+    padding-block: 0.75rem;
+  }
+  .storefront-departments {
+    grid-column: auto;
+    justify-content: center;
+    gap: clamp(0.75rem, 2vw, 2rem);
+    border: 0;
+  }
+  .storefront-departments a {
+    flex: 0 0 auto;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  .storefront-tools {
+    gap: 0.5rem;
+  }
+  .storefront-tools select {
+    max-width: 105px;
+    font-size: 0.7rem;
+    border: 0;
+    padding-inline: 0.3rem;
+  }
+  .storefront-tools .storefront-cart-toggle {
+    display: flex;
+  }
+}
+@media (max-width: 1023px) {
+  .storefront-departments {
+    grid-row: 3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spatial-department {
+    transition: none;
+  }
 }
 .shop-category-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1775,37 +2024,8 @@ html[lang="fa"] body,
   .shop-category-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-  .spatial-departments {
-    gap: 1.25rem;
-  }
 }
 @media (min-width: 1024px) {
-  .storefront-departments {
-    justify-content: center;
-  }
-  .storefront-departments a {
-    flex: 0 0 auto;
-    padding-inline: 1rem;
-  }
-  .spatial-composition {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
-    align-items: center;
-    gap: 4rem;
-    padding-block: 4rem;
-  }
-  .spatial-planes {
-    padding: 1.5rem 1rem;
-  }
-  .spatial-department:nth-child(even) {
-    transform: translateY(1.5rem);
-  }
-  .spatial-department-image,
-  .spatial-image-placeholder {
-    aspect-ratio: 4/5;
-  }
-  .spatial-demo {
-    margin-block-start: 2.5rem;
-  }
   .shop-product-layout {
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     gap: 3rem;
@@ -1813,7 +2033,7 @@ html[lang="fa"] body,
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .spatial-department:hover {
-    transform: translateY(-4px);
+    translate: 0 -4px;
   }
   .shop-product-card .shop-card-image {
     transition: box-shadow 0.25s ease;
@@ -1822,14 +2042,17 @@ html[lang="fa"] body,
     box-shadow: 0 14px 30px #0002;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .spatial-department {
-    transition: none;
-  }
-}
 
 .storefront-mini-cart-panel {
   max-height: calc(100dvh - 14rem - env(safe-area-inset-bottom));
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.storefront-app[dir="ltr"] {
+  font-family: Inter, Vazirmatn, sans-serif;
+}
+
+.storefront-utility .group > div {
+  color: var(--text);
 }

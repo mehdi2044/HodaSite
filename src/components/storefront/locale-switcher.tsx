@@ -13,11 +13,13 @@ export function LocaleSwitcher({
   enabledLocales,
   ariaLabel,
   mobile = false,
+  compact = false,
 }: {
   current: string;
   enabledLocales: string[];
   ariaLabel: string;
   mobile?: boolean;
+  compact?: boolean;
 }) {
   const pathname = usePathname();
   const rest = pathname.split("/").slice(2).join("/");
@@ -26,9 +28,11 @@ export function LocaleSwitcher({
     <nav
       aria-label={ariaLabel}
       className={
-        mobile
-          ? "flex flex-wrap gap-1 text-base"
-          : "hidden gap-1 text-sm lg:flex"
+        compact
+          ? "storefront-languages"
+          : mobile
+            ? "flex flex-wrap gap-1 text-base"
+            : "hidden gap-1 text-sm lg:flex"
       }
     >
       {enabledLocales.map((locale) => (
@@ -36,9 +40,14 @@ export function LocaleSwitcher({
           key={locale}
           href={`/${locale}/${rest}`}
           aria-current={locale === current ? "true" : undefined}
-          className={`flex min-h-11 items-center rounded-full px-3 ${locale === current ? "bg-surface font-semibold shadow-sm" : "text-muted"}`}
+          aria-label={LABELS[locale] ?? locale}
+          className={
+            compact
+              ? undefined
+              : `flex min-h-11 items-center rounded-full px-3 ${locale === current ? "bg-surface font-semibold shadow-sm" : "text-muted"}`
+          }
         >
-          {LABELS[locale] ?? locale}
+          {compact ? locale.toUpperCase() : (LABELS[locale] ?? locale)}
         </Link>
       ))}
     </nav>
