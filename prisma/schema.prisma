@@ -611,6 +611,7 @@ model Media {
   mime            String
   altI18n         Json               @default("{}")
   variants        Json               @default("{}")
+  presentation    Json               @default("{}")
   uploadedBy      String?
   status          MediaStatus        @default(READY)
   folderId        String?

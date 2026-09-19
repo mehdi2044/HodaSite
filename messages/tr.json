@@ -104,7 +104,15 @@
     "brandLogoLight": "Logo (açık)",
     "brandLogoDark": "Logo (koyu)",
     "favicon": "Site simgesi",
-    "emailLogo": "E-posta logosu"
+    "emailLogo": "E-posta logosu",
+    "framing": "Görsel kadrajı",
+    "framingPreview": "Kadraj önizlemesi",
+    "imageFit": "Görsel yerleşimi",
+    "fitCover": "Çerçeveyi doldur",
+    "fitContain": "Görselin tamamı",
+    "focalX": "Yatay odak",
+    "focalY": "Dikey odak",
+    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir."
   },
   "contentNavigation": {
     "main": "Ana navigasyon",
@@ -320,7 +328,10 @@
     "scopeHelp": "Pazara özel düzen genel düzenin önüne geçer. Mağazayı güncellerken etkin pazarı kontrol edin.",
     "heroHelp": "Fotoğraflı afiş için hazır bir görsel seçin. Görsel yoksa afiş yalnızca metin gösterir.",
     "trustItem": "Güven öğesi",
-    "addTrustItem": "Güven öğesi ekle"
+    "addTrustItem": "Güven öğesi ekle",
+    "heroLayout": "Ana görsel düzeni",
+    "editorialLayout": "Tek editoryal görsel",
+    "spatialLayout": "Dört kategori · katmanlı"
   },
   "translationAdmin": {
     "title": "Arayüz çevirileri",
@@ -1159,7 +1170,9 @@
     "emptyCollection": "Bu seçkide henüz ürün yok.",
     "emptyCategories": "Kategoriler yakında burada görünecek.",
     "collectionPreview": "Günlük stile bir bakış",
-    "carousel": "Kayan galeri"
+    "carousel": "Kayan galeri",
+    "backCollection": "Kategoriye dön",
+    "fullImage": "Tam görseli aç"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",

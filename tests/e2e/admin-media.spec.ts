@@ -102,6 +102,25 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   const tile = page.getByTestId(`media-tile-${media.id}`);
   await expect(tile).toBeVisible();
   await tile.locator("img").click();
+  await page.getByLabel("نحوهٔ نمایش").selectOption("contain");
+  await page.getByLabel("نقطهٔ تمرکز عمودی").press("Home");
+  await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect
+    .poll(async () => {
+      const response = await page.request.get("/api/admin/media?kind=image");
+      const data = (await response.json()) as {
+        items: Array<{ id: string; presentation: unknown }>;
+      };
+      return data.items.find((item) => item.id === media.id)?.presentation;
+    })
+    .toMatchObject({ fit: "contain", focalY: 0 });
+  await page.reload();
+  await tile.locator("img").click();
+  await expect(page.getByLabel("نحوهٔ نمایش")).toHaveValue("contain");
+  await expect(page.getByAltText("پیش‌نمایش قاب تصویر")).toHaveCSS(
+    "object-fit",
+    "contain",
+  );
   await page.getByRole("button", { name: "حذف", exact: true }).click();
   await expect(tile).toBeHidden();
   await page.goto("/admin/media?view=trash");

@@ -1,7 +1,12 @@
+import {
+  mediaPresentation,
+  type MediaRole,
+} from "@/modules/media/presentation";
 import type { MediaVariants } from "@/modules/media/constants";
 
 export type ResponsiveImageMedia = {
   originalName?: string;
+  presentation?: unknown;
   url: string;
   variants: unknown;
   width: number | null;
@@ -35,6 +40,7 @@ export function ResponsiveImage({
   locale,
   sizes,
   priority,
+  role,
   className,
   imgClassName = "h-full w-full object-cover",
 }: {
@@ -42,6 +48,7 @@ export function ResponsiveImage({
   locale: "fa" | "tr" | "en";
   sizes: string;
   priority?: boolean;
+  role?: MediaRole;
   className?: string;
   /** Defaults to filling the wrapper (grid tiles); pass e.g.
    *  "h-8 w-auto object-contain" for intrinsic-sized logos. */
@@ -93,6 +100,7 @@ export function ResponsiveImage({
         decoding="async"
         fetchPriority={priority ? "high" : undefined}
         className={imgClassName}
+        style={role ? mediaPresentation(media.presentation, role) : undefined}
       />
     </picture>
   );

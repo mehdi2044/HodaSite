@@ -108,8 +108,9 @@ export function ProductGallery({
                 locale={locale}
                 sizes="(max-width:1024px) 100vw, 50vw"
                 priority={index === 0}
+                role="gallery"
                 className="shop-gallery-image"
-                imgClassName="aspect-[3/4] h-full w-full object-cover"
+                imgClassName="h-full w-full object-cover"
               />
             </button>
           ))
@@ -119,7 +120,13 @@ export function ProductGallery({
       </div>
       {items.length > 0 && (
         <div className="shop-gallery-meta">
-          <span>{t("galleryHint")}</span>
+          <button
+            type="button"
+            className="shop-full-image"
+            onClick={() => zoom.current?.showModal()}
+          >
+            {t("fullImage")} <span aria-hidden="true">↗</span>
+          </button>
           <span aria-live="polite" aria-atomic="true">
             {t("galleryCount", {
               current: new Intl.NumberFormat(locale).format(active + 1),
@@ -148,6 +155,7 @@ export function ProductGallery({
                 media={item.media}
                 locale={locale}
                 sizes="64px"
+                role="thumbnail"
                 className="shop-gallery-thumbnail"
               />
             </button>
@@ -170,6 +178,7 @@ export function ProductGallery({
             media={current.media}
             locale={locale}
             sizes="100vw"
+            role="full"
             className="block"
             imgClassName="w-full max-h-[85dvh] object-contain"
           />

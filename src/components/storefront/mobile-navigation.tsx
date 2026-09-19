@@ -16,7 +16,9 @@ export function MobileNavigation({
   };
 }) {
   const pathname = usePathname();
-  const segment = pathname.split("/")[2] ?? "";
+  const segments = pathname.split("/");
+  const segment =
+    segments[2] === "m" ? (segments[4] ?? "") : (segments[2] ?? "");
   const active = ["cart", "checkout"].includes(segment)
     ? "cart"
     : ["account", "orders", "tracking", "returns"].includes(segment)

@@ -13,6 +13,7 @@ const sourceSchema = z.object({
 export const homepageBlockSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("Hero"),
+    layout: z.enum(["editorial", "spatial"]).optional(),
     mediaId: mediaId.optional(),
     title: localizedTextSchema,
     body: localizedTextSchema,

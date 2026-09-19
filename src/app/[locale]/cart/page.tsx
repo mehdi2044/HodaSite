@@ -71,6 +71,7 @@ export default async function CartPage({
                   }
                   locale={locale as "fa" | "tr" | "en"}
                   sizes="96px"
+                  role="thumbnail"
                   className="shop-cart-image"
                 />
               )}

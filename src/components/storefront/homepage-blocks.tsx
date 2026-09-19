@@ -1,3 +1,5 @@
+import { SpatialHero } from "./spatial-hero";
+import { seoPath } from "@/lib/seo-urls";
 import { getDisplayPrices } from "@/modules/pricing";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -68,6 +70,21 @@ export async function HomepageBlocks({
   return (
     <main dir={locale === "fa" ? "rtl" : "ltr"}>
       {blocks.map((block, index) => {
+        if (
+          block.type === "Hero" &&
+          block.layout === "spatial" &&
+          categories.length > 0
+        )
+          return (
+            <SpatialHero
+              key={index}
+              block={block}
+              departments={categories.slice(0, 4)}
+              locale={locale}
+              marketCode={market.code}
+              first={index === 0}
+            />
+          );
         if (block.type === "Hero" || block.type === "Banner") {
           const image = block.mediaId
             ? mediaById.get(block.mediaId)
@@ -86,6 +103,7 @@ export async function HomepageBlocks({
                   locale={locale}
                   sizes="(min-width:1024px) 50vw, 100vw"
                   priority={index === 0}
+                  role="hero"
                   className="shop-hero-image"
                 />
               )}
@@ -178,7 +196,15 @@ export async function HomepageBlocks({
                 {categories.slice(0, block.source.limit).map((category) => (
                   <Link
                     key={category.id}
-                    href={`/${locale}/c/${encodeURIComponent(localizedValue(category.slugI18n as Record<Locale, string>, locale))}`}
+                    href={seoPath(
+                      locale,
+                      market.code,
+                      "c",
+                      localizedValue(
+                        category.slugI18n as Record<Locale, string>,
+                        locale,
+                      ),
+                    )}
                     className="shop-category-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
                   >
                     {category.media &&
@@ -187,9 +213,10 @@ export async function HomepageBlocks({
                         <ResponsiveImage
                           media={category.media}
                           locale={locale}
-                          sizes="(max-width:640px) 25vw,25vw"
+                          sizes="(max-width:640px) 50vw,25vw"
+                          role="editorial"
                           className="shop-category-image"
-                          imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                          imgClassName="h-full w-full object-cover"
                         />
                       )}
                     <h3 className="shop-category-name">

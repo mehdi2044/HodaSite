@@ -63,14 +63,15 @@ export async function ProductCard({
   return (
     <article className="shop-product-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
       <Link href={seoPath(locale, market.code, "p", slug)} className="block">
-        <div className="shop-card-image aspect-[3/4] overflow-hidden bg-black/5">
+        <div className="shop-card-image aspect-[4/5] overflow-hidden bg-black/5">
           {image ? (
             <ResponsiveImage
               media={image}
+              role="catalog"
               locale={locale}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="h-full w-full"
-              imgClassName="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              imgClassName="h-full w-full object-cover"
             />
           ) : (
             <div className="grid h-full place-items-center text-sm text-muted">

@@ -120,6 +120,7 @@ export default async function MediaLibrary({
           height: m.height,
           blurDataUrl: m.blurDataUrl,
           processingError: m.processingError,
+          presentation: m.presentation,
           altI18n: m.altI18n as Record<string, string> | null,
           tags: m.tags,
           folderId: m.folderId,

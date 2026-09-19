@@ -1,4 +1,5 @@
 "use client";
+import { MediaFramingEditor } from "./media-framing-editor";
 import { useState } from "react";
 import { Badge, Sheet, Button } from "@/components/ui";
 import { useTranslations } from "next-intl";
@@ -33,6 +34,7 @@ export type MediaItem = {
   deletedAt: string | null;
   createdAt: string;
   variants: MediaVariants | null;
+  presentation?: unknown;
   replacement: { id: string; status: string } | null;
 };
 
@@ -277,6 +279,12 @@ function MediaTile({
                     className="h-8 rounded-[6px] border border-black/10 px-2"
                   />
                 </label>
+                {item.kind === "image" && (
+                  <MediaFramingEditor
+                    src={thumbSrc(item)}
+                    value={item.presentation}
+                  />
+                )}
                 <label className="grid gap-1 text-xs">
                   {t("tags")}
                   <input
