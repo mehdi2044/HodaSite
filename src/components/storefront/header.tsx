@@ -137,6 +137,13 @@ export async function Header({
           )}
           <div className="storefront-tools min-w-0">
             <Link
+              href={`/${locale}/search`}
+              aria-label={t("catalog.search")}
+              className="hidden min-h-11 min-w-11 items-center justify-center lg:inline-flex"
+            >
+              <StorefrontIcon name="search" />
+            </Link>
+            <Link
               href={`/${locale}/account/wishlist`}
               aria-label={t("engagement.wishlist")}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"

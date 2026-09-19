@@ -2061,3 +2061,7 @@ html[lang="fa"] body,
 .storefront-app[dir="ltr"] {
   font-family: Inter, Vazirmatn, sans-serif;
 }
+
+.storefront-utility .group > div {
+  color: var(--text);
+}
