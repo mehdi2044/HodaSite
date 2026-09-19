@@ -173,3 +173,7 @@ Phase 08 audit correction: manual display-price validity is evaluated at request
 ## D66 — Verified login return paths for customer engagement
 
 Decision recorded before the return-path implementation: verified email login may return to the wishlist or a canonical public product/stock-alert anchor in addition to the existing checkout/payment destinations. This is a strict same-origin path allowlist, not an arbitrary redirect; authentication, OTP expiry, session validation and payment permissions are unchanged. Reject external URLs, admin/API routes, encoded separators and normalized traversal. Guest stock-alert links preserve the chosen variant through verification; subscribing still needs the customer's subsequent explicit action.
+
+### D67 clarification — reference fidelity, 2026-09-19
+
+The owner rejected equal-sized hero cards as a visual departure from the supplied Lovable composition. Four-department coverage means equal discoverability and real destinations, not equal image rectangles. The spatial layout uses one main campaign image, floating department planes and a three-line CMS title (plain text line breaks, middle line emphasized using a self-hosted display font). Geometry and typography roles belong to the selected layout; brand, colors, copy and imagery remain editable under D31. Existing Inter/Vazirmatn body roles remain. No additional schema migration or business-policy change.

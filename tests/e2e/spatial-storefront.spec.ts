@@ -6,7 +6,7 @@ for (const [locale, market, labels] of [
   ["tr", "TR", ["Kadın", "Erkek", "Çocuk", "Aksesuar"]],
   ["en", "CA", ["Women", "Men", "Kids", "Accessories"]],
 ] as const) {
-  test(`${locale}: four equal departments, real category routes, history and full images`, async ({
+  test(`${locale}: four editorial planes, real category routes, history and full images`, async ({
     page,
   }, info) => {
     test.setTimeout(120000);
@@ -15,22 +15,28 @@ for (const [locale, market, labels] of [
     await expect(departments.getByRole("link")).toHaveCount(4);
     for (const width of [360, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 900 });
+      // Every editorial plane remains a usable target, despite unequal geometry.
       const dimensions = await departments
         .getByRole("link")
         .evaluateAll((links) =>
-          links.map((link) => ({
-            width: link.getBoundingClientRect().width,
-            height: link.getBoundingClientRect().height,
-          })),
+          links.map((link) => {
+            const rect = link.getBoundingClientRect();
+            return {
+              width: rect.width,
+              height: rect.height,
+            };
+          }),
         );
-      expect(
-        Math.max(...dimensions.map((d) => d.width)) -
-          Math.min(...dimensions.map((d) => d.width)),
-      ).toBeLessThan(2);
-      expect(
-        Math.max(...dimensions.map((d) => d.height)) -
-          Math.min(...dimensions.map((d) => d.height)),
-      ).toBeLessThan(2);
+      for (const box of dimensions) {
+        expect(box.width).toBeGreaterThan(44);
+        expect(box.height).toBeGreaterThan(44);
+      }
+      // Wait for the actual campaign images, not just their blur placeholders.
+      await departments.locator("img").evaluateAll(async (images) => {
+        await Promise.all(
+          images.map((image) => (image as HTMLImageElement).decode()),
+        );
+      });
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -40,6 +46,10 @@ for (const [locale, market, labels] of [
         await shoppingProof(page, info, `spatial-home-${locale}-${width}`);
     }
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator(".storefront-app")).toHaveAttribute(
+      "dir",
+      locale === "fa" ? "rtl" : "ltr",
+    );
     for (const label of labels) {
       const link = departments.getByRole("link", { name: label, exact: true });
       const href = await link.getAttribute("href");

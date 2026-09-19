@@ -33,3 +33,10 @@ export const legacyHomepageBlocks = [
     ],
   },
 ];
+
+// Editable three-line campaign title, inclusive of all four shop departments.
+export const spatialCampaignTitle = {
+  fa: "استایل\nبرای\nهمه",
+  tr: "HERKES\niçin\nSTİL",
+  en: "STYLE\nfor\nEVERYONE.",
+};

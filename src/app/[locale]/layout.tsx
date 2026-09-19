@@ -122,7 +122,11 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <EngagementProvider context={{ marketId: market.id, locale }}>
-        <div className="storefront-app">
+        <div
+          className="storefront-app"
+          lang={locale}
+          dir={locale === "fa" ? "rtl" : "ltr"}
+        >
           <a className="storefront-skip-link" href="#storefront-content">
             {t("skipContent")}
           </a>

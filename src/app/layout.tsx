@@ -1,3 +1,4 @@
+import "@fontsource-variable/bodoni-moda/wght-italic.css";
 import "@/styles/tokens.css";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";

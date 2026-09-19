@@ -326,7 +326,7 @@
     "rootCategories": "Kategori kartları, ana kategorileri yönetim sırasıyla gösterir.",
     "catalogPreview": "Yalnızca düzen önizlemesi; kaydettikten sonra gerçek ürünleri ve kategorileri mağazada görüntüleyin.",
     "scopeHelp": "Pazara özel düzen genel düzenin önüne geçer. Mağazayı güncellerken etkin pazarı kontrol edin.",
-    "heroHelp": "Fotoğraflı afiş için hazır bir görsel seçin. Görsel yoksa afiş yalnızca metin gösterir.",
+    "heroHelp": "Mekânsal afişte kısa başlığı üç satır yazın; orta satır vurgulanır. Seçilen görsel ana kampanya fotoğrafıdır. Diğer görseller ve bağlantılar ilk dört ana kategoriden gelir.",
     "trustItem": "Güven öğesi",
     "addTrustItem": "Güven öğesi ekle",
     "heroLayout": "Ana görsel düzeni",

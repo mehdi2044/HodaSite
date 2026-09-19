@@ -326,7 +326,7 @@
     "rootCategories": "Category cards show top-level categories in their admin sort order.",
     "catalogPreview": "Layout preview only; view live products and categories in the storefront after saving.",
     "scopeHelp": "A market composition overrides the global composition. Check the active market when updating its storefront.",
-    "heroHelp": "Select a ready image for a photo banner. Without an image, the banner displays text only.",
+    "heroHelp": "For the spatial hero, enter a short title on three lines; the middle line is emphasized. The selected image is the main campaign photo. The other images and destinations come from the first four root categories.",
     "trustItem": "Trust item",
     "addTrustItem": "Add trust item",
     "heroLayout": "Hero layout",
