@@ -37,7 +37,7 @@ export function CartDrawer({
           {label}
         </span>
       </summary>
-      <section className="absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
+      <section className="storefront-mini-cart-panel absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
         <button
           type="button"
           className="justify-self-end min-h-11 px-2 text-sm underline"

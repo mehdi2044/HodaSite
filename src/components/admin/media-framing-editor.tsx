@@ -49,7 +49,7 @@ export function MediaFramingEditor({
             min="0"
             max="1"
             step="0.01"
-            value={frame[key] ?? (key === "focalX" ? 0.5 : 0.25)}
+            value={frame[key] ?? (key === "focalX" ? 0.5 : 0)}
             onChange={(e) =>
               setFrame({ ...frame, [key]: Number(e.target.value) })
             }

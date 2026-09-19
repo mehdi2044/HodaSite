@@ -22,7 +22,7 @@ describe("reusable media presentation", () => {
       expect(mediaPresentationSchema.safeParse(value).success).toBe(false);
       expect(mediaPresentation(value, "catalog")).toEqual({
         objectFit: "cover",
-        objectPosition: "50% 25%",
+        objectPosition: "50% 0%",
       });
     }
     expect(mediaPresentation(null, "gallery")).toEqual(

@@ -18,6 +18,6 @@ export function mediaPresentation(value: unknown, role: MediaRole) {
     objectPosition:
       role === "full"
         ? "50% 50%"
-        : `${(data.focalX ?? 0.5) * 100}% ${(data.focalY ?? 0.25) * 100}%`,
+        : `${(data.focalX ?? 0.5) * 100}% ${(data.focalY ?? 0) * 100}%`,
   };
 }
