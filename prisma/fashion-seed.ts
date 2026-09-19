@@ -184,12 +184,25 @@ export async function upgradeDemoComposition(db: PrismaClient) {
         !home.deletedAt &&
         home.marketId === null &&
         hero &&
-        isDeepStrictEqual(home.blocks, legacyHomepageBlocks)
+        (isDeepStrictEqual(home.blocks, legacyHomepageBlocks) ||
+          isDeepStrictEqual(
+            home.blocks,
+            legacyHomepageBlocks.map((block, i) =>
+              i === 0
+                ? { ...block, mediaId: hero.id, ctaUrl: "/search" }
+                : block,
+            ),
+          ))
       ) {
         const blocks = structuredClone(
           legacyHomepageBlocks,
         ) as Prisma.InputJsonObject[];
-        blocks[0] = { ...blocks[0], mediaId: hero.id, ctaUrl: "/search" };
+        blocks[0] = {
+          ...blocks[0],
+          mediaId: hero.id,
+          ctaUrl: "/search",
+          layout: "spatial",
+        };
         await tx.homepage.updateMany({
           where: { id: home.id, updatedAt: home.updatedAt },
           data: { blocks },

@@ -6,7 +6,13 @@ import type { HomepageBlock } from "@/modules/content/homepage";
 import { MediaPicker } from "@/components/admin/media-picker";
 import { Button, Card, Input } from "@/components/ui";
 
-type SourceOption = { id: string; title: string };
+type SourceOption = {
+  id: string;
+  title: string;
+  titleI18n?: Partial<Record<Locale, string>>;
+  root?: boolean;
+  mediaUrl?: string;
+};
 type Locale = "fa" | "tr" | "en";
 type Labels = Record<
   | "title"
@@ -40,7 +46,10 @@ type Labels = Record<
   | "body"
   | "ctaLabel"
   | "ctaUrl"
-  | "source",
+  | "source"
+  | "heroLayout"
+  | "editorialLayout"
+  | "spatialLayout",
   string
 >;
 const locales: Locale[] = ["fa", "tr", "en"];
@@ -89,8 +98,8 @@ export function HomepageBuilder({
   const [newType, setNewType] = useState<HomepageBlock["type"]>("Hero");
   const [urls, setUrls] = useState(mediaUrls);
   const preview = useMemo(
-    () => previewHtml(blocks, locale, urls, labels),
-    [blocks, locale, urls, labels],
+    () => previewHtml(blocks, locale, urls, labels, categories),
+    [blocks, locale, urls, labels, categories],
   );
   function setScopeValue(value: string) {
     setScope(value);
@@ -369,6 +378,24 @@ function BlockFields({
   if (block.type === "Hero" || block.type === "Banner")
     return (
       <>
+        {block.type === "Hero" && (
+          <label>
+            {labels.heroLayout}
+            <select
+              className="input"
+              value={block.layout ?? "editorial"}
+              onChange={(e) =>
+                update(index, {
+                  ...block,
+                  layout: e.target.value as "editorial" | "spatial",
+                })
+              }
+            >
+              <option value="editorial">{labels.editorialLayout}</option>
+              <option value="spatial">{labels.spatialLayout}</option>
+            </select>
+          </label>
+        )}
         {localized("title")}
         {localized("body")}
         {localized("ctaLabel")}
@@ -552,6 +579,7 @@ function previewHtml(
   locale: Locale,
   urls: Record<string, string>,
   labels: Labels,
+  categories: SourceOption[],
 ) {
   const esc = (value: string) =>
     value.replace(
@@ -569,6 +597,15 @@ function previewHtml(
     esc(value[locale] || value.fa || value.en || "");
   const body = blocks
     .map((block) => {
+      if (block.type === "Hero" && block.layout === "spatial")
+        return `<section class="spatial"><div><h2>${local(block.title)}</h2><p>${local(block.body)}</p><span>${local(block.ctaLabel)}</span></div><div class="planes">${categories
+          .filter((c) => c.root)
+          .slice(0, 4)
+          .map(
+            (c) =>
+              `<article>${c.mediaUrl ? `<img src="${esc(c.mediaUrl)}" alt="">` : ""}<b>${c.titleI18n ? local(c.titleI18n) : esc(c.title)}</b></article>`,
+          )
+          .join("")}</div></section>`;
       if (block.type === "Hero" || block.type === "Banner")
         return `<section class="hero">${block.mediaId && urls[block.mediaId] ? `<img src="${esc(urls[block.mediaId])}" alt="">` : ""}<div><h2>${local(block.title)}</h2><p>${local(block.body)}</p><span>${local(block.ctaLabel)}</span></div></section>`;
       if (block.type === "CategoryCards" || block.type === "ProductStrip")
@@ -578,5 +615,5 @@ function previewHtml(
       return `<section><p>${local(block.text)}</p></section>`;
     })
     .join("");
-  return `<!doctype html><html dir="${locale === "fa" ? "rtl" : "ltr"}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src http: https: data: blob:; style-src 'unsafe-inline'"><style>*{box-sizing:border-box}body{margin:0;font:16px system-ui;color:#181714;background:#fffdf8}section{padding:32px 20px}.hero{position:relative;isolation:isolate;min-height:320px;overflow:hidden;color:white;display:flex;flex-direction:column;justify-content:end}.hero:after{position:absolute;inset:0;z-index:-1;background:#0007;content:""}.hero img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}.hero h2{font-size:clamp(32px,8vw,72px);margin:0}.placeholder{min-height:140px;border:1px dashed #aaa;display:grid;place-items:center;color:#777}.trust{display:flex;gap:24px;flex-wrap:wrap;background:#f4eee5}span{min-height:44px;display:inline-flex;align-items:center}</style><body>${body}</body></html>`;
+  return `<!doctype html><html dir="${locale === "fa" ? "rtl" : "ltr"}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src http: https: data: blob:; style-src 'unsafe-inline'"><style>*{box-sizing:border-box}body{margin:0;font:16px system-ui;color:#181714;background:#fffdf8}section{padding:32px 20px}.hero{position:relative;isolation:isolate;min-height:320px;overflow:hidden;color:white;display:flex;flex-direction:column;justify-content:end}.hero:after{position:absolute;inset:0;z-index:-1;background:#0007;content:""}.hero img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}.hero h2{font-size:clamp(32px,8vw,72px);margin:0}.placeholder{min-height:140px;border:1px dashed #aaa;display:grid;place-items:center;color:#777}.trust{display:flex;gap:24px;flex-wrap:wrap;background:#f4eee5}span{min-height:44px;display:inline-flex;align-items:center}.spatial{background:#191712;color:#fbf8f3}.spatial h2{font-size:36px;line-height:1.4}.planes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}.planes article{background:#fbf8f3;color:#191712;box-shadow:0 8px 24px #0004}.planes img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;object-position:50% 0%}.planes b{display:block;padding:12px}@media(min-width:900px){.spatial{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}} </style><body>${body}</body></html>`;
 }

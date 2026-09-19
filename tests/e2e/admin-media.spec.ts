@@ -101,7 +101,27 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await page.goto("/admin/media");
   const tile = page.getByTestId(`media-tile-${media.id}`);
   await expect(tile).toBeVisible();
-  await tile.locator("img").click();
+  await tile.locator('img[alt=""]').click();
+  await tile.getByLabel("نحوهٔ نمایش").selectOption("contain");
+  await tile.getByLabel("نقطهٔ تمرکز عمودی").press("End");
+  await tile.getByLabel("نقطهٔ تمرکز عمودی").press("Home");
+  await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect
+    .poll(async () => {
+      const response = await page.request.get("/api/admin/media?kind=image");
+      const data = (await response.json()) as {
+        items: Array<{ id: string; presentation: unknown }>;
+      };
+      return data.items.find((item) => item.id === media.id)?.presentation;
+    })
+    .toMatchObject({ fit: "contain", focalY: 0 });
+  await page.reload();
+  await tile.locator('img[alt=""]').click();
+  await expect(tile.getByLabel("نحوهٔ نمایش")).toHaveValue("contain");
+  await expect(tile.getByAltText("پیش‌نمایش قاب تصویر")).toHaveCSS(
+    "object-fit",
+    "contain",
+  );
   await page.getByRole("button", { name: "حذف", exact: true }).click();
   await expect(tile).toBeHidden();
   await page.goto("/admin/media?view=trash");

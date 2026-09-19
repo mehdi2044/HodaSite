@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { mediaPresentationSchema } from "@/modules/media/presentation";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth } from "@/modules/auth";
@@ -32,6 +33,18 @@ const updateSchema = z.object({
   altEn: z.string().optional().default(""),
   tags: z.string().optional().default(""),
   folderId: z.string().optional().default(""),
+  presentation: z
+    .string()
+    .transform((value, ctx): unknown => {
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        ctx.addIssue({ code: "custom", message: "Invalid image presentation" });
+        return z.NEVER;
+      }
+    })
+    .pipe(mediaPresentationSchema)
+    .optional(),
 });
 
 export async function updateMediaMeta(formData: FormData): Promise<void> {
@@ -52,6 +65,7 @@ export async function updateMediaMeta(formData: FormData): Promise<void> {
       data: {
         altI18n: { fa: parsed.altFa, tr: parsed.altTr, en: parsed.altEn },
         tags,
+        ...(parsed.presentation ? { presentation: parsed.presentation } : {}),
         folderId: parsed.folderId || null,
       },
     });
@@ -170,6 +184,18 @@ export async function createFolderAction(formData: FormData): Promise<void> {
 const bulkSchema = z.object({
   ids: z.string().min(1),
   folderId: z.string().optional().default(""),
+  presentation: z
+    .string()
+    .transform((value, ctx): unknown => {
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        ctx.addIssue({ code: "custom", message: "Invalid image presentation" });
+        return z.NEVER;
+      }
+    })
+    .pipe(mediaPresentationSchema)
+    .optional(),
 });
 
 export async function bulkMoveAction(formData: FormData): Promise<void> {

@@ -30,7 +30,7 @@ export function Sheet({
       />
       <aside
         className={cn(
-          "fixed top-0 bottom-0 end-0 z-50 w-[min(22rem,90vw)] bg-surface p-6 shadow-xl transition-transform",
+          "fixed top-0 bottom-0 end-0 z-50 w-[min(22rem,90vw)] overflow-y-auto bg-surface p-6 shadow-xl transition-transform",
           open ? "translate-x-0" : "translate-x-full rtl:-translate-x-full",
         )}
         aria-hidden={!open}

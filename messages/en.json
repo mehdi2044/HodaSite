@@ -104,7 +104,15 @@
     "brandLogoLight": "Logo (light)",
     "brandLogoDark": "Logo (dark)",
     "favicon": "Favicon",
-    "emailLogo": "Email logo"
+    "emailLogo": "Email logo",
+    "framing": "Image framing",
+    "framingPreview": "Framing preview",
+    "imageFit": "Image fit",
+    "fitCover": "Fill frame",
+    "fitContain": "Show whole image",
+    "focalX": "Horizontal focus",
+    "focalY": "Vertical focus",
+    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original."
   },
   "contentNavigation": {
     "main": "Main navigation",
@@ -320,7 +328,10 @@
     "scopeHelp": "A market composition overrides the global composition. Check the active market when updating its storefront.",
     "heroHelp": "Select a ready image for a photo banner. Without an image, the banner displays text only.",
     "trustItem": "Trust item",
-    "addTrustItem": "Add trust item"
+    "addTrustItem": "Add trust item",
+    "heroLayout": "Hero layout",
+    "editorialLayout": "Single editorial image",
+    "spatialLayout": "Four departments · spatial"
   },
   "translationAdmin": {
     "title": "UI translations",
@@ -1159,7 +1170,9 @@
     "emptyCollection": "There are no products in this selection yet.",
     "emptyCategories": "Categories will appear here soon.",
     "collectionPreview": "A look at everyday style",
-    "carousel": "Carousel"
+    "carousel": "Carousel",
+    "backCollection": "Back to collection",
+    "fullImage": "View full image"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",

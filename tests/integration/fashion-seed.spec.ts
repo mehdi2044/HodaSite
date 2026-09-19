@@ -99,6 +99,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             ...legacyHomepageBlocks[0],
             mediaId: "seed-fashion-v1-coat",
             ctaUrl: "/search",
+            layout: "spatial",
           },
           ...legacyHomepageBlocks.slice(1),
         ]);

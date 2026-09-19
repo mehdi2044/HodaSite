@@ -92,6 +92,7 @@ export default async function ProductPage({
     getRequestContext(locale),
     getTranslations("catalog"),
   ]);
+  const shopping = await getTranslations("shopping");
   const product = await findProductBySlug(market.id, safe, slug, {
     includeInactive: previewRequested && previewAllowed,
   });
@@ -215,14 +216,31 @@ export default async function ProductPage({
           __html: jsonLdText(jsonLd),
         }}
       />
+      <Link
+        className="shop-back-link"
+        href={seoPath(
+          safe,
+          market.code,
+          "c",
+          catalogText(product.category.slugI18n, safe),
+        )}
+      >
+        <span aria-hidden="true">←</span>
+        {shopping("backCollection")}
+      </Link>
       <nav
         className="shop-breadcrumbs mb-7 flex flex-wrap gap-2 text-sm text-muted"
         aria-label={t("breadcrumbs")}
       >
-        <Link href={`/${safe}`}>{t("home")}</Link>
+        <Link href={seoPath(safe, market.code)}>{t("home")}</Link>
         <span>/</span>
         <Link
-          href={`/${safe}/c/${encodeURIComponent(catalogText(product.category.slugI18n, safe))}`}
+          href={seoPath(
+            safe,
+            market.code,
+            "c",
+            catalogText(product.category.slugI18n, safe),
+          )}
         >
           {catalogText(product.category.titleI18n, safe)}
         </Link>

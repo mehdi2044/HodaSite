@@ -28,7 +28,12 @@ export default async function HomepageAdmin() {
     db.category.findMany({
       where: { deletedAt: null },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-      select: { id: true, titleI18n: true },
+      select: {
+        id: true,
+        titleI18n: true,
+        parentId: true,
+        media: { select: { url: true, status: true, deletedAt: true } },
+      },
     }),
     db.collection.findMany({
       where: { deletedAt: null },
@@ -68,6 +73,12 @@ export default async function HomepageAdmin() {
       action={saveHomepage}
       categories={categories.map((item) => ({
         id: item.id,
+        root: item.parentId === null,
+        titleI18n: item.titleI18n as Record<"fa" | "tr" | "en", string>,
+        mediaUrl:
+          item.media?.status === "READY" && !item.media.deletedAt
+            ? item.media.url
+            : undefined,
         title: localizedValue(
           item.titleI18n as Record<typeof locale, string>,
           locale,
@@ -86,6 +97,9 @@ export default async function HomepageAdmin() {
       )}
       markets={markets.map((market) => ({ id: market.id, code: market.code }))}
       labels={{
+        heroLayout: t("heroLayout"),
+        editorialLayout: t("editorialLayout"),
+        spatialLayout: t("spatialLayout"),
         title: t("title"),
         description: t("description"),
         global: t("global"),

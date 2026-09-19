@@ -1,3 +1,5 @@
+import { seoPath } from "@/lib/seo-urls";
+import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
 import { MobileNavigation } from "./mobile-navigation";
 import { StorefrontIcon } from "./storefront-icon";
@@ -28,7 +30,7 @@ export async function Header({
   headerStyle: string;
 }) {
   const normalizedLocale = locale as "fa" | "tr" | "en";
-  const [logo, desktopMenu, mobileMenu, t] = await Promise.all([
+  const [logo, desktopMenu, mobileMenu, t, departments] = await Promise.all([
     logoMediaId
       ? db.media.findFirst({
           where: {
@@ -42,9 +44,27 @@ export async function Header({
     getMenu("header", market.id, market.code, normalizedLocale),
     getMenu("mobile", market.id, market.code, normalizedLocale),
     getTranslations(),
+    db.category.findMany({
+      where: { deletedAt: null, parentId: null },
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      take: 12,
+      select: { id: true, titleI18n: true, slugI18n: true },
+    }),
   ]);
 
   const cart = await readCart();
+  const cartMedia = cart?.items.length
+    ? await db.productMedia.findMany({
+        where: {
+          productId: {
+            in: cart.items.slice(0, 5).map((item) => item.variant.product.id),
+          },
+          media: { status: "READY", kind: "image", deletedAt: null },
+        },
+        include: { media: true },
+        orderBy: { sortOrder: "asc" },
+      })
+    : [];
   return (
     <>
       <header
@@ -53,7 +73,7 @@ export async function Header({
       >
         <div className="shell storefront-header-grid">
           <Link
-            href={`/${locale}`}
+            href={seoPath(normalizedLocale, market.code, "home")}
             className="storefront-brand flex min-h-11 min-w-0 items-center gap-2 text-lg font-semibold tracking-tight text-text"
           >
             {logo ? (
@@ -106,6 +126,9 @@ export async function Header({
                       locale
                     ] ?? "",
                   quantity: i.quantity,
+                  image: cartMedia.find(
+                    (m) => m.productId === i.variant.product.id,
+                  )?.media,
                 })) ?? []
               }
             />
@@ -178,6 +201,33 @@ export async function Header({
             </button>
           </form>
         </div>
+        {departments.length > 0 && (
+          <nav
+            className="storefront-departments shell"
+            aria-label={t("shopping.browseCategories")}
+            data-testid="department-navigation"
+          >
+            {departments.map((department) => (
+              <Link
+                key={department.id}
+                href={seoPath(
+                  normalizedLocale,
+                  market.code,
+                  "c",
+                  localizedValue(
+                    department.slugI18n as Record<"fa" | "tr" | "en", string>,
+                    normalizedLocale,
+                  ),
+                )}
+              >
+                {localizedValue(
+                  department.titleI18n as Record<"fa" | "tr" | "en", string>,
+                  normalizedLocale,
+                )}
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
       <MobileNavigation
         locale={locale}

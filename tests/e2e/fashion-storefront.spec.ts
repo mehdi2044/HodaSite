@@ -42,20 +42,20 @@ for (const locale of ["fa", "tr", "en"] as const) {
   }, info) => {
     await page.goto(`/${locale}`);
     const hero = page.getByTestId("storefront-hero");
-    await expect(hero.locator("img")).toBeVisible();
+    await expect(hero.locator("img").first()).toBeVisible();
     await expect
       .poll(() =>
         hero
           .locator("img")
+          .first()
           .evaluate(
             (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
           ),
       )
       .toBe(true);
-    await expect(hero.getByRole("link")).toHaveAttribute(
-      "href",
-      `/${locale}/search`,
-    );
+    await expect(
+      hero.locator(".spatial-cta, .shop-hero-content .button"),
+    ).toHaveAttribute("href", `/${locale}/search`);
     const categories = page.getByTestId("home-categories");
     await expect(categories.locator("img")).toHaveCount(4);
     for (const width of [360, 390, 430, 768, 1280]) {
@@ -98,6 +98,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
       .poll(() =>
         card
           .locator("img")
+          .first()
           .evaluate(
             (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
           ),

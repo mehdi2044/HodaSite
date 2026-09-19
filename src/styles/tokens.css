@@ -1530,3 +1530,306 @@ html[lang="fa"] body,
     top: 7rem;
   }
 }
+
+/* Spatial fashion direction, adapted from the owner's Lovable reference.
+   Equal department planes; no photo zoom, parallax JS or identity-based crops. */
+.storefront-departments {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.8rem, 3vw, 2.5rem);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
+}
+.storefront-departments a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 0 auto;
+  min-height: 44px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-underline-offset: 0.45em;
+}
+.storefront-departments a:hover {
+  text-decoration: underline;
+}
+.spatial-storefront {
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--background);
+  background: var(--text);
+}
+.spatial-composition {
+  display: grid;
+  gap: 2rem;
+  padding-block: 2.5rem 2rem;
+}
+.spatial-copy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+.spatial-eyebrow {
+  font-size: 0.75rem;
+  line-height: 2;
+  margin-block-end: 1rem;
+  opacity: 0.85;
+}
+.spatial-copy h1,
+.spatial-copy h2 {
+  font-size: clamp(2.4rem, 6vw, 5.8rem);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+[dir="rtl"] .spatial-copy h1,
+[dir="rtl"] .spatial-copy h2 {
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+.spatial-description {
+  margin-block-start: 1rem;
+  line-height: 1.9;
+  opacity: 0.8;
+  max-width: 34ch;
+}
+.spatial-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  margin-block-start: 1.5rem;
+  min-height: 48px;
+  border-radius: 0;
+}
+.spatial-planes {
+  position: relative;
+  min-width: 0;
+  padding: 0.5rem;
+}
+.spatial-frames {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.spatial-frames i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--background) 30%, transparent);
+}
+.spatial-frames i:nth-child(2) {
+  inset: -0.4rem 0.6rem 0.5rem -0.5rem;
+}
+.spatial-frames i:nth-child(3) {
+  inset: 0.75rem -0.35rem -0.5rem 0.8rem;
+  border-color: var(--primary);
+}
+.spatial-departments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+.spatial-department {
+  display: block;
+  min-width: 0;
+  background: var(--background);
+  color: var(--text);
+  box-shadow: 0 14px 28px #0003;
+  transition: transform 0.25s ease;
+}
+.spatial-department-image,
+.spatial-image-placeholder {
+  display: block;
+  aspect-ratio: 4/5;
+  width: 100%;
+  overflow: hidden;
+  background: var(--surface);
+}
+.spatial-department-image img {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+.spatial-image-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 4rem;
+  color: var(--muted);
+}
+.spatial-department-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 44px;
+  font-size: 0.85rem;
+}
+.spatial-department-label > span:first-child {
+  overflow-wrap: anywhere;
+}
+[dir="rtl"] .spatial-department-label > span:last-child,
+[dir="rtl"] .spatial-cta > span {
+  transform: scaleX(-1);
+}
+.spatial-demo {
+  position: relative;
+  margin-block-start: 1.25rem;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  text-align: end;
+}
+.shop-category-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+.shop-category-image {
+  border-radius: 0;
+}
+.shop-category-name {
+  justify-content: space-between;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
+  padding-block: 0.75rem;
+}
+.shop-product-card .shop-card-image {
+  border-radius: 0;
+}
+.shop-product-card {
+  border-radius: 0;
+}
+.shop-card-image picture {
+  display: block;
+}
+.shop-gallery-image {
+  aspect-ratio: 4/5;
+  width: 100%;
+}
+.shop-gallery-image img {
+  aspect-ratio: auto;
+  height: 100%;
+}
+.shop-gallery-track {
+  border-radius: 0;
+}
+.shop-gallery-thumbnail {
+  aspect-ratio: 4/5;
+  border-radius: 0;
+}
+.shop-gallery-dots {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-block: 0.3rem;
+}
+.shop-gallery-dots button {
+  flex: 0 0 64px;
+}
+.shop-full-image {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+.shop-gallery-meta {
+  align-items: center;
+}
+.shop-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin-block-end: 0.75rem;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+[dir="rtl"] .shop-back-link > span {
+  transform: scaleX(-1);
+}
+.shop-cart-image {
+  aspect-ratio: 4/5;
+  padding: 0;
+}
+.storefront-mini-cart-item {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+.storefront-mini-cart-item picture {
+  display: block;
+  width: 60px;
+  aspect-ratio: 4/5;
+  overflow: hidden;
+}
+.storefront-mini-cart-item p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 640px) {
+  .shop-category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .spatial-departments {
+    gap: 1.25rem;
+  }
+}
+@media (min-width: 1024px) {
+  .storefront-departments {
+    justify-content: center;
+  }
+  .storefront-departments a {
+    flex: 0 0 auto;
+    padding-inline: 1rem;
+  }
+  .spatial-composition {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: 4rem;
+    padding-block: 4rem;
+  }
+  .spatial-planes {
+    padding: 1.5rem 1rem;
+  }
+  .spatial-department:nth-child(even) {
+    transform: translateY(1.5rem);
+  }
+  .spatial-department-image,
+  .spatial-image-placeholder {
+    aspect-ratio: 4/5;
+  }
+  .spatial-demo {
+    margin-block-start: 2.5rem;
+  }
+  .shop-product-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .spatial-department:hover {
+    transform: translateY(-4px);
+  }
+  .shop-product-card .shop-card-image {
+    transition: box-shadow 0.25s ease;
+  }
+  .shop-product-card:hover .shop-card-image {
+    box-shadow: 0 14px 30px #0002;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spatial-department {
+    transition: none;
+  }
+}
+
+.storefront-mini-cart-panel {
+  max-height: calc(100dvh - 14rem - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

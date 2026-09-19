@@ -13,7 +13,7 @@ for (const [locale, market, cartLabel] of [
     await page.goto(`/${locale}/m/${market}`);
     await page.evaluate(() => document.fonts.ready);
     const hero = page.getByTestId("storefront-hero");
-    const image = hero.locator("img");
+    const image = hero.locator("img").first();
     const brand = page.locator(".storefront-brand");
     const brandName = brand.locator(".storefront-brand-name");
     const cart = page.locator("header .storefront-cart-toggle");
@@ -32,10 +32,9 @@ for (const [locale, market, cartLabel] of [
           ),
         )
         .toBe(true);
-      await expect(hero.getByRole("link")).toHaveAttribute(
-        "href",
-        `/${locale}/search`,
-      );
+      await expect(
+        hero.locator(".spatial-cta, .shop-hero-content .button"),
+      ).toHaveAttribute("href", `/${locale}/search`);
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
       await expect(cart.locator(".storefront-cart-mobile")).toBeVisible();
       await expect(cart.locator(".storefront-cart-desktop")).toBeHidden();
