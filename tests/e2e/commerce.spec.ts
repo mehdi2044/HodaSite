@@ -103,8 +103,8 @@ for (const [locale, slug, province, city, postal] of [
     const headerCart = page.locator("header .storefront-cart-toggle");
     await expect(headerCart).toBeVisible();
     await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);
-    await expect(headerCart.locator(".storefront-cart-mobile")).toBeVisible();
-    await expect(headerCart.locator(".storefront-cart-mobile bdi")).toHaveText(
+    await expect(headerCart.locator(".storefront-cart-content")).toBeVisible();
+    await expect(headerCart.locator(".storefront-cart-content bdi")).toHaveText(
       "1",
     );
     for (const [key, value] of Object.entries({
