@@ -6,6 +6,94 @@ for (const [locale, market, labels] of [
   ["tr", "TR", ["Kadın", "Erkek", "Çocuk", "Aksesuar"]],
   ["en", "CA", ["Women", "Men", "Kids", "Accessories"]],
 ] as const) {
+  test(`${locale}: editorial collections stay usable with depth and reduced motion`, async ({
+    page,
+    browser,
+  }, info) => {
+    await page.goto(`/${locale}/m/${market}`);
+    const categories = page.getByTestId("home-categories");
+    const cards = categories.locator(".shop-category-card");
+    await expect(cards).toHaveCount(4);
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await categories.scrollIntoViewIfNeeded();
+      await categories.locator("img").evaluateAll(async (images) => {
+        await Promise.all(
+          images.map((image) => (image as HTMLImageElement).decode()),
+        );
+      });
+      await shoppingProof(
+        page,
+        info,
+        `editorial-categories-${locale}-${width}`,
+      );
+    }
+    // Resizing Pixel 7 does not change its coarse pointer: touch stays static.
+    await cards.first().hover();
+    await expect(cards.first().locator(".shop-category-plane")).toHaveCSS(
+      "transform",
+      "none",
+    );
+    const desktop = await browser.newContext({
+      baseURL: info.project.use.baseURL,
+      viewport: { width: 1280, height: 900 },
+      isMobile: false,
+      hasTouch: false,
+    });
+    try {
+      const desktopPage = await desktop.newPage();
+      await desktopPage.goto(`/${locale}/m/${market}`);
+      const desktopCard = desktopPage
+        .getByTestId("home-categories")
+        .locator(".shop-category-card")
+        .first();
+      await desktopCard.hover();
+      await expect(desktopCard.locator(".shop-category-plane")).not.toHaveCSS(
+        "transform",
+        "none",
+      );
+      await desktopPage.emulateMedia({ reducedMotion: "reduce" });
+      await expect(desktopCard.locator(".shop-category-plane")).toHaveCSS(
+        "transform",
+        "none",
+      );
+    } finally {
+      await desktop.close();
+    }
+    await cards.first().focus();
+    await expect(cards.first()).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      labels[0],
+    );
+    await page.goBack();
+    await page.setViewportSize({ width: 390, height: 844 });
+    const products = page.getByTestId("home-product-strip").first();
+    await products.scrollIntoViewIfNeeded();
+    const product = products.locator(".shop-product-card").first();
+    await expect(product).toBeVisible();
+    // Overlay remains its own 44px button; it must not trigger the product link.
+    const heart = product.locator(".shop-card-wishlist button");
+    await expect(heart).toBeEnabled();
+    const before = await heart.getAttribute("aria-pressed");
+    await heart.click();
+    await expect(heart).toHaveAttribute(
+      "aria-pressed",
+      before === "true" ? "false" : "true",
+    );
+    await expect(page).toHaveURL(new RegExp(`/${locale}/m/${market}$`));
+    await heart.click();
+    await products.locator("img").evaluateAll(async (images) => {
+      await Promise.all(
+        images.map((image) => (image as HTMLImageElement).decode()),
+      );
+    });
+    await shoppingProof(page, info, `editorial-products-${locale}`);
+    const href = await product.getByRole("link").getAttribute("href");
+    await product.getByRole("link").click();
+    await expect(page).toHaveURL(href!);
+  });
+
   test(`${locale}: four editorial planes, real category routes, history and full images`, async ({
     page,
   }, info) => {
