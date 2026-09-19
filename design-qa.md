@@ -1,3 +1,18 @@
+# Editorial depth continuation — visual QA
+
+The owner accepted the PR #44 upper-page composition and requested creative three-dimensional detail in the continuation. This slice preserves that header/hero and extends its framed imagery to categories, products and the existing CMS service strip. There is no supplied lower-page mockup; this review checks visual coherence and usability, not pixel equivalence to an invented reference.
+
+- Actual `HomepageBlocks` and `ProductCard` were server-rendered with catalog fixtures and the repository CSS/fonts. English desktop (1280px), Persian mobile (390px), and Turkish mobile were inspected in the browser. The fixture harness is not evidence of database or hydrated commerce behavior.
+- Categories retain full subjects, warm surfaces, readable labels and two aligned mobile columns. Desktop alternates frame height, with restrained perspective on hover/focus. The observed hovered plane used a 3D transform while its siblings remained static.
+- Product cards retain color swatches, image disclosures, price and product links. The wishlist remains a separate 44px button over the photo; the real interaction is covered by the new database-backed browser tests, not the static harness.
+- Mobile DOM measurements showed equal scroll/client widths; no horizontal overflow. Persian product text and prices remain readable; labels use logical spacing. Existing merchant content and colors are unchanged. No invented trust claims or product imagery were introduced.
+- Motion runs only for fine-pointer hover and `prefers-reduced-motion: no-preference`. Coarse touch and reduced-motion users receive the same static layout. No pointer listener, canvas, animation loop, extra dependency or image request was added.
+- Browser console inspection showed only historical extension-metadata errors, not an application error. Required real-route checks, mobile screenshots and reduced-motion/wishlist assertions run in CI on the final PR head before merge.
+
+Visual review result: passed. Production-speed and physical iPhone acceptance remain separate.
+
+---
+
 # Lovable fidelity correction — visual QA
 
 Source: owner-supplied Lovable screenshot and the project's latest screenshot (`lovable-design.png`, 1920 × 1080). Target: the spatial hero's layered composition, offset display typography and compact header, adapted to the owner's four-department catalog. The existing shop brand, images and palette remain merchant-owned; this is not an exact copy of the women's campaign photography or MODA4 brand.

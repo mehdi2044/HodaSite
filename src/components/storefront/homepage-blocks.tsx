@@ -68,7 +68,7 @@ export async function HomepageBlocks({
     market,
   );
   return (
-    <main dir={locale === "fa" ? "rtl" : "ltr"}>
+    <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
       {blocks.map((block, index) => {
         if (
           block.type === "Hero" &&
@@ -149,6 +149,9 @@ export async function HomepageBlocks({
               data-testid="home-product-strip"
             >
               <div className="shop-section-heading">
+                <span className="shop-section-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                   {localizedValue(block.title, locale)}
                 </h2>
@@ -189,59 +192,76 @@ export async function HomepageBlocks({
               className="shell shop-home-section shop-category-section"
               data-testid="home-categories"
             >
-              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {localizedValue(block.title, locale)}
-              </h2>
+              <div className="shop-section-heading">
+                <span className="shop-section-number" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                  {localizedValue(block.title, locale)}
+                </h2>
+              </div>
               {!categories.length && (
                 <p className="shop-inline-empty">{t("emptyCategories")}</p>
               )}
               <div className="shop-category-grid">
-                {categories.slice(0, block.source.limit).map((category) => (
-                  <Link
-                    key={category.id}
-                    href={seoPath(
-                      locale,
-                      market.code,
-                      "c",
-                      localizedValue(
-                        category.slugI18n as Record<Locale, string>,
+                {categories
+                  .slice(0, block.source.limit)
+                  .map((category, categoryIndex) => (
+                    <Link
+                      key={category.id}
+                      href={seoPath(
                         locale,
-                      ),
-                    )}
-                    className="shop-category-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]"
-                  >
-                    {category.media &&
-                      category.media.status === "READY" &&
-                      !category.media.deletedAt && (
-                        <ResponsiveImage
-                          media={category.media}
-                          locale={locale}
-                          sizes="(max-width:640px) 50vw,25vw"
-                          role="editorial"
-                          className="shop-category-image"
-                          imgClassName="h-full w-full object-cover"
-                        />
+                        market.code,
+                        "c",
+                        localizedValue(
+                          category.slugI18n as Record<Locale, string>,
+                          locale,
+                        ),
                       )}
-                    <h3 className="shop-category-name">
-                      {localizedValue(
-                        category.titleI18n as Record<Locale, string>,
-                        locale,
-                      )}
-                    </h3>
-                  </Link>
-                ))}
+                      className="shop-category-card group"
+                    >
+                      <div className="shop-category-plane">
+                        {category.media &&
+                          category.media.status === "READY" &&
+                          !category.media.deletedAt && (
+                            <ResponsiveImage
+                              media={category.media}
+                              locale={locale}
+                              sizes="(max-width:640px) 50vw,25vw"
+                              role="editorial"
+                              className="shop-category-image"
+                              imgClassName="h-full w-full object-cover"
+                            />
+                          )}
+                      </div>
+                      <h3 className="shop-category-name">
+                        <span
+                          className="shop-category-number"
+                          aria-hidden="true"
+                        >
+                          {String(categoryIndex + 1).padStart(2, "0")}
+                        </span>
+                        <span>
+                          {localizedValue(
+                            category.titleI18n as Record<Locale, string>,
+                            locale,
+                          )}
+                        </span>
+                      </h3>
+                    </Link>
+                  ))}
               </div>
             </section>
           );
         if (block.type === "TrustBar")
           return (
-            <section key={index} className="border-y border-black/5 bg-surface">
-              <div className="shell grid gap-3 py-8 sm:grid-cols-2 lg:grid-cols-4">
+            <section key={index} className="shop-service-strip">
+              <div className="shell shop-service-grid">
                 {block.items.map((item, itemIndex) => (
-                  <p
-                    key={itemIndex}
-                    className="flex min-h-11 items-center justify-center rounded-full bg-bg px-4 text-center font-medium"
-                  >
+                  <p key={itemIndex} className="shop-service-item">
+                    <span aria-hidden="true">
+                      {String(itemIndex + 1).padStart(2, "0")}
+                    </span>
                     {localizedValue(item, locale)}
                   </p>
                 ))}

@@ -61,8 +61,11 @@ export async function ProductCard({
     ).values(),
   ];
   return (
-    <article className="shop-product-card group overflow-hidden rounded-token bg-surface shadow-[0_16px_50px_rgba(57,35,11,0.08)]">
-      <Link href={seoPath(locale, market.code, "p", slug)} className="block">
+    <article className="shop-product-card group">
+      <Link
+        href={seoPath(locale, market.code, "p", slug)}
+        className="shop-product-link block"
+      >
         <div className="shop-card-image aspect-[4/5] overflow-hidden bg-black/5">
           {image ? (
             <ResponsiveImage
@@ -82,20 +85,22 @@ export async function ProductCard({
             <span className="shop-demo-badge">{t("demoImage")}</span>
           )}
         </div>
-        <div className="p-4">
+        <div className="p-4 shop-card-copy">
           <div className="shop-card-colors" aria-hidden="true">
             {colors.slice(0, 5).map((color) => (
               <span key={color.hex} style={{ background: color.hex }} />
             ))}
           </div>
           <h3 className="font-medium">{title}</h3>
-          <p className="mt-2 text-sm font-semibold" dir="ltr">
+          <p className="shop-card-price mt-2 text-sm font-semibold" dir="ltr">
             {formatCatalogCurrency(price.amount, currency, locale)}
           </p>
         </div>
         <LinkPending />
       </Link>
-      <WishlistHeart productId={product.id} />
+      <div className="shop-card-wishlist">
+        <WishlistHeart productId={product.id} />
+      </div>
     </article>
   );
 }
