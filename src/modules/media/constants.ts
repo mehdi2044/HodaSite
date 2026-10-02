@@ -28,7 +28,13 @@ export const ALLOWED_MIME: Record<string, { ext: string; kind: string }> = {
 
 export type MediaVariants = {
   [format in ImageFormat]?: {
-    [width in `${ImageWidth}`]?: { key: string; url: string; bytes: number };
+    [width: string]: {
+      key: string;
+      url: string;
+      bytes: number;
+      width?: number;
+      height?: number;
+    };
   };
 };
 

@@ -877,3 +877,22 @@ Existing data is preserved by additive migrations, immutable finance evidence an
 The owner rejected the equal-card interpretation delivered in PR43. Replaced that hero with a portrait-led layered composition, floating department images, offset three-line typography, and self-hosted Bodoni Moda italic. The header integrates category navigation in its main desktop row; utilities remain available. Storefront direction now follows its own locale even after client navigation. All four root departments keep real canonical routes, and custom branding/palette/media remain DB-owned.
 
 The homepage title accepts line breaks in the admin editor. The main selected campaign image is now actually consumed by the spatial hero. The demo upgrade also recognizes the exact unchanged PR43 composition; merchant edits prevent replacement. No schema/payment/auth/backup change. Browser component comparison and full CI evidence are tracked in `design-qa.md` and the PR. Final iPhone and production-speed acceptance remain pending, as agreed.
+
+
+## Stabilization & Pre-Acceptance — ۲۰۲۶-۱۰-۰۲
+
+Implemented against docs v1.2 / D-numbers touched: D21, D23, D24, D31, D40, D41, D50, D63, D67, D68.
+
+- مرحلهٔ مستقل تثبیت؛ فاز ۹ شروع نشده. فایل شخصی ممیزی و دیتابیس preview محفوظ است؛ کار روی checkout و DB تست جدا انجام شد.
+- purge ابتدا ارجاع‌ها را زیر قفل بررسی می‌کند، سپس حذف رکورد و ثبت Job پاک‌سازی را اتمیک commit می‌کند. storage فقط پس از commit پاک می‌شود؛ شکست جزئی با manifest پایدار و retry قابل ادامه است. ارجاع‌های برند/CMS نیز قفل همزمانی دارند؛ D67 و metadata محل استفاده تغییر نکرد.
+- Optimize و Replace یک مسیر EXIF دارند: ابعاد جهت‌اصلاح‌شده و عرض/ارتفاع واقعی فایل خروجی، rendition و srcset را تعیین می‌کند؛ تصویر قدیمی خودکار بازنویسی نمی‌شود.
+- LF در Git و Docker، مجوز اجرای entrypoint، startup بدون seed خودکار، دستور unit-only امن و دیتابیس integration مستقل مستند شد. تست‌های حساس به slash ویندوز اصلاح شدند.
+- شواهد محلی نهایی: frozen install/Prisma generate، lint/typecheck و ۳۵۷۰ unit موفق؛ هر ۳۸ تست integration رسانه روی DB مجزا موفق. clone تازهٔ ویندوز با autocrlf=true هر ۲۱ shell را LF دریافت کرد؛ ops آن بدون restart و backup smoke و guards موفق بود. CI نهایی و نتیجهٔ merge در PR ثبت می‌شود.
+- نتیجهٔ ادغام فقط با سه check الزامی سبز روی head نهایی معتبر است؛ این یادداشت به‌تنهایی ادعای merge نیست. [شرح فنی و rollback](reviews/STABILIZATION_PRE_ACCEPTANCE.md).
+- تست دستی بعدی: در محیط آزمون جدا رسانهٔ متصل به محصول/برند را soft-delete کنید و بررسی کنید purge فایل را نگه می‌دارد؛ عکس گوشی EXIF را آپلود/replace و گالری را بررسی کنید. این عملیات روی preview موجود در این مرحله اجرا نشد.
+- CP1/CP2 هنوز نیازمند پذیرش مهدی، ایمیل/تنظیمات واقعی و محیط ایزولهٔ مناسب restore هستند؛ نصب گوشی/HTTPS/offsite طبق D51 باز است. هیچ staging، انتشار یا feature تازه‌ای انجام نشده.
+
+Stabilization CI follow-up: Windows tooling passed. Required CI exposed upstream
+mc registry unavailability and high Nodemailer advisories. D68 records identical
+mc release acquisition from pinned official source; Nodemailer patch 10.0.9
+removes all known production audit findings. Fresh complete CI is required before merging.

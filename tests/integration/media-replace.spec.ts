@@ -50,16 +50,20 @@ describe.skipIf(!hasDb)("atomic media replacement", () => {
     target.failDeleteOnce.clear();
   });
 
-  async function jpeg(color: string) {
+  async function jpeg(color: string, orientation = 1) {
     return sharp({
       create: { width: 640, height: 480, channels: 3, background: color },
     })
+      .withMetadata({ orientation })
       .jpeg()
       .toBuffer();
   }
-  async function fixture(baseStorageKey = "media/test/old.jpg") {
+  async function fixture(
+    baseStorageKey = "media/test/old.jpg",
+    orientation = 1,
+  ) {
     const oldBytes = await jpeg("#111111");
-    const newBytes = await jpeg("#e8792a");
+    const newBytes = await jpeg("#e8792a", orientation);
     target.objects.set(baseStorageKey, oldBytes);
     target.objects.set("media/test/new.jpg", newBytes);
     const media = await db.media.create({
@@ -118,6 +122,42 @@ describe.skipIf(!hasDb)("atomic media replacement", () => {
       ).status,
     ).toBe("DONE");
   });
+
+  it.each([1, 3, 6, 8])(
+    "replacement uses corrected metadata for EXIF %s",
+    async (orientation) => {
+      const { media, replacement } = await fixture(undefined, orientation);
+      await mediaReplaceHandler(job(replacement.id), target);
+      const updated = await db.media.findUniqueOrThrow({
+        where: { id: media.id },
+      });
+      const record = await db.mediaReplacement.findUniqueOrThrow({
+        where: { id: replacement.id },
+      });
+      expect([updated.width, updated.height]).toEqual(
+        orientation >= 6 ? [480, 640] : [640, 480],
+      );
+      expect([record.width, record.height]).toEqual([
+        updated.width,
+        updated.height,
+      ]);
+      for (const byWidth of Object.values(
+        updated.variants as Record<
+          string,
+          Record<string, { key: string; width: number; height: number }>
+        >,
+      )) {
+        for (const [descriptor, item] of Object.entries(byWidth)) {
+          const actual = await sharp(target.objects.get(item.key)!).metadata();
+          expect(actual.width).toBe(Number(descriptor));
+          expect([actual.width, actual.height]).toEqual([
+            item.width,
+            item.height,
+          ]);
+        }
+      }
+    },
+  );
 
   it("does not swap when the live media changed and leaves the replacement retryable/finally failed", async () => {
     const { media, replacement } = await fixture();

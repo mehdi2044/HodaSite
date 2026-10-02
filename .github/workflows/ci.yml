@@ -6,16 +6,16 @@ jobs:
     services:
       postgres:
         image: postgres:16
-        env: { POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda }
+        env: { POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda_test }
         ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U hoda" --health-interval 5s --health-timeout 5s --health-retries 10
+        options: --health-cmd "pg_isready -U hoda -d hoda_test" --health-interval 5s --health-timeout 5s --health-retries 10
       mailpit:
         image: axllent/mailpit:v1.31.1
         ports: ["1025:1025", "8025:8025"]
     env:
       {
-        DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda",
-        TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda",
+        DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
+        TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
         MEDIA_DIR: "/tmp/hoda-media",
         ADMIN_EMAIL: "owner@example.com",
         ADMIN_PASSWORD: "ChangeMe123!",
@@ -91,27 +91,47 @@ jobs:
       - name: ops image has the Prisma CLI and schema at /app/prisma
         run: |
           docker run --rm hoda-ops sh -c 'test -f /app/prisma/schema.prisma && npx prisma -v'
+      - name: Linux script syntax and executable entrypoint
+        run: |
+          docker run --rm hoda-app sh -c 'test -x /app/entrypoint.sh && sh -n /app/entrypoint.sh'
+          docker run --rm hoda-ops bash -c 'find /app/scripts -name "*.sh" -exec bash -n {} \; && test -x /app/scripts/ops/run.sh'
       - name: production compose config is valid
         run: |
           cp .env.example .env
           docker compose -f docker-compose.yml config --quiet
           docker compose -f docker-compose.dev.yml config --quiet
 
+  windows-tooling:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+
   # Real runtime: brings the production stack up and exercises migrate,
   # health, and a full backup/verify/restore cycle inside `ops`. Slower than
   # the rest — must be a REQUIRED check in branch protection (Vee's GO gate).
   docker-runtime:
     runs-on: ubuntu-latest
+    env: { COMPOSE_PROJECT_NAME: hoda-ci-local }
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Runtime smoke — LocalStorage
         run: bash scripts/ci/runtime-smoke.sh local
       - name: Reset stack before S3 proof
-        run: docker compose -f docker-compose.yml down -v
+        run: docker compose -f docker-compose.yml down
       - name: Runtime smoke — S3Storage against MinIO
+        env: { COMPOSE_PROJECT_NAME: hoda-ci-s3 }
         run: bash scripts/ci/runtime-smoke.sh s3
       - name: Collect compose + ops logs
+        env: { COMPOSE_PROJECT_NAME: hoda-ci-s3 }
         if: always()
         run: |
           docker compose -f docker-compose.yml logs --no-color --timestamps > compose-logs.txt 2>&1 || true
@@ -127,4 +147,6 @@ jobs:
           if-no-files-found: warn
       - name: Tear down
         if: always()
-        run: docker compose -f docker-compose.yml down -v || true
+        run: |
+          COMPOSE_PROJECT_NAME=hoda-ci-local docker compose -f docker-compose.yml down || true
+          COMPOSE_PROJECT_NAME=hoda-ci-s3 docker compose -f docker-compose.yml down || true

@@ -33,10 +33,27 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
-COPY entrypoint.sh ./
+COPY --chmod=755 entrypoint.sh ./
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 CMD ["./entrypoint.sh"]
 
-FROM quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727 AS minio-client
+# D68: upstream registries no longer serve the pinned client image.
+FROM golang:1.27.1-bookworm AS minio-client-build
+ENV CGO_ENABLED=0 GOTOOLCHAIN=local
+RUN go install github.com/minio/mc@7394ce0dd2a80935aded936b09fa12cbb3cb8096 \
+    && module_dir="$(go list -m -f '{{.Dir}}' github.com/minio/mc@7394ce0dd2a80935aded936b09fa12cbb3cb8096)" \
+    && cp "$module_dir/LICENSE" /MC-LICENSE
+
+FROM debian:bookworm-slim AS minio-client
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=minio-client-build /go/bin/mc /usr/local/bin/mc
+COPY --from=minio-client-build /MC-LICENSE /usr/share/licenses/mc/LICENSE
+LABEL org.opencontainers.image.source="https://github.com/minio/mc" \
+      org.opencontainers.image.revision="7394ce0dd2a80935aded936b09fa12cbb3cb8096" \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+ENTRYPOINT ["/usr/local/bin/mc"]
 
 FROM base AS ops
 # postgresql-client-16 from PGDG — the Debian 12 package is v15 and cannot
@@ -52,8 +69,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          postgresql-client-16 zstd jq zip unzip file python3 util-linux \
     && rm -rf /var/lib/apt/lists/*
-# Use the same digest-verified upstream client as minio-init; dl.min.io now returns 410.
-COPY --from=minio-client /usr/bin/mc /usr/local/bin/mc
+# Use the same checksum-verified upstream source as minio-init (D68).
+COPY --from=minio-client /usr/local/bin/mc /usr/local/bin/mc
+COPY --from=minio-client /usr/share/licenses/mc /usr/share/licenses/mc
 COPY --from=deps /app/node_modules ./node_modules
 # Separate COPY lines: with multiple sources Docker copies the *contents* of
 # each directory into ./, so `COPY package.json prisma scripts ./` would put
@@ -62,4 +80,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY prisma ./prisma
 COPY scripts ./scripts
+# Defense in depth for archives/old Windows checkouts bypassing .gitattributes.
+RUN find /app/scripts -type f -name '*.sh' -exec sed -i 's/\r$//' {} + \
+    && find /app/scripts -type f -name '*.sh' -exec chmod 755 {} +
 CMD ["bash", "/app/scripts/ops/run.sh"]

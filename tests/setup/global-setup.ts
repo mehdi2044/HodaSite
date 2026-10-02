@@ -14,12 +14,18 @@ export default async function setup() {
     return;
   }
 
+  if (!new URL(url).pathname.endsWith("_test")) {
+    throw new Error(
+      "TEST_DATABASE_URL must use a dedicated database whose name ends in _test",
+    );
+  }
+
   const prisma = new PrismaClient({ datasources: { db: { url } } });
   try {
     await prisma.$queryRaw`SELECT 1`;
   } catch (cause) {
     throw new Error(
-      `integration tests FAILED: TEST_DATABASE_URL is set but the database is not reachable at ${url}`,
+      "integration tests FAILED: the dedicated test database is not reachable",
       { cause },
     );
   } finally {

@@ -4,6 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
+import {
+  blockMediaIds,
+  lockMediaReferences,
+} from "@/modules/media/reference-lock";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
@@ -85,6 +89,7 @@ export async function savePage(
     }
     const saved = await withMutation(() =>
       db.$transaction(async (tx) => {
+        await lockMediaReferences(tx, requestedMediaIds);
         const page = input.id
           ? await tx.page.update({
               where: { id: input.id },
@@ -128,6 +133,7 @@ export async function duplicatePage(
     const suffix = Date.now().toString(36);
     await withMutation(() =>
       db.$transaction(async (tx) => {
+        await lockMediaReferences(tx, blockMediaIds(original.blocks));
         const copy = await tx.page.create({
           data: {
             slugI18n: Object.fromEntries(

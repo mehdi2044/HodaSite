@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
+import { lockMediaReferences } from "@/modules/media/reference-lock";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
@@ -63,6 +64,7 @@ export async function saveHomepage(
     });
     await withMutation(() =>
       db.$transaction(async (tx) => {
+        await lockMediaReferences(tx, mediaIds);
         const saved = before
           ? await tx.homepage.update({
               where: { id: before.id },

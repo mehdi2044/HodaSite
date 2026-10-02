@@ -9,6 +9,7 @@ import {
 } from "@/modules/orders/invoices/access";
 import { invoiceWorker } from "@/modules/orders/invoices/worker";
 import type { StorageProvider } from "@/modules/integrations/storage";
+import { purgeOne } from "@/modules/media/purge";
 const session = vi.hoisted(() => ({
   admin: null as { user: { id: string } } | null,
   customer: null as { id: string } | null,
@@ -52,6 +53,50 @@ beforeEach(() => {
   session.token = "";
 });
 describe.skipIf(!process.env.TEST_DATABASE_URL)("private invoices", () => {
+  it("retains an invoice snapshot logo after the brand stops referencing it", async () => {
+    const { order } = await shippingFixture(db);
+    const theme = await db.themeSettings.findUniqueOrThrow({
+      where: { id: "default" },
+    });
+    const media = await db.media.create({
+      data: {
+        kind: "image",
+        storageKey: `media/test/invoice-logo-${order.id}.png`,
+        originalName: "invoice-logo-fixture",
+        url: "/media/logo.png",
+        mime: "image/png",
+        bytes: 4,
+        status: "READY",
+      },
+    });
+    try {
+      await db.themeSettings.update({
+        where: { id: "default" },
+        data: { emailLogoMediaId: media.id },
+      });
+      const invoice = await db.$transaction((tx) => queueInvoice(tx, order.id));
+      expect((invoice.snapshot as { logoMediaId: string }).logoMediaId).toBe(
+        media.id,
+      );
+    } finally {
+      await db.themeSettings.update({
+        where: { id: "default" },
+        data: { emailLogoMediaId: theme.emailLogoMediaId },
+      });
+    }
+    await db.media.update({
+      where: { id: media.id },
+      data: { deletedAt: new Date(0) },
+    });
+    const target = new MemoryStorage();
+    target.objects.set(media.storageKey, Buffer.from("logo"));
+    await purgeOne(media, target);
+    expect(
+      await db.media.findUnique({ where: { id: media.id } }),
+    ).not.toBeNull();
+    expect(target.objects.has(media.storageKey)).toBe(true);
+    // Immutable invoice + its referenced logo stay in this disposable test DB.
+  });
   it("queues atomically once, fences competing requests and retains immutable versions", async () => {
     const { order } = await shippingFixture(db);
     const owner = await shippingActor(db);

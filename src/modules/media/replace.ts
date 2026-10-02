@@ -1,4 +1,4 @@
-import sharp, { type Sharp } from "sharp";
+import { createRenditions } from "./renditions";
 import { db } from "@/lib/db";
 import { storage, type StorageProvider } from "@/modules/integrations/storage";
 import {
@@ -10,32 +10,7 @@ import { MAX_JOB_ATTEMPTS } from "@/modules/jobs";
 import { revalidatePath } from "next/cache";
 import { isMaintenanceOn } from "@/modules/settings";
 import type { Prisma } from "@prisma/client";
-import {
-  IMAGE_FORMATS,
-  IMAGE_WIDTHS,
-  MEDIA_REPLACE_JOB,
-  type MediaVariants,
-} from "./constants";
-
-function variantKey(id: string, format: string, width: number) {
-  return `media/replacements/${id}/${width}.${format}`;
-}
-
-async function blur(image: Sharp) {
-  const value = await image.clone().resize(16).webp({ quality: 20 }).toBuffer();
-  return `data:image/webp;base64,${value.toString("base64")}`;
-}
-
-async function color(image: Sharp) {
-  const { data } = await image
-    .clone()
-    .resize(1, 1)
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  return `#${[data[0], data[1], data[2]]
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("")}`;
-}
+import { MEDIA_REPLACE_JOB, type MediaVariants } from "./constants";
 
 async function deleteVariants(variants: unknown, target: StorageProvider) {
   for (const widths of Object.values((variants as MediaVariants | null) ?? {}))
@@ -102,43 +77,13 @@ export async function mediaReplaceHandler(
   try {
     const bytes = await target.getBytes(replacement.storageKey);
     if (!bytes) throw new Error("replacement file missing from storage");
-    const base = sharp(bytes).rotate();
-    const metadata = await base.metadata();
-    const originalWidth = metadata.width ?? 0;
-    if (!originalWidth)
-      throw new Error("could not read replacement dimensions");
-    const widths: number[] = IMAGE_WIDTHS.filter(
-      (width) => width <= originalWidth,
+    const rendered = await createRenditions(
+      bytes,
+      target,
+      (format, width) =>
+        `media/replacements/${replacement.id}/${width}.${format}`,
+      createdKeys,
     );
-    if (!widths.length) widths.push(originalWidth);
-    const variants: MediaVariants = {};
-    for (const format of IMAGE_FORMATS) {
-      const values: Record<
-        string,
-        { key: string; url: string; bytes: number }
-      > = {};
-      for (const width of widths) {
-        const resized = base
-          .clone()
-          .resize({ width, withoutEnlargement: true });
-        const output =
-          format === "webp"
-            ? await resized.webp({ quality: 80 }).toBuffer()
-            : await resized.avif({ quality: 60 }).toBuffer();
-        const key = variantKey(replacement.id, format, width);
-        values[String(width)] = {
-          key,
-          url: await target.put(key, output, `image/${format}`),
-          bytes: output.length,
-        };
-        createdKeys.push(key);
-      }
-      variants[format] = values;
-    }
-    const [blurDataUrl, dominantColor] = await Promise.all([
-      blur(base),
-      color(base),
-    ]);
     const old = await db.$transaction(async (tx) => {
       const current = await tx.media.findUniqueOrThrow({
         where: { id: replacement.mediaId },
@@ -157,11 +102,7 @@ export async function mediaReplaceHandler(
           originalName: replacement.originalName,
           bytes: replacement.bytes,
           mime: replacement.mime,
-          width: metadata.width ?? null,
-          height: metadata.height ?? null,
-          variants,
-          blurDataUrl,
-          dominantColor,
+          ...rendered,
           status: "READY",
           processingError: null,
         },
@@ -171,11 +112,7 @@ export async function mediaReplaceHandler(
         where: { id: replacement.id },
         data: {
           status: "SWAPPED",
-          width: metadata.width ?? null,
-          height: metadata.height ?? null,
-          variants,
-          blurDataUrl,
-          dominantColor,
+          ...rendered,
           oldStorageKey: current.storageKey,
           oldVariants: current.variants as Prisma.InputJsonValue,
         },

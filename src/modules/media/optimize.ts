@@ -1,4 +1,4 @@
-import sharp, { type Sharp } from "sharp";
+import { createRenditions } from "./renditions";
 import { db } from "@/lib/db";
 import { storage } from "@/modules/integrations/storage";
 import { isMaintenanceOn } from "@/modules/settings";
@@ -8,38 +8,7 @@ import {
   registerJobHandler,
   type JobContext,
 } from "@/modules/jobs";
-import {
-  IMAGE_FORMATS,
-  IMAGE_WIDTHS,
-  MEDIA_OPTIMIZE_JOB,
-  type MediaVariants,
-} from "./constants";
-
-const BLUR_WIDTH = 16;
-
-function variantKey(mediaId: string, format: string, width: number): string {
-  // System-generated, content-independent of the original filename (D40).
-  return `media/variants/${mediaId}/${width}.${format}`;
-}
-
-async function dominantColorHex(image: Sharp): Promise<string> {
-  const { data } = await image
-    .clone()
-    .resize(1, 1, { fit: "cover" })
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const [r, g, b] = data;
-  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
-}
-
-async function blurDataUrl(image: Sharp): Promise<string> {
-  const buf = await image
-    .clone()
-    .resize(BLUR_WIDTH)
-    .webp({ quality: 20 })
-    .toBuffer();
-  return `data:image/webp;base64,${buf.toString("base64")}`;
-}
+import { MEDIA_OPTIMIZE_JOB } from "./constants";
 
 /**
  * Runs on the DB-backed job queue (type `media-optimize`, D21). Strips EXIF
@@ -67,52 +36,18 @@ export async function mediaOptimizeHandler(job: JobContext): Promise<void> {
     const original = await storage.getBytes(media.storageKey);
     if (!original) throw new Error("original file missing from storage");
 
-    const base = sharp(original).rotate();
-    const metadata = await base.metadata();
-    const originalWidth = metadata.width ?? 0;
-    if (originalWidth <= 0) throw new Error("could not read image dimensions");
-
-    const widths = IMAGE_WIDTHS.filter((w) => w <= originalWidth);
-    if (widths.length === 0)
-      widths.push(originalWidth as (typeof IMAGE_WIDTHS)[number]);
-
-    const variants: MediaVariants = {};
-    for (const format of IMAGE_FORMATS) {
-      const byWidth: NonNullable<MediaVariants[typeof format]> = {};
-      for (const width of widths) {
-        const resized = base.clone().resize({
-          width,
-          withoutEnlargement: true,
-        });
-        const buffer =
-          format === "webp"
-            ? await resized.webp({ quality: 80 }).toBuffer()
-            : await resized.avif({ quality: 60 }).toBuffer();
-        const key = variantKey(mediaId, format, width);
-        const url = await storage.put(key, buffer, `image/${format}`);
-        byWidth[`${width}` as `${(typeof IMAGE_WIDTHS)[number]}`] = {
-          key,
-          url,
-          bytes: buffer.length,
-        };
-      }
-      variants[format] = byWidth;
-    }
-
-    const [blur, dominantColor] = await Promise.all([
-      blurDataUrl(base),
-      dominantColorHex(base),
-    ]);
+    const rendered = await createRenditions(
+      original,
+      storage,
+      (format, width) => `media/variants/${mediaId}/${width}.${format}`,
+    );
 
     await db.media.update({
       where: { id: mediaId },
       data: {
         status: "READY",
-        variants: variants as object,
-        width: originalWidth,
-        height: metadata.height ?? null,
-        blurDataUrl: blur,
-        dominantColor,
+        ...rendered,
+        variants: rendered.variants as object,
         processingError: null,
       },
     });

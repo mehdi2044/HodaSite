@@ -35,11 +35,16 @@ describe.skipIf(!hasDb)("media-optimize worker", () => {
     });
   });
 
-  async function jpeg(width: number, height: number): Promise<Buffer> {
+  async function jpeg(
+    width: number,
+    height: number,
+    orientation = 1,
+  ): Promise<Buffer> {
     const sharp = (await import("sharp")).default;
     return sharp({
       create: { width, height, channels: 3, background: "#336699" },
     })
+      .withMetadata({ orientation })
       .jpeg()
       .toBuffer();
   }
@@ -119,6 +124,31 @@ describe.skipIf(!hasDb)("media-optimize worker", () => {
     expect(Object.keys(variants.webp)).toEqual(["100"]);
     expect(Object.keys(variants.avif)).toEqual(["100"]);
   });
+
+  it.each([1, 3, 6, 8])(
+    "stores orientation-correct dimensions for EXIF %s",
+    async (orientation) => {
+      const buffer = await jpeg(1200, 800, orientation);
+      const key = `media/test/orientation-${orientation}.jpg`;
+      await storagePut(key, buffer, "image/jpeg");
+      const media = await createMedia({
+        storageKey: key,
+        originalName: "test-exif",
+        bytes: buffer.length,
+      });
+      await mediaOptimizeHandler(fakeJob(media.id));
+      const after = await db.media.findUniqueOrThrow({
+        where: { id: media.id },
+      });
+      expect([after.width, after.height]).toEqual(
+        orientation >= 6 ? [800, 1200] : [1200, 800],
+      );
+      const widths = Object.keys(
+        (after.variants as Record<string, object>).webp,
+      ).map(Number);
+      expect(widths).toEqual(orientation >= 6 ? [320, 640] : [320, 640, 960]);
+    },
+  );
 
   it("is idempotent: re-running overwrites the same variant keys instead of duplicating them", async () => {
     const buffer = await jpeg(320, 240);

@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { db } from "@/lib/db";
 import { setMaintenanceFlag } from "@/modules/settings";
+import { MEDIA_PURGE_OBJECTS_JOB } from "@/modules/media/purge";
 import { MEDIA_PURGE_JOB } from "@/modules/media/constants";
 
 const hasDb = Boolean(process.env.TEST_DATABASE_URL);
@@ -38,7 +39,9 @@ describe.skipIf(!hasDb)("media-purge job", () => {
     await db.media.deleteMany({
       where: { originalName: { startsWith: "test-" } },
     });
-    await db.job.deleteMany({ where: { type: MEDIA_PURGE_JOB } });
+    await db.job.deleteMany({
+      where: { type: { in: [MEDIA_PURGE_JOB, MEDIA_PURGE_OBJECTS_JOB] } },
+    });
   });
 
   async function createSoftDeleted(opts: {
@@ -112,7 +115,7 @@ describe.skipIf(!hasDb)("media-purge job", () => {
     expect(nextSweep!.runAt.getTime()).toBeGreaterThan(Date.now());
   });
 
-  it("keeps the DB row when deleting an object fails so a later sweep can retry", async () => {
+  it("keeps durable cleanup intent when storage fails", async () => {
     const old = await createSoftDeleted({
       daysAgo: 31,
       storageKey: "media/test/delete-fails.jpg",
@@ -134,6 +137,10 @@ describe.skipIf(!hasDb)("media-purge job", () => {
     ).rejects.toThrow("storage unavailable");
     await expect(
       db.media.findUnique({ where: { id: old.id } }),
-    ).resolves.not.toBeNull();
+    ).resolves.toBeNull();
+    const intent = await db.job.findUniqueOrThrow({
+      where: { id: `media-purge-objects:${old.id}` },
+    });
+    expect(intent.status).toBe("PENDING");
   });
 });

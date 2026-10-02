@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { normalizeBrand } from "@/lib/brand";
+import { lockMediaReferences } from "@/modules/media/reference-lock";
 import {
   invoiceLocale,
   invoiceSettingsSchema,
@@ -160,6 +161,8 @@ export async function queueInvoice(
     logoMediaId: theme?.emailLogoMediaId || theme?.logoMediaId || null,
     labels,
   });
+  // The immutable snapshot keeps this reference even after branding changes.
+  await lockMediaReferences(tx, [snapshot.logoMediaId]);
   const invoice = await tx.invoice.create({
     data: { orderId, version: (last?.version ?? 0) + 1, snapshot, requestedBy },
   });

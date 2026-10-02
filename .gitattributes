@@ -1,0 +1,7 @@
+# Linux entrypoints must survive a standard core.autocrlf=true Windows clone.
+*.sh text eol=lf
+Dockerfile text eol=lf
+**/Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.husky/* text eol=lf
