@@ -13,7 +13,9 @@
     "prepare": "husky",
     "postinstall": "prisma generate",
     "test:coverage": "vitest run --coverage",
-    "prebuild": "node scripts/prepare-invoice-fonts.mjs"
+    "prebuild": "node scripts/prepare-invoice-fonts.mjs",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run tests/integration"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",

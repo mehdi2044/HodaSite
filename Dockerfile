@@ -33,7 +33,8 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
-COPY entrypoint.sh ./
+COPY --chmod=755 entrypoint.sh ./
+RUN sed -i 's/\r$//' /app/entrypoint.sh
 CMD ["./entrypoint.sh"]
 
 FROM quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727 AS minio-client
@@ -62,4 +63,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY prisma ./prisma
 COPY scripts ./scripts
+# Defense in depth for archives/old Windows checkouts bypassing .gitattributes.
+RUN find /app/scripts -type f -name '*.sh' -exec sed -i 's/\r$//' {} + \
+    && find /app/scripts -type f -name '*.sh' -exec chmod 755 {} +
 CMD ["bash", "/app/scripts/ops/run.sh"]

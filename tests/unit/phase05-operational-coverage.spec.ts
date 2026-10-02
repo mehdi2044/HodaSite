@@ -32,7 +32,7 @@ describe("V-4 operational coverage registry", () => {
         // inherit this exemption: its permission guard immediately fails this test.
         const implementations = sources("src").filter(
           (file) =>
-            file !== "src/modules/access/namespace.ts" &&
+            file !== path.join("src", "modules", "access", "namespace.ts") &&
             readFileSync(file, "utf8").includes(permission),
         );
         expect(implementations).toEqual([]);

@@ -8,6 +8,50 @@ import {
   type MediaVariants,
 } from "./constants";
 import type { StorageProvider } from "@/modules/integrations/storage";
+import { z } from "zod";
+import type { JobContext } from "@/modules/jobs";
+
+export const MEDIA_PURGE_OBJECTS_JOB = "media-purge-objects";
+const cleanupPayload = z.object({
+  mediaId: z.string().min(1),
+  keys: z
+    .array(
+      z
+        .string()
+        .regex(/^media\//)
+        .refine(
+          (key) =>
+            !key.includes("\\") &&
+            !key.includes("\0") &&
+            key
+              .split("/")
+              .every((part) => part !== "" && part !== "." && part !== ".."),
+        ),
+    )
+    .min(1),
+});
+
+/** The committed outbox survives crashes and partial storage deletion.
+ * Both storage providers delete missing keys idempotently. The payload stays
+ * in Job even if storage or the final DONE write fails.
+ */
+export async function mediaPurgeObjectsHandler(
+  job: Pick<JobContext, "id" | "payload">,
+  target: StorageProvider = storage,
+): Promise<void> {
+  if (await isMaintenanceOn()) throw new JobDeferredError("maintenance is on");
+  const { mediaId, keys } = cleanupPayload.parse(job.payload);
+  // A restored database must never lose live media to a stale cleanup request.
+  if (
+    await db.media.findUnique({ where: { id: mediaId }, select: { id: true } })
+  )
+    throw new Error("purge cleanup still has a Media row");
+  for (const key of keys) await target.delete(key);
+  await db.job.update({
+    where: { id: job.id },
+    data: { status: "DONE", lastError: null },
+  });
+}
 
 /**
  * Deliberately NOT the cached `getMediaSettings()` accessor: that goes
@@ -37,19 +81,78 @@ export async function purgeOne(
   },
   target: StorageProvider = storage,
 ): Promise<void> {
-  if (
-    media.storageKey.startsWith("receipts/") ||
-    media.storageKey.startsWith("invoices/")
-  )
-    throw new Error("Financial documents cannot be purged");
-  await target.delete(media.storageKey);
-  const variants = (media.variants as MediaVariants | null) ?? {};
-  for (const byWidth of Object.values(variants)) {
-    for (const variant of Object.values(byWidth ?? {})) {
-      if (variant) await target.delete(variant.key);
-    }
-  }
-  await db.media.delete({ where: { id: media.id } });
+  if (!media.storageKey.startsWith("media/"))
+    throw new Error("Private/financial documents cannot be purged");
+  if (await isMaintenanceOn()) throw new JobDeferredError("maintenance is on");
+  const retention = await getPurgeRetentionDays();
+  const jobId = `media-purge-objects:${media.id}`;
+  const cleanup = await db.$transaction(async (tx) => {
+    // FK reference creation takes KEY SHARE. This stronger lock waits for
+    // existing writers; new writers wait and fail their FK if deletion commits.
+    // JSON/scalar writers use lockMediaReferences for the same guarantee.
+    await tx.$queryRaw`SELECT id FROM "Media" WHERE id = ${media.id} FOR UPDATE`;
+    const current = await tx.media.findUnique({ where: { id: media.id } });
+    if (!current) return tx.job.findUnique({ where: { id: jobId } });
+    if (
+      !current.deletedAt ||
+      current.deletedAt.getTime() > Date.now() - retention * 86_400_000 ||
+      !["image", "document"].includes(current.kind) ||
+      !current.storageKey.startsWith("media/") ||
+      current.status === "PROCESSING"
+    )
+      return null;
+    const counts = await Promise.all([
+      tx.productMedia.count({ where: { mediaId: current.id } }),
+      tx.variantMedia.count({ where: { mediaId: current.id } }),
+      tx.category.count({ where: { mediaId: current.id } }),
+      tx.color.count({ where: { swatchMediaId: current.id } }),
+      tx.receipt.count({ where: { mediaId: current.id } }),
+      tx.invoice.count({ where: { mediaId: current.id } }),
+      tx.reviewPhoto.count({ where: { mediaId: current.id } }),
+      // A replacement can still own originals/renditions. Keep its evidence.
+      tx.mediaReplacement.count({
+        where: { mediaId: current.id, status: { not: "DONE" } },
+      }),
+      tx.job.count({
+        where: {
+          type: "media-optimize",
+          status: { in: ["PENDING", "RUNNING"] },
+          payload: { path: ["mediaId"], equals: current.id },
+        },
+      }),
+    ]);
+    if (counts.some(Boolean)) return null;
+    const [references] = await tx.$queryRaw<{ used: boolean }[]>`
+      SELECT (
+        EXISTS (SELECT 1 FROM "ThemeSettings" WHERE ${current.id} IN
+          ("logoMediaId", "logoDarkMediaId", "faviconMediaId", "emailLogoMediaId"))
+        OR EXISTS (SELECT 1 FROM "Page" WHERE jsonb_path_exists(
+          blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
+          blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+      ) AS used
+    `;
+    // Include draft and soft-deleted content: restoration must remain possible.
+    if (references.used) return null;
+    const keys = [current.storageKey];
+    for (const widths of Object.values(
+      (current.variants as MediaVariants | null) ?? {},
+    ))
+      for (const rendition of Object.values(widths ?? {}))
+        if (rendition) keys.push(rendition.key);
+    const payload = cleanupPayload.parse({
+      mediaId: current.id,
+      keys: [...new Set(keys)],
+    });
+    // Commit deletion and durable cleanup intent together. A failed constraint,
+    // DB write or commit rolls both back and no storage call has happened.
+    await tx.media.delete({ where: { id: current.id } });
+    return tx.job.create({
+      data: { id: jobId, type: MEDIA_PURGE_OBJECTS_JOB, payload },
+    });
+  });
+  if (cleanup && cleanup.status !== "DONE")
+    await mediaPurgeObjectsHandler(cleanup, target);
 }
 
 /**
@@ -80,9 +183,17 @@ export async function mediaPurgeHandler(): Promise<void> {
     },
     select: { id: true, storageKey: true, variants: true },
   });
-  for (const media of toPurge) await purgeOne(media);
-
-  await enqueueNextSweep();
+  try {
+    // Failed object cleanup is retained and retried by the existing queue.
+    // Hourly sweeps re-arm exhausted retries after storage becomes available.
+    await db.job.updateMany({
+      where: { type: MEDIA_PURGE_OBJECTS_JOB, status: "FAILED" },
+      data: { status: "PENDING", attempts: 0, runAt: new Date() },
+    });
+    for (const media of toPurge) await purgeOne(media);
+  } finally {
+    await enqueueNextSweep();
+  }
 }
 
 async function enqueueNextSweep(): Promise<void> {
@@ -104,14 +215,12 @@ async function enqueueNextSweep(): Promise<void> {
  */
 export function registerMediaPurgeHandler(): void {
   registerJobHandler(MEDIA_PURGE_JOB, mediaPurgeHandler);
+  registerJobHandler(MEDIA_PURGE_OBJECTS_JOB, mediaPurgeObjectsHandler);
 }
 
-let purgeSweepBootstrapped = false;
-
-/** Called once, lazily, on the first real cron tick request. */
+/** Reconcile on every real cron tick: recover even if a sweep exhausted its
+ * retries during a DB outage before it could schedule its successor. */
 export async function ensurePurgeSweepScheduled(): Promise<void> {
-  if (purgeSweepBootstrapped) return;
-  purgeSweepBootstrapped = true;
   const pending = await db.job.findFirst({
     where: { type: MEDIA_PURGE_JOB, status: { in: ["PENDING", "RUNNING"] } },
   });

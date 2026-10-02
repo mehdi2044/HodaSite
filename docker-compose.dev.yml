@@ -4,9 +4,8 @@ services:
     environment: {POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda}
     healthcheck: {test: [CMD-SHELL, pg_isready -U hoda], interval: 3s, timeout: 3s, retries: 20}
     # Published to the host (unlike docker-compose.yml's production postgres)
-    # so `pnpm test` on the host machine can reach it directly — the
-    # integration suites in tests/integration/*.spec.ts skip themselves via
-    # `db.$queryRaw` when DATABASE_URL isn't reachable (see vitest.config.ts).
+    # Optional host app tooling may connect here. Integration tests must use
+    # a separate *_test database, never this application database.
     # Host port 55432, not 5432: a machine with its own local Postgres
     # install (e.g. a Windows "postgres" service) may already own 5432, and
     # two listeners on the same host port silently misroute connections to
@@ -23,7 +22,8 @@ services:
   mailpit: {image: axllent/mailpit:v1.31.1, ports: ['127.0.0.1:8025:8025', '127.0.0.1:1025:1025']}
   app:
     build: {context: ., target: deps}
-    command: sh -c 'pnpm prisma migrate deploy && pnpm prisma db seed && pnpm dev --hostname 0.0.0.0'
+    # Explicit install/generate/migrate/seed steps are documented; startup never seeds.
+    command: pnpm dev --hostname 0.0.0.0
     ports: ['3000:3000']
     env_file: [.env]
     environment: {DATABASE_URL: postgresql://hoda:hoda@postgres:5432/hoda, MEDIA_DIR: /data/media, EMAIL_PROVIDER: smtp, SMTP_HOST: mailpit, SMTP_PORT: 1025, EMAIL_FROM: shop@example.com, APP_URL: http://localhost:3000}

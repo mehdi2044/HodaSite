@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { lockMediaReferences } from "@/modules/media/reference-lock";
 import { db } from "@/lib/db";
 import { revalidateTag } from "next/cache";
 import { auth } from "@/modules/auth";
@@ -69,26 +70,29 @@ export async function saveBrand(
         emailLogoMediaId:
           parsed.emailLogoMediaId || currentTheme.emailLogoMediaId,
       };
-      await db.$transaction([
-        db.siteSettings.update({ where: { id: "default" }, data: { brand } }),
-        db.themeSettings.update({ where: { id: "default" }, data: media }),
-        db.auditLog.create({
-          data: {
-            userId,
-            action: "settings.brand.update",
-            entityType: "SiteSettings",
-            entityId: "default",
-            before: {
-              brand: currentSite?.brand ?? undefined,
-              logoMediaId: currentTheme.logoMediaId,
-              logoDarkMediaId: currentTheme.logoDarkMediaId,
-              faviconMediaId: currentTheme.faviconMediaId,
-              emailLogoMediaId: currentTheme.emailLogoMediaId,
-            } as object,
-            after: { brand, ...media },
-          },
-        }),
-      ]);
+      await db.$transaction(async (tx) => {
+        await lockMediaReferences(tx, Object.values(media));
+        await Promise.all([
+          tx.siteSettings.update({ where: { id: "default" }, data: { brand } }),
+          tx.themeSettings.update({ where: { id: "default" }, data: media }),
+          tx.auditLog.create({
+            data: {
+              userId,
+              action: "settings.brand.update",
+              entityType: "SiteSettings",
+              entityId: "default",
+              before: {
+                brand: currentSite?.brand ?? undefined,
+                logoMediaId: currentTheme.logoMediaId,
+                logoDarkMediaId: currentTheme.logoDarkMediaId,
+                faviconMediaId: currentTheme.faviconMediaId,
+                emailLogoMediaId: currentTheme.emailLogoMediaId,
+              } as object,
+              after: { brand, ...media },
+            },
+          }),
+        ]);
+      });
     });
 
     revalidateTag("site-settings");

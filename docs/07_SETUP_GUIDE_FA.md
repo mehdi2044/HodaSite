@@ -48,116 +48,81 @@ cd HodaSite
 
 ### B3. تنظیمات محیط
 
-```bash
-cp .env.example .env
-```
+فقط در یک clone جدید که فایل `.env` ندارد، از `.env.example` کپی بگیرید. فایل موجود را بازنویسی نکنید؛ مقدارهای آن را خارج از مخزن نگه دارید. رمزهای نمونه فقط برای محیط محلی‌اند. `TEST_DATABASE_URL` به‌صورت پیش‌فرض خالی است.
 
-فایل `.env` را با یک ویرایشگر باز کنید. برای لپ‌تاپ **هیچ چیزی لازم نیست عوض کنید** (مقدارهای پیش‌فرض کار می‌کنند). فقط این دو خط را نگاه کنید:
+### B4. مسیر مرجع: Docker
 
-```
-ADMIN_EMAIL=owner@example.com
-ADMIN_PASSWORD=ChangeMe123!
-```
-
-اینها ایمیل و رمز اولین ادمین هستند؛ می‌توانید عوض کنید.
-
-### B4. اجرا
-
-```bash
-docker compose -f docker-compose.dev.yml up --build
-```
-
-اولین بار ۵–۱۰ دقیقه طول می‌کشد (پکیج‌ها دانلود می‌شوند). وقتی خط `✓ Ready` را دیدید:
-
-- فروشگاه: http://localhost:3000
-- ادمین: http://localhost:3000/admin
-- فایل‌ها (MinIO): http://localhost:9001 (کاربر/رمز در `.env`)
-
-توقف: `Ctrl + C`. حذف کامل و شروع از صفر (داده‌های تست پاک می‌شود):
-
-```bash
-docker compose -f docker-compose.dev.yml down -v
-```
-
-### B5. به‌روزرسانی بعد از merge هر فاز
-
-```bash
-git pull
-docker compose -f docker-compose.dev.yml up --build
-```
-
-### B6. اجرای محلی روی ویندوز
-
-این بخش دقیقاً همان دستورهایی است که روی لپ‌تاپ ویندوزی مهدی اجرا می‌شود (PowerShell). Docker Desktop باید نصب و روشن باشد (آیکون نهنگ در نوار وضعیت).
-
-**روشن کردن سایت (بار اول یا بعد از تغییر کد):**
+نسخهٔ مرجع Node 20 و pnpm 10.15.1 است. پس از تغییر lockfile یا schema، rebuild به‌تنهایی volume قدیمی node_modules را به‌روز نمی‌کند؛ install و generate را صریح اجرا کنید:
 
 ```powershell
-docker compose -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.dev.yml build app ops
+docker compose -f docker-compose.dev.yml up -d postgres minio mailpit
+docker compose -f docker-compose.dev.yml run --rm app pnpm install --frozen-lockfile
+docker compose -f docker-compose.dev.yml run --rm app pnpm prisma generate
 ```
 
-بار اول ۵–۱۰ دقیقه طول می‌کشد. وقتی خط `✓ Ready` را دیدید، سایت روی http://localhost:3000/fa بالاست.
+برای دیتابیس **جدید**، یا پس از بررسی migration و داشتن بکاپ از دیتابیس موجود:
 
-**روشن کردن سریع (بدون تغییر کد، از دفعهٔ قبل):**
+```powershell
+docker compose -f docker-compose.dev.yml run --rm app pnpm prisma migrate deploy
+```
+
+**فقط بار اول برای دیتابیس خالی و عمدیِ دمو**، seed را اجرا کنید. روی دادهٔ موجود تکرار نکنید:
+
+```powershell
+docker compose -f docker-compose.dev.yml run --rm app pnpm prisma db seed
+```
+
+سپس سایت و workerها را روشن کنید:
 
 ```powershell
 docker compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml logs --tail=100 app ops
 ```
 
-**خاموش کردن (دادهٔ آزمایشی حفظ می‌شود):**
+startup دیگر migration یا seed را خودکار اجرا نمی‌کند. فروشگاه [localhost:3000](http://localhost:3000)، مدیریت [/admin](http://localhost:3000/admin) و Mailpit [localhost:8025](http://localhost:8025) است. پورت MinIO در Compose فعلی روی میزبان منتشر نشده؛ سلامت داخلی آن با ورود به پنل روی پورت میزبان یکی نیست.
+
+### B5. به‌روزرسانی نسخهٔ موجود
+
+ابتدا branch/status و فایل‌های محلی را بررسی کنید. بروزرسانی کد باید بدون ازبین‌بردن تغییرهای محلی انجام شود. سپس install/generate بخش B4 و migrationهای بررسی‌شده را اجرا کنید؛ seed برای refresh نیست. با `docker compose -f docker-compose.dev.yml stop` سرویس‌ها متوقف و داده حفظ می‌شود. برای رفع مشکل، volume دیتابیس را حذف نکنید.
+
+### B6. نکات ویندوز
+
+Git به کمک `.gitattributes` اسکریپت‌های شل را LF می‌گیرد؛ Docker نیز هنگام COPY برای checkoutهای قدیمی آن‌ها را نرمال می‌کند. اصلاح دستی با sed روی لپ‌تاپ لازم نیست. اگر ops قبلاً restart loop داشته، پس از گرفتن نسخهٔ اصلاح‌شده image آن را rebuild کنید.
+
+`docker compose ... ps` و لاگ app/ops را بررسی کنید. تداخل پورت 3000 یا 55432 را با برنامهٔ موجود حل کنید؛ stack دوم را بی‌هدف روشن نکنید. برای اصلاح env، فایل موجود را بررسی کنید؛ نمونه را روی آن کپی نکنید. ایمیل/رمز اولیهٔ seed الزاماً رمز فعلی کاربر نیست.
+
+### B7. ابزار اختیاری host و دیتابیس تست جدا
+
+برای lint/typecheck/unit به Docker DB نیاز نیست. از Node 20 و pnpm مندرج در package.json استفاده کنید؛ هیچ upgrade عمده برای نصب لازم نیست:
 
 ```powershell
-docker compose -f docker-compose.dev.yml stop
+corepack enable
+corepack prepare pnpm@10.15.1 --activate
+pnpm install --frozen-lockfile
+pnpm prisma generate
+pnpm lint
+pnpm typecheck
+pnpm test:unit
 ```
 
-**پاک‌کردن کامل و شروع از صفر (دادهٔ آزمایشی پاک می‌شود):**
+postinstall نیز generate می‌کند؛ اجرای صریح بعد از تغییر schema مانع client قدیمی می‌شود. اگر فایل engine ویندوز قفل است، فقط process توسعهٔ مربوط را ببندید و install/generate را تکرار کنید. اگر node_modules همچنان خراب بود، در **همین checkout مشخص** پوشه را به نام موقت تغییر دهید و دوباره frozen install کنید؛ .env، lockfile و volumeهای Docker را حذف نکنید. node_modules ویندوز را با Linux مشترک نکنید.
+
+`test:unit` هرگز .env نمی‌خواند و اتصال DB را غیرفعال می‌کند. `pnpm test` بدون TEST_DATABASE_URL تست‌های integration را skip می‌کند؛ برای اجرای صریح آن‌ها از `pnpm test:integration` استفاده کنید.
+
+Integration ممکن است fixture بسازد/پاک کند. تنها یک PostgreSQL مجزا و بی‌دادهٔ واقعی مجاز است. نمونهٔ زیر container و دیتابیس مستقلی با حافظهٔ موقت می‌سازد؛ اگر نام یا پورت اشغال است، container قبلی را حذف نکنید:
 
 ```powershell
-docker compose -f docker-compose.dev.yml down -v
+docker run -d --name hoda-tests -p 127.0.0.1:55433:5432 -e POSTGRES_USER=hoda -e POSTGRES_PASSWORD=test-only -e POSTGRES_DB=hoda_test --tmpfs /var/lib/postgresql/data postgres:16
+$env:TEST_DATABASE_URL='postgresql://hoda:test-only@localhost:55433/hoda_test'
+$env:DATABASE_URL=$env:TEST_DATABASE_URL
+pnpm prisma migrate deploy
+pnpm prisma db seed
+pnpm test:integration
 ```
 
-**دیدن لاگ‌ها (وقتی چیزی درست کار نمی‌کند):**
+این envها را در ترمینال مخصوص تست تنظیم کنید؛ app را از همان ترمینال به DB تست وصل نکنید. نام DB باید به `_test` ختم شود و عدم دسترسی خطای صریح می‌دهد. این guard جای بررسی مقصد و جداسازی واقعی را نمی‌گیرد. آدرس DB اصلی preview را هرگز به TEST_DATABASE_URL ندهید. آزمون مرورگر و backup/restore کامل روی محیط‌های ایزولهٔ CI اجرا می‌شوند.
 
-```powershell
-docker compose -f docker-compose.dev.yml logs --tail=200 app
-```
-
-برای دنبال‌کردن زنده‌ی لاگ‌ها (تا `Ctrl+C` بزنید): همان دستور را با `-f` اضافه اجرا کنید: `docker compose -f docker-compose.dev.yml logs -f app`.
-
-**اگر سایت بالا نیامد، به ترتیب این‌ها را چک کنید:**
-
-1. `docker compose -f docker-compose.dev.yml ps` — همهٔ سرویس‌ها باید `Up` باشند (`postgres` باید `healthy` باشد).
-2. لاگ `app` را ببینید (دستور بالا) و متن خطا را برای عامل اجرایی بفرستید.
-3. **تداخل پورت روی ویندوز:** اگر قبلاً یک Postgres یا هر برنامهٔ دیگری روی همین کامپیوتر نصب بوده، ممکن است پورت‌های `3000` یا `5432`/`55432` را قبل از Docker گرفته باشد و اتصال به دیتابیس یا سایت اشتباه برود (بدون خطای واضح). برای بررسی: `netstat -ano | findstr :3000` (یا `:55432`) — اگر یک PID غیرمرتبط با Docker آنجا بود، همان برنامه پورت را گرفته؛ یا آن برنامه را ببندید یا پورت را در `docker-compose.dev.yml` عوض کنید.
-4. اگر مطمئن نیستید فایل `.env` درست است: دوباره `cp .env.example .env` بزنید و مقدارهای لازم را پر کنید.
-
-**ایمیل و رمز ادمین کجاست؟** در فایل `.env` (نه `.env.example`) دو خط زیر است:
-
-```
-ADMIN_EMAIL=...
-ADMIN_PASSWORD=...
-```
-
-این‌ها فقط روی همین لپ‌تاپ هستند (`.env` هرگز commit نمی‌شود). **رمز و ایمیل سرور Production باید متفاوت از لپ‌تاپ باشند** — همان مقداری که اینجا برای تست محلی گذاشته‌اید را روی سرور واقعی دوباره استفاده نکنید (بخش C4 را ببینید).
-
-### B7. اجرای `pnpm test` مستقیم روی لپ‌تاپ (نه داخل Docker)
-
-با `docker compose -f docker-compose.dev.yml up` بالا، دیتابیس Postgres روی پورت `55432` هاست هم در دسترس است، اما `pnpm test` روی لپ‌تاپ به‌طور پیش‌فرض دنبال آدرس داخل شبکهٔ Docker (`DATABASE_URL` در `.env`) می‌گردد، نه پورت هاست. برای همین متغیر جدا `TEST_DATABASE_URL` وجود دارد (نمونه‌اش در `.env.example`، زیر بلوک Database) — رفتار `pnpm test` بسته به آن دقیقاً سه حالت دارد:
-
-1. **`TEST_DATABASE_URL` در `.env` خالی/نبود:** تست‌های integration فقط **skip** می‌شوند (تست‌های unit عادی اجرا می‌شوند) و همین ابتدای خروجی این خط چاپ می‌شود:
-   ```
-   ℹ integration tests skipped: TEST_DATABASE_URL not set (unit tests only)
-   ```
-2. **`TEST_DATABASE_URL` تنظیم شده ولی Postgres در دسترس نیست:** اجرای `pnpm test` **fail** می‌شود (نه skip بی‌صدا) با پیام واضح که آدرس در دسترس نیست. یعنی اگر این مقدار را گذاشته‌اید، باید `docker compose -f docker-compose.dev.yml up` هم روشن باشد؛ وگرنه `pnpm test` عمداً قرمز می‌شود تا یادتان نرود.
-3. **`TEST_DATABASE_URL` تنظیم و در دسترس است:** هر ۴۵ تست (unit + integration) واقعاً اجرا می‌شوند.
-
-برای حالت ۳ (توصیه‌شده وقتی `docker compose -f docker-compose.dev.yml up` روشن است)، در `.env` مقدار `TEST_DATABASE_URL` را نگه دارید و همان‌طور اجرا کنید:
-
-```powershell
-pnpm test
-```
-
-اگر پیام fail را دیدید یعنی پورت `55432` توسط برنامهٔ دیگری اشغال شده یا استک روشن نیست (بخش B6، مورد ۳ بالا را ببینید).
 
 ---
 

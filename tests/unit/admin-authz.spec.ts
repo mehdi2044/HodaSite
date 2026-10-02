@@ -39,7 +39,7 @@ describe("every admin server action is authorized (fix-order A2)", () => {
     "%s calls assertCan()",
     (_label, file) => {
       const src = readFileSync(file, "utf8");
-      if (file.endsWith("/admin/security/setup/actions.ts")) {
+      if (file.endsWith(join("admin", "security", "setup", "actions.ts"))) {
         // This is the only action reachable by a restricted enrollment session.
         // Its authenticated-session and MFA checks have runtime regression tests.
         expect(src).toContain("getAdminSession(true)");
