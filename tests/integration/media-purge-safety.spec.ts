@@ -255,7 +255,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         const gate = new Promise<void>((resolve) => {
           release = resolve;
         });
+        let writerPid = 0;
         const writer = db.$transaction(async (tx) => {
+          const [backend] = await tx.$queryRaw<{ pid: number }[]>`
+            SELECT pg_backend_pid() AS pid
+          `;
+          writerPid = backend.pid;
           if (kind === "fk")
             await tx.productMedia.create({
               data: { productId, mediaId: media.id },
@@ -274,8 +279,25 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
         await entered;
         const purge = purgeOne(media, target);
-        release();
-        await Promise.all([writer, purge]);
+        try {
+          let blocked = false;
+          for (let attempt = 0; attempt < 100 && !blocked; attempt++) {
+            const [state] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+                WHERE ${writerPid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            blocked = state.blocked;
+            if (!blocked)
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          }
+          // Prove real lock contention, not merely two promises that happened
+          // to finish sequentially before the reference check.
+          expect(blocked).toBe(true);
+          expect(deleted).toEqual([]);
+        } finally {
+          release();
+          await Promise.all([writer, purge]);
+        }
         expect(deleted).toEqual([]);
         expect(
           await db.media.findUnique({ where: { id: media.id } }),
