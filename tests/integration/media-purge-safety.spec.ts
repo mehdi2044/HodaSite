@@ -339,12 +339,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     it("reconciles a missing sweep after previous work failed", async () => {
       await db.job.deleteMany({ where: { type: "media-purge" } });
-      await ensurePurgeSweepScheduled();
+      await Promise.all(
+        Array.from({ length: 12 }, () => ensurePurgeSweepScheduled()),
+      );
+      expect(
+        await db.job.count({
+          where: { type: "media-purge", status: "PENDING" },
+        }),
+      ).toBe(1);
       await db.job.updateMany({
         where: { type: "media-purge" },
         data: { status: "FAILED" },
       });
-      await ensurePurgeSweepScheduled();
+      await Promise.all(
+        Array.from({ length: 12 }, () => ensurePurgeSweepScheduled()),
+      );
       expect(
         await db.job.count({
           where: { type: "media-purge", status: "PENDING" },

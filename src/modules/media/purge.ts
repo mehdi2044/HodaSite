@@ -221,8 +221,18 @@ export function registerMediaPurgeHandler(): void {
 /** Reconcile on every real cron tick: recover even if a sweep exhausted its
  * retries during a DB outage before it could schedule its successor. */
 export async function ensurePurgeSweepScheduled(): Promise<void> {
-  const pending = await db.job.findFirst({
-    where: { type: MEDIA_PURGE_JOB, status: { in: ["PENDING", "RUNNING"] } },
+  await db.$transaction(async (tx) => {
+    // Serialize check + insert across cron requests and application replicas.
+    await tx.$queryRaw`SELECT 1 FROM pg_advisory_xact_lock(hashtext('media-purge-sweep-reconcile'))`;
+    const pending = await tx.job.findFirst({
+      where: { type: MEDIA_PURGE_JOB, status: { in: ["PENDING", "RUNNING"] } },
+    });
+    if (!pending)
+      await tx.job.create({
+        data: {
+          type: MEDIA_PURGE_JOB,
+          runAt: new Date(Date.now() + SWEEP_INTERVAL_MS),
+        },
+      });
   });
-  if (!pending) await enqueueNextSweep();
 }
