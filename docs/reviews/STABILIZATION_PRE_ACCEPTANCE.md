@@ -15,7 +15,7 @@ Purge rereads the persisted Media under PostgreSQL FOR UPDATE, rechecks retentio
 status and kind, and checks ProductMedia, VariantMedia, Category, Color, Receipt,
 Invoice, ReviewPhoto, replacement work and pending/running optimization jobs.
 It also protects ThemeSettings scalar IDs and Page/Homepage block media IDs,
-including drafts and soft-deleted content. Non-public/private kinds and object
+including drafts and soft-deleted content, plus immutable invoice snapshot logos. Non-public/private kinds and object
 namespaces cannot enter generic cleanup. Financial DB guards remain unchanged.
 
 The same transaction deletes the unreferenced Media and writes a deterministic
@@ -39,7 +39,8 @@ must follow the same locking contract and must not reuse system-generated keys.
 
 Existing replacement work is conservatively retained unless DONE. Private
 financial/review objects are not generic garbage collection candidates.
-No existing media is automatically reprocessed, purged or migrated by rollout.
+No existing media is automatically reprocessed or migrated by rollout; normal
+retention cron applies the safer purge rules.
 
 ## EXIF and renditions
 
@@ -107,3 +108,9 @@ release from its official, checksum-verified source commit for ops/minio-init.
 This adds no service/provider or business feature and changes no backup format.
 The existing Auth.js optional Nodemailer peer-range warning remains; application
 SMTP is covered by the full CI email/browser tests.
+
+The invoice queue locks its snapshot logo before insertion, so changing the brand
+does not release historical invoice references for purge. Existing invoice
+negative/rollback/concurrency tests and a historical-logo regression cover this
+non-financial metadata guard. CI S3 copying uses --no-deps for the one-shot mc
+client: the already healthy MinIO service must not be recreated during the probe.

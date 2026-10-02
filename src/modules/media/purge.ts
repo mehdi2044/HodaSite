@@ -126,6 +126,8 @@ export async function purgeOne(
       SELECT (
         EXISTS (SELECT 1 FROM "ThemeSettings" WHERE ${current.id} IN
           ("logoMediaId", "logoDarkMediaId", "faviconMediaId", "emailLogoMediaId"))
+        OR EXISTS (SELECT 1 FROM "Invoice"
+          WHERE snapshot->>'logoMediaId' = ${current.id})
         OR EXISTS (SELECT 1 FROM "Page" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(

@@ -122,7 +122,9 @@ if [[ "$STORAGE_MODE" == "s3" ]]; then
   SOURCE_KEY=${SOURCE_KEY//[[:space:]]/}
   [[ -n "$SOURCE_KEY" ]] || fail "missing S3 replacement source"
   REPLACEMENT_KEY="media/replacements/s3-smoke-input.jpg"
-  "${COMPOSE[@]}" run --rm --entrypoint /bin/sh minio-init -c \
+  # The stack is already healthy. Do not let this one-shot client recreate
+  # MinIO and race its startup after switching between built Compose projects.
+  "${COMPOSE[@]}" run --rm --no-deps --entrypoint /bin/sh minio-init -c \
     'mc alias set local http://minio:9000 "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null && mc cp "local/$S3_BUCKET/'"${SOURCE_KEY}"'" "local/$S3_BUCKET/'"${REPLACEMENT_KEY}"'" >/dev/null'
   "${COMPOSE[@]}" exec -T postgres psql -U hoda -d hoda -v ON_ERROR_STOP=1 -c \
     "insert into \"MediaReplacement\"(id,\"mediaId\",\"baseStorageKey\",\"storageKey\",url,\"originalName\",bytes,mime,width,height,status,\"requestedBy\",\"createdAt\",\"updatedAt\")
