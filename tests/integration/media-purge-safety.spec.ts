@@ -271,13 +271,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               data: {
                 id: prefix,
                 blocks: [{ type: "Hero", mediaId: media.id }],
+                // The seeded CI database already has its singleton active home.
+                deletedAt: new Date(),
               },
             });
           }
           ready();
           await gate;
         });
-        await entered;
+        await Promise.race([entered, writer]);
         const purge = purgeOne(media, target);
         try {
           let blocked = false;
