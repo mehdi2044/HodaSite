@@ -1,6 +1,6 @@
 # Stabilization & Pre-Acceptance
 
-Implemented against docs v1.2 / D-numbers touched: D21, D23, D24, D31, D40, D41, D50, D63, D67.
+Implemented against docs v1.2 / D-numbers touched: D21, D23, D24, D31, D40, D41, D50, D63, D67, D68.
 
 This is engineering stabilization, not Phase 09. Starting state: branch
 `preview/spatial-20260919`, HEAD/origin/main/live main
@@ -96,3 +96,14 @@ not acceptance. CP1/CP2 manual execution, production SMTP/FX/configuration,
 offsite backup and staging restore, Android/iPhone and HTTPS remain separate.
 No hosting, staging, deployment, broad media architecture or new feature is
 included. Review is self-review plus automated tests, not independent human review.
+
+## Fresh CI dependency recovery
+
+The first run passed Windows tooling but exposed two upstream acquisition/security
+failures: Nodemailer 10.0.3 has high advisories, and the pinned mc Quay image
+returns unauthorized. Nodemailer is patched to 10.0.6 with a regenerated lockfile
+(no high production audit findings). D68 records building the identical mc
+release from its official, checksum-verified source commit for ops/minio-init.
+This adds no service/provider or business feature and changes no backup format.
+The existing Auth.js optional Nodemailer peer-range warning remains; application
+SMTP is covered by the full CI email/browser tests.

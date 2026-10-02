@@ -177,3 +177,14 @@ Decision recorded before the return-path implementation: verified email login ma
 ### D67 clarification — reference fidelity, 2026-09-19
 
 The owner rejected equal-sized hero cards as a visual departure from the supplied Lovable composition. Four-department coverage means equal discoverability and real destinations, not equal image rectangles. The spatial layout uses one main campaign image, floating department planes and a three-line CMS title (plain text line breaks, middle line emphasized using a self-hosted display font). Geometry and typography roles belong to the selected layout; brand, colors, copy and imagery remain editable under D31. Existing Inter/Vazirmatn body roles remain. No additional schema migration or business-policy change.
+
+## D68 — Reproducible MinIO client acquisition (2026-10-02)
+
+Under D50/D63, build the existing mc release `RELEASE.2025-08-13T08-35-41Z`
+from official source commit `7394ce0dd2a80935aded936b09fa12cbb3cb8096`,
+authenticated by the Go module checksum database. Its previously pinned Quay
+image now returns unauthorized and the Docker Hub image is unavailable. The
+same source-built binary serves ops and minio-init; retain its upstream license.
+This changes acquisition only: no storage/backup provider, format, data, schema,
+or restore-boundary change. Verify fresh builds and Local/S3 backup/restore CI;
+rollback may use a previously verified image, never an unverified mirror.

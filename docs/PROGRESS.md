@@ -891,3 +891,8 @@ Implemented against docs v1.2 / D-numbers touched: D21, D23, D24, D31, D40, D41,
 - نتیجهٔ ادغام فقط با سه check الزامی سبز روی head نهایی معتبر است؛ این یادداشت به‌تنهایی ادعای merge نیست. [شرح فنی و rollback](reviews/STABILIZATION_PRE_ACCEPTANCE.md).
 - تست دستی بعدی: در محیط آزمون جدا رسانهٔ متصل به محصول/برند را soft-delete کنید و بررسی کنید purge فایل را نگه می‌دارد؛ عکس گوشی EXIF را آپلود/replace و گالری را بررسی کنید. این عملیات روی preview موجود در این مرحله اجرا نشد.
 - CP1/CP2 هنوز نیازمند پذیرش مهدی، ایمیل/تنظیمات واقعی و محیط ایزولهٔ مناسب restore هستند؛ نصب گوشی/HTTPS/offsite طبق D51 باز است. هیچ staging، انتشار یا feature تازه‌ای انجام نشده.
+
+Stabilization CI follow-up: Windows tooling passed. Required CI exposed upstream
+mc registry unavailability and high Nodemailer advisories. D68 records identical
+mc release acquisition from pinned official source; Nodemailer patch 10.0.6
+removes high audit findings. Fresh complete CI is required before merging.
