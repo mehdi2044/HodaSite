@@ -101,8 +101,8 @@ included. Review is self-review plus automated tests, not independent human revi
 
 The first run passed Windows tooling but exposed two upstream acquisition/security
 failures: Nodemailer 10.0.3 has high advisories, and the pinned mc Quay image
-returns unauthorized. Nodemailer is patched to 10.0.6 with a regenerated lockfile
-(no high production audit findings). D68 records building the identical mc
+returns unauthorized. Nodemailer is patched to 10.0.9 with a regenerated lockfile
+(no known production audit vulnerabilities). D68 records building the identical mc
 release from its official, checksum-verified source commit for ops/minio-init.
 This adds no service/provider or business feature and changes no backup format.
 The existing Auth.js optional Nodemailer peer-range warning remains; application
