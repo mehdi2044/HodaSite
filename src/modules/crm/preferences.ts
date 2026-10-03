@@ -334,6 +334,7 @@ export async function exportPersonalData(requestId: string, page = 0) {
         wishlist,
         carts,
         returns,
+        addresses,
       ] = await Promise.all([
         tx.order.findMany({
           where: { customerId: actor.id, marketId },
@@ -418,6 +419,27 @@ export async function exportPersonalData(requestId: string, page = 0) {
           skip: page * 100,
           take: 101,
         }),
+        // Address is the customer's global address book, not an Order's frozen
+        // shipping/billing snapshot. It has no marketId; scope by session owner.
+        tx.address.findMany({
+          where: { customerId: actor.id },
+          select: {
+            label: true,
+            country: true,
+            province: true,
+            city: true,
+            line1: true,
+            line2: true,
+            postalCode: true,
+            phone: true,
+            isDefault: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: { id: "asc" },
+          skip: page * 100,
+          take: 101,
+        }),
       ]);
       return {
         schemaVersion: 1,
@@ -446,6 +468,7 @@ export async function exportPersonalData(requestId: string, page = 0) {
         wishlist: wishlist.slice(0, 100),
         carts: carts.slice(0, 100),
         returns: returns.slice(0, 100),
+        addresses: addresses.slice(0, 100),
         pagination: {
           page,
           pageSize: 100,
@@ -457,6 +480,7 @@ export async function exportPersonalData(requestId: string, page = 0) {
             wishlist,
             carts,
             returns,
+            addresses,
           ].some((xs) => xs.length > 100)
             ? page + 1
             : null,

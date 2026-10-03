@@ -1,6 +1,6 @@
 # Prompt for the implementation agent — Phase 04: Cart, Customer Auth, Checkout, Orders, Offline Payment, Returns Model
 
-> این متن را به عامل اجرایی بدهید. مرجع همکاری، جدول وضعیت جاری در `docs/02_DECISIONS.md` و D50/D63 است؛ تأیید پیکسل یا اجازهٔ موردی مالک برای مرج لازم نیست.
+> این متن را به عامل اجرایی بدهید. مرجع همکاری، جدول وضعیت جاری در `docs/02_DECISIONS.md` و D70 است؛ Codex هرگز PR خودش را مرج نمی‌کند و مرج به gateهای D70 و اجازهٔ صریح مهدی نیاز دارد.
 
 ---
 
@@ -15,7 +15,7 @@ Before writing any code:
 
 Then:
 - Create branch `phase/04`.
-- Implement the full scope of `docs/phases/phase-04.md`. Do not implement anything from later phases. Follow current decisions in `docs/02_DECISIONS.md`; record any necessary delegated technical decision before implementation under D50/D63, without changing product scope by assumption.
+- Implement the full scope of `docs/phases/phase-04.md`. Do not implement anything from later phases. Follow current decisions in `docs/02_DECISIONS.md`; record any necessary delegated technical decision before implementation within authorized scope, without changing product scope by assumption; PR review/merge follows D70.
 - Prisma migrations must be additive; never edit applied migrations. Update `prisma/seed.ts` so a fresh `docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up --build` yields a working demo shop.
 - Write unit tests (Vitest) for domain logic and Playwright e2e for each user-facing flow in this phase, in `fa`, `tr`, `en`, at mobile width.
 - Run `pnpm lint && pnpm typecheck && pnpm test` and the e2e suite. Fix everything until green.
@@ -23,6 +23,6 @@ Then:
 - Update `docs/PROGRESS.md`: mark Phase 04 done, list what was built, exact manual test steps in **simple Persian** for a non-programmer, and known limitations.
 - Update `docs/07_SETUP_GUIDE_FA.md` if any command or step changed.
 - In the PR description state `Implemented against docs v1.2 / D-numbers touched: …` (D39).
-- Open a PR titled `Phase 04: Cart, Customer Auth, Checkout, Orders, Offline Payment, Returns Model` with: (a) a Persian summary for the owner, (b) English technical notes, (c) a "Questions for PM" section if you had to make assumptions. The implementation agent may review and merge this PR under D50/D63 without separate owner or Pixel approval, after all required checks pass on the latest head and blocking findings are resolved. Report self-review and automated verification accurately.
+- Open a Draft PR titled `Phase 04: Cart, Customer Auth, Checkout, Orders, Offline Payment, Returns Model` with: (a) a Persian summary for the owner, (b) English technical notes, (c) a "Questions for PM" section if you had to make assumptions. Always create PRs as Draft. Mark Ready for Review only after implementation is complete, all intended commits are pushed, and required local checks pass. Codex must never merge its own PR. Under D70, merge requires green required CI for the current head SHA, the latest [HODASITE-AI-REVIEW] for that same SHA reporting no blockers, resolved blocking conversations, and explicit merge authorization from Mehdi. Report self-review and automated verification accurately.
 
 Quality bar: this is a premium fashion brand; UI must look designed, not default. Every screen has loading/empty/error states, works RTL in Persian with Persian digits and Jalali dates, and passes the acceptance criteria in the phase file.

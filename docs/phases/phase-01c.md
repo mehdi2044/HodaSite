@@ -82,4 +82,4 @@ Product/catalog CRUD and real category/product/collection feeds (Phase 02); chec
 
 ## Deliverables
 
-Code, additive migrations, seed data, unit/integration/e2e tests, updated database/admin/roadmap/progress docs, simple Persian manual test steps, and one PR titled `Phase 01c: CMS and Storefront Design`. Do not merge the PR; Vee performs the final review and Mahdi gives the merge decision.
+Code, additive migrations, seed data, unit/integration/e2e tests, updated database/admin/roadmap/progress docs, simple Persian manual test steps, and one Draft PR titled `Phase 01c: CMS and Storefront Design`. Ready and merge follow D70; Codex never merges its own PR, and Mehdi is the final merge authority.

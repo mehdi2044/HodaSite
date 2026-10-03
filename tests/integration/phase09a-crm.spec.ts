@@ -522,6 +522,104 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       actor.customer = "";
       await expect(preferences(marketId)).rejects.toThrow("UNAUTHENTICATED");
     });
+    it("exports only the session customer's saved address fields, separately from order snapshots", async () => {
+      const address = {
+        label: "Saved home",
+        country: "CA",
+        province: "Fixture province",
+        city: "Saved city",
+        line1: "Saved street",
+        line2: "Unit 2",
+        postalCode: "TEST",
+        phone: "+10000000000",
+        isDefault: true,
+      };
+      const saved = await db.address.create({
+        data: { ...address, customerId },
+      });
+      const foreign = await db.address.create({
+        data: {
+          ...address,
+          customerId: otherCustomer,
+          line1: "OTHER_CUSTOMER_ADDRESS",
+        },
+      });
+      const request = await db.privacyRequest.create({
+        data: { customerId, marketId, kind: "EXPORT", status: "APPROVED" },
+      });
+      const data = await exportPersonalData(request.id);
+      expect(data.addresses).toEqual([
+        {
+          ...address,
+          createdAt: saved.createdAt,
+          updatedAt: saved.updatedAt,
+        },
+      ]);
+      expect(data.addresses[0]).not.toHaveProperty("id");
+      expect(data.addresses[0]).not.toHaveProperty("customerId");
+      expect(JSON.stringify(data.addresses)).not.toContain(foreign.line1);
+      expect(data.orders[0].shippingAddress).toEqual({
+        city: "Fixture shipping city",
+        line1: "Example street",
+      });
+      expect(data.orders[0].billingAddress).toEqual({
+        city: "Fixture billing city",
+        postalCode: "TEST",
+      });
+      actor.customer = otherCustomer;
+      await expect(exportPersonalData(request.id)).rejects.toThrow("FORBIDDEN");
+      const foreignRequest = await db.privacyRequest.create({
+        data: {
+          customerId: otherCustomer,
+          marketId: otherMarket,
+          kind: "EXPORT",
+          status: "APPROVED",
+        },
+      });
+      const foreignData = await exportPersonalData(foreignRequest.id);
+      expect(foreignData.addresses.map((a) => a.line1)).toEqual([
+        foreign.line1,
+      ]);
+      expect(JSON.stringify(foreignData.addresses)).not.toContain(saved.line1);
+    });
+    it("paginates a saved address book even when no market orders exist", async () => {
+      const owner = await db.customer.create({
+        data: {
+          email: `crm-address-${randomUUID()}@example.com`,
+          preferredMarketId: otherMarket,
+        },
+      });
+      actor.customer = owner.id;
+      const rows = Array.from({ length: 101 }, (_, i) => ({
+        id: `${owner.id}-${String(i).padStart(3, "0")}`,
+        customerId: owner.id,
+        label: `Address ${i}`,
+        country: i % 2 ? "TR" : "CA",
+        province: "Fixture province",
+        city: "Fixture city",
+        line1: `Saved street ${i}`,
+        phone: "+10000000000",
+      }));
+      await db.address.createMany({ data: rows });
+      const request = await db.privacyRequest.create({
+        data: {
+          customerId: owner.id,
+          marketId: otherMarket,
+          kind: "EXPORT",
+          status: "APPROVED",
+        },
+      });
+      const first = await exportPersonalData(request.id);
+      const second = await exportPersonalData(request.id, 1);
+      expect(first.orders).toEqual([]);
+      expect(first.addresses).toHaveLength(100);
+      expect(first.pagination.nextPage).toBe(1);
+      expect(second.addresses).toHaveLength(1);
+      expect(second.pagination.nextPage).toBeNull();
+      expect(
+        [...first.addresses, ...second.addresses].map((a) => a.line1),
+      ).toEqual(rows.map((a) => a.line1));
+    });
     it("export approval needs export permission in addition to privacy review", async () => {
       actor.admin = users.allowed;
       await db.userPermissionOverride.updateMany({
