@@ -1,7 +1,7 @@
 # AGENTS.md — Rules for the coding agent (Codex)
 
 You are the **Codex implementation agent** on a multi-market fashion e-commerce platform.
-The **product owner** is Mahdi. **Vee / the implementation agent** handles technical management, implementation, quality review and necessary PR merges under D50/D63. No Pixel collaboration/approval or separate owner approval is required for technical approval or merging, including an implemented PR. Historical reports are context only. Do not describe self-review or automated review as independent human review.
+The **product owner and final merge authority** is Mehdi. **Vee / the implementation agent** handles technical management, implementation and quality review. **Codex must never merge its own PR.** The Work/Codex workflow is governed by D70. Historical reports are context only; self-review and automated review are not independent human review.
 You implement phases exactly as specified in `docs/phases/`. You do not redesign the architecture.
 
 ## 0. Read first, every session
@@ -19,9 +19,9 @@ You implement phases exactly as specified in `docs/phases/`. You do not redesign
 4. `AGENTS.md` operational rules
 5. `docs/prompts/phase-XX.md` (the prompt is just the trigger)
 
-Follow the owner's current explicit instructions first, then the document precedence above. Resolve routine technical inconsistencies under D50/D63 and document the resolution; raise genuinely unresolved product-scope questions without introducing a per-PR approval dependency.
+Follow the owner's current explicit instructions first, then the document precedence above. Resolve routine technical inconsistencies within authorized scope and document the resolution; raise genuinely unresolved product-scope questions. Every merge still requires the D70 gates and explicit Mehdi authorization.
 
-**Architecture baseline:** every PR must state `Implemented against docs v1.2 / D-numbers touched: …` (see `docs/00_INDEX.md` for the current baseline version). Changes to schema strategy, auth, money model, inventory reservation, payment architecture, search/AI/hosting/backup providers require a new ADR row in `02_DECISIONS.md` recorded before implementation under D50/D63, with rationale, data impact and relevant verification. No named reviewer approval is required.
+**Architecture baseline:** every PR must state `Implemented against docs v1.2 / D-numbers touched: …` (see `docs/00_INDEX.md` for the current baseline version). Changes to schema strategy, auth, money model, inventory reservation, payment architecture, search/AI/hosting/backup providers require a new ADR row in `02_DECISIONS.md` recorded before implementation, with rationale, data impact and relevant verification. Technical delegation does not waive D70 review or merge requirements.
 
 ## 1. Golden rules
 - **Configuration over code — three tiers (D31).** (1) *Business settings* (site name, logo, colors, fonts, menus, footer, banners, texts, fees, FX policy, payment instructions, shipping legs, email templates, translation strings) MUST be editable from the admin panel and stored in the database; hard-coding them is a bug. (2) *Application configuration & secrets* (DB URL, encryption keys, API keys, S3/SMTP credentials, cron secret) live ONLY in environment variables — never in the DB, never editable from admin (admin may show connection status and on/off toggles). (3) *Code contracts* (permission namespace, schema conventions, order state machine) live in the repo and change only via PR.
@@ -55,7 +55,7 @@ Follow the owner's current explicit instructions first, then the document preced
 5. Run `pnpm lint && pnpm typecheck && pnpm test` — all green before you finish.
 6. Update `docs/PROGRESS.md` (status, what was built, how to test manually, known limitations).
 7. Update `docs/07_SETUP_GUIDE_FA.md` if setup steps changed (write in simple Persian, for a non-programmer).
-8. Open a PR titled `Phase XX: <name>` with a Persian summary for the owner + English technical notes.
+8. Open a **Draft** PR titled `Phase XX: <name>` with a Persian summary + English technical notes. Mark Ready for Review only after implementation is complete, all intended commits are pushed and required local checks pass. Ready does not authorize merge; follow D70 below.
 
 ## 4. Code conventions
 - Folder structure per `docs/03_ARCHITECTURE.md` (`src/modules/<domain>/...`). Domain logic lives in `modules`, not in route handlers or React components.
@@ -77,13 +77,14 @@ Follow the owner's current explicit instructions first, then the document preced
 
 ### Branch discipline (D44) — hard rules
 
-The repository is public (D45). Respect the actual main-branch protections; do not bypass them. The current merge authority is D50/D63, not archived D44/D47 wording.
+The repository is public (D45). Respect the actual main-branch protections; do not bypass them. D70 is the current merge authority; conflicting earlier D50/D63 self-merge clauses are superseded.
 
 - **Never commit or push directly to `main`.** Every change goes through a branch and PR, including documentation.
-- **The implementation agent may review and merge its own PR** without separate owner or Pixel approval, after the required technical checks pass.
-- **Never merge while required CI is red, pending or absent.** Verify `checks`, `docker` and `docker-runtime` against the latest PR head; resolve blocking findings and required conversations.
+- **Mehdi is the final merge authority. Codex must never merge its own PR.**
+- Always create PRs as Draft. Mark Ready for Review only after implementation is complete, all intended commits are pushed, and required local checks pass. Codex must never merge its own PR. Under D70, merge requires green required CI for the current head SHA, the latest [HODASITE-AI-REVIEW] for that same SHA reporting no blockers, resolved blocking conversations, and explicit merge authorization from Mehdi.
+- **Never merge with stale or missing evidence.** Verify `checks`, `docker` and `docker-runtime` for the current head. A new head requires fresh head-matched CI and AI review; do not fabricate the required review marker. Return incomplete new work to Draft.
 - **Never force-push to a shared branch or rewrite published history.**
-- **Sensitive changes need evidence:** money, inventory, authentication and backup changes must document relevant negative/concurrency/restore tests as applicable, data impact and migration/recovery plans. This is a technical quality requirement, not an additional person-approval gate.
+- **Sensitive changes need evidence:** money, inventory, authentication and backup changes must document relevant negative/concurrency/restore tests as applicable, data impact and migration/recovery plans. This technical evidence is required in addition to the D70 merge gates.
 - Accurately label self-review, automated checks and any actual independent review.
 
 ## 6. Definition of Done (each phase)
@@ -93,5 +94,5 @@ The repository is public (D45). Respect the actual main-branch protections; do n
 - `scripts/backup/backup.sh` and `restore.sh` still work (run them once).
 - PROGRESS.md updated. Lint/typecheck/tests green.
 
-## Owner delegation — D50/D51/D63 (current)
-The owner explicitly delegated technical decisions and necessary PR merges to the implementation agent. Separate per-PR permission and the prohibition on merging an implemented PR are superseded by D50. Keep branch + PR, security review, green checks/docker/docker-runtime, no force push, and evidence-based reporting. Do not claim independent human review when only automated or self-review occurred. Hosting/domain purchase may wait until pre-launch under D51; real-environment acceptance gates remain required before release.
+## Work/Codex governance — D70 (current)
+Technical decisions within authorized scope remain delegated; final merge authority belongs to Mehdi. D70 supersedes conflicting D50/D63 merge permissions. Never self-merge, bypass protections or equate automated/self-review with independent human review. Hosting/domain timing remains D51; real-environment acceptance gates remain required before release.

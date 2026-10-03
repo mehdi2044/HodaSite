@@ -54,11 +54,11 @@ export default async function CrmPage({
     }
     const marketId =
       markets.find((m) => m.id === q.marketId)?.id ?? markets[0].id;
+    const search = (q.search ?? "").slice(0, 100);
     const query = new URLSearchParams({ tab, marketId });
+    if (tab === "customers" && search) query.set("search", search);
     const customers =
-      tab === "customers"
-        ? await listCustomers(marketId, page, (q.search ?? "").slice(0, 100))
-        : [];
+      tab === "customers" ? await listCustomers(marketId, page, search) : [];
     const segments =
       tab === "segments" ? await listSegments(marketId, page) : [];
     const requests =
@@ -122,7 +122,7 @@ export default async function CrmPage({
                 className="input w-full"
                 name="search"
                 maxLength={100}
-                defaultValue={q.search}
+                defaultValue={search}
               />
             </label>
           )}
