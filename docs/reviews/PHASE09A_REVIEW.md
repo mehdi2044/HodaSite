@@ -29,6 +29,8 @@ Historical value/AOV use original frozen USD snapshots and Decimal. Refunds rema
 
 Browser flows cover all three locales at 390px, RTL, customer OTP, channel preference/unsubscribe, export/delete requests, admin password/MFA in the test environment, notes/tags, segment preview/save, metric configuration, review and private export. Test selectors distinguish visible forms during streamed navigation, and segment controls have explicit accessible labels. CRM browser assertions use a bounded 30-second semantic outcome budget for streamed refreshes, and OTP setup waits for the actual document navigation. No sleeps, skipped assertions or automatic retries were added. Two consecutive fresh-customer rounds (six locale flows) passed locally. Full production CI and backup/runtime gates must pass on the final PR head before merge.
 
+CRM action responses no longer include a redundant server-side path revalidation. These authenticated pages query uncached data, and EngagementForm already refreshes after receiving success. Keeping the mutation result separate from the streamed page render prevents the action pending state from depending on that render. Repeated CI failures persisted with a 30-second assertion budget, so increasing test timeouts alone was not treated as a fix.
+
 Automated PR review identified two corrections: tag reads now require the tag grant (the domain skips the query and the UI hides the section), and private exports include whitelisted order addresses while rejecting unknown/nested snapshot fields. Regression tests cover both; final CI reruns on the corrected head.
 
 ## Remaining acceptance

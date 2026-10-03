@@ -1,5 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
+// These authenticated CRM pages read uncached data. EngagementForm refreshes
+// after the action result arrives; including an RSC refresh in this response
+// can keep useActionState pending on the page render.
 import { runAction } from "@/lib/action-result";
 import {
   setPreference,
@@ -14,13 +16,11 @@ export async function preferenceAction(_: unknown, f: FormData) {
       channel: f.get("channel"),
       status: f.get("status"),
     });
-    revalidatePath("/[locale]/account/preferences", "page");
   });
 }
 export async function requestAction(_: unknown, f: FormData) {
   return runAction(async () => {
     await requestPrivacy({ marketId: f.get("marketId"), kind: f.get("kind") });
-    revalidatePath("/[locale]/account/preferences", "page");
   });
 }
 export async function cancelRequestAction(_: unknown, f: FormData) {
@@ -34,7 +34,6 @@ export async function cancelRequestAction(_: unknown, f: FormData) {
       },
       true,
     );
-    revalidatePath("/[locale]/account/preferences", "page");
   });
 }
 export async function unsubscribeAction(_: unknown, f: FormData) {

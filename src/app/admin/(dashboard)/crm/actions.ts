@@ -1,5 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
+// These authenticated CRM pages read uncached data. EngagementForm refreshes
+// after the action result arrives; including an RSC refresh in this response
+// can keep useActionState pending on the page render.
 import { runAction } from "@/lib/action-result";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
@@ -25,7 +27,6 @@ export async function noteAction(_: unknown, f: FormData) {
       marketId: f.get("marketId"),
       body: f.get("body"),
     });
-    revalidatePath("/admin/crm");
   });
 }
 export async function tagsAction(_: unknown, f: FormData) {
@@ -39,7 +40,6 @@ export async function tagsAction(_: unknown, f: FormData) {
         .map((v) => v.trim())
         .filter(Boolean),
     });
-    revalidatePath("/admin/crm");
   });
 }
 export async function segmentAction(_: unknown, f: FormData) {
@@ -65,7 +65,6 @@ export async function segmentAction(_: unknown, f: FormData) {
       name: f.get("name"),
       definition,
     });
-    revalidatePath("/admin/crm");
   });
 }
 export async function metricsAction(_: unknown, f: FormData) {
@@ -83,7 +82,6 @@ export async function metricsAction(_: unknown, f: FormData) {
         churnDays: Number(f.get("churnDays")),
       },
     });
-    revalidatePath("/admin/crm");
   });
 }
 export async function privacyAction(_: unknown, f: FormData) {
@@ -95,6 +93,5 @@ export async function privacyAction(_: unknown, f: FormData) {
       version: Number(f.get("version")),
       status: f.get("status"),
     });
-    revalidatePath("/admin/crm");
   });
 }
