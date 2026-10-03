@@ -86,7 +86,18 @@ export function SegmentBuilder({
     }
   }
   return (
-    <EngagementForm action={action}>
+    <EngagementForm
+      action={async (previous, form) => {
+        const result = await action(previous, form);
+        // React resets native form controls after success. Clear the new
+        // definition too so its displayed fields cannot diverge from state.
+        if (result.ok && !saved) {
+          setRules([]);
+          setPreview(null);
+        }
+        return result;
+      }}
+    >
       <input type="hidden" name="marketId" value={marketId} />
       {saved && (
         <>

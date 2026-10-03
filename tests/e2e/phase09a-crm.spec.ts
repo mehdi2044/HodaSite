@@ -169,6 +169,19 @@ for (const [locale, code] of [
         db.crmSegment.count({ where: { name: tag, marketId: market.id } }),
       )
       .toBe(1);
+    await expect(builder.getByLabel(t.condition, { exact: true })).toHaveCount(
+      0,
+    );
+    const savedSegment = page
+      .locator("details")
+      .filter({ has: page.locator("summary", { hasText: tag }) });
+    await savedSegment.locator("summary").click();
+    await expect(
+      savedSegment.getByLabel(t.condition, { exact: true }),
+    ).toHaveValue("tag");
+    await expect(
+      savedSegment.getByLabel(t.conditionValue, { exact: true }),
+    ).toHaveValue(tag);
     await page.screenshot({
       path: info.outputPath(`crm-segment-${locale}.png`),
       fullPage: true,
