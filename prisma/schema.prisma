@@ -341,9 +341,16 @@ model ThemeSettings {
 }
 
 model Market {
-  wishlists   Wishlist[]
-  reviews     Review[]
-  stockAlerts StockAlert[]
+  crmProfiles       CrmProfile[]
+  crmNotes          CrmNote[]
+  marketingConsents MarketingConsent[]
+  consentEvents     ConsentEvent[]
+  privacyRequests   PrivacyRequest[]
+  crmSegments       CrmSegment[]
+  crmMetricsConfig  CrmMetricsConfig?
+  wishlists         Wishlist[]
+  reviews           Review[]
+  stockAlerts       StockAlert[]
 
   ledgerAccounts  LedgerAccount[]
   journalEntries  JournalEntry[]
@@ -1030,6 +1037,11 @@ enum ReturnStatus {
 }
 
 model Customer {
+  crmProfiles       CrmProfile[]
+  crmNotes          CrmNote[]
+  consents          MarketingConsent[]
+  consentEvents     ConsentEvent[]
+  privacyRequests   PrivacyRequest[]
   wishlists         Wishlist[]
   reviews           Review[]
   stockAlerts       StockAlert[]
@@ -1057,6 +1069,8 @@ model Customer {
   credits             StoreCredit[]
   createdAt           DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt           DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@index([preferredMarketId, id])
 }
 
 model Address {
@@ -1218,6 +1232,7 @@ model Order {
   @@index([customerId])
   @@index([parentOrderId])
   @@index([status, paymentDeadlineAt])
+  @@index([marketId, customerId, paidAt])
 }
 
 model OrderItem {
@@ -2055,4 +2070,139 @@ model LaunchEvidence {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([gate, origin, revision, createdAt])
+}
+
+// D69: market-scoped CRM. Legacy global customer fields remain untouched.
+model CrmProfile {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId   String
+  market     Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  tags       String[] @default([])
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, marketId])
+  @@index([marketId])
+  @@index([tags], type: Gin, map: "CrmProfile_tags_gin")
+}
+
+model CrmNote {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId   String
+  market     Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  body       String
+  actorId    String
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([customerId, marketId, createdAt])
+  @@index([marketId])
+}
+
+model MarketingConsent {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId   String
+  market     Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  channel    String
+  status     String
+  source     String
+  version    Int      @default(1)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, marketId, channel])
+  @@index([marketId, channel, status, customerId])
+}
+
+model ConsentEvent {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId   String
+  market     Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  channel    String
+  status     String
+  source     String
+  actorId    String
+  version    Int
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, marketId, channel, version])
+  @@index([customerId, marketId, createdAt])
+  @@index([marketId])
+}
+
+model PrivacyRequest {
+  id         String         @id @default(cuid())
+  customerId String
+  customer   Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId   String
+  market     Market         @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  kind       String
+  status     String         @default("REQUESTED")
+  version    Int            @default(1)
+  reviewedBy String?
+  events     PrivacyEvent[]
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([customerId, marketId, createdAt])
+  @@index([marketId, status])
+}
+
+model PrivacyEvent {
+  id        String         @id @default(cuid())
+  requestId String
+  request   PrivacyRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  status    String
+  actorId   String
+  actorKind String
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([requestId, createdAt])
+}
+
+model CrmSegment {
+  id         String               @id @default(cuid())
+  marketId   String
+  market     Market               @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  name       String
+  version    Int                  @default(1)
+  definition Json
+  revisions  CrmSegmentRevision[]
+  createdAt  DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime             @updatedAt @db.Timestamptz(3)
+
+  @@index([marketId, createdAt])
+}
+
+model CrmSegmentRevision {
+  id         String     @id @default(cuid())
+  segmentId  String
+  segment    CrmSegment @relation(fields: [segmentId], references: [id], onDelete: Restrict)
+  version    Int
+  name       String
+  definition Json
+  actorId    String
+  createdAt  DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@unique([segmentId, version])
+}
+
+model CrmMetricsConfig {
+  id         String   @id @default(cuid())
+  marketId   String   @unique
+  market     Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  definition Json
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
 }
