@@ -9,7 +9,6 @@ import { CommerceForm } from "@/components/storefront/commerce-form";
 import {
   profileAction,
   logoutCustomerAction,
-  deletionRequestAction,
   saveCustomerAddressAction,
 } from "../commerce-actions";
 export const dynamic = "force-dynamic";
@@ -185,12 +184,15 @@ export default async function AccountPage({
           {customer.deletionRequestedAt ? (
             <p>{t("deletionPending")}</p>
           ) : (
-            <CommerceForm action={deletionRequestAction.bind(null, locale)}>
+            <div>
               <p className="text-sm text-muted">{t("deletionExplanation")}</p>
-              <button className="rounded-token border border-error px-4 py-3 text-error">
+              <Link
+                href={`/${locale}/account/preferences`}
+                className="inline-block rounded-token border border-error px-4 py-3 text-error"
+              >
                 {t("requestDeletion")}
-              </button>
-            </CommerceForm>
+              </Link>
+            </div>
           )}
         </section>
       </div>

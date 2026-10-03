@@ -187,6 +187,11 @@ export default async function CrmPage({
             {requests.slice(0, 25).map((r) => (
               <article className="card grid gap-3" key={r.id}>
                 <h2>{t(`kinds.${r.kind}`)}</h2>
+                <p>
+                  {[r.customer.firstName, r.customer.lastName]
+                    .join(" ")
+                    .trim() || t("unnamed")}
+                </p>
                 <bdi className="break-all" dir="ltr">
                   {r.id}
                 </bdi>

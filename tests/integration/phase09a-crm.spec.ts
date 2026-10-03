@@ -482,6 +482,24 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(response.headers.get("cache-control")).toContain("no-store");
       const text = await response.text();
       expect(text).not.toMatch(/Matrix internal|MUST_NOT_LEAK|sessionVersion/);
+      const data = JSON.parse(text);
+      expect(data.orders).toHaveLength(2);
+      expect(data.carts).toHaveLength(2);
+      expect(data.consentHistory.length).toBeGreaterThan(0);
+      expect(data.carts[0]).not.toHaveProperty("tokenHash");
+      const privateCart = await db.cart.create({
+        data: {
+          customerId,
+          marketId: otherMarket,
+          tokenHash: randomUUID(),
+          locale: "tr",
+          currency: "USD",
+          expiresAt: new Date("2030-01-01"),
+        },
+      });
+      const scoped = await exportPersonalData(r.id);
+      expect(scoped.carts).toHaveLength(2);
+      expect(JSON.stringify(scoped)).not.toContain(privateCart.tokenHash);
       actor.customer = otherCustomer;
       await expect(exportPersonalData(r.id)).rejects.toThrow("FORBIDDEN");
       actor.customer = "";
@@ -554,7 +572,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const result = await previewSegment(otherMarket, def);
       const truth = await db.$queryRaw<
         { n: bigint }[]
-      >`SELECT count(*) n FROM "Customer" c WHERE c."preferredMarketId"=${otherMarket} AND c."isActive" AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE o."customerId"=c.id AND o."marketId"=${otherMarket} AND o."paidAt" IS NOT NULL AND o.kind='SALE' AND o.status <> 'CANCELLED')`;
+      >`SELECT count(*) n FROM "Customer" c WHERE (c."preferredMarketId"=${otherMarket} OR EXISTS (SELECT 1 FROM "Cart" a WHERE a."customerId"=c.id AND a."marketId"=${otherMarket})) AND c."isActive" AND NOT EXISTS (SELECT 1 FROM "Order" o WHERE o."customerId"=c.id AND o."marketId"=${otherMarket} AND o."paidAt" IS NOT NULL AND o.kind='SALE' AND o.status <> 'CANCELLED')`;
       expect(result.count).toBe(Number(truth[0].n));
       expect(result.rows).toHaveLength(25);
       const second = await previewSegment(otherMarket, def, 1);

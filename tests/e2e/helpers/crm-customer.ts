@@ -44,4 +44,13 @@ export async function customerLogin(page: Page, email: string) {
     .first()
     .click();
   await expect(page).toHaveURL(/\/en\/account\/wishlist$/);
+  await expect
+    .poll(
+      async () =>
+        (await page.request.get("/api/customer-auth/session"))
+          .json()
+          .then((s: { user?: { id?: string } } | null) => Boolean(s?.user?.id)),
+      { timeout: 15000 },
+    )
+    .toBe(true);
 }

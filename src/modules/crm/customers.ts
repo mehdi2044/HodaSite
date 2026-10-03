@@ -53,6 +53,10 @@ export async function customer360(
   };
   return db.$transaction(
     async (tx) => {
+      const market = await tx.market.findUniqueOrThrow({
+        where: { id: marketId },
+        select: { code: true },
+      });
       const profile = await tx.customer.findUniqueOrThrow({
         where: { id: customerId },
         select: {
@@ -207,6 +211,7 @@ export async function customer360(
         config?.definition,
       );
       return {
+        market,
         profile,
         access,
         tags: tags?.tags ?? [],
@@ -312,6 +317,7 @@ export async function saveMetricsConfig(raw: unknown) {
   const actorId = await admin("crm.metrics.manage", input.marketId);
   return withMutation(() =>
     db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${"crm-metrics:" + input.marketId}))::text`;
       const before = await tx.crmMetricsConfig.findUnique({
         where: { marketId: input.marketId },
       });

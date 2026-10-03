@@ -84,6 +84,9 @@ export default async function CustomerPage({
         </header>
         <article className="card grid gap-2">
           <h2>{t("profile")}</h2>
+          <p>
+            {t("market")}: <bdi>{d.market.code}</bdi>
+          </p>
           <bdi dir="ltr" className="break-all">
             {d.profile.email}
           </bdi>

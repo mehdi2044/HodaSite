@@ -118,6 +118,7 @@ export function SegmentBuilder({
           <label>
             {t("condition")}
             <select
+              aria-label={t("condition")}
               className="input w-full"
               value={r.field}
               onChange={(e) =>
@@ -176,6 +177,7 @@ export function SegmentBuilder({
             r.field === "consent" ||
             r.field === "category" ? (
               <select
+                aria-label={t("conditionValue")}
                 className="input w-full"
                 value={r.value}
                 onChange={(e) =>

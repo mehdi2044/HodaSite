@@ -214,7 +214,10 @@ export async function privacyRequests(
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 26,
     skip: page * 25,
-    include: { events: { orderBy: { createdAt: "asc" }, take: 10 } },
+    include: {
+      customer: { select: { firstName: true, lastName: true } },
+      events: { orderBy: { createdAt: "asc" }, take: 10 },
+    },
   });
 }
 export async function transitionPrivacy(raw: unknown, asCustomer = false) {
@@ -297,7 +300,16 @@ export async function exportPersonalData(requestId: string, page = 0) {
   const marketId = request.marketId;
   return db.$transaction(
     async (tx) => {
-      const [orders, reviews, consents, requests] = await Promise.all([
+      const [
+        orders,
+        reviews,
+        consents,
+        requests,
+        consentHistory,
+        wishlist,
+        carts,
+        returns,
+      ] = await Promise.all([
         tx.order.findMany({
           where: { customerId: actor.id, marketId },
           select: {
@@ -334,6 +346,51 @@ export async function exportPersonalData(requestId: string, page = 0) {
           skip: page * 100,
           take: 101,
         }),
+        tx.consentEvent.findMany({
+          where: { customerId: actor.id, marketId },
+          select: {
+            channel: true,
+            status: true,
+            source: true,
+            createdAt: true,
+          },
+          orderBy: { id: "asc" },
+          skip: page * 100,
+          take: 101,
+        }),
+        tx.wishlist.findMany({
+          where: { customerId: actor.id, marketId },
+          select: { productId: true, createdAt: true },
+          orderBy: { id: "asc" },
+          skip: page * 100,
+          take: 101,
+        }),
+        tx.cart.findMany({
+          where: { customerId: actor.id, marketId },
+          select: {
+            createdAt: true,
+            updatedAt: true,
+            completedAt: true,
+            expiresAt: true,
+            locale: true,
+          },
+          orderBy: { id: "asc" },
+          skip: page * 100,
+          take: 101,
+        }),
+        tx.returnRequest.findMany({
+          where: { customerId: actor.id, order: { marketId } },
+          select: {
+            type: true,
+            status: true,
+            reasonCode: true,
+            note: true,
+            createdAt: true,
+          },
+          orderBy: { id: "asc" },
+          skip: page * 100,
+          take: 101,
+        }),
       ]);
       return {
         schemaVersion: 1,
@@ -345,15 +402,29 @@ export async function exportPersonalData(requestId: string, page = 0) {
           lastName: actor.lastName,
           phone: actor.phone,
           locale: actor.locale,
+          birthDate: actor.birthDate,
+          gender: actor.gender,
         },
         consents,
         orders: orders.slice(0, 100),
         reviews: reviews.slice(0, 100),
         requests: requests.slice(0, 100),
+        consentHistory: consentHistory.slice(0, 100),
+        wishlist: wishlist.slice(0, 100),
+        carts: carts.slice(0, 100),
+        returns: returns.slice(0, 100),
         pagination: {
           page,
           pageSize: 100,
-          nextPage: [orders, reviews, requests].some((xs) => xs.length > 100)
+          nextPage: [
+            orders,
+            reviews,
+            requests,
+            consentHistory,
+            wishlist,
+            carts,
+            returns,
+          ].some((xs) => xs.length > 100)
             ? page + 1
             : null,
         },

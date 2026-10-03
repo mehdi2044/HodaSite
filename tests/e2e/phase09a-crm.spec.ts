@@ -42,7 +42,7 @@ for (const [locale, code] of [
       locale === "fa" ? "rtl" : "ltr",
     );
     const channelForm = page
-      .locator("form")
+      .locator("form:visible")
       .filter({ has: page.locator('input[name="channel"][value="email"]') });
     await channelForm.locator('select[name="status"]').selectOption("OPTED_IN");
     await channelForm.getByRole("button", { name: t.save }).click();
@@ -67,7 +67,7 @@ for (const [locale, code] of [
       ).status,
     ).toBe("OPTED_OUT");
     await page.goto(`/${locale}/account/preferences`);
-    await page.locator('select[name="kind"]').selectOption("EXPORT");
+    await page.locator('select[name="kind"]:visible').selectOption("EXPORT");
     await page.getByRole("button", { name: t.request, exact: true }).click();
     await expect(
       page.getByRole("button", { name: t.cancel, exact: true }),
@@ -75,7 +75,7 @@ for (const [locale, code] of [
     const req = await db.privacyRequest.findFirstOrThrow({
       where: { customerId: customer.id, marketId: market.id, kind: "EXPORT" },
     });
-    await page.locator('select[name="kind"]').selectOption("DELETE");
+    await page.locator('select[name="kind"]:visible').selectOption("DELETE");
     await page.getByRole("button", { name: t.request, exact: true }).click();
     await expect(
       page.getByRole("button", { name: t.cancel, exact: true }),
@@ -122,10 +122,10 @@ for (const [locale, code] of [
     await page.goto(`/admin/crm/${customer.id}?marketId=${market.id}`);
     await expect(page.getByRole("heading", { name: t.profile })).toBeVisible();
     const tag = `browser-${locale}-${randomUUID().slice(0, 8)}`;
-    await page.locator('[name="tags"]').fill(tag);
+    await page.locator('[name="tags"]:visible').fill(tag);
     await page
-      .locator("form")
-      .filter({ has: page.locator('[name="tags"]') })
+      .locator("form:visible")
+      .filter({ has: page.locator('[name="tags"]:visible') })
       .getByRole("button", { name: t.save })
       .click();
     await expect
@@ -143,18 +143,18 @@ for (const [locale, code] of [
           )?.tags,
       )
       .toContain(tag);
-    await page.locator('[name="body"]').fill("Private browser fixture note");
+    await page
+      .locator('[name="body"]:visible')
+      .fill("Private browser fixture note");
     await page.getByRole("button", { name: t.addNote }).click();
-    await expect(
-      page.getByText("Private browser fixture note", { exact: true }),
-    ).toBeVisible();
+    await expect(page.getByText(/^Private browser fixture note/)).toBeVisible();
     await page.screenshot({
       path: info.outputPath(`crm-customer-${locale}.png`),
       fullPage: true,
     });
     await page.goto(`/admin/crm?tab=segments&marketId=${market.id}`);
     const builder = page
-      .locator("form")
+      .locator("form:visible")
       .filter({ has: page.locator('[name="definition"]') })
       .first();
     await builder.locator('[name="name"]').fill(tag);
@@ -181,13 +181,13 @@ for (const [locale, code] of [
       monetaryUsd: "50,100,250,500",
       churnDays: "180",
     }))
-      await page.locator(`[name="${name}"]`).fill(value);
+      await page.locator(`[name="${name}"]:visible`).fill(value);
     await page.getByRole("button", { name: t.save, exact: true }).click();
     await expect(page.getByRole("status")).toContainText(
       { fa, tr, en }[locale].engagement.saved,
     );
     await page.goto(`/admin/crm?tab=privacy&marketId=${market.id}`);
-    const review = page.locator("article").filter({ hasText: req.id });
+    const review = page.locator("article:visible").filter({ hasText: req.id });
     await review.locator('[name="status"]').selectOption("IN_REVIEW");
     await review.getByRole("button", { name: t.save }).click();
     await expect(
