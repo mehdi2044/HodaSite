@@ -317,3 +317,51 @@ to downgrade. Validate migrations on an isolated `_test` database, permission an
 market negatives, stale edits, retry/rollback, real concurrent cap/budget claims,
 release guards and direct SQL immutability. Local/S3 restore CI remains mandatory
 before Ready. This increment does not complete 09B or authorize deployment/merge.
+
+## D73 — 09B checkout, tax and discount allocation (2026-10-03)
+
+Recorded before commerce integration. Gross item prices/subtotal remain intact.
+Quote first computes ordinary D17 fees, evaluates promotions against gross
+merchandise and charged shipping, then recomputes TAX using net merchandise and
+net taxable charged shipping. Shipping/customs/service selection and bases remain
+as configured against gross merchandise, avoiding circular shipping thresholds.
+Absorbed shipping cannot be discounted. Fixed/per-item/weight taxes keep their
+configured method; percentage/value-bracket taxes use the net merchandise base.
+No country-specific rate or legal assumption is introduced: actual tax/fee
+configuration still requires the existing pre-release owner/accountant gate.
+Order total = gross subtotal + final charged fees - explicit discount total.
+No extra rounding to display-price endings is applied after discount allocation.
+
+Checkout re-quotes with server prices and verified session identity, locks market,
+programs and coupons at ReadCommitted, and checks the customer's confirmed total.
+Coupon strings persist in cart checkout JSON with cart revision locking; address
+and shipping updates preserve them, market changes clear them. No browser prices,
+audiences or discount evidence are accepted. Public estimates expose applied
+public-copy lines only, never rejected rules, CRM evidence or coupon internals.
+The cart lock precedes promotion locks for new order creation; the new Order has
+no competing owner. Existing-order operations lock Order before promotion rows,
+and promotion locks precede inventory/credit locks in cancellation and checkout.
+Immutable D72 evaluation/redemptions commit with order, inventory and payment;
+any mismatch rolls back everything. Unpaid cancellation/expiry releases capacity
+before inventory locks. Paid/refunded orders never release usage.
+
+Return budgets use exact saved merchandise allocations per variant, including
+zero-value gifts already in the basket. Shipping discounts do not reduce the
+returnable merchandise budget. D55's existing non-refundable fee/tax policy is
+unchanged; split returns preserve the final four-decimal remainder. Legacy orders
+without promotion evidence keep the existing proportional-discount behavior.
+Ledger sales = subtotal minus merchandise discounts; shipping income = charged
+shipping minus shipping discounts. Sales attribution uses saved net item weights.
+All three monetary roles still use the order FX snapshot. Invoice revisions copy
+immutable discount titles/amounts, never live rules. Zero-due discounted orders
+follow the existing zero-due fulfillment path, including finance validation.
+
+Data impact: no new schema or historic-order rewrite. D72 tables already preserve
+the allocation/copy evidence; cart JSON and new-order snapshots carry new data.
+Rollback after accepting discounted orders must retain the allocation-aware
+returns/finance readers; do not roll back to code that treats shipping discounts
+as merchandise discounts. Backup format/ops boundary unchanged. Required proof:
+checkout cap race and stale-total rollback, retry, cancellation, guest isolation,
+net tax, zero-due, scoped allocations/partial returns, balanced finance, immutable
+invoice in three locales, and no-promotion regression. No deployment/Preview
+mutation; 09B stays Draft while the admin interface and final gates remain open.
