@@ -35,9 +35,9 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await expect
     .poll(
       async () => {
-        // A freshly seeded database already has 12 optimization jobs while a
-        // worker batch claims 10. Tick inside the poll so this test never
-        // assumes an empty queue or a particular job ordering.
+        // Seed and integration fixtures leave jobs ahead of this upload; a
+        // tick claims only 10. Drive the real queue on every poll and keep
+        // inter-batch waits short within the unchanged 30-second budget.
         const tick = await page.request.post("/api/cron/tick", {
           headers: { authorization: `Bearer ${CRON_SECRET}` },
         });
@@ -48,7 +48,7 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
         };
         return body.items.find((item) => item.id === media.id)?.status;
       },
-      { timeout: 30_000, intervals: [500, 1_000, 2_000] },
+      { timeout: 30_000, intervals: [100, 250, 500] },
     )
     .toBe("READY");
 
@@ -87,7 +87,7 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
         };
         return body.items.find((item) => item.id === media.id);
       },
-      { timeout: 30_000, intervals: [500, 1_000, 2_000] },
+      { timeout: 30_000, intervals: [100, 250, 500] },
     )
     .toMatchObject({ id: media.id, width: 960 });
   const afterReplace = await page.request.get("/api/admin/media?kind=image");
