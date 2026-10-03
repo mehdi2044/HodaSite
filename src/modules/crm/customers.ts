@@ -97,10 +97,12 @@ export async function customer360(
           _max: { paidAt: true },
         }),
         tx.crmMetricsConfig.findUnique({ where: { marketId } }),
-        tx.crmProfile.findUnique({
-          where: { customerId_marketId: common },
-          select: { tags: true },
-        }),
+        access.tags
+          ? tx.crmProfile.findUnique({
+              where: { customerId_marketId: common },
+              select: { tags: true },
+            })
+          : null,
         tx.order.findMany({
           where: common,
           select: {

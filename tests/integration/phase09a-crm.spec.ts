@@ -171,8 +171,17 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             fxSnapshot: {},
             bankSnapshot: {},
             contactSnapshot: { private: "MUST_NOT_LEAK" },
-            shippingAddress: {},
-            billingAddress: {},
+            shippingAddress: {
+              city: "Fixture shipping city",
+              line1: "Example street",
+              token: "MUST_NOT_LEAK",
+              nested: { secret: "MUST_NOT_LEAK" },
+            },
+            billingAddress: {
+              city: "Fixture billing city",
+              postalCode: "TEST",
+              bankAccount: "MUST_NOT_LEAK",
+            },
             holdExpiresAt: new Date("2030-01-01"),
             paymentDeadlineAt: new Date("2030-01-01"),
             paidAt: new Date("2026-01-01"),
@@ -484,6 +493,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(text).not.toMatch(/Matrix internal|MUST_NOT_LEAK|sessionVersion/);
       const data = JSON.parse(text);
       expect(data.orders).toHaveLength(2);
+      expect(data.orders[0].shippingAddress).toEqual({
+        city: "Fixture shipping city",
+        line1: "Example street",
+      });
+      expect(data.orders[0].billingAddress).toEqual({
+        city: "Fixture billing city",
+        postalCode: "TEST",
+      });
       expect(data.carts).toHaveLength(2);
       expect(data.consentHistory.length).toBeGreaterThan(0);
       expect(data.carts[0]).not.toHaveProperty("tokenHash");
@@ -530,7 +547,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
-    it("hides notes without the separate grant and paginates detail collections", async () => {
+    it("hides notes and tags without separate grants and paginates detail collections", async () => {
       await db.crmNote.createMany({
         data: Array.from({ length: 30 }, (_, i) => ({
           customerId,
@@ -545,14 +562,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).toBeGreaterThan(0);
       actor.admin = users.allowed;
       await db.userPermissionOverride.updateMany({
-        where: { userId: users.allowed, permission: "crm.customer.notes" },
+        where: {
+          userId: users.allowed,
+          permission: { in: ["crm.customer.notes", "crm.customer.tags"] },
+        },
         data: { allow: false },
       });
       try {
         expect((await customer360(marketId, customerId)).notes).toEqual([]);
+        expect((await customer360(marketId, customerId)).tags).toEqual([]);
       } finally {
         await db.userPermissionOverride.updateMany({
-          where: { userId: users.allowed, permission: "crm.customer.notes" },
+          where: {
+            userId: users.allowed,
+            permission: { in: ["crm.customer.notes", "crm.customer.tags"] },
+          },
           data: { allow: true },
         });
       }

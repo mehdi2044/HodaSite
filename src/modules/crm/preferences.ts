@@ -14,6 +14,31 @@ import {
   validTransition,
 } from "./contracts";
 
+// Historical checkout address fields only; never return arbitrary snapshot JSON.
+function exportAddress(value: Prisma.JsonValue) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const fields = [
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "country",
+    "province",
+    "city",
+    "line1",
+    "line2",
+    "postalCode",
+    "note",
+    "birthDate",
+    "gender",
+  ];
+  return Object.fromEntries(
+    fields.flatMap((field) =>
+      typeof value[field] === "string" ? [[field, value[field]]] : [],
+    ),
+  );
+}
+
 async function writeConsent(
   tx: Prisma.TransactionClient,
   customerId: string,
@@ -318,6 +343,8 @@ export async function exportPersonalData(requestId: string, page = 0) {
             totalAmount: true,
             currency: true,
             placedAt: true,
+            shippingAddress: true,
+            billingAddress: true,
           },
           orderBy: { id: "asc" },
           skip: page * 100,
@@ -406,7 +433,13 @@ export async function exportPersonalData(requestId: string, page = 0) {
           gender: actor.gender,
         },
         consents,
-        orders: orders.slice(0, 100),
+        orders: orders
+          .slice(0, 100)
+          .map(({ shippingAddress, billingAddress, ...order }) => ({
+            ...order,
+            shippingAddress: exportAddress(shippingAddress),
+            billingAddress: exportAddress(billingAddress),
+          })),
         reviews: reviews.slice(0, 100),
         requests: requests.slice(0, 100),
         consentHistory: consentHistory.slice(0, 100),

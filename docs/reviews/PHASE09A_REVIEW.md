@@ -15,10 +15,10 @@ The existing preview was synchronized from `ba8f174` to PR46/main `86c07d0`, ret
 ## Security and privacy
 
 - Every admin operation derives the actor from its authenticated session, checks its permission and market, and validates input. Notes/tags also require customer-view membership. A known foreign customer ID cannot grant access.
-- The seven-permission matrix exercises owner, scoped grant, wrong market, explicit denial, inactive user and anonymous actor against actual domain operations. Separate tests cover missing note/export grants, forged actors, private exports and cross-market data.
+- The seven-permission matrix exercises owner, scoped grant, wrong market, explicit denial, inactive user and anonymous actor against actual domain operations. Separate tests cover missing note/tag/export grants, forged actors, private exports and cross-market data.
 - Consent absence never authorizes marketing. Legacy unverified JSON is retained but not read as permission; analytics consent has a separate purpose. Concurrent first writes serialize on the customer row; evidence is append-only. No IP is collected.
 - Unsubscribe uses encrypted, purpose-bound, expiring, consent-version-bound tokens and POST confirmation. A stale link cannot reverse subsequent opt-in. No campaign sender exists.
-- Export approval needs both privacy-review and export permission. Downloads additionally require the same authenticated customer and approved request, with private/no-store headers. Contact and owned activity are paginated; notes, credentials, tokens, receipts and banking snapshots are excluded. Deletion approval records review only, never destructive fulfillment.
+- Export approval needs both privacy-review and export permission. Downloads additionally require the same authenticated customer and approved request, with private/no-store headers. Contact, whitelisted historical shipping/billing address fields and owned activity are paginated; notes, credentials, tokens, receipts and banking snapshots are excluded. Deletion approval records review only, never destructive fulfillment.
 - Segment revisions use optimistic version checks. Metrics settings use a transaction lock so concurrent audit records retain the correct prior definition. Audit entries avoid copying notes or customer contact into general logs.
 
 ## Query and UX verification
@@ -28,6 +28,8 @@ Segment count/member queries use the same parameterized predicate and repeatable
 Historical value/AOV use original frozen USD snapshots and Decimal. Refunds remain separate from gross paid-sale value; cancelled/exchange orders are excluded. Category membership means current catalog classification, and date boundaries mean midnight UTC. RFM/churn thresholds are editable market settings; no configuration means unclassified. No ML, new pricing logic or external senders were added.
 
 Browser flows cover all three locales at 390px, RTL, customer OTP, channel preference/unsubscribe, export/delete requests, admin password/MFA in the test environment, notes/tags, segment preview/save, metric configuration, review and private export. Test selectors distinguish visible forms during streamed navigation, and segment controls have explicit accessible labels. Full production CI and backup/runtime gates must pass on the final PR head before merge.
+
+Automated PR review identified two corrections: tag reads now require the tag grant (the domain skips the query and the UI hides the section), and private exports include whitelisted order addresses while rejecting unknown/nested snapshot fields. Regression tests cover both; final CI reruns on the corrected head.
 
 ## Remaining acceptance
 

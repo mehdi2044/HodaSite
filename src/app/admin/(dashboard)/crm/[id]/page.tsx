@@ -114,25 +114,27 @@ export default async function CustomerPage({
           {t("churn")}: {t(d.metrics.churn)}
         </p>
         <p className="text-muted">{t("sessionsHelp")}</p>
-        <section className="card grid gap-4">
-          <h2>{t("tags")}</h2>
-          <p>{d.tags.join(" · ") || t("empty")}</p>
-          {d.access.tags && (
-            <EngagementForm action={tagsAction}>
-              {hidden}
-              <label>
-                {t("tagsHelp")}
-                <input
-                  className="input w-full"
-                  name="tags"
-                  defaultValue={d.tags.join(", ")}
-                  maxLength={1800}
-                />
-              </label>
-              <button className="button">{t("save")}</button>
-            </EngagementForm>
-          )}
-        </section>
+        {d.access.tags && (
+          <section className="card grid gap-4">
+            <h2>{t("tags")}</h2>
+            <p>{d.tags.join(" · ") || t("empty")}</p>
+            {d.access.tags && (
+              <EngagementForm action={tagsAction}>
+                {hidden}
+                <label>
+                  {t("tagsHelp")}
+                  <input
+                    className="input w-full"
+                    name="tags"
+                    defaultValue={d.tags.join(", ")}
+                    maxLength={1800}
+                  />
+                </label>
+                <button className="button">{t("save")}</button>
+              </EngagementForm>
+            )}
+          </section>
+        )}
         {d.access.notes && (
           <section className="card grid gap-4">
             <h2>{t("notes")}</h2>
