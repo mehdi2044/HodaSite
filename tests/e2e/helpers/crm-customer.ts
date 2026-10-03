@@ -1,6 +1,10 @@
 import { expect, type Page } from "@playwright/test";
-export async function customerLogin(page: Page, email: string) {
-  await page.goto("/en/account/login?next=/en/account/wishlist");
+export async function customerLogin(
+  page: Page,
+  email: string,
+  locale: "fa" | "tr" | "en",
+) {
+  await page.goto(`/${locale}/account/login?next=/${locale}/account/wishlist`);
   await page.locator('main [name="email"]').fill(email);
   await page
     .locator("main form")
@@ -48,7 +52,7 @@ export async function customerLogin(page: Page, email: string) {
       .first()
       .click(),
   ]);
-  await expect(page).toHaveURL(/\/en\/account\/wishlist$/);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/account/wishlist$`));
   await expect
     .poll(
       async () =>

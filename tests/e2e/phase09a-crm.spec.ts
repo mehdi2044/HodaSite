@@ -31,11 +31,13 @@ for (const [locale, code] of [
     await page.setViewportSize({ width: 390, height: 844 });
     const t = { fa, tr, en }[locale].crm,
       email = `crm-browser-${randomUUID()}@example.com`;
-    await customerLogin(page, email);
-    const market = await db.market.findUniqueOrThrow({ where: { code } });
+    // Establish the market before any storefront request. Changing the cookie
+    // after login races with in-flight responses from the previous market.
     await context.addCookies([
-      { name: "market", value: code, url: "http://127.0.0.1:3000" },
+      { name: "market", value: code, url: info.project.use.baseURL! },
     ]);
+    await customerLogin(page, email, locale);
+    const market = await db.market.findUniqueOrThrow({ where: { code } });
     await page.goto(`/${locale}/account/preferences`);
     await expect(
       page.getByRole("heading", { name: t.preferences }),
