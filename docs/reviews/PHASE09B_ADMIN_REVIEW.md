@@ -1,0 +1,86 @@
+# Phase 09B admin delivery and acceptance
+
+Implemented against docs v1.2 / D-numbers touched: D08, D09, D24, D31,
+D69, D70, D71, D72, D73.
+
+## Scope and behavior
+
+`/admin/promotions` adds one permission-aware navigation entry in the existing
+admin shell. This is the 09B operational interface, not the separate #49 redesign.
+Market-scoped program cards lead to a no-code editor covering metadata, public
+FA/TR/EN copy, all eleven condition types, all five supported effects, inclusion
+and exclusion selectors, scheduling, lifecycle, priority, grouping, conflict
+exclusions, budget and lifetime usage caps. New programs default to disabled Draft
+and exclusive-group evaluation. Save requires an explicit confirmation; active,
+scheduled and irreversible archive choices have contextual warnings.
+
+Dates in the editor explicitly use UTC and retain sub-minute precision. Decimal
+amounts stay strings; integer conversion is restricted to counts/priority. Empty
+limits mean unbounded; zero means no capacity. Business definitions, public copy
+and notes remain versioned DB data; new UI text uses the existing translation
+layer and override mechanism. No permission namespace or data model changed.
+
+Coupon management includes single codes, batches of 1–100 generated codes,
+immutable terms, per-customer/total caps and version-checked status changes.
+Lost-response save/issuance retries lock the form and reuse the exact original
+payload and mutation key. A successful response clears the confirmation. A stale
+lifecycle retry asks for a reload; it never repeats a change against a new version.
+Duplicate coupon errors and stale revisions are translated, without raw database
+errors. Program/coupon/history lists paginate at 25 records.
+
+The simulator selects a nonempty open cart from the authorized market, showing
+its customer display name (or guest), language, line count and time. Cart tokens,
+checkout addresses, email and raw CRM evidence are not sent to the browser.
+Customer-view and segment-management permissions are required in addition to
+promotion management. The existing server service loads actual prices/CRM and
+explains conditions, conflicts and benefit amounts. An explicit preview checkbox
+can evaluate the saved inactive program without changing it; date, coupon,
+capacity and other eligibility checks still apply. Input changes clear results.
+The interface labels the result as an estimate, not a final checkout total:
+address-specific charges and final taxes are not claimed. Unsaved editor changes
+must be saved before simulation.
+
+## Bundle / gift boundary
+
+The safe 09B foundation is D71's existing-basket multi-buy: a selected pool needs
+X+Y existing units; the cheapest Y are discounted, with ordinary saved item
+allocations and returns. Spend steps and category/product/collection selectors
+provide the other supported combinations. The editor explains these mechanics.
+Automatic gift insertion, a cross-pool gift and a separate fixed bundle price are
+not implemented and are not advertised. Issue #53 makes additional bundle/gift
+mechanics conditional on a safe explicit contract; D71's deferral is retained.
+No new effect or inventory semantics are introduced by this UI increment.
+
+## Verification
+
+Final local run: 132 files / 8,714 unit and PostgreSQL tests passed, including
+required coverage thresholds (99.49% lines over the configured money/pricing/fees/
+inventory targets, not whole-project coverage). ESLint, TypeScript, production
+build and backup guards passed. All three FA/TR/EN Chromium flows passed at 390px;
+rendered screenshots were visually self-reviewed. Remote evidence belongs to the
+current PR head and is not inferred from local results.
+New tests exercise form money/UTC/defaults/confirmation, every effect,
+translation-key completeness, direct authenticated actions and read services,
+anonymous/inactive/denied/wrong-market users, pricing-only simulator denial,
+market isolation, retries and stale revisions. The browser spec covers three
+languages at 390px, create/edit, single/batch coupons, a committed request with a
+lost response and identical retry, non-consuming Draft preview, inactive-rule
+explanation, lifecycle change, RTL/LTR and horizontal overflow.
+
+Technical self-review and automated checks are not independent human review.
+Physical-phone/HTTPS and owner visual acceptance remain open under D51/D70.
+Remote current-head CI must include Local/S3 restore and the D70 review gates.
+
+## Data and recovery
+
+No schema, migration, provider, dependency or backup-format change in this
+increment. All test writes use disposable `_test` databases; no Preview sync,
+reset, live activation, deployment or customer-data edit. Existing D72 additive
+migration and D73 allocation-aware recovery contract remain mandatory. Never
+remove immutable promotion/order evidence when rolling back compatible code.
+
+Catalog dropdowns show the first 1,000 rows in stable ID order; saved references
+outside that set are preserved and labelled. Larger catalogs need paginated
+search before using those selectors at scale. This does not truncate stored
+rules or broaden an existing program on save. CRM audience-wide forecasts are
+not invented; the simulator estimates only its selected cart.

@@ -14,6 +14,18 @@ import {
   issuePromotionCoupons,
   setPromotionCouponStatus,
 } from "@/modules/promotions/persistence";
+import {
+  promotionEditorData,
+  listPromotionCoupons,
+  promotionHistory,
+  promotionSampleCarts,
+} from "@/modules/promotions/admin-read";
+import {
+  saveProgramAction,
+  issueCouponsAction,
+  couponStatusAction,
+  simulateAction,
+} from "@/app/admin/(dashboard)/promotions/actions";
 import { simulatePromotionCart } from "@/modules/promotions/simulator";
 import {
   redeemOrderPromotions,
@@ -249,6 +261,110 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     beforeEach(() => {
       actor.id = owner;
       setMaintenanceFlag(false);
+    });
+
+    it.each(["denied", "inactive", "anonymous", "wrong-market"])(
+      "guards admin actions and loaders for %s",
+      async (kind) => {
+        actor.id =
+          kind === "denied"
+            ? denied
+            : kind === "inactive"
+              ? inactive
+              : kind === "anonymous"
+                ? ""
+                : scoped;
+        const market = kind === "wrong-market" ? otherMarket : marketId;
+        const before = await db.auditLog.count();
+        await expect(promotionEditorData(market)).rejects.toThrow();
+        await expect(listPromotionCoupons(market, "missing")).rejects.toThrow();
+        await expect(promotionHistory(market, "missing")).rejects.toThrow();
+        await expect(promotionSampleCarts(market)).rejects.toThrow();
+        expect(await saveProgramAction(input({}, market))).toMatchObject({
+          ok: false,
+          code: "FORBIDDEN",
+        });
+        expect(
+          await issueCouponsAction({
+            marketId: market,
+            programId: "missing",
+            mutationKey: randomUUID(),
+            confirmed: true,
+            codes: ["TESTCODE"],
+            generateCount: 0,
+            startsAt,
+            endsAt: null,
+            totalUsageCap: null,
+            perCustomerCap: null,
+          }),
+        ).toMatchObject({ ok: false, code: "FORBIDDEN" });
+        expect(
+          await couponStatusAction({
+            marketId: market,
+            id: "missing",
+            expectedVersion: 1,
+            status: "PAUSED",
+            confirmed: true,
+          }),
+        ).toMatchObject({ ok: false, code: "FORBIDDEN" });
+        expect(
+          await simulateAction({
+            marketId: market,
+            cartId: "missing",
+            couponCodes: [],
+          }),
+        ).toMatchObject({ ok: false, code: "FORBIDDEN" });
+        expect(await db.auditLog.count()).toBe(before);
+      },
+    );
+    it("does not let pricing-only users list customer carts or simulate", async () => {
+      actor.id = scoped;
+      expect((await promotionEditorData(marketId)).segmentAllowed).toBe(false);
+      await expect(promotionSampleCarts(marketId)).rejects.toThrow();
+      expect(
+        await simulateAction({ marketId, cartId: "missing", couponCodes: [] }),
+      ).toMatchObject({ ok: false, code: "FORBIDDEN" });
+    });
+    it("reads only same-market editor, history and coupon data", async () => {
+      const p = await program();
+      const c = await coupon(p.id);
+      expect((await promotionEditorData(marketId, p.id)).saved?.version).toBe(
+        1,
+      );
+      const history = await promotionHistory(marketId, p.id);
+      expect(history).toHaveLength(1);
+      expect(history[0]).not.toHaveProperty("actorId");
+      const coupons = await listPromotionCoupons(marketId, p.id);
+      expect(coupons[0].id).toBe(c.id);
+      expect(coupons[0]).not.toHaveProperty("mutationHash");
+      await expect(promotionEditorData(otherMarket, p.id)).rejects.toThrow(
+        "NOT_FOUND",
+      );
+      await expect(listPromotionCoupons(otherMarket, p.id)).rejects.toThrow(
+        "NOT_FOUND",
+      );
+      expect(await promotionHistory(otherMarket, p.id)).toHaveLength(0);
+    });
+    it("server actions preserve retry identity, reject stale edits and require confirmation", async () => {
+      const raw = input({ status: "DRAFT", enabled: false });
+      const first = await saveProgramAction(raw);
+      expect(first.ok).toBe(true);
+      expect(await saveProgramAction(raw)).toEqual(first);
+      expect(
+        await saveProgramAction({ ...raw, confirmed: false }),
+      ).toMatchObject({ ok: false, code: "VALIDATION" });
+      if (!first.ok) throw new Error("fixture save failed");
+      const edit = {
+        ...raw,
+        id: first.data.id,
+        expectedVersion: 1,
+        mutationKey: randomUUID(),
+        name: "Changed",
+      };
+      expect((await saveProgramAction(edit)).ok).toBe(true);
+      expect(
+        await saveProgramAction({ ...edit, mutationKey: randomUUID() }),
+      ).toMatchObject({ ok: false, code: "STALE_VERSION" });
     });
 
     it.each(["denied", "inactive", "anonymous", "wrong-market"])(

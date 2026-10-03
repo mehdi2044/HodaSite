@@ -6,9 +6,9 @@ Retention & growth engine, compliant with per-market consent laws (CASL/KVKK/…
 ## Scope
 Current subdivision: [Phase 09A](phase-09a.md) covers CRM 360, consent/preferences and segment foundation only. The full scope and acceptance criteria below remain outstanding until their respective authorized deliveries. Growth configuration and design backlogs #47–#49 remain open; 09A does not authorize 09B or redesign.
 
-[Phase 09B](phase-09b.md) is now separately authorized by Issue #53. Its first
-increment is an offline rule evaluator under D71; persistence, live promotions,
-coupon redemption, admin UI and full acceptance remain in progress. This does
+[Phase 09B](phase-09b.md) is now separately authorized by Issue #53. The evaluator, persistence, checkout/coupon integration and admin UI are now
+implemented under D71–D73; final current-head CI/review and real-environment
+acceptance remain pending. This does
 not authorize 09C–09E or close Phase 09.
 
 1. **Customer 360** in admin: profile, orders, returns, wishlist, carts, reviews, sessions summary, tags, notes, RFM score, CLV, churn risk (rule-based), timeline.

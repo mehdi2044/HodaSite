@@ -7,3 +7,10 @@ export {
   setPromotionCouponStatus,
 } from "./persistence";
 export { simulatePromotionCart } from "./simulator";
+export {
+  promotionEditorData,
+  listPromotionCoupons,
+  promotionHistory,
+  promotionSampleCarts,
+} from "./admin-read";
+export { PromotionError } from "./persistence-contracts";

@@ -24,7 +24,7 @@ The previous preparation is not completion. Work starts from PR #52's merge
 3. **Implemented service boundary:** permission-checked, market-scoped admin
    save/list/single-or-bulk coupons and lifecycle services; CRM 09A membership,
    segment SQL, tags and consent loader. No endpoint accepts raw membership or
-   usage claims. Server Actions and the admin interface remain pending.
+   usage claims. Server Actions and the FA/TR/EN admin interface are now implemented.
 4. **Implemented transaction adapter and D73 checkout/cancellation wiring:**
    fixed Order/Market/Program/Coupon lock order, lifetime program/coupon limits,
    per-customer caps, Decimal budgets, atomic retry/rollback and append-only
@@ -38,18 +38,21 @@ The previous preparation is not completion. Work starts from PR #52's merge
    their configured gross basis. Returns and sales attribution consume immutable
    merchandise allocations; shipping income is reduced separately. Existing
    orders without promotion evidence retain their legacy calculation. Three
-   locale storefront flows pass in Chromium at 390px; admin flows remain pending.
-6. **Backend simulator implemented; UI pending:** read-only saved-cart simulation
-   with live server prices, market-scoped CRM and explicit draft-preview mode.
-   No activation/redemption side effect; estimates are not checkout quotes.
-   Still required: no-code editor, lifecycle/schedule/group/budget fields,
-   coupons (single and batch), simulator and explanations, permission-aware
-   access, contextual helper text/safe defaults/examples/warnings in fa/tr/en,
-   RTL/LTR and 390px browser tests. Bundle/gift mechanics require precise
-   semantics; existing-basket multi-buy does not claim automatic gift insertion.
-7. **Pending:** full #53 acceptance matrix, integration/E2E and all current-head
-   CI gates. Keep the PR Draft until all implementation and intended commits are
-   complete and local checks pass. Do not close #53 or declare Phase 09 complete.
+   locale storefront flows pass in Chromium at 390px; admin coverage is in
+   `tests/e2e/promotion-admin.spec.ts`.
+6. **Implemented admin UI:** `/admin/promotions` provides no-code conditions,
+   selectors, all five effects, lifecycle/schedule/group/budget fields, public
+   trilingual copy, single/batch coupon management and revision history. Defaults
+   are disabled Draft/exclusive group. Every write requires confirmation; retries
+   retain the original payload/key. Read-only saved-cart simulation explains
+   conditions/conflicts and amount estimates with explicit inactive-preview mode.
+   Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
+   Bundle/gift scope remains existing-basket multi-buy under D71; automatic gift
+   insertion and separate bundle pricing are explicitly not implemented.
+7. **Acceptance gates:** final local results and current-head CI are recorded in
+   PROGRESS and PR #54. Local/S3 restore and D70 review remain required. Keep #53
+   open through review; do not declare Phase 09 complete or deploy this branch.
+   [Admin delivery / limits](../reviews/PHASE09B_ADMIN_REVIEW.md).
 
 ## Required acceptance (not waived by the first increment)
 
@@ -69,7 +72,7 @@ The previous preparation is not completion. Work starts from PR #52's merge
 For the offline evaluator, `pnpm test:unit -- tests/unit/promotions.spec.ts` uses
 the unit-only configuration and no database. `pnpm lint` and `pnpm typecheck`
 remain required. Storefront coupon input and explicit discount lines exist;
-admin rule/coupon management and simulator UI remain pending.
+admin rule/coupon management and simulator UI are implemented at `/admin/promotions`.
 Evaluation has no ambient clock, database, network or coupon-consuming side
 effect. Reason codes are an internal API and must be translated by the eventual
 UI. Do not expose rejected promotion/segment details on a public route.
@@ -79,8 +82,7 @@ disposable `_test` databases while this PR is Draft. Test
 `tests/integration/phase09b-promotions.spec.ts` with `TEST_DATABASE_URL` set;
 use UTF-8, PostgreSQL session timezone UTC and the documented test-only secrets.
 No Preview sync or deployment. Rollback must retain persistent evidence, using
-compatible code instead of dropping the new tables. This is an implementation
-implementation, not authorization to deploy or activate live discounts.
+compatible code instead of dropping the new tables. This is an implementation not authorization to deploy or activate live discounts.
 
 ## Outside this phase
 
