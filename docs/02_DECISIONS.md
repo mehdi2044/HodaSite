@@ -270,3 +270,48 @@ stacking/allocation, exact decimal boundaries, cap evidence, no input mutation,
 and unchanged existing quote tests. Full 09B acceptance additionally requires
 server authorization, atomic redemption, FA/TR/EN admin/simulator and 390px
 browser evidence. Initial unit proof does not establish those pending gates.
+
+## D72 — 09B persistent promotion evidence (2026-10-03)
+
+Recorded before the persistence increment. Program identity, market and currency
+are permanent. Every edit (including lifecycle) appends an immutable revision;
+optimistic version checks prevent lost updates. Limits and budgets apply across
+all revisions of a program, not a fresh allowance on every edit. Coupon codes
+are normalized ASCII uppercase and unique per market. Coupon terms are immutable;
+only audited, version-checked lifecycle changes are allowed. Archived programs
+and coupons cannot be reactivated. Business metadata and three-language public
+copy remain DB-owned. Mutations require the existing `pricing.sale_price.edit`
+permission in the market, a verified admin session and explicit confirmation.
+Idempotency keys bind to actor, operation and exact validated request content.
+
+The internal transaction adapter derives eligibility from stored order lines and
+09A CRM membership, tags, consent and segment SQL. It accepts only an identity
+already verified by its trusted checkout caller; an order contact email never
+authenticates a customer. Simulator customer reads additionally require
+`crm.customer.view` and `crm.segment.manage`. No public route accepts raw
+membership, usage, price or discount claims. No operational checkout caller is
+connected in this increment: fee/tax/refund/finance integration remains D71's
+next gate. The adapter rejects an order unless its existing monetary snapshot
+already agrees with the newly evaluated discount; it never edits order amounts.
+
+Lock order is Order, then all market Program rows in ascending ID order, then
+Coupon rows in ascending ID order. Program edits/issuance also lock Program
+first. Evaluate with live revision, coupon eligibility and lifetime usage under
+these locks at ReadCommitted isolation; never redeem a previously computed quote.
+An immutable evaluation (including zero benefit) and immutable discount records
+are inserted in the same order transaction. Retry returns the stored result only
+for the same verified identity and normalized coupon input. Changed input fails.
+Limits include pending and paid orders. An append-only release is allowed only
+for a CANCELLED, never-paid order without approved payment evidence; release is
+idempotent and frees all its allowances. Paid/refunded orders retain consumption;
+refunds never silently restore a coupon. Cancellation wiring remains pending.
+
+Data impact: additive PostgreSQL tables/indexes/FKs/checks and immutable-evidence
+triggers only. No existing order, amount, media, permission grant or seed data is
+rewritten. Whole-database pg_dump includes the new tables. Restore uses existing
+ops/maintenance/safety-backup flow and matching migrations. Rollback uses
+compatible code retaining revision/redemption/release history; never DROP/reset
+to downgrade. Validate migrations on an isolated `_test` database, permission and
+market negatives, stale edits, retry/rollback, real concurrent cap/budget claims,
+release guards and direct SQL immutability. Local/S3 restore CI remains mandatory
+before Ready. This increment does not complete 09B or authorize deployment/merge.
