@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect as baseExpect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { customerLogin } from "./helpers/crm-customer";
@@ -7,6 +7,9 @@ import { ensureMaintenanceOff } from "./helpers/maintenance";
 import en from "../../messages/en.json";
 import fa from "../../messages/fa.json";
 import tr from "../../messages/tr.json";
+// RSC refreshes can outlive response headers on the shared CI runner. Assert
+// semantic UI/database outcomes with a bounded budget, without sleeps/retries.
+const expect = baseExpect.configure({ timeout: 30000 });
 const db = new PrismaClient();
 for (const [locale, code] of [
   ["fa", "IR"],

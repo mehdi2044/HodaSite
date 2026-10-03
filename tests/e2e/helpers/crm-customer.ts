@@ -37,12 +37,17 @@ export async function customerLogin(page: Page, email: string) {
     )
     .toBe(true);
   await page.locator('[name="code"]').fill(code);
-  await page
-    .locator("main form")
-    .filter({ has: page.locator('[name="code"]') })
-    .locator("button")
-    .first()
-    .click();
+  // Auth can update the URL before CommerceForm's document navigation. Wait
+  // for the new document, not an intermediate client-side URL transition.
+  await Promise.all([
+    page.waitForEvent("domcontentloaded"),
+    page
+      .locator("main form")
+      .filter({ has: page.locator('[name="code"]') })
+      .locator("button")
+      .first()
+      .click(),
+  ]);
   await expect(page).toHaveURL(/\/en\/account\/wishlist$/);
   await expect
     .poll(
