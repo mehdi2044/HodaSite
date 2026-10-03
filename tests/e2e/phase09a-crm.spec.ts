@@ -50,12 +50,13 @@ for (const [locale, code] of [
       .locator("form:visible")
       .filter({ has: page.locator('input[name="channel"][value="email"]') });
     await channelForm.locator('select[name="status"]').selectOption("OPTED_IN");
-    await channelForm.getByRole("button", { name: t.save }).click();
-    // Consent is a server mutation followed by a page refresh. Wait for its
-    // completion before asserting the link derived from the new consent.
-    await expect(channelForm.getByRole("status")).toHaveText(
-      { fa, tr, en }[locale].engagement.saved,
-      { timeout: 30000 },
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      channelForm.getByRole("button", { name: t.save }).click(),
+    ]);
+    // The reloaded document reads the persisted choice, not a transient status.
+    await expect(channelForm.locator('select[name="status"]')).toHaveValue(
+      "OPTED_IN",
     );
     await expect(page.getByRole("link", { name: t.unsubscribe })).toBeVisible();
     await page.getByRole("link", { name: t.unsubscribe }).click();
@@ -79,7 +80,10 @@ for (const [locale, code] of [
     ).toBe("OPTED_OUT");
     await page.goto(`/${locale}/account/preferences`);
     await page.locator('select[name="kind"]:visible').selectOption("EXPORT");
-    await page.getByRole("button", { name: t.request, exact: true }).click();
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      page.getByRole("button", { name: t.request, exact: true }).click(),
+    ]);
     await expect(
       page.getByRole("button", { name: t.cancel, exact: true }),
     ).toBeVisible();
@@ -87,14 +91,17 @@ for (const [locale, code] of [
       where: { customerId: customer.id, marketId: market.id, kind: "EXPORT" },
     });
     await page.locator('select[name="kind"]:visible').selectOption("DELETE");
-    await page.getByRole("button", { name: t.request, exact: true }).click();
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      page.getByRole("button", { name: t.request, exact: true }).click(),
+    ]);
     await expect(
       page.getByRole("button", { name: t.cancel, exact: true }),
     ).toHaveCount(2);
-    await page
-      .getByRole("button", { name: t.cancel, exact: true })
-      .first()
-      .click();
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      page.getByRole("button", { name: t.cancel, exact: true }).first().click(),
+    ]);
     // Cancel only the newest deletion request; the export remains for admin review.
     await expect
       .poll(

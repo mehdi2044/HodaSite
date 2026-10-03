@@ -51,6 +51,8 @@ export default async function PreferencesPage({
       <p>
         {t("market")}: <bdi>{market.code}</bdi>
       </p>
+      {/* Privacy choices must show authoritative server state after saving.
+          A fresh document avoids retaining stale data in a streamed refresh. */}
       <div className="grid gap-4 sm:grid-cols-2">
         {channels.map((channel) => {
           const row = rows.find((r) => r.channel === channel);
@@ -66,7 +68,7 @@ export default async function PreferencesPage({
                   }).format(row.updatedAt)}
                 </time>
               )}
-              <EngagementForm action={preferenceAction}>
+              <EngagementForm action={preferenceAction} refresh="document">
                 <input type="hidden" name="marketId" value={market.id} />
                 <input type="hidden" name="channel" value={channel} />
                 <label>
@@ -99,7 +101,7 @@ export default async function PreferencesPage({
         <h2>{t("privacy")}</h2>
         <p>{t("privacyHelp")}</p>
         {actor.deletionRequestedAt && <p>{t("legacyDeletion")}</p>}
-        <EngagementForm action={requestAction}>
+        <EngagementForm action={requestAction} refresh="document">
           <input type="hidden" name="marketId" value={market.id} />
           <label>
             {t("requestType")}
@@ -128,7 +130,7 @@ export default async function PreferencesPage({
             </>
           )}
           {["REQUESTED", "IN_REVIEW"].includes(r.status) && (
-            <EngagementForm action={cancelRequestAction}>
+            <EngagementForm action={cancelRequestAction} refresh="document">
               <input type="hidden" name="marketId" value={market.id} />
               <input type="hidden" name="id" value={r.id} />
               <input type="hidden" name="version" value={r.version} />
