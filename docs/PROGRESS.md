@@ -19,13 +19,25 @@
 | 07 | AI Gateway / Data Entry | ✅ توسعه، CI و ادغام تکمیل شد؛ پذیرش اتصال واقعی معوق | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35) |
 | 08 | SEO / PWA / Performance / Launch Checklist | ✅ توسعهٔ 08a/08b و تکمیل قابلیت‌ها؛ پذیرش محیط واقعی معوق | ۲۰۲۶-۰۹-۱۵ | [برنامهٔ اجرا](PHASE08_IMPLEMENTATION_PLAN.md) |
 | —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
-| 09  | CRM / Promotions / Loyalty                 | 🟡 09A merged / Phase 09 partial | ۲۰۲۶-۱۰-۰۳ | [#50](https://github.com/mehdi2044/HodaSite/pull/50) |
+| 09  | CRM / Promotions / Loyalty                 | 🟡 09A merged / 09B started / Phase 09 partial | ۲۰۲۶-۱۰-۰۳ | [#50](https://github.com/mehdi2044/HodaSite/pull/50)، [09B #53](https://github.com/mehdi2044/HodaSite/issues/53) |
 | 10  | AI Shopping Agent                          | ⬜              |            |                                                    |
 | —   | **Checkpoint 4**                           | ⬜              |            |                                                    |
 | 11  | Visual / Voice / Try-On / App              | ⬜              |            |                                                    |
 | —   | **Checkpoint 5**                           | ⬜              |            |                                                    |
 
 وضعیت‌ها: ⬜ شروع نشده · 🟡 در حال انجام · 🔍 در بازبینی · ✅ Merge شده · 🧪 تست‌شده توسط مهدی
+
+## شروع Phase 09B — موتور مستقل قواعد و تخفیف — ۲۰۲۶-۱۰-۰۳
+
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D31, D70, D71.
+
+- پس از Merge مجاز PR #52، شاخهٔ `phase/09b-scenario-promotion-engine` از `c93cc624212d5028fc5bea82b357de9f56f79b95` شروع شد. D71 پیش از پیاده‌سازی در commit جدا ثبت شد. [برنامهٔ اجرا و معیارهای باقی‌مانده](phases/phase-09b.md).
+- نخستین بخش کدنویسی: قرارداد سخت‌گیرانه و نسخه‌دار WHEN/THEN و evaluator مستقل در `src/modules/promotions`؛ شرط بازار/زبان/گروه/تعداد سفارش/مبلغ و تعداد سبد/محصول/دسته/کالکشن/برچسب/رضایت. تخفیف درصدی و ثابت، ارسال رایگان، خرید X+Y با تخفیف ارزان‌ترین Y موجود در سبد، و منفعت ثابت به‌ازای پلهٔ خرید پشتیبانی می‌شوند. قانون مبهم/نسخهٔ ناشناخته/پول عددی رد می‌شود.
+- اولویت و stacking قطعی، علت رد/اعمال برای هر revision، تخصیص دقیق چهاررقمی بدون تغییر unit price، محدودیت به بازار و ارز، و رد شواهد ناقص مشتری/کوپن/سقف مصرف. این شواهد هنوز فقط ورودی شبیه‌سازی‌اند؛ تضمین مصرف هم‌زمان کوپن نیستند.
+- نتیجهٔ محلی: lint و typecheck موفق؛ هر ۸۲ فایل / ۳۹۲۴ تست واحد موفق، شامل ۶۵ تست جدید قواعد، مرز پول، تخصیص، تداخل، ورودی نامعتبر و سقف‌ها. تست‌های قبلی quote و Money نیز موفق‌اند. اجرای نخست suite به محدودیت محیط در `spawnSync git` برخورد کرد؛ همان suite بدون آن محدودیت کامل عبور کرد. lockfile/نسخه‌های وابستگی تغییر نکردند.
+- تست دستی: فعلاً UI جدیدی وجود ندارد. هسته با `pnpm test:unit -- tests/unit/promotions.spec.ts` قابل آزمون است. هیچ promotion زنده‌ای فعال نمی‌شود؛ `quoteCart` و checkout هنوز به این module متصل نیستند.
+- باقی‌ماندهٔ 09B: schema/migration و revision/audit، کوپن و ثبت مصرف اتمیک/قفل و retry، آداپتورهای مجوز/بازار و reuse گروه‌های 09A، اتصال quote/order/invoice با سیاست fee/tax/refund، پنل سازنده و simulator سه‌زبانه/390px، integration/E2E و CI کامل. gift insertion و bundle عمومی هنوز پیاده نشده‌اند. این PR Draft است و 09B کامل یا آمادهٔ Merge اعلام نمی‌شود.
+- این مرحله هیچ migration/seed/reset/restore، تغییر Preview، سفارش/مبلغ تاریخی، هاست یا deployment ندارد. integration/DB، E2E، آزمون گوشی واقعی و restore runtime در این محیط اجرا نشدند؛ نتیجهٔ CI باید جداگانه روی head PR خوانده شود. خودبازبینی و تست خودکار است، نه بازبینی مستقل انسانی. مراحل 09C–09E و پرونده‌های طراحی #48/#49 باز باقی‌اند.
 
 ## اصلاح CRM و حاکمیت Work/Codex — ۲۰۲۶-۱۰-۰۳
 
