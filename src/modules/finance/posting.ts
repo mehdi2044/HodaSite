@@ -1,3 +1,4 @@
+import { promotionOrderAmounts } from "@/modules/promotions";
 import { movementCost, movementRates } from "./movement-cost";
 import { raiseOrderAlerts } from "./alerts";
 import { Prisma } from "@prisma/client";
@@ -104,7 +105,12 @@ export async function recognizePaidOrder(
 ) {
   const order = await tx.order.findUniqueOrThrow({
     where: { id: orderId },
-    include: { payments: true, fees: true },
+    include: {
+      payments: true,
+      fees: true,
+      items: true,
+      promotionEvaluation: true,
+    },
   });
   const config = await tx.financeConfig.findUnique({
     where: { id: order.marketId },
@@ -116,6 +122,7 @@ export async function recognizePaidOrder(
     order.paidAt < config.enabledAt
   )
     return;
+  const promotion = promotionOrderAmounts(order);
   const rates = orderRates(order.currency, order.fxSnapshot, order.paidAt);
   const stored = equivalents(order.totalAmount.toFixed(4), rates);
   if (
@@ -156,7 +163,7 @@ export async function recognizePaidOrder(
     ...base,
     key: `sale:${order.id}`,
     amount: new Exact(order.subtotalAmount.toString())
-      .sub(order.discountAmount.toString())
+      .sub(promotion?.merchandise.toString() ?? order.discountAmount.toString())
       .toFixed(4),
     debit: "clearing",
     credit: "sales",
@@ -165,7 +172,8 @@ export async function recognizePaidOrder(
     await postPair(tx, {
       ...base,
       key: `fee:${f.id}`,
-      amount: f.amount.toFixed(4),
+      amount:
+        promotion?.netShipping.get(f.id)?.toFixed(4) ?? f.amount.toFixed(4),
       debit: "clearing",
       credit:
         f.type === "TAX"

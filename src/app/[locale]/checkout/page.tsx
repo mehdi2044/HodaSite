@@ -1,3 +1,5 @@
+import { DiscountLines } from "@/components/storefront/discount-lines";
+import { CouponForm } from "@/components/storefront/coupon-form";
 import { Iso } from "@/components/storefront/iso";
 import { provinces } from "@/modules/checkout/regions";
 import Link from "next/link";
@@ -69,6 +71,11 @@ export default async function CheckoutPage({
           </li>
         ))}
       </ol>
+      <CouponForm
+        locale={locale}
+        revision={cart.revision}
+        codes={(cart.checkout as Record<string, unknown>).couponCodes}
+      />
       <section className="rounded-token border border-black/10 bg-surface p-6">
         {step === 1 ? (
           <>
@@ -267,6 +274,11 @@ async function QuoteSummary({
       marketId: cart.marketId,
       locale: locale as "fa" | "tr" | "en",
       items: cart.items,
+      promotions: {
+        customerId: (await currentCustomer())?.id ?? null,
+        couponCodes:
+          (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+      },
       shippingRuleId:
         (cart.checkout as Record<string, string>).shippingRuleId || undefined,
       address,
@@ -295,6 +307,7 @@ async function QuoteSummary({
           </dd>
         </div>
       ))}
+      <DiscountLines lines={quote.discountLines} currency={cart.currency} />
       <div className="flex justify-between border-t pt-3 text-lg font-semibold">
         <dt>{t("total")}</dt>
         <dd>
@@ -319,6 +332,10 @@ async function ShippingSelection({
     marketId: cart.marketId,
     locale: locale as "fa" | "tr" | "en",
     items: cart.items,
+    promotions: {
+      customerId: (await currentCustomer())?.id ?? null,
+      couponCodes: (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+    },
     address: addressSchema.parse(cart.checkout),
   }).catch(() => null);
   if (!quote) return null;

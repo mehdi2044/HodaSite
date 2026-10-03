@@ -1,3 +1,6 @@
+import { currentCustomer } from "@/modules/customers";
+import { DiscountLines } from "@/components/storefront/discount-lines";
+import { CouponForm } from "@/components/storefront/coupon-form";
 import { db } from "@/lib/db";
 import { Iso } from "@/components/storefront/iso";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
@@ -42,6 +45,10 @@ export default async function CartPage({
     marketId: cart.marketId,
     locale: locale as "fa" | "tr" | "en",
     items: cart.items,
+    promotions: {
+      customerId: (await currentCustomer())?.id ?? null,
+      couponCodes: (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+    },
   }).catch(() => null);
   return (
     <main className="shell shop-page grid gap-8 py-10">
@@ -159,6 +166,10 @@ export default async function CartPage({
                     </dd>
                   </div>
                 ))}
+                <DiscountLines
+                  lines={quote.discountLines}
+                  currency={cart.currency}
+                />
                 <div className="flex justify-between border-t pt-4 text-lg font-semibold">
                   <dt>{t("total")}</dt>
                   <dd>
@@ -169,6 +180,11 @@ export default async function CartPage({
                 </div>
               </dl>
               <p className="my-4 text-sm text-muted">{t("estimate")}</p>
+              <CouponForm
+                locale={locale}
+                revision={cart.revision}
+                codes={(cart.checkout as Record<string, unknown>).couponCodes}
+              />
               {!mismatch && (
                 <Link
                   className="button block text-center"

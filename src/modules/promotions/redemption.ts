@@ -10,8 +10,8 @@ import { evaluateStoredPromotions } from "./evidence";
 /**
  * INTERNAL transaction adapter, deliberately not exported from index or a Server
  * Action. Caller must own/authenticate the order, use withMutation and a
- * ReadCommitted transaction. No checkout caller is wired until D71 fee/refund
- * integration is complete. Never accepts precomputed discounts or CRM claims.
+ * ReadCommitted transaction. D73 checkout owns the new order and promotion locks.
+ * Never accepts precomputed discounts or CRM claims.
  */
 export async function redeemOrderPromotions(
   tx: Prisma.TransactionClient,

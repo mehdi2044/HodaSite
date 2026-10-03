@@ -14,9 +14,13 @@ import {
   releaseOrderInventory,
 } from "@/modules/inventory";
 import { queueEmail } from "@/modules/notifications";
+import { releaseCancelledOrderPromotions } from "@/modules/promotions/checkout-server";
 import { CommerceError, assertOrderTransition } from "./state";
 
 export const orderInclude = {
+  promotionEvaluation: {
+    include: { redemptions: { orderBy: { id: "asc" as const } } },
+  },
   creditUses: true,
   items: true,
   fees: true,
@@ -278,13 +282,14 @@ export async function cancelOrder(
         ))
     )
       return;
+    await transition(tx, order, "CANCELLED", userId, reason);
+    await releaseCancelledOrderPromotions(tx, order.id);
     await releaseOrderInventory(tx, order.id);
     await releaseCredit(tx, order.id);
     await tx.payment.updateMany({
       where: { orderId, status: { in: ["PENDING", "SUBMITTED"] } },
       data: { status: "VOIDED" },
     });
-    await transition(tx, order, "CANCELLED", userId, reason);
     const contact = order.contactSnapshot as {
       email: string;
       firstName: string;

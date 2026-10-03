@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { promotionCustomerEvidence } from "@/modules/crm";
+import { promotionCustomerEvidence } from "@/modules/crm/promotion-server";
 import {
   PromotionDecimal as D,
   promotionRevisionSchema,
@@ -21,6 +21,7 @@ export async function evaluateStoredPromotions(
   rawCodes: unknown,
   lock: boolean,
   simulateProgramId?: string,
+  verifiedSelfCheckout = false,
 ) {
   const codes = couponCodesSchema.parse(rawCodes);
   if (lock)
@@ -65,6 +66,7 @@ export async function evaluateStoredPromotions(
         cart.marketId,
         verifiedCustomerId,
         segments,
+        verifiedSelfCheckout,
       )
     : null;
   if (lock && codes.length)

@@ -19,3 +19,4 @@ export type {
   PromotionExplanation,
   PromotionReason,
 } from "./evaluate";
+export { promotionOrderAmounts, orderDiscountLines } from "./order-amounts";

@@ -782,7 +782,10 @@
     "saveView": "Geçerli filtreyi kaydet",
     "viewName": "Görünüm adı",
     "sendViaSupport": "{channel} ile dekont gönder",
-    "bulkResult": "Tamamlanan: {succeeded}; başarısız: {failed}."
+    "bulkResult": "Tamamlanan: {succeeded}; başarısız: {failed}.",
+    "couponCodes": "İndirim kodları",
+    "couponHelp": "Kodları virgülle ayırın. Kaldırmak için alanı boşaltıp kaydedin. Yalnızca geçerli indirimler özette görünür; son kontrol sipariş verilirken yapılır.",
+    "applyCoupons": "Kodları kaydet"
   },
   "security": {
     "title": "Hesap güvenliği",

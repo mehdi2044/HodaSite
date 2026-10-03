@@ -365,3 +365,11 @@ checkout cap race and stale-total rollback, retry, cancellation, guest isolation
 net tax, zero-due, scoped allocations/partial returns, balanced finance, immutable
 invoice in three locales, and no-promotion regression. No deployment/Preview
 mutation; 09B stays Draft while the admin interface and final gates remain open.
+
+D73 integration details: commerce consumes narrow server facades, keeping the
+pure evaluator DB-free and admin authentication out of ordinary quote imports.
+The existing CRM membership predicate is shared unchanged. A verified self-checkout
+may evaluate its own identity before a first market purchase; admin simulation
+still requires existing membership, and all CRM queries remain market-scoped.
+Final checkout uses the validated page locale (including a language switch) for
+both evaluation and order/invoice snapshots. Fee passes share one quote instant.

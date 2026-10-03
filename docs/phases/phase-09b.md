@@ -1,7 +1,7 @@
 # Phase 09B — Scenario / Rule Engine + Promotion Foundation
 
 Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D17,
-D24, D31, D55, D60, D69, D70, D71, D72.
+D24, D31, D55, D60, D69, D70, D71, D72, D73.
 
 Owner-authorized scope: [Issue #53](https://github.com/mehdi2044/HodaSite/issues/53).
 The previous preparation is not completion. Work starts from PR #52's merge
@@ -16,7 +16,7 @@ The previous preparation is not completion. Work starts from PR #52's merge
    same-pool buy-X-get-Y and spend-X-get-Y. Input usage/coupon evidence is an
    estimate, not a redemption guarantee. Unit tests exercise invalid inputs,
    exact money, isolation, limits and allocation conservation.
-2. **Implemented, not connected to live orders:** D72 additive Program/Revision,
+2. **Implemented; connected to checkout code under D73, not deployed:** D72 additive Program/Revision,
    Coupon, OrderEvaluation, Redemption (immutable DiscountLine snapshot) and
    UsageRelease tables; constraints, audit, immutable-evidence triggers and
    indexes. No old orders/media are rewritten. Local/S3 runtime restore CI
@@ -25,16 +25,20 @@ The previous preparation is not completion. Work starts from PR #52's merge
    save/list/single-or-bulk coupons and lifecycle services; CRM 09A membership,
    segment SQL, tags and consent loader. No endpoint accepts raw membership or
    usage claims. Server Actions and the admin interface remain pending.
-4. **Implemented internal transaction adapter; checkout wiring pending:**
+4. **Implemented transaction adapter and D73 checkout/cancellation wiring:**
    fixed Order/Market/Program/Coupon lock order, lifetime program/coupon limits,
    per-customer caps, Decimal budgets, atomic retry/rollback and append-only
    unpaid-cancellation release. It verifies stored order amounts, never changes
-   them, and is not exported as a public action. PostgreSQL tests race two orders
-   against capacity one. Cancellation/expiry hooks remain pending with checkout.
-5. **Pending:** quoteCart/checkout/cart/invoice integration, explicit DiscountLine
-   rendering and immutable order snapshots. Resolve/test fee and tax bases,
-   amount rounding and returns/finance allocation before wiring the evaluator.
-   Existing item unit prices and historic orders must remain untouched.
+   them, and is not exported as a public action. PostgreSQL tests race two real
+   checkouts against capacity one. Cancellation/expiry releases unpaid usage
+   before inventory/credit locks; paid usage stays consumed.
+5. **Implemented under D73:** opt-in trusted quoteCart evaluation, cart coupon
+   persistence, checkout and invoice DiscountLines; original item prices stay
+   unchanged. TAX uses net merchandise/taxable shipping; other fee bases retain
+   their configured gross basis. Returns and sales attribution consume immutable
+   merchandise allocations; shipping income is reduced separately. Existing
+   orders without promotion evidence retain their legacy calculation. Three
+   locale storefront flows pass in Chromium at 390px; admin flows remain pending.
 6. **Backend simulator implemented; UI pending:** read-only saved-cart simulation
    with live server prices, market-scoped CRM and explicit draft-preview mode.
    No activation/redemption side effect; estimates are not checkout quotes.
@@ -64,7 +68,8 @@ The previous preparation is not completion. Work starts from PR #52's merge
 
 For the offline evaluator, `pnpm test:unit -- tests/unit/promotions.spec.ts` uses
 the unit-only configuration and no database. `pnpm lint` and `pnpm typecheck`
-remain required. There is no manual UI to test yet; simulator UI is pending.
+remain required. Storefront coupon input and explicit discount lines exist;
+admin rule/coupon management and simulator UI remain pending.
 Evaluation has no ambient clock, database, network or coupon-consuming side
 effect. Reason codes are an internal API and must be translated by the eventual
 UI. Do not expose rejected promotion/segment details on a public route.
@@ -75,7 +80,7 @@ disposable `_test` databases while this PR is Draft. Test
 use UTF-8, PostgreSQL session timezone UTC and the documented test-only secrets.
 No Preview sync or deployment. Rollback must retain persistent evidence, using
 compatible code instead of dropping the new tables. This is an implementation
-foundation, not authorization to turn on live checkout discounts.
+implementation, not authorization to deploy or activate live discounts.
 
 ## Outside this phase
 

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { requireMember } from "./scope";
+import { requireMember } from "./membership";
 import { segmentQuery } from "./segment-query";
 
 /** Internal 09B consumer. Identity must already be verified by its caller. */
@@ -8,8 +8,11 @@ export async function promotionCustomerEvidence(
   marketId: string,
   customerId: string,
   segmentIds: string[],
+  verifiedSelfCheckout = false,
 ) {
-  await requireMember(customerId, marketId, tx);
+  // A verified shopper may make their first purchase in a new market. Admin
+  // simulation still requires existing membership. All CRM queries stay scoped.
+  if (!verifiedSelfCheckout) await requireMember(customerId, marketId, tx);
   const customer = await tx.customer.findFirst({
     where: { id: customerId, isActive: true },
     select: { id: true },

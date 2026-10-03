@@ -1,3 +1,6 @@
+import { promotionContextSchema } from "@/modules/promotions";
+import { Prisma } from "@prisma/client";
+import { evaluatePromotionQuote } from "@/modules/promotions/checkout-server";
 import { db } from "@/lib/db";
 import { getDisplayPrice } from "@/modules/pricing";
 import { availableForVariant } from "@/modules/inventory";
@@ -7,11 +10,16 @@ export type CartQuoteInput = Readonly<{
   marketId: string;
   locale?: "fa" | "tr" | "en";
   items: readonly { variantId: string; quantity: number }[];
+  /** Trusted server caller only: identity must come from the verified session. */
+  promotions?: { customerId: string | null; couponCodes: unknown };
   shippingRuleId?: string;
   address?: { province?: string; city?: string; postalCode?: string };
 }>;
 
-export async function quoteCart(input: CartQuoteInput) {
+export async function quoteCart(
+  input: CartQuoteInput,
+  transaction?: { tx: Prisma.TransactionClient; lockPromotions: boolean },
+) {
   if (input.items.length === 0) throw new Error("Cart is empty");
   const market = await db.market.findUniqueOrThrow({
     where: { id: input.marketId },
@@ -41,7 +49,7 @@ export async function quoteCart(input: CartQuoteInput) {
         marketIds: { has: input.marketId },
       },
     },
-    include: { product: true },
+    include: { product: { include: { collections: true } } },
   });
   if (variants.length !== new Set(items.map((item) => item.variantId)).size)
     throw new Error("One or more variants are unavailable");
@@ -82,6 +90,7 @@ export async function quoteCart(input: CartQuoteInput) {
   })) as FeeRuleInput[];
   const context = {
     currency: market.currency,
+    now: new Date(),
     items: quoteItems,
     province: input.address?.province,
     city: input.address?.city,
@@ -90,7 +99,54 @@ export async function quoteCart(input: CartQuoteInput) {
     locale: input.locale,
     shippingRuleId: input.shippingRuleId,
   };
-  const result = computeFees(inputs, context);
+  const gross = computeFees(inputs, context);
+  const promotions = input.promotions
+    ? await evaluatePromotionQuote(
+        transaction?.tx ?? db,
+        {
+          marketId: market.id,
+          currency: promotionContextSchema.shape.currency.parse(
+            market.currency,
+          ),
+          locale: input.locale ?? "en",
+          items: quoteItems.map((i) => {
+            const v = variants.find((v) => v.id === i.variantId)!;
+            return {
+              variantId: v.id,
+              productId: v.productId,
+              categoryId: v.product.categoryId,
+              collectionIds: v.product.collections.map((c) => c.id),
+              quantity: i.quantity,
+              unitPrice: i.unitPrice,
+            };
+          }),
+          shippingAmount:
+            gross.lines.find((l) => l.type === "SHIPPING")?.chargedAmount ??
+            "0",
+        },
+        input.promotions.customerId,
+        input.promotions.couponCodes,
+        transaction?.lockPromotions ?? false,
+      )
+    : {
+        discountTotal: "0",
+        merchandiseDiscount: "0",
+        shippingDiscount: "0",
+        discountLines: [],
+      };
+  const fees = computeFees(inputs, {
+    ...context,
+    promotionTax: {
+      merchandise: promotions.merchandiseDiscount,
+      shipping: promotions.shippingDiscount,
+    },
+  });
+  const result = {
+    ...fees,
+    total: new Prisma.Decimal(fees.total)
+      .sub(promotions.discountTotal)
+      .toFixed(),
+  };
   const shippingOptions = inputs
     .filter(
       (r) =>
@@ -110,6 +166,8 @@ export async function quoteCart(input: CartQuoteInput) {
         ) as Record<string, unknown>,
       ]),
     ),
+    ...promotions,
+    feeTotal: new Prisma.Decimal(fees.total).sub(fees.subtotal).toFixed(),
     shippingOptions,
     marketId: market.id,
     currency: market.currency,

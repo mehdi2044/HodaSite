@@ -1,3 +1,4 @@
+import { promotionOrderAmounts } from "@/modules/promotions";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -23,8 +24,24 @@ const select = {
   totalAmountTry: true,
   totalAmountUsd: true,
   fxSnapshot: true,
-  items: { select: { lineTotalAmount: true, currency: true } },
-  fees: { select: { amount: true, currency: true, absorbed: true } },
+  promotionEvaluation: { select: { result: true } },
+  items: {
+    select: {
+      id: true,
+      variantId: true,
+      lineTotalAmount: true,
+      currency: true,
+    },
+  },
+  fees: {
+    select: {
+      id: true,
+      type: true,
+      amount: true,
+      currency: true,
+      absorbed: true,
+    },
+  },
   payments: {
     select: {
       id: true,
@@ -65,6 +82,7 @@ function present(o: Prisma.OrderGetPayload<{ select: typeof select }>) {
     subtotal: o.subtotalAmount.toFixed(4),
     fees: o.feeTotalAmount.toFixed(4),
     discount: o.discountAmount.toFixed(4),
+    shippingDiscount: promotionOrderAmounts(o)?.shipping.toFixed(4) ?? "0",
     total: o.totalAmount.toFixed(4),
     totalTry: o.totalAmountTry.toFixed(4),
     totalUsd: o.totalAmountUsd.toFixed(4),
@@ -94,6 +112,7 @@ function present(o: Prisma.OrderGetPayload<{ select: typeof select }>) {
     totalTry: o.totalAmountTry.toFixed(4),
     totalUsd: o.totalAmountUsd.toFixed(4),
     discount: o.discountAmount.toFixed(4),
+    shippingDiscount: promotionOrderAmounts(o)?.shipping.toFixed(4) ?? "0",
     review,
     // Reference may contain a bank transfer identifier: it is used for checking,
     // never returned to the report surface.

@@ -782,7 +782,10 @@
     "saveView": "Save current filter",
     "viewName": "View name",
     "sendViaSupport": "Send receipt via {channel}",
-    "bulkResult": "Completed: {succeeded}; failed: {failed}."
+    "bulkResult": "Completed: {succeeded}; failed: {failed}.",
+    "couponCodes": "Coupon codes",
+    "couponHelp": "Separate codes with commas. Clear and save to remove. Only eligible discounts appear in the summary; final eligibility is checked when you place the order.",
+    "applyCoupons": "Save codes"
   },
   "security": {
     "title": "Account security",

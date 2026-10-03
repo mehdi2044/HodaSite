@@ -1,5 +1,5 @@
 // Server-only service entry point; the offline evaluator index stays DB-free.
-// No Server Action/public endpoint exists in this persistence increment.
+// Trusted server facade; identity and prices must be supplied by authorized callers.
 export {
   savePromotionProgram,
   listPromotionPrograms,

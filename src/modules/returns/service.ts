@@ -1,3 +1,4 @@
+import { promotionOrderAmounts } from "@/modules/promotions";
 import { averageReturn } from "@/modules/finance/average-cost";
 import { recognizeReturn } from "@/modules/finance/events";
 import { exchangeReturn } from "./exchange";
@@ -57,6 +58,8 @@ export async function requestReturn(customerId: string, raw: unknown) {
           where: { id: subject.id },
           include: {
             market: true,
+            fees: true,
+            promotionEvaluation: true,
             items: { include: { variant: { include: { product: true } } } },
           },
         });
@@ -69,10 +72,9 @@ export async function requestReturn(customerId: string, raw: unknown) {
           Date.now() > order.deliveredAt.getTime() + policy.days * 86400000
         )
           throw new CommerceError("RETURN_INELIGIBLE");
-        const budgets = returnLineBudgets(
-          order.items,
-          order.discountAmount.toString(),
-        );
+        const budgets =
+          promotionOrderAmounts(order)?.netItems ??
+          returnLineBudgets(order.items, order.discountAmount.toString());
         const created: Prisma.ReturnItemUncheckedCreateWithoutReturnRequestInput[] =
           [];
         for (const i of input.items) {

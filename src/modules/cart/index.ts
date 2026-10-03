@@ -1,3 +1,4 @@
+import { couponCodesSchema } from "@/modules/promotions/checkout-server";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -137,19 +138,65 @@ export async function changeCartMarket(locale: "fa" | "tr" | "en") {
     });
   });
 }
+/** Address autosave cannot overwrite server-normalized coupon state. */
 export async function saveCheckout(data: Prisma.InputJsonObject) {
   const cart = await readCart();
   if (!cart) throw new CommerceError("CART_EMPTY");
-  const changed = await db.cart.updateMany({
-    where: {
-      id: cart.id,
-      completedAt: null,
-      customerId: cart.customerId,
-      marketId: cart.marketId,
-    },
-    data: { checkout: data, revision: { increment: 1 } },
+  const customer = await currentCustomer();
+  await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Cart" WHERE id=${cart.id} FOR UPDATE`;
+    const latest = await tx.cart.findUniqueOrThrow({ where: { id: cart.id } });
+    if (latest.completedAt || latest.expiresAt <= new Date())
+      throw new CommerceError("CART_COMPLETED");
+    if (latest.customerId && latest.customerId !== customer?.id)
+      throw new CommerceError("FORBIDDEN");
+    if (latest.marketId !== cart.marketId)
+      throw new CommerceError("MARKET_CHANGED");
+    const previous = latest.checkout as Prisma.JsonObject;
+    await tx.cart.update({
+      where: { id: cart.id },
+      data: {
+        checkout: {
+          ...data,
+          couponCodes: couponCodesSchema.parse(previous.couponCodes ?? []),
+        },
+        revision: { increment: 1 },
+      },
+    });
   });
-  if (!changed.count) throw new CommerceError("CART_COMPLETED");
+}
+export async function saveCartCoupons(
+  rawCodes: unknown,
+  expectedRevision: number,
+) {
+  const codes = couponCodesSchema.parse(rawCodes);
+  const cart = await readCart(),
+    customer = await currentCustomer();
+  if (!cart) throw new CommerceError("CART_EMPTY");
+  return withMutation(() =>
+    db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Cart" WHERE id=${cart.id} FOR UPDATE`;
+      const latest = await tx.cart.findUniqueOrThrow({
+        where: { id: cart.id },
+      });
+      if (latest.completedAt || latest.expiresAt <= new Date())
+        throw new CommerceError("CART_COMPLETED");
+      if (latest.customerId && latest.customerId !== customer?.id)
+        throw new CommerceError("FORBIDDEN");
+      if (latest.revision !== expectedRevision)
+        throw new CommerceError("CART_CHANGED");
+      await tx.cart.update({
+        where: { id: cart.id },
+        data: {
+          checkout: {
+            ...(latest.checkout as Prisma.JsonObject),
+            couponCodes: codes,
+          },
+          revision: { increment: 1 },
+        },
+      });
+    }),
+  );
 }
 export async function mergeCustomerCart(customerId: string) {
   const jar = await cookies(),
