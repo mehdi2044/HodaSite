@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z, ZodError } from "zod";
 import { AuthError } from "next-auth";
+import { getRequestContext } from "@/lib/request-context";
 import { db } from "@/lib/db";
 import { withMutation, MaintenanceError } from "@/lib/mutation-gate";
 import { getClientIp } from "@/lib/net";
@@ -243,12 +244,9 @@ export async function deletionRequestAction(locale: string) {
   return safe(async () => {
     const customer = await currentCustomer();
     if (!customer) throw new CommerceError("LOGIN_REQUIRED");
-    await withMutation(() =>
-      db.customer.update({
-        where: { id: customer.id },
-        data: { deletionRequestedAt: new Date() },
-      }),
-    );
+    const { market } = await getRequestContext(localeSchema.parse(locale));
+    const { requestPrivacy } = await import("@/modules/crm");
+    await requestPrivacy({ marketId: market.id, kind: "DELETE" });
     revalidatePath(`/${locale}/account`);
     return { ok: true };
   });

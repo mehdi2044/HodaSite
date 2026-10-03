@@ -26,7 +26,7 @@ export function parseSeoPath(pathname: string) {
 export function privateSeoPath(pathname: string) {
   return (
     /^\/(admin|api)(\/|$)/.test(pathname) ||
-    /^\/(fa|tr|en)\/(account|cart|checkout|orders|tracking|search)(\/|$)/.test(
+    /^\/(fa|tr|en)\/(account|cart|checkout|orders|tracking|search|unsubscribe)(\/|$)/.test(
       pathname,
     )
   );

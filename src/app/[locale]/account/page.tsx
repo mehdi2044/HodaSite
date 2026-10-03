@@ -195,6 +195,9 @@ export default async function AccountPage({
         </section>
       </div>
       <AccountEngagement />
+      <Link className="button w-fit" href={`/${locale}/account/preferences`}>
+        {(await getTranslations("crm"))("preferences")}
+      </Link>
     </main>
   );
 }

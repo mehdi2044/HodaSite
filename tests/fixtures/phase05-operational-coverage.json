@@ -95,7 +95,9 @@
     ]
   },
   "crm.customer.export": {
-    "reservedPhase": 9
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
   },
   "fees.manage": {
     "tests": [
@@ -313,6 +315,36 @@
   "ai.usage.view": {
     "tests": [
       "tests/integration/phase07-ai.spec.ts"
+    ]
+  },
+  "crm.customer.view": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
+  },
+  "crm.customer.notes": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
+  },
+  "crm.customer.tags": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
+  },
+  "crm.segment.manage": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
+  },
+  "crm.privacy.review": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
+    ]
+  },
+  "crm.metrics.manage": {
+    "tests": [
+      "tests/integration/phase09a-crm.spec.ts"
     ]
   }
 }

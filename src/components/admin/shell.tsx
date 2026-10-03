@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { visibleCrmMarkets } from "@/modules/crm";
 import { visibleFinanceMarkets } from "@/modules/finance";
 import { signOut } from "@/modules/auth";
 import { getTranslations, getLocale } from "next-intl/server";
@@ -31,6 +32,17 @@ export async function AdminShell({
   const launch = await getTranslations("launch");
   const engagement = await getTranslations("engagement");
   const seo = await getTranslations("seoAdmin");
+  const crm = await getTranslations("crm");
+  const crmVisible = (
+    await Promise.all(
+      [
+        "crm.customer.view",
+        "crm.segment.manage",
+        "crm.privacy.review",
+        "crm.metrics.manage",
+      ].map((p) => visibleCrmMarkets(p)),
+    )
+  ).some((m) => m.length);
   const financeMarkets = await visibleFinanceMarkets(user.id);
   const showHealth = await can(user.id, "system.health.view");
   const alertCount = showHealth
@@ -54,6 +66,7 @@ export async function AdminShell({
         <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
         <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
         <Link href="/admin/orders">{commerce("orders")}</Link>
+        {crmVisible && <Link href="/admin/crm">{crm("title")}</Link>}
         {financeMarkets.length > 0 && (
           <>
             <Link href="/admin/finance">{finance("title")}</Link>
