@@ -46,6 +46,12 @@ for (const [locale, code] of [
       .filter({ has: page.locator('input[name="channel"][value="email"]') });
     await channelForm.locator('select[name="status"]').selectOption("OPTED_IN");
     await channelForm.getByRole("button", { name: t.save }).click();
+    // Consent is a server mutation followed by a page refresh. Wait for its
+    // completion before asserting the link derived from the new consent.
+    await expect(channelForm.getByRole("status")).toHaveText(
+      { fa, tr, en }[locale].engagement.saved,
+      { timeout: 30000 },
+    );
     await expect(page.getByRole("link", { name: t.unsubscribe })).toBeVisible();
     await page.getByRole("link", { name: t.unsubscribe }).click();
     await page.getByRole("button", { name: t.confirmUnsubscribe }).click();
