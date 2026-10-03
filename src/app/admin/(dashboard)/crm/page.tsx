@@ -155,6 +155,7 @@ export default async function CrmPage({
               <h2>{t("newSegment")}</h2>
               <SegmentBuilder
                 marketId={marketId}
+                marketLabel={markets.find((m) => m.id === marketId)?.code ?? ""}
                 categories={categories}
                 action={segmentAction}
                 previewAction={segmentPreviewAction}
@@ -168,6 +169,9 @@ export default async function CrmPage({
                 </summary>
                 <SegmentBuilder
                   marketId={marketId}
+                  marketLabel={
+                    markets.find((m) => m.id === marketId)?.code ?? ""
+                  }
                   categories={categories}
                   saved={{
                     ...s,

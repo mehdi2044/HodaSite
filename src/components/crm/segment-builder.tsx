@@ -37,12 +37,14 @@ function initial(field: Rule["field"], marketId: string): Rule {
 }
 export function SegmentBuilder({
   marketId,
+  marketLabel,
   categories,
   action,
   saved,
   previewAction,
 }: {
   marketId: string;
+  marketLabel: string;
   categories: { id: string; name: string }[];
   saved?: {
     id: string;
@@ -226,7 +228,7 @@ export function SegmentBuilder({
                       : "text"
                 }
                 maxLength={100}
-                value={r.value}
+                value={r.field === "market" ? marketLabel : r.value}
                 readOnly={r.field === "market"}
                 onChange={(e) =>
                   change(i, {
