@@ -294,8 +294,10 @@ connected in this increment: fee/tax/refund/finance integration remains D71's
 next gate. The adapter rejects an order unless its existing monetary snapshot
 already agrees with the newly evaluated discount; it never edits order amounts.
 
-Lock order is Order, then all market Program rows in ascending ID order, then
-Coupon rows in ascending ID order. Program edits/issuance also lock Program
+Lock order is Order, Market (shared, to exclude concurrent program creation),
+then all market Program rows in ascending ID order, then Coupon rows in ascending
+ID order. Creation locks Market exclusively. A safety bound of 100 programs per
+market matches the evaluator batch bound. Program edits/issuance also lock Program
 first. Evaluate with live revision, coupon eligibility and lifetime usage under
 these locks at ReadCommitted isolation; never redeem a previously computed quote.
 An immutable evaluation (including zero benefit) and immutable discount records

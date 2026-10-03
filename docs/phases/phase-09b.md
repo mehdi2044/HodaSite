@@ -1,7 +1,7 @@
 # Phase 09B — Scenario / Rule Engine + Promotion Foundation
 
 Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D17,
-D24, D31, D55, D60, D69, D70, D71.
+D24, D31, D55, D60, D69, D70, D71, D72.
 
 Owner-authorized scope: [Issue #53](https://github.com/mehdi2044/HodaSite/issues/53).
 The previous preparation is not completion. Work starts from PR #52's merge
@@ -16,21 +16,29 @@ The previous preparation is not completion. Work starts from PR #52's merge
    same-pool buy-X-get-Y and spend-X-get-Y. Input usage/coupon evidence is an
    estimate, not a redemption guarantee. Unit tests exercise invalid inputs,
    exact money, isolation, limits and allocation conservation.
-2. **Pending:** additive Program/Revision/Promotion/Coupon/usage/order-discount
-   schema, constraints, immutable revision/audit/snapshot evidence and indexes.
-   Preserve existing orders/media and keep backup/restore compatible.
-3. **Pending:** permission-checked, market-scoped server adapters that load the
-   existing CRM segment membership/consents from 09A. Never accept raw evaluator
-   context or membership/usage claims from a browser.
-4. **Pending:** transactional coupon/promotion redemption at order placement;
-   fixed lock order, total/per-customer/budget enforcement, idempotent retry,
-   and explicit cancellation/expiry/release behavior. Test against PostgreSQL:
-   a cap of one and two concurrent checkouts can consume at most once.
+2. **Implemented, not connected to live orders:** D72 additive Program/Revision,
+   Coupon, OrderEvaluation, Redemption (immutable DiscountLine snapshot) and
+   UsageRelease tables; constraints, audit, immutable-evidence triggers and
+   indexes. No old orders/media are rewritten. Local/S3 runtime restore CI
+   remains a gate before Ready.
+3. **Implemented service boundary:** permission-checked, market-scoped admin
+   save/list/single-or-bulk coupons and lifecycle services; CRM 09A membership,
+   segment SQL, tags and consent loader. No endpoint accepts raw membership or
+   usage claims. Server Actions and the admin interface remain pending.
+4. **Implemented internal transaction adapter; checkout wiring pending:**
+   fixed Order/Market/Program/Coupon lock order, lifetime program/coupon limits,
+   per-customer caps, Decimal budgets, atomic retry/rollback and append-only
+   unpaid-cancellation release. It verifies stored order amounts, never changes
+   them, and is not exported as a public action. PostgreSQL tests race two orders
+   against capacity one. Cancellation/expiry hooks remain pending with checkout.
 5. **Pending:** quoteCart/checkout/cart/invoice integration, explicit DiscountLine
    rendering and immutable order snapshots. Resolve/test fee and tax bases,
    amount rounding and returns/finance allocation before wiring the evaluator.
    Existing item unit prices and historic orders must remain untouched.
-6. **Pending:** no-code scenario editor, lifecycle/schedule/group/budget fields,
+6. **Backend simulator implemented; UI pending:** read-only saved-cart simulation
+   with live server prices, market-scoped CRM and explicit draft-preview mode.
+   No activation/redemption side effect; estimates are not checkout quotes.
+   Still required: no-code editor, lifecycle/schedule/group/budget fields,
    coupons (single and batch), simulator and explanations, permission-aware
    access, contextual helper text/safe defaults/examples/warnings in fa/tr/en,
    RTL/LTR and 390px browser tests. Bundle/gift mechanics require precise
@@ -54,17 +62,20 @@ The previous preparation is not completion. Work starts from PR #52's merge
 
 ## Verification and safe operation
 
-For the offline increment, `pnpm test:unit -- tests/unit/promotions.spec.ts` uses
+For the offline evaluator, `pnpm test:unit -- tests/unit/promotions.spec.ts` uses
 the unit-only configuration and no database. `pnpm lint` and `pnpm typecheck`
-remain required. There is no manual UI to test yet; the simulator is pending.
+remain required. There is no manual UI to test yet; simulator UI is pending.
 Evaluation has no ambient clock, database, network or coupon-consuming side
 effect. Reason codes are an internal API and must be translated by the eventual
 UI. Do not expose rejected promotion/segment details on a public route.
 
-No migration, seed, preview sync, restore or deployment is part of this first
-increment. Later integration tests use only disposable `_test` databases.
-Rollback of the unused evaluator removes files; after persistent evidence is
-introduced, rollback must retain that evidence rather than drop tables.
+D72 adds migration `20261003160000_phase09b_promotions`. Apply/test only against
+disposable `_test` databases while this PR is Draft. Test
+`tests/integration/phase09b-promotions.spec.ts` with `TEST_DATABASE_URL` set;
+use UTF-8, PostgreSQL session timezone UTC and the documented test-only secrets.
+No Preview sync or deployment. Rollback must retain persistent evidence, using
+compatible code instead of dropping the new tables. This is an implementation
+foundation, not authorization to turn on live checkout discounts.
 
 ## Outside this phase
 

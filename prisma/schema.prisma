@@ -341,6 +341,7 @@ model ThemeSettings {
 }
 
 model Market {
+  promotionPrograms PromotionProgram[]
   crmProfiles       CrmProfile[]
   crmNotes          CrmNote[]
   marketingConsents MarketingConsent[]
@@ -1178,6 +1179,7 @@ model OrderSequence {
 }
 
 model Order {
+  promotionEvaluation PromotionOrderEvaluation?
   creditUses        CreditUse[]
   invoices          Invoice[]
   id                String          @id @default(cuid())
@@ -2205,4 +2207,107 @@ model CrmMetricsConfig {
   definition Json
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+// D72: append-only revisions and order evidence; no historical data backfill.
+model PromotionProgram {
+  id        String                     @id @default(cuid())
+  marketId  String
+  market    Market                     @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  currency  String
+  version   Int                        @default(1)
+  revisions PromotionProgramRevision[]
+  coupons   PromotionCoupon[]
+  createdAt DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime                   @updatedAt @db.Timestamptz(3)
+
+  @@index([marketId, id])
+}
+
+model PromotionProgramRevision {
+  id              String                @id @default(cuid())
+  programId       String
+  program         PromotionProgram      @relation(fields: [programId], references: [id], onDelete: Restrict)
+  version         Int
+  name            String
+  description     String
+  category        String
+  ownerNotes      String
+  titleI18n       Json
+  descriptionI18n Json
+  config          Json
+  actorId         String
+  mutationKey     String                @unique
+  mutationHash    String
+  redemptions     PromotionRedemption[]
+  createdAt       DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @db.Timestamptz(3)
+
+  @@unique([programId, version])
+}
+
+model PromotionCoupon {
+  id             String                @id @default(cuid())
+  programId      String
+  program        PromotionProgram      @relation(fields: [programId], references: [id], onDelete: Restrict)
+  marketId       String
+  code           String
+  status         String                @default("ACTIVE")
+  version        Int                   @default(1)
+  startsAt       DateTime              @db.Timestamptz(3)
+  endsAt         DateTime?             @db.Timestamptz(3)
+  totalUsageCap  Int?
+  perCustomerCap Int?
+  actorId        String
+  mutationKey    String
+  mutationIndex  Int
+  mutationHash   String
+  redemptions    PromotionRedemption[]
+  createdAt      DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @db.Timestamptz(3)
+
+  @@unique([marketId, code])
+  @@unique([mutationKey, mutationIndex])
+  @@index([programId, id])
+}
+
+model PromotionOrderEvaluation {
+  id          String                 @id @default(cuid())
+  orderId     String                 @unique
+  order       Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  requestHash String
+  result      Json
+  redemptions PromotionRedemption[]
+  release     PromotionUsageRelease?
+  createdAt   DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime               @updatedAt @db.Timestamptz(3)
+}
+
+model PromotionRedemption {
+  id              String                   @id @default(cuid())
+  evaluationId    String
+  evaluation      PromotionOrderEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  programId       String
+  revision        Int
+  programRevision PromotionProgramRevision @relation(fields: [programId, revision], references: [programId, version], onDelete: Restrict)
+  couponId        String?
+  coupon          PromotionCoupon?         @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  amount          Decimal                  @db.Decimal(18, 4)
+  currency        String
+  snapshot        Json
+  createdAt       DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime                 @updatedAt @db.Timestamptz(3)
+
+  @@unique([evaluationId, programId])
+  @@index([programId])
+  @@index([couponId])
+}
+
+model PromotionUsageRelease {
+  id           String                   @id @default(cuid())
+  evaluationId String                   @unique
+  evaluation   PromotionOrderEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  reason       String
+  createdAt    DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime                 @updatedAt @db.Timestamptz(3)
 }
