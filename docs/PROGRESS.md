@@ -27,6 +27,17 @@
 
 وضعیت‌ها: ⬜ شروع نشده · 🟡 در حال انجام · 🔍 در بازبینی · ✅ Merge شده · 🧪 تست‌شده توسط مهدی
 
+## پیگیری 09B و رفع مانع امنیت وابستگی‌ها — ۲۰۲۶-۱۰-۰۷
+
+Implemented against docs v1.2 / D-numbers touched: D21, D70.
+
+- PR #55 با اجازهٔ صریح مالک، CI سبز و گزارش واقعی بدون blocker برای همان SHA در شاخهٔ PR #54 ادغام شد؛ commit ادغام `c6313b6ff80d40caf85b049993fcdea4359f7489`. محتوای ادغام با نسخهٔ قبلاً آزموده‌شدهٔ #55 یکسان بود. main و Preview تغییر نکردند.
+- CI تازهٔ #54 در [run 37546855349](https://github.com/mehdi2044/HodaSite/actions/runs/37546855349) پیش از تست‌ها در audit متوقف شد: دو هشدار high برای `sharp` و `source-map-js`. بازتولید محلی نیز همان دو هشدار را نشان داد. شواهد CI قدیمی جای کنترل امنیت تازه را نمی‌گیرند.
+- اصلاح محدود: حداقل نسخهٔ `sharp` به `^0.35.5` ارتقا یافت و override وابستگی انتقالی `source-map-js` روی `1.2.2` قرار گرفت؛ lockfile با pnpm 10.15.1 بازتولید شد. منابع: [sharp advisory](https://github.com/advisories/GHSA-wq5f-xc86-pv6w)، [source-map-js advisory](https://github.com/advisories/GHSA-68fv-2mgg-jv7q). هیچ audit exception یا تضعیف gate اضافه نشد.
+- اعتبارسنجی محلی این اصلاح: نصب `--frozen-lockfile`، audit وابستگی‌های production با صفر آسیب‌پذیری، lint و TypeScript موفق؛ هر ۸۵ فایل / ۳۹۶۰ تست واحد موفق، شامل ۲۹ تست واقعی پردازش تصویر. نسخهٔ runtime برابر `sharp 0.35.5 / librsvg 2.63.2` تأیید شد. integration/PostgreSQL، build، E2E و Local/S3 restore در این پیگیری محلی اجرا نشدند؛ CI تازهٔ head اصلاح‌شده باید آن‌ها را تأیید کند.
+- دامنهٔ داده و بازیابی: بدون تغییر schema، migration، مبلغ/سفارش، مجوز، provider یا قالب بکاپ. قرارداد نگهداری شواهد مالی D73 و CI واقعی Local/S3 restore پابرجاست. این اصلاح مجوز استقرار یا فعال‌سازی تخفیف زنده نیست.
+- تست دستی مرتبط در محیط آزمایشی: یک تصویر JPEG/PNG بارگذاری و سپس جایگزین شود؛ آماده‌شدن تصویر، ابعاد و URL جدید، AVIF/WebP و نمایش واکنش‌گرا کنترل شوند. PR #54 تا تکمیل CI همان head، بازبینی کامل و اجازهٔ ادغام مالک باز می‌ماند؛ فاز 09 کامل اعلام نشده است.
+
 ## ادامهٔ Phase 09B — پنل قوانین، کوپن و شبیه‌ساز — ۲۰۲۶-۱۰-۰۳
 
 Implemented against docs v1.2 / D-numbers touched: D08, D09, D24, D31, D69, D70, D71, D72, D73.
