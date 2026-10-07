@@ -23,7 +23,38 @@ for (const [locale, marketCode] of [
       where: { code: marketCode },
     });
     const variant = await db.variant.findFirstOrThrow({
-      where: { isActive: true, product: { status: "ACTIVE", deletedAt: null } },
+      where: {
+        isActive: true,
+        product: {
+          status: "ACTIVE",
+          deletedAt: null,
+          marketIds: { has: market.id },
+        },
+      },
+    });
+    const shippingAddress = {
+      province: `Province-${suffix}`,
+      city: `City-${suffix}`,
+      postalCode: "10000",
+    };
+    const shipping = await db.feeRule.create({
+      data: {
+        marketId: market.id,
+        labelI18n: {
+          fa: "ارسال آزمون",
+          tr: "Test teslimatı",
+          en: "Test shipping",
+        },
+        type: "SHIPPING",
+        method: "FIXED",
+        params: { amount: "37" },
+        currency: market.currency,
+        province: shippingAddress.province,
+        city: shippingAddress.city,
+        postalPrefix: "100",
+        selectable: true,
+        validFrom: new Date(0),
+      },
     });
     const cart = await db.cart.create({
       data: {
@@ -31,6 +62,7 @@ for (const [locale, marketCode] of [
         marketId: market.id,
         currency: market.currency,
         locale,
+        checkout: { ...shippingAddress, shippingRuleId: shipping.id },
         expiresAt: new Date(Date.now() + 86400000),
         items: { create: { variantId: variant.id, quantity: 1 } },
       },
@@ -76,6 +108,7 @@ for (const [locale, marketCode] of [
       .getByLabel(t.value, { exact: true })
       .fill("0");
     await editor.locator('[name="couponRequired"]').check();
+    await editor.locator('[name="effect"]').selectOption("freeShipping");
     await editor.locator('[name="totalUsageCap"]').fill("5");
     await editor.locator('[name="confirmed"]').check();
     await editor.getByRole("button", { name: t.save, exact: true }).click();
@@ -167,6 +200,12 @@ for (const [locale, marketCode] of [
     await expect(page.getByTestId("simulation-result")).toContainText(
       t.matched,
     );
+    await expect(
+      page
+        .getByTestId("simulation-result")
+        .locator("div.rounded-token")
+        .filter({ has: page.getByText(t.shippingDiscount, { exact: true }) }),
+    ).toContainText(`37.0000 ${market.currency}`);
     expect(
       await db.promotionRedemption.count({ where: { programId: id } }),
     ).toBe(0);

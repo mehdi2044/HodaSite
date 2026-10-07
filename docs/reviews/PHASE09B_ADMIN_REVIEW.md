@@ -48,6 +48,14 @@ replaced with a global rate. Personal/contact fields stay server-side. Missing
 address details and final checkout tax can still change the estimate. Unsaved
 editor changes must be saved before simulation.
 
+Saved category/collection IDs in conditions, inclusions and exclusions must
+resolve to non-deleted taxonomy. A market condition must equal the program
+market. Invalid references fail before any version/revision/audit write; taxonomy
+remains global. Historical definitions are retained and need explicit correction
+before a fresh save. Tests cover stale taxonomy, invalid creates/updates and
+deduplicated valid retries. The three locale browser flows also verify the saved
+location-scoped, selected shipping amount in the free-shipping estimate.
+
 ## Bundle / gift boundary
 
 The safe 09B foundation is D71's existing-basket multi-buy: a selected pool needs

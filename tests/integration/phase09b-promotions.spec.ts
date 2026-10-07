@@ -27,6 +27,7 @@ import {
   simulateAction,
 } from "@/app/admin/(dashboard)/promotions/actions";
 import { simulatePromotionCart } from "@/modules/promotions/simulator";
+import { quoteCart } from "@/modules/fees";
 import {
   redeemOrderPromotions,
   releaseCancelledOrderPromotions,
@@ -445,6 +446,148 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       };
       expect((await savePromotionProgram(valid)).version).toBe(2);
       expect((await savePromotionProgram(valid)).version).toBe(2);
+    });
+    it("rejects invalid taxonomy and market references before writing revisions or audits", async () => {
+      const category = await db.category.create({
+        data: {
+          slugI18n: { en: randomUUID() },
+          titleI18n: { en: "Taxonomy fixture" },
+          gender: "UNISEX",
+        },
+      });
+      const deletedCategory = await db.category.create({
+        data: {
+          slugI18n: { en: randomUUID() },
+          titleI18n: { en: "Deleted fixture" },
+          gender: "UNISEX",
+          deletedAt: new Date(),
+        },
+      });
+      const collection = await db.collection.create({
+        data: { slug: randomUUID(), titleI18n: { en: "Taxonomy fixture" } },
+      });
+      const deletedCollection = await db.collection.create({
+        data: {
+          slug: randomUUID(),
+          titleI18n: { en: "Deleted fixture" },
+          deletedAt: new Date(),
+        },
+      });
+      actor.id = scoped;
+      const raw = input();
+      const saved = await savePromotionProgram(raw);
+      const programs = await db.promotionProgram.count();
+      const revisions = await db.promotionProgramRevision.count();
+      const audits = await db.auditLog.count();
+      const rejectDefinition = async (
+        definition: PromotionRevision["definition"],
+      ) => {
+        const rejected = {
+          ...raw,
+          mutationKey: randomUUID(),
+          config: { ...raw.config, definition },
+        };
+        expect(await saveProgramAction(rejected)).toMatchObject({
+          ok: false,
+          code: "INVALID_REFERENCE",
+        });
+        expect(
+          await saveProgramAction({
+            ...rejected,
+            id: saved.id,
+            expectedVersion: 1,
+            mutationKey: randomUUID(),
+          }),
+        ).toMatchObject({ ok: false, code: "INVALID_REFERENCE" });
+      };
+      for (const field of ["category", "collection"] as const) {
+        const deleted =
+          field === "category" ? deletedCategory.id : deletedCollection.id;
+        for (const ref of [deleted, `missing-${field}`]) {
+          for (const position of ["condition", "include", "exclude"]) {
+            const selector = { ...raw.config.definition.selector };
+            if (position === "include") {
+              if (field === "category") selector.categoryIds = [ref];
+              else selector.collectionIds = [ref];
+            }
+            if (position === "exclude") {
+              if (field === "category") selector.excludedCategoryIds = [ref];
+              else selector.excludedCollectionIds = [ref];
+            }
+            await rejectDefinition({
+              ...raw.config.definition,
+              conditions:
+                position === "condition" ? [{ field, value: ref }] : [],
+              selector,
+            });
+          }
+        }
+      }
+      for (const value of [otherMarket, "missing-market"])
+        await rejectDefinition({
+          ...raw.config.definition,
+          conditions: [{ field: "market", value }],
+        });
+      expect(await db.promotionProgram.count()).toBe(programs);
+      expect(await db.promotionProgramRevision.count()).toBe(revisions);
+      expect(await db.auditLog.count()).toBe(audits);
+      expect(
+        (
+          await db.promotionProgram.findUniqueOrThrow({
+            where: { id: saved.id },
+          })
+        ).version,
+      ).toBe(1);
+      // Reusing a valid ID across all three locations requires deduplicated counts.
+      const valid = {
+        ...raw,
+        id: saved.id,
+        expectedVersion: 1,
+        mutationKey: randomUUID(),
+        config: {
+          ...raw.config,
+          definition: {
+            ...raw.config.definition,
+            conditions: [
+              { field: "market" as const, value: marketId },
+              { field: "category" as const, value: category.id },
+              { field: "collection" as const, value: collection.id },
+            ],
+            selector: {
+              ...raw.config.definition.selector,
+              categoryIds: [category.id],
+              excludedCategoryIds: [category.id],
+              collectionIds: [collection.id],
+              excludedCollectionIds: [collection.id],
+            },
+          },
+        },
+      };
+      expect((await savePromotionProgram(valid)).version).toBe(2);
+      expect((await savePromotionProgram(valid)).version).toBe(2);
+      expect(await db.promotionProgramRevision.count()).toBe(revisions + 1);
+      expect(await db.auditLog.count()).toBe(audits + 1);
+      // A taxonomy deletion after loading the editor invalidates a fresh save.
+      await db.collection.update({
+        where: { id: collection.id },
+        data: { deletedAt: new Date() },
+      });
+      expect(
+        await saveProgramAction({
+          ...valid,
+          expectedVersion: 2,
+          mutationKey: randomUUID(),
+        }),
+      ).toMatchObject({ ok: false, code: "INVALID_REFERENCE" });
+      expect(await db.promotionProgramRevision.count()).toBe(revisions + 1);
+      expect(await db.auditLog.count()).toBe(audits + 1);
+      expect(
+        (
+          await db.promotionProgram.findUniqueOrThrow({
+            where: { id: saved.id },
+          })
+        ).version,
+      ).toBe(2);
     });
     it("server actions preserve retry identity, reject stale edits and require confirmation", async () => {
       const raw = input({ status: "DRAFT", enabled: false });
@@ -1060,13 +1203,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             ?.reason,
         ).toBe("APPLIED");
         const address = {
-          province: " ON ",
+          province: "ON",
           city: "Toronto",
           postalCode: "M5V 1A1",
           email: "shipping-fixture@example.com",
           line1: "Private shipping fixture",
         };
-        const cases: [Prisma.InputJsonObject, string][] = [
+        const cases: [Record<string, string>, string][] = [
           [{}, "5.0000"],
           [address, "25.0000"],
           [{ ...address, shippingRuleId: express.id }, "35.0000"],
@@ -1083,8 +1226,20 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           });
           const audits = await db.auditLog.count();
           const evaluations = await db.promotionOrderEvaluation.count();
+          const checkoutQuote = await quoteCart({
+            marketId,
+            locale: locale as "en" | "fa" | "tr",
+            items: [{ variantId: product.variants[0].id, quantity: 1 }],
+            address: checkout,
+            shippingRuleId: checkout.shippingRuleId,
+          });
+          const chargedShipping = new Prisma.Decimal(
+            checkoutQuote.lines.find((line) => line.type === "SHIPPING")
+              ?.chargedAmount ?? "0",
+          ).toFixed(4);
+          expect(chargedShipping).toBe(amount);
           const result = await simulatePromotionCart(shippingInput);
-          expect(result.result.shippingDiscount).toBe(amount);
+          expect(result.result.shippingDiscount).toBe(chargedShipping);
           expect(result.result.discountTotal).toBe(amount);
           expect(JSON.stringify(result)).not.toContain(address.email);
           expect(JSON.stringify(result)).not.toContain(address.line1);
@@ -1102,6 +1257,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await expect(simulatePromotionCart(shippingInput)).rejects.toThrow(
           "Invalid shipping selection",
         );
+        await db.cart.update({
+          where: { id: cart.id },
+          data: { checkout: { province: 42 } },
+        });
+        await expect(simulatePromotionCart(shippingInput)).rejects.toThrow();
         await db.cart.update({
           where: { id: cart.id },
           data: { checkout: {} },

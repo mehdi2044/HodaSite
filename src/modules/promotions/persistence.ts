@@ -94,6 +94,12 @@ export async function savePromotionProgram(raw: unknown) {
           marketId: input.marketId,
           currency: row?.currency ?? market.currency,
         });
+        if (
+          config.definition.conditions.some(
+            (c) => c.field === "market" && c.value !== input.marketId,
+          )
+        )
+          throw new PromotionError("INVALID_REFERENCE");
         const productIds = [
           ...new Set([
             ...config.definition.selector.productIds,
@@ -112,6 +118,35 @@ export async function savePromotionProgram(raw: unknown) {
               marketIds: { has: input.marketId },
             },
           })) !== productIds.length
+        )
+          throw new PromotionError("INVALID_REFERENCE");
+        const categoryIds = [
+          ...new Set([
+            ...config.definition.selector.categoryIds,
+            ...config.definition.selector.excludedCategoryIds,
+            ...config.definition.conditions
+              .filter((c) => c.field === "category")
+              .map((c) => c.value),
+          ]),
+        ];
+        const collectionIds = [
+          ...new Set([
+            ...config.definition.selector.collectionIds,
+            ...config.definition.selector.excludedCollectionIds,
+            ...config.definition.conditions
+              .filter((c) => c.field === "collection")
+              .map((c) => c.value),
+          ]),
+        ];
+        if (
+          (categoryIds.length &&
+            (await tx.category.count({
+              where: { id: { in: categoryIds }, deletedAt: null },
+            })) !== categoryIds.length) ||
+          (collectionIds.length &&
+            (await tx.collection.count({
+              where: { id: { in: collectionIds }, deletedAt: null },
+            })) !== collectionIds.length)
         )
           throw new PromotionError("INVALID_REFERENCE");
         const segments = config.definition.conditions
