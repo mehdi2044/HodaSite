@@ -50,25 +50,6 @@ export async function evaluateStoredPromotions(
   });
   if (simulateProgramId && !programs.some((p) => p.id === simulateProgramId))
     throw new PromotionError("NOT_FOUND");
-  const segments = [
-    ...new Set(
-      revisions.flatMap((p) =>
-        p.definition.conditions
-          .filter((c) => c.field === "segment")
-          .map((c) => c.value),
-      ),
-    ),
-  ];
-  if (segments.length > 100) throw new PromotionError("LIMIT");
-  const customer = verifiedCustomerId
-    ? await promotionCustomerEvidence(
-        tx,
-        cart.marketId,
-        verifiedCustomerId,
-        segments,
-        verifiedSelfCheckout,
-      )
-    : null;
   if (lock && codes.length)
     await tx.$queryRaw`SELECT id FROM "PromotionCoupon" WHERE "marketId"=${cart.marketId} AND code IN (${Prisma.join(codes)}) ORDER BY id FOR UPDATE`;
   const coupons = await tx.promotionCoupon.findMany({
@@ -91,6 +72,25 @@ export async function evaluateStoredPromotions(
       now >= new Date(p.startsAt) &&
       (p.endsAt === null || now < new Date(p.endsAt)),
   );
+  const segments = [
+    ...new Set(
+      eligible.flatMap((p) =>
+        p.definition.conditions
+          .filter((c) => c.field === "segment")
+          .map((c) => c.value),
+      ),
+    ),
+  ];
+  if (segments.length > 100) throw new PromotionError("LIMIT");
+  const customer = verifiedCustomerId
+    ? await promotionCustomerEvidence(
+        tx,
+        cart.marketId,
+        verifiedCustomerId,
+        segments,
+        verifiedSelfCheckout,
+      )
+    : null;
   const candidates = coupons.filter(
     (coupon) =>
       eligible.some((p) => p.id === coupon.programId && p.couponRequired) &&

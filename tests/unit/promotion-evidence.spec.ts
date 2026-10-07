@@ -2,22 +2,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 import { promotionInput } from "../helpers/promotion-program";
 import type { PromotionRevision } from "@/modules/promotions";
+const customerEvidence = vi.hoisted(() => vi.fn());
 vi.mock("@/modules/crm/promotion-server", () => ({
-  promotionCustomerEvidence: async () => ({
-    id: "customer",
-    marketId: "market",
-    orderCount: 0,
-    segmentIds: [],
-    tags: [],
-    consents: {
-      email: "UNKNOWN",
-      sms: "UNKNOWN",
-      whatsapp: "UNKNOWN",
-      telegram: "UNKNOWN",
-      push: "UNKNOWN",
-    },
-  }),
+  promotionCustomerEvidence: customerEvidence,
 }));
+const customer = {
+  id: "customer",
+  marketId: "market",
+  orderCount: 0,
+  segmentIds: [],
+  tags: [],
+  consents: {
+    email: "UNKNOWN",
+    sms: "UNKNOWN",
+    whatsapp: "UNKNOWN",
+    telegram: "UNKNOWN",
+    push: "UNKNOWN",
+  },
+};
 import { evaluateStoredPromotions } from "@/modules/promotions/evidence";
 const programs = vi.fn(),
   coupons = vi.fn(),
@@ -78,12 +80,37 @@ function coupon(id: string, programId = "p") {
 }
 beforeEach(() => {
   vi.resetAllMocks();
+  customerEvidence.mockResolvedValue(customer);
   programs.mockResolvedValue([]);
   coupons.mockResolvedValue([]);
   groupBy.mockResolvedValue([]);
   query.mockResolvedValue([{ now: new Date("2026-01-01T00:00:00Z") }]);
 });
 describe("bounded live promotion usage loading", () => {
+  it("loads segments only for eligible revisions, including an explicit inactive preview", async () => {
+    const rows = [
+      program("active", { couponRequired: false }),
+      program("disabled", { enabled: false }),
+      program("archived", { status: "ARCHIVED" }),
+      program("expired", { endsAt: "2021-01-01T00:00:00Z" }),
+      program("future", { startsAt: "2099-01-01T00:00:00Z" }),
+      program("currency"),
+    ];
+    rows[5].currency = "CAD";
+    rows[5].revisions[0].config.currency = "CAD";
+    for (const row of rows)
+      row.revisions[0].config.definition.conditions = [
+        { field: "segment", value: `segment-${row.id}` },
+      ];
+    programs.mockResolvedValue(rows);
+    await evaluateStoredPromotions(tx, cart, "customer", [], false);
+    expect(customerEvidence.mock.calls[0][3]).toEqual(["segment-active"]);
+    await evaluateStoredPromotions(tx, cart, "customer", [], false, "disabled");
+    expect(customerEvidence.mock.calls[1][3]).toEqual([
+      "segment-active",
+      "segment-disabled",
+    ]);
+  });
   it("uses four aggregate calls for 100 limited programs and 100 limited coupons after locking", async () => {
     const rows = Array.from({ length: 100 }, (_, i) =>
       program(`p${i}`, { totalUsageCap: 2, perCustomerCap: 2, budget: "20" }),

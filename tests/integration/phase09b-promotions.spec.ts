@@ -36,6 +36,8 @@ import {
 } from "@/app/admin/(dashboard)/promotions/actions";
 import { simulatePromotionCart } from "@/modules/promotions/simulator";
 import { quoteCart } from "@/modules/fees";
+import { promotionCustomerEvidence } from "@/modules/crm/promotion-server";
+import { segmentQuery } from "@/modules/crm/segment-query";
 import {
   redeemOrderPromotions,
   releaseCancelledOrderPromotions,
@@ -1120,6 +1122,61 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect((await evaluate(secondCustomer)).discountTotal).toBe("0.0000");
       await expect(evaluate(foreignCustomer)).rejects.toThrow();
       expect(await db.promotionOrderEvaluation.count()).toBe(before);
+    });
+    it("batched CRM predicates match individual scoped SQL for 100 saved segments", async () => {
+      const definitions = [
+        [],
+        [{ field: "market", value: marketId }],
+        [{ field: "market", value: otherMarket }],
+        [{ field: "locale", value: "en" }],
+        [{ field: "locale", value: "tr" }],
+        [{ field: "orders", op: "gte", value: 0 }],
+        [{ field: "value", op: "gte", value: "0.0001" }],
+        [{ field: "aov", op: "lte", value: "100.0001" }],
+        [{ field: "lastOrder", op: "gte", value: "2020-01-01" }],
+        [{ field: "category", value: categoryId }],
+        [{ field: "tag", value: "promotion-test" }],
+        [{ field: "tag", value: "' OR true --" }],
+        [{ field: "consent", channel: "email", value: "OPTED_IN" }],
+        [{ field: "consent", channel: "sms", value: "UNKNOWN" }],
+        [
+          { field: "locale", value: "en" },
+          { field: "orders", op: "gte", value: 0 },
+        ],
+      ];
+      const rows = Array.from({ length: 100 }, (_, i) => ({
+        id: randomUUID(),
+        marketId: i === 99 ? otherMarket : marketId,
+        name: "Batch segment fixture",
+        definition: { version: 1, rules: definitions[i % definitions.length] },
+      }));
+      await db.crmSegment.createMany({ data: rows });
+      const audits = await db.auditLog.count();
+      const evaluations = await db.promotionOrderEvaluation.count();
+      await db.$transaction(
+        async (tx) => {
+          const batched = await promotionCustomerEvidence(
+            tx,
+            marketId,
+            customerId,
+            rows.map((r) => r.id),
+          );
+          const expected: string[] = [];
+          for (const row of rows.filter((r) => r.marketId === marketId)) {
+            const found = await tx.$queryRaw<
+              { id: string }[]
+            >`SELECT c.id ${segmentQuery(marketId, row.definition)} AND c.id=${customerId} LIMIT 1`;
+            if (found.length) expected.push(row.id);
+          }
+          expect(expected.length).toBeGreaterThan(0);
+          expect(expected.length).toBeLessThan(99);
+          expect(batched.segmentIds.sort()).toEqual(expected.sort());
+          expect(batched.segmentIds).not.toContain(rows[99].id);
+        },
+        { isolationLevel: "RepeatableRead", timeout: 15000 },
+      );
+      expect(await db.auditLog.count()).toBe(audits);
+      expect(await db.promotionOrderEvaluation.count()).toBe(evaluations);
     });
     it("simulator requires customer and segment read privileges beyond price editing", async () => {
       actor.id = scoped;

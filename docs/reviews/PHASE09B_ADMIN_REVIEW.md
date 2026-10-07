@@ -61,7 +61,11 @@ from checkout preserves its selected shipping benefit; invalid selections stop
 the estimate and keep a route to review delivery details. Usage evidence uses at
 most four grouped queries for program/coupon total/customer limits, after the
 existing locks and database clock. Unlimited or inactive rules need no usage
-query. Lifetime and unpaid-release semantics remain unchanged.
+query. Lifetime and unpaid-release semantics remain unchanged. Customer segment
+conditions come only from eligible revisions (or the explicit inactive preview)
+and use one parameterized query over a shared customer/paid-order relation.
+Membership and market guards remain unchanged; PostgreSQL compares the batch
+with individual predicate results over 100 saved segments.
 
 ## Bundle / gift boundary
 

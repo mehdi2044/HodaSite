@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { requireMember } from "./membership";
-import { segmentQuery } from "./segment-query";
+import { customerSegmentsQuery } from "./segment-query";
 
 /** Internal 09B consumer. Identity must already be verified by its caller. */
 export async function promotionCustomerEvidence(
@@ -18,17 +18,17 @@ export async function promotionCustomerEvidence(
     select: { id: true },
   });
   if (!customer) throw new Error("Customer unavailable");
-  const rows = await tx.crmSegment.findMany({
-    where: { id: { in: segmentIds }, marketId },
-  });
-  const matched: string[] = [];
-  for (const segment of rows) {
-    const predicate = segmentQuery(marketId, segment.definition);
-    const matches = await tx.$queryRaw<
-      { id: string }[]
-    >`SELECT c.id ${predicate} AND c.id=${customerId} LIMIT 1`;
-    if (matches.length) matched.push(segment.id);
-  }
+  const rows = segmentIds.length
+    ? await tx.crmSegment.findMany({
+        where: { id: { in: segmentIds }, marketId },
+      })
+    : [];
+  const matches = rows.length
+    ? await tx.$queryRaw<{ id: string | null }[]>(
+        customerSegmentsQuery(marketId, customerId, rows),
+      )
+    : [];
+  const matched = matches.flatMap((row) => (row.id === null ? [] : [row.id]));
   const profile = await tx.crmProfile.findUnique({
     where: { customerId_marketId: { customerId, marketId } },
   });

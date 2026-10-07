@@ -52,6 +52,7 @@ The previous preparation is not completion. Work starts from PR #52's merge
    must match the program market before any revision/audit is written.
    The public cart also preserves these inputs when returning from checkout.
    Usage reads are batched while lifetime/cap/budget/release locking is preserved.
+   Relevant customer segment predicates are also evaluated in one scoped query.
    Shipping uses validated saved address fields and the selected method through
    the checkout quote service; invalid selections fail without consuming coupons.
    Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
