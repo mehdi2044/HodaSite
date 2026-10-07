@@ -1,5 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { Prisma } from "@prisma/client";
 const actor = vi.hoisted(() => ({ id: "" }));
 vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
@@ -51,6 +59,10 @@ let owner = "",
   productId = "",
   categoryId = "";
 const startsAt = "2020-01-01T00:00:00Z";
+const taxonomyFixtures = {
+  categories: [] as string[],
+  collections: [] as string[],
+};
 function input(overrides: Partial<PromotionRevision> = {}, market = marketId) {
   const config = {
     enabled: true,
@@ -263,6 +275,20 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       actor.id = owner;
       setMaintenanceFlag(false);
     });
+    afterEach(async () => {
+      // CI shares this database with browser tests. Keep test taxonomy out of
+      // storefront navigation while retaining references from immutable revisions.
+      if (taxonomyFixtures.categories.length)
+        await db.category.updateMany({
+          where: { id: { in: taxonomyFixtures.categories.splice(0) } },
+          data: { deletedAt: new Date() },
+        });
+      if (taxonomyFixtures.collections.length)
+        await db.collection.updateMany({
+          where: { id: { in: taxonomyFixtures.collections.splice(0) } },
+          data: { deletedAt: new Date() },
+        });
+    });
 
     it.each(["denied", "inactive", "anonymous", "wrong-market"])(
       "guards admin actions and loaders for %s",
@@ -455,6 +481,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           gender: "UNISEX",
         },
       });
+      taxonomyFixtures.categories.push(category.id);
       const deletedCategory = await db.category.create({
         data: {
           slugI18n: { en: randomUUID() },
@@ -463,9 +490,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           deletedAt: new Date(),
         },
       });
+      taxonomyFixtures.categories.push(deletedCategory.id);
       const collection = await db.collection.create({
         data: { slug: randomUUID(), titleI18n: { en: "Taxonomy fixture" } },
       });
+      taxonomyFixtures.collections.push(collection.id);
       const deletedCollection = await db.collection.create({
         data: {
           slug: randomUUID(),
@@ -473,6 +502,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           deletedAt: new Date(),
         },
       });
+      taxonomyFixtures.collections.push(deletedCollection.id);
       actor.id = scoped;
       const raw = input();
       const saved = await savePromotionProgram(raw);
