@@ -954,9 +954,44 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         simulatePromotionCart({ marketId, cartId: "missing", couponCodes: [] }),
       ).rejects.toThrow();
     });
-    it("simulates a saved draft in every locale without activating or consuming it", async () => {
+    it("simulates saved drafts and shipping in every locale without side effects", async () => {
       const p = await program({ status: "DRAFT" }),
         c = await coupon(p.id);
+      const shippingProgram = await program({
+        status: "DRAFT",
+        definition: {
+          ...p.raw.config.definition,
+          effect: { type: "freeShipping" },
+        },
+      });
+      const shippingCoupon = await coupon(shippingProgram.id);
+      const fee = {
+        marketId,
+        labelI18n: { en: "Shipping fixture" },
+        type: "SHIPPING" as const,
+        method: "FIXED" as const,
+        currency: "USD",
+        selectable: true,
+        validFrom: new Date(0),
+      };
+      await db.feeRule.create({
+        data: { ...fee, priority: 1, params: { amount: "5" } },
+      });
+      await db.feeRule.create({
+        data: {
+          ...fee,
+          province: "ON",
+          city: "Toronto",
+          postalPrefix: "M5V",
+          params: { amount: "25" },
+        },
+      });
+      const express = await db.feeRule.create({
+        data: { ...fee, params: { amount: "35" } },
+      });
+      const foreign = await db.feeRule.create({
+        data: { ...fee, marketId: otherMarket, params: { amount: "99" } },
+      });
       const source = await db.variant.findUniqueOrThrow({
         where: { id: variantId },
       });
@@ -1024,7 +1059,71 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           preview.result.explanations.find((e) => e.promotionId === p.id)
             ?.reason,
         ).toBe("APPLIED");
+        const address = {
+          province: " ON ",
+          city: "Toronto",
+          postalCode: "M5V 1A1",
+          email: "shipping-fixture@example.com",
+          line1: "Private shipping fixture",
+        };
+        const cases: [Prisma.InputJsonObject, string][] = [
+          [{}, "5.0000"],
+          [address, "25.0000"],
+          [{ ...address, shippingRuleId: express.id }, "35.0000"],
+        ];
+        const shippingInput = {
+          ...raw,
+          couponCodes: [shippingCoupon.code],
+          previewProgramId: shippingProgram.id,
+        };
+        for (const [checkout, amount] of cases) {
+          const savedCart = await db.cart.update({
+            where: { id: cart.id },
+            data: { checkout },
+          });
+          const audits = await db.auditLog.count();
+          const evaluations = await db.promotionOrderEvaluation.count();
+          const result = await simulatePromotionCart(shippingInput);
+          expect(result.result.shippingDiscount).toBe(amount);
+          expect(result.result.discountTotal).toBe(amount);
+          expect(JSON.stringify(result)).not.toContain(address.email);
+          expect(JSON.stringify(result)).not.toContain(address.line1);
+          expect(JSON.stringify(result)).not.toContain(address.postalCode);
+          expect(
+            await db.cart.findUniqueOrThrow({ where: { id: cart.id } }),
+          ).toEqual(savedCart);
+          expect(await db.auditLog.count()).toBe(audits);
+          expect(await db.promotionOrderEvaluation.count()).toBe(evaluations);
+        }
+        await db.cart.update({
+          where: { id: cart.id },
+          data: { checkout: { ...address, shippingRuleId: foreign.id } },
+        });
+        await expect(simulatePromotionCart(shippingInput)).rejects.toThrow(
+          "Invalid shipping selection",
+        );
+        await db.cart.update({
+          where: { id: cart.id },
+          data: { checkout: {} },
+        });
       }
+      expect(
+        await db.promotionRedemption.count({
+          where: { programId: shippingProgram.id },
+        }),
+      ).toBe(0);
+      expect(
+        await db.promotionProgramRevision.count({
+          where: { programId: shippingProgram.id },
+        }),
+      ).toBe(1);
+      expect(
+        (
+          await db.promotionProgramRevision.findFirstOrThrow({
+            where: { programId: shippingProgram.id },
+          })
+        ).config,
+      ).toMatchObject({ status: "DRAFT" });
       expect(
         await db.promotionRedemption.count({ where: { programId: p.id } }),
       ).toBe(0);

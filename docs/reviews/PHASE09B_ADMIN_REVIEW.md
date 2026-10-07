@@ -41,8 +41,12 @@ explains conditions, conflicts and benefit amounts. An explicit preview checkbox
 can evaluate the saved inactive program without changing it; date, coupon,
 capacity and other eligibility checks still apply. Input changes clear results.
 The interface labels the result as an estimate, not a final checkout total:
-address-specific charges and final taxes are not claimed. Unsaved editor changes
-must be saved before simulation.
+validated saved province, city, postal code and selected shipping rule are used
+by the same quote service as checkout. Partial drafts remain usable; malformed
+shipping fields and unavailable/inapplicable selections are rejected, not silently
+replaced with a global rate. Personal/contact fields stay server-side. Missing
+address details and final checkout tax can still change the estimate. Unsaved
+editor changes must be saved before simulation.
 
 ## Bundle / gift boundary
 

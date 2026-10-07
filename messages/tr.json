@@ -2150,7 +2150,7 @@
     "issued": "{count} kod oluşturuldu.",
     "couponDisabled": "Kupon oluşturmak için arşivlenmemiş programda “Kupon kodu gerekli” kaydedilmelidir.",
     "couponCaps": "Toplam sınır: {total} · Müşteri başına: {customer}",
-    "estimateHelp": "Kayıtlı kuralları, güncel fiyatları ve seçili sepetin müşterisini kullanır. Önce değişiklikleri kaydedin. Kural etkinleştirmez, kapasite ayırmaz veya kupon tüketmez. Adrese bağlı ücretler ve nihai vergi farklı olabilir.",
+    "estimateHelp": "Kayıtlı kuralları, güncel fiyatları, sepetin müşterisini ve kayıtlı teslimat bilgilerini kullanır. Önce değişiklikleri kaydedin. Kural etkinleştirmez, kapasite ayırmaz veya kupon tüketmez. Eksik adresler ve nihai ödeme vergisi tahmini değiştirebilir.",
     "previewDraft": "Bu kayıtlı programı kapalı veya etkin değilken de dene; diğer uygunluk kontrolleri geçerlidir.",
     "noCarts": "Bu pazarda açık ve dolu sepet yok. Önce mağazada test sepeti oluşturun.",
     "estimateOnly": "Yalnız uygunluk tahmini — nihai ödeme toplamı değildir.",

@@ -2150,7 +2150,7 @@
     "issued": "Issued {count} codes.",
     "couponDisabled": "Coupon issuance requires a non-archived program with “Require a coupon code” saved.",
     "couponCaps": "Total limit: {total} · Per customer: {customer}",
-    "estimateHelp": "Uses saved rules, live prices and the selected cart’s customer. Save edits first. Does not activate rules, reserve capacity or consume coupons. Address-specific fees and final checkout tax may differ.",
+    "estimateHelp": "Uses saved rules, live prices, the cart’s customer and its saved shipping details. Save edits first. Does not activate rules, reserve capacity or consume coupons. Incomplete addresses and final checkout tax may change the estimate.",
     "previewDraft": "Preview this saved program even if disabled or inactive; other eligibility checks still apply.",
     "noCarts": "No open, nonempty cart in this market. Create a test cart in the storefront first.",
     "estimateOnly": "Eligibility estimate only — not the final checkout total.",

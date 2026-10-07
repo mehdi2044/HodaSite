@@ -48,6 +48,8 @@ The previous preparation is not completion. Work starts from PR #52's merge
    stale coupon status changes lock the form and require reloading current status.
    Read-only saved-cart simulation explains
    conditions/conflicts and amount estimates with explicit inactive-preview mode.
+   Shipping uses validated saved address fields and the selected method through
+   the checkout quote service; invalid selections fail without consuming coupons.
    Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
    Bundle/gift scope remains existing-basket multi-buy under D71; automatic gift
    insertion and separate bundle pricing are explicitly not implemented.
