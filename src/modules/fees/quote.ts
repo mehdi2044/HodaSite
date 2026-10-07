@@ -1,5 +1,6 @@
 import { promotionContextSchema } from "@/modules/promotions";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { evaluatePromotionQuote } from "@/modules/promotions/checkout-server";
 import { db } from "@/lib/db";
 import { getDisplayPrice } from "@/modules/pricing";
@@ -15,6 +16,23 @@ export type CartQuoteInput = Readonly<{
   shippingRuleId?: string;
   address?: { province?: string; city?: string; postalCode?: string };
 }>;
+
+const savedShippingSchema = z.object({
+  province: z.string().trim().max(100).optional(),
+  city: z.string().trim().max(100).optional(),
+  postalCode: z.string().trim().max(20).optional(),
+  shippingRuleId: z.string().max(100).optional(),
+});
+
+/** Saved drafts can be partial; invalid shipping must never become a fallback quote. */
+export async function quoteSavedCart(input: CartQuoteInput, checkout: unknown) {
+  const { shippingRuleId, ...address } = savedShippingSchema.parse(checkout);
+  return quoteCart({
+    ...input,
+    address,
+    shippingRuleId: shippingRuleId || undefined,
+  });
+}
 
 export async function quoteCart(
   input: CartQuoteInput,

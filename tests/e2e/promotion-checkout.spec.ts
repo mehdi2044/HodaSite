@@ -33,6 +33,10 @@ for (const [locale, marketCode, province, city, postalCode] of [
     const raw = promotionInput(market.id, variant.productId),
       config = {
         ...raw.config,
+        definition: {
+          ...raw.config.definition,
+          effect: { type: "freeShipping" },
+        },
         id,
         revision: 1,
         marketId: market.id,
@@ -86,6 +90,25 @@ for (const [locale, marketCode, province, city, postalCode] of [
       line2: "",
       note: "",
     };
+    const shipping = await db.feeRule.create({
+      data: {
+        marketId: market.id,
+        currency: market.currency,
+        type: "SHIPPING",
+        method: "FIXED",
+        labelI18n: {
+          fa: "ارسال منتخب",
+          tr: "Seçilen teslimat",
+          en: "Selected shipping",
+        },
+        province,
+        city,
+        postalPrefix: postalCode.slice(0, 3),
+        params: { amount: "37" },
+        selectable: true,
+        validFrom: new Date(0),
+      },
+    });
     const cart = await db.cart.create({
       data: {
         tokenHash: createHash("sha256").update(token).digest("hex"),
@@ -93,7 +116,7 @@ for (const [locale, marketCode, province, city, postalCode] of [
         currency: market.currency,
         locale,
         expiresAt: new Date(Date.now() + 86400000),
-        checkout: address,
+        checkout: { ...address, shippingRuleId: shipping.id },
         items: { create: { variantId: variant.id, quantity: 1 } },
       },
     });
@@ -118,6 +141,14 @@ for (const [locale, marketCode, province, city, postalCode] of [
         new RegExp(raw.titleI18n[locale]),
       );
       await expect(page.getByLabel(t.couponCodes)).toHaveValue(code);
+      await expect(page.getByTestId("discount-line")).toContainText(
+        `37.0000 ${market.currency}`,
+      );
+      const cartTotal = await page
+        .locator("aside dl div")
+        .filter({ has: page.getByText(t.total, { exact: true }) })
+        .locator("dd")
+        .innerText();
       await page.screenshot({
         path: info.outputPath(`${locale}-coupon-cart.png`),
         fullPage: true,
@@ -137,6 +168,34 @@ for (const [locale, marketCode, province, city, postalCode] of [
       const expectedTotal = await page
         .locator('[name="expectedTotal"]')
         .inputValue();
+      expect(cartTotal).toContain(`${expectedTotal} ${market.currency}`);
+      // Returning to the cart must retain the selected delivery discount and total.
+      await page.goto(`/${locale}/cart`);
+      await expect(page.getByTestId("discount-line")).toContainText(
+        `37.0000 ${market.currency}`,
+      );
+      await db.cart.update({
+        where: { id: cart.id },
+        data: {
+          checkout: {
+            ...address,
+            couponCodes: [code],
+            shippingRuleId: "missing-shipping",
+          },
+        },
+      });
+      await page.reload();
+      await expect(page.getByRole("alert")).toHaveText(
+        t.errors.QUOTE_UNAVAILABLE,
+      );
+      await expect(page.getByTestId("discount-line")).toHaveCount(0);
+      await page.getByRole("link", { name: t.checkout, exact: true }).click();
+      await page.getByLabel(t.shippingMethod).selectOption(shipping.id);
+      await page.getByRole("button", { name: t.next, exact: true }).click();
+      await expect(page).toHaveURL(/checkout\?step=3/);
+      await expect(page.locator('[name="expectedTotal"]')).toHaveValue(
+        expectedTotal,
+      );
       await page.screenshot({
         path: info.outputPath(`${locale}-coupon-checkout.png`),
         fullPage: true,
@@ -154,9 +213,13 @@ for (const [locale, marketCode, province, city, postalCode] of [
         include: { promotionEvaluation: { include: { redemptions: true } } },
       });
       expect(order.totalAmount.toString()).toBe(expectedTotal);
-      expect(order.discountAmount.toFixed(4)).toBe("10.0000");
+      expect(order.discountAmount.toFixed(4)).toBe("37.0000");
       expect(order.promotionEvaluation?.redemptions).toHaveLength(1);
     } finally {
+      await db.feeRule.update({
+        where: { id: shipping.id },
+        data: { isActive: false },
+      });
       await db.promotionProgram.update({
         where: { id },
         data: {

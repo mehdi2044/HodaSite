@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { assertCan } from "@/modules/access";
-import { quoteCart } from "@/modules/fees";
+import { quoteSavedCart } from "@/modules/fees";
 import { promotionContextSchema, PromotionDecimal as D } from "./contracts";
 import { promotionAdmin } from "./persistence";
 import {
@@ -19,15 +19,6 @@ const simulatorSchema = z
     previewProgramId: promotionIdSchema.optional(),
   })
   .strict();
-
-// Checkout autosaves partial drafts. Validate just the saved quote inputs,
-// allowing empty fields while keeping personal/contact details out of results.
-const savedShippingSchema = z.object({
-  province: z.string().trim().max(100).optional(),
-  city: z.string().trim().max(100).optional(),
-  postalCode: z.string().trim().max(20).optional(),
-  shippingRuleId: z.string().max(100).optional(),
-});
 
 /** Read-only admin estimate. Saved cart prices and CRM evidence are server-loaded. */
 export async function simulatePromotionCart(raw: unknown) {
@@ -52,16 +43,14 @@ export async function simulatePromotionCart(raw: unknown) {
     },
   });
   if (!cart) throw new PromotionError("NOT_FOUND");
-  const { shippingRuleId, ...address } = savedShippingSchema.parse(
+  const quote = await quoteSavedCart(
+    {
+      marketId: cart.marketId,
+      locale: z.enum(["fa", "tr", "en"]).parse(cart.locale),
+      items: cart.items,
+    },
     cart.checkout,
   );
-  const quote = await quoteCart({
-    marketId: cart.marketId,
-    locale: z.enum(["fa", "tr", "en"]).parse(cart.locale),
-    items: cart.items,
-    address,
-    shippingRuleId: shippingRuleId || undefined,
-  });
   const context = promotionContextSchema.parse({
     marketId: cart.marketId,
     currency: quote.currency,

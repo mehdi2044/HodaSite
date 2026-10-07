@@ -56,6 +56,13 @@ before a fresh save. Tests cover stale taxonomy, invalid creates/updates and
 deduplicated valid retries. The three locale browser flows also verify the saved
 location-scoped, selected shipping amount in the free-shipping estimate.
 
+The public cart and admin simulator share saved-shipping validation. Returning
+from checkout preserves its selected shipping benefit; invalid selections stop
+the estimate and keep a route to review delivery details. Usage evidence uses at
+most four grouped queries for program/coupon total/customer limits, after the
+existing locks and database clock. Unlimited or inactive rules need no usage
+query. Lifetime and unpaid-release semantics remain unchanged.
+
 ## Bundle / gift boundary
 
 The safe 09B foundation is D71's existing-basket multi-buy: a selected pool needs

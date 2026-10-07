@@ -7,7 +7,7 @@ import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { readCart } from "@/modules/cart";
-import { quoteCart } from "@/modules/fees";
+import { quoteSavedCart } from "@/modules/fees";
 import { getRequestContext } from "@/lib/request-context";
 import { CommerceForm } from "@/components/storefront/commerce-form";
 import { updateCartAction, switchCartAction } from "../commerce-actions";
@@ -41,15 +41,19 @@ export default async function CartPage({
     orderBy: { sortOrder: "asc" },
   });
   const mismatch = cart.marketId !== market.id;
-  const quote = await quoteCart({
-    marketId: cart.marketId,
-    locale: locale as "fa" | "tr" | "en",
-    items: cart.items,
-    promotions: {
-      customerId: (await currentCustomer())?.id ?? null,
-      couponCodes: (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+  const quote = await quoteSavedCart(
+    {
+      marketId: cart.marketId,
+      locale: locale as "fa" | "tr" | "en",
+      items: cart.items,
+      promotions: {
+        customerId: (await currentCustomer())?.id ?? null,
+        couponCodes:
+          (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+      },
     },
-  }).catch(() => null);
+    cart.checkout,
+  ).catch(() => null);
   return (
     <main className="shell shop-page grid gap-8 py-10">
       <h1 className="text-3xl font-semibold">
@@ -195,7 +199,17 @@ export default async function CartPage({
               )}
             </>
           ) : (
-            <p role="alert">{t("errors.STOCK_UNAVAILABLE")}</p>
+            <>
+              <p role="alert">{t("errors.QUOTE_UNAVAILABLE")}</p>
+              {!mismatch && (
+                <Link
+                  className="button mt-4 block text-center"
+                  href={`/${locale}/checkout?step=2`}
+                >
+                  {t("checkout")}
+                </Link>
+              )}
+            </>
           )}
         </aside>
       </div>

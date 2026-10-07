@@ -83,65 +83,126 @@ export async function evaluateStoredPromotions(
   const liveUsage = {
     evaluation: { release: null },
   } satisfies Prisma.PromotionRedemptionWhereInput;
-  const usage: PromotionContext["usage"] = [];
-  for (const p of programs) {
-    const stats = await tx.promotionRedemption.aggregate({
-      where: { programId: p.id, ...liveUsage },
-      _count: true,
-      _sum: { amount: true },
-    });
-    usage.push({
-      promotionId: p.id,
-      revision: p.version,
-      totalUsed: stats._count,
-      spent: stats._sum.amount?.toFixed(4) ?? "0",
-      customerId: verifiedCustomerId,
-      customerUsed: verifiedCustomerId
-        ? await tx.promotionRedemption.count({
-            where: {
-              programId: p.id,
-              evaluation: {
-                release: null,
-                order: { customerId: verifiedCustomerId },
-              },
+  const eligible = revisions.filter(
+    (p) =>
+      p.enabled &&
+      (p.status === "ACTIVE" || p.status === "SCHEDULED") &&
+      p.currency === cart.currency &&
+      now >= new Date(p.startsAt) &&
+      (p.endsAt === null || now < new Date(p.endsAt)),
+  );
+  const candidates = coupons.filter(
+    (coupon) =>
+      eligible.some((p) => p.id === coupon.programId && p.couponRequired) &&
+      coupon.status === "ACTIVE" &&
+      now >= coupon.startsAt &&
+      (!coupon.endsAt || now < coupon.endsAt) &&
+      (coupon.perCustomerCap === null || verifiedCustomerId !== null),
+  );
+  const totalCouponIds = candidates
+    .filter((c) => c.totalUsageCap !== null)
+    .map((c) => c.id);
+  const customerCouponIds = candidates
+    .filter((c) => c.perCustomerCap !== null)
+    .map((c) => c.id);
+  const couponTotals = totalCouponIds.length
+    ? await tx.promotionRedemption.groupBy({
+        by: ["couponId"],
+        where: { couponId: { in: totalCouponIds }, ...liveUsage },
+        _count: { _all: true },
+      })
+    : [];
+  const couponCustomers =
+    verifiedCustomerId && customerCouponIds.length
+      ? await tx.promotionRedemption.groupBy({
+          by: ["couponId"],
+          where: {
+            couponId: { in: customerCouponIds },
+            evaluation: {
+              release: null,
+              order: { customerId: verifiedCustomerId },
             },
-          })
-        : null,
-    });
-  }
+          },
+          _count: { _all: true },
+        })
+      : [];
+  const couponTotalById = new Map(
+    couponTotals.map((s) => [s.couponId, s._count._all]),
+  );
+  const couponCustomerById = new Map(
+    couponCustomers.map((s) => [s.couponId, s._count._all]),
+  );
   const verifiedCoupons: PromotionContext["verifiedCoupons"] = [];
   const couponByProgram = new Map<string, string>();
-  for (const coupon of coupons) {
-    const p = revisions.find((r) => r.id === coupon.programId);
+  for (const coupon of candidates) {
+    if (couponByProgram.has(coupon.programId)) continue;
     if (
-      !p?.couponRequired ||
-      couponByProgram.has(p.id) ||
-      coupon.status !== "ACTIVE" ||
-      now < coupon.startsAt ||
-      (coupon.endsAt && now >= coupon.endsAt)
+      coupon.totalUsageCap !== null &&
+      (couponTotalById.get(coupon.id) ?? 0) >= coupon.totalUsageCap
     )
       continue;
-    if (coupon.perCustomerCap !== null && !verifiedCustomerId) continue;
-    const used = await tx.promotionRedemption.count({
-      where: { couponId: coupon.id, ...liveUsage },
-    });
-    if (coupon.totalUsageCap !== null && used >= coupon.totalUsageCap) continue;
     if (
       coupon.perCustomerCap !== null &&
-      (await tx.promotionRedemption.count({
-        where: {
-          couponId: coupon.id,
-          evaluation: {
-            release: null,
-            order: { customerId: verifiedCustomerId! },
-          },
-        },
-      })) >= coupon.perCustomerCap
+      (couponCustomerById.get(coupon.id) ?? 0) >= coupon.perCustomerCap
     )
       continue;
+    const p = eligible.find((p) => p.id === coupon.programId)!;
     couponByProgram.set(p.id, coupon.id);
     verifiedCoupons.push({ promotionId: p.id, revision: p.revision });
   }
+  const limited = eligible.filter(
+    (p) =>
+      (p.totalUsageCap !== null ||
+        p.perCustomerCap !== null ||
+        p.budget !== null) &&
+      (!p.couponRequired || couponByProgram.has(p.id)) &&
+      (p.perCustomerCap === null || verifiedCustomerId !== null),
+  );
+  const totalProgramIds = limited
+    .filter((p) => p.totalUsageCap !== null || p.budget !== null)
+    .map((p) => p.id);
+  const customerProgramIds = limited
+    .filter((p) => p.perCustomerCap !== null)
+    .map((p) => p.id);
+  // Lifetime usage spans revisions; released unpaid orders never consume capacity.
+  // At most four aggregate queries cover all program and coupon limits.
+  const totals = totalProgramIds.length
+    ? await tx.promotionRedemption.groupBy({
+        by: ["programId"],
+        where: { programId: { in: totalProgramIds }, ...liveUsage },
+        _count: { _all: true },
+        _sum: { amount: true },
+      })
+    : [];
+  const customers =
+    verifiedCustomerId && customerProgramIds.length
+      ? await tx.promotionRedemption.groupBy({
+          by: ["programId"],
+          where: {
+            programId: { in: customerProgramIds },
+            evaluation: {
+              release: null,
+              order: { customerId: verifiedCustomerId },
+            },
+          },
+          _count: { _all: true },
+        })
+      : [];
+  const totalById = new Map(totals.map((s) => [s.programId, s]));
+  const customerById = new Map(
+    customers.map((s) => [s.programId, s._count._all]),
+  );
+  const usage: PromotionContext["usage"] = limited.map((p) => ({
+    promotionId: p.id,
+    revision: p.revision,
+    totalUsed: totalById.get(p.id)?._count._all ?? 0,
+    spent: totalById.get(p.id)?._sum.amount?.toFixed(4) ?? "0",
+    customerId: verifiedCustomerId,
+    customerUsed:
+      p.perCustomerCap !== null && verifiedCustomerId
+        ? (customerById.get(p.id) ?? 0)
+        : null,
+  }));
   const result = evaluatePromotions(revisions, {
     ...cart,
     now: now.toISOString(),

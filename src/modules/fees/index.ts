@@ -310,6 +310,6 @@ export function computeFees(
   });
 }
 
-export { quoteCart } from "./quote";
+export { quoteCart, quoteSavedCart } from "./quote";
 export type { CartQuoteInput } from "./quote";
 export { parseFeeRuleParams } from "./validation";

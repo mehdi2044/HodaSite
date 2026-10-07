@@ -735,6 +735,7 @@
       "REQUEST_FAILED": "We could not complete the request. Check the details and try again.",
       "VALIDATION": "Some form details are missing or invalid.",
       "STOCK_UNAVAILABLE": "Stock is insufficient or an item is unavailable. Please review your cart.",
+      "QUOTE_UNAVAILABLE": "This cart cannot be estimated. Review item availability and your delivery details before continuing.",
       "MARKET_CHANGED": "Your cart uses a different market. Update the cart first.",
       "CART_CHANGED": "Your cart changed. Reload the page and review the total.",
       "LOGIN_REQUIRED": "Please sign in first.",

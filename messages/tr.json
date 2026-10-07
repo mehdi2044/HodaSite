@@ -735,6 +735,7 @@
       "REQUEST_FAILED": "İşlem tamamlanamadı. Bilgileri kontrol edip yeniden deneyin.",
       "VALIDATION": "Form bilgileri eksik veya geçersiz.",
       "STOCK_UNAVAILABLE": "Yeterli stok yok veya bir ürün kullanılamıyor. Sepetinizi kontrol edin.",
+      "QUOTE_UNAVAILABLE": "Bu sepet için tahmin hesaplanamıyor. Devam etmeden önce ürünlerin stok durumunu ve teslimat bilgilerinizi kontrol edin.",
       "MARKET_CHANGED": "Sepet pazarı farklı; önce sepeti güncelleyin.",
       "CART_CHANGED": "Sepet değişti; sayfayı yenileyip toplamı kontrol edin.",
       "LOGIN_REQUIRED": "Önce giriş yapın.",
