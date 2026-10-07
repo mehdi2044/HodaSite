@@ -2,22 +2,25 @@
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 type Reply<T> = { ok: true; data: T } | { ok: false; code: string };
-/** Preserve the exact request/key after a lost response; never mint a new retry. */
+/** Replay keyed requests exactly; version-only status changes require a reload. */
 export function RequestForm<T>({
   children,
   build,
   action,
   onSuccess,
+  recoveryMode = "retry",
 }: {
   children: React.ReactNode;
   build: (data: FormData) => unknown;
   action: (input: unknown) => Promise<Reply<T>>;
   onSuccess?: (result: T) => void;
+  recoveryMode?: "retry" | "reload";
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const t = useTranslations("promotionAdmin");
   const [busy, setBusy] = useState(false),
     [retry, setRetry] = useState<{ input: unknown } | null>(null),
+    [reloadRequired, setReloadRequired] = useState(false),
     [message, setMessage] = useState<string | null>(null);
   async function send(input: unknown) {
     setBusy(true);
@@ -33,10 +36,21 @@ export function RequestForm<T>({
           );
         if (confirmed) confirmed.checked = false;
         onSuccess?.(response.data);
+      } else if (
+        recoveryMode === "reload" &&
+        ["STALE_VERSION", "ARCHIVED"].includes(response.code)
+      ) {
+        setReloadRequired(true);
+        setMessage("statusNeedsReload");
       } else setMessage(`errors.${response.code}`);
     } catch {
-      setRetry({ input });
-      setMessage("unknown");
+      if (recoveryMode === "reload") {
+        setReloadRequired(true);
+        setMessage("statusNeedsReload");
+      } else {
+        setRetry({ input });
+        setMessage("unknown");
+      }
     } finally {
       setBusy(false);
     }
@@ -47,7 +61,7 @@ export function RequestForm<T>({
       className="grid gap-4 min-w-0"
       onSubmit={(e) => {
         e.preventDefault();
-        if (busy || retry) return;
+        if (busy || retry || reloadRequired) return;
         try {
           const input = build(new FormData(e.currentTarget));
           void send(input);
@@ -56,7 +70,10 @@ export function RequestForm<T>({
         }
       }}
     >
-      <fieldset disabled={busy || !!retry} className="grid gap-4 min-w-0">
+      <fieldset
+        disabled={busy || !!retry || reloadRequired}
+        className="grid gap-4 min-w-0"
+      >
         {children}
       </fieldset>
       {busy && <p role="status">{t("working")}</p>}
@@ -71,6 +88,16 @@ export function RequestForm<T>({
           onClick={() => void send(retry.input)}
         >
           {t("retry")}
+        </button>
+      )}
+      {reloadRequired && (
+        <button
+          className="button"
+          type="button"
+          disabled={busy}
+          onClick={() => window.location.reload()}
+        >
+          {t("reloadStatus")}
         </button>
       )}
     </form>

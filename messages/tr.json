@@ -2144,6 +2144,8 @@
     "stackingHelp": "Yüksek öncelik önce uygulanır. Gruba özel güvenli varsayılandır. Grup anahtarı harf, rakam, alt çizgi veya tire kullanır. İndirimleri birleştirmek marjı azaltabilir.",
     "confirm": "Bu değişiklikleri ve indirimlere etkisini onaylıyorum.",
     "unknown": "Yanıt alınamadı. Alanlar kilitli; değişiklik yapmadan aynı isteği yeniden deneyin.",
+    "reloadStatus": "Yenile ve kupon durumunu kontrol et",
+    "statusNeedsReload": "Kuponun durumu değişmiş olabilir. Başka bir değişiklik yapmadan önce sayfayı yenileyip mevcut durumunu kontrol edin.",
     "couponHelp": "4–64 Latin harf, rakam, alt çizgi veya tire kullanın. Kodlar büyük harfe çevrilir. Kuponlar program bütçesine de tabidir. Koşullar oluşturulduktan sonra değiştirilemez. Saatler UTC kullanır.",
     "issued": "{count} kod oluşturuldu.",
     "couponDisabled": "Kupon oluşturmak için arşivlenmemiş programda “Kupon kodu gerekli” kaydedilmelidir.",

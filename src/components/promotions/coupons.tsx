@@ -135,6 +135,7 @@ export function CouponStatus({
         confirmed: f.get("confirmed") === "on",
       })}
       action={couponStatusAction}
+      recoveryMode="reload"
       onSuccess={() => router.refresh()}
     >
       <label>

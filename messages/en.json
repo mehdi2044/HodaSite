@@ -2144,6 +2144,8 @@
     "stackingHelp": "Higher priority wins. Exclusive group is the safe default. Group keys use letters, numbers, underscore or hyphen. Combining discounts can reduce margin.",
     "confirm": "I confirm these changes and their effect on discounts.",
     "unknown": "The response was lost. Fields are locked; retry the same request before making changes.",
+    "reloadStatus": "Reload and check coupon status",
+    "statusNeedsReload": "The coupon may have changed. Reload this page and check its current status before making another change.",
     "couponHelp": "Use 4–64 Latin letters, digits, underscores or hyphens. Codes are uppercased. Coupon limits also obey the program budget. Terms cannot be edited after issuance. Times use UTC.",
     "issued": "Issued {count} codes.",
     "couponDisabled": "Coupon issuance requires a non-archived program with “Require a coupon code” saved.",

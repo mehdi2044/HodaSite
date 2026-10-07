@@ -43,8 +43,10 @@ The previous preparation is not completion. Work starts from PR #52's merge
 6. **Implemented admin UI:** `/admin/promotions` provides no-code conditions,
    selectors, all five effects, lifecycle/schedule/group/budget fields, public
    trilingual copy, single/batch coupon management and revision history. Defaults
-   are disabled Draft/exclusive group. Every write requires confirmation; retries
-   retain the original payload/key. Read-only saved-cart simulation explains
+   are disabled Draft/exclusive group. Every write requires confirmation; program
+   save and coupon issuance retries retain the original payload/key. Uncertain or
+   stale coupon status changes lock the form and require reloading current status.
+   Read-only saved-cart simulation explains
    conditions/conflicts and amount estimates with explicit inactive-preview mode.
    Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
    Bundle/gift scope remains existing-basket multi-buy under D71; automatic gift

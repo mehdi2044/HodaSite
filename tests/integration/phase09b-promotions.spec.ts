@@ -523,6 +523,29 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         status: "ARCHIVED",
         confirmed: true,
       });
+      // Lifecycle requests are version-checked, not keyed replays: recover by
+      // reading current state, never by silently applying against a new version.
+      await expect(
+        setPromotionCouponStatus({
+          id: c.id,
+          marketId,
+          expectedVersion: 2,
+          status: "ARCHIVED",
+          confirmed: true,
+        }),
+      ).rejects.toThrow("STALE_VERSION");
+      expect(
+        await db.promotionCoupon.findUniqueOrThrow({ where: { id: c.id } }),
+      ).toMatchObject({ status: "ARCHIVED", version: 3 });
+      expect(
+        await db.auditLog.count({
+          where: {
+            entityType: "PromotionCoupon",
+            entityId: c.id,
+            action: "promotion.coupon.status",
+          },
+        }),
+      ).toBe(2);
       await expect(
         setPromotionCouponStatus({
           id: c.id,

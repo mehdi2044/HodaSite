@@ -183,20 +183,126 @@ for (const [locale, marketCode] of [
     const coupon = page
       .locator("details")
       .filter({ has: page.locator("summary", { hasText: code }) });
+    const { id: couponId } = await db.promotionCoupon.findFirstOrThrow({
+      where: { programId: id, code },
+    });
+    async function expectCoupon(status: string, version: number) {
+      await expect
+        .poll(async () => {
+          const row = await db.promotionCoupon.findUniqueOrThrow({
+            where: { id: couponId },
+          });
+          return {
+            status: row.status,
+            version: row.version,
+            mutations: await db.auditLog.count({
+              where: {
+                entityType: "PromotionCoupon",
+                entityId: couponId,
+                action: "promotion.coupon.status",
+              },
+            }),
+          };
+        })
+        .toEqual({ status, version, mutations: version - 1 });
+    }
+    async function expectReloadRequired() {
+      await expect(coupon.getByRole("alert")).toHaveText(t.statusNeedsReload);
+      await expect(coupon.locator('[name="status"]')).toBeDisabled();
+      await expect(coupon.locator('[name="confirmed"]')).toBeDisabled();
+      await expect(
+        coupon.getByRole("button", { name: t.save, exact: true }),
+      ).toBeDisabled();
+      await expect(
+        coupon.getByRole("button", { name: t.retry, exact: true }),
+      ).toHaveCount(0);
+      await expect(coupon.getByText(t.saved, { exact: true })).toHaveCount(0);
+    }
+    async function reloadCoupon() {
+      await Promise.all([
+        page.waitForEvent("load"),
+        coupon
+          .getByRole("button", { name: t.reloadStatus, exact: true })
+          .click(),
+      ]);
+      await coupon.locator("summary").click();
+      await expect(coupon.getByRole("alert")).toHaveCount(0);
+    }
     await coupon.locator("summary").click();
-    await coupon.locator('[name="status"]').selectOption("PAUSED");
+    // An uncertain response must not imply success, whether or not it committed.
+    for (const commit of [false, true]) {
+      let requests = 0;
+      await page.route("**/admin/promotions?**", async (route) => {
+        if (
+          route.request().method() === "POST" &&
+          route.request().headers()["next-action"]
+        ) {
+          requests++;
+          if (commit) await route.fetch();
+          await route.abort("connectionreset");
+        } else await route.continue();
+      });
+      await coupon.locator('[name="status"]').selectOption("PAUSED");
+      await coupon.locator('[name="confirmed"]').check();
+      await coupon.getByRole("button", { name: t.save, exact: true }).click();
+      await expectReloadRequired();
+      await expectCoupon(commit ? "PAUSED" : "ACTIVE", commit ? 2 : 1);
+      await reloadCoupon();
+      await expect(coupon.locator('[name="status"]')).toHaveValue(
+        commit ? "PAUSED" : "ACTIVE",
+      );
+      await expect(coupon.locator('[name="status"]')).toBeEnabled();
+      await expect(coupon.locator('[name="confirmed"]')).not.toBeChecked();
+      expect(requests).toBe(1);
+      await page.unroute("**/admin/promotions?**");
+    }
+    // Another tab commits the same target status; a stale form still needs reload.
+    const otherPage = await context.newPage();
+    await otherPage.goto(page.url());
+    const otherCoupon = otherPage.locator("details").filter({
+      has: otherPage.locator("summary", { hasText: code }),
+    });
+    await otherCoupon.locator("summary").click();
+    await otherCoupon.locator('[name="status"]').selectOption("ACTIVE");
+    await otherCoupon.locator('[name="confirmed"]').check();
+    await otherCoupon
+      .getByRole("button", { name: t.save, exact: true })
+      .click();
+    await expectCoupon("ACTIVE", 3);
+    await otherPage.close();
+    await coupon.locator('[name="status"]').selectOption("ACTIVE");
     await coupon.locator('[name="confirmed"]').check();
     await coupon.getByRole("button", { name: t.save, exact: true }).click();
-    await expect
-      .poll(
-        async () =>
-          (
-            await db.promotionCoupon.findFirstOrThrow({
-              where: { programId: id, code },
-            })
-          ).status,
-      )
-      .toBe("PAUSED");
+    await expectReloadRequired();
+    await expectCoupon("ACTIVE", 3);
+    await reloadCoupon();
+    await expect(coupon.locator('[name="status"]')).toHaveValue("ACTIVE");
+
+    // Irreversible archive has the same recovery, with no second mutation/audit.
+    let archiveRequests = 0;
+    await page.route("**/admin/promotions?**", async (route) => {
+      if (
+        route.request().method() === "POST" &&
+        route.request().headers()["next-action"]
+      ) {
+        archiveRequests++;
+        await route.fetch();
+        await route.abort("connectionreset");
+      } else await route.continue();
+    });
+    await coupon.locator('[name="status"]').selectOption("ARCHIVED");
+    await coupon.locator('[name="confirmed"]').check();
+    await coupon.getByRole("button", { name: t.save, exact: true }).click();
+    await expectReloadRequired();
+    await expectCoupon("ARCHIVED", 4);
+    await reloadCoupon();
+    await expect(coupon.locator("form")).toHaveCount(0);
+    await expect(
+      coupon.getByText(t.archiveWarning, { exact: true }),
+    ).toBeVisible();
+    await expectCoupon("ARCHIVED", 4);
+    expect(archiveRequests).toBe(1);
+    await page.unroute("**/admin/promotions?**");
     expect(await page.locator(".admin").getAttribute("dir")).toBe(
       locale === "fa" ? "rtl" : "ltr",
     );

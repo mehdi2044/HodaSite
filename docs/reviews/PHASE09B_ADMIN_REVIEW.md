@@ -23,8 +23,12 @@ layer and override mechanism. No permission namespace or data model changed.
 Coupon management includes single codes, batches of 1–100 generated codes,
 immutable terms, per-customer/total caps and version-checked status changes.
 Lost-response save/issuance retries lock the form and reuse the exact original
-payload and mutation key. A successful response clears the confirmation. A stale
-lifecycle retry asks for a reload; it never repeats a change against a new version.
+payload and mutation key. A successful response clears the confirmation. Coupon
+status changes are version-checked, not keyed replays. A lost response or stale/
+archived reply locks that form and offers a full reload to inspect current status;
+it never offers a retry or repeats a change against a new version. Even a matching
+current status is not interpreted as proof that the original request succeeded.
+Reload also resets the confirmation before any new change.
 Duplicate coupon errors and stale revisions are translated, without raw database
 errors. Program/coupon/history lists paginate at 25 records.
 
@@ -66,6 +70,13 @@ market isolation, retries and stale revisions. The browser spec covers three
 languages at 390px, create/edit, single/batch coupons, a committed request with a
 lost response and identical retry, non-consuming Draft preview, inactive-rule
 explanation, lifecycle change, RTL/LTR and horizontal overflow.
+
+The 2026-10-07 review follow-up extends all three locale flows with a lost request
+before commit, lost pause/archive responses after commit, and a second tab's
+successful mutation followed by a stale form submission. Assertions check the
+locked form, reload recovery, actual database status/version and exact audit count.
+Fresh execution results for this follow-up belong to PROGRESS and the PR head;
+the earlier local results above do not validate these added scenarios.
 
 Technical self-review and automated checks are not independent human review.
 Physical-phone/HTTPS and owner visual acceptance remain open under D51/D70.
