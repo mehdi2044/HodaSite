@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Iso } from "@/components/storefront/iso";
 import { simulateAction } from "@/app/admin/(dashboard)/promotions/actions";
+import { MAX_COUPON_INPUT_LENGTH } from "@/modules/promotions/coupon-contracts";
 type Reply = Awaited<ReturnType<typeof simulateAction>>;
 export function PromotionSimulator({
   marketId,
@@ -73,7 +74,7 @@ export function PromotionSimulator({
             className="input w-full"
             dir="ltr"
             name="couponCodes"
-            maxLength={6500}
+            maxLength={MAX_COUPON_INPUT_LENGTH}
           />
         </label>
         <label className="flex items-start gap-3 min-h-11">

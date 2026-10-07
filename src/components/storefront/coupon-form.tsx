@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { CommerceForm } from "./commerce-form";
 import { saveCouponsAction } from "@/app/[locale]/commerce-actions";
+import { MAX_COUPON_INPUT_LENGTH } from "@/modules/promotions/coupon-contracts";
 export async function CouponForm({
   locale,
   revision,
@@ -23,7 +24,7 @@ export async function CouponForm({
           className="input w-full min-w-0"
           name="coupons"
           dir="ltr"
-          maxLength={3200}
+          maxLength={MAX_COUPON_INPUT_LENGTH}
           defaultValue={
             Array.isArray(codes)
               ? codes.filter((x) => typeof x === "string").join(", ")

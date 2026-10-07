@@ -27,6 +27,7 @@ import {
 } from "@/modules/customers";
 import { submitReceipt } from "@/modules/payments";
 import { CommerceError } from "@/modules/orders";
+import { couponCodesInputSchema } from "@/modules/promotions/coupon-contracts";
 
 type Result = {
   error?: string;
@@ -279,11 +280,7 @@ export async function saveShippingAction(locale: string, form: FormData) {
 export async function saveCouponsAction(locale: string, form: FormData) {
   return safe(async () => {
     const l = localeSchema.parse(locale);
-    const raw = z
-      .string()
-      .max(3200)
-      .parse(form.get("coupons") ?? "");
-    const codes = raw.trim() ? raw.split(/[\s,]+/).filter(Boolean) : [];
+    const codes = couponCodesInputSchema.parse(form.get("coupons") ?? "");
     await saveCartCoupons(
       codes,
       z.coerce.number().int().min(0).parse(form.get("revision")),

@@ -1,18 +1,10 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { promotionRevisionSchema } from "./contracts";
+import { couponCodesSchema, MAX_COUPON_CODES } from "./coupon-contracts";
+export { couponCodeSchema, couponCodesSchema } from "./coupon-contracts";
 
 export const promotionIdSchema = z.string().regex(/^[\w-]{1,100}$/);
-export const couponCodeSchema = z
-  .string()
-  .trim()
-  .toUpperCase()
-  .regex(/^[A-Z0-9][A-Z0-9_-]{3,63}$/);
-export const couponCodesSchema = z
-  .array(couponCodeSchema)
-  .max(100)
-  .refine((v) => new Set(v).size === v.length, "Duplicate coupon codes")
-  .transform((v) => v.sort());
 const copy = z
   .object({
     fa: z.string().trim().min(1).max(300),
@@ -66,7 +58,7 @@ export const issueCouponsSchema = z
     mutationKey: z.uuid(),
     confirmed: z.literal(true),
     codes: couponCodesSchema,
-    generateCount: z.number().int().min(0).max(100),
+    generateCount: z.number().int().min(0).max(MAX_COUPON_CODES),
     startsAt: z.iso.datetime(),
     endsAt: z.iso.datetime().nullable(),
     totalUsageCap: z.number().int().min(0).max(10000000).nullable(),

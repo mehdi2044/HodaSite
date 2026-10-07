@@ -133,6 +133,22 @@ for (const [locale, marketCode, province, city, postalCode] of [
       ]);
       await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(`/${locale}/cart`);
+      // Exercise the real form/server boundary with the full supported batch.
+      const batch = Array.from({ length: 100 }, (_, i) =>
+        `batch-${String(i).padStart(3, "0")}`.padEnd(64, "a"),
+      );
+      const savedBatch = batch.map((value) => value.toUpperCase()).join(", ");
+      await expect(page.getByLabel(t.couponCodes)).toHaveAttribute(
+        "maxlength",
+        "6598",
+      );
+      await page.getByLabel(t.couponCodes).fill(batch.join(", "));
+      await page
+        .getByRole("button", { name: t.applyCoupons, exact: true })
+        .click();
+      await expect(page.getByLabel(t.couponCodes)).toHaveValue(savedBatch);
+      await page.reload();
+      await expect(page.getByLabel(t.couponCodes)).toHaveValue(savedBatch);
       await page.getByLabel(t.couponCodes).fill(code.toLowerCase());
       await page
         .getByRole("button", { name: t.applyCoupons, exact: true })
@@ -185,7 +201,7 @@ for (const [locale, marketCode, province, city, postalCode] of [
         },
       });
       await page.reload();
-      await expect(page.getByRole("alert")).toHaveText(
+      await expect(page.locator("aside").getByRole("alert")).toHaveText(
         t.errors.QUOTE_UNAVAILABLE,
       );
       await expect(page.getByTestId("discount-line")).toHaveCount(0);
