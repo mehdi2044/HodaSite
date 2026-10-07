@@ -145,7 +145,12 @@ export function PromotionEditor({
       action={saveProgramAction}
       onSuccess={(r) => {
         if (saved) router.refresh();
-        else router.push(`/admin/promotions?marketId=${marketId}&id=${r.id}`);
+        // Action-triggered refreshes can race a client push back to the new
+        // form. Load the committed record as a document after first creation.
+        else
+          window.location.assign(
+            `/admin/promotions?marketId=${marketId}&id=${r.id}`,
+          );
       }}
     >
       <fieldset

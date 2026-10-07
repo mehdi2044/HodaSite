@@ -81,6 +81,13 @@ for (const [locale, marketCode] of [
     await editor.getByRole("button", { name: t.save, exact: true }).click();
     await expect(page).toHaveURL(/&id=/);
     const id = new URL(page.url()).searchParams.get("id")!;
+    await expect(editor.locator('[name="name"]')).toHaveValue(name);
+    await expect(editor.locator('[name="confirmed"]')).not.toBeChecked();
+    expect(
+      await db.promotionProgramRevision.count({
+        where: { name, program: { marketId: market.id } },
+      }),
+    ).toBe(1);
     await expect
       .poll(
         async () =>
