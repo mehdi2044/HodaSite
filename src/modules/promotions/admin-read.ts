@@ -26,7 +26,7 @@ export async function promotionEditorData(marketId: string, id?: string) {
   const [products, categories, collections, segments, programs] =
     await Promise.all([
       db.product.findMany({
-        where: { deletedAt: null },
+        where: { deletedAt: null, marketIds: { has: marketId } },
         select: { id: true, titleI18n: true },
         orderBy: { id: "asc" },
         take: 1000,

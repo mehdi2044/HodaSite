@@ -94,6 +94,26 @@ export async function savePromotionProgram(raw: unknown) {
           marketId: input.marketId,
           currency: row?.currency ?? market.currency,
         });
+        const productIds = [
+          ...new Set([
+            ...config.definition.selector.productIds,
+            ...config.definition.selector.excludedProductIds,
+            ...config.definition.conditions
+              .filter((c) => c.field === "product")
+              .map((c) => c.value),
+          ]),
+        ];
+        if (
+          productIds.length &&
+          (await tx.product.count({
+            where: {
+              id: { in: productIds },
+              deletedAt: null,
+              marketIds: { has: input.marketId },
+            },
+          })) !== productIds.length
+        )
+          throw new PromotionError("INVALID_REFERENCE");
         const segments = config.definition.conditions
           .filter((c) => c.field === "segment")
           .map((c) => c.value);

@@ -278,7 +278,13 @@ export function computeFees(
       ctx,
     );
     running[type] = amount;
-    if (selected.taxable) taxable[type] = amount;
+    if (selected.taxable)
+      // D73 recomputes tax on charged shipping; the legacy standalone fee
+      // contract and the configured customs/service bases remain unchanged.
+      taxable[type] =
+        type === "SHIPPING" && ctx.promotionTax && selected.absorb
+          ? new Decimal(0)
+          : amount;
     lines.push({
       ruleId: selected.id,
       type,

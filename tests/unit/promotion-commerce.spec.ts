@@ -80,6 +80,43 @@ describe("D73 tax, returns and public evidence", () => {
       }),
     );
   });
+  it.each(["subtotal_plus_shipping", "subtotal_plus_shipping_customs"])(
+    "excludes absorbed shipping from the promotion tax base %s",
+    (of) => {
+      const configured = rules.map((r) =>
+        r.type === "SHIPPING"
+          ? { ...r, absorb: true }
+          : r.type === "CUSTOMS"
+            ? { ...r, taxable: true }
+            : { ...r, params: { ...r.params, of } },
+      );
+      for (const merchandise of ["0", "25"]) {
+        const q = computeFees(configured, {
+          ...ctx,
+          promotionTax: { merchandise, shipping: "0" },
+        });
+        expect(q.lines[0]).toMatchObject({
+          amount: "20",
+          chargedAmount: "0",
+          absorbed: true,
+        });
+        const tax =
+          merchandise === "25"
+            ? of.endsWith("customs")
+              ? "8"
+              : "7.5"
+            : of.endsWith("customs")
+              ? "10.5"
+              : "10";
+        expect(q.lines.at(-1)?.amount).toBe(tax);
+        expect(q.lines[1].amount).toBe("5");
+      }
+      // The legacy standalone fee contract still taxes configured amounts.
+      expect(computeFees(configured, ctx).lines.at(-1)?.amount).toBe(
+        of.endsWith("customs") ? "12.5" : "12",
+      );
+    },
+  );
   it("does not reduce a fixed tax or add a shipping deduction when shipping is not taxable", () => {
     expect(
       computeFees(

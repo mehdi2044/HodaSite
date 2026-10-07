@@ -95,3 +95,13 @@ outside that set are preserved and labelled. Larger catalogs need paginated
 search before using those selectors at scale. This does not truncate stored
 rules or broaden an existing program on save. CRM audience-wide forecasts are
 not invented; the simulator estimates only its selected cart.
+
+The second 2026-10-07 review follow-up limits product options to non-deleted
+products assigned to the selected market. Server saves check all product
+conditions, inclusions and exclusions against that same assignment; foreign,
+deleted or missing IDs fail without a revision/audit write. Shared products remain
+valid when assigned to this market. Categories/collections remain global taxonomy.
+Old invalid references are retained in immutable history but must be corrected
+before saving a new revision; they are never silently removed. The D73 tax
+correction separately excludes absorbed shipping from the recomputed tax base.
+Current-head verification for both fixes is recorded in PROGRESS and PR #54.

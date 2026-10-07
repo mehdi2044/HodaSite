@@ -372,6 +372,44 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(2);
     });
+    it("quotes and stores tax without merchant-absorbed shipping", async () => {
+      const f = await fixture();
+      await customFees(f);
+      await db.feeRule.updateMany({
+        where: { id: { in: feeIds }, type: "SHIPPING" },
+        data: { absorb: true },
+      });
+      const p = await program(f),
+        shipping = await program(f, {
+          definition: {
+            ...p.raw.config.definition,
+            effect: { type: "freeShipping" },
+          },
+        });
+      const noCoupon = await quote(f);
+      expect(noCoupon.lines.find((l) => l.type === "TAX")?.amount).toBe("10");
+      expect(noCoupon.total).toBe("110");
+      const { q, order } = await place(f, [
+        p.coupon.code,
+        shipping.coupon.code,
+      ]);
+      expect(q.lines.find((l) => l.type === "SHIPPING")).toMatchObject({
+        amount: "40",
+        chargedAmount: "0",
+        absorbed: true,
+      });
+      expect(q.shippingDiscount).toBe("0.0000");
+      expect(q.discountTotal).toBe("10.0000");
+      expect(q.lines.find((l) => l.type === "TAX")?.amount).toBe("9");
+      expect(q.total).toBe("99");
+      expect(order.fees.find((l) => l.type === "TAX")?.amount.toFixed(4)).toBe(
+        "9.0000",
+      );
+      expect(order.payments[0].amount.toFixed(4)).toBe("99.0000");
+      expect(order.totalAmount.toFixed(4)).toBe("99.0000");
+      expect(order.items[0].unitPriceAmount.toFixed(4)).toBe("100.0000");
+      expect(order.promotionEvaluation?.redemptions).toHaveLength(1);
+    });
     it("rolls back stale total before creating order, usage, payment or reservation", async () => {
       const f = await fixture(),
         p = await program(f);

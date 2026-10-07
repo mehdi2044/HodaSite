@@ -345,6 +345,107 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       );
       expect(await promotionHistory(otherMarket, p.id)).toHaveLength(0);
     });
+    it("scopes product options and all submitted product references to the authorized market", async () => {
+      const makeProduct = (markets: string[], deletedAt: Date | null = null) =>
+        db.product.create({
+          data: {
+            slugI18n: { en: randomUUID() },
+            titleI18n: { en: "Market selector fixture" },
+            descriptionI18n: {},
+            categoryId,
+            gender: "UNISEX",
+            status: "ACTIVE",
+            basePriceAmount: "100",
+            marketIds: markets,
+            deletedAt,
+          },
+        });
+      const local = await makeProduct([marketId]),
+        shared = await makeProduct([marketId, otherMarket]),
+        foreign = await makeProduct([otherMarket]),
+        deleted = await makeProduct([marketId], new Date());
+      actor.id = scoped;
+      const options = (await promotionEditorData(marketId)).products.map(
+        (p) => p.id,
+      );
+      expect(options).toEqual(expect.arrayContaining([local.id, shared.id]));
+      expect(options).not.toContain(foreign.id);
+      expect(options).not.toContain(deleted.id);
+      const base = input(),
+        raw = {
+          ...base,
+          config: {
+            ...base.config,
+            definition: {
+              ...base.config.definition,
+              selector: {
+                ...base.config.definition.selector,
+                productIds: [local.id, shared.id],
+              },
+            },
+          },
+        };
+      const saved = await savePromotionProgram(raw);
+      const programsBefore = await db.promotionProgram.count();
+      const auditsBefore = await db.auditLog.count();
+      for (const field of ["condition", "include", "exclude"]) {
+        for (const ref of [foreign.id, deleted.id, "missing-product"]) {
+          const definition: PromotionRevision["definition"] = {
+            ...raw.config.definition,
+            conditions:
+              field === "condition" ? [{ field: "product", value: ref }] : [],
+            selector: {
+              ...raw.config.definition.selector,
+              productIds: field === "include" ? [ref] : [local.id],
+              excludedProductIds: field === "exclude" ? [ref] : [],
+            },
+          };
+          const rejected = {
+            ...raw,
+            mutationKey: randomUUID(),
+            config: { ...raw.config, definition },
+          };
+          expect(await saveProgramAction(rejected)).toMatchObject({
+            ok: false,
+            code: "INVALID_REFERENCE",
+          });
+          expect(
+            await saveProgramAction({
+              ...rejected,
+              id: saved.id,
+              expectedVersion: 1,
+              mutationKey: randomUUID(),
+            }),
+          ).toMatchObject({ ok: false, code: "INVALID_REFERENCE" });
+        }
+      }
+      expect(await db.promotionProgram.count()).toBe(programsBefore);
+      expect(await db.auditLog.count()).toBe(auditsBefore);
+      expect(await promotionHistory(marketId, saved.id)).toHaveLength(1);
+      expect(
+        (await promotionEditorData(marketId, saved.id)).saved?.version,
+      ).toBe(1);
+      // Deduplicate references across condition/include/exclude before validation.
+      const valid = {
+        ...raw,
+        id: saved.id,
+        expectedVersion: 1,
+        mutationKey: randomUUID(),
+        config: {
+          ...raw.config,
+          definition: {
+            ...raw.config.definition,
+            conditions: [{ field: "product" as const, value: local.id }],
+            selector: {
+              ...raw.config.definition.selector,
+              excludedProductIds: [shared.id],
+            },
+          },
+        },
+      };
+      expect((await savePromotionProgram(valid)).version).toBe(2);
+      expect((await savePromotionProgram(valid)).version).toBe(2);
+    });
     it("server actions preserve retry identity, reject stale edits and require confirmation", async () => {
       const raw = input({ status: "DRAFT", enabled: false });
       const first = await saveProgramAction(raw);
