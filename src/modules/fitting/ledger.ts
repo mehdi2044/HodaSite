@@ -1,3 +1,5 @@
+import { promotionOrderAmounts } from "@/modules/promotions/order-amounts";
+import { returnLineBudgets } from "@/modules/returns/validation";
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
 import { configSchema, dayBounds, type FittingConfig } from "./contracts";
@@ -136,7 +138,7 @@ export async function creditPaidOrder(
 ) {
   const order = await tx.order.findUniqueOrThrow({
     where: { id: orderId },
-    include: { items: true },
+    include: { items: true, fees: true, promotionEvaluation: true },
   });
   if (!order.paidAt || order.kind !== "SALE") return;
   const config = await readConfig(tx);
@@ -166,18 +168,24 @@ export async function creditPaidOrder(
   if (!c.enabled) return;
   const reward = c.rewards.find((r) => r.marketId === order.marketId);
   if (!reward) return;
-  const eligible = order.items
-    .filter(
-      (item) =>
-        typeof (item.productSnapshot as Prisma.JsonObject).coinPackCoins !==
-        "string",
-    )
-    .reduce(
-      (n, item) => n.add(item.lineTotalAmount.toString()),
-      new Decimal(0),
-    );
-  // Exclude fees and pack purchases; deduct all merchandise discount conservatively.
-  const spend = Decimal.max(0, eligible.sub(order.discountAmount.toString()));
+  const eligibleItems = order.items.filter(
+    (item) =>
+      typeof (item.productSnapshot as Prisma.JsonObject).coinPackCoins !==
+      "string",
+  );
+  const budgets =
+    promotionOrderAmounts(order)?.netItems ??
+    returnLineBudgets(order.items, order.discountAmount.toString());
+  const eligible = eligibleItems.reduce(
+    (n, item) => n.add(item.lineTotalAmount.toString()),
+    new Decimal(0),
+  );
+  // Immutable merchandise allocations exclude shipping and coin-pack discounts.
+  const spend = eligibleItems.reduce(
+    (n, item) => n.add(budgets.get(item.id)!.toString()),
+    new Decimal(0),
+  );
+
   await grantCoins(
     tx,
     order.customerId,
@@ -191,6 +199,11 @@ export async function creditPaidOrder(
         coins: reward.coins,
         eligibleNetSpend: spend.toFixed(),
         eligibleGrossSpend: eligible.toFixed(),
+        itemNetSpend: eligibleItems.map((item) => ({
+          orderItemId: item.id,
+          quantity: item.quantity,
+          amount: budgets.get(item.id)!.toString(),
+        })),
       },
     },
   );
@@ -212,6 +225,8 @@ export async function revokeReturnedCoins(
     where: { id: orderId },
     include: {
       items: true,
+      fees: true,
+      promotionEvaluation: true,
       returns: {
         where: {
           status: "RESOLVED",
@@ -246,6 +261,11 @@ export async function revokeReturnedCoins(
         coins?: string;
         eligibleNetSpend?: string;
         eligibleGrossSpend?: string;
+        itemNetSpend?: {
+          orderItemId: string;
+          quantity: number;
+          amount: string;
+        }[];
       } | null;
       const returnedSpend = order.items
         .filter(
@@ -270,14 +290,54 @@ export async function revokeReturnedCoins(
           rule.eligibleGrossSpend &&
           new Decimal(rule.eligibleGrossSpend).gt(0)
         ) {
-          const net = new Decimal(rule.eligibleNetSpend)
-            .mul(
-              Decimal.max(
-                0,
-                new Decimal(rule.eligibleGrossSpend).sub(returnedSpend),
-              ),
-            )
-            .div(rule.eligibleGrossSpend);
+          const immutableBudgets = promotionOrderAmounts(order)?.netItems;
+          const net = rule.itemNetSpend
+            ? rule.itemNetSpend.reduce(
+                (sum, item) =>
+                  sum.add(
+                    new Decimal(item.amount)
+                      .mul(
+                        item.quantity -
+                          Math.min(
+                            item.quantity,
+                            returned.get(item.orderItemId) ?? 0,
+                          ),
+                      )
+                      .div(item.quantity),
+                  ),
+                new Decimal(0),
+              )
+            : immutableBudgets
+              ? order.items
+                  .filter(
+                    (item) =>
+                      typeof (item.productSnapshot as Prisma.JsonObject)
+                        .coinPackCoins !== "string",
+                  )
+                  .reduce(
+                    (sum, item) =>
+                      sum.add(
+                        new Decimal(immutableBudgets.get(item.id)!.toString())
+                          .mul(
+                            item.quantity -
+                              Math.min(
+                                item.quantity,
+                                returned.get(item.id) ?? 0,
+                              ),
+                          )
+                          .div(item.quantity),
+                      ),
+                    new Decimal(0),
+                  )
+              : new Decimal(rule.eligibleNetSpend)
+                  .mul(
+                    Decimal.max(
+                      0,
+                      new Decimal(rule.eligibleGrossSpend).sub(returnedSpend),
+                    ),
+                  )
+                  .div(rule.eligibleGrossSpend);
+
           const remaining = new Decimal(
             rewardAmountSafe(net.toFixed(), rule.spendAmount, rule.coins),
           );

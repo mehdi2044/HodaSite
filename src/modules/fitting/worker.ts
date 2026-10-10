@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { seal } from "@/lib/secure-tokens";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
@@ -13,6 +14,21 @@ import {
 import { refundSession } from "./index";
 import { readConfig } from "./ledger";
 import { snapshotSchema } from "./contracts";
+async function queueOutputPurge(
+  tx: Prisma.TransactionClient,
+  id: string,
+  storageKey: string,
+) {
+  await tx.job.upsert({
+    where: { id: `fitting-purge:${id}` },
+    create: {
+      id: `fitting-purge:${id}`,
+      type: "fitting-output-purge",
+      payload: { sessionId: id, storageKey },
+    },
+    update: {},
+  });
+}
 export async function renderFitting(
   id: string,
   provider: FittingProvider = openAiFittingProvider,
@@ -24,6 +40,11 @@ export async function renderFitting(
       if (s.status === "RUNNING") {
         if (s.startedAt && Date.now() - s.startedAt.getTime() < 5 * 60000)
           throw new JobDeferredError("FITTING_RUNNING");
+        if (s.storageKey) {
+          await refundSession(tx, id, "OUTPUT_INTERRUPTED");
+          await queueOutputPurge(tx, id, s.storageKey);
+          return null;
+        }
         await tx.fittingSession.update({
           where: { id },
           data: { status: "REVIEW", errorCode: "INTERRUPTED" },
@@ -66,19 +87,28 @@ export async function renderFitting(
     } catch {
       throw new ProviderFailure(true);
     }
-    key = `fitting/${new Date().getUTCFullYear()}/${randomUUID()}.sealed`;
-    await storage.put(
-      key,
-      Buffer.from(
-        seal({
-          kind: "fitting-image",
-          sessionId: id,
-          webp: bytes.toString("base64"),
-        }),
-        "utf8",
-      ),
-      "application/octet-stream",
+    const encrypted = Buffer.from(
+      seal({
+        kind: "fitting-image",
+        sessionId: id,
+        webp: bytes.toString("base64"),
+      }),
+      "utf8",
     );
+    const candidate = `fitting/${new Date().getUTCFullYear()}/${randomUUID()}.sealed`;
+    // Record the object identity before uploading so interruptions cannot orphan it.
+    await withMutation(() =>
+      db.$transaction(async (tx) => {
+        const changed = await tx.fittingSession.updateMany({
+          where: { id, status: "RUNNING" },
+          data: { storageKey: candidate },
+        });
+        if (!changed.count) throw new ProviderFailure(false);
+      }),
+    );
+    key = candidate;
+    await storage.put(key, encrypted, "application/octet-stream");
+
     await withMutation(() =>
       db.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
@@ -96,7 +126,7 @@ export async function renderFitting(
       }),
     );
   } catch (error) {
-    const cleanup = await withMutation(() =>
+    await withMutation(() =>
       db.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
         const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
@@ -111,15 +141,43 @@ export async function renderFitting(
               data: { status: "REVIEW", errorCode: "PROVIDER_UNKNOWN" },
             });
         }
+        if (s.storageKey) await queueOutputPurge(tx, id, s.storageKey);
         return true;
       }),
     );
-    if (key && cleanup) await storage.delete(key).catch(() => {});
   }
 }
 export function registerFittingJobs(
   provider: FittingProvider = openAiFittingProvider,
 ) {
+  registerJobHandler("fitting-output-purge", async (job) => {
+    const payload = job.payload as { sessionId?: string; storageKey?: string };
+    if (
+      !payload.sessionId ||
+      !payload.storageKey ||
+      !/^fitting\/\d{4}\/[a-f0-9-]{36}\.sealed$/.test(payload.storageKey)
+    )
+      throw new Error("INVALID_FITTING_PURGE");
+    const key = payload.storageKey;
+    try {
+      await withMutation(async () => {
+        const session = await db.fittingSession.findUnique({
+          where: { id: payload.sessionId },
+        });
+        if (session?.storageKey === key && session.status === "DONE") return;
+        if (
+          session?.storageKey === key &&
+          ["QUEUED", "RUNNING"].includes(session.status)
+        )
+          throw new JobDeferredError("FITTING_RUNNING");
+        await storage.delete(key);
+      });
+    } catch (error) {
+      if (error instanceof MaintenanceError)
+        throw new JobDeferredError("MAINTENANCE");
+      throw error;
+    }
+  });
   registerJobHandler("fitting-render", async (job) => {
     const p = job.payload as { sessionId?: string };
     try {

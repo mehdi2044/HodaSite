@@ -164,7 +164,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       if (sessions.length)
         await db.job.deleteMany({
           where: {
-            type: "fitting-render",
+            type: { in: ["fitting-render", "fitting-output-purge"] },
             OR: sessions.map((s) => ({
               payload: { path: ["sessionId"], equals: s.id },
             })),
@@ -180,7 +180,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           },
         });
       else await db.integration.deleteMany({ where: { key: "fitting-room" } });
-      for (const key of outputKeys) await storage.delete(key);
+      for (const key of new Set([
+        ...outputKeys,
+        ...sessions.flatMap((s) => (s.storageKey ? [s.storageKey] : [])),
+      ]))
+        await storage.delete(key);
       vi.unstubAllEnvs();
     });
     it("does not grant welcome/daily credit while disabled", async () => {
@@ -412,11 +416,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           s = await create(c.id);
         const provider = { render: vi.fn(async () => bytes) };
         const secret = process.env.AUTH_SECRET;
+        const originalPut = storage.put.bind(storage);
         const put =
           failure === "storage"
             ? vi
                 .spyOn(storage, "put")
-                .mockRejectedValue(new Error("fixture storage failure"))
+                .mockImplementation(
+                  async (
+                    key: string,
+                    data: Buffer,
+                    mime = "application/octet-stream",
+                  ) => {
+                    await originalPut(key, data, mime);
+                    throw new Error("fixture upload acknowledgement lost");
+                  },
+                )
             : null;
         if (failure === "encryption") process.env.AUTH_SECRET = "";
         try {
@@ -425,6 +439,45 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           expect(provider.render).toHaveBeenCalledTimes(1);
           expect((await sessionView(c.id, s.id)).status).toBe("FAILED");
           expect(await balance(c.id)).toBe("100");
+          if (failure === "storage") {
+            const session = await db.fittingSession.findUniqueOrThrow({
+              where: { id: s.id },
+            });
+            expect(session.storageKey).toBeTruthy();
+            expect(await storage.getBytes(session.storageKey!)).not.toBeNull();
+            const job = await db.job.findUniqueOrThrow({
+              where: { id: `fitting-purge:${s.id}` },
+            });
+            const remove = vi
+              .spyOn(storage, "delete")
+              .mockRejectedValueOnce(
+                new Error("fixture transient cleanup failure"),
+              );
+            try {
+              await runJobs(["fitting-output-purge"]);
+              const retry = await db.job.findUniqueOrThrow({
+                where: { id: job.id },
+              });
+              expect(retry.status).toBe("PENDING");
+              expect(retry.attempts).toBe(1);
+              expect((retry.payload as { storageKey: string }).storageKey).toBe(
+                session.storageKey,
+              );
+            } finally {
+              remove.mockRestore();
+            }
+            await db.job.update({
+              where: { id: job.id },
+              data: { runAt: new Date(0) },
+            });
+            await runJobs(["fitting-output-purge"]);
+            expect(
+              (await db.job.findUniqueOrThrow({ where: { id: job.id } }))
+                .status,
+            ).toBe("DONE");
+            expect(await storage.getBytes(session.storageKey!)).toBeNull();
+          }
+
           expect(
             await db.fittingCoinEntry.count({
               where: { customerId: c.id, sourceKey: `refund:${s.id}` },
@@ -437,6 +490,31 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("refunds an abandoned known output and retains durable cleanup identity", async () => {
+      const c = await customer(),
+        session = await create(c.id);
+      const key = `fitting/2026/${randomUUID()}.sealed`;
+      await db.fittingSession.update({
+        where: { id: session.id },
+        data: {
+          status: "RUNNING",
+          storageKey: key,
+          startedAt: new Date(Date.now() - 6 * 60000),
+        },
+      });
+      const provider = { render: vi.fn(async () => bytes) };
+      await renderFitting(session.id, provider);
+      expect(provider.render).not.toHaveBeenCalled();
+      expect((await sessionView(c.id, session.id)).status).toBe("FAILED");
+      expect(await balance(c.id)).toBe("100");
+      expect(
+        (
+          await db.job.findUniqueOrThrow({
+            where: { id: `fitting-purge:${session.id}` },
+          })
+        ).payload,
+      ).toEqual({ sessionId: session.id, storageKey: key });
+    });
     it("locks concurrent refunds and keeps source identity, journal and charge immutable", async () => {
       const c = await customer(),
         s = await create(c.id);
@@ -700,6 +778,171 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
+    it.each(["shipping", "item", "pack"])(
+      "uses exact merchandise allocations for %s promotions and reversals",
+      async (kind) => {
+        await configure({
+          rewards: [{ marketId, spendAmount: "100", coins: "25" }],
+        });
+        const c = await customer("0"),
+          f = await returnFixture(db, { customerId: c.id });
+        const cart = await db.cart.create({
+          data: {
+            tokenHash: randomUUID(),
+            customerId: c.id,
+            marketId,
+            currency: f.market.currency,
+            locale: "en",
+            expiresAt: new Date(Date.now() + 86400000),
+          },
+        });
+        const two = kind !== "shipping",
+          discount = kind === "shipping" ? "10" : "100";
+        const order = await db.order.create({
+          data: {
+            number: `FITTING-${randomUUID()}`,
+            marketId,
+            customerId: c.id,
+            cartId: cart.id,
+            guestTokenHash: cart.tokenHash,
+            locale: "en",
+            currency: f.market.currency,
+            status: "DELIVERED",
+            paidAt: new Date(),
+            deliveredAt: new Date(),
+            subtotalAmount: two ? "200" : "100",
+            feeTotalAmount: two ? "0" : "10",
+            discountAmount: discount,
+            totalAmount: "100",
+            totalAmountTry: "100",
+            totalAmountUsd: "100",
+            fxSnapshot: {},
+            bankSnapshot: [],
+            contactSnapshot: {},
+            shippingAddress: {},
+            billingAddress: {},
+            holdExpiresAt: cart.expiresAt,
+            paymentDeadlineAt: cart.expiresAt,
+            items: {
+              create: (two ? f.variants : [f.variants[0]]).map((v, index) => ({
+                variantId: v.id,
+                quantity: 1,
+                unitPriceAmount: "100",
+                lineTotalAmount: "100",
+                currency: f.market.currency,
+                weightGrams: 100,
+                productSnapshot:
+                  kind === "pack" && index === 1
+                    ? { coinPackCoins: "100" }
+                    : {},
+              })),
+            },
+            ...(kind === "shipping"
+              ? {
+                  fees: {
+                    create: {
+                      type: "SHIPPING",
+                      amount: "10",
+                      currency: f.market.currency,
+                      absorbed: false,
+                      label: "Test shipping",
+                      ruleSnapshot: {},
+                    },
+                  },
+                }
+              : {}),
+            promotionEvaluation: {
+              create: {
+                requestHash: randomUUID(),
+                result: {
+                  discountTotal: discount,
+                  lines: [
+                    {
+                      target: kind === "shipping" ? "SHIPPING" : "MERCHANDISE",
+                      currency: f.market.currency,
+                      amount: discount,
+                      allocations:
+                        kind === "shipping"
+                          ? []
+                          : [
+                              {
+                                variantId:
+                                  f.variants[kind === "pack" ? 1 : 0].id,
+                                amount: "100",
+                              },
+                            ],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          include: { items: { orderBy: { variantId: "asc" } } },
+        });
+        await db.$transaction((tx) => creditPaidOrder(tx, order.id));
+        expect(
+          (
+            await db.fittingCoinGrant.findFirstOrThrow({
+              where: { orderId: order.id, reason: "PURCHASE" },
+            })
+          ).amount.toString(),
+        ).toBe("25");
+        expect(await balance(c.id)).toBe(kind === "pack" ? "125" : "25");
+        const returned = order.items.find(
+          (i) => i.variantId === f.variants[kind === "pack" ? 1 : 0].id,
+        )!;
+        if (kind !== "shipping") {
+          await db.returnRequest.create({
+            data: {
+              orderId: order.id,
+              customerId: c.id,
+              type: "RETURN",
+              reasonCode: "OTHER",
+              status: "RESOLVED",
+              resolution: "REFUND",
+              requestKey: randomUUID(),
+              refundAmount: "0",
+              items: {
+                create: {
+                  orderItemId: returned.id,
+                  quantity: 1,
+                  condition: "RESTOCK",
+                  refundAmount: "0",
+                },
+              },
+            },
+          });
+          await db.$transaction((tx) => revokeReturnedCoins(tx, order.id));
+          await db.$transaction((tx) => revokeReturnedCoins(tx, order.id));
+          expect(await balance(c.id)).toBe("25");
+          if (kind === "item") {
+            const paid = order.items.find((i) => i.id !== returned.id)!;
+            await db.returnRequest.create({
+              data: {
+                orderId: order.id,
+                customerId: c.id,
+                type: "RETURN",
+                reasonCode: "OTHER",
+                status: "RESOLVED",
+                resolution: "REFUND",
+                requestKey: randomUUID(),
+                refundAmount: "100",
+                items: {
+                  create: {
+                    orderItemId: paid.id,
+                    quantity: 1,
+                    condition: "RESTOCK",
+                    refundAmount: "100",
+                  },
+                },
+              },
+            });
+            await db.$transaction((tx) => revokeReturnedCoins(tx, order.id));
+            expect(await balance(c.id)).toBe("0");
+          }
+        }
+      },
+    );
     it("retains reward rule snapshots and reverses only returned purchase value", async () => {
       await configure({
         rewards: [{ marketId, spendAmount: "100", coins: "25" }],
