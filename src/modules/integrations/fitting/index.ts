@@ -19,6 +19,8 @@ export const openAiFittingProvider: FittingProvider = {
     if (!key) throw new ProviderFailure(true);
     const form = new FormData();
     form.set("model", input.modelName);
+    // Image 1.5 defaults to low input fidelity; Image 2 always uses high and rejects this override.
+    if (input.modelName === "gpt-image-1.5") form.set("input_fidelity", "high");
     form.set("quality", input.quality);
     form.set("size", "1024x1536");
     form.set("n", "1");
