@@ -46,3 +46,21 @@ export function formatCatalogDate(date: Date, locale: "fa" | "tr" | "en") {
     { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" },
   ).format(date);
 }
+
+/** Display only; quote values and submitted monetary snapshots stay exact. */
+export function formatStorefrontAmount(
+  amount: Decimal.Value,
+  currency: string,
+  locale: string,
+) {
+  if (
+    ["IRT", "TRY", "CAD", "USD"].includes(currency) &&
+    ["fa", "tr", "en"].includes(locale)
+  )
+    return formatCatalogCurrency(
+      amount,
+      currency as "IRT" | "TRY" | "CAD" | "USD",
+      locale as "fa" | "tr" | "en",
+    );
+  return `${new Decimal(amount).toString()} ${currency}`;
+}

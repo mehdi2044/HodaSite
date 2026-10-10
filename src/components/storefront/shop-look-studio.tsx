@@ -130,57 +130,60 @@ function LookSelection({
     formatCatalogCurrency(amount, currency, locale);
   return (
     <div className="look-layout">
-      <div className="look-scene">
-        <div className="look-frames" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-        <div className="look-model">
-          <ResponsiveImage
-            media={look.media}
-            locale={locale}
-            role="full"
-            sizes="(min-width:1024px) 42vw, 78vw"
-            className="look-model-image"
-          />
-          <span className="look-model-caption">{look.label}</span>
-        </div>
-        {look.items.map((item, index) => (
-          <button
-            type="button"
-            key={item.productId}
-            className={`look-plane look-plane-${index + 1}`}
-            data-active={focused === item.productId}
-            onMouseEnter={() => setFocused(item.productId)}
-            onFocus={() => setFocused(item.productId)}
-            onClick={() => {
-              setFocused(item.productId);
-              document.getElementById(`${uid}-${item.productId}-size`)?.focus();
-            }}
-            aria-label={`${labels.size}: ${item.title}`}
-          >
-            {item.media && (
-              <ResponsiveImage
-                media={item.media}
-                locale={locale}
-                role="catalog"
-                sizes="(min-width:1024px) 12vw, 26vw"
-                className="look-piece-image"
-                imgClassName="h-full w-full object-contain"
-              />
-            )}
-            <span className="look-plane-caption">
-              <span>
-                {new Intl.NumberFormat(locale, {
-                  minimumIntegerDigits: 2,
-                }).format(index + 1)}
+      <div className="look-visual">
+        <div className="look-scene">
+          <div className="look-frames" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className="look-model">
+            <ResponsiveImage
+              media={look.media}
+              locale={locale}
+              role="full"
+              sizes="(min-width:1024px) 42vw, 78vw"
+              className="look-model-image"
+            />
+          </div>
+          {look.items.map((item, index) => (
+            <button
+              type="button"
+              key={item.productId}
+              className={`look-plane look-plane-${index + 1}`}
+              data-active={focused === item.productId}
+              onMouseEnter={() => setFocused(item.productId)}
+              onFocus={() => setFocused(item.productId)}
+              onClick={() => {
+                setFocused(item.productId);
+                document
+                  .getElementById(`${uid}-${item.productId}-size`)
+                  ?.focus();
+              }}
+              aria-label={`${labels.size}: ${item.title}`}
+            >
+              {item.media && (
+                <ResponsiveImage
+                  media={item.media}
+                  locale={locale}
+                  role="catalog"
+                  sizes="(min-width:1024px) 12vw, 26vw"
+                  className="look-piece-image"
+                  imgClassName="h-full w-full object-contain"
+                />
+              )}
+              <span className="look-plane-caption">
+                <span>
+                  {new Intl.NumberFormat(locale, {
+                    minimumIntegerDigits: 2,
+                  }).format(index + 1)}
+                </span>
+                <span>{item.title}</span>
+                <span aria-hidden="true">↗</span>
               </span>
-              <span>{item.title}</span>
-              <span aria-hidden="true">↗</span>
-            </span>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
         <p className="look-image-note">
           {isDemoFashionMedia(look.media) ? `${labels.demo} · ` : ""}
           {labels.completeImage}

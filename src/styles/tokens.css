@@ -2349,14 +2349,6 @@ html[lang="fa"] body,
 .look-model-image img {
   object-position: center 45%;
 }
-.look-model-caption {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline-start: 0;
-  background: var(--background);
-  padding: 0.5rem 0.8rem;
-  font-size: 0.8rem;
-}
 .look-plane {
   position: absolute;
   z-index: 2;
@@ -2419,9 +2411,8 @@ html[lang="fa"] body,
   flex: 1;
 }
 .look-image-note {
-  position: absolute;
-  inset-block-end: 1%;
-  inset-inline: 4%;
+  margin-block-start: 1.5rem;
+  padding-inline: 0.5rem;
   text-align: center;
   color: var(--muted);
   font-size: 0.7rem;
@@ -2611,14 +2602,88 @@ html[lang="fa"] body,
   font-size: clamp(2rem, 4vw, 3.25rem);
 }
 .shop-cart-item {
-  border-radius: 4px;
+  border: 0;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  border-radius: 0;
   box-shadow: none;
-  padding: 1.25rem;
+  padding: 1.25rem 0;
+  background: transparent;
+}
+.shop-cart-image {
+  border-radius: 4px;
+}
+.shop-cart-item-body > a {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.shop-cart-item-body > p {
+  font-size: 0.9rem;
+}
+.shop-cart-controls label {
+  font-size: 0.8rem;
+}
+.shop-cart-controls input.input {
+  margin: 0;
+  width: 3.5rem;
+  min-height: 44px;
+  border-radius: 4px;
+  text-align: center;
+}
+.shop-cart-controls .button {
+  min-height: 44px;
+  padding: 0.5rem 0.8rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--text) 25%, transparent);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.shop-cart-item-body .shop-remove {
+  font-size: 0.8rem;
 }
 .shop-order-summary {
   border-radius: 4px;
   box-shadow: none;
   padding: 1.5rem;
+}
+.shop-order-summary > .button,
+.shop-checkout .button {
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--background);
+  font-size: 0.95rem;
+}
+.shop-checkout-layout > section {
+  border-radius: 4px;
+}
+.shop-coupon-form {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  border-radius: 4px;
+}
+.shop-coupon-form label {
+  min-width: 0;
+}
+.shop-coupon-form input {
+  min-height: 44px;
+  border-radius: 4px;
+}
+.shop-coupon-form p {
+  grid-column: 1/-1;
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+.shop-coupon-form .button {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 44px;
+  width: auto;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--text) 25%, transparent);
+  border-radius: 4px;
 }
 .shop-checkout-layout {
   display: grid;

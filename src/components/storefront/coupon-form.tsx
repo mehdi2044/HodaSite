@@ -15,7 +15,7 @@ export async function CouponForm({
   return (
     <CommerceForm
       action={saveCouponsAction.bind(null, locale)}
-      className="my-5 grid gap-3 rounded-token border border-black/10 p-4"
+      className="shop-coupon-form my-5 grid gap-3 rounded-token border border-black/10 p-4"
     >
       <input type="hidden" name="revision" value={revision} />
       <label className="grid gap-2 text-sm font-semibold">

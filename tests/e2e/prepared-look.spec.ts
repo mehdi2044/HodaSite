@@ -43,6 +43,9 @@ for (const [locale, market] of [
           images.map((image) => (image as HTMLImageElement).decode()),
         );
       });
+      const sceneBox = await studio.locator(".look-scene").boundingBox();
+      const noteBox = await studio.locator(".look-image-note").boundingBox();
+      expect(noteBox!.y).toBeGreaterThan(sceneBox!.y + sceneBox!.height);
       await shoppingProof(page, info, `prepared-look-${locale}-${width}`);
       await page.screenshot({
         path: info.outputPath(

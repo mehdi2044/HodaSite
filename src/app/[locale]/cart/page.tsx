@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { currentCustomer } from "@/modules/customers";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
@@ -108,30 +109,27 @@ export default async function CartPage({
                     ]
                   }{" "}
                   · <Iso>{item.variant.size.value}</Iso>
-                  <br />
-                  <small>
-                    <Iso>{item.variant.sku}</Iso>
-                  </small>
                 </p>
                 {quote?.items.find(
                   (line) => line.variantId === item.variantId,
                 ) && (
                   <p className="my-3 font-semibold">
                     <Iso>
-                      {new Decimal(
-                        quote.items.find(
-                          (line) => line.variantId === item.variantId,
-                        )!.unitPrice,
-                      )
-                        .mul(item.quantity)
-                        .toString()}{" "}
-                      {cart.currency}
+                      {formatStorefrontAmount(
+                        new Decimal(
+                          quote.items.find(
+                            (line) => line.variantId === item.variantId,
+                          )!.unitPrice,
+                        ).mul(item.quantity),
+                        cart.currency,
+                        locale,
+                      )}
                     </Iso>
                   </p>
                 )}
                 <CommerceForm
                   action={updateCartAction.bind(null, locale)}
-                  className="flex flex-wrap items-end gap-3"
+                  className="shop-cart-controls flex flex-wrap items-end gap-3"
                 >
                   <input
                     type="hidden"
@@ -176,7 +174,11 @@ export default async function CartPage({
                   <dt>{t("subtotal")}</dt>
                   <dd>
                     <Iso>
-                      {quote.subtotal} {cart.currency}
+                      {formatStorefrontAmount(
+                        quote.subtotal,
+                        cart.currency,
+                        locale,
+                      )}
                     </Iso>
                   </dd>
                 </div>
@@ -185,7 +187,11 @@ export default async function CartPage({
                     <dt>{line.label}</dt>
                     <dd>
                       <Iso>
-                        {line.chargedAmount} {cart.currency}
+                        {formatStorefrontAmount(
+                          line.chargedAmount,
+                          cart.currency,
+                          locale,
+                        )}
                       </Iso>
                     </dd>
                   </div>
@@ -193,12 +199,17 @@ export default async function CartPage({
                 <DiscountLines
                   lines={quote.discountLines}
                   currency={cart.currency}
+                  locale={locale}
                 />
                 <div className="flex justify-between border-t pt-4 text-lg font-semibold">
                   <dt>{t("total")}</dt>
                   <dd>
                     <Iso>
-                      {quote.total} {cart.currency}
+                      {formatStorefrontAmount(
+                        quote.total,
+                        cart.currency,
+                        locale,
+                      )}
                     </Iso>
                   </dd>
                 </div>

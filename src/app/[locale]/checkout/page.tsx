@@ -1,3 +1,4 @@
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
@@ -355,7 +356,7 @@ async function QuoteSummary({
         <dt>{t("subtotal")}</dt>
         <dd>
           <Iso>
-            {quote.subtotal} {cart.currency}
+            {formatStorefrontAmount(quote.subtotal, cart.currency, locale)}
           </Iso>
         </dd>
       </div>
@@ -364,17 +365,21 @@ async function QuoteSummary({
           <dt>{l.label}</dt>
           <dd>
             <Iso>
-              {l.chargedAmount} {cart.currency}
+              {formatStorefrontAmount(l.chargedAmount, cart.currency, locale)}
             </Iso>
           </dd>
         </div>
       ))}
-      <DiscountLines lines={quote.discountLines} currency={cart.currency} />
+      <DiscountLines
+        lines={quote.discountLines}
+        currency={cart.currency}
+        locale={locale}
+      />
       <div className="flex justify-between border-t pt-3 text-lg font-semibold">
         <dt>{t("total")}</dt>
         <dd>
           <Iso>
-            {quote.total} {cart.currency}
+            {formatStorefrontAmount(quote.total, cart.currency, locale)}
           </Iso>
         </dd>
       </div>

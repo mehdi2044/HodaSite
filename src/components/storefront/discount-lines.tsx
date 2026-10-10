@@ -1,10 +1,13 @@
 import { Iso } from "./iso";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 export function DiscountLines({
   lines,
   currency,
+  locale,
 }: {
   lines: readonly { title: string; amount: string }[];
   currency: string;
+  locale?: string;
 }) {
   return lines.map((line, index) => (
     <div
@@ -15,7 +18,10 @@ export function DiscountLines({
       <dt className="min-w-0 break-words">{line.title}</dt>
       <dd className="shrink-0">
         <Iso>
-          −{line.amount} {currency}
+          −
+          {locale
+            ? formatStorefrontAmount(line.amount, currency, locale)
+            : `${line.amount} ${currency}`}
         </Iso>
       </dd>
     </div>
