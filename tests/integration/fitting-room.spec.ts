@@ -32,6 +32,8 @@ vi.mock("next/cache", () => ({
   revalidateTag: () => {},
 }));
 import { db } from "@/lib/db";
+import { MaintenanceError } from "@/lib/mutation-gate";
+import { inFlightCount } from "@/lib/request-metrics";
 import { configSchema, dayBounds } from "@/modules/fitting/contracts";
 import {
   createFittingSession,
@@ -825,6 +827,88 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         } finally {
           read.mockRestore();
           vi.unstubAllGlobals();
+        }
+      },
+    );
+    it.each(["success", "definite", "unknown", "delivery"] as const)(
+      "keeps the restore drain active through provider and %s settlement",
+      async (outcome) => {
+        const c = await customer(),
+          session = await create(c.id);
+        let entered!: () => void, release!: () => void;
+        const started = new Promise<void>((resolve) => {
+          entered = resolve;
+        });
+        const blocked = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const provider = {
+          render: vi.fn(async () => {
+            entered();
+            await blocked;
+            if (outcome === "definite") throw new ProviderFailure(true);
+            if (outcome === "unknown") throw new ProviderFailure(false);
+            return bytes;
+          }),
+        };
+        const failedUpload =
+          outcome === "delivery"
+            ? vi
+                .spyOn(storage, "put")
+                .mockRejectedValue(new Error("fixture upload failure"))
+            : null;
+        expect(inFlightCount()).toBe(0);
+        const rendering = renderFitting(session.id, provider);
+        try {
+          await Promise.race([started, rendering]);
+          expect(provider.render).toHaveBeenCalledTimes(1);
+          expect(inFlightCount()).toBe(1);
+          state.maintenance = true;
+          await expect(
+            renderFitting(session.id, provider),
+          ).rejects.toBeInstanceOf(MaintenanceError);
+          expect(inFlightCount()).toBe(1);
+          expect(provider.render).toHaveBeenCalledTimes(1);
+          release();
+          await rendering;
+          const result = await db.fittingSession.findUniqueOrThrow({
+            where: { id: session.id },
+          });
+          expect(result.status).toBe(
+            outcome === "success"
+              ? "DONE"
+              : outcome === "unknown"
+                ? "REVIEW"
+                : "FAILED",
+          );
+          expect(inFlightCount()).toBe(0);
+          if (outcome === "success") {
+            outputKeys.push(result.storageKey!);
+            expect(await storage.getBytes(result.storageKey!)).not.toBeNull();
+          }
+          if (outcome === "delivery")
+            expect(
+              await db.job.count({
+                where: {
+                  type: "fitting-output-purge",
+                  payload: { path: ["sessionId"], equals: session.id },
+                },
+              }),
+            ).toBe(1);
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, sourceKey: `refund:${session.id}` },
+            }),
+          ).toBe(["definite", "delivery"].includes(outcome) ? 1 : 0);
+          state.maintenance = false;
+          expect(await balance(c.id)).toBe(
+            ["definite", "delivery"].includes(outcome) ? "100" : "87.5",
+          );
+        } finally {
+          release();
+          await Promise.allSettled([rendering]);
+          state.maintenance = false;
+          failedUpload?.mockRestore();
         }
       },
     );

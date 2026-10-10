@@ -191,7 +191,14 @@ test("pending fitting requests survive market changes without leaking selection 
   try {
     await customerLogin(page, email, "en");
     const customer = await db.customer.findUniqueOrThrow({ where: { email } });
-    const origin = new URL(page.url()).origin;
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/en/fitting-room");
+    const room = page.getByTestId("fitting-room");
+    await expect(room).toBeVisible();
+    const switcher = page.getByRole("combobox", {
+      name: en.market.chooseMarket,
+      exact: true,
+    });
     const firstKey = `hoda:fitting:${customer.id}:${market.id}`;
     const secondKey = `hoda:fitting:${customer.id}:${other.id}`;
     const request = {
@@ -219,19 +226,20 @@ test("pending fitting requests survive market changes without leaking selection 
       },
       { firstKey, secondKey, record },
     );
-    await page
-      .context()
-      .addCookies([{ name: "market", value: "TR", url: origin }]);
-    await page.goto("/en/fitting-room");
-    const room = page.getByTestId("fitting-room");
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      switcher.selectOption("TR"),
+    ]);
+    await expect(switcher).toHaveValue("TR");
     await expect(room.locator(".fitting-chip")).toHaveCount(1);
     await expect(room.locator(".fitting-generate")).toContainText(
       en.fitting.retry,
     );
-    await page
-      .context()
-      .addCookies([{ name: "market", value: "CA", url: origin }]);
-    await page.goto("/en/fitting-room");
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      switcher.selectOption("CA"),
+    ]);
+    await expect(switcher).toHaveValue("CA");
     await expect(room).toBeVisible();
     await expect(room.locator(".fitting-chip")).toHaveCount(0);
     await expect(room.locator(".fitting-generate")).not.toContainText(
@@ -240,10 +248,11 @@ test("pending fitting requests survive market changes without leaking selection 
     expect(
       await page.evaluate((key) => sessionStorage.getItem(key), firstKey),
     ).toBe(record);
-    await page
-      .context()
-      .addCookies([{ name: "market", value: "TR", url: origin }]);
-    await page.goto("/en/fitting-room");
+    await Promise.all([
+      page.waitForEvent("domcontentloaded"),
+      switcher.selectOption("TR"),
+    ]);
+    await expect(switcher).toHaveValue("TR");
     await expect(room.locator(".fitting-chip")).toHaveCount(1);
     await expect(room.locator(".fitting-generate")).toContainText(
       en.fitting.retry,

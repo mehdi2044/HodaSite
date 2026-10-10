@@ -32,40 +32,43 @@ export async function renderFitting(
   id: string,
   provider: FittingProvider = openAiFittingProvider,
 ) {
-  const snapshot = await withMutation(() =>
-    db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
-      const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
-      if (s.status === "RUNNING") {
-        if (s.startedAt && Date.now() - s.startedAt.getTime() < 5 * 60000)
-          throw new JobDeferredError("FITTING_RUNNING");
-        if (s.storageKey) {
-          await refundSession(tx, id, "OUTPUT_INTERRUPTED");
-          await queueOutputPurge(tx, id, s.storageKey);
-          return null;
-        }
-        await tx.fittingSession.update({
-          where: { id },
-          data: { status: "REVIEW", errorCode: "INTERRUPTED" },
-        });
-        return null;
-      }
-      if (s.status !== "QUEUED") return null;
-      const c = await readConfig(tx);
-      const customer = await tx.customer.findUnique({
-        where: { id: s.customerId },
-      });
-      if (!c.enabled || !customer?.isActive) {
-        await refundSession(tx, id, "DISABLED");
+  // Keep paid dispatch, delivery and settlement inside the restore drain.
+  // An admitted attempt finishes even if maintenance starts; only new attempts are rejected.
+  return withMutation(() => renderFittingAttempt(id, provider));
+}
+async function renderFittingAttempt(id: string, provider: FittingProvider) {
+  const snapshot = await db.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
+    const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
+    if (s.status === "RUNNING") {
+      if (s.startedAt && Date.now() - s.startedAt.getTime() < 5 * 60000)
+        throw new JobDeferredError("FITTING_RUNNING");
+      if (s.storageKey) {
+        await refundSession(tx, id, "OUTPUT_INTERRUPTED");
+        await queueOutputPurge(tx, id, s.storageKey);
         return null;
       }
       await tx.fittingSession.update({
         where: { id },
-        data: { status: "RUNNING", startedAt: new Date() },
+        data: { status: "REVIEW", errorCode: "INTERRUPTED" },
       });
-      return snapshotSchema.parse(s.snapshot);
-    }),
-  );
+      return null;
+    }
+    if (s.status !== "QUEUED") return null;
+    const c = await readConfig(tx);
+    const customer = await tx.customer.findUnique({
+      where: { id: s.customerId },
+    });
+    if (!c.enabled || !customer?.isActive) {
+      await refundSession(tx, id, "DISABLED");
+      return null;
+    }
+    await tx.fittingSession.update({
+      where: { id },
+      data: { status: "RUNNING", startedAt: new Date() },
+    });
+    return snapshotSchema.parse(s.snapshot);
+  });
   if (!snapshot) return;
   let key: string | undefined;
   let rendered = false;
@@ -96,54 +99,48 @@ export async function renderFitting(
     );
     const candidate = `fitting/${new Date().getUTCFullYear()}/${randomUUID()}.sealed`;
     // Record the object identity before uploading so interruptions cannot orphan it.
-    await withMutation(() =>
-      db.$transaction(async (tx) => {
-        const changed = await tx.fittingSession.updateMany({
-          where: { id, status: "RUNNING" },
-          data: { storageKey: candidate },
-        });
-        if (!changed.count) throw new ProviderFailure(false);
-      }),
-    );
+    await db.$transaction(async (tx) => {
+      const changed = await tx.fittingSession.updateMany({
+        where: { id, status: "RUNNING" },
+        data: { storageKey: candidate },
+      });
+      if (!changed.count) throw new ProviderFailure(false);
+    });
     key = candidate;
     await storage.put(key, encrypted, "application/octet-stream");
 
-    await withMutation(() =>
-      db.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
-        const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
-        if (s.status !== "RUNNING") throw new ProviderFailure(false);
-        await tx.fittingSession.update({
-          where: { id },
-          data: {
-            status: "DONE",
-            storageKey: key,
-            completedAt: new Date(),
-            errorCode: null,
-          },
-        });
-      }),
-    );
+    await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
+      const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
+      if (s.status !== "RUNNING") throw new ProviderFailure(false);
+      await tx.fittingSession.update({
+        where: { id },
+        data: {
+          status: "DONE",
+          storageKey: key,
+          completedAt: new Date(),
+          errorCode: null,
+        },
+      });
+    });
   } catch (error) {
-    await withMutation(() =>
-      db.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
-        const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
-        // A commit response can be lost after DONE: keep its delivered image.
-        if (s.status === "DONE") return false;
-        if (rendered || (error instanceof ProviderFailure && error.definitive))
-          await refundSession(tx, id, "PROVIDER_FAILED");
-        else {
-          if (s.status === "RUNNING")
-            await tx.fittingSession.update({
-              where: { id },
-              data: { status: "REVIEW", errorCode: "PROVIDER_UNKNOWN" },
-            });
-        }
-        if (s.storageKey) await queueOutputPurge(tx, id, s.storageKey);
-        return true;
-      }),
-    );
+    await db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
+      const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
+      // A commit response can be lost after DONE: keep its delivered image.
+      if (s.status === "DONE") return false;
+      if (rendered || (error instanceof ProviderFailure && error.definitive))
+        await refundSession(tx, id, "PROVIDER_FAILED");
+      else {
+        if (s.status === "RUNNING")
+          await tx.fittingSession.update({
+            where: { id },
+            data: { status: "REVIEW", errorCode: "PROVIDER_UNKNOWN" },
+          });
+      }
+      if (s.storageKey) await queueOutputPurge(tx, id, s.storageKey);
+      return true;
+    });
   }
 }
 export function registerFittingJobs(
