@@ -23,7 +23,16 @@ async function actor() {
   return s.user.id;
 }
 export async function fittingSettings() {
-  await actor();
+  const userId = await actor();
+  const markets = await db.market.findMany({ select: { id: true } });
+  const access = await Promise.all(
+    markets.map((market) =>
+      can(userId, "ai.settings.manage", { marketId: market.id }),
+    ),
+  );
+  const reviewMarketIds = markets
+    .filter((_, index) => access[index])
+    .map((market) => market.id);
   const config = await readConfig(db);
   return {
     config,
@@ -36,7 +45,7 @@ export async function fittingSettings() {
       )?.updatedAt.toISOString() ?? null,
     review: (
       await db.fittingSession.findMany({
-        where: { status: "REVIEW" },
+        where: { status: "REVIEW", marketId: { in: reviewMarketIds } },
         orderBy: { createdAt: "desc" },
         take: 50,
       })
@@ -308,11 +317,11 @@ export async function resolveFittingSession(raw: unknown) {
     userId = await actor();
   return withMutation(() =>
     db.$transaction(async (tx) => {
-      await txCan(tx, userId, "ai.settings.manage");
       await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${input.id} FOR UPDATE`;
       const s = await tx.fittingSession.findUniqueOrThrow({
         where: { id: input.id },
       });
+      await txCan(tx, userId, "ai.settings.manage", { marketId: s.marketId });
       if (s.status === "FAILED") return;
       if (s.status !== "REVIEW") throw new FittingError("STALE");
       const { refundSession } = await import("./index");

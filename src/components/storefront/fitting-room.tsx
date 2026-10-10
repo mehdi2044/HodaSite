@@ -41,6 +41,7 @@ type Result = {
 };
 export function FittingRoom({
   customerId,
+  marketId,
   models,
   products,
   ownedProducts,
@@ -57,6 +58,7 @@ export function FittingRoom({
   saved = [],
 }: {
   customerId?: string;
+  marketId: string;
   models: FittingModel[];
   products: FittingProduct[];
   ownedProducts: FittingProduct[];
@@ -89,7 +91,9 @@ export function FittingRoom({
     [message, setMessage] = useState(""),
     [savedLooks, setSaved] = useState(saved);
   const pending = useRef<Parameters<typeof generate>[0] | null>(null);
-  const persistenceKey = customerId ? `hoda:fitting:${customerId}` : null;
+  const persistenceKey = customerId
+    ? `hoda:fitting:${customerId}:${marketId}`
+    : null;
   function remember(value: unknown) {
     if (persistenceKey)
       try {
@@ -109,15 +113,22 @@ export function FittingRoom({
         models.some((m) => m.id === old.modelId)
       )
         setModelId(old.modelId);
+      const oldRequest = requestSchema.safeParse(old.request);
+      const availableIds = new Set(
+        [...products, ...ownedProducts].map((product) => product.variantId),
+      );
       if (Array.isArray(old.selection))
         setSelection(
           old.selection
-            .filter((id: unknown) => typeof id === "string")
+            .filter(
+              (id: unknown) =>
+                typeof id === "string" &&
+                (oldRequest.success || availableIds.has(id)),
+            )
             .slice(0, 4),
         );
       if (old.request) {
-        const parsed = requestSchema.safeParse(old.request);
-        if (parsed.success) pending.current = parsed.data;
+        if (oldRequest.success) pending.current = oldRequest.data;
       }
       if (typeof old.sessionId === "string" && old.sessionId.length <= 100) {
         setSession({ id: old.sessionId, status: "QUEUED", imageUrl: null });

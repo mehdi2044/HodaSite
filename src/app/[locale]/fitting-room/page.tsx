@@ -126,7 +126,9 @@ export default async function Page({
         <button className="button">{t("search")}</button>
       </form>
       <FittingRoom
+        key={`${c.id}:${market.id}`}
         customerId={c.id}
+        marketId={market.id}
         models={models}
         products={products}
         ownedProducts={owned}

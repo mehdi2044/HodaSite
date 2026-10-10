@@ -173,6 +173,95 @@ test("admin config toggle and fractional charge persist through real authorized 
   }
 });
 
+test("pending fitting requests survive market changes without leaking selection or losing recovery", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const old = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  const config = old.config as Record<string, unknown>;
+  const market = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+  const other = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+  const email = `fit-persistence-${randomUUID()}@example.com`;
+  await db.integration.update({
+    where: { id: old.id },
+    data: { isActive: true, config: { ...config, enabled: true } },
+  });
+  try {
+    await customerLogin(page, email, "en");
+    const customer = await db.customer.findUniqueOrThrow({ where: { email } });
+    const origin = new URL(page.url()).origin;
+    const firstKey = `hoda:fitting:${customer.id}:${market.id}`;
+    const secondKey = `hoda:fitting:${customer.id}:${other.id}`;
+    const request = {
+      requestKey: randomUUID(),
+      modelId: "woman",
+      variantIds: ["seed-style-v2-women-tee-m"],
+      expectedCostCoins: "12.5",
+      confirm: true,
+    };
+    const record = JSON.stringify({
+      request,
+      modelId: "woman",
+      selection: request.variantIds,
+    });
+    await page.evaluate(
+      ({ firstKey, secondKey, record }) => {
+        sessionStorage.setItem(firstKey, record);
+        sessionStorage.setItem(
+          secondKey,
+          JSON.stringify({
+            modelId: "woman",
+            selection: ["not-a-current-product"],
+          }),
+        );
+      },
+      { firstKey, secondKey, record },
+    );
+    await page
+      .context()
+      .addCookies([{ name: "market", value: "TR", url: origin }]);
+    await page.goto("/en/fitting-room");
+    const room = page.getByTestId("fitting-room");
+    await expect(room.locator(".fitting-chip")).toHaveCount(1);
+    await expect(room.locator(".fitting-generate")).toContainText(
+      en.fitting.retry,
+    );
+    await page
+      .context()
+      .addCookies([{ name: "market", value: "CA", url: origin }]);
+    await page.goto("/en/fitting-room");
+    await expect(room).toBeVisible();
+    await expect(room.locator(".fitting-chip")).toHaveCount(0);
+    await expect(room.locator(".fitting-generate")).not.toContainText(
+      en.fitting.retry,
+    );
+    expect(
+      await page.evaluate((key) => sessionStorage.getItem(key), firstKey),
+    ).toBe(record);
+    await page
+      .context()
+      .addCookies([{ name: "market", value: "TR", url: origin }]);
+    await page.goto("/en/fitting-room");
+    await expect(room.locator(".fitting-chip")).toHaveCount(1);
+    await expect(room.locator(".fitting-generate")).toContainText(
+      en.fitting.retry,
+    );
+    expect(
+      await db.fittingSession.count({ where: { customerId: customer.id } }),
+    ).toBe(0);
+    expect(
+      await page.evaluate((key) => sessionStorage.getItem(key), firstKey),
+    ).toBe(record);
+  } finally {
+    await db.integration.update({
+      where: { id: old.id },
+      data: { isActive: old.isActive, config: old.config! },
+    });
+  }
+});
+
 test("fitting recipient search hides scoped-denied customers even with a forged market URL", async ({
   page,
 }) => {

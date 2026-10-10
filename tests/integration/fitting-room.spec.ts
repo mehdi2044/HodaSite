@@ -57,6 +57,7 @@ import {
   grantFittingCoins,
   fittingRecipients,
   fittingRecipientMarkets,
+  resolveFittingSession,
 } from "@/modules/fitting/settings";
 import { renderFitting, registerFittingJobs } from "@/modules/fitting/worker";
 import { JobDeferredError, runJobs } from "@/modules/jobs";
@@ -1180,6 +1181,67 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await db.fittingCoinGrant.count({ where: { customerId: c.id } }),
       ).toBe(0);
+    });
+    it("filters the review queue and authorizes refunds against the locked session market", async () => {
+      const other = await db.market.findUniqueOrThrow({
+        where: { code: "CA" },
+      });
+      const a = await customer(),
+        b = await customer();
+      const first = await create(a.id);
+      const second = await createFittingSession(b.id, other.id, "en", input());
+      const provider = {
+        render: vi.fn(async () => {
+          throw new ProviderFailure(false);
+        }),
+      };
+      await renderFitting(first.id, provider);
+      await renderFitting(second.id, provider);
+      const deny = await db.userPermissionOverride.create({
+        data: {
+          userId: ownerId,
+          permission: "ai.settings.manage",
+          allow: false,
+          scope: { marketId: other.id },
+        },
+      });
+      try {
+        const review = (await fittingSettings()).review;
+        expect(review.some((s) => s.id === first.id)).toBe(true);
+        expect(review.some((s) => s.id === second.id)).toBe(false);
+        await expect(
+          resolveFittingSession({ id: second.id, confirm: true, refund: true }),
+        ).rejects.toThrow("FORBIDDEN");
+        expect((await sessionView(b.id, second.id)).status).toBe("REVIEW");
+        expect(await balance(b.id)).toBe("87.5");
+        expect(
+          await db.auditLog.count({
+            where: { action: "fitting.session.refund", entityId: second.id },
+          }),
+        ).toBe(0);
+        expect(
+          await db.fittingCoinEntry.count({
+            where: { customerId: b.id, sourceKey: `refund:${second.id}` },
+          }),
+        ).toBe(0);
+        await resolveFittingSession({
+          id: first.id,
+          confirm: true,
+          refund: true,
+        });
+        expect(await balance(a.id)).toBe("100");
+      } finally {
+        await db.userPermissionOverride.delete({ where: { id: deny.id } });
+      }
+      expect(
+        (await fittingSettings()).review.some((s) => s.id === second.id),
+      ).toBe(true);
+      await resolveFittingSession({
+        id: second.id,
+        confirm: true,
+        refund: true,
+      });
+      expect(await balance(b.id)).toBe("100");
     });
     it("saves versioned admin settings and grants exact batch credits idempotently", async () => {
       const a = await customer("0"),

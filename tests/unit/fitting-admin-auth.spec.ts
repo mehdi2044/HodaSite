@@ -5,6 +5,7 @@ import {
   grantFittingCoins,
   fittingRecipients,
   fittingRecipientMarkets,
+  resolveFittingSession,
 } from "@/modules/fitting/settings";
 import { UnauthorizedError } from "@/modules/access";
 describe("fitting administration authentication boundary", () => {
@@ -16,6 +17,9 @@ describe("fitting administration authentication boundary", () => {
     await expect(fittingRecipientMarkets()).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
+    await expect(
+      resolveFittingSession({ id: "fixture", confirm: true, refund: true }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
     await expect(
       grantFittingCoins({
         requestKey: "4d258ea3-7897-4b50-a4f6-bc7b0b14b570",
