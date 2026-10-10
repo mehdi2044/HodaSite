@@ -110,6 +110,20 @@ Ledger tables are included in ordinary whole-database pg_dump. Restore into the 
 
 ## 3. Backup & restore system (D23)
 
+### Phase 09B persistent promotions — D72 (Draft)
+
+Migration `20261003160000_phase09b_promotions` adds `PromotionProgram`, immutable
+`PromotionProgramRevision`, `PromotionCoupon`, immutable `PromotionOrderEvaluation`,
+`PromotionRedemption` (DiscountLine, public-copy snapshot and revision reference)
+and `PromotionUsageRelease`. Program/coupon limits count unreleased consumption
+across all revisions. The order's original monetary fields are never rewritten.
+No existing data backfill/reset, permission grant, storage-provider or archive
+format change. These tables are automatically included in whole-database
+pg_dump; the existing isolated ops restore runs matching migrations as before.
+Rollback must retain all history and use compatible code. Apply only to isolated
+test databases until integration and D70 gates pass. Local/S3 runtime restore CI
+is still mandatory; a successful migration alone does not prove recovery.
+
 ### 3.1 What gets backed up
 
 1. **Database:** `pg_dump -Fc` (custom, compressed, restorable selectively).

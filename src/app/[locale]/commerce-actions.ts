@@ -13,6 +13,7 @@ import {
   changeCart,
   changeCartMarket,
   saveCheckout,
+  saveCartCoupons,
   readCart,
   CART_COOKIE,
 } from "@/modules/cart";
@@ -26,6 +27,7 @@ import {
 } from "@/modules/customers";
 import { submitReceipt } from "@/modules/payments";
 import { CommerceError } from "@/modules/orders";
+import { couponCodesInputSchema } from "@/modules/promotions/coupon-contracts";
 
 type Result = {
   error?: string;
@@ -94,6 +96,7 @@ export async function placeOrderAction(locale: string, form: FormData) {
         .regex(/^\d+(\.\d+)?$/)
         .parse(form.get("expectedTotal")),
       form.get("useCredit") === "on",
+      localeSchema.parse(locale),
     );
     if (token)
       (await cookies()).set(`hoda.order.${order.number}`, token, {
@@ -271,5 +274,19 @@ export async function saveShippingAction(locale: string, form: FormData) {
     });
     await withMutation(() => saveCheckout({ ...address, shippingRuleId }));
     return { url: `/${l}/checkout?step=3` };
+  });
+}
+
+export async function saveCouponsAction(locale: string, form: FormData) {
+  return safe(async () => {
+    const l = localeSchema.parse(locale);
+    const codes = couponCodesInputSchema.parse(form.get("coupons") ?? "");
+    await saveCartCoupons(
+      codes,
+      z.coerce.number().int().min(0).parse(form.get("revision")),
+    );
+    revalidatePath(`/${l}/cart`);
+    revalidatePath(`/${l}/checkout`);
+    return { ok: true };
   });
 }

@@ -43,11 +43,15 @@ export const invoiceSnapshotSchema = z.object({
     )
     .min(1)
     .max(200),
+  discounts: z
+    .array(z.object({ title: text, amount }))
+    .max(100)
+    .default([]),
   fees: z
     .array(z.object({ label: text, amount, absorbed: z.boolean() }))
     .max(200),
 });
-export type InvoiceSnapshot = z.infer<typeof invoiceSnapshotSchema>;
+export type InvoiceSnapshot = z.input<typeof invoiceSnapshotSchema>;
 export function localDigits(value: string, locale: InvoiceLocale): string {
   return locale === "fa"
     ? value.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[parseInt(digit, 10)])
@@ -114,6 +118,6 @@ ${fonts}
 <div class="meta"><div>${label("order")} <bdi>${e(d.number)}</bdi><br>${label("version")} ${localDigits(String(version), d.locale)}</div><div>${label("placedAt")}: ${e(invoiceDate(d.placedAt, d.locale))}<br>${label("paidAt")}: ${e(invoiceDate(d.paidAt, d.locale))}</div></div>
 <div class="parties"><div><h2>${label("customer")}</h2><p class="pre">${e(d.customer)}</p><p class="pre">${e(d.address)}</p></div><div>${d.taxId ? `<h2>${e(d.taxLabel)}</h2><bdi>${e(d.taxId)}</bdi>` : ""}</div></div>
 <table><thead><tr><th>${label("item")}</th><th>${label("quantity")}</th><th>${label("unit")}</th><th>${label("amount")}</th></tr></thead><tbody>${d.items.map((i) => `<tr><td>${e(i.title)}<div class="sku"><bdi>${e(i.sku)}</bdi></div></td><td>${localDigits(String(i.quantity), d.locale)}</td><td>${money(i.unit)}</td><td>${money(i.total)}</td></tr>`).join("")}</tbody></table>
-<div class="totals">${row("subtotal", d.subtotal)}${d.fees.map((f) => `<div class="sum"><span>${e(f.label)}${f.absorbed ? ` (${label("absorbed")})` : ""}</span><strong>${money(f.absorbed ? "0" : f.amount)}</strong></div>`).join("")}${row("discount", d.discount)}${row("total", d.total)}</div>
+<div class="totals">${row("subtotal", d.subtotal)}${d.fees.map((f) => `<div class="sum"><span>${e(f.label)}${f.absorbed ? ` (${label("absorbed")})` : ""}</span><strong>${money(f.absorbed ? "0" : f.amount)}</strong></div>`).join("")}${d.discounts.map((l) => `<div class="sum"><span>${e(l.title)}</span><strong>−${money(l.amount)}</strong></div>`).join("")}${d.discounts.length ? "" : row("discount", d.discount)}${row("total", d.total)}</div>
 <div class="payment"><h2>${label("payment")}</h2><p class="pre">${e(localDigits(d.payment, d.locale))}</p><p class="pre bank">${e(d.bank)}</p></div></body></html>`;
 }

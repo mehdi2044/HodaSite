@@ -12,6 +12,7 @@ const inputSchema = z.object({
   subtotal: money,
   fees: money,
   discount: money,
+  shippingDiscount: money.default("0"),
   total: money,
   totalTry: money,
   totalUsd: money,
@@ -52,7 +53,7 @@ const quoteSchema = z.object({
     .pipe(z.string().refine((s) => new Exact(s).gt(0))),
   quotedAt: z.iso.datetime(),
 });
-export type ReconciliationInput = z.infer<typeof inputSchema>;
+export type ReconciliationInput = z.input<typeof inputSchema>;
 export const reconciliationIssues = [
   "INVALID_DATA",
   "NOT_PAID",
@@ -130,11 +131,20 @@ export function reconcileOrder(raw: unknown): Reconciliation {
   const absorbedFees = sum(
     input.feeLines.filter((f) => f.absorbed && f.currency === input.currency),
   );
-  const netGoods = new Exact(input.subtotal).sub(input.discount);
-  const expected = netGoods.add(chargedFees);
+  const merchandiseDiscount = new Exact(input.discount).sub(
+    input.shippingDiscount,
+  );
+  const netGoods = new Exact(input.subtotal).sub(merchandiseDiscount);
+  const expected = netGoods.add(chargedFees).sub(input.shippingDiscount);
   if (!items.eq(input.subtotal)) issues.add("ITEM_TOTAL");
   if (!chargedFees.eq(input.fees)) issues.add("FEE_TOTAL");
-  if (netGoods.lt(0) || !expected.eq(input.total)) issues.add("ORDER_TOTAL");
+  if (
+    merchandiseDiscount.lt(0) ||
+    netGoods.lt(0) ||
+    new Exact(input.shippingDiscount).gt(chargedFees) ||
+    !expected.eq(input.total)
+  )
+    issues.add("ORDER_TOTAL");
   const payments = input.payments.filter((p) => p.status === "APPROVED");
   const uses = input.creditUses.filter((c) => c.status === "CONSUMED");
   if (

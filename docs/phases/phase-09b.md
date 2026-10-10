@@ -1,0 +1,102 @@
+# Phase 09B — Scenario / Rule Engine + Promotion Foundation
+
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D17,
+D24, D31, D55, D60, D69, D70, D71, D72, D73.
+
+Owner-authorized scope: [Issue #53](https://github.com/mehdi2044/HodaSite/issues/53).
+The previous preparation is not completion. Work starts from PR #52's merge
+`c93cc624212d5028fc5bea82b357de9f56f79b95` on
+`phase/09b-scenario-promotion-engine`. No other executor is assigned by this PR.
+
+## Delivery sequence and current status
+
+1. **Implemented, offline only:** D71 and strict version-1 contracts; pure rule
+   evaluation with explanations, selected/excluded merchandise, deterministic
+   priority/stacking, currency-safe allocations, percentage/fixed/shipping,
+   same-pool buy-X-get-Y and spend-X-get-Y. Input usage/coupon evidence is an
+   estimate, not a redemption guarantee. Unit tests exercise invalid inputs,
+   exact money, isolation, limits and allocation conservation.
+2. **Implemented; connected to checkout code under D73, not deployed:** D72 additive Program/Revision,
+   Coupon, OrderEvaluation, Redemption (immutable DiscountLine snapshot) and
+   UsageRelease tables; constraints, audit, immutable-evidence triggers and
+   indexes. No old orders/media are rewritten. Local/S3 runtime restore CI
+   remains a gate before Ready.
+3. **Implemented service boundary:** permission-checked, market-scoped admin
+   save/list/single-or-bulk coupons and lifecycle services; CRM 09A membership,
+   segment SQL, tags and consent loader. No endpoint accepts raw membership or
+   usage claims. Server Actions and the FA/TR/EN admin interface are now implemented.
+4. **Implemented transaction adapter and D73 checkout/cancellation wiring:**
+   fixed Order/Market/Program/Coupon lock order, lifetime program/coupon limits,
+   per-customer caps, Decimal budgets, atomic retry/rollback and append-only
+   unpaid-cancellation release. It verifies stored order amounts, never changes
+   them, and is not exported as a public action. PostgreSQL tests race two real
+   checkouts against capacity one. Cancellation/expiry releases unpaid usage
+   before inventory/credit locks; paid usage stays consumed.
+5. **Implemented under D73:** opt-in trusted quoteCart evaluation, cart coupon
+   persistence, checkout and invoice DiscountLines; original item prices stay
+   unchanged. TAX uses net merchandise/taxable shipping; other fee bases retain
+   their configured gross basis. Returns and sales attribution consume immutable
+   merchandise allocations; shipping income is reduced separately. Existing
+   orders without promotion evidence retain their legacy calculation. Three
+   locale storefront flows pass in Chromium at 390px; admin coverage is in
+   `tests/e2e/promotion-admin.spec.ts`.
+6. **Implemented admin UI:** `/admin/promotions` provides no-code conditions,
+   selectors, all five effects, lifecycle/schedule/group/budget fields, public
+   trilingual copy, single/batch coupon management and revision history. Defaults
+   are disabled Draft/exclusive group. Every write requires confirmation; program
+   save and coupon issuance retries retain the original payload/key. Uncertain or
+   stale coupon status changes lock the form and require reloading current status.
+   Read-only saved-cart simulation explains
+   conditions/conflicts and amount estimates with explicit inactive-preview mode.
+   Saved taxonomy references must exist and be non-deleted; market conditions
+   must match the program market before any revision/audit is written.
+   The public cart also preserves these inputs when returning from checkout.
+   Usage reads are batched while lifetime/cap/budget/release locking is preserved.
+   Relevant customer segment predicates are also evaluated in one scoped query.
+   Shipping uses validated saved address fields and the selected method through
+   the checkout quote service; invalid selections fail without consuming coupons.
+   Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
+   Bundle/gift scope remains existing-basket multi-buy under D71; automatic gift
+   insertion and separate bundle pricing are explicitly not implemented.
+7. **Acceptance gates:** final local results and current-head CI are recorded in
+   PROGRESS and PR #54. Local/S3 restore and D70 review remain required. Keep #53
+   open through review; do not declare Phase 09 complete or deploy this branch.
+   [Admin delivery / limits](../reviews/PHASE09B_ADMIN_REVIEW.md).
+
+## Required acceptance (not waived by the first increment)
+
+- CA-only minimum basket benefit and rejection in other markets.
+- Deterministic priority, mutual exclusions and stacking with correct amounts.
+- Clear discount lines in cart/checkout/invoice; no hidden unit-price edits.
+- Coupon total/per-customer limits and budgets survive concurrent order placement.
+- Versioned definitions and audited mutations; immutable order evidence.
+- Explainable simulator using the same evaluation service.
+- Decimal/numeric only; no cross-currency arithmetic or float conversion.
+- Server permission and market-isolation negative tests.
+- Real fa/tr/en admin browser flows in 390px and RTL/LTR.
+- Complete CI, including Local/S3 backup/restore, on the latest head.
+
+## Verification and safe operation
+
+For the offline evaluator, `pnpm test:unit -- tests/unit/promotions.spec.ts` uses
+the unit-only configuration and no database. `pnpm lint` and `pnpm typecheck`
+remain required. Storefront coupon input and explicit discount lines exist;
+admin rule/coupon management and simulator UI are implemented at `/admin/promotions`.
+Evaluation has no ambient clock, database, network or coupon-consuming side
+effect. Reason codes are an internal API and must be translated by the eventual
+UI. Do not expose rejected promotion/segment details on a public route.
+
+D72 adds migration `20261003160000_phase09b_promotions`. Apply/test only against
+disposable `_test` databases while this PR is Draft. Test
+`tests/integration/phase09b-promotions.spec.ts` with `TEST_DATABASE_URL` set;
+use UTF-8, PostgreSQL session timezone UTC and the documented test-only secrets.
+No Preview sync or deployment. Rollback must retain persistent evidence, using
+compatible code instead of dropping the new tables. This is an implementation not authorization to deploy or activate live discounts.
+
+## Outside this phase
+
+Loyalty/tiers/referrals (09C), campaigns/sending/journeys (09D), return/review
+expansion (09E), #48 storefront redesign, #49 admin IA redesign, phases 10/11
+and infrastructure purchase/deployment are not part of #53. Real-environment
+acceptance and owner visual acceptance stay open. D70 merge gates remain active;
+Codex never merges its own implementation PR.

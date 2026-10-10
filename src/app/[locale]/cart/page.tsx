@@ -1,10 +1,13 @@
+import { currentCustomer } from "@/modules/customers";
+import { DiscountLines } from "@/components/storefront/discount-lines";
+import { CouponForm } from "@/components/storefront/coupon-form";
 import { db } from "@/lib/db";
 import { Iso } from "@/components/storefront/iso";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { readCart } from "@/modules/cart";
-import { quoteCart } from "@/modules/fees";
+import { quoteSavedCart } from "@/modules/fees";
 import { getRequestContext } from "@/lib/request-context";
 import { CommerceForm } from "@/components/storefront/commerce-form";
 import { updateCartAction, switchCartAction } from "../commerce-actions";
@@ -38,11 +41,19 @@ export default async function CartPage({
     orderBy: { sortOrder: "asc" },
   });
   const mismatch = cart.marketId !== market.id;
-  const quote = await quoteCart({
-    marketId: cart.marketId,
-    locale: locale as "fa" | "tr" | "en",
-    items: cart.items,
-  }).catch(() => null);
+  const quote = await quoteSavedCart(
+    {
+      marketId: cart.marketId,
+      locale: locale as "fa" | "tr" | "en",
+      items: cart.items,
+      promotions: {
+        customerId: (await currentCustomer())?.id ?? null,
+        couponCodes:
+          (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+      },
+    },
+    cart.checkout,
+  ).catch(() => null);
   return (
     <main className="shell shop-page grid gap-8 py-10">
       <h1 className="text-3xl font-semibold">
@@ -159,6 +170,10 @@ export default async function CartPage({
                     </dd>
                   </div>
                 ))}
+                <DiscountLines
+                  lines={quote.discountLines}
+                  currency={cart.currency}
+                />
                 <div className="flex justify-between border-t pt-4 text-lg font-semibold">
                   <dt>{t("total")}</dt>
                   <dd>
@@ -169,6 +184,11 @@ export default async function CartPage({
                 </div>
               </dl>
               <p className="my-4 text-sm text-muted">{t("estimate")}</p>
+              <CouponForm
+                locale={locale}
+                revision={cart.revision}
+                codes={(cart.checkout as Record<string, unknown>).couponCodes}
+              />
               {!mismatch && (
                 <Link
                   className="button block text-center"
@@ -179,7 +199,17 @@ export default async function CartPage({
               )}
             </>
           ) : (
-            <p role="alert">{t("errors.STOCK_UNAVAILABLE")}</p>
+            <>
+              <p role="alert">{t("errors.QUOTE_UNAVAILABLE")}</p>
+              {!mismatch && (
+                <Link
+                  className="button mt-4 block text-center"
+                  href={`/${locale}/checkout?step=2`}
+                >
+                  {t("checkout")}
+                </Link>
+              )}
+            </>
           )}
         </aside>
       </div>

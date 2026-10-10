@@ -1,3 +1,5 @@
+import { DiscountLines } from "@/components/storefront/discount-lines";
+import { orderDiscountLines } from "@/modules/promotions";
 import Decimal from "decimal.js";
 import { CustomerReturns } from "@/components/returns/customer-panel";
 import { InvoicePanel } from "@/components/invoices/panel";
@@ -87,6 +89,15 @@ export default async function PaymentPage({
               {order.totalAmount.toString()} {order.currency}
             </span>
           </h2>
+          <dl className="grid gap-3">
+            <DiscountLines
+              lines={orderDiscountLines(
+                order.promotionEvaluation?.redemptions ?? [],
+                locale as "fa" | "tr" | "en",
+              )}
+              currency={order.currency}
+            />
+          </dl>
           {order.creditUses.some((c) => c.status !== "RELEASED") && (
             <div className="grid gap-2">
               <p>

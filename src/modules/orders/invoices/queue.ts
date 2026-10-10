@@ -1,3 +1,4 @@
+import { orderDiscountLines } from "@/modules/promotions";
 import type { Prisma } from "@prisma/client";
 import { normalizeBrand } from "@/lib/brand";
 import { lockMediaReferences } from "@/modules/media/reference-lock";
@@ -57,6 +58,9 @@ export async function queueInvoice(
     include: {
       items: { orderBy: { id: "asc" } },
       fees: { orderBy: { id: "asc" } },
+      promotionEvaluation: {
+        include: { redemptions: { orderBy: { id: "asc" } } },
+      },
       payments: {
         where: { status: "APPROVED" },
         orderBy: { createdAt: "asc" },
@@ -97,6 +101,10 @@ export async function queueInvoice(
         subtotal: order.subtotalAmount.toString(),
         feesTotal: order.feeTotalAmount.toString(),
         discount: order.discountAmount.toString(),
+        discounts: orderDiscountLines(
+          order.promotionEvaluation?.redemptions ?? [],
+          locale,
+        ),
         total: order.totalAmount.toString(),
         customer: [
           str(contact.firstName),

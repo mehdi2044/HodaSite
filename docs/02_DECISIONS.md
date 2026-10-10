@@ -214,3 +214,162 @@ Owner instruction: Mehdi is the final merge authority. This decision supersedes 
 - Label self-review, automated review and any actual independent human review accurately. Do not fabricate the AI review marker or treat an implementation summary as its required review. Existing sensitive-change evidence and real-environment release gates remain mandatory.
 
 Rationale: separate implementation from final owner-controlled merge in the Work/Codex workflow. Data impact: no schema, runtime permission, financial or stored-data changes; repository governance is separate from the product privacy-review state machine. Verification: synchronize active instructions, README, index, setup/checkpoint guidance and reusable phase prompts; preserve historical reports/archives. Repository protection settings are not changed or bypassed by this documentation update.
+
+## D71 — Phase 09B promotion rule contract (2026-10-03; implementation in progress)
+
+Recorded before implementation under the owner's explicit instruction to start
+Issue #53 after PR #52. Scope is 09B only; D70 still governs review and merge.
+
+A separate `promotions` domain owns a strict version-1 WHEN/THEN contract,
+not executable code/SQL and not negative FeeRules. Program revisions are
+market/currency bound. Initial work is an offline, deterministic evaluator:
+no database writes, price mutation, coupon consumption or live checkout hookup.
+Ordinary business choices remain definition data, not hard-coded seasons or
+customer groups. CRM membership must come from the existing market-scoped 09A
+service, never a second segment engine or untrusted browser claims.
+
+Evaluation receives an explicit UTC instant and server-derived cart/customer,
+segment/consent, coupon eligibility and usage snapshots. Missing customer or
+usage evidence fails closed where required. This pure function is NOT an
+authorization boundary. A server adapter must check permissions and derive
+identity/market before any public/admin integration. Date windows are start
+inclusive/end exclusive; enabled ACTIVE/SCHEDULED revisions alone participate.
+Higher numeric priority wins; equal priority uses stable ASCII ID order.
+Stacking is explicit per evaluation group; either member's exclusive-group
+policy or explicit exclusion blocks the later candidate. Zero-benefit candidates
+do not claim a group. Outputs explain every rejected/applied revision with
+machine reason codes; these must be translated in future UI, not shown raw.
+
+Money stays Decimal with bounded decimal-string inputs, four-place precision
+matching numeric(18,4), explicit same-currency validation, and no implicit FX.
+Merchandise discounts operate on remaining eligible line amounts, never exceed
+those amounts, and are proportionally allocated with deterministic four-place
+remainders. Original item prices and eligibility subtotal are unchanged.
+Free shipping discounts only the explicitly charged shipping amount, never
+absorbed shipping or other fees. Buy-X-get-Y uses one selected merchandise pool,
+requires X+Y units per set, and discounts the cheapest Y units already present;
+it does not insert gifts or consume inventory. Spend-X-get-Y is a configured
+fixed benefit per complete spend step, optionally capped. Arbitrary bundles and
+gift insertion are deferred until safely specified within #53, not silently
+represented as complete. Exclusions always win over inclusion selectors.
+
+Before activating 09B, add additive schema/revisions, immutable order discount
+snapshots and coupon/promotion usage evidence. Quote remains a read-only
+eligibility estimate. Order creation must re-evaluate and atomically lock/check
+budget and total/per-customer limits in a fixed order, with idempotent redemption
+and an explicit cancellation/release policy. Stale quote evidence never grants
+redemption. Define and test fee/tax basis and refund/finance allocation before
+connecting discounts to checkout; do not silently alter D17/D55/D60 accounting.
+
+Data impact of this first increment: none; no schema, migration, seed, provider,
+preview or stored-order changes. Rollback removes the unused module. Later
+migrations require documented data/backup/recovery and real PostgreSQL
+concurrency tests plus Local/S3 restore CI. Required proof now: validation,
+market/currency/customer isolation at the evaluator boundary, deterministic
+stacking/allocation, exact decimal boundaries, cap evidence, no input mutation,
+and unchanged existing quote tests. Full 09B acceptance additionally requires
+server authorization, atomic redemption, FA/TR/EN admin/simulator and 390px
+browser evidence. Initial unit proof does not establish those pending gates.
+
+## D72 — 09B persistent promotion evidence (2026-10-03)
+
+Recorded before the persistence increment. Program identity, market and currency
+are permanent. Every edit (including lifecycle) appends an immutable revision;
+optimistic version checks prevent lost updates. Limits and budgets apply across
+all revisions of a program, not a fresh allowance on every edit. Coupon codes
+are normalized ASCII uppercase and unique per market. Coupon terms are immutable;
+only audited, version-checked lifecycle changes are allowed. Archived programs
+and coupons cannot be reactivated. Business metadata and three-language public
+copy remain DB-owned. Mutations require the existing `pricing.sale_price.edit`
+permission in the market, a verified admin session and explicit confirmation.
+Idempotency keys bind to actor, operation and exact validated request content.
+
+The internal transaction adapter derives eligibility from stored order lines and
+09A CRM membership, tags, consent and segment SQL. It accepts only an identity
+already verified by its trusted checkout caller; an order contact email never
+authenticates a customer. Simulator customer reads additionally require
+`crm.customer.view` and `crm.segment.manage`. No public route accepts raw
+membership, usage, price or discount claims. No operational checkout caller is
+connected in this increment: fee/tax/refund/finance integration remains D71's
+next gate. The adapter rejects an order unless its existing monetary snapshot
+already agrees with the newly evaluated discount; it never edits order amounts.
+
+Lock order is Order, Market (shared, to exclude concurrent program creation),
+then all market Program rows in ascending ID order, then Coupon rows in ascending
+ID order. Creation locks Market exclusively. A safety bound of 100 programs per
+market matches the evaluator batch bound. Program edits/issuance also lock Program
+first. Evaluate with live revision, coupon eligibility and lifetime usage under
+these locks at ReadCommitted isolation; never redeem a previously computed quote.
+An immutable evaluation (including zero benefit) and immutable discount records
+are inserted in the same order transaction. Retry returns the stored result only
+for the same verified identity and normalized coupon input. Changed input fails.
+Limits include pending and paid orders. An append-only release is allowed only
+for a CANCELLED, never-paid order without approved payment evidence; release is
+idempotent and frees all its allowances. Paid/refunded orders retain consumption;
+refunds never silently restore a coupon. Cancellation wiring remains pending.
+
+Data impact: additive PostgreSQL tables/indexes/FKs/checks and immutable-evidence
+triggers only. No existing order, amount, media, permission grant or seed data is
+rewritten. Whole-database pg_dump includes the new tables. Restore uses existing
+ops/maintenance/safety-backup flow and matching migrations. Rollback uses
+compatible code retaining revision/redemption/release history; never DROP/reset
+to downgrade. Validate migrations on an isolated `_test` database, permission and
+market negatives, stale edits, retry/rollback, real concurrent cap/budget claims,
+release guards and direct SQL immutability. Local/S3 restore CI remains mandatory
+before Ready. This increment does not complete 09B or authorize deployment/merge.
+
+## D73 — 09B checkout, tax and discount allocation (2026-10-03)
+
+Recorded before commerce integration. Gross item prices/subtotal remain intact.
+Quote first computes ordinary D17 fees, evaluates promotions against gross
+merchandise and charged shipping, then recomputes TAX using net merchandise and
+net taxable charged shipping. Shipping/customs/service selection and bases remain
+as configured against gross merchandise, avoiding circular shipping thresholds.
+Absorbed shipping cannot be discounted. Fixed/per-item/weight taxes keep their
+configured method; percentage/value-bracket taxes use the net merchandise base.
+No country-specific rate or legal assumption is introduced: actual tax/fee
+configuration still requires the existing pre-release owner/accountant gate.
+Order total = gross subtotal + final charged fees - explicit discount total.
+No extra rounding to display-price endings is applied after discount allocation.
+
+Checkout re-quotes with server prices and verified session identity, locks market,
+programs and coupons at ReadCommitted, and checks the customer's confirmed total.
+Coupon strings persist in cart checkout JSON with cart revision locking; address
+and shipping updates preserve them, market changes clear them. No browser prices,
+audiences or discount evidence are accepted. Public estimates expose applied
+public-copy lines only, never rejected rules, CRM evidence or coupon internals.
+The cart lock precedes promotion locks for new order creation; the new Order has
+no competing owner. Existing-order operations lock Order before promotion rows,
+and promotion locks precede inventory/credit locks in cancellation and checkout.
+Immutable D72 evaluation/redemptions commit with order, inventory and payment;
+any mismatch rolls back everything. Unpaid cancellation/expiry releases capacity
+before inventory locks. Paid/refunded orders never release usage.
+
+Return budgets use exact saved merchandise allocations per variant, including
+zero-value gifts already in the basket. Shipping discounts do not reduce the
+returnable merchandise budget. D55's existing non-refundable fee/tax policy is
+unchanged; split returns preserve the final four-decimal remainder. Legacy orders
+without promotion evidence keep the existing proportional-discount behavior.
+Ledger sales = subtotal minus merchandise discounts; shipping income = charged
+shipping minus shipping discounts. Sales attribution uses saved net item weights.
+All three monetary roles still use the order FX snapshot. Invoice revisions copy
+immutable discount titles/amounts, never live rules. Zero-due discounted orders
+follow the existing zero-due fulfillment path, including finance validation.
+
+Data impact: no new schema or historic-order rewrite. D72 tables already preserve
+the allocation/copy evidence; cart JSON and new-order snapshots carry new data.
+Rollback after accepting discounted orders must retain the allocation-aware
+returns/finance readers; do not roll back to code that treats shipping discounts
+as merchandise discounts. Backup format/ops boundary unchanged. Required proof:
+checkout cap race and stale-total rollback, retry, cancellation, guest isolation,
+net tax, zero-due, scoped allocations/partial returns, balanced finance, immutable
+invoice in three locales, and no-promotion regression. No deployment/Preview
+mutation; 09B stays Draft while the admin interface and final gates remain open.
+
+D73 integration details: commerce consumes narrow server facades, keeping the
+pure evaluator DB-free and admin authentication out of ordinary quote imports.
+The existing CRM membership predicate is shared unchanged. A verified self-checkout
+may evaluate its own identity before a first market purchase; admin simulation
+still requires existing membership, and all CRM queries remain market-scoped.
+Final checkout uses the validated page locale (including a language switch) for
+both evaluation and order/invoice snapshots. Fee passes share one quote instant.

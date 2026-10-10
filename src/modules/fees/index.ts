@@ -50,6 +50,8 @@ export type FeeContext = Readonly<{
   postalCode?: string;
   volumetricDivisor: string;
   now?: Date;
+  /** D73: trusted server discounts; applies only to the TAX base. */
+  promotionTax?: { merchandise: string; shipping: string };
   locale?: "fa" | "tr" | "en";
 }>;
 
@@ -259,12 +261,30 @@ export function computeFees(
     if (!selected) continue;
     const amount = calculate(
       selected,
-      subtotal,
-      type === "TAX" ? taxable : running,
+      type === "TAX" && ctx.promotionTax
+        ? Decimal.max(0, subtotal.sub(ctx.promotionTax.merchandise))
+        : subtotal,
+      type === "TAX" && ctx.promotionTax
+        ? {
+            ...taxable,
+            SHIPPING: Decimal.max(
+              0,
+              taxable.SHIPPING.sub(ctx.promotionTax.shipping),
+            ),
+          }
+        : type === "TAX"
+          ? taxable
+          : running,
       ctx,
     );
     running[type] = amount;
-    if (selected.taxable) taxable[type] = amount;
+    if (selected.taxable)
+      // D73 recomputes tax on charged shipping; the legacy standalone fee
+      // contract and the configured customs/service bases remain unchanged.
+      taxable[type] =
+        type === "SHIPPING" && ctx.promotionTax && selected.absorb
+          ? new Decimal(0)
+          : amount;
     lines.push({
       ruleId: selected.id,
       type,
@@ -290,6 +310,6 @@ export function computeFees(
   });
 }
 
-export { quoteCart } from "./quote";
+export { quoteCart, quoteSavedCart } from "./quote";
 export type { CartQuoteInput } from "./quote";
 export { parseFeeRuleParams } from "./validation";

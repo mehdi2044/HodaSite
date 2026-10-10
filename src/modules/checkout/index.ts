@@ -1,3 +1,7 @@
+import {
+  redeemOrderPromotions,
+  couponCodesSchema,
+} from "@/modules/promotions/checkout-server";
 import { reserveCredit, consumeCredit } from "@/modules/credits";
 import { consumeOrderInventory } from "@/modules/inventory";
 import { transition } from "@/modules/orders/service";
@@ -16,7 +20,11 @@ import { reserveOrderInventory } from "@/modules/inventory";
 import { queueEmail } from "@/modules/notifications";
 import { CART_COOKIE } from "@/modules/cart";
 import { CommerceError } from "@/modules/orders";
-import { addressSchema, type CheckoutAddress } from "./validation";
+import {
+  addressSchema,
+  localeSchema,
+  type CheckoutAddress,
+} from "./validation";
 export { addressSchema, localeSchema } from "./validation";
 export type { CheckoutAddress } from "./validation";
 
@@ -26,8 +34,13 @@ export async function placeOrder(
   expectedRevision: number,
   expectedTotal?: string,
   useCredit = false,
+  checkoutLocale?: "fa" | "tr" | "en",
 ) {
   const address = addressSchema.parse(raw);
+  const requestedLocale =
+    checkoutLocale === undefined
+      ? undefined
+      : localeSchema.parse(checkoutLocale);
   if (!acceptedTerms) throw new CommerceError("TERMS_REQUIRED");
   const token = (await cookies()).get(CART_COOKIE)?.value;
   if (!token) throw new CommerceError("CART_EMPTY");
@@ -100,18 +113,27 @@ export async function placeOrder(
           orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
         });
         if (!banks.length) throw new CommerceError("PAYMENT_UNAVAILABLE");
-        const locale = cart.locale as "fa" | "tr" | "en";
+        const locale = requestedLocale ?? localeSchema.parse(cart.locale);
         if ((await getRequestContext(locale)).market.id !== cart.marketId)
           throw new CommerceError("MARKET_CHANGED");
-        const quote = await quoteCart({
-          marketId: cart.marketId,
-          locale,
-          items: cart.items,
-          shippingRuleId:
-            (cart.checkout as Record<string, string>).shippingRuleId ||
-            undefined,
-          address,
-        });
+        const quote = await quoteCart(
+          {
+            marketId: cart.marketId,
+            locale,
+            items: cart.items,
+            shippingRuleId:
+              (cart.checkout as Record<string, string>).shippingRuleId ||
+              undefined,
+            address,
+            promotions: {
+              customerId: customer?.id ?? null,
+              couponCodes: couponCodesSchema.parse(
+                (cart.checkout as Prisma.JsonObject).couponCodes ?? [],
+              ),
+            },
+          },
+          { tx, lockPromotions: true },
+        );
         if (
           expectedTotal !== undefined &&
           !new Decimal(expectedTotal).eq(quote.total)
@@ -165,7 +187,8 @@ export async function placeOrder(
             locale,
             currency: quote.currency,
             subtotalAmount: quote.subtotal,
-            feeTotalAmount: total.sub(quote.subtotal).toFixed(),
+            feeTotalAmount: quote.feeTotal,
+            discountAmount: quote.discountTotal,
             totalAmount: total.toFixed(),
             totalAmountTry: usd.mul(tryRate).toDecimalPlaces(4).toFixed(),
             totalAmountUsd: usd.toDecimalPlaces(4).toFixed(),
@@ -230,6 +253,12 @@ export async function placeOrder(
             events: { create: { type: "placed", toStatus: "PENDING_PAYMENT" } },
           },
         });
+        await redeemOrderPromotions(
+          tx,
+          order.id,
+          customer?.id ?? null,
+          (cart.checkout as Prisma.JsonObject).couponCodes ?? [],
+        );
         await reserveOrderInventory(
           tx,
           order.id,
@@ -264,7 +293,7 @@ export async function placeOrder(
         }
         await tx.cart.update({
           where: { id: cart.id },
-          data: { completedAt: now },
+          data: { completedAt: now, locale },
         });
         const origin = process.env.APP_URL ?? process.env.AUTH_URL ?? "";
         await queueEmail(
@@ -290,7 +319,7 @@ export async function placeOrder(
         );
         return { number: order.number, locale };
       },
-      { timeout: 30000 },
+      { timeout: 30000, isolationLevel: "ReadCommitted" },
     ),
   );
 }

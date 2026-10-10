@@ -10,6 +10,7 @@ const MONEY_MODULES = [
   "src/modules/orders/**/*.ts",
   "src/modules/finance/**/*.ts",
   "src/modules/shipping/**/*.ts",
+  "src/modules/promotions/**/*.ts",
 ];
 
 const noFloatMoney = [

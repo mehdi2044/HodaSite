@@ -6,9 +6,9 @@ const operators = {
   lte: Prisma.sql`<=`,
   eq: Prisma.sql`=`,
 };
-export function segmentQuery(marketId: string, input: unknown) {
+function segmentRules(marketId: string, input: unknown) {
   const definition = segmentSchema.parse(input);
-  const rules = definition.rules.map((r) => {
+  return definition.rules.map((r) => {
     switch (r.field) {
       case "market":
         return Prisma.sql`${marketId} = ${r.value}`;
@@ -32,6 +32,10 @@ export function segmentQuery(marketId: string, input: unknown) {
           : Prisma.sql`EXISTS (SELECT 1 FROM "MarketingConsent" mc WHERE mc."customerId"=c.id AND mc."marketId"=${marketId} AND mc.channel=${r.channel} AND mc.status=${r.value})`;
     }
   });
+}
+
+export function segmentQuery(marketId: string, input: unknown) {
+  const rules = segmentRules(marketId, input);
   return Prisma.sql`FROM "Customer" c LEFT JOIN (SELECT "customerId", count(*)::int n, sum("totalAmountUsd") value, max("paidAt") last FROM "Order" WHERE "marketId"=${marketId} AND "paidAt" IS NOT NULL AND kind='SALE' AND status <> 'CANCELLED' GROUP BY "customerId") s ON s."customerId"=c.id
     WHERE c."isActive" AND (c."preferredMarketId"=${marketId}
       OR EXISTS (SELECT 1 FROM "Order" x WHERE x."customerId"=c.id AND x."marketId"=${marketId})
@@ -40,4 +44,18 @@ export function segmentQuery(marketId: string, input: unknown) {
       OR EXISTS (SELECT 1 FROM "Review" x WHERE x."customerId"=c.id AND x."marketId"=${marketId})
       OR EXISTS (SELECT 1 FROM "MarketingConsent" x WHERE x."customerId"=c.id AND x."marketId"=${marketId}))
       ${rules.length ? Prisma.sql`AND ${Prisma.join(rules, " AND ")}` : Prisma.empty}`;
+}
+
+/** One customer/market relation and one paid-order aggregate for all predicates. */
+export function customerSegmentsQuery(
+  marketId: string,
+  customerId: string,
+  segments: readonly { id: string; definition: unknown }[],
+) {
+  const matches = segments.map((segment) => {
+    const rules = segmentRules(marketId, segment.definition);
+    return Prisma.sql`CASE WHEN ${rules.length ? Prisma.join(rules, " AND ") : Prisma.sql`TRUE`} THEN ${segment.id}::text ELSE NULL END`;
+  });
+  return Prisma.sql`SELECT unnest(ARRAY[${Prisma.join(matches)}]::text[]) AS id
+    ${segmentQuery(marketId, { version: 1, rules: [] })} AND c.id=${customerId}`;
 }

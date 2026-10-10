@@ -33,6 +33,8 @@ export async function AdminShell({
   const engagement = await getTranslations("engagement");
   const seo = await getTranslations("seoAdmin");
   const crm = await getTranslations("crm");
+  const promotions = await getTranslations("promotionAdmin");
+  const promotionMarkets = await visibleCrmMarkets("pricing.sale_price.edit");
   const crmVisible = (
     await Promise.all(
       [
@@ -66,6 +68,9 @@ export async function AdminShell({
         <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
         <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
         <Link href="/admin/orders">{commerce("orders")}</Link>
+        {promotionMarkets.length > 0 && (
+          <Link href="/admin/promotions">{promotions("title")}</Link>
+        )}
         {crmVisible && <Link href="/admin/crm">{crm("title")}</Link>}
         {financeMarkets.length > 0 && (
           <>

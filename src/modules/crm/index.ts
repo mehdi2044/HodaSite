@@ -3,3 +3,4 @@ export { visibleCrmMarkets } from "./scope";
 export * from "./customers";
 export * from "./segments";
 export * from "./preferences";
+export { promotionCustomerEvidence } from "./promotion-evidence";

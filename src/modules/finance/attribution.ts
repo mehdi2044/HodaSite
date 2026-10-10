@@ -1,3 +1,4 @@
+import { promotionOrderAmounts } from "@/modules/promotions";
 import { Prisma } from "@prisma/client";
 import { apportion } from "./apportion";
 import { Exact } from "./operations-input";
@@ -60,6 +61,14 @@ export async function attributeEntry(
         where: { returnRequestId: input.returnId },
       })
     : [];
+  const saleOrder =
+    input.credit === "sales" && !input.returnId
+      ? await tx.order.findUniqueOrThrow({
+          where: { id: input.orderId },
+          include: { items: true, fees: true, promotionEvaluation: true },
+        })
+      : null;
+  const net = saleOrder ? promotionOrderAmounts(saleOrder)?.netItems : null;
   const weights = items
     .filter(
       (i) => !input.returnId || returns.some((r) => r.orderItemId === i.id),
@@ -68,7 +77,7 @@ export async function attributeEntry(
       id: i.id,
       weight: input.returnId
         ? returns.find((r) => r.orderItemId === i.id)!.refundAmount.toFixed(4)
-        : i.lineTotalAmount.toFixed(4),
+        : (net?.get(i.id)?.toFixed(4) ?? i.lineTotalAmount.toFixed(4)),
     }));
   const tr = apportion(
       new Exact(input.amountTry).mul(sign).toFixed(4),
