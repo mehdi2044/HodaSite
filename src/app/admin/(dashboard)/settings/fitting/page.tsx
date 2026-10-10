@@ -3,7 +3,7 @@ import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { fittingSettings } from "@/modules/fitting";
+import { fittingSettings } from "@/modules/fitting/settings";
 import { FittingSettings } from "@/components/admin/fitting-settings";
 export default async function Page({
   searchParams,

@@ -21,12 +21,7 @@ import {
   settleDebt,
 } from "./ledger";
 export { creditPaidOrder, revokeReturnedCoins } from "./ledger";
-export {
-  fittingSettings,
-  saveFittingSettings,
-  grantFittingCoins,
-  resolveFittingSession,
-} from "./settings";
+
 export { FittingError } from "./contracts";
 export { registerFittingJobs } from "./worker";
 export async function fittingConfig() {

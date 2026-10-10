@@ -1,4 +1,5 @@
 "use server";
+import { FittingError } from "@/modules/fitting/contracts";
 import { ZodError } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, ForbiddenError, UnauthorizedError } from "@/modules/access";
@@ -8,8 +9,7 @@ import {
   saveFittingSettings,
   grantFittingCoins,
   resolveFittingSession,
-  FittingError,
-} from "@/modules/fitting";
+} from "@/modules/fitting/settings";
 async function action(fn: () => Promise<unknown>) {
   try {
     const session = await auth();
