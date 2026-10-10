@@ -1,3 +1,4 @@
+import { variantImages } from "@/modules/catalog/variant-images";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { DiscountLines } from "@/components/storefront/discount-lines";
@@ -56,14 +57,7 @@ export default async function CheckoutPage({
     draft = cart.checkout as Record<string, string>;
   const parsed = addressSchema.safeParse(draft);
   if (step > 1 && !parsed.success) redirect(`/${locale}/checkout`);
-  const images = await db.productMedia.findMany({
-    where: {
-      productId: { in: cart.items.map((item) => item.variant.product.id) },
-      media: { kind: "image", status: "READY", deletedAt: null },
-    },
-    include: { media: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const images = await variantImages(cart.items.map((item) => item.variant));
   const shopping = await getTranslations("shopping");
   return (
     <main className="shell shop-checkout py-10">
@@ -274,9 +268,7 @@ export default async function CheckoutPage({
         <aside className="shop-checkout-summary">
           <h2 className="text-xl font-semibold">{shopping("summary")}</h2>
           {cart.items.map((item) => {
-            const media = images.find(
-              (image) => image.productId === item.variant.product.id,
-            )?.media;
+            const media = images.get(item.variantId);
             return (
               <article className="shop-checkout-piece" key={item.id}>
                 {media && (

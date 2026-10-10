@@ -1,4 +1,5 @@
 import { ShopLook } from "@/components/storefront/shop-look";
+import { categoryRootId } from "@/modules/catalog/tree";
 import { relevantLookBlocks } from "@/modules/outfits";
 import { seoPath } from "@/lib/seo-urls";
 import { getDisplayPrices } from "@/modules/pricing";
@@ -94,7 +95,7 @@ export default async function CategoryPage({
   const [prices, looks] = await Promise.all([
     getDisplayPrices(result.items, market),
     relevantLookBlocks(market.id, {
-      categoryId: category.parentId ?? category.id,
+      categoryId: categoryRootId(facets.categories, category.id) ?? undefined,
     }),
   ]);
   const children = facets.categories.filter(

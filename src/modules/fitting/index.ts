@@ -147,6 +147,7 @@ export async function fittingProducts(
             deletedAt: null,
             status: "ACTIVE",
             coinPackCoins: null,
+            fittingSlot: { not: null },
             marketIds: { has: marketId },
             category: { deletedAt: null },
             ...(query
@@ -286,7 +287,8 @@ export async function createFittingSession(
           if (
             v.product.coinPackCoins ||
             (!isOwned &&
-              (!v.isActive ||
+              (!v.product.fittingSlot ||
+                !v.isActive ||
                 v.product.status !== "ACTIVE" ||
                 v.product.deletedAt ||
                 v.color.deletedAt ||

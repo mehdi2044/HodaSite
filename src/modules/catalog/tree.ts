@@ -1,5 +1,21 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
+export function categoryRootId(
+  rows: readonly { id: string; parentId: string | null }[],
+  id: string,
+): string | null {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const seen = new Set<string>();
+  let cursor = id;
+  while (!seen.has(cursor)) {
+    seen.add(cursor);
+    const row = byId.get(cursor);
+    if (!row) return null;
+    if (!row.parentId) return row.id;
+    cursor = row.parentId;
+  }
+  return null;
+}
 export async function validateCategoryParent(
   tx: Prisma.TransactionClient,
   id: string | undefined,

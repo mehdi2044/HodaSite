@@ -104,5 +104,15 @@ for (const [locale, market] of [
     await expect(page.locator(".shop-product-title")).toBeVisible();
     await expect(page.getByTestId("shop-look-studio")).toBeVisible();
     await shoppingProof(page, info, `prepared-product-${locale}`);
+    const nested = await db.category.findUniqueOrThrow({
+      where: { id: "seed-category-seed-category-kids-girls-tops" },
+    });
+    await page.goto(
+      `/${locale}/m/${market}/c/${encodeURIComponent((nested.slugI18n as Record<string, string>)[locale])}`,
+    );
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      (nested.titleI18n as Record<string, string>)[locale],
+    );
+    await expect(page.getByTestId("shop-look-studio")).toBeVisible();
   });
 }

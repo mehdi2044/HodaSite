@@ -620,6 +620,44 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ),
       ).toBe(true);
     });
+    it("excludes unclassified shop garments but permits already owned legacy references", async () => {
+      const c = await customer();
+      const originalProduct = await db.product.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee" },
+      });
+      try {
+        await db.product.update({
+          where: { id: originalProduct.id },
+          data: { fittingSlot: null },
+        });
+        expect(
+          (await fittingProducts(c.id, marketId, "en")).some(
+            (p) => p.productId === originalProduct.id,
+          ),
+        ).toBe(false);
+        await expect(create(c.id)).rejects.toThrow("INVALID_SELECTION");
+        expect(await balance(c.id)).toBe("100");
+        const owned = await returnFixture(db, { customerId: c.id });
+        await db.productMedia.create({
+          data: {
+            productId: owned.variants[0].productId,
+            mediaId: "seed-fashion-v2-women-tee",
+          },
+        });
+        expect(
+          (await fittingProducts(c.id, marketId, "en", "", true)).some(
+            (p) => p.variantId === owned.variants[0].id,
+          ),
+        ).toBe(true);
+        await create(c.id, { variantIds: [owned.variants[0].id] });
+        expect(await balance(c.id)).toBe("87.5");
+      } finally {
+        await db.product.update({
+          where: { id: originalProduct.id },
+          data: { fittingSlot: originalProduct.fittingSlot },
+        });
+      }
+    });
     it("prevents concurrent category moves from creating a cycle", async () => {
       const id = randomUUID(),
         a = await db.category.create({

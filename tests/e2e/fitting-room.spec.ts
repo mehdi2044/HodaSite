@@ -5,6 +5,7 @@ import { customerLogin } from "./helpers/crm-customer";
 import { shoppingProof } from "./helpers/shopping-proof";
 import fa from "../../messages/fa.json";
 import en from "../../messages/en.json";
+import tr from "../../messages/tr.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
@@ -69,6 +70,28 @@ for (const locale of ["fa", "tr", "en"] as const) {
           where: { customerId: customer.id, reason: "FITTING" },
         }),
       ).toBe(before);
+      await room.locator(".fitting-add").click();
+      await expect(
+        room.locator(".fitting-selection [role=status]"),
+      ).toContainText({ fa, tr, en }[locale].fitting.added);
+      const cardImage =
+        (charcoal.media.variants as { webp?: Record<string, { url: string }> })
+          .webp?.["960"]?.url ?? charcoal.media.url;
+      await page.goto(`/${locale}/cart`);
+      await expect(page.locator(".shop-cart-image img")).toHaveAttribute(
+        "src",
+        cardImage,
+      );
+      await page.locator(".storefront-cart-toggle").click();
+      await expect(
+        page.locator(".storefront-mini-cart-item img"),
+      ).toHaveAttribute("src", cardImage);
+      await page.goto(`/${locale}/checkout`);
+      await expect(page.locator(".shop-checkout-piece img")).toHaveAttribute(
+        "src",
+        cardImage,
+      );
+      await page.goto(`/${locale}/fitting-room`);
       await room.locator(".fitting-models button").nth(2).click();
       await expect(room.locator(".fitting-chip")).toHaveCount(0);
       await expect(room.locator(".fitting-portrait img")).toHaveAttribute(
@@ -82,7 +105,14 @@ for (const locale of ["fa", "tr", "en"] as const) {
         await room
           .locator(".fitting-portrait img")
           .evaluate((img) => (img as HTMLImageElement).decode());
+        await room.locator(".fitting-models").scrollIntoViewIfNeeded();
         await shoppingProof(page, info, `custom-fitting-${locale}-${width}`);
+        await page.screenshot({
+          path: info.outputPath(
+            `shopping-custom-fitting-full-${locale}-${width}.png`,
+          ),
+          fullPage: true,
+        });
       }
       await page.goto(`/${locale}/fitting-room/coins`);
       await expect(page.locator(".fitting-packs")).toBeVisible();

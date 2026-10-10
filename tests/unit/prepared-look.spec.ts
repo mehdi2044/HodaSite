@@ -34,6 +34,7 @@ vi.mock("@/lib/db", () => ({
 vi.mock("@/modules/cart", () => ({ addCartItems: mocks.add }));
 import { getDisplayPrice } from "@/modules/pricing";
 import { addPreparedLook, preparedLooks } from "@/modules/outfits";
+import { categoryRootId } from "@/modules/catalog/tree";
 import { categoryFamily } from "@/modules/catalog/queries";
 import { homepageBlocksSchema } from "@/modules/content/homepage";
 import { styleLookBlock, styleProducts } from "../../prisma/style-seed";
@@ -163,6 +164,28 @@ describe("prepared look server contract", () => {
       addPreparedLook("fa", "IR", "look", ["v1", "v1"]),
     ).rejects.toThrow();
     expect(mocks.add).not.toHaveBeenCalled();
+  });
+  it("resolves nested departments at every depth", () => {
+    const rows = [
+      { id: "kids", parentId: null },
+      { id: "girls", parentId: "kids" },
+      { id: "tops", parentId: "girls" },
+      { id: "tees", parentId: "tops" },
+      { id: "women", parentId: null },
+    ];
+    for (const id of ["kids", "girls", "tops", "tees"])
+      expect(categoryRootId(rows, id)).toBe("kids");
+    expect(categoryRootId(rows, "women")).toBe("women");
+  });
+  it("refuses broken or cyclic ancestry instead of choosing another department", () => {
+    const rows = [
+      { id: "a", parentId: "b" },
+      { id: "b", parentId: "a" },
+      { id: "orphan", parentId: "missing" },
+    ];
+    expect(categoryRootId(rows, "a")).toBeNull();
+    expect(categoryRootId(rows, "orphan")).toBeNull();
+    expect(categoryRootId(rows, "absent")).toBeNull();
   });
   it("includes all reachable descendants, bounds cycles and excludes other roots", async () => {
     mocks.categories.mockResolvedValue([

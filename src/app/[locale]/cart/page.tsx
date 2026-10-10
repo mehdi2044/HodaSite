@@ -3,7 +3,7 @@ import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { currentCustomer } from "@/modules/customers";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
-import { db } from "@/lib/db";
+import { variantImages } from "@/modules/catalog/variant-images";
 import { Iso } from "@/components/storefront/iso";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import Link from "next/link";
@@ -34,14 +34,7 @@ export default async function CartPage({
         </Link>
       </main>
     );
-  const images = await db.productMedia.findMany({
-    where: {
-      productId: { in: cart.items.map((i) => i.variant.product.id) },
-      media: { kind: "image", status: "READY", deletedAt: null },
-    },
-    include: { media: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const images = await variantImages(cart.items.map((item) => item.variant));
   const mismatch = cart.marketId !== market.id;
   const quote = await quoteSavedCart(
     {
@@ -79,12 +72,9 @@ export default async function CartPage({
               key={item.id}
               className="shop-cart-item rounded-token border border-black/10 bg-surface p-5"
             >
-              {images.find((m) => m.productId === item.variant.product.id) && (
+              {images.get(item.variantId) && (
                 <ResponsiveImage
-                  media={
-                    images.find((m) => m.productId === item.variant.product.id)!
-                      .media
-                  }
+                  media={images.get(item.variantId)!}
                   locale={locale as "fa" | "tr" | "en"}
                   sizes="96px"
                   role="thumbnail"
