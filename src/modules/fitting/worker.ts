@@ -19,14 +19,13 @@ async function queueOutputPurge(
   id: string,
   storageKey: string,
 ) {
-  await tx.job.upsert({
-    where: { id: `fitting-purge:${id}` },
-    create: {
-      id: `fitting-purge:${id}`,
+  // A late writer needs fresh work even if an earlier deletion is RUNNING/DONE.
+  // Each request has its own durable job; deletion and DONE-output protection are idempotent.
+  await tx.job.create({
+    data: {
       type: "fitting-output-purge",
       payload: { sessionId: id, storageKey },
     },
-    update: {},
   });
 }
 export async function renderFitting(

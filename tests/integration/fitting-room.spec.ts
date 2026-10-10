@@ -887,8 +887,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             });
             expect(session.storageKey).toBeTruthy();
             expect(await storage.getBytes(session.storageKey!)).not.toBeNull();
-            const job = await db.job.findUniqueOrThrow({
-              where: { id: `fitting-purge:${s.id}` },
+            const job = await db.job.findFirstOrThrow({
+              where: {
+                type: "fitting-output-purge",
+                payload: { path: ["sessionId"], equals: s.id },
+              },
             });
             const remove = vi
               .spyOn(storage, "delete")
@@ -951,12 +954,126 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(await balance(c.id)).toBe("100");
       expect(
         (
-          await db.job.findUniqueOrThrow({
-            where: { id: `fitting-purge:${session.id}` },
+          await db.job.findFirstOrThrow({
+            where: {
+              type: "fitting-output-purge",
+              payload: { path: ["sessionId"], equals: session.id },
+            },
           })
         ).payload,
       ).toEqual({ sessionId: session.id, storageKey: key });
     });
+    it.each(["DONE", "RUNNING"] as const)(
+      "cleans a late upload after the previous deletion is %s without another render or refund",
+      async (previousState) => {
+        const c = await customer(),
+          session = await create(c.id);
+        const provider = { render: vi.fn(async () => bytes) };
+        const originalPut = storage.put.bind(storage);
+        const originalDelete = storage.delete.bind(storage);
+        let putReady!: () => void, releasePut!: () => void;
+        let deleteReady!: () => void, releaseDelete!: () => void;
+        const putEntered = new Promise<void>((resolve) => {
+          putReady = resolve;
+        });
+        const putGate = new Promise<void>((resolve) => {
+          releasePut = resolve;
+        });
+        const deleteEntered = new Promise<void>((resolve) => {
+          deleteReady = resolve;
+        });
+        const deleteGate = new Promise<void>((resolve) => {
+          releaseDelete = resolve;
+        });
+        let key = "",
+          heldDelete = false;
+        const put = vi
+          .spyOn(storage, "put")
+          .mockImplementation(async (...args) => {
+            key = args[0];
+            outputKeys.push(key);
+            putReady();
+            await putGate;
+            return originalPut(
+              args[0],
+              args[1],
+              args[2] ?? "application/octet-stream",
+            );
+          });
+        const remove = vi
+          .spyOn(storage, "delete")
+          .mockImplementation(async (objectKey) => {
+            await originalDelete(objectKey);
+            if (
+              objectKey === key &&
+              previousState === "RUNNING" &&
+              !heldDelete
+            ) {
+              heldDelete = true;
+              deleteReady();
+              await deleteGate;
+            }
+          });
+        const original = renderFitting(session.id, provider);
+        let purge: Promise<number> | undefined;
+        try {
+          await Promise.race([putEntered, original]);
+          expect(key).toMatch(/^fitting\//);
+          await db.fittingSession.update({
+            where: { id: session.id },
+            data: { startedAt: new Date(0) },
+          });
+          await renderFitting(session.id, provider);
+          const first = await db.job.findFirstOrThrow({
+            where: {
+              type: "fitting-output-purge",
+              payload: { path: ["sessionId"], equals: session.id },
+            },
+          });
+          purge = runJobs(["fitting-output-purge"]);
+          if (previousState === "RUNNING")
+            await Promise.race([deleteEntered, purge]);
+          else await purge;
+          expect(
+            (await db.job.findUniqueOrThrow({ where: { id: first.id } }))
+              .status,
+          ).toBe(previousState);
+          releasePut();
+          await original;
+          expect(await storage.getBytes(key)).not.toBeNull();
+          const jobs = await db.job.findMany({
+            where: {
+              type: "fitting-output-purge",
+              payload: { path: ["sessionId"], equals: session.id },
+            },
+          });
+          expect(jobs).toHaveLength(2);
+          expect(jobs.find((j) => j.id !== first.id)?.status).toBe("PENDING");
+          releaseDelete();
+          await purge;
+          await runJobs(["fitting-output-purge"]);
+          expect(await storage.getBytes(key)).toBeNull();
+          expect(
+            await db.job.count({
+              where: { id: { in: jobs.map((j) => j.id) }, status: "DONE" },
+            }),
+          ).toBe(2);
+          expect(provider.render).toHaveBeenCalledTimes(1);
+          expect(await balance(c.id)).toBe("100");
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, sourceKey: `refund:${session.id}` },
+            }),
+          ).toBe(1);
+        } finally {
+          releasePut();
+          releaseDelete();
+          await Promise.allSettled([original, ...(purge ? [purge] : [])]);
+          put.mockRestore();
+          remove.mockRestore();
+        }
+      },
+    );
     it("locks concurrent refunds and keeps source identity, journal and charge immutable", async () => {
       const c = await customer(),
         s = await create(c.id);
