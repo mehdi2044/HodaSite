@@ -319,9 +319,43 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("rejects a crafted child department without changing homepage content", async () => {
+      state.actor = ownerId;
+      const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+      const block = blocks[0];
+      if (block.type !== "ShopLook") throw new Error("Missing shop look");
+      const child = await db.category.findFirstOrThrow({
+        where: { parentId: block.looks[0].categoryId, deletedAt: null },
+      });
+      block.looks[0].categoryId = child.id;
+      const before = await db.homepage.findFirst({
+        where: { marketId, deletedAt: null },
+      });
+      const audits = await db.auditLog.count({
+        where: { action: { startsWith: "content.homepage." } },
+      });
+      const form = new FormData();
+      form.set("marketId", marketId);
+      form.set("blocks", JSON.stringify(blocks));
+      expect(await saveHomepage(null, form)).toMatchObject({
+        ok: false,
+        code: "VALIDATION",
+      });
+      expect(
+        await db.homepage.findFirst({
+          where: { marketId, deletedAt: null },
+        }),
+      ).toEqual(before);
+      expect(
+        await db.auditLog.count({
+          where: { action: { startsWith: "content.homepage." } },
+        }),
+      ).toBe(audits);
+    });
     it.each([
       "PRODUCT",
       "CATEGORY",
+      "CATEGORY_PARENT",
       "COLOR",
       "MEDIA_DELETE",
       "MEDIA_STATUS",
@@ -378,6 +412,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               await tx.category.update({
                 where: { id: categoryId },
                 data: { deletedAt: new Date() },
+              });
+            else if (kind === "CATEGORY_PARENT")
+              await tx.category.update({
+                where: { id: categoryId },
+                data: { parentId: "seed-category-men" },
               });
             else if (kind === "COLOR")
               await tx.color.update({
@@ -439,6 +478,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             await db.category.update({
               where: { id: categoryId },
               data: { deletedAt: originalCategory.deletedAt },
+            });
+          else if (kind === "CATEGORY_PARENT")
+            await db.category.update({
+              where: { id: categoryId },
+              data: { parentId: originalCategory.parentId },
             });
           else if (kind === "COLOR")
             await db.color.update({

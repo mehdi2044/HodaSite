@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { fittingConfig } from "@/modules/fitting";
 import { db } from "@/lib/db";
 import { getRequestContext } from "@/lib/request-context";
-import { getDisplayPrice } from "@/modules/pricing";
+import { getDisplayPrices } from "@/modules/pricing";
 import { catalogText, formatCatalogCurrency } from "@/modules/catalog";
 import { seoPath } from "@/lib/seo-urls";
 import { z } from "zod";
@@ -34,6 +34,7 @@ export default async function Page({
           orderBy: { coinPackCoins: "asc" },
         })
       : [];
+  const prices = await getDisplayPrices(packs, market);
   return (
     <main className="shell shop-page py-10">
       <header className="fitting-heading">
@@ -45,37 +46,35 @@ export default async function Page({
       </header>
       <div className="fitting-packs">
         {packs.length ? (
-          await Promise.all(
-            packs.map(async (p) => {
-              const price = await getDisplayPrice(p, p.variants[0], market);
-              return (
-                <article key={p.id}>
-                  <span>
-                    {p.coinPackCoins?.toString()} <small>{t("coins")}</small>
-                  </span>
-                  <h2>{catalogText(p.titleI18n, locale)}</h2>
-                  <strong>
-                    {formatCatalogCurrency(
-                      price.amount,
-                      market.currency as "IRT" | "TRY" | "CAD",
-                      locale,
-                    )}
-                  </strong>
-                  <Link
-                    className="button"
-                    href={seoPath(
-                      locale,
-                      market.code,
-                      "p",
-                      catalogText(p.slugI18n, locale),
-                    )}
-                  >
-                    {t("choosePack")} ↗
-                  </Link>
-                </article>
-              );
-            }),
-          )
+          packs.map((p) => {
+            const price = prices.get(p.id)!;
+            return (
+              <article key={p.id}>
+                <span>
+                  {p.coinPackCoins?.toString()} <small>{t("coins")}</small>
+                </span>
+                <h2>{catalogText(p.titleI18n, locale)}</h2>
+                <strong>
+                  {formatCatalogCurrency(
+                    price.amount,
+                    market.currency as "IRT" | "TRY" | "CAD",
+                    locale,
+                  )}
+                </strong>
+                <Link
+                  className="button"
+                  href={seoPath(
+                    locale,
+                    market.code,
+                    "p",
+                    catalogText(p.slugI18n, locale),
+                  )}
+                >
+                  {t("choosePack")} ↗
+                </Link>
+              </article>
+            );
+          })
         ) : (
           <p>{t("packsDisabled")}</p>
         )}

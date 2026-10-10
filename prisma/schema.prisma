@@ -2387,4 +2387,5 @@ model FittingSession {
   @@unique([customerId, requestKey])
   @@index([customerId, createdAt])
   @@index([status, createdAt])
+  @@index([createdAt])
 }

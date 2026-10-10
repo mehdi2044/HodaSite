@@ -223,7 +223,7 @@ export async function validateLookReferences(
     for (const look of block.looks) {
       if (
         !(await client.category.count({
-          where: { id: look.categoryId, deletedAt: null },
+          where: { id: look.categoryId, deletedAt: null, parentId: null },
         }))
       )
         throw new z.ZodError([]);
