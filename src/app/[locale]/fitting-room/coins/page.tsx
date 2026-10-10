@@ -25,6 +25,7 @@ export default async function Page({
             deletedAt: null,
             status: "ACTIVE",
             marketIds: { has: market.id },
+            variants: { some: { isActive: true } },
           },
           include: {
             variants: { where: { isActive: true }, take: 1 },

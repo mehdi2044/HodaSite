@@ -16,6 +16,8 @@ const mocks = vi.hoisted(() => ({
   variants: vi.fn(),
   add: vi.fn(),
   categories: vi.fn(),
+  media: vi.fn(),
+  products: vi.fn(),
 }));
 vi.mock("@/modules/content/homepage", async (original) => ({
   ...(await original<typeof import("@/modules/content/homepage")>()),
@@ -24,11 +26,14 @@ vi.mock("@/modules/content/homepage", async (original) => ({
 vi.mock("@/lib/db", () => ({
   db: {
     variant: { findMany: mocks.variants },
+    product: { findMany: mocks.products },
+    media: { findMany: mocks.media },
     category: { findMany: mocks.categories },
   },
 }));
 vi.mock("@/modules/cart", () => ({ addCartItems: mocks.add }));
-import { addPreparedLook } from "@/modules/outfits";
+import { getDisplayPrice } from "@/modules/pricing";
+import { addPreparedLook, preparedLooks } from "@/modules/outfits";
 import { categoryFamily } from "@/modules/catalog/queries";
 import { homepageBlocksSchema } from "@/modules/content/homepage";
 import { styleLookBlock, styleProducts } from "../../prisma/style-seed";
@@ -57,6 +62,71 @@ beforeEach(() => {
   ]);
 });
 describe("prepared look server contract", () => {
+  it.each(["READY", "PENDING", "DELETED"])(
+    "uses the selected color photograph only when available: %s",
+    async (status) => {
+      const original = {
+        id: "ivory-photo",
+        url: "/media/ivory.webp",
+        status: "READY",
+        deletedAt: null,
+      };
+      const charcoal = {
+        id: "charcoal-photo",
+        url: "/media/charcoal.webp",
+        status: status === "PENDING" ? "PENDING" : "READY",
+        deletedAt: status === "DELETED" ? new Date() : null,
+      };
+      mocks.media.mockResolvedValue([{ id: "look-photo" }]);
+      mocks.categories.mockResolvedValue([{ id: "women" }]);
+      mocks.products.mockResolvedValue([
+        {
+          id: "tee",
+          titleI18n: { en: "Tee" },
+          slugI18n: { en: "tee" },
+          media: [{ media: original }],
+          variants: [
+            {
+              id: "charcoal-m",
+              colorId: "charcoal",
+              color: {
+                nameI18n: { en: "Charcoal" },
+                hex: "#40413d",
+                deletedAt: null,
+              },
+              size: { value: "M", deletedAt: null },
+              stockItems: [{ onHand: 10, reserved: 0 }],
+              media: [{ media: charcoal }],
+            },
+          ],
+        },
+      ]);
+      vi.mocked(getDisplayPrice).mockResolvedValue({ amount: "20" } as Awaited<
+        ReturnType<typeof getDisplayPrice>
+      >);
+      const looks = await preparedLooks(
+        {
+          type: "ShopLook",
+          looks: [
+            {
+              id: "outfit",
+              label: { en: "City" },
+              categoryId: "women",
+              mediaId: "look-photo",
+              items: [{ productId: "tee", colorId: "charcoal" }],
+            },
+          ],
+        } as Parameters<typeof preparedLooks>[0],
+        { id: "CA", code: "CA" } as Parameters<typeof preparedLooks>[1],
+        "en",
+      );
+      expect(looks[0].items[0].media?.url).toBe(
+        status === "READY" ? "/media/charcoal.webp" : "/media/ivory.webp",
+      );
+      expect(looks[0].items[0].colorName).toBe("Charcoal");
+      expect(looks[0].items[0].variants[0].id).toBe("charcoal-m");
+    },
+  );
   it("accepts selected pieces once and uses live market eligibility", async () => {
     await addPreparedLook("en", "CA", "look", ["v1", "v2"]);
     expect(mocks.add).toHaveBeenCalledExactlyOnceWith("en", ["v1", "v2"]);

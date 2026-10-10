@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { customerLogin } from "./helpers/crm-customer";
 import { shoppingProof } from "./helpers/shopping-proof";
 import fa from "../../messages/fa.json";
+import en from "../../messages/en.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
@@ -138,6 +139,60 @@ test("admin config toggle and fractional charge persist through real authorized 
     await db.integration.update({
       where: { id: old.id },
       data: { isActive: old.isActive, config: old.config! },
+    });
+  }
+});
+
+test("coin listing survives an active pack with no active variants", async ({
+  page,
+}) => {
+  const original = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  const pack = await db.product.findUniqueOrThrow({
+    where: { id: "seed-fitting-pack-100" },
+  });
+  const variant = await db.variant.findUniqueOrThrow({
+    where: { id: "seed-fitting-pack-100-digital" },
+  });
+  try {
+    await db.integration.update({
+      where: { id: original.id },
+      data: {
+        isActive: true,
+        config: {
+          ...(original.config as Record<string, unknown>),
+          enabled: true,
+          coinSalesEnabled: true,
+        },
+      },
+    });
+    await db.product.update({
+      where: { id: pack.id },
+      data: { status: "ACTIVE" },
+    });
+    await db.variant.update({
+      where: { id: variant.id },
+      data: { isActive: false },
+    });
+    await page.goto("/en/fitting-room/coins");
+    await expect(page.locator(".fitting-packs")).toBeVisible();
+    await expect(page.locator(".fitting-packs")).toContainText(
+      en.fitting.packsDisabled,
+    );
+    await expect(page.locator(".fitting-packs article")).toHaveCount(0);
+  } finally {
+    await db.variant.update({
+      where: { id: variant.id },
+      data: { isActive: variant.isActive },
+    });
+    await db.product.update({
+      where: { id: pack.id },
+      data: { status: pack.status },
+    });
+    await db.integration.update({
+      where: { id: original.id },
+      data: { isActive: original.isActive, config: original.config! },
     });
   }
 });

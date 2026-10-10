@@ -12,11 +12,14 @@ import {
 const state = vi.hoisted(() => ({
   actor: null as string | null,
   customer: null as string | null,
+  maintenance: false,
 }));
 vi.mock("@/modules/auth", () => ({
   auth: async () => (state.actor ? { user: { id: state.actor } } : null),
 }));
-vi.mock("@/modules/settings", () => ({ isMaintenanceOn: async () => false }));
+vi.mock("@/modules/settings", () => ({
+  isMaintenanceOn: async () => state.maintenance,
+}));
 vi.mock("@/modules/customers", () => ({
   currentCustomer: async () =>
     state.customer
@@ -53,7 +56,8 @@ import {
   fittingSettings,
   grantFittingCoins,
 } from "@/modules/fitting/settings";
-import { renderFitting } from "@/modules/fitting/worker";
+import { renderFitting, registerFittingJobs } from "@/modules/fitting/worker";
+import { JobDeferredError, runJobs } from "@/modules/jobs";
 import { ProviderFailure } from "@/modules/integrations/fitting";
 import { GET as imageGET } from "@/app/api/fitting/[id]/image/route";
 import { storage } from "@/modules/integrations/storage";
@@ -150,6 +154,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     beforeEach(async () => {
       state.actor = ownerId;
       state.customer = null;
+      state.maintenance = false;
       await configure();
     });
     afterAll(async () => {
@@ -190,6 +195,62 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await db.fittingSession.count({ where: { customerId: c.id } }),
       ).toBe(0);
+    });
+    it("defers interrupted paid rendering through maintenance and reviews it without redispatch", async () => {
+      const c = await customer(),
+        s = await create(c.id);
+      const provider = {
+        render: vi.fn(async () => {
+          state.maintenance = true;
+          return bytes;
+        }),
+      };
+      registerFittingJobs(provider);
+      const put = vi.spyOn(storage, "put");
+      const job = await db.job.findFirstOrThrow({
+        where: {
+          type: "fitting-render",
+          payload: { path: ["sessionId"], equals: s.id },
+        },
+      });
+      try {
+        await runJobs(["fitting-render"]);
+        const deferred = await db.job.findUniqueOrThrow({
+          where: { id: job.id },
+        });
+        expect(deferred.status).toBe("PENDING");
+        expect(deferred.attempts).toBe(0);
+        state.maintenance = false;
+        await db.job.update({
+          where: { id: job.id },
+          data: { runAt: new Date(0) },
+        });
+        await runJobs(["fitting-render"]);
+        const fresh = await db.job.findUniqueOrThrow({ where: { id: job.id } });
+        expect(fresh.status).toBe("PENDING");
+        expect(fresh.attempts).toBe(0);
+        expect(fresh.runAt.getTime()).toBeGreaterThan(Date.now());
+        await db.fittingSession.update({
+          where: { id: s.id },
+          data: { startedAt: new Date(Date.now() - 6 * 60000) },
+        });
+        await db.job.update({
+          where: { id: job.id },
+          data: { runAt: new Date(0) },
+        });
+        await runJobs(["fitting-render"]);
+        expect(
+          (await db.job.findUniqueOrThrow({ where: { id: job.id } })).status,
+        ).toBe("DONE");
+        expect((await sessionView(c.id, s.id)).status).toBe("REVIEW");
+        expect(provider.render).toHaveBeenCalledTimes(1);
+        expect(await balance(c.id)).toBe("87.5");
+      } finally {
+        state.maintenance = false;
+        outputKeys.push(...put.mock.calls.map(([key]) => key));
+        put.mockRestore();
+        registerFittingJobs();
+      }
     });
     it("serializes simultaneous requests without overspend", async () => {
       const c = await customer("50");
@@ -272,10 +333,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const c = await customer(),
         s = await create(c.id),
         provider = { render: vi.fn(async () => bytes) };
-      await Promise.all([
+      const attempts = await Promise.allSettled([
         renderFitting(s.id, provider),
         renderFitting(s.id, provider),
       ]);
+      expect(attempts.some((r) => r.status === "fulfilled")).toBe(true);
+      for (const result of attempts)
+        if (result.status === "rejected")
+          expect(result.reason).toBeInstanceOf(JobDeferredError);
       expect(provider.render).toHaveBeenCalledTimes(1);
       expect((await sessionView(c.id, s.id)).status).toBe("DONE");
       await renderFitting(s.id, provider);
@@ -340,6 +405,38 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect((await sessionView(c.id, uncertain.id)).status).toBe("REVIEW");
       expect(await balance(c.id)).toBe("87.5");
     });
+    it.each(["storage", "encryption"])(
+      "refunds a definite %s delivery failure once",
+      async (failure) => {
+        const c = await customer(),
+          s = await create(c.id);
+        const provider = { render: vi.fn(async () => bytes) };
+        const secret = process.env.AUTH_SECRET;
+        const put =
+          failure === "storage"
+            ? vi
+                .spyOn(storage, "put")
+                .mockRejectedValue(new Error("fixture storage failure"))
+            : null;
+        if (failure === "encryption") process.env.AUTH_SECRET = "";
+        try {
+          await renderFitting(s.id, provider);
+          await renderFitting(s.id, provider);
+          expect(provider.render).toHaveBeenCalledTimes(1);
+          expect((await sessionView(c.id, s.id)).status).toBe("FAILED");
+          expect(await balance(c.id)).toBe("100");
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, sourceKey: `refund:${s.id}` },
+            }),
+          ).toBe(1);
+        } finally {
+          put?.mockRestore();
+          if (secret === undefined) delete process.env.AUTH_SECRET;
+          else process.env.AUTH_SECRET = secret;
+        }
+      },
+    );
     it("locks concurrent refunds and keeps source identity, journal and charge immutable", async () => {
       const c = await customer(),
         s = await create(c.id);

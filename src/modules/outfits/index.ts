@@ -74,7 +74,10 @@ export async function preparedLooks(
         );
         const color = eligible[0]?.color;
         if (!color) return null;
-        const picture = product.media.find(
+        const picture = [
+          ...eligible.flatMap((variant) => variant.media),
+          ...product.media,
+        ].find(
           (link) => link.media.status === "READY" && !link.media.deletedAt,
         )?.media;
         return {

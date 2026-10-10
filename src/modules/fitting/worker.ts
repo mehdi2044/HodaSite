@@ -2,8 +2,8 @@ import { seal } from "@/lib/secure-tokens";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { db } from "@/lib/db";
-import { withMutation } from "@/lib/mutation-gate";
-import { registerJobHandler } from "@/modules/jobs";
+import { MaintenanceError, withMutation } from "@/lib/mutation-gate";
+import { JobDeferredError, registerJobHandler } from "@/modules/jobs";
 import { storage } from "@/modules/integrations/storage";
 import {
   openAiFittingProvider,
@@ -23,7 +23,7 @@ export async function renderFitting(
       const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
       if (s.status === "RUNNING") {
         if (s.startedAt && Date.now() - s.startedAt.getTime() < 5 * 60000)
-          return null;
+          throw new JobDeferredError("FITTING_RUNNING");
         await tx.fittingSession.update({
           where: { id },
           data: { status: "REVIEW", errorCode: "INTERRUPTED" },
@@ -48,8 +48,10 @@ export async function renderFitting(
   );
   if (!snapshot) return;
   let key: string | undefined;
+  let rendered = false;
   try {
     const raw = await provider.render(snapshot);
+    rendered = true;
     let bytes: Buffer;
     try {
       bytes = await sharp(raw, { limitInputPixels: 16000000 })
@@ -94,29 +96,38 @@ export async function renderFitting(
       }),
     );
   } catch (error) {
-    if (key) await storage.delete(key).catch(() => {});
-    await withMutation(() =>
+    const cleanup = await withMutation(() =>
       db.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
-        if (error instanceof ProviderFailure && error.definitive)
+        const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
+        // A commit response can be lost after DONE: keep its delivered image.
+        if (s.status === "DONE") return false;
+        if (rendered || (error instanceof ProviderFailure && error.definitive))
           await refundSession(tx, id, "PROVIDER_FAILED");
         else {
-          const s = await tx.fittingSession.findUniqueOrThrow({
-            where: { id },
-          });
           if (s.status === "RUNNING")
             await tx.fittingSession.update({
               where: { id },
               data: { status: "REVIEW", errorCode: "PROVIDER_UNKNOWN" },
             });
         }
+        return true;
       }),
     );
+    if (key && cleanup) await storage.delete(key).catch(() => {});
   }
 }
-export function registerFittingJobs() {
+export function registerFittingJobs(
+  provider: FittingProvider = openAiFittingProvider,
+) {
   registerJobHandler("fitting-render", async (job) => {
     const p = job.payload as { sessionId?: string };
-    if (p.sessionId) await renderFitting(p.sessionId);
+    try {
+      if (p.sessionId) await renderFitting(p.sessionId, provider);
+    } catch (error) {
+      if (error instanceof MaintenanceError)
+        throw new JobDeferredError("MAINTENANCE");
+      throw error;
+    }
   });
 }
