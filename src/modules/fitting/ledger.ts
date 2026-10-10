@@ -240,12 +240,20 @@ export async function revokeReturnedCoins(
   const grants = await tx.fittingCoinGrant.findMany({ where: { orderId } });
   if (!grants.length) return;
   const returned = new Map<string, number>();
+  const returnedAmounts = new Map<string, Decimal>();
   for (const r of order.returns)
-    for (const i of r.items)
+    for (const i of r.items) {
       returned.set(
         i.orderItemId,
         (returned.get(i.orderItemId) ?? 0) + i.quantity,
       );
+      returnedAmounts.set(
+        i.orderItemId,
+        (returnedAmounts.get(i.orderItemId) ?? new Decimal(0)).add(
+          i.refundAmount.toString(),
+        ),
+      );
+    }
   for (const g of grants) {
     let target = new Decimal(0);
     if (g.orderItemId) {
@@ -291,19 +299,18 @@ export async function revokeReturnedCoins(
           new Decimal(rule.eligibleGrossSpend).gt(0)
         ) {
           const immutableBudgets = promotionOrderAmounts(order)?.netItems;
+          // ReturnItem already preserves the four-decimal cumulative remainder.
+          // Never recompute its allocation from remaining quantity.
           const net = rule.itemNetSpend
             ? rule.itemNetSpend.reduce(
                 (sum, item) =>
                   sum.add(
-                    new Decimal(item.amount)
-                      .mul(
-                        item.quantity -
-                          Math.min(
-                            item.quantity,
-                            returned.get(item.orderItemId) ?? 0,
-                          ),
-                      )
-                      .div(item.quantity),
+                    Decimal.max(
+                      0,
+                      new Decimal(item.amount).sub(
+                        returnedAmounts.get(item.orderItemId) ?? 0,
+                      ),
+                    ),
                   ),
                 new Decimal(0),
               )
@@ -317,26 +324,31 @@ export async function revokeReturnedCoins(
                   .reduce(
                     (sum, item) =>
                       sum.add(
-                        new Decimal(immutableBudgets.get(item.id)!.toString())
-                          .mul(
-                            item.quantity -
-                              Math.min(
-                                item.quantity,
-                                returned.get(item.id) ?? 0,
-                              ),
-                          )
-                          .div(item.quantity),
+                        Decimal.max(
+                          0,
+                          new Decimal(
+                            immutableBudgets.get(item.id)!.toString(),
+                          ).sub(returnedAmounts.get(item.id) ?? 0),
+                        ),
                       ),
                     new Decimal(0),
                   )
-              : new Decimal(rule.eligibleNetSpend)
-                  .mul(
-                    Decimal.max(
-                      0,
-                      new Decimal(rule.eligibleGrossSpend).sub(returnedSpend),
-                    ),
-                  )
-                  .div(rule.eligibleGrossSpend);
+              : Decimal.max(
+                  0,
+                  new Decimal(rule.eligibleNetSpend).sub(
+                    order.items
+                      .filter(
+                        (item) =>
+                          typeof (item.productSnapshot as Prisma.JsonObject)
+                            .coinPackCoins !== "string",
+                      )
+                      .reduce(
+                        (sum, item) =>
+                          sum.add(returnedAmounts.get(item.id) ?? 0),
+                        new Decimal(0),
+                      ),
+                  ),
+                );
 
           const remaining = new Decimal(
             rewardAmountSafe(net.toFixed(), rule.spendAmount, rule.coins),

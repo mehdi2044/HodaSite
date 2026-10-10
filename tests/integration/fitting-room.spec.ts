@@ -75,6 +75,7 @@ import { validateLookReferences } from "@/modules/outfits";
 import { styleLookBlock } from "../../prisma/style-seed";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
+import { returnAmount } from "@/modules/returns/validation";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "fitting room: real PostgreSQL and private local storage",
@@ -1136,6 +1137,59 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it.each(["REFUND", "STORE_CREDIT"] as const)(
+      "preserves the four-decimal remainder across repeated %s reward reversals",
+      async (resolution) => {
+        await configure({
+          rewards: [{ marketId, spendAmount: "33.3334", coins: "12.5" }],
+        });
+        const f = await returnFixture(db, {
+          customerId: (await customer("0")).id,
+          quantity: 3,
+          price: "33.3334",
+          discount: "0.0002",
+        });
+        customers.push(f.customer.id);
+        await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+        expect(await balance(f.customer.id)).toBe("25");
+        let allocated = "0";
+        for (let claimed = 0; claimed < 3; claimed++) {
+          const amount = returnAmount("100", 3, claimed, allocated, 1);
+          expect(amount.toFixed(4)).toBe(claimed === 2 ? "33.3334" : "33.3333");
+          allocated = amount.add(allocated).toFixed(4);
+          await db.returnRequest.create({
+            data: {
+              orderId: f.order.id,
+              customerId: f.customer.id,
+              type: "RETURN",
+              reasonCode: "OTHER",
+              status: "RESOLVED",
+              resolution,
+              requestKey: randomUUID(),
+              refundAmount: amount.toFixed(),
+              items: {
+                create: {
+                  orderItemId: f.order.items[0].id,
+                  quantity: 1,
+                  condition: "RESTOCK",
+                  refundAmount: amount.toFixed(),
+                },
+              },
+            },
+          });
+          await db.$transaction((tx) => revokeReturnedCoins(tx, f.order.id));
+          await db.$transaction((tx) => revokeReturnedCoins(tx, f.order.id));
+          expect(await balance(f.customer.id)).toBe(
+            claimed === 2 ? "0" : "12.5",
+          );
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
+            }),
+          ).toBe(claimed === 2 ? 2 : 1);
+        }
+      },
+    );
     it("retains reward rule snapshots and reverses only returned purchase value", async () => {
       await configure({
         rewards: [{ marketId, spendAmount: "100", coins: "25" }],
@@ -1159,11 +1213,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           reasonCode: "OTHER",
           status: "RESOLVED",
           resolution: "REFUND",
+          refundAmount: "100",
           items: {
             create: {
               orderItemId: f.order.items[0].id,
               quantity: 1,
               condition: "RESTOCK",
+              refundAmount: "100",
             },
           },
         },
