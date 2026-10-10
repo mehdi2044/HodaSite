@@ -539,23 +539,31 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             slugI18n: { en: id + "-b" },
           },
         });
-      const result = await Promise.allSettled([
-        db.$transaction(async (tx) => {
-          await validateCategoryParent(tx, a.id, b.id);
-          await tx.category.update({
-            where: { id: a.id },
-            data: { parentId: b.id },
-          });
-        }),
-        db.$transaction(async (tx) => {
-          await validateCategoryParent(tx, b.id, a.id);
-          await tx.category.update({
-            where: { id: b.id },
-            data: { parentId: a.id },
-          });
-        }),
-      ]);
-      expect(result.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      try {
+        const result = await Promise.allSettled([
+          db.$transaction(async (tx) => {
+            await validateCategoryParent(tx, a.id, b.id);
+            await tx.category.update({
+              where: { id: a.id },
+              data: { parentId: b.id },
+            });
+          }),
+          db.$transaction(async (tx) => {
+            await validateCategoryParent(tx, b.id, a.id);
+            await tx.category.update({
+              where: { id: b.id },
+              data: { parentId: a.id },
+            });
+          }),
+        ]);
+        expect(result.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      } finally {
+        // Retain fixtures as archived records, without leaking root cards into e2e.
+        await db.category.updateMany({
+          where: { id: { in: [a.id, b.id] } },
+          data: { deletedAt: new Date() },
+        });
+      }
     });
     it("retains reward rule snapshots and reverses only returned purchase value", async () => {
       await configure({

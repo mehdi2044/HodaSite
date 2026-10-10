@@ -178,7 +178,7 @@ export function FittingSettings({
                   })
                 }
               />{" "}
-              {t("enabled")}
+              {t("enabled")} · {t("modelName")} {index + 1}
             </label>
             <Select
               aria-label={t("modelKind")}

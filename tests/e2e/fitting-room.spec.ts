@@ -30,19 +30,30 @@ for (const locale of ["fa", "tr", "en"] as const) {
       const room = page.getByTestId("fitting-room");
       await expect(room).toBeVisible();
       await expect(room.locator(".fitting-models button")).toHaveCount(4);
-      const tee = room
-        .locator(".fitting-product")
-        .filter({
-          has: page.locator(
-            'option[value="seed-style-v2-women-tee-charcoal-m"]',
-          ),
-        });
+      const tee = room.locator(".fitting-product").filter({
+        has: page.locator('option[value="seed-style-v2-women-tee-charcoal-m"]'),
+      });
       await expect(tee).toBeVisible();
-      const initial = await tee.locator("img").getAttribute("src");
+      const ivory = await db.productMedia.findFirstOrThrow({
+        where: { productId: "seed-style-v2-women-tee" },
+        orderBy: { sortOrder: "asc" },
+        include: { media: true },
+      });
+      const charcoal = await db.variantMedia.findFirstOrThrow({
+        where: { variantId: "seed-style-v2-women-tee-charcoal-m" },
+        orderBy: { sortOrder: "asc" },
+        include: { media: true },
+      });
+      expect(ivory.media.url).not.toBe(charcoal.media.url);
+      await tee.locator("select").selectOption("seed-style-v2-women-tee-m");
+      await expect(tee.locator("img")).toHaveAttribute("src", ivory.media.url);
       await tee
         .locator("select")
         .selectOption("seed-style-v2-women-tee-charcoal-m");
-      await expect(tee.locator("img")).not.toHaveAttribute("src", initial!);
+      await expect(tee.locator("img")).toHaveAttribute(
+        "src",
+        charcoal.media.url,
+      );
       await expect(room.locator(".fitting-chip")).toHaveCount(1);
       const customer = await db.customer.findUniqueOrThrow({
         where: { email },

@@ -1105,7 +1105,11 @@ async function seedPhase03(ownerId: string) {
   const byCode = Object.fromEntries(
     markets.map((market) => [market.code, market]),
   );
-  const simulatorVariant = variants[0];
+  // CP2-03 belongs to the original SH-001 garment, independent of new SKUs.
+  const simulatorVariant = variants.find(
+    (variant) =>
+      variant.sku.startsWith("SH-001-") && !variant.product.coinPackCoins,
+  );
   if (simulatorVariant) {
     await db.variant.update({
       where: { id: simulatorVariant.id },
