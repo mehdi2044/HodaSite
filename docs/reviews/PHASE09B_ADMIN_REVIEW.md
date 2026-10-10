@@ -3,6 +3,12 @@
 Implemented against docs v1.2 / D-numbers touched: D08, D09, D24, D31,
 D69, D70, D71, D72, D73.
 
+**Delivery closed — 2026-10-10:** PR #54 merged into main, #53 closed as
+completed, all nine review threads resolved and the final head-matched AI review
+reports no blockers. [Closure evidence](PHASE09B_CLOSURE_2026-10-10.md) is the
+current delivery record. Earlier verification below remains dated history;
+physical-phone/HTTPS and owner visual acceptance remain release gates.
+
 ## Scope and behavior
 
 `/admin/promotions` adds one permission-aware navigation entry in the existing
@@ -103,7 +109,9 @@ the earlier local results above do not validate these added scenarios.
 
 Technical self-review and automated checks are not independent human review.
 Physical-phone/HTTPS and owner visual acceptance remain open under D51/D70.
-Remote current-head CI must include Local/S3 restore and the D70 review gates.
+The final PR #54 head passed current-head CI, Local/S3 restore and the D70
+review/conversation gates; evidence and the one-task owner Merge authorization
+are linked in the closure record.
 
 ## Data and recovery
 
