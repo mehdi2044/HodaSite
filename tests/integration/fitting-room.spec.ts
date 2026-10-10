@@ -389,7 +389,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           reason: "test",
           confirm: true,
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("UNAUTHENTICATED");
       expect(
         await db.fittingCoinGrant.count({ where: { customerId: c.id } }),
       ).toBe(0);

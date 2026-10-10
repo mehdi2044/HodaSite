@@ -1,4 +1,6 @@
 import Decimal from "decimal.js";
+import { auth } from "@/modules/auth";
+import { segmentQuery } from "@/modules/crm/segment-query";
 import { lockMediaReferences } from "@/modules/media/reference-lock";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -12,7 +14,6 @@ import {
 import { configSchema, coins, FittingError } from "./contracts";
 import { readConfig, lockWallet, grantCoins } from "./ledger";
 async function actor() {
-  const { auth } = await import("@/modules/auth");
   const s = await auth();
   if (!s?.user?.id) throw new UnauthorizedError();
   await assertCan(s.user.id, "ai.settings.manage");
@@ -150,7 +151,6 @@ export async function grantFittingCoins(raw: unknown) {
           await txCan(tx, userId, "crm.segment.manage", {
             marketId: segment.marketId,
           });
-          const { segmentQuery } = await import("@/modules/crm");
           await tx.$executeRaw`SET LOCAL statement_timeout='5000ms'`;
           const predicate = segmentQuery(segment.marketId, segment.definition);
           const members = await tx.$queryRaw<
