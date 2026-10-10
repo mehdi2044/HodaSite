@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 import { currentCustomer } from "@/modules/customers";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
@@ -56,9 +57,12 @@ export default async function CartPage({
   ).catch(() => null);
   return (
     <main className="shell shop-page grid gap-8 py-10">
-      <h1 className="text-3xl font-semibold">
-        {t("cart")} <span className="text-lg text-muted">{cart.currency}</span>
-      </h1>
+      <header className="shop-cart-heading">
+        <h1 className="text-3xl font-semibold">{t("cart")}</h1>
+        <Link className="shop-back-link" href={`/${locale}/search`}>
+          {t("continueShopping")} ↗
+        </Link>
+      </header>
       {mismatch && (
         <section className="rounded-token border border-warning p-5">
           <p>{t("marketWarning")}</p>
@@ -109,6 +113,22 @@ export default async function CartPage({
                     <Iso>{item.variant.sku}</Iso>
                   </small>
                 </p>
+                {quote?.items.find(
+                  (line) => line.variantId === item.variantId,
+                ) && (
+                  <p className="my-3 font-semibold">
+                    <Iso>
+                      {new Decimal(
+                        quote.items.find(
+                          (line) => line.variantId === item.variantId,
+                        )!.unitPrice,
+                      )
+                        .mul(item.quantity)
+                        .toString()}{" "}
+                      {cart.currency}
+                    </Iso>
+                  </p>
+                )}
                 <CommerceForm
                   action={updateCartAction.bind(null, locale)}
                   className="flex flex-wrap items-end gap-3"

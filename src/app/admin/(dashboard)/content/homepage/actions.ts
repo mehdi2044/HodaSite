@@ -4,7 +4,11 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
-import { lockMediaReferences } from "@/modules/media/reference-lock";
+import { validateLookReferences } from "@/modules/outfits";
+import {
+  blockMediaIds,
+  lockMediaReferences,
+} from "@/modules/media/reference-lock";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
@@ -38,15 +42,8 @@ export async function saveHomepage(
         throw new z.ZodError([]);
     }
 
-    const mediaIds = [
-      ...new Set(
-        blocks.flatMap((block) =>
-          (block.type === "Hero" || block.type === "Banner") && block.mediaId
-            ? [block.mediaId]
-            : [],
-        ),
-      ),
-    ];
+    await validateLookReferences(blocks, marketId);
+    const mediaIds = [...new Set(blockMediaIds(blocks))];
     if (mediaIds.length) {
       const count = await db.media.count({
         where: {

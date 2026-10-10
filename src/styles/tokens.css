@@ -2250,3 +2250,476 @@ html[lang="fa"] body,
       color-mix(in srgb, var(--text) 40%, transparent);
   }
 }
+
+/* D74: prepared outfit studio. Logical positioning keeps the same composition in RTL. */
+.look-studio {
+  padding-block: 3.5rem;
+}
+.look-heading {
+  display: grid;
+  gap: 1rem;
+  margin-block-end: 1.75rem;
+}
+.look-heading h2 {
+  font-size: clamp(1.9rem, 4vw, 3.5rem);
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.look-heading > p {
+  max-width: 30rem;
+  color: var(--muted);
+  line-height: 1.9;
+  font-size: 1rem;
+}
+.look-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-block: 0.5rem 1.5rem;
+  scrollbar-width: thin;
+}
+.look-tabs button {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  white-space: nowrap;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  border-radius: 4px;
+}
+.look-tabs button > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.look-tabs button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--background);
+  border-color: var(--text);
+}
+.look-tabs button[aria-pressed="true"] > span {
+  color: inherit;
+}
+.look-layout {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+.look-scene {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1/1.15;
+  isolation: isolate;
+  perspective: 1100px;
+  background: color-mix(in srgb, var(--background) 70%, var(--text) 5%);
+  border-radius: 4px;
+}
+.look-frames {
+  position: absolute;
+  inset: 7% 10% 10%;
+  z-index: -1;
+  transform: rotate(-3deg);
+}
+.look-frames i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+}
+.look-frames i:nth-child(2) {
+  transform: translate(8px, -8px);
+}
+.look-frames i:nth-child(3) {
+  transform: translate(16px, -16px);
+}
+.look-model {
+  position: absolute;
+  inset-block-start: 6%;
+  inset-inline-start: 14%;
+  width: 68%;
+  height: 81%;
+  box-shadow: 0 22px 38px #0002;
+}
+.look-model-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.look-model-image img {
+  object-position: center 45%;
+}
+.look-model-caption {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  background: var(--background);
+  padding: 0.5rem 0.8rem;
+  font-size: 0.8rem;
+}
+.look-plane {
+  position: absolute;
+  z-index: 2;
+  width: 25%;
+  aspect-ratio: 3/4;
+  background: var(--surface);
+  box-shadow: 0 12px 22px #0002;
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  transform: rotate(var(--look-rotate, 4deg));
+  transform-style: preserve-3d;
+  transition:
+    transform 280ms ease,
+    box-shadow 280ms ease;
+}
+.look-plane-1 {
+  inset-block-start: 3%;
+  inset-inline-end: 2%;
+  --look-rotate: 5deg;
+}
+.look-plane-2 {
+  inset-block-end: 12%;
+  inset-inline-start: 1%;
+  --look-rotate: -6deg;
+}
+.look-plane-3 {
+  inset-block-end: 6%;
+  inset-inline-end: 2%;
+  --look-rotate: 4deg;
+}
+.look-plane-4 {
+  inset-block-start: 7%;
+  inset-inline-start: 1%;
+  --look-rotate: -3deg;
+}
+.look-plane[data-active="true"],
+.look-plane:focus-visible {
+  transform: rotate(0deg) translateZ(36px) translateY(-6px);
+  box-shadow: 0 22px 35px #0003;
+  z-index: 3;
+}
+.look-piece-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.look-plane-caption {
+  position: absolute;
+  inset-inline: -0.25rem;
+  inset-block-end: -0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--background);
+  padding: 0.35rem;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 8px #0001;
+}
+.look-plane-caption > span:nth-child(2) {
+  flex: 1;
+}
+.look-image-note {
+  position: absolute;
+  inset-block-end: 1%;
+  inset-inline: 4%;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.7;
+}
+.look-purchase {
+  border-block: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  padding-block: 1.25rem;
+}
+.look-purchase-heading {
+  display: flex;
+  justify-content: space-between;
+  margin-block-end: 0.6rem;
+}
+.look-purchase-heading h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.look-purchase-heading > span {
+  color: var(--muted);
+}
+.look-form {
+  display: grid;
+  gap: 0;
+}
+.look-item {
+  padding-block: 1rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+.look-item-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.look-item-title label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  font-weight: 500;
+}
+.look-item-title input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--text);
+}
+.look-item-title a {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid transparent;
+}
+.look-item[data-active="true"] .look-item-title a {
+  border-color: var(--text);
+}
+.look-color {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  margin-inline-start: 1.7rem;
+  font-size: 0.85rem;
+}
+.look-color > span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #0002;
+}
+.look-item-options {
+  display: grid;
+  grid-template-columns: auto minmax(5rem, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  margin-block-start: 0.8rem;
+}
+.look-item-options label {
+  font-size: 0.85rem;
+}
+.look-item-options select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 25%, transparent);
+  background: var(--surface);
+  border-radius: 4px;
+  font: inherit;
+}
+.look-piece-price {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.look-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.5rem 1rem;
+}
+.look-total strong {
+  font-size: 1.3rem;
+}
+.look-help {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding-block-end: 1rem;
+}
+.look-add {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-radius: 4px;
+  min-height: 52px;
+  background: var(--text);
+  color: var(--background);
+}
+.look-form > p[role] {
+  margin-block-start: 1rem;
+}
+.shop-category-intro {
+  display: grid;
+  gap: 1rem;
+  padding-block: 1rem 2rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+}
+.shop-category-intro h1 {
+  font-size: clamp(2.25rem, 6vw, 5rem);
+  line-height: 1.3;
+}
+.shop-category-intro p {
+  line-height: 1.9;
+  max-width: 35rem;
+  color: var(--muted);
+}
+.shop-subcategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1.5rem;
+}
+.shop-subcategories a {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  font-size: 0.95rem;
+}
+.shop-card-image {
+  position: relative;
+}
+.shop-card-image > .shop-card-alternate {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+@media (hover: hover) {
+  .shop-product-link:hover .shop-card-alternate {
+    opacity: 1;
+  }
+}
+.shop-product-link:focus-visible .shop-card-alternate {
+  opacity: 1;
+}
+.shop-product-card h3 {
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.shop-product-card .shop-card-price {
+  font-size: 1rem;
+}
+.shop-product-information .shop-product-title {
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 1.5;
+}
+.shop-cart-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  padding-block-end: 1.5rem;
+}
+.shop-cart-heading h1 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+}
+.shop-cart-item {
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 1.25rem;
+}
+.shop-order-summary {
+  border-radius: 4px;
+  box-shadow: none;
+  padding: 1.5rem;
+}
+.shop-checkout-layout {
+  display: grid;
+  gap: 2rem;
+  align-items: start;
+}
+.shop-checkout-summary {
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  background: var(--surface);
+}
+.shop-checkout-summary h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-block-end: 1rem;
+}
+.shop-checkout-summary article {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding-block: 0.75rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+}
+.shop-checkout-summary picture {
+  display: block;
+  aspect-ratio: 3/4;
+}
+.shop-checkout-summary p {
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+@media (min-width: 768px) {
+  .look-heading {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+  .look-heading > p {
+    justify-self: end;
+  }
+  .look-scene {
+    aspect-ratio: 1/1;
+  }
+}
+@media (min-width: 1024px) {
+  .look-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(19rem, 1fr);
+    gap: 3rem;
+  }
+  .look-scene {
+    aspect-ratio: 1/1.1;
+  }
+  .look-purchase {
+    margin-block-start: 1.5rem;
+  }
+  .look-heading {
+    margin-block-end: 2rem;
+  }
+  .look-studio {
+    padding-block: 5rem;
+  }
+  .shop-checkout-layout {
+    grid-template-columns: minmax(0, 1fr) 21rem;
+  }
+  .shop-checkout-summary {
+    position: sticky;
+    top: 7rem;
+  }
+  .shop-category-intro {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+  .shop-cart-item {
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .look-plane,
+  .look-plane[data-active="true"],
+  .look-plane:focus-visible {
+    transform: none;
+    transition: none;
+  }
+  .shop-card-alternate {
+    transition: none !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .look-item-options {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .look-item-options > label {
+    grid-column: 1/-1;
+  }
+  .look-piece-price {
+    font-size: 0.85rem;
+  }
+  .look-plane-caption {
+    font-size: 0.72rem;
+  }
+  .look-image-note {
+    font-size: 0.75rem;
+  }
+}

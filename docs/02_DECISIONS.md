@@ -1,5 +1,8 @@
 # تصمیم‌های قطعی پروژه (Architecture Decision Records) — v1.2.1
 
+### Prepared outfit studio — D74 (2026-10-10)
+Owner-approved storefront scope: prepared store models and exact product/color looks, no personal-photo upload. The existing Homepage JSON block contract gains ShopLook; its media and catalog references remain editable through authorized CMS saves and existing audit. No schema/provider/auth/payment/reservation changes. Cart additions are validated and written as one locked batch using the existing quote pipeline and Decimal totals. Demo products/media are additive, tagged, idempotent and do not overwrite merchant edits or historical commerce data. External image generation, credits and loyalty rewards remain a later separately specified delivery. Verification: schema/reference tests, atomic rejection and concurrent cart integration tests, three-language mobile shopping e2e and owner visual acceptance under D70.
+
 <a id="current-policy"></a>
 ## وضعیت معتبر امروز — ابتدا این جدول را بخوانید
 

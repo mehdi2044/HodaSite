@@ -108,7 +108,9 @@ export async function listCatalogProducts(
     status: "ACTIVE",
     marketIds: { has: marketId },
     ...(matchingIds ? { id: { in: matchingIds } } : {}),
-    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    ...(filters.categoryId
+      ? { categoryId: { in: await categoryFamily(filters.categoryId) } }
+      : {}),
     ...(filters.collectionId
       ? { collections: { some: { id: filters.collectionId } } }
       : {}),
@@ -290,4 +292,29 @@ function safeDecode(value: string) {
   } catch {
     return value;
   }
+}
+
+/** Only live descendants; a visited set also bounds malformed category cycles. */
+export async function categoryFamily(id: string) {
+  const categories = await db.category.findMany({
+    where: { deletedAt: null },
+    select: { id: true, parentId: true },
+  });
+  const found = new Set(
+    categories.some((category) => category.id === id) ? [id] : [],
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const category of categories)
+      if (
+        category.parentId &&
+        found.has(category.parentId) &&
+        !found.has(category.id)
+      ) {
+        found.add(category.id);
+        changed = true;
+      }
+  }
+  return [...found];
 }

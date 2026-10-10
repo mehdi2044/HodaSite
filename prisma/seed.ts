@@ -1,5 +1,6 @@
 import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
+import { seedStyleStorefront } from "./style-seed";
 import { seedFashionStorefront } from "./fashion-seed";
 import { seedShipping } from "./shipping-seed";
 import { PrismaClient, FxMode } from "@prisma/client";
@@ -360,6 +361,7 @@ async function main() {
   await seedDemoMedia();
   await seedCatalog();
   await seedFashionStorefront(db, putMediaFile);
+  await seedStyleStorefront(db, putMediaFile);
   await seedPhase03(user.id);
   await seedPhase04();
   await seedLedgerAccounts(db);

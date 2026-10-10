@@ -1,3 +1,4 @@
+import { ShopLook } from "./shop-look";
 import { SpatialHero } from "./spatial-hero";
 import { seoPath } from "@/lib/seo-urls";
 import { getDisplayPrices } from "@/modules/pricing";
@@ -70,6 +71,12 @@ export async function HomepageBlocks({
   return (
     <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
       {blocks.map((block, index) => {
+        if (block.type === "ShopLook")
+          return (
+            <div className="shell" key={index}>
+              <ShopLook block={block} locale={locale} market={market} />
+            </div>
+          );
         if (
           block.type === "Hero" &&
           block.layout === "spatial" &&

@@ -331,7 +331,14 @@
     "addTrustItem": "Add trust item",
     "heroLayout": "Hero layout",
     "editorialLayout": "Single editorial image",
-    "spatialLayout": "Four departments · spatial"
+    "spatialLayout": "Four departments · spatial",
+    "shopLook": "Prepared look",
+    "lookName": "Look name",
+    "addLook": "Add look",
+    "lookProducts": "Product",
+    "lookColor": "Color",
+    "lookDepartment": "Department",
+    "lookHelp": "Match the model image to these products and colors. Each look contains 2–4 pieces."
   },
   "translationAdmin": {
     "title": "UI translations",
@@ -2259,5 +2266,21 @@
       "RELEASE_FORBIDDEN": "Usage cannot be released.",
       "DUPLICATE": "This coupon code already exists in this market."
     }
+  },
+  "outfit": {
+    "eyebrow": "The style room",
+    "chooseLook": "Choose a look",
+    "pieces": "Pieces in this look",
+    "size": "Size",
+    "chooseSize": "Choose size",
+    "unavailable": "Unavailable",
+    "details": "Product details",
+    "subtotal": "Selected pieces subtotal",
+    "addLook": "Add look to bag",
+    "chooseSizes": "Choose a size for each selected piece.",
+    "emptySelection": "Select at least one piece.",
+    "completeImage": "The image shows the complete look; selecting pieces does not change the image.",
+    "demo": "Demo image",
+    "inBag": "Added to bag"
   }
 }

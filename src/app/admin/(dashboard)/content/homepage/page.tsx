@@ -7,6 +7,7 @@ import {
   localizedValue,
   homepageBlocksSchema,
 } from "@/modules/content/homepage";
+import { blockMediaIds } from "@/modules/media/reference-lock";
 import { HomepageBuilder } from "@/components/admin/homepage-builder";
 import { saveHomepage } from "./actions";
 
@@ -19,7 +20,7 @@ export default async function HomepageAdmin() {
     redirect("/admin");
   const t = await getTranslations("homepageAdmin");
   const locale = (await getLocale()) as "fa" | "tr" | "en";
-  const [rows, markets, categories, collections] = await Promise.all([
+  const [rows, markets, categories, collections, products] = await Promise.all([
     db.homepage.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: "asc" },
@@ -40,6 +41,22 @@ export default async function HomepageAdmin() {
       orderBy: { slug: "asc" },
       select: { id: true, titleI18n: true },
     }),
+    db.product.findMany({
+      where: { deletedAt: null, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        titleI18n: true,
+        variants: {
+          where: {
+            isActive: true,
+            color: { deletedAt: null },
+            size: { deletedAt: null },
+          },
+          select: { color: { select: { id: true, nameI18n: true } } },
+        },
+      },
+    }),
   ]);
   const compositions = Object.fromEntries(
     rows.map((row) => {
@@ -51,14 +68,7 @@ export default async function HomepageAdmin() {
     ...new Set(
       rows.flatMap((row) => {
         const parsed = homepageBlocksSchema.safeParse(row.blocks);
-        return parsed.success
-          ? parsed.data.flatMap((block) =>
-              (block.type === "Hero" || block.type === "Banner") &&
-              block.mediaId
-                ? [block.mediaId]
-                : [],
-            )
-          : [];
+        return parsed.success ? blockMediaIds(parsed.data) : [];
       }),
     ),
   ];
@@ -91,12 +101,40 @@ export default async function HomepageAdmin() {
           locale,
         ),
       }))}
+      products={products.map((product) => ({
+        id: product.id,
+        title: localizedValue(
+          product.titleI18n as Record<typeof locale, string>,
+          locale,
+        ),
+        colors: [
+          ...new Map(
+            product.variants.map((variant) => [
+              variant.color.id,
+              {
+                id: variant.color.id,
+                title: localizedValue(
+                  variant.color.nameI18n as Record<typeof locale, string>,
+                  locale,
+                ),
+              },
+            ]),
+          ).values(),
+        ],
+      }))}
       compositions={compositions}
       mediaUrls={Object.fromEntries(
         media.map((item) => [item.id, `/media/${item.storageKey}`]),
       )}
       markets={markets.map((market) => ({ id: market.id, code: market.code }))}
       labels={{
+        shopLook: t("shopLook"),
+        lookName: t("lookName"),
+        addLook: t("addLook"),
+        lookProducts: t("lookProducts"),
+        lookColor: t("lookColor"),
+        lookDepartment: t("lookDepartment"),
+        lookHelp: t("lookHelp"),
         heroLayout: t("heroLayout"),
         editorialLayout: t("editorialLayout"),
         spatialLayout: t("spatialLayout"),

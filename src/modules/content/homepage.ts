@@ -4,6 +4,24 @@ import { db } from "@/lib/db";
 import { localizedTextSchema, safeLinkSchema } from "./validation";
 
 const mediaId = z.string().trim().min(1).max(100);
+export const preparedLookSchema = z
+  .object({
+    id: mediaId,
+    label: localizedTextSchema,
+    categoryId: mediaId,
+    mediaId,
+    items: z
+      .array(z.object({ productId: mediaId, colorId: mediaId }))
+      .min(2)
+      .max(4),
+  })
+  .superRefine((look, ctx) => {
+    if (
+      new Set(look.items.map((item) => item.productId)).size !==
+      look.items.length
+    )
+      ctx.addIssue({ code: "custom", message: "Duplicate outfit product" });
+  });
 const sourceSchema = z.object({
   mode: z.enum(["latest", "bestseller", "category", "collection"]),
   referenceId: z.string().trim().max(100).optional(),
@@ -11,6 +29,12 @@ const sourceSchema = z.object({
 });
 
 export const homepageBlockSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("ShopLook"),
+    title: localizedTextSchema,
+    body: localizedTextSchema,
+    looks: z.array(preparedLookSchema).min(1).max(8),
+  }),
   z.object({
     type: z.literal("Hero"),
     layout: z.enum(["editorial", "spatial"]).optional(),
@@ -48,7 +72,16 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-export const homepageBlocksSchema = z.array(homepageBlockSchema).max(30);
+export const homepageBlocksSchema = z
+  .array(homepageBlockSchema)
+  .max(30)
+  .superRefine((blocks, ctx) => {
+    const ids = blocks.flatMap((block) =>
+      block.type === "ShopLook" ? block.looks.map((look) => look.id) : [],
+    );
+    if (new Set(ids).size !== ids.length)
+      ctx.addIssue({ code: "custom", message: "Duplicate outfit identity" });
+  });
 export type HomepageBlock = z.infer<typeof homepageBlockSchema>;
 
 async function getHomepageRows(marketId: string) {

@@ -1,3 +1,6 @@
+import { ShopLook } from "@/components/storefront/shop-look";
+import { relevantLookBlocks } from "@/modules/outfits";
+import { seoPath } from "@/lib/seo-urls";
 import { getDisplayPrices } from "@/modules/pricing";
 import { publicMetadata } from "@/modules/seo";
 import { filteredListing, singleFacetQuery } from "@/lib/seo";
@@ -88,13 +91,21 @@ export default async function CategoryPage({
     page: Number(one(query.page) || 1),
     after: one(query.after),
   });
-  const prices = await getDisplayPrices(result.items, market);
+  const [prices, looks] = await Promise.all([
+    getDisplayPrices(result.items, market),
+    relevantLookBlocks(market.id, {
+      categoryId: category.parentId ?? category.id,
+    }),
+  ]);
+  const children = facets.categories.filter(
+    (item) => item.parentId === category.id,
+  );
   return (
     <main
       className="shell shop-page py-10 md:py-16"
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <header className="mb-8">
+      <header className="shop-category-intro mb-8">
         <h1 className="text-4xl font-semibold">
           {catalogText(category.titleI18n, safe)}
         </h1>
@@ -102,6 +113,24 @@ export default async function CategoryPage({
           {catalogText(category.descriptionI18n, safe)}
         </p>
       </header>
+      {children.length > 0 && (
+        <nav className="shop-subcategories" aria-label={t("filters")}>
+          {children.map((item) => (
+            <Link
+              key={item.id}
+              href={seoPath(
+                safe,
+                market.code,
+                "c",
+                catalogText(item.slugI18n, safe),
+              )}
+            >
+              {catalogText(item.titleI18n, safe)}
+              <span aria-hidden="true">↗</span>
+            </Link>
+          ))}
+        </nav>
+      )}
       <CatalogFilter
         labels={{
           filters: t("filters"),
@@ -158,6 +187,9 @@ export default async function CategoryPage({
           </Link>
         </div>
       )}
+      {looks.map((block, index) => (
+        <ShopLook key={index} block={block} locale={safe} market={market} />
+      ))}
     </main>
   );
 }

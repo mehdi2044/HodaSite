@@ -331,7 +331,14 @@
     "addTrustItem": "Güven öğesi ekle",
     "heroLayout": "Ana görsel düzeni",
     "editorialLayout": "Tek editoryal görsel",
-    "spatialLayout": "Dört kategori · katmanlı"
+    "spatialLayout": "Dört kategori · katmanlı",
+    "shopLook": "Hazır kombin",
+    "lookName": "Kombin adı",
+    "addLook": "Kombin ekle",
+    "lookProducts": "Ürün",
+    "lookColor": "Renk",
+    "lookDepartment": "Ana kategori",
+    "lookHelp": "Model görseli seçilen ürün ve renklerle eşleşmeli. Her kombin 2–4 parça içerir."
   },
   "translationAdmin": {
     "title": "Arayüz çevirileri",
@@ -2259,5 +2266,21 @@
       "RELEASE_FORBIDDEN": "Kullanım serbest bırakılamaz.",
       "DUPLICATE": "Bu kupon kodu pazarda zaten var."
     }
+  },
+  "outfit": {
+    "eyebrow": "Stil odası",
+    "chooseLook": "Kombin seç",
+    "pieces": "Bu kombindeki parçalar",
+    "size": "Beden",
+    "chooseSize": "Beden seç",
+    "unavailable": "Tükendi",
+    "details": "Ürün detayları",
+    "subtotal": "Seçilen parçalar toplamı",
+    "addLook": "Kombini sepete ekle",
+    "chooseSizes": "Her parça için bedenini seç.",
+    "emptySelection": "En az bir parça seç.",
+    "completeImage": "Görsel tam kombini gösterir; parça seçimi görseli değiştirmez.",
+    "demo": "Örnek görsel",
+    "inBag": "Sepete eklendi"
   }
 }
