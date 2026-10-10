@@ -23,9 +23,14 @@ export function formatCatalogCurrency(
   amount: Decimal.Value,
   currency: "IRT" | "TRY" | "CAD" | "USD",
   locale: "fa" | "tr" | "en",
+  preservePrecision = false,
 ) {
-  const decimals = currency === "IRT" ? 0 : 2;
-  const raw = new Decimal(amount).toFixed(decimals);
+  const value = new Decimal(amount);
+  const decimals = Math.max(
+    currency === "IRT" ? 0 : 2,
+    preservePrecision ? value.decimalPlaces() : 0,
+  );
+  const raw = value.toFixed(decimals);
   const localized = grouped(
     raw,
     locale === "fa" ? "٬" : locale === "tr" ? "." : ",",
@@ -61,6 +66,7 @@ export function formatStorefrontAmount(
       amount,
       currency as "IRT" | "TRY" | "CAD" | "USD",
       locale as "fa" | "tr" | "en",
+      true,
     );
   return `${new Decimal(amount).toString()} ${currency}`;
 }

@@ -26,6 +26,8 @@ describe("catalog locale formatting", () => {
     expect(formatStorefrontAmount("6720000.0000", "IRT", "fa")).toBe(
       "۶٬۷۲۰٬۰۰۰ تومان",
     );
+    expect(formatStorefrontAmount("37.1201", "CAD", "en")).toBe("CA$37.1201");
+    expect(formatStorefrontAmount("37.5000", "IRT", "fa")).toBe("۳۷٫۵ تومان");
   });
 
   it("retains the actual currency for unsupported display configurations", () => {
