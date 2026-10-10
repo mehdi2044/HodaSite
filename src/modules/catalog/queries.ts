@@ -27,7 +27,11 @@ export type CatalogFilters = {
 export const catalogProductInclude = {
   brand: true,
   category: true,
-  media: { orderBy: { sortOrder: "asc" as const }, include: { media: true } },
+  media: {
+    where: { media: { kind: "image", status: "READY", deletedAt: null } },
+    orderBy: { sortOrder: "asc" as const },
+    include: { media: true },
+  },
   variants: {
     where: { isActive: true },
     orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }],
@@ -36,6 +40,7 @@ export const catalogProductInclude = {
       size: true,
       stockItems: true,
       media: {
+        where: { media: { kind: "image", status: "READY", deletedAt: null } },
         orderBy: { sortOrder: "asc" as const },
         include: { media: true },
       },
@@ -259,7 +264,13 @@ export async function findProductBySlug(
           color: true,
           size: true,
           stockItems: true,
-          media: { orderBy: { sortOrder: "asc" }, include: { media: true } },
+          media: {
+            where: {
+              media: { kind: "image", status: "READY", deletedAt: null },
+            },
+            orderBy: { sortOrder: "asc" },
+            include: { media: true },
+          },
         },
       },
     },
