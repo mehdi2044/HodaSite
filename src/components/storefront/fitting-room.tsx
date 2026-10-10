@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { requestSchema } from "@/modules/fitting/contracts";
 import { ResponsiveImage } from "./responsive-image";
 import {
   formatCatalogCurrency,
@@ -39,6 +40,7 @@ type Result = {
   id?: string;
 };
 export function FittingRoom({
+  customerId,
   models,
   products,
   ownedProducts,
@@ -54,6 +56,7 @@ export function FittingRoom({
   addToBag,
   saved = [],
 }: {
+  customerId?: string;
   models: FittingModel[];
   products: FittingProduct[];
   ownedProducts: FittingProduct[];
@@ -86,6 +89,62 @@ export function FittingRoom({
     [message, setMessage] = useState(""),
     [savedLooks, setSaved] = useState(saved);
   const pending = useRef<Parameters<typeof generate>[0] | null>(null);
+  const persistenceKey = customerId ? `hoda:fitting:${customerId}` : null;
+  function remember(value: unknown) {
+    if (persistenceKey)
+      try {
+        if (value === null) sessionStorage.removeItem(persistenceKey);
+        else sessionStorage.setItem(persistenceKey, JSON.stringify(value));
+      } catch {}
+  }
+  useEffect(() => {
+    if (!persistenceKey) return;
+    let live = true;
+    try {
+      const value = sessionStorage.getItem(persistenceKey);
+      if (!value) return;
+      const old = JSON.parse(value);
+      if (
+        typeof old.modelId === "string" &&
+        models.some((m) => m.id === old.modelId)
+      )
+        setModelId(old.modelId);
+      if (Array.isArray(old.selection))
+        setSelection(
+          old.selection
+            .filter((id: unknown) => typeof id === "string")
+            .slice(0, 4),
+        );
+      if (old.request) {
+        const parsed = requestSchema.safeParse(old.request);
+        if (parsed.success) pending.current = parsed.data;
+      }
+      if (typeof old.sessionId === "string" && old.sessionId.length <= 100) {
+        setSession({ id: old.sessionId, status: "QUEUED", imageUrl: null });
+        void readSession(old.sessionId)
+          .then((r) => {
+            if (!live) return;
+            if (r.ok && r.session) {
+              setSession(r.session);
+              if (r.balance) setBalance(r.balance);
+            } else if (
+              r.error === "NOT_FOUND" ||
+              r.error === "LOGIN_REQUIRED"
+            ) {
+              remember(null);
+              setSession(null);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch {
+      remember(null);
+    }
+    return () => {
+      live = false;
+    };
+  }, [persistenceKey]);
+
   const model = models.find((m) => m.id === modelId),
     gender =
       model?.kind === "WOMAN"
@@ -131,12 +190,14 @@ export function FittingRoom({
     };
   }, [session, readSession]);
   function changeModel(id: string) {
+    remember(null);
     setModelId(id);
     setSelection([]);
     setSession(null);
     setError("");
   }
   function select(productId: string, variantId: string) {
+    remember(null);
     setSelection((ids) => [
       ...ids.filter(
         (id) => all.find((p) => p.variantId === id)?.productId !== productId,
@@ -147,6 +208,7 @@ export function FittingRoom({
     setMessage("");
   }
   function removeProduct(productId: string) {
+    remember(null);
     setSelection((ids) =>
       ids.filter(
         (id) => all.find((v) => v.variantId === id)?.productId !== productId,
@@ -166,11 +228,13 @@ export function FittingRoom({
       confirm: true,
       expectedCostCoins: costCoins,
     };
+    remember({ request: pending.current, modelId, selection });
     try {
       const r = await generate(pending.current);
       if (r.ok && r.id) {
         setSession({ id: r.id, status: "QUEUED", imageUrl: null });
         pending.current = null;
+        remember({ sessionId: r.id, modelId, selection });
         const next = await readSession(r.id);
         if (next.ok) {
           if (next.session) setSession(next.session);
@@ -178,7 +242,10 @@ export function FittingRoom({
         }
       } else {
         setError(labels[`error_${r.error}`] ?? labels.error);
-        if (r.error !== "REQUEST_UNKNOWN") pending.current = null;
+        if (r.error !== "REQUEST_UNKNOWN") {
+          pending.current = null;
+          remember(null);
+        }
       }
     } catch {
       setError(labels.requestUnknown);
@@ -382,12 +449,7 @@ export function FittingRoom({
                 <button
                   aria-label={`${labels.remove} ${p.title}`}
                   disabled={locked}
-                  onClick={() => {
-                    setSelection((ids) =>
-                      ids.filter((id) => id !== p.variantId),
-                    );
-                    setSession(null);
-                  }}
+                  onClick={() => removeProduct(p.productId)}
                 >
                   ×
                 </button>

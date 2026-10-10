@@ -137,6 +137,14 @@ export async function saveProduct(
           marketIds: input.marketIds,
           searchText: productSearchText(input),
         } satisfies Prisma.ProductUncheckedUpdateInput;
+        if (
+          current &&
+          Boolean(current.coinPackCoins) !== Boolean(input.coinPackCoins) &&
+          (await tx.orderItem.count({
+            where: { variant: { productId: current.id } },
+          }))
+        )
+          throw new z.ZodError([]);
         const product = input.id
           ? await tx.product.update({
               where: { id: input.id },

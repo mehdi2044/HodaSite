@@ -430,6 +430,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     it("credits a snapshotted pack only after the real PAID transition and once", async () => {
       const f = await returnFixture(db, {
+        customerId: (await customer("0")).id,
         pending: true,
         quantity: 2,
         coinPackCoins: "100",
@@ -453,7 +454,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).toBe(false);
     });
     it("reclaims returned pack coins after spending and correctly refunds the pending usage", async () => {
-      const f = await returnFixture(db, { coinPackCoins: "100", quantity: 2 });
+      const f = await returnFixture(db, {
+        customerId: (await customer("0")).id,
+        coinPackCoins: "100",
+        quantity: 2,
+      });
       customers.push(f.customer.id);
       await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
       const session = await create(f.customer.id);
@@ -556,7 +561,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await configure({
         rewards: [{ marketId, spendAmount: "100", coins: "25" }],
       });
-      const f = await returnFixture(db, { quantity: 2, price: "100" });
+      const f = await returnFixture(db, {
+        customerId: (await customer("0")).id,
+        quantity: 2,
+        price: "100",
+      });
       customers.push(f.customer.id);
       await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
       expect(await balance(f.customer.id)).toBe("50");
@@ -583,6 +592,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await db.$transaction((tx) => revokeReturnedCoins(tx, f.order.id));
       expect(await balance(f.customer.id)).toBe("25");
       const pack = await returnFixture(db, {
+        customerId: (await customer("0")).id,
         coinPackCoins: "100",
         quantity: 1,
         price: "1000",
@@ -597,7 +607,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).toBe(0);
     });
     it("refunds partially revoked in-flight allocations without minting unearned coins", async () => {
-      const f = await returnFixture(db, { coinPackCoins: "50", quantity: 2 });
+      const f = await returnFixture(db, {
+        customerId: (await customer("0")).id,
+        coinPackCoins: "50",
+        quantity: 2,
+      });
       customers.push(f.customer.id);
       await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
       const sessions = await Promise.all(

@@ -210,7 +210,7 @@ export async function archiveTaxonomy(
     await withMutation(() =>
       db.$transaction(async (tx) => {
         if (parsed.kind === "category")
-          await tx.$queryRaw`SELECT pg_advisory_xact_lock(75106)`;
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(75106)`;
         if (await hasLiveReferences(tx, parsed.kind, parsed.id))
           throw new z.ZodError([]);
         if (parsed.kind === "sizeGuide")

@@ -6,7 +6,7 @@ export async function validateCategoryParent(
   parentId: string | undefined,
 ) {
   // Serialize all parent changes: two concurrent individually valid moves must not form a cycle.
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(75106)`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(75106)`;
   const seen = new Set(id ? [id] : []);
   let cursor = parentId;
   while (cursor) {

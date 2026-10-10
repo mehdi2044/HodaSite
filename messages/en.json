@@ -2374,6 +2374,7 @@
     "saveSettings": "Save settings",
     "manualGrant": "Manual coin grants",
     "recipients": "Choose one or more customers",
+    "customerSearch": "Search customers",
     "recipientGroup": "Or a saved customer segment",
     "grantAmount": "Coins per recipient",
     "grantReason": "Grant reason",

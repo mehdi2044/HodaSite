@@ -63,7 +63,7 @@ export async function saveFittingSettings(raw: unknown) {
   return withMutation(() =>
     db.$transaction(async (tx) => {
       await txCan(tx, userId, "ai.settings.manage");
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(75105)`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(75105)`;
       const old = await tx.integration.findUnique({
         where: { key: "fitting-room" },
       });
@@ -166,7 +166,7 @@ export async function grantFittingCoins(raw: unknown) {
         });
         if (users.length !== ids.length)
           throw new FittingError("INVALID_SELECTION");
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${input.requestKey}))`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.requestKey}))`;
         const prior = await tx.auditLog.findFirst({
           where: { action: "fitting.coins.grant", entityId: input.requestKey },
         });

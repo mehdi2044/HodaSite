@@ -126,6 +126,7 @@ export default async function Page({
         <button className="button">{t("search")}</button>
       </form>
       <FittingRoom
+        customerId={c.id}
         models={models}
         products={products}
         ownedProducts={owned}
