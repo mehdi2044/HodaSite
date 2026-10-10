@@ -3,7 +3,7 @@ import { z } from "zod";
 export const coins = z
   .string()
   .regex(/^\d{1,10}(?:\.\d{1,4})?$/)
-  .refine((v) => new Decimal(v).gte(0));
+  .pipe(z.string().refine((v) => new Decimal(v).gte(0)));
 const positive = coins.refine((v) => new Decimal(v).gt(0));
 const localized = z.object({
   fa: z.string().trim().min(1).max(120),

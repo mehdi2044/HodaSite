@@ -15,12 +15,19 @@ describe("optional fitting-room contracts", () => {
     expect(c.coinSalesEnabled).toBe(false);
     expect(c.costCoins).toBe("12.5");
   });
-  it.each(["-1", "0", "0.00000", "12.55555", "1e3", "99999999999"])(
-    "rejects unsafe generation cost %s",
-    (cost) => {
-      expect(configSchema.safeParse({ costCoins: cost }).success).toBe(false);
-    },
-  );
+  it.each([
+    "-1",
+    "0",
+    "0.00000",
+    "12.55555",
+    "1e3",
+    "99999999999",
+    "",
+    "invalid",
+    "1.2.3",
+  ])("rejects unsafe generation cost %s", (cost) => {
+    expect(configSchema.safeParse({ costCoins: cost }).success).toBe(false);
+  });
   it("requires confirmation, quoted charge and unique variants", () => {
     const r = {
       requestKey: "2b5c8b48-4ad6-4826-a58f-aa2433e0a443",
