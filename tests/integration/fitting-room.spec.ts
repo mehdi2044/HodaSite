@@ -55,6 +55,8 @@ import {
   saveFittingSettings,
   fittingSettings,
   grantFittingCoins,
+  fittingRecipients,
+  fittingRecipientMarkets,
 } from "@/modules/fitting/settings";
 import { renderFitting, registerFittingJobs } from "@/modules/fitting/worker";
 import { JobDeferredError, runJobs } from "@/modules/jobs";
@@ -1116,6 +1118,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       state.actor = null;
       await expect(
         grantFittingCoins({
+          marketId,
           requestKey: randomUUID(),
           customerIds: [c.id],
           amount: "100",
@@ -1145,6 +1148,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).rejects.toThrow("STALE");
       const request = {
+        marketId,
         requestKey: randomUUID(),
         customerIds: [a.id, b.id],
         amount: "12.5001",
@@ -1152,6 +1156,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         reason: "loyalty",
         confirm: true,
       };
+      await db.customer.updateMany({
+        where: { id: { in: [a.id, b.id] } },
+        data: { preferredMarketId: marketId },
+      });
       await Promise.all([
         grantFittingCoins(request),
         grantFittingCoins(request),
@@ -1161,6 +1169,170 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(
         grantFittingCoins({ ...request, amount: "20" }),
       ).rejects.toThrow("REQUEST_CONFLICT");
+    });
+    it("scopes recipient search and direct grants despite a global allow and scoped deny", async () => {
+      const other = await db.market.findUniqueOrThrow({
+        where: { code: "CA" },
+      });
+      const a = await customer("0"),
+        b = await customer("0"),
+        cartMember = await customer("0");
+      const marker = `scope-fit-${randomUUID()}`;
+      await db.customer.update({
+        where: { id: a.id },
+        data: { preferredMarketId: marketId, firstName: marker },
+      });
+      await db.customer.update({
+        where: { id: b.id },
+        data: { preferredMarketId: other.id, firstName: marker },
+      });
+      await db.customer.update({
+        where: { id: cartMember.id },
+        data: { firstName: marker },
+      });
+      await db.cart.create({
+        data: {
+          tokenHash: randomUUID(),
+          customerId: cartMember.id,
+          marketId,
+          locale: "en",
+          currency: "TRY",
+          expiresAt: new Date(Date.now() + 86400000),
+        },
+      });
+      const deny = await db.userPermissionOverride.create({
+        data: {
+          userId: ownerId,
+          permission: "crm.customer.view",
+          allow: false,
+          scope: { marketId: other.id },
+        },
+      });
+      const request = {
+        marketId,
+        requestKey: randomUUID(),
+        customerIds: [a.id, cartMember.id],
+        amount: "12.5",
+        expiresAt: null,
+        reason: "scoped fixture",
+        confirm: true,
+      };
+      try {
+        expect(
+          (await fittingRecipientMarkets()).some((m) => m.id === other.id),
+        ).toBe(false);
+        expect(
+          (await fittingRecipients(marketId, marker)).map((c) => c.id).sort(),
+        ).toEqual([a.id, cartMember.id].sort());
+        await expect(fittingRecipients(other.id, marker)).rejects.toThrow(
+          "FORBIDDEN",
+        );
+        await expect(
+          grantFittingCoins({
+            ...request,
+            marketId: other.id,
+            customerIds: [b.id],
+          }),
+        ).rejects.toThrow("FORBIDDEN");
+        await expect(
+          grantFittingCoins({ ...request, customerIds: [a.id, b.id] }),
+        ).rejects.toThrow("INVALID_SELECTION");
+        expect(
+          await db.fittingCoinGrant.count({
+            where: { customerId: { in: [a.id, b.id, cartMember.id] } },
+          }),
+        ).toBe(0);
+        await grantFittingCoins(request);
+        expect(await balance(a.id)).toBe("12.5");
+        expect(await balance(cartMember.id)).toBe("12.5");
+        expect(await balance(b.id)).toBe("0");
+      } finally {
+        await db.userPermissionOverride.delete({ where: { id: deny.id } });
+      }
+    });
+    it("requires segment and customer membership in the same explicitly authorized market", async () => {
+      const other = await db.market.findUniqueOrThrow({
+        where: { code: "CA" },
+      });
+      const a = await customer("0"),
+        b = await customer("0"),
+        marker = `fit-group-${randomUUID()}`;
+      await db.customer.update({
+        where: { id: a.id },
+        data: { preferredMarketId: marketId },
+      });
+      await db.customer.update({
+        where: { id: b.id },
+        data: { preferredMarketId: other.id },
+      });
+      await db.crmProfile.createMany({
+        data: [a, b].map((c) => ({
+          customerId: c.id,
+          marketId,
+          tags: [marker],
+        })),
+      });
+      const definition = {
+        version: 1,
+        rules: [{ field: "tag", value: marker }],
+      };
+      const segment = await db.crmSegment.create({
+        data: { name: marker, marketId, definition },
+      });
+      const foreign = await db.crmSegment.create({
+        data: { name: marker, marketId: other.id, definition },
+      });
+      const request = {
+        marketId,
+        requestKey: randomUUID(),
+        customerIds: [],
+        segmentId: segment.id,
+        amount: "12.5",
+        expiresAt: null,
+        reason: "scoped segment fixture",
+        confirm: true,
+      };
+      await expect(
+        grantFittingCoins({ ...request, segmentId: foreign.id }),
+      ).rejects.toThrow("INVALID_SELECTION");
+      await grantFittingCoins(request);
+      await grantFittingCoins(request);
+      expect(await balance(a.id)).toBe("12.5");
+      expect(await balance(b.id)).toBe("0");
+    });
+    it("binds an idempotent manual grant request to its authorized market", async () => {
+      const other = await db.market.findUniqueOrThrow({
+        where: { code: "CA" },
+      });
+      const c = await customer("0");
+      await db.customer.update({
+        where: { id: c.id },
+        data: { preferredMarketId: marketId },
+      });
+      await db.cart.create({
+        data: {
+          tokenHash: randomUUID(),
+          customerId: c.id,
+          marketId: other.id,
+          locale: "en",
+          currency: other.currency,
+          expiresAt: new Date(Date.now() + 86400000),
+        },
+      });
+      const request = {
+        marketId,
+        requestKey: randomUUID(),
+        customerIds: [c.id],
+        amount: "12.5",
+        expiresAt: null,
+        reason: "market-bound replay",
+        confirm: true,
+      };
+      await grantFittingCoins(request);
+      await expect(
+        grantFittingCoins({ ...request, marketId: other.id }),
+      ).rejects.toThrow("REQUEST_CONFLICT");
+      expect(await balance(c.id)).toBe("12.5");
     });
     it("credits a snapshotted pack only after the real PAID transition and once", async () => {
       const f = await returnFixture(db, {

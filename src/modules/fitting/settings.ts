@@ -1,12 +1,14 @@
 import Decimal from "decimal.js";
 import { auth } from "@/modules/auth";
 import { segmentQuery } from "@/modules/crm/segment-query";
+import { membership } from "@/modules/crm/membership";
 import { lockMediaReferences } from "@/modules/media/reference-lock";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import {
   assertCan,
+  can,
   UnauthorizedError,
   evaluateAccess,
   ForbiddenError,
@@ -39,11 +41,55 @@ export async function fittingSettings() {
       })
     ).map((s) => ({
       id: s.id,
-      customerId: s.customerId,
       cost: s.costCoins.toString(),
       code: s.errorCode,
     })),
   };
+}
+export async function fittingRecipientMarkets() {
+  const userId = await actor();
+  const markets = await db.market.findMany({
+    where: { isActive: true },
+    select: { id: true, code: true },
+    orderBy: { code: "asc" },
+  });
+  const access = await Promise.all(
+    markets.map(
+      async (market) =>
+        (await can(userId, "crm.customer.view", { marketId: market.id })) &&
+        (await can(userId, "ai.settings.manage", { marketId: market.id })),
+    ),
+  );
+  return markets.filter((_, index) => access[index]);
+}
+export async function fittingRecipients(marketId: string, search = "") {
+  z.string().min(1).max(100).parse(marketId);
+  z.string().max(100).parse(search);
+  const userId = await actor();
+  await assertCan(userId, "crm.customer.view", { marketId });
+  await assertCan(userId, "ai.settings.manage", { marketId });
+  if (!(await db.market.count({ where: { id: marketId, isActive: true } })))
+    throw new FittingError("INVALID_SELECTION");
+  return db.customer.findMany({
+    where: {
+      AND: [
+        membership(marketId),
+        { isActive: true, isGuest: false },
+        search
+          ? {
+              OR: [
+                { email: { contains: search, mode: "insensitive" } },
+                { firstName: { contains: search, mode: "insensitive" } },
+                { lastName: { contains: search, mode: "insensitive" } },
+              ],
+            }
+          : {},
+      ],
+    },
+    select: { id: true, firstName: true, lastName: true, email: true },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    take: 200,
+  });
 }
 export async function saveFittingSettings(raw: unknown) {
   const v = z
@@ -118,6 +164,7 @@ export async function saveFittingSettings(raw: unknown) {
 const grantSchema = z
   .object({
     requestKey: z.string().uuid(),
+    marketId: z.string().min(1).max(100),
     customerIds: z.array(z.string().min(1)).max(1000),
     segmentId: z.string().min(1).optional(),
     amount: coins.refine((v) => new Decimal(v).gt(0)),
@@ -129,33 +176,50 @@ const grantSchema = z
 export async function grantFittingCoins(raw: unknown) {
   const input = grantSchema.parse(raw),
     userId = await actor();
-  await assertCan(userId, "crm.customer.view");
+  await assertCan(userId, "crm.customer.view", { marketId: input.marketId });
+  await assertCan(userId, "ai.settings.manage", { marketId: input.marketId });
   if (input.expiresAt && new Date(input.expiresAt) <= new Date())
     throw new FittingError("INVALID_SELECTION");
   return withMutation(() =>
     db.$transaction(
       async (tx) => {
-        await txCan(tx, userId, "ai.settings.manage");
-        await txCan(tx, userId, "crm.customer.view");
+        await txCan(tx, userId, "ai.settings.manage", {
+          marketId: input.marketId,
+        });
+        await txCan(tx, userId, "crm.customer.view", {
+          marketId: input.marketId,
+        });
+        if (
+          !(await tx.market.count({
+            where: { id: input.marketId, isActive: true },
+          }))
+        )
+          throw new FittingError("INVALID_SELECTION");
         let ids = [...new Set(input.customerIds)].sort();
         if (input.segmentId) {
-          const segment = await tx.crmSegment.findUniqueOrThrow({
-            where: { id: input.segmentId },
-          });
           await txCan(tx, userId, "crm.segment.manage", {
-            marketId: segment.marketId,
+            marketId: input.marketId,
           });
+          const segment = await tx.crmSegment.findFirst({
+            where: { id: input.segmentId, marketId: input.marketId },
+          });
+          if (!segment) throw new FittingError("INVALID_SELECTION");
           await tx.$executeRaw`SET LOCAL statement_timeout='5000ms'`;
           const predicate = segmentQuery(segment.marketId, segment.definition);
           const members = await tx.$queryRaw<
             { id: string }[]
-          >`SELECT c.id ${predicate} ORDER BY c.id LIMIT 1001`;
+          >`SELECT c.id ${predicate} AND NOT c."isGuest" ORDER BY c.id LIMIT 1001`;
           if (members.length > 1000) throw new FittingError("GROUP_LIMIT");
           ids = members.map((m) => m.id);
         }
         if (!ids.length) throw new FittingError("INVALID_SELECTION");
         const users = await tx.customer.findMany({
-          where: { id: { in: ids }, isActive: true, isGuest: false },
+          where: {
+            AND: [
+              membership(input.marketId),
+              { id: { in: ids }, isActive: true, isGuest: false },
+            ],
+          },
           select: { id: true },
         });
         if (users.length !== ids.length)
@@ -165,6 +229,7 @@ export async function grantFittingCoins(raw: unknown) {
           where: { action: "fitting.coins.grant", entityId: input.requestKey },
         });
         const after = {
+          marketId: input.marketId,
           customerIds: ids,
           amount: input.amount,
           expiresAt: input.expiresAt,
@@ -175,6 +240,7 @@ export async function grantFittingCoins(raw: unknown) {
             // JSON object key order is not a comparison contract.
             const previous = prior.after as typeof after;
             if (
+              previous.marketId !== after.marketId ||
               previous.amount !== after.amount ||
               previous.expiresAt !== after.expiresAt ||
               previous.reason !== after.reason ||

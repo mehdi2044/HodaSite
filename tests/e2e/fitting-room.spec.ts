@@ -173,6 +173,76 @@ test("admin config toggle and fractional charge persist through real authorized 
   }
 });
 
+test("fitting recipient search hides scoped-denied customers even with a forged market URL", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const owner = await db.user.findUniqueOrThrow({
+    where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
+  });
+  const market = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+  const other = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+  const marker = `fit-scope-${randomUUID()}`;
+  const allowed = await db.customer.create({
+    data: {
+      email: `${marker}-tr@example.com`,
+      preferredMarketId: market.id,
+      isGuest: false,
+    },
+  });
+  const denied = await db.customer.create({
+    data: {
+      email: `${marker}-ca@example.com`,
+      preferredMarketId: other.id,
+      isGuest: false,
+    },
+  });
+  const override = await db.userPermissionOverride.create({
+    data: {
+      userId: owner.id,
+      permission: "crm.customer.view",
+      allow: false,
+      scope: { marketId: other.id },
+    },
+  });
+  try {
+    await page.goto("/admin/login");
+    await page
+      .locator("[name=email]")
+      .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+    await page
+      .locator("[name=password]")
+      .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+    await fillAdminMfa(page);
+    await page.getByRole("button", { name: /ورود|Login|Giriş/ }).click();
+    await expect(page).toHaveURL(/\/admin\/?$/);
+    await page.goto(
+      `/admin/settings/fitting?marketId=${market.id}&q=${marker}`,
+    );
+    const recipients = page.locator("select[multiple]");
+    await expect(
+      recipients.locator(`option[value="${allowed.id}"]`),
+    ).toContainText(allowed.email);
+    await expect(
+      recipients.locator(`option[value="${denied.id}"]`),
+    ).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText(denied.email);
+    await expect(
+      page.locator(`select[name=marketId] option[value="${other.id}"]`),
+    ).toHaveCount(0);
+    await page.goto(`/admin/settings/fitting?marketId=${other.id}&q=${marker}`);
+    await expect(recipients.locator("option")).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText(denied.email);
+    await expect(
+      page.getByRole("button", { name: fa.fitting.grant, exact: true }),
+    ).toBeDisabled();
+  } finally {
+    await db.userPermissionOverride.delete({ where: { id: override.id } });
+    await db.customer.deleteMany({
+      where: { id: { in: [allowed.id, denied.id] } },
+    });
+  }
+});
 test("public coin-pack links disappear immediately when either sale toggle is disabled", async ({
   page,
 }) => {

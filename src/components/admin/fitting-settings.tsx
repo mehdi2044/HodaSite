@@ -15,6 +15,7 @@ export function FittingSettings({
   keyReady,
   markets,
   customers,
+  grantMarketId,
   segments,
   mediaUrls,
   review,
@@ -24,11 +25,11 @@ export function FittingSettings({
   keyReady: boolean;
   markets: { id: string; code: string; currency: string }[];
   customers: { id: string; label: string }[];
+  grantMarketId: string | null;
   segments: { id: string; name: string; marketId: string }[];
   mediaUrls: Record<string, string>;
   review: {
     id: string;
-    customerId: string;
     cost: string;
     code: string | null;
   }[];
@@ -395,6 +396,7 @@ export function FittingSettings({
         <Button
           disabled={
             busy ||
+            !grantMarketId ||
             !confirmed ||
             (!recipientIds.length && !segmentId) ||
             !reason.trim()
@@ -403,6 +405,7 @@ export function FittingSettings({
             run(() =>
               grantCoinsAction({
                 requestKey: grantKey,
+                marketId: grantMarketId,
                 customerIds: recipientIds,
                 segmentId: segmentId || undefined,
                 amount,

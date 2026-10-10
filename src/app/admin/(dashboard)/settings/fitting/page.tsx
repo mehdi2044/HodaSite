@@ -3,56 +3,39 @@ import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { fittingSettings } from "@/modules/fitting/settings";
+import {
+  fittingSettings,
+  fittingRecipientMarkets,
+  fittingRecipients,
+} from "@/modules/fitting/settings";
 import { FittingSettings } from "@/components/admin/fitting-settings";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; marketId?: string }>;
 }) {
   const s = await auth();
   if (!s?.user?.id || !(await can(s.user.id, "ai.settings.manage")))
     redirect("/admin");
-  const config = await fittingSettings(),
-    grantAllowed = await can(s.user.id, "crm.customer.view");
+  const config = await fittingSettings();
   const t = await getTranslations("fitting");
-  const q = (await searchParams).q?.trim().slice(0, 100) ?? "";
-  const allMarkets = await db.market.findMany({ select: { id: true } });
-  const segmentAccess = await Promise.all(
-    allMarkets.map(async (m) =>
-      (await can(s.user.id, "crm.segment.manage", { marketId: m.id }))
-        ? m.id
-        : null,
-    ),
-  );
+  const query = await searchParams;
+  const q = query.q?.trim().slice(0, 100) ?? "";
+  const grantMarkets = await fittingRecipientMarkets();
+  const grantMarketId =
+    query.marketId !== undefined
+      ? (grantMarkets.find((m) => m.id === query.marketId)?.id ?? null)
+      : (grantMarkets[0]?.id ?? null);
+  const segmentAllowed = grantMarketId
+    ? await can(s.user.id, "crm.segment.manage", { marketId: grantMarketId })
+    : false;
   const [markets, customers, segments, media] = await Promise.all([
     db.market.findMany({ select: { id: true, code: true, currency: true } }),
-    grantAllowed
-      ? db.customer.findMany({
-          where: {
-            isActive: true,
-            isGuest: false,
-            ...(q
-              ? {
-                  OR: [
-                    { email: { contains: q, mode: "insensitive" as const } },
-                    {
-                      firstName: { contains: q, mode: "insensitive" as const },
-                    },
-                    { lastName: { contains: q, mode: "insensitive" as const } },
-                  ],
-                }
-              : {}),
-          },
-          select: { id: true, firstName: true, lastName: true, email: true },
-          orderBy: { createdAt: "desc" },
-          take: 200,
-        })
-      : [],
-    grantAllowed
+    grantMarketId ? fittingRecipients(grantMarketId, q) : [],
+    grantMarketId && segmentAllowed
       ? db.crmSegment.findMany({
           where: {
-            marketId: { in: segmentAccess.filter((id): id is string => !!id) },
+            marketId: grantMarketId,
           },
           select: { id: true, name: true, marketId: true },
           orderBy: { name: "asc" },
@@ -65,7 +48,23 @@ export default async function Page({
   ]);
   return (
     <>
-      <form className="mb-6 flex gap-3">
+      <form className="mb-6 flex flex-wrap items-end gap-3">
+        <label>
+          {t("recipientMarket")}
+          <select
+            className="input"
+            name="marketId"
+            defaultValue={grantMarketId ?? ""}
+            disabled={!grantMarkets.length}
+          >
+            <option value="">{t("none")}</option>
+            {grantMarkets.map((market) => (
+              <option key={market.id} value={market.id}>
+                {market.code}
+              </option>
+            ))}
+          </select>
+        </label>
         <input
           className="input"
           name="q"
@@ -75,11 +74,12 @@ export default async function Page({
         <button className="button">{t("customerSearch")}</button>
       </form>
       <FittingSettings
-        key={config.integration ?? "new"}
+        key={`${config.integration ?? "new"}:${grantMarketId ?? "none"}`}
         initial={config.config}
         version={config.integration}
         keyReady={config.keyReady}
         markets={markets}
+        grantMarketId={grantMarketId}
         customers={customers.map((c) => ({
           id: c.id,
           label: `${c.firstName} ${c.lastName} · ${c.email}`,

@@ -2373,6 +2373,7 @@
     "confirmAdmin": "I confirm these settings or coin grants",
     "saveSettings": "Save settings",
     "manualGrant": "Manual coin grants",
+    "recipientMarket": "Recipient market",
     "recipients": "Choose one or more customers",
     "customerSearch": "Search customers",
     "recipientGroup": "Or a saved customer segment",
