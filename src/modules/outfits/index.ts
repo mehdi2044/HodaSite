@@ -7,13 +7,13 @@ import {
   catalogProductInclude,
   type CatalogLocale,
 } from "@/modules/catalog";
-import { getDisplayPrice } from "@/modules/pricing";
+import { getVariantDisplayPrices } from "@/modules/pricing";
 import { getHomepage, type HomepageBlock } from "@/modules/content/homepage";
 import { CommerceError } from "@/modules/orders/state";
 import type { PreparedLookView } from "./types";
 
 export type ShopLookBlock = Extract<HomepageBlock, { type: "ShopLook" }>;
-type Market = Parameters<typeof getDisplayPrice>[2];
+type Market = Parameters<typeof getVariantDisplayPrices>[1];
 
 /** Live market/catalog/stock reads: prepared artwork never grants sellability. */
 export async function preparedLooks(
@@ -55,7 +55,25 @@ export async function preparedLooks(
   ]);
   const images = new Map(media.map((image) => [image.id, image]));
   const byId = new Map(products.map((product) => [product.id, product]));
-  const priceCache = new Map<string, Promise<string>>();
+  const chosenColors = new Map<string, Set<string>>();
+  for (const look of block.looks)
+    for (const item of look.items) {
+      const colors = chosenColors.get(item.productId) ?? new Set<string>();
+      colors.add(item.colorId);
+      chosenColors.set(item.productId, colors);
+    }
+  const prices = await getVariantDisplayPrices(
+    products.map((product) => ({
+      ...product,
+      variants: product.variants.filter(
+        (variant) =>
+          chosenColors.get(product.id)?.has(variant.colorId) &&
+          !variant.color.deletedAt &&
+          !variant.size.deletedAt,
+      ),
+    })),
+    market,
+  );
   const result: PreparedLookView[] = [];
   for (const look of block.looks) {
     const image = images.get(look.mediaId);
@@ -94,29 +112,20 @@ export async function preparedLooks(
           colorName: catalogText(color.nameI18n, locale),
           colorHex: color.hex,
           media: picture,
-          variants: await Promise.all(
-            eligible.map(async (variant) => {
-              if (!priceCache.has(variant.id))
-                priceCache.set(
-                  variant.id,
-                  getDisplayPrice(product, variant, market).then(
-                    (price) => price.amount,
-                  ),
-                );
-              return {
-                id: variant.id,
-                size: variant.size.value,
-                amount: await priceCache.get(variant.id)!,
-                available: Math.max(
+          variants: eligible.map((variant) => {
+            return {
+              id: variant.id,
+              size: variant.size.value,
+              amount: prices.get(variant.id)!.amount,
+              available: Math.max(
+                0,
+                variant.stockItems.reduce(
+                  (sum, stock) => sum + stock.onHand - stock.reserved,
                   0,
-                  variant.stockItems.reduce(
-                    (sum, stock) => sum + stock.onHand - stock.reserved,
-                    0,
-                  ),
                 ),
-              };
-            }),
-          ),
+              ),
+            };
+          }),
         };
       }),
     );

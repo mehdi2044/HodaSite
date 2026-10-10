@@ -408,6 +408,10 @@ test("saving settings after a lost manual-grant response preserves the original 
       .getByRole("button", { name: fa.fitting.saveSettings, exact: true })
       .click();
     await expect(page.getByRole("status")).toHaveText(fa.fitting.saved);
+    await expect(page.locator("[data-config-version]")).not.toHaveAttribute(
+      "data-config-version",
+      old.updatedAt.toISOString(),
+    );
     await expect(page.locator("select[multiple]")).toHaveValues([customer.id]);
     await page.getByLabel(fa.fitting.confirmAdmin, { exact: true }).check();
     await page
@@ -426,11 +430,14 @@ test("saving settings after a lost manual-grant response preserves the original 
       }),
     ).toBe(1);
   } finally {
-    await page.unroute("**/admin/settings/fitting**");
-    await db.integration.update({
-      where: { id: old.id },
-      data: { isActive: old.isActive, config: old.config! },
-    });
+    try {
+      if (!page.isClosed()) await page.unroute("**/admin/settings/fitting**");
+    } finally {
+      await db.integration.update({
+        where: { id: old.id },
+        data: { isActive: old.isActive, config: old.config! },
+      });
+    }
   }
 });
 test("public coin-pack links disappear immediately when either sale toggle is disabled", async ({

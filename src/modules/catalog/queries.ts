@@ -327,21 +327,25 @@ export async function categoryFamily(id: string) {
     where: { deletedAt: null },
     select: { id: true, parentId: true },
   });
-  const found = new Set(
-    categories.some((category) => category.id === id) ? [id] : [],
-  );
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const category of categories)
-      if (
-        category.parentId &&
-        found.has(category.parentId) &&
-        !found.has(category.id)
-      ) {
-        found.add(category.id);
-        changed = true;
-      }
+  const children = new Map<string, string[]>();
+  const found = new Set<string>();
+  let exists = false;
+  for (const category of categories) {
+    if (category.id === id) exists = true;
+    const parentId = category.parentId;
+    if (parentId) {
+      const list = children.get(parentId) ?? [];
+      list.push(category.id);
+      children.set(parentId, list);
+    }
+  }
+  if (!exists) return [];
+  const pending = [id];
+  for (let index = 0; index < pending.length; index++) {
+    const current = pending[index];
+    if (found.has(current)) continue;
+    found.add(current);
+    for (const child of children.get(current) ?? []) pending.push(child);
   }
   return [...found];
 }

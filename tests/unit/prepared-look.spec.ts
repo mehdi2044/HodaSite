@@ -1,6 +1,7 @@
 vi.mock("@/modules/pricing", () => ({
   getDisplayPrice: vi.fn(),
   getDisplayPrices: vi.fn(),
+  getVariantDisplayPrices: vi.fn(),
 }));
 vi.mock("@/modules/orders", () => ({
   CommerceError: class CommerceError extends Error {
@@ -32,7 +33,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/modules/cart", () => ({ addCartItems: mocks.add }));
-import { getDisplayPrice } from "@/modules/pricing";
+import { getDisplayPrice, getVariantDisplayPrices } from "@/modules/pricing";
 import { addPreparedLook, preparedLooks } from "@/modules/outfits";
 import { categoryRootId } from "@/modules/catalog/tree";
 import { categoryFamily } from "@/modules/catalog/queries";
@@ -102,9 +103,14 @@ describe("prepared look server contract", () => {
           ],
         },
       ]);
-      vi.mocked(getDisplayPrice).mockResolvedValue({ amount: "20" } as Awaited<
-        ReturnType<typeof getDisplayPrice>
-      >);
+      vi.mocked(getVariantDisplayPrices).mockResolvedValue(
+        new Map([
+          [
+            "charcoal-m",
+            { amount: "20" } as Awaited<ReturnType<typeof getDisplayPrice>>,
+          ],
+        ]),
+      );
       const looks = await preparedLooks(
         {
           type: "ShopLook",
@@ -126,6 +132,9 @@ describe("prepared look server contract", () => {
       );
       expect(looks[0].items[0].colorName).toBe("Charcoal");
       expect(looks[0].items[0].variants[0].id).toBe("charcoal-m");
+      expect(looks[0].items[0].variants[0].amount).toBe("20");
+      expect(getVariantDisplayPrices).toHaveBeenCalledTimes(1);
+      expect(getDisplayPrice).not.toHaveBeenCalled();
     },
   );
   it("accepts selected pieces once and uses live market eligibility", async () => {
@@ -210,5 +219,30 @@ describe("prepared look server contract", () => {
     expect(
       homepageBlocksSchema.safeParse([styleLookBlock, styleLookBlock]).success,
     ).toBe(false);
+  });
+  it("traverses deep child-before-parent and very wide trees within a linear scan budget", async () => {
+    const count = 10000;
+    let parentReads = 0;
+    const rows = Array.from({ length: count }, (_, i) => ({
+      id: `deep-${i}`,
+      get parentId() {
+        parentReads++;
+        return i === 0 ? null : `deep-${i - 1}`;
+      },
+    })).reverse();
+    mocks.categories.mockResolvedValue(rows);
+    const family = await categoryFamily("deep-0");
+    expect(family).toHaveLength(count);
+    expect(family[0]).toBe("deep-0");
+    expect(family.at(-1)).toBe(`deep-${count - 1}`);
+    expect(parentReads).toBeLessThanOrEqual(10 * count);
+    mocks.categories.mockResolvedValue([
+      { id: "wide", parentId: null },
+      ...Array.from({ length: 70000 }, (_, i) => ({
+        id: `wide-${i}`,
+        parentId: "wide",
+      })),
+    ]);
+    expect(await categoryFamily("wide")).toHaveLength(70001);
   });
 });

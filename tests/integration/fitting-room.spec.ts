@@ -576,7 +576,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await db.fittingSession.count({ where: { customerId: c.id } }),
       ).toBe(0);
     });
-    it("defers interrupted paid rendering through maintenance and reviews it without redispatch", async () => {
+    it("defers new jobs during maintenance and completes admitted rendering without redispatch", async () => {
       const c = await customer(),
         s = await create(c.id);
       const provider = {
@@ -594,12 +594,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         },
       });
       try {
+        state.maintenance = true;
         await runJobs(["fitting-render"]);
         const deferred = await db.job.findUniqueOrThrow({
           where: { id: job.id },
         });
         expect(deferred.status).toBe("PENDING");
         expect(deferred.attempts).toBe(0);
+        expect(provider.render).not.toHaveBeenCalled();
         state.maintenance = false;
         await db.job.update({
           where: { id: job.id },
@@ -607,22 +609,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
         await runJobs(["fitting-render"]);
         const fresh = await db.job.findUniqueOrThrow({ where: { id: job.id } });
-        expect(fresh.status).toBe("PENDING");
+        expect(fresh.status).toBe("DONE");
         expect(fresh.attempts).toBe(0);
-        expect(fresh.runAt.getTime()).toBeGreaterThan(Date.now());
-        await db.fittingSession.update({
-          where: { id: s.id },
-          data: { startedAt: new Date(Date.now() - 6 * 60000) },
-        });
-        await db.job.update({
-          where: { id: job.id },
-          data: { runAt: new Date(0) },
-        });
+        expect(state.maintenance).toBe(true);
+        expect((await sessionView(c.id, s.id)).status).toBe("DONE");
+        state.maintenance = false;
         await runJobs(["fitting-render"]);
         expect(
           (await db.job.findUniqueOrThrow({ where: { id: job.id } })).status,
         ).toBe("DONE");
-        expect((await sessionView(c.id, s.id)).status).toBe("REVIEW");
+        expect((await sessionView(c.id, s.id)).status).toBe("DONE");
         expect(provider.render).toHaveBeenCalledTimes(1);
         expect(await balance(c.id)).toBe("87.5");
       } finally {
@@ -1030,11 +1026,17 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                 payload: { path: ["sessionId"], equals: s.id },
               },
             });
+            const originalDelete = storage.delete.bind(storage);
+            let failed = false;
             const remove = vi
               .spyOn(storage, "delete")
-              .mockRejectedValueOnce(
-                new Error("fixture transient cleanup failure"),
-              );
+              .mockImplementation(async (key) => {
+                if (key === session.storageKey && !failed) {
+                  failed = true;
+                  throw new Error("fixture transient cleanup failure");
+                }
+                return originalDelete(key);
+              });
             try {
               await runJobs(["fitting-output-purge"]);
               const retry = await db.job.findUniqueOrThrow({

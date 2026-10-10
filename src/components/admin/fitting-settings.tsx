@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { FittingConfig } from "@/modules/fitting/contracts";
 import { MediaPicker } from "./media-picker";
@@ -45,14 +45,14 @@ export function FittingSettings({
     [amount, setAmount] = useState("100"),
     [reason, setReason] = useState(""),
     [expiry, setExpiry] = useState("");
-  const configVersion = useRef(version);
-  useEffect(() => {
-    if (configVersion.current !== version) {
-      configVersion.current = version;
-      setConfig(initial);
-      setConfirmed(false);
-    }
-  }, [initial, version]);
+  const [configVersion, setConfigVersion] = useState(version);
+  // Apply refreshed settings before children commit. A delayed effect could
+  // clear a confirmation the administrator has just checked after saving.
+  if (configVersion !== version) {
+    setConfigVersion(version);
+    setConfig(initial);
+    setConfirmed(false);
+  }
   const set = (patch: Partial<FittingConfig>) =>
     setConfig((c) => ({ ...c, ...patch }));
   async function run(
@@ -81,7 +81,7 @@ export function FittingSettings({
     }
   }
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6" data-config-version={version ?? ""}>
       <header>
         <h1 className="text-2xl font-semibold">{t("adminTitle")}</h1>
         <p className="muted mt-2">{t("adminHelp")}</p>
