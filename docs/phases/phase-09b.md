@@ -8,6 +8,14 @@ The previous preparation is not completion. Work starts from PR #52's merge
 `c93cc624212d5028fc5bea82b357de9f56f79b95` on
 `phase/09b-scenario-promotion-engine`. No other executor is assigned by this PR.
 
+**Current delivery status — 2026-10-10:** 09B implementation and technical
+acceptance are complete. PR #54 merged as
+`6a05440fb17441dc18490874d7b745434da44937`; #53 is closed as completed.
+All nine review conversations are resolved and the exact reviewed head has
+green CI and a no-blocker AI review. See the
+[closure evidence](../reviews/PHASE09B_CLOSURE_2026-10-10.md).
+Phase 09 overall and real-environment release acceptance remain separate.
+
 ## Delivery sequence and current status
 
 1. **Implemented, offline only:** D71 and strict version-1 contracts; pure rule
@@ -58,9 +66,11 @@ The previous preparation is not completion. Work starts from PR #52's merge
    Permission-aware access, contextual helpers, examples and warnings use FA/TR/EN.
    Bundle/gift scope remains existing-basket multi-buy under D71; automatic gift
    insertion and separate bundle pricing are explicitly not implemented.
-7. **Acceptance gates:** final local results and current-head CI are recorded in
-   PROGRESS and PR #54. Local/S3 restore and D70 review remain required. Keep #53
-   open through review; do not declare Phase 09 complete or deploy this branch.
+7. **Technical acceptance completed:** current-head CI, Local/S3 restore and
+   the D70 review/conversation gates passed before PR #54 merged. #53 is closed.
+   Mehdi expressly authorized Merge and all closure steps for this task; the
+   one-task exception does not change general D70 governance. Do not declare
+   Phase 09 overall complete or infer deployment authorization from this closure.
    [Admin delivery / limits](../reviews/PHASE09B_ADMIN_REVIEW.md).
 
 ## Required acceptance (not waived by the first increment)
@@ -86,8 +96,9 @@ Evaluation has no ambient clock, database, network or coupon-consuming side
 effect. Reason codes are an internal API and must be translated by the eventual
 UI. Do not expose rejected promotion/segment details on a public route.
 
-D72 adds migration `20261003160000_phase09b_promotions`. Apply/test only against
-disposable `_test` databases while this PR is Draft. Test
+D72 adds migration `20261003160000_phase09b_promotions`. Development/CI validation
+uses disposable `_test` databases. Target-environment migration requires the
+separate release workflow, pre-deploy backup and acceptance evidence. Test
 `tests/integration/phase09b-promotions.spec.ts` with `TEST_DATABASE_URL` set;
 use UTF-8, PostgreSQL session timezone UTC and the documented test-only secrets.
 No Preview sync or deployment. Rollback must retain persistent evidence, using
@@ -98,5 +109,6 @@ compatible code instead of dropping the new tables. This is an implementation no
 Loyalty/tiers/referrals (09C), campaigns/sending/journeys (09D), return/review
 expansion (09E), #48 storefront redesign, #49 admin IA redesign, phases 10/11
 and infrastructure purchase/deployment are not part of #53. Real-environment
-acceptance and owner visual acceptance stay open. D70 merge gates remain active;
-Codex never merges its own implementation PR.
+acceptance and owner visual acceptance stay open. General D70 merge governance
+remains active; the task-specific owner authorization is recorded in the closure
+report and is not standing self-merge permission.
