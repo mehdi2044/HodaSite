@@ -8,8 +8,7 @@ import {
 } from "@/modules/catalog";
 import { getDisplayPrice } from "@/modules/pricing";
 import { getHomepage, type HomepageBlock } from "@/modules/content/homepage";
-import { CommerceError } from "@/modules/orders";
-import { addCartItems } from "@/modules/cart";
+import { CommerceError } from "@/modules/orders/state";
 import type { PreparedLookView } from "./types";
 
 export type ShopLookBlock = Extract<HomepageBlock, { type: "ShopLook" }>;
@@ -193,6 +192,7 @@ export async function addPreparedLook(
     )
   )
     throw new CommerceError("VALIDATION");
+  const { addCartItems } = await import("@/modules/cart");
   await addCartItems(locale, variantIds);
 }
 

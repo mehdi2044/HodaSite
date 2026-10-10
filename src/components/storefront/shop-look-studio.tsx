@@ -140,7 +140,7 @@ function LookSelection({
           <ResponsiveImage
             media={look.media}
             locale={locale}
-            role="editorial"
+            role="full"
             sizes="(min-width:1024px) 42vw, 78vw"
             className="look-model-image"
           />
@@ -156,9 +156,7 @@ function LookSelection({
             onFocus={() => setFocused(item.productId)}
             onClick={() => {
               setFocused(item.productId);
-              document
-                .getElementById(`${uid}-${item.productId}-size`)
-                ?.focus({ preventScroll: true });
+              document.getElementById(`${uid}-${item.productId}-size`)?.focus();
             }}
             aria-label={`${labels.size}: ${item.title}`}
           >
