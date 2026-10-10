@@ -286,10 +286,21 @@ export async function cancelOrder(
         ))
     )
       return;
+    // Use the same source-order lock as return settlements before releasing
+    // credit or changing the original purchase's service-unit entitlement.
+    const cancelledExchange = order.kind === "EXCHANGE" && !order.paidAt;
+    if (cancelledExchange) {
+      const { lockRewardSource } = await import("@/modules/fitting/ledger");
+      await lockRewardSource(tx, order.id);
+    }
     await transition(tx, order, "CANCELLED", userId, reason);
     await releaseCancelledOrderPromotions(tx, order.id);
     await releaseOrderInventory(tx, order.id);
     await releaseCredit(tx, order.id);
+    if (cancelledExchange) {
+      const { revokeReturnedCoins } = await import("@/modules/fitting");
+      await revokeReturnedCoins(tx, order.id);
+    }
     await tx.payment.updateMany({
       where: { orderId, status: { in: ["PENDING", "SUBMITTED"] } },
       data: { status: "VOIDED" },
@@ -365,3 +376,4 @@ export async function extendOrderHold(
     });
   });
 }
+

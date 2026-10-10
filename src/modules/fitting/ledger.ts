@@ -286,18 +286,37 @@ export async function allowances(
   );
   return day;
 }
+function usableGrantWhere(
+  customerId: string,
+  now: Date,
+): Prisma.FittingCoinGrantWhereInput {
+  return {
+    customerId,
+    balance: { gt: 0 },
+    revokedAt: null,
+    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+  };
+}
+export async function usableCoinBalance(
+  tx: Prisma.TransactionClient,
+  customerId: string,
+  now: Date,
+) {
+  // PostgreSQL SUM(numeric) retains all four decimal places even when the
+  // combined balance exceeds an individual numeric(18,4) grant's range.
+  const result = await tx.fittingCoinGrant.aggregate({
+    where: usableGrantWhere(customerId, now),
+    _sum: { balance: true },
+  });
+  return result._sum.balance?.toFixed() ?? "0";
+}
 export async function usableGrants(
   tx: Prisma.TransactionClient,
   customerId: string,
   now: Date,
 ) {
   return tx.fittingCoinGrant.findMany({
-    where: {
-      customerId,
-      balance: { gt: 0 },
-      revokedAt: null,
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    },
+    where: usableGrantWhere(customerId, now),
     orderBy: [
       { expiresAt: { sort: "asc", nulls: "last" } },
       { createdAt: "asc" },
@@ -486,13 +505,24 @@ export async function revokeReturnedCoins(
         AND o."customerId"=${order.customerId} AND o."marketId"=${order.marketId}
         AND NOT i.id = ANY(l.path)
     )
-    SELECT l."rootId", SUM(r.quantity)::bigint AS quantity
-    FROM lineage l
-    JOIN "ReturnItem" r ON r."orderItemId"=l.id
-    JOIN "ReturnRequest" rr ON rr.id=r."returnRequestId"
-    WHERE l.id<>l."rootId" AND rr.status='RESOLVED'
-      AND rr.resolution IN ('REFUND', 'STORE_CREDIT')
-    GROUP BY l."rootId"
+    SELECT terminal."rootId", SUM(terminal.quantity)::bigint AS quantity
+    FROM (
+      SELECT l."rootId", r.quantity
+      FROM lineage l
+      JOIN "ReturnItem" r ON r."orderItemId"=l.id
+      JOIN "ReturnRequest" rr ON rr.id=r."returnRequestId"
+      WHERE l.id<>l."rootId" AND rr.status='RESOLVED'
+        AND rr.resolution IN ('REFUND', 'STORE_CREDIT')
+      UNION ALL
+      -- Cancelling an unpaid replacement releases the source return's store
+      -- credit. It is terminal monetary settlement, not a retained purchase.
+      SELECT l."rootId", i.quantity
+      FROM lineage l
+      JOIN "OrderItem" i ON i.id=l.id
+      JOIN "Order" o ON o.id=l."orderId"
+      WHERE l.id<>l."rootId" AND o.status='CANCELLED' AND o."paidAt" IS NULL
+    ) terminal
+    GROUP BY terminal."rootId"
   `;
   const descendantQuantities = new Map(
     descendants.map((r) => [r.rootId, Number(r.quantity)]),
@@ -676,3 +706,4 @@ export async function revokeReturnedCoins(
   }
   await settleDebt(tx, order.customerId);
 }
+

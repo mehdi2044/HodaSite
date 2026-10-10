@@ -81,7 +81,7 @@ import { GET as suggestGET } from "@/app/api/catalog/suggest/route";
 import { validateLookReferences } from "@/modules/outfits";
 import { styleLookBlock } from "../../prisma/style-seed";
 import { publicCards, mergeWishlist, wishlist } from "@/modules/engagement";
-import { transition } from "@/modules/orders/service";
+import { transition, cancelOrder } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
 import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
@@ -2167,6 +2167,165 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await ownedVariantIds(db, f.customer.id)).has(f.variants[0].id),
       ).toBe(false);
     });
+    it.each([
+      { pack: true, spent: false, automatic: false, quantity: 1 },
+      { pack: true, spent: true, automatic: true, quantity: 1 },
+      { pack: false, spent: false, automatic: false, quantity: 2 },
+      { pack: false, spent: true, automatic: true, quantity: 2 },
+    ])(
+      "reverses source coins when an unpaid exchange is cancelled: %j",
+      async ({ pack, spent, automatic, quantity }) => {
+        await configure({
+          rewards: [{ marketId, spendAmount: "100", coins: "25" }],
+        });
+        const c = await customer("0");
+        const f = await returnFixture(db, {
+          customerId: c.id,
+          quantity,
+          price: "100",
+          replacementPrice: "200",
+          ...(pack ? { coinPackCoins: "100" } : {}),
+        });
+        await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+        const source = await db.fittingCoinGrant.findFirstOrThrow({
+          where: { orderId: f.order.id },
+        });
+        if (spent)
+          await db.$transaction(async (tx) => {
+            await lockWallet(tx, c.id);
+            // Fixture for already completed uses; retain the immutable grant
+            // and append the corresponding historical consumption evidence.
+            await tx.fittingCoinEntry.create({
+              data: {
+                customerId: c.id,
+                sourceKey: `historic-spend:${source.id}`,
+                amount: new Decimal(source.amount.toString()).neg().toFixed(),
+                reason: "HISTORIC_SPEND_FIXTURE",
+              },
+            });
+            await tx.fittingCoinGrant.update({
+              where: { id: source.id },
+              data: { balance: "0" },
+            });
+          });
+        const request = await requestReturn(c.id, {
+          orderId: f.order.id,
+          requestKey: randomUUID(),
+          type: "EXCHANGE",
+          reasonCode: "SIZE",
+          items: [{
+            orderItemId: f.order.items[0].id,
+            quantity: 1,
+            exchangeVariantId: f.variants[1].id,
+          }],
+        });
+        await manageReturn(ownerId, {
+          returnId: request.id, version: 0, operation: "APPROVE",
+        });
+        const returnedItem = await db.returnItem.findFirstOrThrow({
+          where: { returnRequestId: request.id },
+        });
+        await manageReturn(ownerId, {
+          returnId: request.id, version: 1, operation: "RECEIVE",
+          conditions: [{ itemId: returnedItem.id, condition: "RESTOCK" }],
+        });
+        const settled = await manageReturn(ownerId, {
+          returnId: request.id, version: 2, operation: "EXCHANGE",
+        });
+        const child = await db.order.findUniqueOrThrow({
+          where: { id: settled.exchangeOrderId! },
+        });
+        expect(child.status).toBe("PENDING_PAYMENT");
+        expect(child.paidAt).toBeNull();
+        const now = new Date(child.paymentDeadlineAt.getTime() + 1);
+        await Promise.all([
+          cancelOrder(child.id, "fixture cancellation", automatic ? undefined : ownerId, now),
+          cancelOrder(child.id, "fixture cancellation", automatic ? undefined : ownerId, now),
+        ]);
+        await db.$transaction((tx) => revokeReturnedCoins(tx, child.id));
+        const reversal = pack ? "100" : "25";
+        const wallet = await walletView(c.id);
+        expect(wallet.balance).toBe(spent ? "0" : pack ? "0" : "25");
+        expect(wallet.debt).toBe(spent ? reversal : "0");
+        const changed = await db.fittingCoinGrant.findUniqueOrThrow({
+          where: { id: source.id },
+        });
+        expect(changed.amount.toString()).toBe(source.amount.toString());
+        expect(changed.revokedAmount.toString()).toBe(reversal);
+        expect(await db.fittingCoinGrant.count({
+          where: { customerId: c.id },
+        })).toBe(1);
+        const entries = await db.fittingCoinEntry.findMany({
+          where: { customerId: c.id, reason: "RETURN_REVERSAL" },
+        });
+        expect(entries).toHaveLength(1);
+        expect(entries[0].amount.toString()).toBe(new Decimal(reversal).neg().toFixed());
+        const credit = await db.storeCredit.findFirstOrThrow({
+          where: { sourceReturnId: request.id },
+        });
+        expect(credit.amount.toString()).toBe("100");
+        expect(credit.balance.toString()).toBe("100");
+        const originalReturn = await db.returnRequest.findUniqueOrThrow({
+          where: { id: request.id },
+        });
+        expect(originalReturn.resolution).toBe("EXCHANGE");
+        expect(originalReturn.version).toBe(3);
+        expect((await db.order.findUniqueOrThrow({
+          where: { id: child.id },
+        })).status).toBe("CANCELLED");
+        if (spent) {
+          await db.$transaction(async (tx) => {
+            await lockWallet(tx, c.id);
+            await grantCoins(tx, c.id, "debt-repayment", "MANUAL", reversal);
+          });
+          expect((await walletView(c.id)).debt).toBe("0");
+          expect(await balance(c.id)).toBe("0");
+        }
+      },
+    );
+    it.each([
+      [101, "10099999999999999.9899"],
+      [1000, "99999999999999999.9"],
+    ] as const)(
+      "reports the exact sum of %i near-limit grants without reviving expired credit",
+      async (count, expected) => {
+        const c = await customer("0");
+        const maximum = "99999999999999.9999";
+        await db.$transaction(async (tx) => {
+          await lockWallet(tx, c.id);
+          const data = Array.from({ length: count }, (_, i) => ({
+            customerId: c.id,
+            sourceKey: `large-balance:${i}`,
+            reason: "PURCHASE",
+            amount: maximum,
+            balance: maximum,
+          }));
+          await tx.fittingCoinGrant.createMany({ data });
+          await tx.fittingCoinEntry.createMany({
+            data: data.map((g) => ({
+              customerId: c.id,
+              sourceKey: `grant:${g.sourceKey}`,
+              reason: g.reason,
+              amount: maximum,
+            })),
+          });
+          await grantCoins(tx, c.id, "expired-balance", "MANUAL", "12.5", {
+            expiresAt: new Date(Date.now() - 86400000),
+          });
+        });
+        const first = await walletView(c.id);
+        const second = await walletView(c.id);
+        expect(first.balance).toBe(expected);
+        expect(second.balance).toBe(expected);
+        expect(first.debt).toBe("0");
+        expect(await db.fittingCoinGrant.count({
+          where: { customerId: c.id },
+        })).toBe(count + 1);
+        expect(await db.fittingCoinEntry.count({
+          where: { customerId: c.id },
+        })).toBe(count + 1);
+      },
+    );
     it("excludes a paid exchanged coin pack with a legacy unmarked snapshot from the wardrobe", async () => {
       const c = await customer("0");
       const f = await returnFixture(db, {
@@ -3099,3 +3258,4 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
   },
 );
+

@@ -18,6 +18,7 @@ import {
   lockWallet,
   allowances,
   usableGrants,
+  usableCoinBalance,
   settleDebt,
   walletDebt,
   payCoinDebt,
@@ -43,13 +44,12 @@ export async function walletView(customerId: string) {
       await requireCustomer(tx, customerId);
       await lockWallet(tx, customerId);
       const c = await readConfig(tx);
-      if (c.enabled) await allowances(tx, customerId, c, new Date());
-      await settleDebt(tx, customerId);
-      const grants = await usableGrants(tx, customerId, new Date());
+      const now = new Date();
+      if (c.enabled) await allowances(tx, customerId, c, now);
+      await settleDebt(tx, customerId, now);
+      const grants = await usableGrants(tx, customerId, now);
       return {
-        balance: grants
-          .reduce((s, g) => s.add(g.balance.toString()), new Decimal(0))
-          .toFixed(),
+        balance: await usableCoinBalance(tx, customerId, now),
         debt: (await walletDebt(tx, customerId)).toFixed(),
         dailyExpires:
           grants.find((g) => g.reason === "DAILY")?.expiresAt?.toISOString() ??
@@ -521,3 +521,4 @@ export async function savedLooks(customerId: string) {
     imageUrl: `/api/fitting/${s.id}/image`,
   }));
 }
+
