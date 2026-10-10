@@ -1,3 +1,4 @@
+import { seoPath } from "@/lib/seo-urls";
 import Decimal from "decimal.js";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { currentCustomer } from "@/modules/customers";
@@ -84,7 +85,14 @@ export default async function CartPage({
               <div className="shop-cart-item-body">
                 <Link
                   className="text-lg font-semibold"
-                  href={`/${locale}/p/${(item.variant.product.slugI18n as Record<string, string>)[locale]}`}
+                  href={seoPath(
+                    locale,
+                    cart.market.code,
+                    "p",
+                    (item.variant.product.slugI18n as Record<string, string>)[
+                      locale
+                    ],
+                  )}
                 >
                   {
                     (item.variant.product.titleI18n as Record<string, string>)[

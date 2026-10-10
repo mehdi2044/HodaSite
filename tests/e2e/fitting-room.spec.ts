@@ -82,6 +82,17 @@ for (const locale of ["fa", "tr", "en"] as const) {
         "src",
         cardImage,
       );
+      const cart = await db.cart.findFirstOrThrow({
+        where: { customerId: customer.id },
+        include: { market: true },
+        orderBy: { createdAt: "desc" },
+      });
+      await expect(
+        page.locator(".shop-cart-item-body a").first(),
+      ).toHaveAttribute(
+        "href",
+        new RegExp(`^/${locale}/m/${cart.market.code}/p/`),
+      );
       await page.locator(".storefront-cart-toggle").click();
       await expect(
         page.locator(".storefront-mini-cart-item img"),
@@ -91,11 +102,6 @@ for (const locale of ["fa", "tr", "en"] as const) {
         "src",
         cardImage,
       );
-      const cart = await db.cart.findFirstOrThrow({
-        where: { customerId: customer.id },
-        include: { market: true },
-        orderBy: { createdAt: "desc" },
-      });
       const checkoutProduct = page.locator(".shop-checkout-piece a").first();
       await expect(checkoutProduct).toHaveAttribute(
         "href",
@@ -107,6 +113,35 @@ for (const locale of ["fa", "tr", "en"] as const) {
       });
       try {
         await checkoutProduct.click();
+        await expect(page).toHaveURL(
+          new RegExp(`/${locale}/m/${cart.market.code}/p/`),
+        );
+        await expect(page.locator(".shop-product-title")).toBeVisible();
+      } finally {
+        await page.evaluate((code) => {
+          document.cookie = `market=${code}; path=/`;
+        }, cart.market.code);
+      }
+      const searchProduct = await db.product.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee" },
+      });
+      await page.goto(
+        `/${locale}/search?q=${encodeURIComponent(searchProduct.searchText.trim().slice(0, 30))}`,
+      );
+      const suggestion = page
+        .getByTestId("search-suggestions")
+        .locator("a")
+        .first();
+      await expect(suggestion).toBeVisible();
+      await expect(suggestion).toHaveAttribute(
+        "href",
+        new RegExp(`^/${locale}/m/${cart.market.code}/p/`),
+      );
+      await page.evaluate(() => {
+        document.cookie = "market=CA; path=/";
+      });
+      try {
+        await suggestion.click();
         await expect(page).toHaveURL(
           new RegExp(`/${locale}/m/${cart.market.code}/p/`),
         );
