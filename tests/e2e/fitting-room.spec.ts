@@ -332,6 +332,98 @@ test("fitting recipient search hides scoped-denied customers even with a forged 
     });
   }
 });
+
+test("saving settings after a lost manual-grant response preserves the original grant key", async ({
+  page,
+}) => {
+  test.setTimeout(150000);
+  const market = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+  const old = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  const marker = `fit-grant-retry-${randomUUID()}`;
+  const customer = await db.customer.create({
+    data: {
+      email: `${marker}@example.com`,
+      preferredMarketId: market.id,
+      isGuest: false,
+    },
+  });
+  await page.goto("/admin/login");
+  await page
+    .locator("[name=email]")
+    .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+  await page
+    .locator("[name=password]")
+    .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+  await fillAdminMfa(page);
+  await page.getByRole("button", { name: /ورود|Login|Giriş/ }).click();
+  await expect(page).toHaveURL(/\/admin\/?$/);
+  let lost = false;
+  try {
+    await page.goto(
+      `/admin/settings/fitting?marketId=${market.id}&q=${marker}`,
+    );
+    await page.locator("select[multiple]").selectOption([customer.id]);
+    await page.getByLabel(fa.fitting.grantAmount, { exact: true }).fill("12.5");
+    await page
+      .getByLabel(fa.fitting.grantReason, { exact: true })
+      .fill("retry fixture");
+    await page.getByLabel(fa.fitting.confirmAdmin, { exact: true }).check();
+    await page.route("**/admin/settings/fitting**", async (route) => {
+      if (!lost && route.request().method() === "POST") {
+        lost = true;
+        await route.fetch();
+        await route.abort("failed");
+      } else await route.continue();
+    });
+    await page
+      .getByRole("button", { name: fa.fitting.grant, exact: true })
+      .click();
+    await expect(page.getByRole("status")).toHaveText(
+      fa.fitting.requestUnknown,
+    );
+    await expect
+      .poll(() =>
+        db.fittingCoinGrant.count({
+          where: { customerId: customer.id, reason: "MANUAL" },
+        }),
+      )
+      .toBe(1);
+    const first = await db.fittingCoinGrant.findFirstOrThrow({
+      where: { customerId: customer.id, reason: "MANUAL" },
+    });
+    await page.getByLabel(fa.fitting.costCoins, { exact: true }).fill("13.5");
+    await page.getByLabel(fa.fitting.confirmAdmin, { exact: true }).check();
+    await page
+      .getByRole("button", { name: fa.fitting.saveSettings, exact: true })
+      .click();
+    await expect(page.getByRole("status")).toHaveText(fa.fitting.saved);
+    await expect(page.locator("select[multiple]")).toHaveValues([customer.id]);
+    await page.getByLabel(fa.fitting.confirmAdmin, { exact: true }).check();
+    await page
+      .getByRole("button", { name: fa.fitting.grant, exact: true })
+      .click();
+    await expect(page.getByRole("status")).toHaveText(fa.fitting.saved);
+    const grants = await db.fittingCoinGrant.findMany({
+      where: { customerId: customer.id, reason: "MANUAL" },
+    });
+    expect(grants).toHaveLength(1);
+    expect(grants[0].sourceKey).toBe(first.sourceKey);
+    expect(grants[0].amount.toString()).toBe("12.5");
+    expect(
+      await db.fittingCoinEntry.count({
+        where: { customerId: customer.id, reason: "MANUAL" },
+      }),
+    ).toBe(1);
+  } finally {
+    await page.unroute("**/admin/settings/fitting**");
+    await db.integration.update({
+      where: { id: old.id },
+      data: { isActive: old.isActive, config: old.config! },
+    });
+  }
+});
 test("public coin-pack links disappear immediately when either sale toggle is disabled", async ({
   page,
 }) => {

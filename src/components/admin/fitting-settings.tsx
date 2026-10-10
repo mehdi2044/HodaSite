@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { FittingConfig } from "@/modules/fitting/contracts";
 import { MediaPicker } from "./media-picker";
@@ -45,9 +45,20 @@ export function FittingSettings({
     [amount, setAmount] = useState("100"),
     [reason, setReason] = useState(""),
     [expiry, setExpiry] = useState("");
+  const configVersion = useRef(version);
+  useEffect(() => {
+    if (configVersion.current !== version) {
+      configVersion.current = version;
+      setConfig(initial);
+      setConfirmed(false);
+    }
+  }, [initial, version]);
   const set = (patch: Partial<FittingConfig>) =>
     setConfig((c) => ({ ...c, ...patch }));
-  async function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
+  async function run(
+    fn: () => Promise<{ ok: boolean; error?: string }>,
+    isGrant = false,
+  ) {
     setBusy(true);
     setResult("");
     try {
@@ -61,7 +72,7 @@ export function FittingSettings({
       );
       if (r.ok) {
         setConfirmed(false);
-        setGrantKey(crypto.randomUUID());
+        if (isGrant) setGrantKey(crypto.randomUUID());
       }
     } catch {
       setResult(t("requestUnknown"));
@@ -402,17 +413,19 @@ export function FittingSettings({
             !reason.trim()
           }
           onClick={() =>
-            run(() =>
-              grantCoinsAction({
-                requestKey: grantKey,
-                marketId: grantMarketId,
-                customerIds: recipientIds,
-                segmentId: segmentId || undefined,
-                amount,
-                reason,
-                expiresAt: expiry ? new Date(expiry).toISOString() : null,
-                confirm: true,
-              }),
+            run(
+              () =>
+                grantCoinsAction({
+                  requestKey: grantKey,
+                  marketId: grantMarketId,
+                  customerIds: recipientIds,
+                  segmentId: segmentId || undefined,
+                  amount,
+                  reason,
+                  expiresAt: expiry ? new Date(expiry).toISOString() : null,
+                  confirm: true,
+                }),
+              true,
             )
           }
         >

@@ -74,7 +74,7 @@ export default async function Page({
         <button className="button">{t("customerSearch")}</button>
       </form>
       <FittingSettings
-        key={`${config.integration ?? "new"}:${grantMarketId ?? "none"}`}
+        key={grantMarketId ?? "none"}
         initial={config.config}
         version={config.integration}
         keyReady={config.keyReady}
