@@ -239,7 +239,7 @@ export async function seedStyleStorefront(
         .resize({ width, withoutEnlargement: true })
         .webp({ quality: 80 })
         .toBuffer();
-      const key = `${prefix}-${width}.webp`;
+      const key = `media/variants/${mediaId(asset.key)}/${width}.webp`;
       variants[String(width)] = {
         url: await put(key, data),
         key,

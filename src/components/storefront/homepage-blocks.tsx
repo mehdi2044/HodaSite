@@ -226,6 +226,10 @@ export async function HomepageBlocks({
                         ),
                       )}
                       className="shop-category-card group"
+                      aria-label={localizedValue(
+                        category.titleI18n as Record<Locale, string>,
+                        locale,
+                      )}
                     >
                       <div className="shop-category-plane">
                         {category.media &&
