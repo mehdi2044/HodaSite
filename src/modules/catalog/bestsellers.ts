@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
 import { catalogProductInclude } from "./queries";
+import { catalogCoinPacksEnabled, catalogVisibilityWhere } from "./visibility";
 
 /** All-time paid SALE quantities in this market, less physically received returns.
  * Cancelled/fully refunded orders and exchange replacements do not count.
  * This is merchandising popularity, not a financial revenue report.
  */
 export async function listBestsellers(marketId: string, limit = 4) {
+  const allowCoinPacks = await catalogCoinPacksEnabled();
   const take = Math.min(12, Math.max(1, Math.trunc(limit)));
   const ranked = await db.$queryRaw<Array<{ id: string }>>`
     SELECT p.id
@@ -23,6 +25,10 @@ export async function listBestsellers(marketId: string, limit = 4) {
       AND o.kind = 'SALE' AND o.status NOT IN ('CANCELLED', 'REFUNDED')
       AND p."deletedAt" IS NULL AND p.status = 'ACTIVE'
       AND ${marketId} = ANY(p."marketIds")
+      AND (p."coinPackCoins" IS NULL OR ${allowCoinPacks})
+      AND (p."coinPackCoins" IS NULL OR EXISTS (
+        SELECT 1 FROM "Variant" pv WHERE pv."productId" = p.id AND pv."isActive" = true
+      ))
     GROUP BY p.id
     HAVING SUM(GREATEST(i.quantity - COALESCE(returned.quantity, 0), 0)) > 0
     ORDER BY SUM(GREATEST(i.quantity - COALESCE(returned.quantity, 0), 0)) DESC, p.id ASC
@@ -30,6 +36,7 @@ export async function listBestsellers(marketId: string, limit = 4) {
   `;
   const products = await db.product.findMany({
     where: {
+      ...catalogVisibilityWhere(allowCoinPacks),
       id: { in: ranked.map((row) => row.id) },
       deletedAt: null,
       status: "ACTIVE",

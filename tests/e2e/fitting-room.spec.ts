@@ -173,6 +173,67 @@ test("admin config toggle and fractional charge persist through real authorized 
   }
 });
 
+test("public coin-pack links disappear immediately when either sale toggle is disabled", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const original = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  const pack = await db.product.findUniqueOrThrow({
+    where: { id: "seed-fitting-pack-100" },
+  });
+  const slug = (pack.slugI18n as Record<string, string>).en;
+  const set = async (enabled: boolean, coinSalesEnabled: boolean) =>
+    db.integration.update({
+      where: { id: original.id },
+      data: {
+        isActive: enabled,
+        config: {
+          ...(original.config as Record<string, unknown>),
+          enabled,
+          coinSalesEnabled,
+        },
+      },
+    });
+  try {
+    await db.product.update({
+      where: { id: pack.id },
+      data: { status: "ACTIVE" },
+    });
+    await set(true, true);
+    await page.goto(`/en/m/TR/p/${slug}`);
+    await expect(page.locator(".shop-product-title")).toBeVisible();
+    const market = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+    const suggest = async () =>
+      (await (
+        await page.request.get(
+          `/api/catalog/suggest?market=${market.id}&q=coins`,
+        )
+      ).json()) as { items: { id: string }[] };
+    expect((await suggest()).items.some((p) => p.id === pack.id)).toBe(true);
+    for (const [enabled, sales] of [
+      [true, false],
+      [false, true],
+    ]) {
+      await set(enabled, sales);
+      expect((await page.goto(`/en/p/${slug}`))?.status()).toBe(404);
+      expect((await page.goto(`/en/p/${slug}?preview=1`))?.status()).toBe(404);
+      await page.goto("/en/search?q=coins");
+      await expect(page.locator(`a[href$="/p/${slug}"]`)).toHaveCount(0);
+      expect((await suggest()).items.some((p) => p.id === pack.id)).toBe(false);
+    }
+  } finally {
+    await db.product.update({
+      where: { id: pack.id },
+      data: { status: pack.status },
+    });
+    await db.integration.update({
+      where: { id: original.id },
+      data: { isActive: original.isActive, config: original.config! },
+    });
+  }
+});
 test("coin listing survives an active pack with no active variants", async ({
   page,
 }) => {

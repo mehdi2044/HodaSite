@@ -7,6 +7,10 @@ import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
 import { normalizeBrand } from "@/lib/brand";
 import { localized, xmlEscape } from "@/lib/seo";
+import {
+  catalogCoinPacksEnabled,
+  catalogVisibilityWhere,
+} from "@/modules/catalog/visibility";
 export const dynamic = "force-dynamic";
 export async function GET(
   _request: Request,
@@ -53,6 +57,7 @@ export async function GET(
         ? await db.product.findFirst({
             where: {
               ...common,
+              ...catalogVisibilityWhere(await catalogCoinPacksEnabled()),
               status: "ACTIVE",
               marketIds: { has: market.id },
             },
@@ -125,7 +130,8 @@ export async function GET(
   return new Response(new Uint8Array(png), {
     headers: {
       "content-type": "image/png",
-      "cache-control": "public, max-age=300",
+      "cache-control":
+        kind === "p" ? "private, no-store" : "public, max-age=300",
       "x-content-type-options": "nosniff",
     },
   });

@@ -37,6 +37,7 @@ export async function preparedLooks(
           ),
         },
         status: "ACTIVE",
+        coinPackCoins: null,
         deletedAt: null,
         marketIds: { has: market.id },
         category: { deletedAt: null },
@@ -174,6 +175,7 @@ export async function addPreparedLook(
       size: { deletedAt: null },
       product: {
         status: "ACTIVE",
+        coinPackCoins: null,
         deletedAt: null,
         marketIds: { has: marketId },
         category: { deletedAt: null },
@@ -216,6 +218,9 @@ export async function validateLookReferences(
         where: {
           id: { in: look.items.map((item) => item.productId) },
           deletedAt: null,
+          status: "ACTIVE",
+          coinPackCoins: null,
+          category: { deletedAt: null },
           ...(marketId ? { marketIds: { has: marketId } } : {}),
         },
         select: {

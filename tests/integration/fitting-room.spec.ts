@@ -63,6 +63,16 @@ import { GET as imageGET } from "@/app/api/fitting/[id]/image/route";
 import { storage } from "@/modules/integrations/storage";
 import { returnFixture } from "../helpers/returns";
 import { unusableFittingResponses } from "../helpers/fitting-provider-responses";
+import {
+  findProductBySlug,
+  listCatalogProducts,
+  listBestsellers,
+} from "@/modules/catalog";
+import { homepageProducts } from "@/modules/content/homepage-products";
+import { homepageBlocksSchema } from "@/modules/content/homepage";
+import { GET as suggestGET } from "@/app/api/catalog/suggest/route";
+import { validateLookReferences } from "@/modules/outfits";
+import { styleLookBlock } from "../../prisma/style-seed";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 
@@ -188,6 +198,117 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await storage.delete(key);
       vi.unstubAllEnvs();
     });
+    it.each([
+      { enabled: false, coinSalesEnabled: true },
+      { enabled: true, coinSalesEnabled: false },
+    ])(
+      "hides active packs across public catalog surfaces when toggles are %j",
+      async (toggles) => {
+        const f = await returnFixture(db, { coinPackCoins: "100" });
+        const productId = f.variants[0].productId;
+        const marker = `coinvisibility${randomUUID().replaceAll("-", "")}`;
+        await db.product.update({
+          where: { id: productId },
+          data: {
+            marketIds: [marketId],
+            slugI18n: { en: marker },
+            searchText: marker,
+          },
+        });
+        const visible = async (expected: boolean) => {
+          for (const filters of [
+            {},
+            { q: marker },
+            { q: marker, sort: "price-asc" as const },
+          ]) {
+            expect(
+              (await listCatalogProducts(marketId, "en", filters)).items.some(
+                (p) => p.id === productId,
+              ),
+            ).toBe(expected);
+          }
+          expect(
+            (await listBestsellers(marketId, 12)).some(
+              (p) => p.id === productId,
+            ),
+          ).toBe(expected);
+          expect(
+            (
+              await homepageProducts(marketId, "en", {
+                mode: "latest",
+                limit: 12,
+              })
+            ).items.some((p) => p.id === productId),
+          ).toBe(expected);
+          expect(Boolean(await findProductBySlug(marketId, "en", marker))).toBe(
+            expected,
+          );
+          expect(
+            (
+              await findProductBySlug(marketId, "en", marker, {
+                includeInactive: true,
+              })
+            )?.id,
+          ).toBe(productId);
+          const response = await suggestGET(
+            new Request(
+              `http://app.invalid/api/catalog/suggest?market=${marketId}&q=${marker}`,
+            ),
+          );
+          expect(response.headers.get("cache-control")).toBe(
+            "private, no-store",
+          );
+          expect(
+            ((await response.json()) as { items: { id: string }[] }).items.some(
+              (p) => p.id === productId,
+            ),
+          ).toBe(expected);
+        };
+        try {
+          await configure({ enabled: true, coinSalesEnabled: true });
+          await visible(true);
+          await configure(toggles);
+          await visible(false);
+          await configure({ enabled: true, coinSalesEnabled: true });
+          await visible(true);
+        } finally {
+          await db.product.update({
+            where: { id: productId },
+            data: { status: "ARCHIVED" },
+          });
+        }
+      },
+    );
+    it.each(["DRAFT", "ARCHIVED", "COIN_PACK"] as const)(
+      "rejects a prepared look when its previously active garment becomes %s",
+      async (state) => {
+        const original = await db.product.findUniqueOrThrow({
+          where: { id: "seed-style-v2-women-tee" },
+        });
+        const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+        await validateLookReferences(blocks, marketId);
+        try {
+          await db.product.update({
+            where: { id: original.id },
+            data:
+              state === "COIN_PACK"
+                ? { coinPackCoins: "100" }
+                : { status: state },
+          });
+          await expect(
+            validateLookReferences(blocks, marketId),
+          ).rejects.toThrow();
+        } finally {
+          await db.product.update({
+            where: { id: original.id },
+            data: {
+              status: original.status,
+              coinPackCoins: original.coinPackCoins,
+            },
+          });
+        }
+      },
+    );
     it("does not grant welcome/daily credit while disabled", async () => {
       await configure({
         enabled: false,

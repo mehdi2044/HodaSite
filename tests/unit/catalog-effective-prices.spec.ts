@@ -6,6 +6,7 @@ const mock = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/db", () => ({
   db: {
+    integration: { findUnique: vi.fn(async () => null) },
     product: { findMany: mock.products },
     market: { findUniqueOrThrow: mock.market },
   },
