@@ -209,6 +209,8 @@ function toEditor(
     tags: product.tags.join(", "),
     status: product.status,
     basePriceAmount: product.basePriceAmount.toString(),
+    coinPackCoins: product.coinPackCoins?.toString() ?? "",
+    fittingSlot: product.fittingSlot ?? "",
     compareAtPriceAmount: product.compareAtPriceAmount?.toString() ?? "",
     defaultPurchaseCostAmount:
       product.defaultPurchaseCostAmount?.toString() ?? "",

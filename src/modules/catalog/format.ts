@@ -70,3 +70,17 @@ export function formatStorefrontAmount(
     );
   return `${new Decimal(amount).toString()} ${currency}`;
 }
+
+/** Service units retain Decimal precision; never pass a wallet balance through Number. */
+export function formatServiceUnits(
+  value: Decimal.Value,
+  locale: "fa" | "tr" | "en",
+) {
+  const raw = new Decimal(value).toFixed();
+  const result = grouped(
+    raw,
+    locale === "fa" ? "٬" : locale === "tr" ? "." : ",",
+    locale === "fa" ? "٫" : locale === "tr" ? "," : ".",
+  );
+  return locale === "fa" ? toPersianDigits(result) : result;
+}

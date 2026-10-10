@@ -53,6 +53,8 @@ export async function saveProduct(
       tags: splitList(data.get("tags")),
       status,
       basePriceAmount: String(data.get("basePriceAmount") || ""),
+      coinPackCoins: optional(data, "coinPackCoins"),
+      fittingSlot: optional(data, "fittingSlot"),
       compareAtPriceAmount: optional(data, "compareAtPriceAmount"),
       defaultPurchaseCostAmount: optional(data, "defaultPurchaseCostAmount"),
       defaultPurchaseCostCurrency:
@@ -105,6 +107,10 @@ export async function saveProduct(
           status: input.status,
           basePriceAmount: new Prisma.Decimal(input.basePriceAmount),
           basePriceCurrency: "USD",
+          coinPackCoins: input.coinPackCoins
+            ? new Prisma.Decimal(input.coinPackCoins)
+            : null,
+          fittingSlot: input.fittingSlot || null,
           compareAtPriceAmount: input.compareAtPriceAmount
             ? new Prisma.Decimal(input.compareAtPriceAmount)
             : null,

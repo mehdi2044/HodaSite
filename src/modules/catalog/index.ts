@@ -25,3 +25,5 @@ export {
   type CatalogFilters,
   type CatalogLocale,
 } from "./queries";
+
+export { validateCategoryParent, categoryPathLabel } from "./tree";

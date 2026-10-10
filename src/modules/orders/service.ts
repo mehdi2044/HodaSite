@@ -118,7 +118,11 @@ export async function transition(
       userId,
     },
   });
-  if (to === "PAID") await recognizePaidOrder(tx, order.id, userId ?? null);
+  if (to === "PAID") {
+    await recognizePaidOrder(tx, order.id, userId ?? null);
+    const { creditPaidOrder } = await import("@/modules/fitting");
+    await creditPaidOrder(tx, order.id);
+  }
   if (userId)
     await tx.auditLog.create({
       data: {

@@ -36,6 +36,7 @@ export type FeeItem = Readonly<{
   unitPrice: string;
   categoryId?: string | null;
   weightGrams: number;
+  shippable?: boolean;
   lengthCm?: string | null;
   widthCm?: string | null;
   heightCm?: string | null;
@@ -219,14 +220,17 @@ export function computeFees(
   total: string;
   chargeableWeightKg: string;
 }> {
+  const physicalItems = ctx.items.filter((item) => item.shippable !== false);
+  const shippingContext = { ...ctx, items: physicalItems };
   if (
+    physicalItems.length > 0 &&
     ctx.shippingRuleId &&
     !rules.some(
       (r) =>
         r.id === ctx.shippingRuleId &&
         r.type === "SHIPPING" &&
         r.selectable &&
-        feeRuleApplies(r, ctx),
+        feeRuleApplies(r, shippingContext),
     )
   )
     throw new Error("Invalid shipping selection");
@@ -243,11 +247,15 @@ export function computeFees(
   const taxable: Record<FeeType, Decimal> = { ...running };
   const lines: FeeLine[] = [];
   for (const type of ORDER) {
+    if ((type === "SHIPPING" || type === "CUSTOMS") && !physicalItems.length)
+      continue;
+    const calculationContext =
+      type === "SHIPPING" || type === "CUSTOMS" ? shippingContext : ctx;
     const selected = rules
       .filter(
         (rule) =>
           rule.type === type &&
-          feeRuleApplies(rule, ctx) &&
+          feeRuleApplies(rule, calculationContext) &&
           (type !== "SHIPPING" ||
             !ctx.shippingRuleId ||
             rule.id === ctx.shippingRuleId),
@@ -263,7 +271,12 @@ export function computeFees(
       selected,
       type === "TAX" && ctx.promotionTax
         ? Decimal.max(0, subtotal.sub(ctx.promotionTax.merchandise))
-        : subtotal,
+        : type === "SHIPPING" || type === "CUSTOMS"
+          ? physicalItems.reduce(
+              (n, i) => n.add(new Decimal(i.unitPrice).mul(i.quantity)),
+              new Decimal(0),
+            )
+          : subtotal,
       type === "TAX" && ctx.promotionTax
         ? {
             ...taxable,
@@ -275,7 +288,7 @@ export function computeFees(
         : type === "TAX"
           ? taxable
           : running,
-      ctx,
+      calculationContext,
     );
     running[type] = amount;
     if (selected.taxable)
@@ -304,7 +317,7 @@ export function computeFees(
     lines: Object.freeze(lines),
     total: subtotal.add(charged).toFixed(),
     chargeableWeightKg: chargeableWeightKg(
-      ctx.items,
+      physicalItems,
       ctx.volumetricDivisor,
     ).toFixed(),
   });

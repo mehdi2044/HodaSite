@@ -395,6 +395,10 @@ export async function manageReturn(userId: string, raw: unknown) {
           data,
         });
         await recognizeReturn(tx, row.id, userId);
+        if (input.operation === "REFUND" || input.operation === "CREDIT") {
+          const { revokeReturnedCoins } = await import("@/modules/fitting");
+          await revokeReturnedCoins(tx, row.orderId);
+        }
         await tx.auditLog.create({
           data: {
             userId,

@@ -78,6 +78,11 @@ export async function placeOrder(
           throw new CommerceError("CART_CHANGED");
         if (address.country !== cart.market.code)
           throw new CommerceError("ADDRESS_MARKET");
+        if (
+          cart.items.some((i) => i.variant.product.coinPackCoins) &&
+          (!customer || customer.isGuest || !customer.isActive)
+        )
+          throw new CommerceError("LOGIN_REQUIRED");
         if (customer && address.email !== customer.email)
           throw new CommerceError("EMAIL_MISMATCH");
         const settings = await tx.siteSettings.findUnique({
@@ -226,6 +231,9 @@ export async function placeOrder(
                     sku: v.sku,
                     color: v.color.nameI18n,
                     size: v.size.value,
+                    ...(v.product.coinPackCoins
+                      ? { coinPackCoins: v.product.coinPackCoins.toString() }
+                      : {}),
                   },
                   unitPriceAmount: item.unitPrice,
                   quantity: item.quantity,

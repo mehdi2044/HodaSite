@@ -130,6 +130,8 @@ export async function purgeOne(
           WHERE snapshot->>'logoMediaId' = ${current.id})
         OR EXISTS (SELECT 1 FROM "Page" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "Integration" WHERE key='fitting-room' AND jsonb_path_exists(
+          config, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
       ) AS used

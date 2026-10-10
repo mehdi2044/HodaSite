@@ -8,7 +8,10 @@ import { assertCan, UnauthorizedError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
-import { localizedRequiredSchema } from "@/modules/catalog";
+import {
+  localizedRequiredSchema,
+  validateCategoryParent,
+} from "@/modules/catalog";
 
 const common = z.object({
   kind: z.enum([
@@ -40,7 +43,11 @@ export async function saveTaxonomy(
         let id = base.id ?? "";
         if (base.kind === "brand") {
           const input = z
-            .object({ slug: slugSchema, nameI18n: localizedRequiredSchema })
+            .object({
+              slug: slugSchema,
+              nameI18n: localizedRequiredSchema,
+              validateCategoryParent,
+            })
             .parse({
               slug: value(data, "slug"),
               nameI18n: localized(data, "name"),
@@ -51,7 +58,11 @@ export async function saveTaxonomy(
           id = row.id;
         } else if (base.kind === "collection") {
           const input = z
-            .object({ slug: slugSchema, titleI18n: localizedRequiredSchema })
+            .object({
+              slug: slugSchema,
+              titleI18n: localizedRequiredSchema,
+              validateCategoryParent,
+            })
             .parse({
               slug: value(data, "slug"),
               titleI18n: localized(data, "name"),
@@ -127,7 +138,7 @@ export async function saveTaxonomy(
               mediaId: value(data, "mediaId") || undefined,
               sortOrder: Number(data.get("sortOrder") || 0),
             });
-          if (input.parentId === base.id) throw new z.ZodError([]);
+          await validateCategoryParent(tx, base.id, input.parentId);
           if (input.mediaId) await requireImage(input.mediaId);
           const row = base.id
             ? await tx.category.update({
