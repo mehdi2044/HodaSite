@@ -1,0 +1,132 @@
+import { randomUUID } from "node:crypto";
+import { test, expect } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+import { customerLogin } from "./helpers/crm-customer";
+import { shoppingProof } from "./helpers/shopping-proof";
+import fa from "../../messages/fa.json";
+import { fillAdminMfa } from "./helpers/admin-mfa";
+const db = new PrismaClient();
+test.afterAll(() => db.$disconnect());
+for (const locale of ["fa", "tr", "en"] as const) {
+  test(`${locale}: fixed models, actual variant color, wardrobe and no-charge provider fallback`, async ({
+    page,
+  }, info) => {
+    test.setTimeout(150000);
+    const old = await db.integration.findUniqueOrThrow({
+        where: { key: "fitting-room" },
+      }),
+      config = old.config as Record<string, unknown>;
+    const email = `fit-browser-${randomUUID()}@example.com`;
+    await db.integration.update({
+      where: { id: old.id },
+      data: {
+        isActive: true,
+        config: { ...config, enabled: true, coinSalesEnabled: true },
+      },
+    });
+    try {
+      await customerLogin(page, email, locale);
+      await page.goto(`/${locale}/fitting-room`);
+      const room = page.getByTestId("fitting-room");
+      await expect(room).toBeVisible();
+      await expect(room.locator(".fitting-models button")).toHaveCount(4);
+      const tee = room
+        .locator(".fitting-product")
+        .filter({
+          has: page.locator(
+            'option[value="seed-style-v2-women-tee-charcoal-m"]',
+          ),
+        });
+      await expect(tee).toBeVisible();
+      const initial = await tee.locator("img").getAttribute("src");
+      await tee
+        .locator("select")
+        .selectOption("seed-style-v2-women-tee-charcoal-m");
+      await expect(tee.locator("img")).not.toHaveAttribute("src", initial!);
+      await expect(room.locator(".fitting-chip")).toHaveCount(1);
+      const customer = await db.customer.findUniqueOrThrow({
+        where: { email },
+      });
+      const before = await db.fittingCoinEntry.count({
+        where: { customerId: customer.id, reason: "FITTING" },
+      });
+      await room.locator(".fitting-generate").click();
+      await expect(room.getByRole("alert")).toBeVisible();
+      expect(
+        await db.fittingCoinEntry.count({
+          where: { customerId: customer.id, reason: "FITTING" },
+        }),
+      ).toBe(before);
+      await room.locator(".fitting-models button").nth(2).click();
+      await expect(room.locator(".fitting-chip")).toHaveCount(0);
+      await expect(room.locator(".fitting-portrait img")).toHaveAttribute(
+        "src",
+        /media/,
+      );
+      await room.locator(".fitting-source button").nth(1).click();
+      await expect(room.locator(".fitting-product")).toHaveCount(0);
+      for (const width of [390, 1280]) {
+        await page.setViewportSize({ width, height: 900 });
+        await room
+          .locator(".fitting-portrait img")
+          .evaluate((img) => (img as HTMLImageElement).decode());
+        await shoppingProof(page, info, `custom-fitting-${locale}-${width}`);
+      }
+      await page.goto(`/${locale}/fitting-room/coins`);
+      await expect(page.locator(".fitting-packs")).toBeVisible();
+    } finally {
+      await db.integration.update({
+        where: { id: old.id },
+        data: { isActive: old.isActive, config: old.config! },
+      });
+    }
+  });
+}
+test("admin config toggle and fractional charge persist through real authorized actions", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const old = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  await page.goto("/admin/login");
+  await page
+    .locator("[name=email]")
+    .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+  await page
+    .locator("[name=password]")
+    .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+  await fillAdminMfa(page);
+  await page.getByRole("button", { name: /ورود|Login|Giriş/ }).click();
+  await expect(page).toHaveURL(/\/admin\/?$/);
+  try {
+    await page.goto("/admin/settings/fitting");
+    await expect(
+      page.getByLabel(fa.fitting.costCoins, { exact: true }),
+    ).toHaveValue("12.5");
+    await page.getByLabel(fa.fitting.costCoins, { exact: true }).fill("13.5");
+    await page.getByLabel(fa.fitting.coinSalesEnabled, { exact: true }).check();
+    await page.getByLabel(fa.fitting.confirmAdmin, { exact: true }).check();
+    await page
+      .getByRole("button", { name: fa.fitting.saveSettings, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (
+            (await db.integration.findUniqueOrThrow({ where: { id: old.id } }))
+              .config as { costCoins: string }
+          ).costCoins,
+      )
+      .toBe("13.5");
+    await expect(
+      page.getByLabel(fa.fitting.enabled, { exact: true }),
+    ).not.toBeChecked();
+    await expect(page.locator("main")).toContainText(/مدل|Model/);
+  } finally {
+    await db.integration.update({
+      where: { id: old.id },
+      data: { isActive: old.isActive, config: old.config! },
+    });
+  }
+});

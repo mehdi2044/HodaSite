@@ -17,21 +17,22 @@ export default async function Page({
     t = await getTranslations("fitting"),
     c = await fittingConfig(),
     { market } = await getRequestContext(locale);
-  const packs = c.coinSalesEnabled
-    ? await db.product.findMany({
-        where: {
-          coinPackCoins: { gt: 0 },
-          deletedAt: null,
-          status: "ACTIVE",
-          marketIds: { has: market.id },
-        },
-        include: {
-          variants: { where: { isActive: true }, take: 1 },
-          media: { include: { media: true }, orderBy: { sortOrder: "asc" } },
-        },
-        orderBy: { coinPackCoins: "asc" },
-      })
-    : [];
+  const packs =
+    c.enabled && c.coinSalesEnabled
+      ? await db.product.findMany({
+          where: {
+            coinPackCoins: { gt: 0 },
+            deletedAt: null,
+            status: "ACTIVE",
+            marketIds: { has: market.id },
+          },
+          include: {
+            variants: { where: { isActive: true }, take: 1 },
+            media: { include: { media: true }, orderBy: { sortOrder: "asc" } },
+          },
+          orderBy: { coinPackCoins: "asc" },
+        })
+      : [];
   return (
     <main className="shell shop-page py-10">
       <header className="fitting-heading">

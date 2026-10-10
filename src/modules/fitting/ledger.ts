@@ -25,7 +25,12 @@ export async function grantCoins(
   sourceKey: string,
   reason: string,
   amount: string,
-  extra: { expiresAt?: Date; orderId?: string; orderItemId?: string } = {},
+  extra: {
+    expiresAt?: Date;
+    orderId?: string;
+    orderItemId?: string;
+    ruleSnapshot?: Prisma.InputJsonValue;
+  } = {},
 ) {
   if (
     await tx.fittingCoinGrant.findUnique({
@@ -100,6 +105,31 @@ export async function usableGrants(
     ],
   });
 }
+/** Consume existing spendable lots to settle returned, already-used entitlements. Caller holds wallet lock. */
+export async function settleDebt(
+  tx: Prisma.TransactionClient,
+  customerId: string,
+  now = new Date(),
+) {
+  const wallet = await tx.fittingWallet.findUniqueOrThrow({
+    where: { customerId },
+  });
+  let debt = new Decimal(wallet.debt.toString());
+  if (debt.lte(0)) return;
+  for (const grant of await usableGrants(tx, customerId, now)) {
+    const take = Decimal.min(debt, grant.balance.toString());
+    await tx.fittingCoinGrant.update({
+      where: { id: grant.id },
+      data: { balance: { decrement: take.toFixed() } },
+    });
+    debt = debt.sub(take);
+    if (debt.eq(0)) break;
+  }
+  await tx.fittingWallet.update({
+    where: { customerId },
+    data: { debt: debt.toFixed() },
+  });
+}
 export async function creditPaidOrder(
   tx: Prisma.TransactionClient,
   orderId: string,
@@ -154,7 +184,15 @@ export async function creditPaidOrder(
     `reward:${orderId}`,
     "PURCHASE",
     rewardAmountSafe(spend.toFixed(), reward.spendAmount, reward.coins),
-    { orderId },
+    {
+      orderId,
+      ruleSnapshot: {
+        spendAmount: reward.spendAmount,
+        coins: reward.coins,
+        eligibleNetSpend: spend.toFixed(),
+        eligibleGrossSpend: eligible.toFixed(),
+      },
+    },
   );
 }
 function rewardAmountSafe(spend: string, threshold: string, coins: string) {
@@ -183,9 +221,9 @@ export async function revokeReturnedCoins(
       },
     },
   });
+  await lockWallet(tx, order.customerId);
   const grants = await tx.fittingCoinGrant.findMany({ where: { orderId } });
   if (!grants.length) return;
-  await lockWallet(tx, order.customerId);
   const returned = new Map<string, number>();
   for (const r of order.returns)
     for (const i of r.items)
@@ -202,8 +240,54 @@ export async function revokeReturnedCoins(
           .mul(Math.min(item.quantity, returned.get(item.id) ?? 0))
           .div(item.quantity)
           .toDecimalPlaces(4);
-    } else if (g.reason === "PURCHASE" && returned.size > 0)
-      target = new Decimal(g.amount.toString());
+    } else if (g.reason === "PURCHASE" && returned.size > 0) {
+      const rule = g.ruleSnapshot as {
+        spendAmount?: string;
+        coins?: string;
+        eligibleNetSpend?: string;
+        eligibleGrossSpend?: string;
+      } | null;
+      const returnedSpend = order.items
+        .filter(
+          (i) =>
+            typeof (i.productSnapshot as Prisma.JsonObject).coinPackCoins !==
+            "string",
+        )
+        .reduce(
+          (n, i) =>
+            n.add(
+              new Decimal(i.lineTotalAmount.toString())
+                .mul(Math.min(i.quantity, returned.get(i.id) ?? 0))
+                .div(i.quantity),
+            ),
+          new Decimal(0),
+        );
+      if (returnedSpend.gt(0)) {
+        if (
+          rule?.spendAmount &&
+          rule.coins &&
+          rule.eligibleNetSpend &&
+          rule.eligibleGrossSpend &&
+          new Decimal(rule.eligibleGrossSpend).gt(0)
+        ) {
+          const net = new Decimal(rule.eligibleNetSpend)
+            .mul(
+              Decimal.max(
+                0,
+                new Decimal(rule.eligibleGrossSpend).sub(returnedSpend),
+              ),
+            )
+            .div(rule.eligibleGrossSpend);
+          const remaining = new Decimal(
+            rewardAmountSafe(net.toFixed(), rule.spendAmount, rule.coins),
+          );
+          target = Decimal.max(
+            0,
+            new Decimal(g.amount.toString()).sub(remaining),
+          );
+        } else target = new Decimal(g.amount.toString());
+      }
+    }
     const delta = target.sub(g.revokedAmount.toString());
     if (delta.lte(0)) continue;
     const reclaim = Decimal.min(delta, g.balance.toString()),
@@ -230,4 +314,5 @@ export async function revokeReturnedCoins(
       },
     });
   }
+  await settleDebt(tx, order.customerId);
 }

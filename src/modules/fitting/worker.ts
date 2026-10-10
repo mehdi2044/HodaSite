@@ -1,3 +1,4 @@
+import { seal } from "@/lib/secure-tokens";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { db } from "@/lib/db";
@@ -21,6 +22,8 @@ export async function renderFitting(
       await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
       const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
       if (s.status === "RUNNING") {
+        if (s.startedAt && Date.now() - s.startedAt.getTime() < 5 * 60000)
+          return null;
         await tx.fittingSession.update({
           where: { id },
           data: { status: "REVIEW", errorCode: "INTERRUPTED" },
@@ -61,8 +64,19 @@ export async function renderFitting(
     } catch {
       throw new ProviderFailure(true);
     }
-    key = `fitting/${new Date().getUTCFullYear()}/${randomUUID()}.webp`;
-    await storage.put(key, bytes, "image/webp");
+    key = `fitting/${new Date().getUTCFullYear()}/${randomUUID()}.sealed`;
+    await storage.put(
+      key,
+      Buffer.from(
+        seal({
+          kind: "fitting-image",
+          sessionId: id,
+          webp: bytes.toString("base64"),
+        }),
+        "utf8",
+      ),
+      "application/octet-stream",
+    );
     await withMutation(() =>
       db.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;

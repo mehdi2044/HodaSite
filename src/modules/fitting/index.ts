@@ -13,7 +13,13 @@ import {
   type FittingSnapshot,
   type Allocation,
 } from "./contracts";
-import { readConfig, lockWallet, allowances, usableGrants } from "./ledger";
+import {
+  readConfig,
+  lockWallet,
+  allowances,
+  usableGrants,
+  settleDebt,
+} from "./ledger";
 export { creditPaidOrder, revokeReturnedCoins } from "./ledger";
 export {
   fittingSettings,
@@ -41,6 +47,7 @@ export async function walletView(customerId: string) {
       await lockWallet(tx, customerId);
       const c = await readConfig(tx);
       if (c.enabled) await allowances(tx, customerId, c, new Date());
+      await settleDebt(tx, customerId);
       const grants = await usableGrants(tx, customerId, new Date());
       const w = await tx.fittingWallet.findUniqueOrThrow({
         where: { customerId },
@@ -327,13 +334,20 @@ export async function createFittingSession(
         };
         const [userCount, globalCount] = await Promise.all([
           tx.fittingSession.count({ where: { ...countWhere, customerId } }),
-          tx.fittingSession.count({ where: countWhere }),
+          tx.fittingSession.count({
+            where: { createdAt: countWhere.createdAt },
+          }),
         ]);
         if (
           (c.dailyLimit > 0 && userCount >= c.dailyLimit) ||
           globalCount >= c.globalDailyLimit
         )
           throw new FittingError("DAILY_LIMIT");
+        await settleDebt(tx, customerId, now);
+        const wallet = await tx.fittingWallet.findUniqueOrThrow({
+          where: { customerId },
+        });
+        if (wallet.debt.gt(0)) throw new FittingError("INSUFFICIENT_COINS");
         const grants = await usableGrants(tx, customerId, now);
         const allocations = allocate(c.costCoins, grants);
         for (const a of allocations)
@@ -385,6 +399,7 @@ export async function refundSession(
   id: string,
   errorCode: string,
 ) {
+  await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
   const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
   await lockWallet(tx, s.customerId);
   if (["FAILED", "DONE"].includes(s.status)) return;
@@ -393,33 +408,42 @@ export async function refundSession(
     const g = await tx.fittingCoinGrant.findUniqueOrThrow({
       where: { id: a.grantId },
     });
+    const wallet = await tx.fittingWallet.findUniqueOrThrow({
+      where: { customerId: s.customerId },
+    });
+    const offset = Decimal.min(a.amount, wallet.debt.toString());
+    if (offset.gt(0))
+      await tx.fittingWallet.update({
+        where: { customerId: s.customerId },
+        data: { debt: { decrement: offset.toFixed() } },
+      });
+    const credit = new Decimal(a.amount).sub(offset);
     const room = Decimal.max(
       0,
       new Decimal(g.amount.toString())
         .sub(g.revokedAmount.toString())
         .sub(g.balance.toString()),
     );
-    const restored = Decimal.min(a.amount, room);
+    const restored = Decimal.min(credit, room);
     if (restored.gt(0))
       await tx.fittingCoinGrant.update({
-        where: { id: a.grantId },
+        where: { id: g.id },
         data: { balance: { increment: restored.toFixed() } },
       });
-    const revoked = new Decimal(a.amount).sub(restored);
-    if (revoked.gt(0)) {
-      const w = await tx.fittingWallet.findUniqueOrThrow({
-        where: { customerId: s.customerId },
-      });
-      await tx.fittingWallet.update({
-        where: { customerId: s.customerId },
+    const recovered = credit.sub(restored);
+    // A revoked source can have been replaced by later paid grants that cleared its debt.
+    // Restore that overpaid debt as a new compensating lot, retaining the original expiry.
+    if (recovered.gt(0))
+      await tx.fittingCoinGrant.create({
         data: {
-          debt: Decimal.max(
-            0,
-            new Decimal(w.debt.toString()).sub(revoked),
-          ).toFixed(),
+          customerId: s.customerId,
+          sourceKey: `recovery:${id}:${g.id}`,
+          reason: "FAILED_RECOVERY",
+          amount: recovered.toFixed(),
+          balance: recovered.toFixed(),
+          expiresAt: g.expiresAt,
         },
       });
-    }
   }
   await tx.fittingCoinEntry.create({
     data: {

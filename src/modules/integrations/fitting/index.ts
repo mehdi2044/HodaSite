@@ -37,7 +37,7 @@ export const openAiFittingProvider: FittingProvider = {
       form.append(
         "image[]",
         new Blob([new Uint8Array(bytes)], { type: image.mime }),
-        `reference-${index}.webp`,
+        `reference-${index}.${image.mime === "image/png" ? "png" : image.mime === "image/jpeg" ? "jpg" : "webp"}`,
       );
     }
     let response: Response;

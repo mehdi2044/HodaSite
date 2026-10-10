@@ -73,7 +73,8 @@ export async function quoteCart(
     throw new Error("One or more variants are unavailable");
   if (variants.some((v) => v.product.coinPackCoins)) {
     const { fittingConfig } = await import("@/modules/fitting");
-    if (!(await fittingConfig()).coinSalesEnabled)
+    const fitting = await fittingConfig();
+    if (!fitting.enabled || !fitting.coinSalesEnabled)
       throw new Error("Coin pack sales are disabled");
   }
   const quoteItems = await Promise.all(

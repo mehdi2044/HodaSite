@@ -46,7 +46,6 @@ export async function saveTaxonomy(
             .object({
               slug: slugSchema,
               nameI18n: localizedRequiredSchema,
-              validateCategoryParent,
             })
             .parse({
               slug: value(data, "slug"),
@@ -61,7 +60,6 @@ export async function saveTaxonomy(
             .object({
               slug: slugSchema,
               titleI18n: localizedRequiredSchema,
-              validateCategoryParent,
             })
             .parse({
               slug: value(data, "slug"),
@@ -211,6 +209,8 @@ export async function archiveTaxonomy(
       .parse({ kind: data.get("kind"), id: data.get("id") });
     await withMutation(() =>
       db.$transaction(async (tx) => {
+        if (parsed.kind === "category")
+          await tx.$queryRaw`SELECT pg_advisory_xact_lock(75106)`;
         if (await hasLiveReferences(tx, parsed.kind, parsed.id))
           throw new z.ZodError([]);
         if (parsed.kind === "sizeGuide")

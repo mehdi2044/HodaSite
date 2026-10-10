@@ -112,7 +112,8 @@ export function FittingRoom({
     session && ["QUEUED", "RUNNING", "REVIEW"].includes(session.status);
   const locked = busy || !!inProgress || !!pending.current;
   useEffect(() => {
-    if (!session || !["QUEUED", "RUNNING"].includes(session.status)) return;
+    if (!session || !["QUEUED", "RUNNING", "REVIEW"].includes(session.status))
+      return;
     let live = true;
     const poll = async () => {
       try {
@@ -144,6 +145,16 @@ export function FittingRoom({
     ]);
     setSession(null);
     setMessage("");
+  }
+  function removeProduct(productId: string) {
+    setSelection((ids) =>
+      ids.filter(
+        (id) => all.find((v) => v.variantId === id)?.productId !== productId,
+      ),
+    );
+    setSession(null);
+    setMessage("");
+    setError("");
   }
   async function create() {
     setBusy(true);
@@ -328,13 +339,7 @@ export function FittingRoom({
                           onChange={(e) =>
                             e.target.value
                               ? select(item.productId, e.target.value)
-                              : setSelection((ids) =>
-                                  ids.filter(
-                                    (id) =>
-                                      all.find((v) => v.variantId === id)
-                                        ?.productId !== item.productId,
-                                  ),
-                                )
+                              : removeProduct(item.productId)
                           }
                         >
                           <option value="">{labels.choose}</option>

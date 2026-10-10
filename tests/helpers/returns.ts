@@ -5,6 +5,7 @@ export async function returnFixture(
   db: PrismaClient,
   options: {
     quantity?: number;
+    coinPackCoins?: string;
     price?: string;
     replacementPrice?: string;
     discount?: string;
@@ -45,6 +46,7 @@ export async function returnFixture(
       descriptionI18n: {},
       status: "ACTIVE",
       basePriceAmount: "1",
+      coinPackCoins: options.coinPackCoins,
     },
   });
   const variants = [];
@@ -162,7 +164,12 @@ export async function returnFixture(
           lineTotalAmount: subtotal,
           currency: market.currency,
           weightGrams: 100,
-          productSnapshot: { title: product.titleI18n },
+          productSnapshot: {
+            title: product.titleI18n,
+            ...(options.coinPackCoins
+              ? { coinPackCoins: options.coinPackCoins }
+              : {}),
+          },
         },
       },
     },

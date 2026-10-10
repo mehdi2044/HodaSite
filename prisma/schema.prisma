@@ -2335,6 +2335,7 @@ model FittingCoinGrant {
   reason        String
   orderId       String?
   orderItemId   String?
+  ruleSnapshot  Json?
   amount        Decimal   @db.Decimal(18, 4)
   balance       Decimal   @db.Decimal(18, 4)
   expiresAt     DateTime? @db.Timestamptz(3)

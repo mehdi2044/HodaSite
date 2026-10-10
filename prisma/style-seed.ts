@@ -210,6 +210,19 @@ export async function seedStyleStorefront(
   put: (key: string, bytes: Buffer) => Promise<string>,
 ) {
   const assets = [
+    ...[
+      "look-girl",
+      "women-tee-charcoal",
+      "men-tee-navy",
+      "kids-hoodie-sage",
+    ].map((key) => ({
+      key,
+      title: text(
+        "تصویر نمونه اتاق پرو",
+        "Örnek kabin görseli",
+        "Demo fitting image",
+      ),
+    })),
     ...styleProducts.map((row) => ({ key: row[0], title: row[4] })),
     ...["look-women-coat", "look-women-knit", "look-men", "look-kids"].map(
       (key) => ({
@@ -334,7 +347,22 @@ export async function seedStyleStorefront(
       update: {},
       create: {
         id: productId(key),
-        categoryId: section ? `seed-category-${root}-${section}` : root,
+        categoryId:
+          department === "kids"
+            ? `seed-category-seed-category-kids-${key === "kids-dress" || key === "kids-set" ? "girls" : "boys"}-${section}`
+            : section
+              ? `seed-category-${root}-${section}`
+              : root,
+        fittingSlot:
+          section === "tops"
+            ? "TOP"
+            : section === "bottoms"
+              ? "BOTTOM"
+              : section === "one-pieces"
+                ? "ONE_PIECE"
+                : section === "outerwear"
+                  ? "LAYER"
+                  : "ACCESSORY",
         brandId: "seed-brand-atelier",
         gender:
           department === "women"
@@ -355,33 +383,53 @@ export async function seedStyleStorefront(
         searchText: `${title.fa} ${title.tr} ${title.en} ${key} demo`,
       },
     });
-    for (const [order, value] of sizes.entries()) {
-      const groupKey =
-        department === "kids"
-          ? "kids-age"
-          : department === "accessories"
-            ? "accessories"
-            : "apparel";
-      const scale = department === "kids" ? "CA" : "INTL";
-      const size = await db.size.upsert({
-        where: { scale_value_groupKey: { scale, value, groupKey } },
-        update: {},
-        create: { scale, value, groupKey, sortOrder: order },
-      });
-      const sku = `STYLE-V2-${key.toUpperCase()}-${value.replace(/\s/g, "-")}`;
-      await db.variant.upsert({
-        where: { sku },
-        update: {},
-        create: {
-          id: `${productId(key)}-${value.replace(/\s/g, "-").toLowerCase()}`,
-          productId: product.id,
-          colorId: colorId(color),
-          sizeId: size.id,
-          sku,
-          isActive: true,
-        },
-      });
-    }
+    const extra = (
+      {
+        "women-tee": "CHARCOAL",
+        "men-tee": "NAVY",
+        "kids-hoodie": "SAGE",
+      } as Record<string, string>
+    )[key];
+    for (const selectedColor of extra ? [color, extra] : [color])
+      for (const [order, value] of sizes.entries()) {
+        const groupKey =
+          department === "kids"
+            ? "kids-age"
+            : department === "accessories"
+              ? "accessories"
+              : "apparel";
+        const scale = department === "kids" ? "CA" : "INTL";
+        const size = await db.size.upsert({
+          where: { scale_value_groupKey: { scale, value, groupKey } },
+          update: {},
+          create: { scale, value, groupKey, sortOrder: order },
+        });
+        const suffix = selectedColor === color ? "" : `-${selectedColor}`;
+        const sku = `STYLE-V2-${key.toUpperCase()}${suffix}-${value.replace(/\s/g, "-")}`;
+        const variant = await db.variant.upsert({
+          where: { sku },
+          update: {},
+          create: {
+            id: `${productId(key)}${suffix.toLowerCase()}-${value.replace(/\s/g, "-").toLowerCase()}`,
+            productId: product.id,
+            colorId: colorId(selectedColor),
+            sizeId: size.id,
+            sku,
+            isActive: true,
+          },
+        });
+        if (
+          selectedColor !== color &&
+          !(await db.variantMedia.count({ where: { variantId: variant.id } }))
+        )
+          await db.variantMedia.create({
+            data: {
+              variantId: variant.id,
+              mediaId: mediaId(`${key}-${selectedColor.toLowerCase()}`),
+              sortOrder: 0,
+            },
+          });
+      }
     if (!(await db.productMedia.count({ where: { productId: product.id } })))
       await db.productMedia.create({
         data: { productId: product.id, mediaId: mediaId(key), sortOrder: 0 },
