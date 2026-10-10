@@ -204,7 +204,7 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     const email = `fit-repurchase-${randomUUID()}@example.com`;
     await customerLogin(page, email, "en");
     const customer = await db.customer.findUniqueOrThrow({ where: { email } });
-    const f = await returnFixture(db, { customerId: customer.id });
+    const f = await returnFixture(db, { customerId: customer.id, code: "CA" });
     productId = f.variants[0].productId;
     await db.product.update({
       where: { id: productId },

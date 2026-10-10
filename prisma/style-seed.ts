@@ -1,3 +1,4 @@
+import { buildProductSearchText } from "../scripts/catalog-search";
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -380,9 +381,29 @@ export async function seedStyleStorefront(
         basePriceAmount: price,
         basePriceCurrency: "USD",
         marketIds: markets.map((market) => market.id),
-        searchText: `${title.fa} ${title.tr} ${title.en} ${key} demo`,
+        searchText: buildProductSearchText([
+          title.fa,
+          title.tr,
+          title.en,
+          `${key} demo`,
+        ]),
       },
     });
+    // Repair only the exact legacy index; preserve merchant content and custom indexes.
+    if (
+      product.searchText === `${title.fa} ${title.tr} ${title.en} ${key} demo`
+    )
+      await db.product.update({
+        where: { id: product.id },
+        data: {
+          searchText: buildProductSearchText([
+            title.fa,
+            title.tr,
+            title.en,
+            `${key} demo`,
+          ]),
+        },
+      });
     const extra = (
       {
         "women-tee": "CHARCOAL",

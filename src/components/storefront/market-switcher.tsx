@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import { switchedMarketPath } from "@/lib/seo-urls";
 
 const YEAR = 60 * 60 * 24 * 365;
@@ -18,6 +19,11 @@ export function MarketSwitcher({
   }[];
   ariaLabel: string;
 }) {
+  // A prefetched canonical page can be served from the router cache. Persist
+  // its market only when the shopper actually opens that page.
+  useEffect(() => {
+    document.cookie = `market=${current}; path=/; max-age=${YEAR}`;
+  }, [current]);
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
     document.cookie = `market=${code}; path=/; max-age=${YEAR}`;

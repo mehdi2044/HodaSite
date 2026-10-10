@@ -1,3 +1,4 @@
+import { buildProductSearchText } from "../scripts/catalog-search";
 import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
 import { seedFittingRoom } from "./fitting-seed";
@@ -926,7 +927,12 @@ async function seedCatalog() {
           },
         },
         marketIds: allowedMarkets,
-        searchText: `${titles.fa} ${titles.tr} ${titles.en} seed new`,
+        searchText: buildProductSearchText([
+          titles.fa,
+          titles.tr,
+          titles.en,
+          "seed new",
+        ]),
       },
     });
     for (let n = 0; n < 2; n += 1) {

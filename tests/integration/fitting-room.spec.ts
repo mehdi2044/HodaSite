@@ -355,7 +355,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
-    it("requires globally prepared looks to be available in every market", async () => {
+    it("requires globally prepared looks to be available in every inheriting market", async () => {
       const product = await db.product.findUniqueOrThrow({
         where: { id: "seed-style-v2-women-tee" },
       });
@@ -402,6 +402,66 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: product.id },
           data: { marketIds: product.marketIds },
         });
+      }
+    });
+    it("excludes live market homepage overrides from global look eligibility, restoring fallback checks after soft deletion", async () => {
+      const product = await db.product.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee" },
+      });
+      const overrideMarket = await db.market.findUniqueOrThrow({
+        where: { code: "CA" },
+      });
+      const previous = await db.homepage.findUnique({
+        where: { marketId: overrideMarket.id },
+      });
+      const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+      const markets = await db.market.findMany({ select: { id: true } });
+      try {
+        await db.product.update({
+          where: { id: product.id },
+          data: {
+            marketIds: markets
+              .filter((m) => m.id !== overrideMarket.id)
+              .map((m) => m.id),
+          },
+        });
+        const override = await db.homepage.upsert({
+          where: { marketId: overrideMarket.id },
+          create: { marketId: overrideMarket.id, blocks: [] },
+          update: { blocks: [], deletedAt: null },
+        });
+        await validateLookReferences(blocks, null);
+        await expect(
+          validateLookReferences(blocks, overrideMarket.id),
+        ).rejects.toThrow();
+        await db.homepage.update({
+          where: { id: override.id },
+          data: { deletedAt: new Date() },
+        });
+        await expect(validateLookReferences(blocks, null)).rejects.toThrow();
+        await db.homepage.update({
+          where: { id: override.id },
+          data: { deletedAt: null },
+        });
+        await validateLookReferences(blocks, null);
+      } finally {
+        await db.product.update({
+          where: { id: product.id },
+          data: { marketIds: product.marketIds },
+        });
+        if (previous)
+          await db.homepage.update({
+            where: { id: previous.id },
+            data: {
+              blocks:
+                previous.blocks as import("@prisma/client").Prisma.InputJsonValue,
+              deletedAt: previous.deletedAt,
+            },
+          });
+        else
+          await db.homepage.deleteMany({
+            where: { marketId: overrideMarket.id },
+          });
       }
     });
     it("rejects a crafted child department without changing homepage content", async () => {

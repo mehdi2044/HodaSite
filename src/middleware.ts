@@ -234,6 +234,12 @@ async function applicationMiddleware(req: NextAuthRequest) {
     return NextResponse.next({ request: { headers: req.headers } });
   }
 
+  // Background prefetches must never change a shopper's chosen market.
+  const isPrefetch =
+    req.headers.has("next-router-prefetch") ||
+    req.headers.get("purpose") === "prefetch" ||
+    req.headers.get("sec-purpose")?.includes("prefetch") === true;
+
   // --- Everything else: storefront ---
   const canonical = parseSeoPath(pathname);
   if (/^\/(fa|tr|en)\/m(?:\/|$)/.test(pathname) && !canonical)
@@ -288,10 +294,11 @@ async function applicationMiddleware(req: NextAuthRequest) {
       const response = NextResponse.rewrite(target, {
         request: { headers: requestHeaders },
       });
-      response.cookies.set("market", market.code, {
-        path: "/",
-        maxAge: MARKET_COOKIE_MAX_AGE,
-      });
+      if (!isPrefetch)
+        response.cookies.set("market", market.code, {
+          path: "/",
+          maxAge: MARKET_COOKIE_MAX_AGE,
+        });
       return response;
     }
     if (markets.length) {
@@ -324,14 +331,15 @@ async function applicationMiddleware(req: NextAuthRequest) {
           pathname.replace(`/${urlLocale}`, `/${market.defaultLocale}`) ||
           `/${market.defaultLocale}`;
         const redirectRes = NextResponse.redirect(url);
-        redirectRes.cookies.set("market", market.code, {
-          path: "/",
-          maxAge: MARKET_COOKIE_MAX_AGE,
-        });
+        if (!isPrefetch)
+          redirectRes.cookies.set("market", market.code, {
+            path: "/",
+            maxAge: MARKET_COOKIE_MAX_AGE,
+          });
         return redirectRes;
       }
       const res = intlMiddleware(req);
-      if (market && market.code !== cookieCode) {
+      if (market && market.code !== cookieCode && !isPrefetch) {
         res.cookies.set("market", market.code, {
           path: "/",
           maxAge: MARKET_COOKIE_MAX_AGE,

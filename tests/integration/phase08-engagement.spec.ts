@@ -463,5 +463,119 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
+    it.each([
+      { enabled: false, coinSalesEnabled: true },
+      { enabled: true, coinSalesEnabled: false },
+    ])(
+      "defers coin-pack stock alerts under disabled sales without consuming delivery or retry: %j",
+      async (off) => {
+        const integration = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const site = await db.siteSettings.findUniqueOrThrow({
+          where: { id: "default" },
+        });
+        const env = process.env.EMAIL_PROVIDER;
+        const config = integration.config as Record<string, unknown>;
+        const enable = (toggles: typeof off) =>
+          db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: toggles.enabled,
+              config: { ...config, ...toggles },
+            },
+          });
+        let jobId: string | undefined;
+        actor.send.mockClear();
+        try {
+          process.env.EMAIL_PROVIDER = "smtp";
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: {
+              seo: {
+                origin: "https://shop.example.com",
+                indexingEnabled: false,
+              },
+            },
+          });
+          await db.product.update({
+            where: { id: productId },
+            data: { coinPackCoins: "100" },
+          });
+          await enable({ enabled: true, coinSalesEnabled: true });
+          actor.id = first;
+          await db.stockItem.updateMany({
+            where: { variantId },
+            data: { onHand: 0 },
+          });
+          await setStockAlert(context(), { variantId, active: true });
+          const alert = await db.stockAlert.findFirstOrThrow({
+            where: { customerId: first, variantId },
+          });
+          jobId = `stock-${alert.id}-${alert.generation}`;
+          await db.stockItem.updateMany({
+            where: { variantId },
+            data: { onHand: 2 },
+          });
+          await enable(off);
+          await scheduleStockAlerts();
+          expect(await db.job.findUnique({ where: { id: jobId } })).toBeNull();
+          await enable({ enabled: true, coinSalesEnabled: true });
+          await scheduleStockAlerts();
+          expect(await db.job.count({ where: { id: jobId } })).toBe(1);
+          await enable(off);
+          registerStockJobs();
+          await runJobs(["stock-alert"]);
+          expect(actor.send).not.toHaveBeenCalled();
+          expect(
+            await db.job.findUniqueOrThrow({ where: { id: jobId } }),
+          ).toMatchObject({
+            status: "PENDING",
+            attempts: 0,
+            lastError: "COIN_PACK_DISABLED",
+          });
+          expect(
+            await db.stockAlert.findUniqueOrThrow({ where: { id: alert.id } }),
+          ).toMatchObject({ active: true, notifiedAt: null });
+          await enable({ enabled: true, coinSalesEnabled: true });
+          await db.job.update({
+            where: { id: jobId },
+            data: { runAt: new Date(0) },
+          });
+          await runJobs(["stock-alert"]);
+          expect(actor.send).toHaveBeenCalledTimes(1);
+          expect(actor.send.mock.calls[0][0]).toMatchObject({
+            idempotencyKey: jobId,
+          });
+          expect(
+            await db.job.findUniqueOrThrow({ where: { id: jobId } }),
+          ).toMatchObject({ status: "DONE", attempts: 0 });
+          await scheduleStockAlerts();
+          await runJobs(["stock-alert"]);
+          expect(actor.send).toHaveBeenCalledTimes(1);
+        } finally {
+          await db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: integration.isActive,
+              config: integration.config!,
+            },
+          });
+          await db.product.update({
+            where: { id: productId },
+            data: { coinPackCoins: null },
+          });
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: {
+              seo: site.seo as import("@prisma/client").Prisma.InputJsonValue,
+            },
+          });
+          if (env === undefined) delete process.env.EMAIL_PROVIDER;
+          else process.env.EMAIL_PROVIDER = env;
+          if (jobId) await db.job.deleteMany({ where: { id: jobId } });
+        }
+      },
+    );
   },
 );
