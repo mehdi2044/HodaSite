@@ -19,6 +19,8 @@ import {
   allowances,
   usableGrants,
   settleDebt,
+  walletDebt,
+  payCoinDebt,
 } from "./ledger";
 export { creditPaidOrder, revokeReturnedCoins } from "./ledger";
 
@@ -44,14 +46,11 @@ export async function walletView(customerId: string) {
       if (c.enabled) await allowances(tx, customerId, c, new Date());
       await settleDebt(tx, customerId);
       const grants = await usableGrants(tx, customerId, new Date());
-      const w = await tx.fittingWallet.findUniqueOrThrow({
-        where: { customerId },
-      });
       return {
         balance: grants
           .reduce((s, g) => s.add(g.balance.toString()), new Decimal(0))
           .toFixed(),
-        debt: w.debt.toString(),
+        debt: (await walletDebt(tx, customerId)).toFixed(),
         dailyExpires:
           grants.find((g) => g.reason === "DAILY")?.expiresAt?.toISOString() ??
           null,
@@ -345,10 +344,8 @@ export async function createFittingSession(
         )
           throw new FittingError("DAILY_LIMIT");
         await settleDebt(tx, customerId, now);
-        const wallet = await tx.fittingWallet.findUniqueOrThrow({
-          where: { customerId },
-        });
-        if (wallet.debt.gt(0)) throw new FittingError("INSUFFICIENT_COINS");
+        if ((await walletDebt(tx, customerId)).gt(0))
+          throw new FittingError("INSUFFICIENT_COINS");
         const grants = await usableGrants(tx, customerId, now);
         const allocations = allocate(c.costCoins, grants);
         for (const a of allocations)
@@ -409,15 +406,7 @@ export async function refundSession(
     const g = await tx.fittingCoinGrant.findUniqueOrThrow({
       where: { id: a.grantId },
     });
-    const wallet = await tx.fittingWallet.findUniqueOrThrow({
-      where: { customerId: s.customerId },
-    });
-    const offset = Decimal.min(a.amount, wallet.debt.toString());
-    if (offset.gt(0))
-      await tx.fittingWallet.update({
-        where: { customerId: s.customerId },
-        data: { debt: { decrement: offset.toFixed() } },
-      });
+    const offset = await payCoinDebt(tx, s.customerId, a.amount);
     const credit = new Decimal(a.amount).sub(offset);
     const room = Decimal.max(
       0,

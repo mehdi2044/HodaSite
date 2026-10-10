@@ -1040,19 +1040,20 @@ enum ReturnStatus {
 }
 
 model Customer {
-  fittingWallet     FittingWallet?
-  fittingGrants     FittingCoinGrant[]
-  fittingEntries    FittingCoinEntry[]
-  fittingSessions   FittingSession[]
-  crmProfiles       CrmProfile[]
-  crmNotes          CrmNote[]
-  consents          MarketingConsent[]
-  consentEvents     ConsentEvent[]
-  privacyRequests   PrivacyRequest[]
-  wishlists         Wishlist[]
-  reviews           Review[]
-  stockAlerts       StockAlert[]
-  pushSubscriptions PushSubscription[]
+  fittingWallet       FittingWallet?
+  fittingDebtOverflow FittingCoinDebtOverflow[]
+  fittingGrants       FittingCoinGrant[]
+  fittingEntries      FittingCoinEntry[]
+  fittingSessions     FittingSession[]
+  crmProfiles         CrmProfile[]
+  crmNotes            CrmNote[]
+  consents            MarketingConsent[]
+  consentEvents       ConsentEvent[]
+  privacyRequests     PrivacyRequest[]
+  wishlists           Wishlist[]
+  reviews             Review[]
+  stockAlerts         StockAlert[]
+  pushSubscriptions   PushSubscription[]
 
   id                  String          @id @default(cuid())
   email               String          @unique
@@ -2325,6 +2326,20 @@ model FittingWallet {
   debt       Decimal  @default(0) @db.Decimal(18, 4)
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model FittingCoinDebtOverflow {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  sourceKey  String
+  amount     Decimal  @db.Decimal(18, 4)
+  balance    Decimal  @db.Decimal(18, 4)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, sourceKey])
+  @@index([customerId, createdAt])
 }
 
 model FittingCoinGrant {

@@ -126,6 +126,30 @@ export async function saveFittingSettings(raw: unknown) {
       });
       if ((old?.updatedAt.toISOString() ?? null) !== v.version)
         throw new FittingError("STALE");
+      const previous = z
+        .object({ rewards: configSchema.shape.rewards })
+        .safeParse(old?.config ?? {});
+      const oldRewards = new Map(
+        (previous.success ? previous.data.rewards : []).map((r) => [
+          r.marketId,
+          r,
+        ]),
+      );
+      const newRewards = new Map(v.config.rewards.map((r) => [r.marketId, r]));
+      for (const marketId of new Set([
+        ...oldRewards.keys(),
+        ...newRewards.keys(),
+      ])) {
+        const before = oldRewards.get(marketId),
+          after = newRewards.get(marketId);
+        if (
+          !before ||
+          !after ||
+          !new Decimal(before.spendAmount).eq(after.spendAmount) ||
+          !new Decimal(before.coins).eq(after.coins)
+        )
+          await txCan(tx, userId, "ai.settings.manage", { marketId });
+      }
       try {
         await lockMediaReferences(
           tx,

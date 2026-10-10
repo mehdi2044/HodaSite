@@ -27,6 +27,88 @@ export async function lockWallet(
   await tx.$queryRaw`SELECT id FROM "FittingWallet" WHERE "customerId"=${customerId} FOR UPDATE`;
   return tx.fittingWallet.findUniqueOrThrow({ where: { customerId } });
 }
+// Aggregate liabilities can exceed a single numeric(18,4) row. Keep ample
+// precision for sums without changing the precision of individual coin entries.
+const DebtDecimal = Decimal.clone({ precision: 100 });
+export async function walletDebt(
+  tx: Prisma.TransactionClient,
+  customerId: string,
+) {
+  const [wallet, overflow] = await Promise.all([
+    tx.fittingWallet.findUniqueOrThrow({ where: { customerId } }),
+    tx.fittingCoinDebtOverflow.aggregate({
+      where: { customerId, balance: { gt: 0 } },
+      _sum: { balance: true },
+    }),
+  ]);
+  return new DebtDecimal(wallet.debt.toString()).add(
+    overflow._sum.balance?.toString() ?? "0",
+  );
+}
+/** Caller holds the wallet lock. Every stored liability tranche stays in range. */
+async function addCoinDebt(
+  tx: Prisma.TransactionClient,
+  customerId: string,
+  sourceKey: string,
+  amount: Decimal,
+) {
+  const wallet = await tx.fittingWallet.findUniqueOrThrow({
+    where: { customerId },
+  });
+  const first = Decimal.min(
+    amount,
+    new Decimal(maxPurchaseReward).sub(wallet.debt.toString()),
+  );
+  if (first.gt(0))
+    await tx.fittingWallet.update({
+      where: { customerId },
+      data: { debt: { increment: first.toFixed() } },
+    });
+  const overflow = amount.sub(first);
+  if (overflow.gt(0))
+    await tx.fittingCoinDebtOverflow.create({
+      data: {
+        customerId,
+        sourceKey,
+        amount: overflow.toFixed(),
+        balance: overflow.toFixed(),
+      },
+    });
+}
+/** Repay the legacy first tranche and then overflow lots; caller holds wallet lock. */
+export async function payCoinDebt(
+  tx: Prisma.TransactionClient,
+  customerId: string,
+  amount: Decimal.Value,
+) {
+  const value = new DebtDecimal(amount);
+  let remaining = value;
+  const wallet = await tx.fittingWallet.findUniqueOrThrow({
+    where: { customerId },
+  });
+  const first = Decimal.min(remaining, wallet.debt.toString());
+  if (first.gt(0)) {
+    await tx.fittingWallet.update({
+      where: { customerId },
+      data: { debt: { decrement: first.toFixed() } },
+    });
+    remaining = remaining.sub(first);
+  }
+  if (remaining.gt(0))
+    for (const lot of await tx.fittingCoinDebtOverflow.findMany({
+      where: { customerId, balance: { gt: 0 } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    })) {
+      const take = Decimal.min(remaining, lot.balance.toString());
+      await tx.fittingCoinDebtOverflow.update({
+        where: { id: lot.id },
+        data: { balance: { decrement: take.toFixed() } },
+      });
+      remaining = remaining.sub(take);
+      if (remaining.eq(0)) break;
+    }
+  return value.sub(remaining);
+}
 export async function grantCoins(
   tx: Prisma.TransactionClient,
   customerId: string,
@@ -46,12 +128,9 @@ export async function grantCoins(
     })
   )
     return;
-  const wallet = await tx.fittingWallet.findUniqueOrThrow({
-      where: { customerId },
-    }),
-    value = new Decimal(amount),
-    offset = Decimal.min(value, wallet.debt.toString());
+  const value = new Decimal(amount);
   if (value.lte(0)) return;
+  const offset = await payCoinDebt(tx, customerId, value);
   await tx.fittingCoinGrant.create({
     data: {
       customerId,
@@ -62,11 +141,6 @@ export async function grantCoins(
       ...extra,
     },
   });
-  if (offset.gt(0))
-    await tx.fittingWallet.update({
-      where: { customerId },
-      data: { debt: new Decimal(wallet.debt.toString()).sub(offset).toFixed() },
-    });
   await tx.fittingCoinEntry.create({
     data: {
       customerId,
@@ -119,10 +193,8 @@ export async function settleDebt(
   customerId: string,
   now = new Date(),
 ) {
-  const wallet = await tx.fittingWallet.findUniqueOrThrow({
-    where: { customerId },
-  });
-  let debt = new Decimal(wallet.debt.toString());
+  const original = await walletDebt(tx, customerId);
+  let debt = original;
   if (debt.lte(0)) return;
   for (const grant of await usableGrants(tx, customerId, now)) {
     const take = Decimal.min(debt, grant.balance.toString());
@@ -133,10 +205,7 @@ export async function settleDebt(
     debt = debt.sub(take);
     if (debt.eq(0)) break;
   }
-  await tx.fittingWallet.update({
-    where: { customerId },
-    data: { debt: debt.toFixed() },
-  });
+  await payCoinDebt(tx, customerId, original.sub(debt));
 }
 export async function creditPaidOrder(
   tx: Prisma.TransactionClient,
@@ -472,10 +541,12 @@ export async function revokeReturnedCoins(
       },
     });
     if (debt.gt(0))
-      await tx.fittingWallet.update({
-        where: { customerId: order.customerId },
-        data: { debt: { increment: debt.toFixed() } },
-      });
+      await addCoinDebt(
+        tx,
+        order.customerId,
+        `revoke:${g.id}:${target.toFixed()}`,
+        debt,
+      );
     await tx.fittingCoinEntry.create({
       data: {
         customerId: order.customerId,

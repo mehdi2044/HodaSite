@@ -1375,6 +1375,80 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       });
       expect(await balance(b.id)).toBe("100");
     });
+    it.each(["ADD", "CHANGE", "REMOVE"] as const)(
+      "requires market-scoped permission to %s a purchase reward despite global allow",
+      async (operation) => {
+        const ca = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+        const trReward = { marketId, spendAmount: "100", coins: "25" };
+        const caReward = { marketId: ca.id, spendAmount: "100", coins: "25" };
+        const config = await configure({
+          enabled: false,
+          rewards: operation === "ADD" ? [trReward] : [trReward, caReward],
+        });
+        const deny = await db.userPermissionOverride.create({
+          data: {
+            userId: ownerId,
+            permission: "ai.settings.manage",
+            allow: false,
+            scope: { marketId: ca.id },
+          },
+        });
+        try {
+          const before = await db.integration.findUniqueOrThrow({
+            where: { key: "fitting-room" },
+          });
+          const audits = await db.auditLog.count({
+            where: { action: "fitting.settings.save" },
+          });
+          const rewards =
+            operation === "REMOVE"
+              ? [trReward]
+              : [
+                  trReward,
+                  { ...caReward, coins: operation === "CHANGE" ? "50" : "25" },
+                ];
+          await expect(
+            saveFittingSettings({
+              version: before.updatedAt.toISOString(),
+              config: { ...config, rewards },
+              confirm: true,
+            }),
+          ).rejects.toThrow("FORBIDDEN");
+          expect(
+            await db.integration.findUniqueOrThrow({
+              where: { key: "fitting-room" },
+            }),
+          ).toEqual(before);
+          expect(
+            await db.auditLog.count({
+              where: { action: "fitting.settings.save" },
+            }),
+          ).toBe(audits);
+          await saveFittingSettings({
+            version: before.updatedAt.toISOString(),
+            config: {
+              ...config,
+              costCoins: "13.5",
+              rewards: config.rewards
+                .map((r) =>
+                  r.marketId === marketId
+                    ? { ...r, spendAmount: "200" }
+                    : { ...r, spendAmount: "100.0000", coins: "25.0000" },
+                )
+                .reverse(),
+            },
+            confirm: true,
+          });
+          expect(
+            (await fittingSettings()).config.rewards.find(
+              (r) => r.marketId === marketId,
+            )?.spendAmount,
+          ).toBe("200");
+        } finally {
+          await db.userPermissionOverride.delete({ where: { id: deny.id } });
+        }
+      },
+    );
     it("saves versioned admin settings and grants exact batch credits idempotently", async () => {
       const a = await customer("0"),
         b = await customer("0"),
@@ -2130,6 +2204,128 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(1);
     });
+    it.each(["REFUND", "CREDIT"] as const)(
+      "settles %s after consumed near-limit grants without overflowing or forgiving debt",
+      async (operation) => {
+        await configure({
+          rewards: [{ marketId, spendAmount: "0.0001", coins: "9999999999" }],
+        });
+        const c = await customer("0");
+        const maximum = "99999999999999.9999";
+        const source = async () => {
+          const f = await returnFixture(db, {
+            customerId: c.id,
+            quantity: 1,
+            price: "100",
+          });
+          await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+          return f;
+        };
+        const first = await source(),
+          second = await source();
+        const pending = await create(c.id);
+        // Fixture for earlier completed uses: keep the original grants/entries
+        // and consume their remaining balances without billions of UI requests.
+        await db.$transaction(async (tx) => {
+          await lockWallet(tx, c.id);
+          for (const g of await usableGrants(tx, c.id, new Date())) {
+            await tx.fittingCoinEntry.create({
+              data: {
+                customerId: c.id,
+                sourceKey: `historic-spend:${g.id}`,
+                amount: new Decimal(g.balance.toString()).neg().toFixed(),
+                reason: "HISTORIC_SPEND_FIXTURE",
+              },
+            });
+            await tx.fittingCoinGrant.update({
+              where: { id: g.id },
+              data: { balance: "0" },
+            });
+          }
+        });
+        const receive = async (f: Awaited<ReturnType<typeof source>>) => {
+          const r = await requestReturn(c.id, {
+            orderId: f.order.id,
+            requestKey: randomUUID(),
+            type: "RETURN",
+            reasonCode: "SIZE",
+            items: [{ orderItemId: f.order.items[0].id, quantity: 1 }],
+          });
+          await manageReturn(ownerId, {
+            returnId: r.id,
+            version: 0,
+            operation: "APPROVE",
+          });
+          const item = await db.returnItem.findFirstOrThrow({
+            where: { returnRequestId: r.id },
+          });
+          await manageReturn(ownerId, {
+            returnId: r.id,
+            version: 1,
+            operation: "RECEIVE",
+            conditions: [{ itemId: item.id, condition: "RESTOCK" }],
+          });
+          return r;
+        };
+        const returns = await Promise.all([receive(first), receive(second)]);
+        await Promise.all(
+          returns.map((r) =>
+            manageReturn(ownerId, {
+              returnId: r.id,
+              version: 2,
+              operation,
+              note: "overflow debt fixture",
+            }),
+          ),
+        );
+        await Promise.all(
+          [first, second].map((f) =>
+            db.$transaction((tx) => revokeReturnedCoins(tx, f.order.id)),
+          ),
+        );
+        expect((await walletView(c.id)).debt).toBe("199999999999999.9998");
+        expect(await balance(c.id)).toBe("0");
+        const overflow = await db.fittingCoinDebtOverflow.findMany({
+          where: { customerId: c.id },
+        });
+        expect(overflow).toHaveLength(1);
+        expect(overflow[0].amount.toString()).toBe(maximum);
+        expect(overflow[0].balance.toString()).toBe(maximum);
+        expect(
+          await db.fittingCoinEntry.count({
+            where: {
+              customerId: c.id,
+              reason: "RETURN_REVERSAL",
+            },
+          }),
+        ).toBe(2);
+        await expect(create(c.id)).rejects.toThrow("INSUFFICIENT_COINS");
+        await source();
+        expect((await walletView(c.id)).debt).toBe(maximum);
+        expect(
+          (
+            await db.fittingWallet.findUniqueOrThrow({
+              where: { customerId: c.id },
+            })
+          ).debt.toString(),
+        ).toBe("0");
+        await expect(create(c.id)).rejects.toThrow("INSUFFICIENT_COINS");
+        await db.$transaction((tx) => refundSession(tx, pending.id, "TEST"));
+        expect((await walletView(c.id)).debt).toBe("99999999999987.4999");
+        expect(await balance(c.id)).toBe("0");
+        await source();
+        expect((await walletView(c.id)).debt).toBe("0");
+        expect(await balance(c.id)).toBe("12.5");
+        await db.$transaction((tx) => refundSession(tx, pending.id, "TEST"));
+        expect(await balance(c.id)).toBe("12.5");
+        const settled = await db.fittingCoinDebtOverflow.findUniqueOrThrow({
+          where: { id: overflow[0].id },
+        });
+        expect(settled.amount.toString()).toBe(maximum);
+        expect(settled.balance.toString()).toBe("0");
+        expect((await create(c.id)).status).toBe("QUEUED");
+      },
+    );
     it.each(["REFUND", "CREDIT"] as const)(
       "reverses source sale rewards through nested exchanges and %s settlement",
       async (operation) => {
