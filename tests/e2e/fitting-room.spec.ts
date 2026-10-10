@@ -91,6 +91,31 @@ for (const locale of ["fa", "tr", "en"] as const) {
         "src",
         cardImage,
       );
+      const cart = await db.cart.findFirstOrThrow({
+        where: { customerId: customer.id },
+        include: { market: true },
+        orderBy: { createdAt: "desc" },
+      });
+      const checkoutProduct = page.locator(".shop-checkout-piece a").first();
+      await expect(checkoutProduct).toHaveAttribute(
+        "href",
+        new RegExp(`^/${locale}/m/${cart.market.code}/p/`),
+      );
+      // Simulate another tab switching the cookie while this checkout stays open.
+      await page.evaluate(() => {
+        document.cookie = "market=CA; path=/";
+      });
+      try {
+        await checkoutProduct.click();
+        await expect(page).toHaveURL(
+          new RegExp(`/${locale}/m/${cart.market.code}/p/`),
+        );
+        await expect(page.locator(".shop-product-title")).toBeVisible();
+      } finally {
+        await page.evaluate((code) => {
+          document.cookie = `market=${code}; path=/`;
+        }, cart.market.code);
+      }
       await page.goto(`/${locale}/fitting-room`);
       await room.locator(".fitting-models button").nth(2).click();
       await expect(room.locator(".fitting-chip")).toHaveCount(0);

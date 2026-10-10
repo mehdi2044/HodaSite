@@ -2,7 +2,13 @@ import { promotionOrderAmounts } from "@/modules/promotions/order-amounts";
 import { returnLineBudgets } from "@/modules/returns/validation";
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
-import { configSchema, dayBounds, type FittingConfig } from "./contracts";
+import {
+  configSchema,
+  dayBounds,
+  rewardAmount,
+  maxPurchaseReward,
+  type FittingConfig,
+} from "./contracts";
 export async function readConfig(tx: Prisma.TransactionClient) {
   const r = await tx.integration.findUnique({ where: { key: "fitting-room" } });
   const parsed = configSchema.safeParse(r?.config ?? {});
@@ -191,10 +197,11 @@ export async function creditPaidOrder(
     order.customerId,
     `reward:${orderId}`,
     "PURCHASE",
-    rewardAmountSafe(spend.toFixed(), reward.spendAmount, reward.coins),
+    rewardAmount(spend.toFixed(), reward.spendAmount, reward.coins),
     {
       orderId,
       ruleSnapshot: {
+        maxCoins: maxPurchaseReward,
         spendAmount: reward.spendAmount,
         coins: reward.coins,
         eligibleNetSpend: spend.toFixed(),
@@ -207,14 +214,6 @@ export async function creditPaidOrder(
       },
     },
   );
-}
-function rewardAmountSafe(spend: string, threshold: string, coins: string) {
-  return new Decimal(spend)
-    .div(threshold)
-    .floor()
-    .mul(coins)
-    .toDecimalPlaces(4)
-    .toFixed();
 }
 /** Cumulative entitlement reversal, called under the existing order lock. */
 export async function revokeReturnedCoins(
@@ -351,7 +350,7 @@ export async function revokeReturnedCoins(
                 );
 
           const remaining = new Decimal(
-            rewardAmountSafe(net.toFixed(), rule.spendAmount, rule.coins),
+            rewardAmount(net.toFixed(), rule.spendAmount, rule.coins),
           );
           target = Decimal.max(
             0,

@@ -54,6 +54,12 @@ describe("optional fitting-room contracts", () => {
       allocate("12.5", [{ id: "daily", balance: "12.4999" }]),
     ).toThrow("INSUFFICIENT_COINS");
   });
+  it("caps extreme purchase rewards within numeric(18,4) without rounding normal rewards up", () => {
+    expect(rewardAmount("100", "0.0001", "9999999999")).toBe(
+      "99999999999999.9999",
+    );
+    expect(rewardAmount("0", "0.0001", "9999999999")).toBe("0");
+  });
   it("never rounds purchases up to an unearned reward", () => {
     expect(rewardAmount("199.9999", "100", "12.5")).toBe("12.5");
     expect(rewardAmount("200", "100", "12.5")).toBe("25");

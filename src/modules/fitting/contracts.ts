@@ -135,17 +135,20 @@ export function dayBounds(now: Date, timezone: string) {
   }
   return { key, start: new Date(hi), end };
 }
+export const maxPurchaseReward = "99999999999999.9999";
 export function rewardAmount(
   spend: string,
   threshold: string,
   coinsPerStep: string,
 ) {
-  return new Decimal(spend)
-    .div(threshold)
-    .floor()
-    .mul(coinsPerStep)
-    .toDecimalPlaces(4)
-    .toFixed();
+  return Decimal.min(
+    maxPurchaseReward,
+    new Decimal(spend)
+      .div(threshold)
+      .floor()
+      .mul(coinsPerStep)
+      .toDecimalPlaces(4),
+  ).toFixed();
 }
 export function allocate(
   cost: string,

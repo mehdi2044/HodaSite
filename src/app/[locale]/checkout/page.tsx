@@ -1,3 +1,4 @@
+import { seoPath } from "@/lib/seo";
 import { variantImages } from "@/modules/catalog/variant-images";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
@@ -281,7 +282,14 @@ export default async function CheckoutPage({
                 )}
                 <div>
                   <Link
-                    href={`/${locale}/p/${(item.variant.product.slugI18n as Record<string, string>)[locale]}`}
+                    href={seoPath(
+                      locale as "fa" | "tr" | "en",
+                      cart.market.code,
+                      "p",
+                      (item.variant.product.slugI18n as Record<string, string>)[
+                        locale
+                      ],
+                    )}
                   >
                     {
                       (

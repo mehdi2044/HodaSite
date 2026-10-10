@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { catalogText } from "@/modules/catalog/localized";
-import { getDisplayPrice } from "@/modules/pricing";
+import { getVariantDisplayPrices } from "@/modules/pricing";
 import {
   requestSchema,
   FittingError,
@@ -162,18 +162,22 @@ export async function fittingProducts(
     take: 300,
   });
   const market = await db.market.findUniqueOrThrow({ where: { id: marketId } });
-  const prices = new Map(
-    await Promise.all(
-      rows.map(
-        async (v) =>
-          [
-            v.id,
-            ownedIds.has(v.id)
-              ? null
-              : (await getDisplayPrice(v.product, v, market)).amount,
-          ] as const,
-      ),
-    ),
+  const pricedProducts = new Map<
+    string,
+    (typeof rows)[number]["product"] & { variants: (typeof rows)[number][] }
+  >();
+  for (const variant of rows) {
+    if (ownedIds.has(variant.id)) continue;
+    const product = pricedProducts.get(variant.productId) ?? {
+      ...variant.product,
+      variants: [],
+    };
+    product.variants.push(variant);
+    pricedProducts.set(variant.productId, product);
+  }
+  const prices = await getVariantDisplayPrices(
+    [...pricedProducts.values()],
+    market,
   );
   return rows.flatMap((v) => {
     const m = [...v.media, ...v.product.media]
@@ -194,7 +198,7 @@ export async function fittingProducts(
         gender: v.product.gender,
         slot: v.product.fittingSlot,
         url: m.url,
-        amount: prices.get(v.id) ?? null,
+        amount: ownedIds.has(v.id) ? null : (prices.get(v.id)?.amount ?? null),
         owned: ownedIds.has(v.id),
         available:
           v.stockItems.reduce((n, s) => n + s.onHand - s.reserved, 0) > 0,
