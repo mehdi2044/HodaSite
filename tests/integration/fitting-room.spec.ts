@@ -659,6 +659,56 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).rejects.toThrow("REQUEST_CONFLICT");
       expect(await balance(c.id)).toBe("87.5");
     });
+    it.each(["QUEUED", "DONE"] as const)(
+      "recovers an existing %s session after the feature is disabled",
+      async (status) => {
+        const c = await customer(),
+          request = input(),
+          session = await createFittingSession(c.id, marketId, "en", request),
+          provider = { render: vi.fn(async () => bytes) };
+        if (status === "DONE") {
+          await renderFitting(session.id, provider);
+          outputKeys.push(
+            (
+              await db.fittingSession.findUniqueOrThrow({
+                where: { id: session.id },
+              })
+            ).storageKey!,
+          );
+        }
+        await configure({ enabled: false, costCoins: "25", models: [] });
+        expect(
+          await createFittingSession(c.id, marketId, "en", request),
+        ).toEqual({
+          id: session.id,
+          status,
+        });
+        await expect(
+          createFittingSession(c.id, marketId, "en", {
+            ...request,
+            modelId: "other",
+          }),
+        ).rejects.toThrow("REQUEST_CONFLICT");
+        await expect(
+          createFittingSession(c.id, marketId, "en", {
+            ...request,
+            requestKey: randomUUID(),
+          }),
+        ).rejects.toThrow("DISABLED");
+        expect(await balance(c.id)).toBe("87.5");
+        expect(
+          await db.fittingSession.count({ where: { customerId: c.id } }),
+        ).toBe(1);
+        expect(
+          await db.fittingCoinEntry.count({
+            where: { customerId: c.id, reason: "FITTING" },
+          }),
+        ).toBe(1);
+        expect(provider.render).toHaveBeenCalledTimes(
+          status === "DONE" ? 1 : 0,
+        );
+      },
+    );
     it.each([
       { expectedCostCoins: "13" },
       { confirm: false },
@@ -1333,6 +1383,82 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         grantFittingCoins({ ...request, marketId: other.id }),
       ).rejects.toThrow("REQUEST_CONFLICT");
       expect(await balance(c.id)).toBe("12.5");
+    });
+    it("replays a segment grant against its submitted request after the audience changes", async () => {
+      const a = await customer("0"),
+        b = await customer("0"),
+        marker = `replay-group-${randomUUID()}`;
+      await db.customer.updateMany({
+        where: { id: { in: [a.id, b.id] } },
+        data: { preferredMarketId: marketId },
+      });
+      await db.crmProfile.createMany({
+        data: [a, b].map((c) => ({
+          customerId: c.id,
+          marketId,
+          tags: c.id === a.id ? [marker] : [],
+        })),
+      });
+      const segment = await db.crmSegment.create({
+        data: {
+          name: marker,
+          marketId,
+          definition: { version: 1, rules: [{ field: "tag", value: marker }] },
+        },
+      });
+      const request = {
+        marketId,
+        requestKey: randomUUID(),
+        customerIds: [],
+        segmentId: segment.id,
+        amount: "12.5",
+        expiresAt: null,
+        reason: "stable request fixture",
+        confirm: true,
+      };
+      await grantFittingCoins(request);
+      await db.crmProfile.updateMany({
+        where: { customerId: a.id, marketId },
+        data: { tags: [] },
+      });
+      await db.crmProfile.updateMany({
+        where: { customerId: b.id, marketId },
+        data: { tags: [marker] },
+      });
+      await Promise.all([
+        grantFittingCoins(request),
+        grantFittingCoins(request),
+      ]);
+      const evidence = await db.auditLog.findMany({
+        where: { action: "fitting.coins.grant", entityId: request.requestKey },
+      });
+      expect(evidence).toHaveLength(1);
+      expect(evidence[0].after).toMatchObject({
+        customerIds: [a.id],
+        request: { customerIds: [], segmentId: segment.id, marketId },
+        requestFingerprint: expect.any(String),
+      });
+      await expect(
+        grantFittingCoins({ ...request, segmentId: "other" }),
+      ).rejects.toThrow("REQUEST_CONFLICT");
+      await expect(
+        grantFittingCoins({ ...request, customerIds: [b.id] }),
+      ).rejects.toThrow("REQUEST_CONFLICT");
+      const deny = await db.userPermissionOverride.create({
+        data: {
+          userId: ownerId,
+          permission: "crm.segment.manage",
+          allow: false,
+          scope: { marketId },
+        },
+      });
+      try {
+        await expect(grantFittingCoins(request)).rejects.toThrow("FORBIDDEN");
+      } finally {
+        await db.userPermissionOverride.delete({ where: { id: deny.id } });
+      }
+      expect(await balance(a.id)).toBe("12.5");
+      expect(await balance(b.id)).toBe("0");
     });
     it("credits a snapshotted pack only after the real PAID transition and once", async () => {
       const f = await returnFixture(db, {

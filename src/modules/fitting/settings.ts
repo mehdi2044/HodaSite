@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import Decimal from "decimal.js";
 import { auth } from "@/modules/auth";
 import { segmentQuery } from "@/modules/crm/segment-query";
@@ -178,8 +179,17 @@ export async function grantFittingCoins(raw: unknown) {
     userId = await actor();
   await assertCan(userId, "crm.customer.view", { marketId: input.marketId });
   await assertCan(userId, "ai.settings.manage", { marketId: input.marketId });
-  if (input.expiresAt && new Date(input.expiresAt) <= new Date())
-    throw new FittingError("INVALID_SELECTION");
+  const request = {
+    marketId: input.marketId,
+    customerIds: [...new Set(input.customerIds)].sort(),
+    segmentId: input.segmentId ?? null,
+    amount: input.amount,
+    expiresAt: input.expiresAt,
+    reason: input.reason,
+  };
+  const requestFingerprint = createHash("sha256")
+    .update(JSON.stringify({ userId, ...request }))
+    .digest("hex");
   return withMutation(() =>
     db.$transaction(
       async (tx) => {
@@ -189,17 +199,46 @@ export async function grantFittingCoins(raw: unknown) {
         await txCan(tx, userId, "crm.customer.view", {
           marketId: input.marketId,
         });
+        if (input.segmentId)
+          await txCan(tx, userId, "crm.segment.manage", {
+            marketId: input.marketId,
+          });
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.requestKey}))`;
+        const prior = await tx.auditLog.findFirst({
+          where: { action: "fitting.coins.grant", entityId: input.requestKey },
+        });
+        if (prior) {
+          const previous = prior.after as {
+            requestFingerprint?: string;
+            marketId?: string;
+            customerIds?: string[];
+            amount?: string;
+            expiresAt?: string | null;
+            reason?: string;
+          } | null;
+          const same = previous?.requestFingerprint
+            ? previous.requestFingerprint === requestFingerprint
+            : prior.userId === userId &&
+              !input.segmentId &&
+              previous?.marketId === request.marketId &&
+              previous.amount === request.amount &&
+              previous.expiresAt === request.expiresAt &&
+              previous.reason === request.reason &&
+              JSON.stringify(previous.customerIds) ===
+                JSON.stringify(request.customerIds);
+          if (!same) throw new FittingError("REQUEST_CONFLICT");
+          return;
+        }
+        if (input.expiresAt && new Date(input.expiresAt) <= new Date())
+          throw new FittingError("INVALID_SELECTION");
         if (
           !(await tx.market.count({
             where: { id: input.marketId, isActive: true },
           }))
         )
           throw new FittingError("INVALID_SELECTION");
-        let ids = [...new Set(input.customerIds)].sort();
+        let ids = request.customerIds;
         if (input.segmentId) {
-          await txCan(tx, userId, "crm.segment.manage", {
-            marketId: input.marketId,
-          });
           const segment = await tx.crmSegment.findFirst({
             where: { id: input.segmentId, marketId: input.marketId },
           });
@@ -224,33 +263,15 @@ export async function grantFittingCoins(raw: unknown) {
         });
         if (users.length !== ids.length)
           throw new FittingError("INVALID_SELECTION");
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${input.requestKey}))`;
-        const prior = await tx.auditLog.findFirst({
-          where: { action: "fitting.coins.grant", entityId: input.requestKey },
-        });
         const after = {
+          request,
+          requestFingerprint,
           marketId: input.marketId,
           customerIds: ids,
           amount: input.amount,
           expiresAt: input.expiresAt,
           reason: input.reason,
         };
-        if (prior) {
-          if (JSON.stringify(prior.after) !== JSON.stringify(after)) {
-            // JSON object key order is not a comparison contract.
-            const previous = prior.after as typeof after;
-            if (
-              previous.marketId !== after.marketId ||
-              previous.amount !== after.amount ||
-              previous.expiresAt !== after.expiresAt ||
-              previous.reason !== after.reason ||
-              JSON.stringify(previous.customerIds) !== JSON.stringify(ids)
-            )
-              throw new FittingError("REQUEST_CONFLICT");
-          }
-          return;
-        }
-
         for (const customerId of ids) {
           await lockWallet(tx, customerId);
           await grantCoins(

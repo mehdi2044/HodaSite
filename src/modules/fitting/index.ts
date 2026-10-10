@@ -222,12 +222,8 @@ export async function createFittingSession(
     db.$transaction(
       async (tx) => {
         await requireCustomer(tx, customerId);
-        let c = await readConfig(tx);
-        if (!c.enabled) throw new FittingError("DISABLED");
         // Shared dispatch cap and admin settings are serialized before the customer wallet.
         await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR UPDATE`;
-        c = await readConfig(tx);
-        if (!c.enabled) throw new FittingError("DISABLED");
         await lockWallet(tx, customerId);
         const old = await tx.fittingSession.findUnique({
           where: {
@@ -239,6 +235,8 @@ export async function createFittingSession(
             throw new FittingError("REQUEST_CONFLICT");
           return { id: old.id, status: old.status };
         }
+        const c = await readConfig(tx);
+        if (!c.enabled) throw new FittingError("DISABLED");
         if (!new Decimal(input.expectedCostCoins).eq(c.costCoins))
           throw new FittingError("CHARGE_CHANGED");
         const model = c.models.find((m) => m.id === input.modelId && m.enabled);
