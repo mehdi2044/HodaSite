@@ -265,6 +265,178 @@ afterEach(async () => {
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "09B real checkout integration",
   () => {
+    it.each(["CHECKOUT_FIRST", "DISABLE_FIRST"] as const)(
+      "serializes coin-sale disabling with %s",
+      async (mode) => {
+        const f = await fixture();
+        const old = await db.integration.findUnique({
+          where: { key: "fitting-room" },
+        });
+        await db.integration.upsert({
+          where: { key: "fitting-room" },
+          create: {
+            key: "fitting-room",
+            provider: "openai",
+            isActive: true,
+            config: configSchema.parse({
+              enabled: true,
+              coinSalesEnabled: true,
+            }),
+          },
+          update: {
+            isActive: true,
+            config: configSchema.parse({
+              enabled: true,
+              coinSalesEnabled: true,
+            }),
+          },
+        });
+        await db.product.update({
+          where: { id: f.product.id },
+          data: { coinPackCoins: "100" },
+        });
+        actor.customerId = (
+          await db.customer.create({
+            data: { email: f.address.email, isGuest: false },
+          })
+        ).id;
+        let entered!: () => void,
+          release!: () => void,
+          blockedPid = 0;
+        const ready = new Promise<void>((r) => {
+          entered = r;
+        });
+        const gate = new Promise<void>((r) => {
+          release = r;
+        });
+        const real = db.$transaction.bind(db);
+        const run = real as unknown as (
+          fn: unknown,
+          options?: unknown,
+        ) => Promise<unknown>;
+        const checkpoint = async (tx: Prisma.TransactionClient) => {
+          const [backend] = await tx.$queryRaw<
+            { pid: number }[]
+          >`SELECT pg_backend_pid() AS pid`;
+          blockedPid = backend.pid;
+          entered();
+          await gate;
+        };
+        if (mode === "CHECKOUT_FIRST")
+          db.$transaction = (async (fn: unknown, options?: unknown) => {
+            if (typeof fn !== "function") return run(fn, options);
+            return run(async (tx: Prisma.TransactionClient) => {
+              const wrapped = new Proxy(tx, {
+                get(target, key) {
+                  const value = Reflect.get(target, key, target);
+                  if (key !== "$queryRaw") return value;
+                  return async (...args: unknown[]) => {
+                    const result = await value.apply(target, args);
+                    const query = Array.isArray(args[0])
+                      ? args[0].join("")
+                      : "";
+                    if (
+                      query.includes('"Integration"') &&
+                      query.includes("FOR SHARE")
+                    )
+                      await checkpoint(tx);
+                    return result;
+                  };
+                },
+              });
+              return (
+                fn as (client: Prisma.TransactionClient) => Promise<unknown>
+              )(wrapped);
+            }, options);
+          }) as typeof db.$transaction;
+        const checkout = () =>
+          placeOrder(f.address, true, 0, undefined, false, f.locale).then(
+            (value) => ({ ok: true as const, value }),
+            (error: unknown) => ({ ok: false as const, error }),
+          );
+        const disable = () =>
+          real(async (tx) => {
+            const result = await tx.integration.update({
+              where: { key: "fitting-room" },
+              data: {
+                config: configSchema.parse({
+                  enabled: true,
+                  coinSalesEnabled: false,
+                }),
+              },
+            });
+            if (mode === "DISABLE_FIRST") await checkpoint(tx);
+            return result;
+          });
+        let purchase: ReturnType<typeof checkout> | undefined,
+          change: ReturnType<typeof disable> | undefined;
+        try {
+          if (mode === "CHECKOUT_FIRST") purchase = checkout();
+          else change = disable();
+          await Promise.race([
+            ready,
+            (mode === "CHECKOUT_FIRST" ? purchase! : change!).then(() => {
+              throw new Error(
+                "Operation ended before integration lock checkpoint",
+              );
+            }),
+          ]);
+          if (mode === "CHECKOUT_FIRST") change = disable();
+          else purchase = checkout();
+          let blocked = false;
+          for (let i = 0; i < 200 && !blocked; i++) {
+            const [row] = await db.$queryRaw<
+              { blocked: boolean }[]
+            >`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE ${blockedPid}=ANY(pg_blocking_pids(pid))) AS blocked`;
+            blocked = row.blocked;
+            if (!blocked) await new Promise((r) => setTimeout(r, 10));
+          }
+          expect(blocked).toBe(true);
+          release();
+          const [result] = await Promise.all([purchase!, change!]);
+          if (mode === "CHECKOUT_FIRST") {
+            expect(result.ok).toBe(true);
+            if (!result.ok) throw result.error;
+            expect(
+              await db.order.count({ where: { number: result.value.number } }),
+            ).toBe(1);
+          } else {
+            expect(result.ok).toBe(false);
+            if (result.ok)
+              throw new Error("Disabled sale unexpectedly committed");
+            expect(String(result.error)).toContain(
+              "Coin pack sales are disabled",
+            );
+            expect(
+              (await db.cart.findUniqueOrThrow({ where: { id: f.cart.id } }))
+                .completedAt,
+            ).toBeNull();
+            expect(
+              await db.orderItem.count({ where: { variantId: f.variant.id } }),
+            ).toBe(0);
+          }
+        } finally {
+          release();
+          await Promise.allSettled([purchase, change]);
+          db.$transaction = real;
+          if (old)
+            await db.integration.update({
+              where: { id: old.id },
+              data: {
+                config: old.config ?? {},
+                isActive: old.isActive,
+                provider: old.provider,
+              },
+            });
+          else
+            await db.integration.deleteMany({ where: { key: "fitting-room" } });
+          await db.product.update({
+            where: { id: f.product.id },
+            data: { status: "ARCHIVED" },
+          });
+        }
+      },
+    );
     it.each([
       ["CHECKOUT_FIRST", false],
       ["CHECKOUT_FIRST", true],

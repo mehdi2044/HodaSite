@@ -166,7 +166,7 @@ export async function fittingProducts(
     (typeof rows)[number]["product"] & { variants: (typeof rows)[number][] }
   >();
   for (const variant of rows) {
-    if (ownedIds.has(variant.id)) continue;
+    if (owned) continue;
     const product = pricedProducts.get(variant.productId) ?? {
       ...variant.product,
       variants: [],
@@ -197,8 +197,8 @@ export async function fittingProducts(
         gender: v.product.gender,
         slot: v.product.fittingSlot,
         url: m.url,
-        amount: ownedIds.has(v.id) ? null : (prices.get(v.id)?.amount ?? null),
-        owned: ownedIds.has(v.id),
+        amount: owned ? null : (prices.get(v.id)?.amount ?? null),
+        owned,
         available:
           v.stockItems.reduce((n, s) => n + s.onHand - s.reserved, 0) > 0,
       },

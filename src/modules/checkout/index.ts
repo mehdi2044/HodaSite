@@ -85,6 +85,8 @@ export async function placeOrder(
           throw new CommerceError("CART_EMPTY");
         if (cart.revision !== expectedRevision)
           throw new CommerceError("CART_CHANGED");
+        if (cart.items.some((i) => i.variant.product.coinPackCoins))
+          await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
         if (address.country !== cart.market.code)
           throw new CommerceError("ADDRESS_MARKET");
         if (

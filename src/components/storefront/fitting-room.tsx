@@ -42,6 +42,7 @@ type Result = {
 export function FittingRoom({
   customerId,
   marketId,
+  enabled = true,
   models,
   products,
   ownedProducts,
@@ -59,6 +60,7 @@ export function FittingRoom({
 }: {
   customerId?: string;
   marketId: string;
+  enabled?: boolean;
   models: FittingModel[];
   products: FittingProduct[];
   ownedProducts: FittingProduct[];
@@ -83,6 +85,7 @@ export function FittingRoom({
   const [modelId, setModelId] = useState(models[0]?.id ?? ""),
     [source, setSource] = useState<"shop" | "wardrobe">("shop"),
     [selection, setSelection] = useState<string[]>([]),
+    [wardrobeSelection, setWardrobeSelection] = useState<string[]>([]),
     [balance, setBalance] = useState(initialBalance),
     [session, setSession] = useState<Session | null>(null),
     [busy, setBusy] = useState(false),
@@ -124,6 +127,16 @@ export function FittingRoom({
               (id: unknown) =>
                 typeof id === "string" &&
                 (oldRequest.success || availableIds.has(id)),
+            )
+            .slice(0, 4),
+        );
+      if (Array.isArray(old.wardrobeSelection))
+        setWardrobeSelection(
+          old.wardrobeSelection
+            .filter(
+              (id: unknown) =>
+                typeof id === "string" &&
+                ownedProducts.some((p) => p.variantId === id),
             )
             .slice(0, 4),
         );
@@ -170,7 +183,11 @@ export function FittingRoom({
     ),
   ];
   const selected = selection
-    .map((id) => all.find((p) => p.variantId === id))
+    .map((id) =>
+      (wardrobeSelection.includes(id) ? ownedProducts : products).find(
+        (p) => p.variantId === id,
+      ),
+    )
     .filter((v): v is FittingProduct => !!v);
   const candidates = (source === "shop" ? products : ownedProducts).filter(
     (p) => p.gender === gender || p.gender === "UNISEX",
@@ -180,7 +197,7 @@ export function FittingRoom({
   );
   const inProgress =
     session && ["QUEUED", "RUNNING", "REVIEW"].includes(session.status);
-  const locked = busy || !!inProgress || !!pending.current;
+  const locked = !enabled || busy || !!inProgress || !!pending.current;
   useEffect(() => {
     if (!session || !["QUEUED", "RUNNING", "REVIEW"].includes(session.status))
       return;
@@ -204,6 +221,7 @@ export function FittingRoom({
     remember(null);
     setModelId(id);
     setSelection([]);
+    setWardrobeSelection([]);
     setSession(null);
     setError("");
   }
@@ -215,6 +233,12 @@ export function FittingRoom({
       ),
       variantId,
     ]);
+    setWardrobeSelection((ids) => [
+      ...ids.filter(
+        (id) => all.find((p) => p.variantId === id)?.productId !== productId,
+      ),
+      ...(source === "wardrobe" ? [variantId] : []),
+    ]);
     setSession(null);
     setMessage("");
   }
@@ -225,11 +249,17 @@ export function FittingRoom({
         (id) => all.find((v) => v.variantId === id)?.productId !== productId,
       ),
     );
+    setWardrobeSelection((ids) =>
+      ids.filter(
+        (id) => all.find((p) => p.variantId === id)?.productId !== productId,
+      ),
+    );
     setSession(null);
     setMessage("");
     setError("");
   }
   async function create() {
+    if (!enabled && !pending.current) return;
     setBusy(true);
     setError("");
     pending.current ??= {
@@ -239,13 +269,18 @@ export function FittingRoom({
       confirm: true,
       expectedCostCoins: costCoins,
     };
-    remember({ request: pending.current, modelId, selection });
+    remember({
+      request: pending.current,
+      modelId,
+      selection,
+      wardrobeSelection,
+    });
     try {
       const r = await generate(pending.current);
       if (r.ok && r.id) {
         setSession({ id: r.id, status: "QUEUED", imageUrl: null });
         pending.current = null;
-        remember({ sessionId: r.id, modelId, selection });
+        remember({ sessionId: r.id, modelId, selection, wardrobeSelection });
         const next = await readSession(r.id);
         if (next.ok) {
           if (next.session) setSession(next.session);
@@ -265,6 +300,7 @@ export function FittingRoom({
     }
   }
   const coins = (v: string) => formatServiceUnits(v, locale);
+  const quotedCost = pending.current?.expectedCostCoins ?? costCoins;
   return (
     <section className="fitting-room" data-testid="fitting-room">
       <header className="fitting-heading">
@@ -272,6 +308,7 @@ export function FittingRoom({
           <p className="shop-eyebrow">{labels.eyebrow}</p>
           <h1>{labels.title}</h1>
           <p>{labels.subtitle}</p>
+          {!enabled && <p role="status">{labels.disabled}</p>}
         </div>
         <div className="fitting-wallet">
           <span>{labels.balance}</span>
@@ -287,7 +324,9 @@ export function FittingRoom({
               }).format(new Date(dailyExpires))}
             </small>
           )}
-          <a href={`/${locale}/fitting-room/coins`}>{labels.buyCoins} ↗</a>
+          {enabled && (
+            <a href={`/${locale}/fitting-room/coins`}>{labels.buyCoins} ↗</a>
+          )}
         </div>
       </header>
       <div className="fitting-layout">
@@ -469,13 +508,18 @@ export function FittingRoom({
             <p>
               {labels.cost}{" "}
               <b>
-                {coins(costCoins)} {labels.coins}
+                {coins(quotedCost)} {labels.coins}
               </b>
             </p>
             <p className="text-muted text-sm">{labels.chargeHelp}</p>
             <button
               className="button fitting-generate"
-              disabled={busy || !!inProgress || !modelId || !selection.length}
+              disabled={
+                busy ||
+                !!inProgress ||
+                (!pending.current &&
+                  (!enabled || !modelId || !selection.length))
+              }
               onClick={create}
             >
               {busy
@@ -483,7 +527,7 @@ export function FittingRoom({
                 : pending.current
                   ? labels.retry
                   : labels.generate}{" "}
-              · {coins(costCoins)} {labels.coins}
+              · {coins(quotedCost)} {labels.coins}
             </button>
             {selected.some((p) => !p.owned) && (
               <button

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { customerLogin } from "./helpers/crm-customer";
@@ -7,6 +7,7 @@ import fa from "../../messages/fa.json";
 import en from "../../messages/en.json";
 import tr from "../../messages/tr.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
+import { returnFixture } from "../helpers/returns";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
 for (const locale of ["fa", "tr", "en"] as const) {
@@ -184,6 +185,94 @@ for (const locale of ["fa", "tr", "en"] as const) {
     }
   });
 }
+test("shop repurchase and wardrobe styling keep separate cart intent for the same owned variant", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const old = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  await db.integration.update({
+    where: { id: old.id },
+    data: {
+      isActive: true,
+      config: { ...(old.config as Record<string, unknown>), enabled: true },
+    },
+  });
+  let productId: string | undefined;
+  try {
+    const email = `fit-repurchase-${randomUUID()}@example.com`;
+    await customerLogin(page, email, "en");
+    const customer = await db.customer.findUniqueOrThrow({ where: { email } });
+    const f = await returnFixture(db, { customerId: customer.id });
+    productId = f.variants[0].productId;
+    await db.product.update({
+      where: { id: productId },
+      data: { fittingSlot: "TOP", marketIds: [f.market.id] },
+    });
+    await db.productMedia.create({
+      data: { productId, mediaId: "seed-fashion-v2-women-tee" },
+    });
+    await page.goto("/en/fitting-room");
+    const room = page.getByTestId("fitting-room");
+    const card = room
+      .locator(".fitting-product")
+      .filter({ has: page.locator(`option[value="${f.variants[0].id}"]`) });
+    await card.locator("select").selectOption(f.variants[0].id);
+    await expect(room.locator(".fitting-chip")).toHaveCount(1);
+    await expect(room.locator(".fitting-chip")).not.toContainText(
+      en.fitting.owned,
+    );
+    await room.locator(".fitting-add").click();
+    await expect(
+      room.locator(".fitting-selection [role=status]"),
+    ).toContainText(en.fitting.added);
+    const cart = await db.cart.findFirstOrThrow({
+      where: { customerId: customer.id, completedAt: null, order: null },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(
+      (
+        await db.cartItem.findUniqueOrThrow({
+          where: {
+            cartId_variantId: { cartId: cart.id, variantId: f.variants[0].id },
+          },
+        })
+      ).quantity,
+    ).toBe(1);
+    await room.locator(".fitting-source button").nth(1).click();
+    await card.locator("select").selectOption(f.variants[0].id);
+    await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
+    await expect(room.locator(".fitting-add")).toHaveCount(0);
+    await room.locator(".fitting-source button").nth(0).click();
+    const trousersId = "seed-style-v2-women-trousers-m";
+    await room
+      .locator(".fitting-product")
+      .filter({ has: page.locator(`option[value="${trousersId}"]`) })
+      .locator("select")
+      .selectOption(trousersId);
+    await room.locator(".fitting-add").click();
+    await expect(
+      room.locator(".fitting-selection [role=status]"),
+    ).toContainText(en.fitting.added);
+    const items = await db.cartItem.findMany({ where: { cartId: cart.id } });
+    expect(items).toHaveLength(2);
+    expect(items.find((i) => i.variantId === f.variants[0].id)?.quantity).toBe(
+      1,
+    );
+    expect(items.find((i) => i.variantId === trousersId)?.quantity).toBe(1);
+  } finally {
+    if (productId)
+      await db.product.update({
+        where: { id: productId },
+        data: { status: "ARCHIVED" },
+      });
+    await db.integration.update({
+      where: { id: old.id },
+      data: { isActive: old.isActive, config: old.config! },
+    });
+  }
+});
 test("admin config toggle and fractional charge persist through real authorized actions", async ({
   page,
 }) => {
@@ -323,6 +412,124 @@ test("pending fitting requests survive market changes without leaking selection 
     expect(
       await page.evaluate((key) => sessionStorage.getItem(key), firstKey),
     ).toBe(record);
+    // A committed response can be lost before the feature is switched off.
+    // The durable fixture holds the real charge and fingerprint; no provider is dispatched.
+    const grant = await db.fittingCoinGrant.create({
+      data: {
+        customerId: customer.id,
+        sourceKey: `browser-recovery:${request.requestKey}`,
+        reason: "MANUAL",
+        amount: "100",
+        balance: "87.5",
+      },
+    });
+    const session = await db.fittingSession.create({
+      data: {
+        customerId: customer.id,
+        marketId: market.id,
+        requestKey: request.requestKey,
+        modelId: request.modelId,
+        fingerprint: createHash("sha256")
+          .update(
+            JSON.stringify({
+              modelId: request.modelId,
+              variantIds: request.variantIds,
+              marketId: market.id,
+              expectedCostCoins: request.expectedCostCoins,
+            }),
+          )
+          .digest("hex"),
+        costCoins: "12.5",
+        allocations: [{ grantId: grant.id, amount: "12.5" }],
+        snapshot: {
+          model: {
+            kind: "WOMAN",
+            image: {
+              storageKey: "media/browser-recovery.webp",
+              mime: "image/webp",
+            },
+          },
+          items: [
+            {
+              variantId: request.variantIds[0],
+              productId: "seed-style-v2-women-tee",
+              title: "Fixture",
+              color: "Ivory",
+              hex: "#ffffff",
+              size: "M",
+              owned: false,
+              image: {
+                storageKey: "media/browser-recovery.webp",
+                mime: "image/webp",
+              },
+            },
+          ],
+          provider: "openai",
+          modelName: "gpt-image-1.5",
+          quality: "medium",
+        },
+      },
+    });
+    await db.fittingCoinEntry.createMany({
+      data: [
+        {
+          customerId: customer.id,
+          sourceKey: `grant:${grant.sourceKey}`,
+          reason: "MANUAL",
+          amount: "100",
+        },
+        {
+          customerId: customer.id,
+          sourceKey: `spend:${session.id}`,
+          reason: "FITTING",
+          amount: "-12.5",
+        },
+      ],
+    });
+    await db.integration.update({
+      where: { id: old.id },
+      data: { isActive: false, config: { ...config, enabled: false } },
+    });
+    await page.reload();
+    await expect(room).toBeVisible();
+    await expect(
+      room.getByRole("status").filter({ hasText: en.fitting.disabled }),
+    ).toBeVisible();
+    const retry = room.locator(".fitting-generate");
+    await expect(retry).toContainText(en.fitting.retry);
+    await expect(retry).toBeEnabled();
+    await retry.click();
+    await expect(room.locator(".fitting-status")).toContainText(
+      en.fitting.status_QUEUED,
+    );
+    await expect(retry).toBeDisabled();
+    await expect
+      .poll(async () =>
+        JSON.parse(
+          (await page.evaluate(
+            (key) => sessionStorage.getItem(key),
+            firstKey,
+          ))!,
+        ),
+      )
+      .toMatchObject({ sessionId: session.id });
+    await page.reload();
+    await expect(room.locator(".fitting-status")).toContainText(
+      en.fitting.status_QUEUED,
+    );
+    expect(
+      await db.fittingSession.count({ where: { customerId: customer.id } }),
+    ).toBe(1);
+    expect(
+      await db.fittingCoinEntry.count({
+        where: { customerId: customer.id, reason: "FITTING" },
+      }),
+    ).toBe(1);
+    expect(
+      (
+        await db.fittingCoinGrant.findUniqueOrThrow({ where: { id: grant.id } })
+      ).balance.toString(),
+    ).toBe("87.5");
   } finally {
     await db.integration.update({
       where: { id: old.id },

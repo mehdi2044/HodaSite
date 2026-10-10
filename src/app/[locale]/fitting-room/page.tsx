@@ -28,8 +28,9 @@ export default async function Page({
 }) {
   const locale = z.enum(["fa", "tr", "en"]).parse((await params).locale),
     t = await getTranslations("fitting"),
-    config = await fittingConfig();
-  if (!config.enabled)
+    config = await fittingConfig(),
+    c = await currentCustomer();
+  if (!config.enabled && (!c || c.isGuest))
     return (
       <main className="shell shop-page py-10">
         <h1>{t("title")}</h1>
@@ -39,7 +40,6 @@ export default async function Page({
         </Link>
       </main>
     );
-  const c = await currentCustomer();
   if (!c || c.isGuest)
     redirect(`/${locale}/account/login?next=/${locale}/fitting-room`);
   const { market } = await getRequestContext(locale);
@@ -69,6 +69,7 @@ export default async function Page({
   const keys = [
     "eyebrow",
     "title",
+    "disabled",
     "subtitle",
     "balance",
     "coins",
@@ -118,17 +119,20 @@ export default async function Page({
   ];
   return (
     <main className="shell shop-page py-10">
-      <form className="fitting-search">
-        <label>
-          {t("search")}
-          <input className="input" name="q" defaultValue={q} />
-        </label>
-        <button className="button">{t("search")}</button>
-      </form>
+      {config.enabled && (
+        <form className="fitting-search">
+          <label>
+            {t("search")}
+            <input className="input" name="q" defaultValue={q} />
+          </label>
+          <button className="button">{t("search")}</button>
+        </form>
+      )}
       <FittingRoom
         key={`${c.id}:${market.id}`}
         customerId={c.id}
         marketId={market.id}
+        enabled={config.enabled}
         models={models}
         products={products}
         ownedProducts={owned}

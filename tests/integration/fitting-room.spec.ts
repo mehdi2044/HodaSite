@@ -2179,6 +2179,29 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         db.fxOverride.findFirst = realFx;
       }
     });
+    it("prices a previously purchased active variant in the shop while retaining its free wardrobe reference", async () => {
+      const f = await returnFixture(db, { price: "100" });
+      customers.push(f.customer.id);
+      await db.product.update({
+        where: { id: f.variants[0].productId },
+        data: { fittingSlot: "TOP", marketIds: [marketId] },
+      });
+      await db.productMedia.create({
+        data: {
+          productId: f.variants[0].productId,
+          mediaId: "seed-fashion-v2-women-tee",
+        },
+      });
+      const shop = (await fittingProducts(f.customer.id, marketId, "en")).find(
+        (p) => p.variantId === f.variants[0].id,
+      );
+      const wardrobe = (
+        await fittingProducts(f.customer.id, marketId, "en", "", true)
+      ).find((p) => p.variantId === f.variants[0].id);
+      expect(shop).toMatchObject({ owned: false, available: true });
+      expect(new Decimal(shop!.amount!).eq("100")).toBe(true);
+      expect(wardrobe).toMatchObject({ owned: true, amount: null });
+    });
     it("keeps paid garments in the wardrobe even when no longer active for sale", async () => {
       const f = await returnFixture(db);
       customers.push(f.customer.id);
