@@ -76,6 +76,7 @@ import { styleLookBlock } from "../../prisma/style-seed";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
+import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "fitting room: real PostgreSQL and private local storage",
@@ -307,6 +308,143 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               coinPackCoins: original.coinPackCoins,
             },
           });
+        }
+      },
+    );
+    it.each([
+      "PRODUCT",
+      "CATEGORY",
+      "COLOR",
+      "MEDIA_DELETE",
+      "MEDIA_STATUS",
+    ] as const)(
+      "rejects homepage references invalidated by a concurrent %s transaction",
+      async (kind) => {
+        state.actor = ownerId;
+        const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+        const block = blocks[0];
+        if (block.type !== "ShopLook") throw new Error("Missing shop look");
+        const look = block.looks[0];
+        const productId = look.items[0].productId;
+        const categoryId = look.categoryId;
+        const colorId = look.items[0].colorId;
+        const mediaId = look.mediaId;
+        const before = await db.homepage.findFirst({
+          where: { marketId, deletedAt: null },
+        });
+        const audits = await db.auditLog.count({
+          where: { action: { startsWith: "content.homepage." } },
+        });
+        const originalProduct = await db.product.findUniqueOrThrow({
+          where: { id: productId },
+        });
+        const originalCategory = await db.category.findUniqueOrThrow({
+          where: { id: categoryId },
+        });
+        const originalColor = await db.color.findUniqueOrThrow({
+          where: { id: colorId },
+        });
+        const originalMedia = await db.media.findUniqueOrThrow({
+          where: { id: mediaId },
+        });
+        let ready!: () => void, release!: () => void;
+        const entered = new Promise<void>((resolve) => {
+          ready = resolve;
+        });
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let writerPid = 0;
+        const invalidator = db.$transaction(
+          async (tx) => {
+            const [backend] = await tx.$queryRaw<
+              { pid: number }[]
+            >`SELECT pg_backend_pid() AS pid`;
+            writerPid = backend.pid;
+            if (kind === "PRODUCT")
+              await tx.product.update({
+                where: { id: productId },
+                data: { status: "ARCHIVED" },
+              });
+            else if (kind === "CATEGORY")
+              await tx.category.update({
+                where: { id: categoryId },
+                data: { deletedAt: new Date() },
+              });
+            else if (kind === "COLOR")
+              await tx.color.update({
+                where: { id: colorId },
+                data: { deletedAt: new Date() },
+              });
+            else
+              await tx.media.update({
+                where: { id: mediaId },
+                data:
+                  kind === "MEDIA_DELETE"
+                    ? { deletedAt: new Date() }
+                    : { status: "FAILED" },
+              });
+            ready();
+            await gate;
+          },
+          { timeout: 15000 },
+        );
+        await Promise.race([entered, invalidator]);
+        const form = new FormData();
+        form.set("marketId", marketId);
+        form.set("blocks", JSON.stringify(blocks));
+        const save = saveHomepage(null, form);
+        try {
+          let blocked = false;
+          for (let attempt = 0; attempt < 200 && !blocked; attempt++) {
+            const [current] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+                WHERE ${writerPid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            blocked = current.blocked;
+            if (!blocked)
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          }
+          expect(blocked).toBe(true);
+          release();
+          await invalidator;
+          expect(await save).toMatchObject({ ok: false, code: "VALIDATION" });
+          expect(
+            await db.homepage.findFirst({
+              where: { marketId, deletedAt: null },
+            }),
+          ).toEqual(before);
+          expect(
+            await db.auditLog.count({
+              where: { action: { startsWith: "content.homepage." } },
+            }),
+          ).toBe(audits);
+        } finally {
+          release();
+          await Promise.allSettled([invalidator, save]);
+          if (kind === "PRODUCT")
+            await db.product.update({
+              where: { id: productId },
+              data: { status: originalProduct.status },
+            });
+          else if (kind === "CATEGORY")
+            await db.category.update({
+              where: { id: categoryId },
+              data: { deletedAt: originalCategory.deletedAt },
+            });
+          else if (kind === "COLOR")
+            await db.color.update({
+              where: { id: colorId },
+              data: { deletedAt: originalColor.deletedAt },
+            });
+          else
+            await db.media.update({
+              where: { id: mediaId },
+              data: {
+                deletedAt: originalMedia.deletedAt,
+                status: originalMedia.status,
+              },
+            });
         }
       },
     );

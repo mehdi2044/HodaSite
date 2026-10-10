@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { seoPath } from "@/lib/seo-urls";
 import {
@@ -204,17 +205,20 @@ export async function addPreparedLook(
 export async function validateLookReferences(
   blocks: HomepageBlock[],
   marketId: string | null,
+  tx?: Prisma.TransactionClient,
 ) {
+  const client = tx ?? db;
+  if (tx) await lockLookReferences(tx, blocks);
   for (const block of blocks) {
     if (block.type !== "ShopLook") continue;
     for (const look of block.looks) {
       if (
-        !(await db.category.count({
+        !(await client.category.count({
           where: { id: look.categoryId, deletedAt: null },
         }))
       )
         throw new z.ZodError([]);
-      const products = await db.product.findMany({
+      const products = await client.product.findMany({
         where: {
           id: { in: look.items.map((item) => item.productId) },
           deletedAt: null,
@@ -250,4 +254,54 @@ export async function validateLookReferences(
         throw new z.ZodError([]);
     }
   }
+}
+
+/** Hold JSON catalog references until the homepage writer commits. */
+async function lockLookReferences(
+  tx: Prisma.TransactionClient,
+  blocks: HomepageBlock[],
+) {
+  const looks = blocks.flatMap((b) => (b.type === "ShopLook" ? b.looks : []));
+  const productIds = [
+    ...new Set(looks.flatMap((l) => l.items.map((i) => i.productId))),
+  ].sort();
+  if (!productIds.length) return;
+  // UPDATE also blocks new variant FK inserts while the eligible variants are read.
+  const products = await tx.$queryRaw<
+    { id: string; categoryId: string }[]
+  >(Prisma.sql`
+    SELECT id, "categoryId" FROM "Product" WHERE id IN (${Prisma.join(productIds)})
+    ORDER BY id FOR UPDATE
+  `);
+  const categoryIds = [
+    ...new Set([
+      ...looks.map((l) => l.categoryId),
+      ...products.map((p) => p.categoryId),
+    ]),
+  ].sort();
+  if (categoryIds.length)
+    await tx.$queryRaw(Prisma.sql`
+      SELECT id FROM "Category" WHERE id IN (${Prisma.join(categoryIds)}) ORDER BY id FOR SHARE
+    `);
+  const variants = await tx.$queryRaw<
+    { colorId: string; sizeId: string }[]
+  >(Prisma.sql`
+    SELECT "colorId", "sizeId" FROM "Variant" WHERE "productId" IN (${Prisma.join(productIds)})
+    ORDER BY id FOR SHARE
+  `);
+  const colorIds = [
+    ...new Set([
+      ...looks.flatMap((l) => l.items.map((i) => i.colorId)),
+      ...variants.map((v) => v.colorId),
+    ]),
+  ].sort();
+  const sizeIds = [...new Set(variants.map((v) => v.sizeId))].sort();
+  if (colorIds.length)
+    await tx.$queryRaw(Prisma.sql`
+      SELECT id FROM "Color" WHERE id IN (${Prisma.join(colorIds)}) ORDER BY id FOR SHARE
+    `);
+  if (sizeIds.length)
+    await tx.$queryRaw(Prisma.sql`
+      SELECT id FROM "Size" WHERE id IN (${Prisma.join(sizeIds)}) ORDER BY id FOR SHARE
+    `);
 }

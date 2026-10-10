@@ -42,26 +42,14 @@ export async function saveHomepage(
         throw new z.ZodError([]);
     }
 
-    await validateLookReferences(blocks, marketId);
     const mediaIds = [...new Set(blockMediaIds(blocks))];
-    if (mediaIds.length) {
-      const count = await db.media.count({
-        where: {
-          id: { in: mediaIds },
-          kind: "image",
-          status: "READY",
-          deletedAt: null,
-        },
-      });
-      if (count !== mediaIds.length) throw new z.ZodError([]);
-    }
-
-    const before = await db.homepage.findFirst({
-      where: { marketId, deletedAt: null },
-    });
     await withMutation(() =>
       db.$transaction(async (tx) => {
-        await lockMediaReferences(tx, mediaIds);
+        await lockMediaReferences(tx, mediaIds, { readyImages: true });
+        await validateLookReferences(blocks, marketId, tx);
+        const before = await tx.homepage.findFirst({
+          where: { marketId, deletedAt: null },
+        });
         const saved = before
           ? await tx.homepage.update({
               where: { id: before.id },
