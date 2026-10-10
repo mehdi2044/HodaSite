@@ -2350,7 +2350,7 @@
     "welcomeCoins": "Hoş geldin coin; hesap başına bir kez",
     "dailyFreeUses": "Günlük ücretsiz kullanım",
     "dailyLimit": "Hesap başına günlük sınır; 0 kişisel sınır yok",
-    "globalDailyLimit": "Mağazanın toplam günlük istek sınırı",
+    "globalDailyLimit": "Mağazanın toplam günlük istek sınırı (başarısız istekler dahil)",
     "timezone": "Gün sonu saat dilimi",
     "providerModel": "Görsel üretim modeli",
     "quality": "Görsel kalitesi",

@@ -1,4 +1,5 @@
 import { storage } from "@/modules/integrations/storage";
+import sharp from "sharp";
 import {
   FittingError,
   type FittingSnapshot,
@@ -33,14 +34,28 @@ export const openAiFittingProvider: FittingProvider = {
       input.model.image,
       ...input.items.map((i) => i.image),
     ].entries()) {
-      const bytes = await storage.getBytes(image.storageKey);
-      if (!bytes || bytes.length > 10 * 1024 * 1024)
+      // All reference work happens before dispatch: failures cannot have incurred a remote request.
+      try {
+        let bytes = await storage.getBytes(image.storageKey);
+        if (!bytes || bytes.length > 10 * 1024 * 1024)
+          throw new ProviderFailure(true);
+        let mime = image.mime;
+        if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) {
+          bytes = await sharp(bytes, { limitInputPixels: 16000000 })
+            .rotate()
+            .webp({ quality: 90 })
+            .toBuffer();
+          mime = "image/webp";
+        }
+        if (bytes.length > 10 * 1024 * 1024) throw new ProviderFailure(true);
+        form.append(
+          "image[]",
+          new Blob([new Uint8Array(bytes)], { type: mime }),
+          `reference-${index}.${mime === "image/png" ? "png" : mime === "image/jpeg" ? "jpg" : "webp"}`,
+        );
+      } catch {
         throw new ProviderFailure(true);
-      form.append(
-        "image[]",
-        new Blob([new Uint8Array(bytes)], { type: image.mime }),
-        `reference-${index}.${image.mime === "image/png" ? "png" : image.mime === "image/jpeg" ? "jpg" : "webp"}`,
-      );
+      }
     }
     let response: Response;
     try {

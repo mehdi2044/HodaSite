@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import sharp from "sharp";
 vi.mock("@/modules/integrations/storage", () => ({
   storage: { getBytes: vi.fn(async () => Buffer.from("fixture-image")) },
 }));
@@ -7,6 +8,7 @@ import {
   ProviderFailure,
 } from "@/modules/integrations/fitting";
 import type { FittingSnapshot } from "@/modules/fitting/contracts";
+import { storage } from "@/modules/integrations/storage";
 const image = {
   storageKey: "fixture.webp",
   mime: "image/webp",
@@ -33,6 +35,12 @@ const snapshot = (
 });
 afterEach(() => vi.unstubAllGlobals());
 afterEach(() => vi.unstubAllEnvs());
+afterEach(() =>
+  vi
+    .mocked(storage.getBytes)
+    .mockReset()
+    .mockResolvedValue(Buffer.from("fixture-image")),
+);
 describe("fitting provider request boundary", () => {
   it.each(["gpt-image-1.5", "gpt-image-2"] as const)(
     "uses faithful multipart references with %s",
@@ -101,5 +109,72 @@ describe("fitting provider request boundary", () => {
       openAiFittingProvider.render(snapshot("gpt-image-1.5")),
     ).rejects.toEqual(new ProviderFailure(false));
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("classifies reference-read errors as definitive before dispatch", async () => {
+    vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
+    vi.mocked(storage.getBytes).mockRejectedValueOnce(
+      new Error("reference unavailable"),
+    );
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    await expect(
+      openAiFittingProvider.render(snapshot("gpt-image-1.5")),
+    ).rejects.toEqual(new ProviderFailure(true));
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it.each(["model", "garment"] as const)(
+    "transcodes the AVIF %s reference to genuine WebP",
+    async (source) => {
+      vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
+      const avif = await sharp({
+        create: { width: 16, height: 24, channels: 3, background: "#c8b79d" },
+      })
+        .avif()
+        .toBuffer();
+      const input = snapshot("gpt-image-1.5");
+      const index = source === "model" ? 0 : 1;
+      if (source === "model")
+        input.model.image = { ...image, mime: "image/avif" };
+      else input.items[0].image = { ...image, mime: "image/avif" };
+      vi.mocked(storage.getBytes)
+        .mockResolvedValueOnce(
+          source === "model" ? avif : Buffer.from("fixture-image"),
+        )
+        .mockResolvedValueOnce(
+          source === "model" ? Buffer.from("fixture-image") : avif,
+        );
+      const fetcher = vi.fn(
+        async (_url: unknown, _options: unknown) =>
+          new Response(
+            JSON.stringify({
+              data: [
+                { b64_json: Buffer.from("fixture-output").toString("base64") },
+              ],
+            }),
+          ),
+      );
+      vi.stubGlobal("fetch", fetcher);
+      await openAiFittingProvider.render(input);
+      const form = (fetcher.mock.calls[0][1] as RequestInit).body as FormData;
+      const reference = form.getAll("image[]")[index] as File;
+      expect(reference.type).toBe("image/webp");
+      expect(reference.name).toBe(`reference-${index}.webp`);
+      expect(
+        (await sharp(Buffer.from(await reference.arrayBuffer())).metadata())
+          .format,
+      ).toBe("webp");
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("rejects a corrupt unsupported reference without dispatch", async () => {
+    vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
+    const input = snapshot("gpt-image-1.5");
+    input.model.image = { ...image, mime: "image/avif" };
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    await expect(openAiFittingProvider.render(input)).rejects.toEqual(
+      new ProviderFailure(true),
+    );
+    expect(fetcher).not.toHaveBeenCalled();
   });
 });

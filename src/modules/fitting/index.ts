@@ -331,6 +331,8 @@ export async function createFittingSession(
         };
         const [userCount, globalCount] = await Promise.all([
           tx.fittingSession.count({ where: { ...countWhere, customerId } }),
+          // Store-wide request budget includes refunded failures: a rendered-but-undelivered
+          // image can still incur provider cost. The customer's usage cap excludes them.
           tx.fittingSession.count({
             where: { createdAt: countWhere.createdAt },
           }),

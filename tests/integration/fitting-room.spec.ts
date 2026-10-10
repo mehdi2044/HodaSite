@@ -32,7 +32,7 @@ vi.mock("next/cache", () => ({
   revalidateTag: () => {},
 }));
 import { db } from "@/lib/db";
-import { configSchema } from "@/modules/fitting/contracts";
+import { configSchema, dayBounds } from "@/modules/fitting/contracts";
 import {
   createFittingSession,
   walletView,
@@ -332,6 +332,50 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await configure({ dailyFreeUses: 2 });
       expect(await balance(c.id)).toBe("25");
       expect(await balance(c.id)).toBe("25");
+    });
+    it("keeps refunded failures in the store request budget but restores customer usage", async () => {
+      const day = dayBounds(new Date(), defaultConfig.timezone);
+      const base = await db.fittingSession.count({
+        where: { createdAt: { gte: day.start, lt: day.end } },
+      });
+      await configure({ dailyLimit: 1, globalDailyLimit: base + 1 });
+      const c = await customer();
+      const session = await create(c.id);
+      await renderFitting(session.id, {
+        render: async () => {
+          throw new ProviderFailure(true);
+        },
+      });
+      expect(await balance(c.id)).toBe("100");
+      await expect(create(c.id)).rejects.toThrow("DAILY_LIMIT");
+      expect(await balance(c.id)).toBe("100");
+      await configure({ dailyLimit: 1, globalDailyLimit: base + 2 });
+      await create(c.id);
+      expect(await balance(c.id)).toBe("87.5");
+    });
+    it("refunds a real adapter reference-read error without remote dispatch", async () => {
+      const c = await customer(),
+        session = await create(c.id);
+      const read = vi
+        .spyOn(storage, "getBytes")
+        .mockRejectedValueOnce(new Error("fixture reference read failure"));
+      const fetcher = vi.fn();
+      vi.stubGlobal("fetch", fetcher);
+      try {
+        await renderFitting(session.id);
+        await renderFitting(session.id);
+        expect(fetcher).not.toHaveBeenCalled();
+        expect((await sessionView(c.id, session.id)).status).toBe("FAILED");
+        expect(await balance(c.id)).toBe("100");
+        expect(
+          await db.fittingCoinEntry.count({
+            where: { customerId: c.id, sourceKey: `refund:${session.id}` },
+          }),
+        ).toBe(1);
+      } finally {
+        read.mockRestore();
+        vi.unstubAllGlobals();
+      }
     });
     it("renders once, saves a look and serves only the authenticated owner", async () => {
       const c = await customer(),

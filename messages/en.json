@@ -2350,7 +2350,7 @@
     "welcomeCoins": "Welcome coins; once per account",
     "dailyFreeUses": "Daily free uses",
     "dailyLimit": "Daily requests per account; 0 means no personal cap",
-    "globalDailyLimit": "Store-wide daily request cap",
+    "globalDailyLimit": "Store-wide daily request cap (includes failed requests)",
     "timezone": "Day-end timezone",
     "providerModel": "Image generation model",
     "quality": "Image quality",
