@@ -244,8 +244,31 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     await card.locator("select").selectOption(f.variants[0].id);
     await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
     await expect(room.locator(".fitting-add")).toHaveCount(0);
-    await room.locator(".fitting-source button").nth(0).click();
     const trousersId = "seed-style-v2-women-trousers-m";
+    const recoveryKey = `hoda:fitting:${customer.id}:${f.market.id}`;
+    const restore = async (variantId: string) => {
+      await page.evaluate(
+        ({ key, variantId }) =>
+          sessionStorage.setItem(
+            key,
+            JSON.stringify({
+              modelId: "woman",
+              selection: [variantId],
+              wardrobeSelection: [variantId],
+            }),
+          ),
+        { key: recoveryKey, variantId },
+      );
+      await page.reload();
+    };
+    // A stale wardrobe reference must not silently become a shop purchase.
+    await restore(trousersId);
+    await expect(room.locator(".fitting-chip")).toHaveCount(0);
+    await expect(room.locator(".fitting-generate")).toBeDisabled();
+    await expect(room.locator(".fitting-add")).toHaveCount(0);
+    await restore(f.variants[0].id);
+    await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
+    await expect(room.locator(".fitting-add")).toHaveCount(0);
     await room
       .locator(".fitting-product")
       .filter({ has: page.locator(`option[value="${trousersId}"]`) })

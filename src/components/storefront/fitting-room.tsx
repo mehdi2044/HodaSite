@@ -117,8 +117,12 @@ export function FittingRoom({
       )
         setModelId(old.modelId);
       const oldRequest = requestSchema.safeParse(old.request);
-      const availableIds = new Set(
-        [...products, ...ownedProducts].map((product) => product.variantId),
+      const oldWardrobeIds = new Set<string>(
+        Array.isArray(old.wardrobeSelection)
+          ? old.wardrobeSelection.filter(
+              (id: unknown): id is string => typeof id === "string",
+            )
+          : [],
       );
       if (Array.isArray(old.selection))
         setSelection(
@@ -126,20 +130,14 @@ export function FittingRoom({
             .filter(
               (id: unknown) =>
                 typeof id === "string" &&
-                (oldRequest.success || availableIds.has(id)),
+                (oldRequest.success ||
+                  (oldWardrobeIds.has(id) ? ownedProducts : products).some(
+                    (p) => p.variantId === id,
+                  )),
             )
             .slice(0, 4),
         );
-      if (Array.isArray(old.wardrobeSelection))
-        setWardrobeSelection(
-          old.wardrobeSelection
-            .filter(
-              (id: unknown) =>
-                typeof id === "string" &&
-                ownedProducts.some((p) => p.variantId === id),
-            )
-            .slice(0, 4),
-        );
+      setWardrobeSelection([...oldWardrobeIds].slice(0, 4));
       if (old.request) {
         if (oldRequest.success) pending.current = oldRequest.data;
       }

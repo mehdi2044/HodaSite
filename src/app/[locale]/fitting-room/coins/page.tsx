@@ -28,7 +28,11 @@ export default async function Page({
             variants: { some: { isActive: true } },
           },
           include: {
-            variants: { where: { isActive: true }, take: 1 },
+            variants: {
+              where: { isActive: true },
+              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              take: 1,
+            },
             media: { include: { media: true }, orderBy: { sortOrder: "asc" } },
           },
           orderBy: { coinPackCoins: "asc" },
