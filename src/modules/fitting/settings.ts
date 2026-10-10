@@ -70,22 +70,16 @@ export async function saveFittingSettings(raw: unknown) {
       });
       if ((old?.updatedAt.toISOString() ?? null) !== v.version)
         throw new FittingError("STALE");
-      await lockMediaReferences(
-        tx,
-        v.config.models.map((m) => m.mediaId),
-      );
-      for (const m of v.config.models) {
-        if (
-          !(await tx.media.count({
-            where: {
-              id: m.mediaId,
-              kind: "image",
-              status: "READY",
-              deletedAt: null,
-            },
-          }))
-        )
+      try {
+        await lockMediaReferences(
+          tx,
+          v.config.models.map((m) => m.mediaId),
+          { readyImages: true },
+        );
+      } catch (error) {
+        if (error instanceof z.ZodError)
           throw new FittingError("INVALID_SELECTION");
+        throw error;
       }
       for (const r of v.config.rewards)
         if (

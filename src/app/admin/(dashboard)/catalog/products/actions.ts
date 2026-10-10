@@ -415,6 +415,8 @@ export async function duplicateProduct(
             defaultPurchaseCostAmount: source.defaultPurchaseCostAmount,
             defaultPurchaseCostCurrency: source.defaultPurchaseCostCurrency,
             weightGrams: source.weightGrams,
+            fittingSlot: source.fittingSlot,
+            coinPackCoins: source.coinPackCoins,
             seoI18n: source.seoI18n as Prisma.InputJsonValue,
             marketIds: source.marketIds,
             searchText: `${source.searchText} copy`,

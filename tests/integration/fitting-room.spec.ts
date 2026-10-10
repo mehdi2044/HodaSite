@@ -77,6 +77,7 @@ import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
 import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
+import { duplicateProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "fitting room: real PostgreSQL and private local storage",
@@ -446,6 +447,115 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               },
             });
         }
+      },
+    );
+    it.each(["DELETE", "STATUS"] as const)(
+      "rejects fitting settings after concurrent model-image %s",
+      async (kind) => {
+        state.actor = ownerId;
+        const originalMedia = await db.media.findUniqueOrThrow({
+          where: { id: defaultConfig.models[0].mediaId },
+        });
+        const originalIntegration = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        let ready!: () => void, release!: () => void;
+        const entered = new Promise<void>((resolve) => {
+          ready = resolve;
+        });
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let writerPid = 0;
+        const invalidator = db.$transaction(
+          async (tx) => {
+            const [backend] = await tx.$queryRaw<
+              { pid: number }[]
+            >`SELECT pg_backend_pid() AS pid`;
+            writerPid = backend.pid;
+            await tx.media.update({
+              where: { id: originalMedia.id },
+              data:
+                kind === "DELETE"
+                  ? { deletedAt: new Date() }
+                  : { status: "FAILED" },
+            });
+            ready();
+            await gate;
+          },
+          { timeout: 15000 },
+        );
+        await Promise.race([entered, invalidator]);
+        const save = saveFittingSettings({
+          config: { ...defaultConfig, costCoins: "15" },
+          version: originalIntegration.updatedAt.toISOString(),
+          confirm: true,
+        }).then(
+          () => null,
+          (error: unknown) => error,
+        );
+        try {
+          let blocked = false;
+          for (let attempt = 0; attempt < 200 && !blocked; attempt++) {
+            const [current] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+                WHERE ${writerPid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            blocked = current.blocked;
+            if (!blocked)
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          }
+          expect(blocked).toBe(true);
+          release();
+          await invalidator;
+          expect(await save).toMatchObject({ message: "INVALID_SELECTION" });
+          expect(
+            await db.integration.findUniqueOrThrow({
+              where: { id: originalIntegration.id },
+            }),
+          ).toEqual(originalIntegration);
+        } finally {
+          release();
+          await Promise.allSettled([invalidator, save]);
+          await db.media.update({
+            where: { id: originalMedia.id },
+            data: {
+              deletedAt: originalMedia.deletedAt,
+              status: originalMedia.status,
+            },
+          });
+        }
+      },
+    );
+    it.each(["seed-fitting-pack-100", "seed-style-v2-women-tee"])(
+      "preserves fitting metadata when the admin duplicates %s",
+      async (sourceId) => {
+        state.actor = ownerId;
+        const source = await db.product.findUniqueOrThrow({
+          where: { id: sourceId },
+          include: { variants: true },
+        });
+        const form = new FormData();
+        form.set("id", sourceId);
+        expect(await duplicateProduct(null, form)).toEqual({ ok: true });
+        const audit = await db.auditLog.findFirstOrThrow({
+          where: {
+            action: "catalog.product.duplicate",
+            before: { path: ["sourceId"], equals: sourceId },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        const copy = await db.product.findUniqueOrThrow({
+          where: { id: audit.entityId! },
+          include: { variants: true },
+        });
+        expect(copy.id).not.toBe(source.id);
+        expect(copy.status).toBe("DRAFT");
+        expect(copy.fittingSlot).toBe(source.fittingSlot);
+        expect(copy.coinPackCoins?.toString() ?? null).toBe(
+          source.coinPackCoins?.toString() ?? null,
+        );
+        expect(copy.variants).toHaveLength(source.variants.length);
       },
     );
     it("does not grant welcome/daily credit while disabled", async () => {
