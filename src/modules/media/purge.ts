@@ -10,6 +10,7 @@ import {
 import type { StorageProvider } from "@/modules/integrations/storage";
 import { z } from "zod";
 import type { JobContext } from "@/modules/jobs";
+import { fittingUsesImage } from "./fitting-references";
 
 export const MEDIA_PURGE_OBJECTS_JOB = "media-purge-objects";
 const cleanupPayload = z.object({
@@ -138,6 +139,7 @@ export async function purgeOne(
     `;
     // Include draft and soft-deleted content: restoration must remain possible.
     if (references.used) return null;
+    if (await fittingUsesImage(current.storageKey, tx)) return null;
     const keys = [current.storageKey];
     for (const widths of Object.values(
       (current.variants as MediaVariants | null) ?? {},

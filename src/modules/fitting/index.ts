@@ -244,7 +244,7 @@ export async function createFittingSession(
           throw new FittingError("CHARGE_CHANGED");
         const model = c.models.find((m) => m.id === input.modelId && m.enabled);
         if (!model) throw new FittingError("INVALID_SELECTION");
-        const modelMedia = await tx.media.findFirst({
+        let modelMedia = await tx.media.findFirst({
           where: {
             id: model.mediaId,
             deletedAt: null,
@@ -262,6 +262,33 @@ export async function createFittingSession(
           where: { id: { in: input.variantIds } },
           include: variantInclude,
         });
+        // Replacement/purge writers wait until the immutable snapshot commits.
+        // Re-read keys after locking: a replacement may have committed first.
+        const mediaIds = [
+          ...new Set([
+            modelMedia.id,
+            ...variants.flatMap((v) =>
+              [...v.media, ...v.product.media].map((m) => m.media.id),
+            ),
+          ]),
+        ].sort();
+        await tx.$queryRaw(Prisma.sql`
+          SELECT id FROM "Media" WHERE id IN (${Prisma.join(mediaIds)}) ORDER BY id FOR SHARE
+        `);
+        const pinnedMedia = new Map(
+          (
+            await tx.media.findMany({
+              where: {
+                id: { in: mediaIds },
+                deletedAt: null,
+                status: "READY",
+                mime: { startsWith: "image/" },
+              },
+            })
+          ).map((m) => [m.id, m]),
+        );
+        modelMedia = pinnedMedia.get(modelMedia.id) ?? null;
+        if (!modelMedia) throw new FittingError("INVALID_SELECTION");
         const owned = await ownedVariantIds(tx, customerId);
         if (
           variants.length !== input.variantIds.length ||
@@ -305,7 +332,10 @@ export async function createFittingSession(
           )
             throw new FittingError("INVALID_SELECTION");
           const image = [...v.media, ...v.product.media]
-            .map((m) => m.media)
+            .flatMap((m) => {
+              const fresh = pinnedMedia.get(m.media.id);
+              return fresh ? [fresh] : [];
+            })
             .find(
               (m) =>
                 m.status === "READY" &&

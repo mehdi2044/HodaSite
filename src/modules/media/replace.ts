@@ -11,6 +11,12 @@ import { revalidatePath } from "next/cache";
 import { isMaintenanceOn } from "@/modules/settings";
 import type { Prisma } from "@prisma/client";
 import { MEDIA_REPLACE_JOB, type MediaVariants } from "./constants";
+import { fittingUsesImage } from "./fitting-references";
+
+async function preserveFittingImage(key: string | null) {
+  if (key && (await fittingUsesImage(key)))
+    throw new JobDeferredError("fitting session still uses replaced image");
+}
 
 async function deleteVariants(variants: unknown, target: StorageProvider) {
   for (const widths of Object.values((variants as MediaVariants | null) ?? {}))
@@ -58,6 +64,7 @@ export async function mediaReplaceHandler(
     replacement.status === "SWAPPED" ||
     replacement.status === "CLEANUP_FAILED"
   ) {
+    await preserveFittingImage(replacement.oldStorageKey);
     if (replacement.oldStorageKey)
       await target.delete(replacement.oldStorageKey);
     await deleteVariants(replacement.oldVariants, target);
@@ -137,6 +144,8 @@ export async function mediaReplaceHandler(
       });
       return current;
     });
+    revalidateMediaPaths();
+    await preserveFittingImage(old.storageKey);
     await target.delete(old.storageKey);
     await deleteVariants(old.variants, target);
     await db.mediaReplacement.update({
@@ -145,6 +154,7 @@ export async function mediaReplaceHandler(
     });
     revalidateMediaPaths();
   } catch (error) {
+    if (error instanceof JobDeferredError) throw error;
     const current = await db.mediaReplacement.findUnique({
       where: { id: replacement.id },
     });

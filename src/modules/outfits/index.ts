@@ -218,6 +218,9 @@ export async function validateLookReferences(
 ) {
   const client = tx ?? db;
   if (tx) await lockLookReferences(tx, blocks);
+  const requiredMarkets = marketId
+    ? [marketId]
+    : (await client.market.findMany({ select: { id: true } })).map((m) => m.id);
   for (const block of blocks) {
     if (block.type !== "ShopLook") continue;
     for (const look of block.looks) {
@@ -234,7 +237,7 @@ export async function validateLookReferences(
           status: "ACTIVE",
           coinPackCoins: null,
           category: { deletedAt: null },
-          ...(marketId ? { marketIds: { has: marketId } } : {}),
+          marketIds: { hasEvery: requiredMarkets },
         },
         select: {
           id: true,

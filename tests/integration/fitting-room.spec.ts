@@ -86,6 +86,8 @@ import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
 import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
 import { duplicateProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
+import { mediaReplaceHandler } from "@/modules/media/replace";
+import type { StorageProvider } from "@/modules/integrations/storage";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "fitting room: real PostgreSQL and private local storage",
@@ -353,6 +355,55 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("requires globally prepared looks to be available in every market", async () => {
+      const product = await db.product.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee" },
+      });
+      const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+      const allMarkets = (
+        await db.market.findMany({ select: { id: true } })
+      ).map((m) => m.id);
+      const before = await db.homepage.findFirst({
+        where: { marketId: null, deletedAt: null },
+      });
+      const audits = await db.auditLog.count({
+        where: { action: { startsWith: "content.homepage." } },
+      });
+      try {
+        await db.product.update({
+          where: { id: product.id },
+          data: { marketIds: [marketId] },
+        });
+        await validateLookReferences(blocks, marketId);
+        const form = new FormData();
+        form.set("marketId", "");
+        form.set("blocks", JSON.stringify(blocks));
+        expect(await saveHomepage(null, form)).toMatchObject({
+          ok: false,
+          code: "VALIDATION",
+        });
+        expect(
+          await db.homepage.findFirst({
+            where: { marketId: null, deletedAt: null },
+          }),
+        ).toEqual(before);
+        expect(
+          await db.auditLog.count({
+            where: { action: { startsWith: "content.homepage." } },
+          }),
+        ).toBe(audits);
+        await db.product.update({
+          where: { id: product.id },
+          data: { marketIds: allMarkets },
+        });
+        await validateLookReferences(blocks, null);
+      } finally {
+        await db.product.update({
+          where: { id: product.id },
+          data: { marketIds: product.marketIds },
+        });
+      }
+    });
     it("rejects a crafted child department without changing homepage content", async () => {
       state.actor = ownerId;
       const blocks = homepageBlocksSchema.parse([styleLookBlock]);
@@ -985,6 +1036,159 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await Promise.allSettled([rendering]);
           state.maintenance = false;
           failedUpload?.mockRestore();
+        }
+      },
+    );
+    it.each([
+      ["MODEL", "QUEUED"],
+      ["MODEL", "RUNNING"],
+      ["GARMENT", "QUEUED"],
+      ["GARMENT", "RUNNING"],
+    ] as const)(
+      "pins replaced %s images through %s delivery and cleans after completion",
+      async (kind, phase) => {
+        const unique = randomUUID(),
+          oldKey = `media/test-fit-${unique}/old.webp`,
+          newKey = `media/test-fit-${unique}/new.webp`;
+        const objects = new Map<string, Buffer>([
+          [oldKey, bytes],
+          [newKey, bytes],
+        ]);
+        const target: StorageProvider = {
+          put: async (key, data) => {
+            objects.set(key, data);
+            return `/media/${key}`;
+          },
+          getBytes: async (key) => objects.get(key) ?? null,
+          getSignedUrl: async (key) => `/media/${key}`,
+          delete: async (key) => {
+            objects.delete(key);
+          },
+        };
+        const media = await db.media.create({
+          data: {
+            kind: "image",
+            status: "READY",
+            storageKey: oldKey,
+            mime: "image/webp",
+            bytes: bytes.length,
+            originalName: "old.webp",
+            url: `/media/${oldKey}`,
+            uploadedBy: ownerId,
+          },
+        });
+        const replacement = await db.mediaReplacement.create({
+          data: {
+            mediaId: media.id,
+            baseStorageKey: oldKey,
+            storageKey: newKey,
+            mime: "image/webp",
+            bytes: bytes.length,
+            originalName: "new.webp",
+            url: `/media/${newKey}`,
+            requestedBy: ownerId,
+          },
+        });
+        if (kind === "MODEL")
+          await configure({
+            models: [{ ...defaultConfig.models[0], mediaId: media.id }],
+          });
+        else
+          await db.variantMedia.create({
+            data: {
+              variantId: "seed-style-v2-women-tee-m",
+              mediaId: media.id,
+              sortOrder: -100,
+            },
+          });
+        const job = {
+          id: `replace-${unique}`,
+          type: "media-replace",
+          payload: { replacementId: replacement.id },
+          attempts: 2,
+        };
+        let entered!: () => void, release!: () => void;
+        const ready = new Promise<void>((resolve) => {
+          entered = resolve;
+        });
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let running: Promise<void> | undefined;
+        try {
+          const c = await customer(),
+            s = await create(c.id);
+          const provider = {
+            render: vi.fn(
+              async (
+                snapshot: Parameters<
+                  import("@/modules/integrations/fitting").FittingProvider["render"]
+                >[0],
+              ) => {
+                if (phase === "RUNNING") {
+                  entered();
+                  await gate;
+                }
+                const reference =
+                  kind === "MODEL"
+                    ? snapshot.model.image
+                    : snapshot.items.find(
+                        (i) => i.variantId === "seed-style-v2-women-tee-m",
+                      )!.image;
+                expect(reference.storageKey).toBe(oldKey);
+                expect(await target.getBytes(reference.storageKey)).toEqual(
+                  bytes,
+                );
+                return bytes;
+              },
+            ),
+          };
+          if (phase === "RUNNING") {
+            running = renderFitting(s.id, provider);
+            await ready;
+          }
+          await expect(mediaReplaceHandler(job, target)).rejects.toBeInstanceOf(
+            JobDeferredError,
+          );
+          expect(
+            (await db.media.findUniqueOrThrow({ where: { id: media.id } }))
+              .storageKey,
+          ).toBe(newKey);
+          expect(
+            (
+              await db.mediaReplacement.findUniqueOrThrow({
+                where: { id: replacement.id },
+              })
+            ).status,
+          ).toBe("SWAPPED");
+          expect(objects.has(oldKey)).toBe(true);
+          // Repeated cleanup deferral never consumes retry attempts or deletes pinned bytes.
+          await expect(mediaReplaceHandler(job, target)).rejects.toBeInstanceOf(
+            JobDeferredError,
+          );
+          release();
+          if (running) await running;
+          else await renderFitting(s.id, provider);
+          expect((await sessionView(c.id, s.id)).status).toBe("DONE");
+          expect(await balance(c.id)).toBe("87.5");
+          expect(provider.render).toHaveBeenCalledTimes(1);
+          await mediaReplaceHandler(job, target);
+          await mediaReplaceHandler(job, target);
+          expect(objects.has(oldKey)).toBe(false);
+          expect(objects.has(newKey)).toBe(true);
+          expect(
+            (
+              await db.mediaReplacement.findUniqueOrThrow({
+                where: { id: replacement.id },
+              })
+            ).status,
+          ).toBe("DONE");
+        } finally {
+          release();
+          await Promise.allSettled([running]);
+          await db.variantMedia.deleteMany({ where: { mediaId: media.id } });
+          await configure();
+          await db.media.delete({ where: { id: media.id } });
         }
       },
     );

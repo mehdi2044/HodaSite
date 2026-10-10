@@ -67,7 +67,7 @@ export const productInputSchema = z
     status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]),
     basePriceAmount: money,
     coinPackCoins: money
-      .refine((v) => new Decimal(v).gt(0))
+      .pipe(z.string().refine((v) => new Decimal(v).gt(0)))
       .optional()
       .or(z.literal("")),
     fittingSlot: z
