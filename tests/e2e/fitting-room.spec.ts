@@ -118,6 +118,13 @@ for (const locale of ["fa", "tr", "en"] as const) {
           new RegExp(`/${locale}/m/${cart.market.code}/p/`),
         );
         await expect(page.locator(".shop-product-title")).toBeVisible();
+        await expect
+          .poll(() =>
+            page.evaluate(() =>
+              document.cookie.split("; ").find((c) => c.startsWith("market=")),
+            ),
+          )
+          .toBe(`market=${cart.market.code}`);
       } finally {
         await page.evaluate((code) => {
           document.cookie = `market=${code}; path=/`;
