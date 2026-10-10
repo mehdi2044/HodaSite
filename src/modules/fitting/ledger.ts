@@ -1,5 +1,5 @@
 import { promotionOrderAmounts } from "@/modules/promotions/order-amounts";
-import { returnLineBudgets } from "@/modules/returns/validation";
+import { returnAmount, returnLineBudgets } from "@/modules/returns/validation";
 import Decimal from "decimal.js";
 import { Prisma } from "@prisma/client";
 import {
@@ -215,11 +215,40 @@ export async function creditPaidOrder(
     },
   );
 }
+/** Lock the source before financial settlement so descendant and direct returns share a lock order. */
+export async function lockRewardSource(
+  tx: Prisma.TransactionClient,
+  orderId: string,
+) {
+  // All descendants settle against the source sale, serialized by its order lock.
+  const source = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+  let root = source;
+  const seen = new Set([root.id]);
+  while (root.kind === "EXCHANGE" && root.parentOrderId) {
+    const parent = await tx.order.findUniqueOrThrow({
+      where: { id: root.parentOrderId },
+    });
+    if (
+      seen.has(parent.id) ||
+      parent.customerId !== source.customerId ||
+      parent.marketId !== source.marketId
+    )
+      return null;
+    seen.add(parent.id);
+    root = parent;
+  }
+  if (root.kind !== "SALE") return null;
+  await tx.$queryRaw`SELECT id FROM "Order" WHERE id=${root.id} FOR UPDATE`;
+  return root.id;
+}
 /** Cumulative entitlement reversal, called under the existing order lock. */
 export async function revokeReturnedCoins(
   tx: Prisma.TransactionClient,
   orderId: string,
 ) {
+  const rootId = await lockRewardSource(tx, orderId);
+  if (!rootId) return;
+  orderId = rootId;
   const order = await tx.order.findUniqueOrThrow({
     where: { id: orderId },
     include: {
@@ -253,6 +282,59 @@ export async function revokeReturnedCoins(
         ),
       );
     }
+  // Replacement quantities map one-for-one to their original sale item, even
+  // through repeated exchanges. Price differences are not new reward spend.
+  const descendants = await tx.$queryRaw<
+    { rootId: string; quantity: bigint }[]
+  >`
+    WITH RECURSIVE lineage AS (
+      SELECT i.id, i.id AS "rootId", i."orderId", ARRAY[i.id]::text[] AS path
+      FROM "OrderItem" i WHERE i."orderId"=${orderId}
+      UNION ALL
+      SELECT i.id, l."rootId", i."orderId", l.path || i.id
+      FROM lineage l
+      JOIN "OrderItem" i ON i."exchangeOfOrderItemId"=l.id
+      JOIN "Order" o ON o.id=i."orderId"
+      WHERE o.kind='EXCHANGE' AND o."parentOrderId"=l."orderId"
+        AND o."customerId"=${order.customerId} AND o."marketId"=${order.marketId}
+        AND NOT i.id = ANY(l.path)
+    )
+    SELECT l."rootId", SUM(r.quantity)::bigint AS quantity
+    FROM lineage l
+    JOIN "ReturnItem" r ON r."orderItemId"=l.id
+    JOIN "ReturnRequest" rr ON rr.id=r."returnRequestId"
+    WHERE l.id<>l."rootId" AND rr.status='RESOLVED'
+      AND rr.resolution IN ('REFUND', 'STORE_CREDIT')
+    GROUP BY l."rootId"
+  `;
+  const descendantQuantities = new Map(
+    descendants.map((r) => [r.rootId, Number(r.quantity)]),
+  );
+  const directQuantities = new Map(returned);
+  for (const [id, quantity] of descendantQuantities)
+    returned.set(id, (returned.get(id) ?? 0) + quantity);
+  const sourceReturnedAmount = (
+    id: string,
+    budget: Decimal.Value,
+    sold: number,
+  ) => {
+    const direct = returnedAmounts.get(id) ?? new Decimal(0);
+    const quantity = Math.min(
+      descendantQuantities.get(id) ?? 0,
+      sold - (directQuantities.get(id) ?? 0),
+    );
+    if (quantity <= 0) return direct;
+    const allocated = Decimal.min(budget, direct);
+    return allocated.add(
+      returnAmount(
+        budget,
+        sold,
+        directQuantities.get(id) ?? 0,
+        allocated,
+        quantity,
+      ),
+    );
+  };
   for (const g of grants) {
     let target = new Decimal(0);
     if (g.orderItemId) {
@@ -307,7 +389,11 @@ export async function revokeReturnedCoins(
                     Decimal.max(
                       0,
                       new Decimal(item.amount).sub(
-                        returnedAmounts.get(item.orderItemId) ?? 0,
+                        sourceReturnedAmount(
+                          item.orderItemId,
+                          item.amount,
+                          item.quantity,
+                        ),
                       ),
                     ),
                   ),
@@ -327,7 +413,13 @@ export async function revokeReturnedCoins(
                           0,
                           new Decimal(
                             immutableBudgets.get(item.id)!.toString(),
-                          ).sub(returnedAmounts.get(item.id) ?? 0),
+                          ).sub(
+                            sourceReturnedAmount(
+                              item.id,
+                              immutableBudgets.get(item.id)!.toString(),
+                              item.quantity,
+                            ),
+                          ),
                         ),
                       ),
                     new Decimal(0),
@@ -343,7 +435,15 @@ export async function revokeReturnedCoins(
                       )
                       .reduce(
                         (sum, item) =>
-                          sum.add(returnedAmounts.get(item.id) ?? 0),
+                          sum.add(
+                            sourceReturnedAmount(
+                              item.id,
+                              new Decimal(rule.eligibleNetSpend!)
+                                .mul(item.lineTotalAmount.toString())
+                                .div(rule.eligibleGrossSpend!),
+                              item.quantity,
+                            ),
+                          ),
                         new Decimal(0),
                       ),
                   ),

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
+import Decimal from "decimal.js";
 import {
   beforeAll,
   afterAll,
@@ -67,6 +68,7 @@ import { ProviderFailure } from "@/modules/integrations/fitting";
 import { GET as imageGET } from "@/app/api/fitting/[id]/image/route";
 import { storage } from "@/modules/integrations/storage";
 import { returnFixture } from "../helpers/returns";
+import { requestReturn, manageReturn } from "@/modules/returns/service";
 import { unusableFittingResponses } from "../helpers/fitting-provider-responses";
 import {
   findProductBySlug,
@@ -1683,9 +1685,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     it("batches fitting catalog prices with a single manual-price and FX lookup", async () => {
       const c = await customer();
-      const manual = vi.spyOn(db.marketPrice, "findMany"),
-        single = vi.spyOn(db.marketPrice, "findFirst"),
-        fx = vi.spyOn(db.fxOverride, "findFirst");
+      const realMany = db.marketPrice.findMany.bind(db.marketPrice),
+        realFirst = db.marketPrice.findFirst.bind(db.marketPrice),
+        realFx = db.fxOverride.findFirst.bind(db.fxOverride),
+        manual = vi.fn(realMany),
+        single = vi.fn(realFirst),
+        fx = vi.fn(realFx);
+      db.marketPrice.findMany = manual as typeof db.marketPrice.findMany;
+      db.marketPrice.findFirst = single as typeof db.marketPrice.findFirst;
+      db.fxOverride.findFirst = fx as typeof db.fxOverride.findFirst;
       try {
         const products = await fittingProducts(c.id, marketId, "en");
         expect(products.length).toBeGreaterThan(1);
@@ -1694,9 +1702,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(single).not.toHaveBeenCalled();
         expect(fx).toHaveBeenCalledTimes(1);
       } finally {
-        manual.mockRestore();
-        single.mockRestore();
-        fx.mockRestore();
+        db.marketPrice.findMany = realMany;
+        db.marketPrice.findFirst = realFirst;
+        db.fxOverride.findFirst = realFx;
       }
     });
     it("keeps paid garments in the wardrobe even when no longer active for sale", async () => {
@@ -2078,6 +2086,138 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(1);
     });
+    it.each(["REFUND", "CREDIT"] as const)(
+      "reverses source sale rewards through nested exchanges and %s settlement",
+      async (operation) => {
+        await configure({
+          rewards: [{ marketId, spendAmount: "100", coins: "25" }],
+        });
+        const f = await returnFixture(db, {
+          customerId: (await customer("0")).id,
+          quantity: 3,
+          price: "100",
+        });
+        customers.push(f.customer.id);
+        await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+        const receive = async (
+          orderId: string,
+          itemId: string,
+          quantity: number,
+          exchangeVariantId?: string,
+        ) => {
+          const request = await requestReturn(f.customer.id, {
+            orderId,
+            requestKey: randomUUID(),
+            type: exchangeVariantId ? "EXCHANGE" : "RETURN",
+            reasonCode: "SIZE",
+            items: [
+              {
+                orderItemId: itemId,
+                quantity,
+                ...(exchangeVariantId ? { exchangeVariantId } : {}),
+              },
+            ],
+          });
+          await manageReturn(ownerId, {
+            returnId: request.id,
+            version: 0,
+            operation: "APPROVE",
+          });
+          const item = await db.returnItem.findFirstOrThrow({
+            where: { returnRequestId: request.id },
+          });
+          await manageReturn(ownerId, {
+            returnId: request.id,
+            version: 1,
+            operation: "RECEIVE",
+            conditions: [{ itemId: item.id, condition: "RESTOCK" }],
+          });
+          return request;
+        };
+        const first = await receive(
+          f.order.id,
+          f.order.items[0].id,
+          2,
+          f.variants[1].id,
+        );
+        const firstDone = await manageReturn(ownerId, {
+          returnId: first.id,
+          version: 2,
+          operation: "EXCHANGE",
+        });
+        const child = await db.order.update({
+          where: { id: firstDone.exchangeOrderId! },
+          data: { status: "DELIVERED", deliveredAt: new Date() },
+          include: { items: true },
+        });
+        const second = await receive(
+          child.id,
+          child.items[0].id,
+          1,
+          f.variants[0].id,
+        );
+        const secondDone = await manageReturn(ownerId, {
+          returnId: second.id,
+          version: 2,
+          operation: "EXCHANGE",
+        });
+        const grandchild = await db.order.update({
+          where: { id: secondDone.exchangeOrderId! },
+          data: { status: "DELIVERED", deliveredAt: new Date() },
+          include: { items: true },
+        });
+        expect(await balance(f.customer.id)).toBe("75");
+        expect(
+          await db.fittingCoinGrant.count({
+            where: { orderId: { in: [child.id, grandchild.id] } },
+          }),
+        ).toBe(0);
+        const terminal = await receive(
+          grandchild.id,
+          grandchild.items[0].id,
+          1,
+        );
+        const direct = await receive(f.order.id, f.order.items[0].id, 1);
+        await Promise.all(
+          [terminal, direct].map((r) =>
+            manageReturn(ownerId, {
+              returnId: r.id,
+              version: 2,
+              operation,
+              note: "source reward fixture",
+            }),
+          ),
+        );
+        expect(await balance(f.customer.id)).toBe("25");
+        const last = await receive(child.id, child.items[0].id, 1);
+        await manageReturn(ownerId, {
+          returnId: last.id,
+          version: 2,
+          operation,
+          note: "source reward fixture",
+        });
+        await db.$transaction((tx) => revokeReturnedCoins(tx, grandchild.id));
+        await db.$transaction((tx) => revokeReturnedCoins(tx, child.id));
+        expect(await balance(f.customer.id)).toBe("0");
+        const grant = await db.fittingCoinGrant.findFirstOrThrow({
+          where: { orderId: f.order.id, reason: "PURCHASE" },
+        });
+        expect(grant.revokedAmount.toString()).toBe("75");
+        const reversals = await db.fittingCoinEntry.findMany({
+          where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
+        });
+        expect(
+          reversals
+            .reduce((sum, e) => sum.add(e.amount.toString()), new Decimal(0))
+            .toString(),
+        ).toBe("-75");
+        expect(
+          await db.fittingWallet
+            .findUniqueOrThrow({ where: { customerId: f.customer.id } })
+            .then((w) => w.debt.toString()),
+        ).toBe("0");
+      },
+    );
     it("retains reward rule snapshots and reverses only returned purchase value", async () => {
       await configure({
         rewards: [{ marketId, spendAmount: "100", coins: "25" }],

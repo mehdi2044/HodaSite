@@ -274,6 +274,10 @@ export async function manageReturn(userId: string, raw: unknown) {
     db.$transaction(
       async (tx) => {
         await tx.$queryRaw`SELECT id FROM "Order" WHERE id=${subject.orderId} FOR UPDATE`;
+        if (settlement) {
+          const { lockRewardSource } = await import("@/modules/fitting/ledger");
+          await lockRewardSource(tx, subject.orderId);
+        }
         await assertCan(userId, "return.manage", {
           marketId: subject.order.marketId,
         });
