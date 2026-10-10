@@ -2107,6 +2107,79 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await ownedVariantIds(db, f.customer.id)).has(f.variants[0].id),
       ).toBe(false);
     });
+    it("excludes a paid exchanged coin pack with a legacy unmarked snapshot from the wardrobe", async () => {
+      const c = await customer("0");
+      const f = await returnFixture(db, {
+        customerId: c.id,
+        quantity: 1,
+        coinPackCoins: "100",
+      });
+      await db.productMedia.create({
+        data: {
+          productId: f.variants[0].productId,
+          mediaId: "seed-fashion-v2-women-tee",
+        },
+      });
+      await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+      const request = await requestReturn(c.id, {
+        orderId: f.order.id,
+        requestKey: randomUUID(),
+        type: "EXCHANGE",
+        reasonCode: "SIZE",
+        items: [
+          {
+            orderItemId: f.order.items[0].id,
+            quantity: 1,
+            exchangeVariantId: f.variants[1].id,
+          },
+        ],
+      });
+      await manageReturn(ownerId, {
+        returnId: request.id,
+        version: 0,
+        operation: "APPROVE",
+      });
+      const item = await db.returnItem.findFirstOrThrow({
+        where: { returnRequestId: request.id },
+      });
+      await manageReturn(ownerId, {
+        returnId: request.id,
+        version: 1,
+        operation: "RECEIVE",
+        conditions: [{ itemId: item.id, condition: "RESTOCK" }],
+      });
+      const settled = await manageReturn(ownerId, {
+        returnId: request.id,
+        version: 2,
+        operation: "EXCHANGE",
+      });
+      const child = await db.order.findUniqueOrThrow({
+        where: { id: settled.exchangeOrderId! },
+        include: { items: true },
+      });
+      expect(child.status).toBe("PAID");
+      expect(
+        (child.items[0].productSnapshot as Record<string, unknown>)
+          .coinPackCoins,
+      ).toBeUndefined();
+      expect((await ownedVariantIds(db, c.id)).has(f.variants[1].id)).toBe(
+        false,
+      );
+      expect(
+        (await fittingProducts(c.id, marketId, "en", "", true)).some(
+          (p) => p.productId === f.variants[0].productId,
+        ),
+      ).toBe(false);
+      await expect(
+        create(c.id, { variantIds: [f.variants[1].id] }),
+      ).rejects.toThrow("INVALID_SELECTION");
+      expect(await balance(c.id)).toBe("100");
+      expect(
+        await db.fittingCoinGrant.count({
+          where: { customerId: c.id, reason: "PACK" },
+        }),
+      ).toBe(1);
+    });
     it("reclaims returned pack coins after spending and correctly refunds the pending usage", async () => {
       const f = await returnFixture(db, {
         customerId: (await customer("0")).id,

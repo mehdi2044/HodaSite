@@ -85,6 +85,7 @@ export async function ownedVariantIds(
 ) {
   const rows = await tx.orderItem.findMany({
     where: {
+      variant: { product: { coinPackCoins: null } },
       order: {
         customerId,
         paidAt: { not: null },
