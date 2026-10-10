@@ -80,6 +80,7 @@ import { homepageBlocksSchema } from "@/modules/content/homepage";
 import { GET as suggestGET } from "@/app/api/catalog/suggest/route";
 import { validateLookReferences } from "@/modules/outfits";
 import { styleLookBlock } from "../../prisma/style-seed";
+import { publicCards, mergeWishlist, wishlist } from "@/modules/engagement";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
@@ -274,14 +275,47 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             ),
           ).toBe(expected);
         };
+        const a = await customer("0"),
+          b = await customer("0");
+        const context = { marketId, locale: "en" };
         try {
           await configure({ enabled: true, coinSalesEnabled: true });
           await visible(true);
+          state.customer = a.id;
+          expect((await mergeWishlist(context, [productId])).ids).toContain(
+            productId,
+          );
+          expect(
+            (await publicCards(context, [productId])).map((p) => p.id),
+          ).toEqual([productId]);
           await configure(toggles);
           await visible(false);
+          // Previously saved IDs stay durable, while both wishlist and recent
+          // cards omit the now-hidden product and its price.
+          const saved = await wishlist(context);
+          expect(saved.ids).toContain(productId);
+          expect(await publicCards(context, saved.ids)).toEqual([]);
+          expect(await publicCards(context, [productId])).toEqual([]);
+          state.customer = b.id;
+          expect((await mergeWishlist(context, [productId])).ids).not.toContain(
+            productId,
+          );
+          expect(
+            await db.wishlist.count({ where: { customerId: b.id, productId } }),
+          ).toBe(0);
           await configure({ enabled: true, coinSalesEnabled: true });
           await visible(true);
+          expect((await mergeWishlist(context, [productId])).ids).toContain(
+            productId,
+          );
+          state.customer = a.id;
+          expect(
+            (await publicCards(context, (await wishlist(context)).ids)).map(
+              (p) => p.id,
+            ),
+          ).toEqual([productId]);
         } finally {
+          state.customer = null;
           await db.product.update({
             where: { id: productId },
             data: { status: "ARCHIVED" },

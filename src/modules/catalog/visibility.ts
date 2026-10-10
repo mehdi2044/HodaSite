@@ -2,8 +2,10 @@ import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { readConfig } from "@/modules/fitting/ledger";
 
-export async function catalogCoinPacksEnabled() {
-  const config = await readConfig(db);
+export async function catalogCoinPacksEnabled(
+  client: Prisma.TransactionClient = db,
+) {
+  const config = await readConfig(client);
   return config.enabled && config.coinSalesEnabled;
 }
 

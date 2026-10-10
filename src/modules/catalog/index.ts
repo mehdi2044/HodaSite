@@ -27,3 +27,4 @@ export {
 } from "./queries";
 
 export { validateCategoryParent, categoryPathLabel } from "./tree";
+export { catalogCoinPacksEnabled, catalogVisibilityWhere } from "./visibility";
