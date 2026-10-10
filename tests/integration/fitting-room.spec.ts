@@ -62,6 +62,7 @@ import { ProviderFailure } from "@/modules/integrations/fitting";
 import { GET as imageGET } from "@/app/api/fitting/[id]/image/route";
 import { storage } from "@/modules/integrations/storage";
 import { returnFixture } from "../helpers/returns";
+import { unusableFittingResponses } from "../helpers/fitting-provider-responses";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 
@@ -377,6 +378,33 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         vi.unstubAllGlobals();
       }
     });
+    it.each(unusableFittingResponses)(
+      "refunds adapter $name exactly once without a second dispatch",
+      async ({ response }) => {
+        const c = await customer(),
+          session = await create(c.id);
+        const read = vi
+          .spyOn(storage, "getBytes")
+          .mockResolvedValue(Buffer.from(bytes));
+        const fetcher = vi.fn(async () => response());
+        vi.stubGlobal("fetch", fetcher);
+        try {
+          await renderFitting(session.id);
+          await renderFitting(session.id);
+          expect(fetcher).toHaveBeenCalledTimes(1);
+          expect((await sessionView(c.id, session.id)).status).toBe("FAILED");
+          expect(await balance(c.id)).toBe("100");
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, sourceKey: `refund:${session.id}` },
+            }),
+          ).toBe(1);
+        } finally {
+          read.mockRestore();
+          vi.unstubAllGlobals();
+        }
+      },
+    );
     it("renders once, saves a look and serves only the authenticated owner", async () => {
       const c = await customer(),
         s = await create(c.id),

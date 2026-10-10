@@ -70,13 +70,14 @@ export const openAiFittingProvider: FittingProvider = {
       throw new ProviderFailure(false);
     }
     if (!response.ok) {
-      await response.body?.cancel();
+      // Releasing an error body must not change the already-known HTTP outcome.
+      await response.body?.cancel().catch(() => {});
       throw new ProviderFailure(
         response.status >= 400 && response.status < 500,
       );
     }
     const reader = response.body?.getReader();
-    if (!reader) throw new ProviderFailure(false);
+    if (!reader) throw new ProviderFailure(true);
     const chunks: Uint8Array[] = [];
     let size = 0;
     try {
@@ -98,7 +99,8 @@ export const openAiFittingProvider: FittingProvider = {
         throw new FittingError("INVALID_IMAGE");
       return Buffer.from(value, "base64");
     } catch {
-      throw new ProviderFailure(false);
+      // HTTP 2xx was received but no usable output can be delivered; refund, never redispatch.
+      throw new ProviderFailure(true);
     }
   },
 };

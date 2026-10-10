@@ -9,6 +9,7 @@ import {
 } from "@/modules/integrations/fitting";
 import type { FittingSnapshot } from "@/modules/fitting/contracts";
 import { storage } from "@/modules/integrations/storage";
+import { unusableFittingResponses } from "../helpers/fitting-provider-responses";
 const image = {
   storageKey: "fixture.webp",
   mime: "image/webp",
@@ -177,4 +178,16 @@ describe("fitting provider request boundary", () => {
     );
     expect(fetcher).not.toHaveBeenCalled();
   });
+  it.each(unusableFittingResponses)(
+    "refunds $name without repeating dispatch",
+    async ({ response }) => {
+      vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
+      const fetcher = vi.fn(async () => response());
+      vi.stubGlobal("fetch", fetcher);
+      await expect(
+        openAiFittingProvider.render(snapshot("gpt-image-1.5")),
+      ).rejects.toEqual(new ProviderFailure(true));
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
 });
