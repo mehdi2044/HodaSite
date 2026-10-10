@@ -49,6 +49,8 @@ import { promotionOrderAmounts } from "@/modules/promotions";
 import { approvePayment, cancelOrder } from "@/modules/orders/service";
 import { requestReturn } from "@/modules/returns/service";
 import { queueInvoice } from "@/modules/orders/invoices/queue";
+import { saveProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
+import { configSchema } from "@/modules/fitting/contracts";
 import { seedLedgerAccounts } from "../../prisma/ledger-seed";
 import { promotionInput } from "../helpers/promotion-program";
 actor.requests = new AsyncLocalStorage();
@@ -91,7 +93,7 @@ async function fixture(locale: "fa" | "tr" | "en" = "tr", code = "TR") {
       productId: product.id,
       colorId: source.colorId,
       sizeId: source.sizeId,
-      sku: `PROMO-${unique}`,
+      sku: `PROMO-${unique.toUpperCase()}`,
     },
   });
   await db.marketPrice.create({
@@ -263,6 +265,220 @@ afterEach(async () => {
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "09B real checkout integration",
   () => {
+    it.each([
+      ["CHECKOUT_FIRST", false],
+      ["CHECKOUT_FIRST", true],
+      ["ADMIN_FIRST", false],
+      ["ADMIN_FIRST", true],
+    ] as const)(
+      "serializes %s with a coin-pack classification change (was pack: %s)",
+      async (mode, wasPack) => {
+        const f = await fixture();
+        await customFees(f);
+        const oldConfig = await db.integration.findUnique({
+          where: { key: "fitting-room" },
+        });
+        await db.integration.upsert({
+          where: { key: "fitting-room" },
+          create: {
+            key: "fitting-room",
+            provider: "openai",
+            isActive: true,
+            config: configSchema.parse({
+              enabled: true,
+              coinSalesEnabled: true,
+            }),
+          },
+          update: {
+            isActive: true,
+            config: configSchema.parse({
+              enabled: true,
+              coinSalesEnabled: true,
+            }),
+          },
+        });
+        await db.product.update({
+          where: { id: f.product.id },
+          data: { coinPackCoins: wasPack ? "100" : null },
+        });
+        actor.customerId = (
+          await db.customer.create({
+            data: { email: f.address.email, isGuest: false },
+          })
+        ).id;
+        const form = new FormData();
+        form.set("id", f.product.id);
+        for (const locale of ["Fa", "Tr", "En"]) {
+          form.set(`title${locale}`, "Test product");
+          form.set(`description${locale}`, "Test product");
+          form.set(`slug${locale}`, f.product.id);
+        }
+        form.set("categoryId", f.product.categoryId);
+        form.set("gender", f.product.gender);
+        form.set("status", "ACTIVE");
+        form.set("basePriceAmount", f.product.basePriceAmount.toString());
+        form.set("weightGrams", "200");
+        form.append("marketIds", f.market.id);
+        form.set("coinPackCoins", wasPack ? "" : "100");
+        form.set(
+          "variants",
+          JSON.stringify([
+            {
+              id: f.variant.id,
+              colorId: f.variant.colorId,
+              sizeId: f.variant.sizeId,
+              sku: f.variant.sku.toUpperCase(),
+              isActive: true,
+            },
+          ]),
+        );
+        let ready!: () => void,
+          release!: () => void,
+          blockedPid = 0;
+        const entered = new Promise<void>((resolve) => {
+          ready = resolve;
+        });
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const realTransaction = db.$transaction.bind(db);
+        const run = realTransaction as unknown as (
+          fn: unknown,
+          options?: unknown,
+        ) => Promise<unknown>;
+        db.$transaction = (async (fn: unknown, options?: unknown) => {
+          if (typeof fn !== "function") return run(fn, options);
+          return run(async (tx: Prisma.TransactionClient) => {
+            const wrapped = new Proxy(tx, {
+              get(target, key) {
+                const isTarget =
+                  mode === "CHECKOUT_FIRST"
+                    ? key === "cart"
+                    : key === "product";
+                if (!isTarget) return Reflect.get(target, key, target);
+                const delegate = Reflect.get(target, key, target);
+                return new Proxy(delegate, {
+                  get(d, method) {
+                    const value = Reflect.get(d, method, d);
+                    const wanted =
+                      mode === "CHECKOUT_FIRST"
+                        ? "findUniqueOrThrow"
+                        : "update";
+                    if (method !== wanted) return value;
+                    return async (input: {
+                      where?: { tokenHash?: string; id?: string };
+                    }) => {
+                      const result = await value.call(d, input);
+                      if (
+                        mode === "CHECKOUT_FIRST"
+                          ? input.where?.tokenHash === tokenHash(f.token)
+                          : input.where?.id === f.product.id
+                      ) {
+                        const [backend] = await tx.$queryRaw<
+                          { pid: number }[]
+                        >`SELECT pg_backend_pid() AS pid`;
+                        blockedPid = backend.pid;
+                        ready();
+                        await gate;
+                      }
+                      return result;
+                    };
+                  },
+                });
+              },
+            });
+            return (
+              fn as (client: Prisma.TransactionClient) => Promise<unknown>
+            )(wrapped);
+          }, options);
+        }) as typeof db.$transaction;
+        let purchase: ReturnType<typeof placeOrder> | undefined,
+          edit: ReturnType<typeof saveProduct> | undefined;
+        const checkout = () =>
+          placeOrder(f.address, true, 0, undefined, false, f.locale);
+        try {
+          if (mode === "CHECKOUT_FIRST") purchase = checkout();
+          else edit = saveProduct(null, form);
+          await Promise.race([
+            entered,
+            (mode === "CHECKOUT_FIRST" ? purchase! : edit!).then((result) => {
+              throw new Error(
+                `Operation ended before the lock checkpoint: ${JSON.stringify(result)}`,
+              );
+            }),
+          ]);
+          if (mode === "CHECKOUT_FIRST") edit = saveProduct(null, form);
+          else purchase = checkout();
+          let blocked = false;
+          const pattern =
+            mode === "CHECKOUT_FIRST"
+              ? "%Product%FOR UPDATE%"
+              : "%FOR SHARE OF p%";
+          for (let i = 0; i < 200 && !blocked; i++) {
+            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+            SELECT EXISTS(SELECT 1 FROM pg_stat_activity
+              WHERE ${blockedPid}=ANY(pg_blocking_pids(pid)) AND query LIKE ${pattern}) AS blocked`;
+            blocked = row.blocked;
+            if (!blocked)
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          }
+          expect(blocked).toBe(true);
+          release();
+          const [placed, changed] = await Promise.all([purchase!, edit!]);
+          expect(changed).toMatchObject(
+            mode === "CHECKOUT_FIRST"
+              ? { ok: false, code: "VALIDATION" }
+              : { ok: true },
+          );
+          const order = await db.order.findUniqueOrThrow({
+            where: { number: placed.number },
+            include,
+          });
+          const expectedPack = mode === "CHECKOUT_FIRST" ? wasPack : !wasPack;
+          expect(
+            typeof (order.items[0].productSnapshot as Prisma.JsonObject)
+              .coinPackCoins === "string",
+          ).toBe(expectedPack);
+          expect(
+            Boolean(
+              (
+                await db.product.findUniqueOrThrow({
+                  where: { id: f.product.id },
+                })
+              ).coinPackCoins,
+            ),
+          ).toBe(expectedPack);
+          expect(order.totalAmount.toString()).toBe((await quote(f)).total);
+          if (expectedPack)
+            expect(
+              order.fees
+                .filter(
+                  (fee) => fee.type === "SHIPPING" || fee.type === "CUSTOMS",
+                )
+                .every((fee) => new Decimal(fee.amount.toString()).eq(0)),
+            ).toBe(true);
+        } finally {
+          release();
+          await Promise.allSettled([purchase, edit]);
+          db.$transaction = realTransaction;
+          if (oldConfig)
+            await db.integration.update({
+              where: { id: oldConfig.id },
+              data: {
+                config: oldConfig.config ?? {},
+                isActive: oldConfig.isActive,
+                provider: oldConfig.provider,
+              },
+            });
+          else
+            await db.integration.deleteMany({ where: { key: "fitting-room" } });
+          await db.product.update({
+            where: { id: f.product.id },
+            data: { status: "ARCHIVED" },
+          });
+        }
+      },
+    );
     it("persists coupon state through address saves, rejects stale revision and clears codes on market change", async () => {
       const f = await fixture(),
         p = await program(f);

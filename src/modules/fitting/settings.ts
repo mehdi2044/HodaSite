@@ -15,7 +15,7 @@ import {
   ForbiddenError,
 } from "@/modules/access";
 import { configSchema, coins, FittingError } from "./contracts";
-import { readConfig, lockWallet, grantCoins } from "./ledger";
+import { readConfig, grantCoinsBatch } from "./ledger";
 async function actor() {
   const s = await auth();
   if (!s?.user?.id) throw new UnauthorizedError();
@@ -305,17 +305,14 @@ export async function grantFittingCoins(raw: unknown) {
           expiresAt: input.expiresAt,
           reason: input.reason,
         };
-        for (const customerId of ids) {
-          await lockWallet(tx, customerId);
-          await grantCoins(
-            tx,
-            customerId,
-            `manual:${input.requestKey}`,
-            "MANUAL",
-            input.amount,
-            input.expiresAt ? { expiresAt: new Date(input.expiresAt) } : {},
-          );
-        }
+        await grantCoinsBatch(
+          tx,
+          ids,
+          `manual:${input.requestKey}`,
+          "MANUAL",
+          input.amount,
+          input.expiresAt ? { expiresAt: new Date(input.expiresAt) } : {},
+        );
         await tx.auditLog.create({
           data: {
             userId,

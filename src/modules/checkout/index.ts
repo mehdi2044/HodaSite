@@ -50,6 +50,15 @@ export async function placeOrder(
       async (tx) => {
         const hash = tokenHash(token);
         await tx.$queryRaw`SELECT id FROM "Cart" WHERE "tokenHash"=${hash} FOR UPDATE`;
+        // Quote providers may read through a separate connection. Hold product
+        // classification stable before loading snapshots and until order commit.
+        await tx.$queryRaw`
+          SELECT p.id FROM "Product" p
+          JOIN "Variant" v ON v."productId"=p.id
+          JOIN "CartItem" i ON i."variantId"=v.id
+          JOIN "Cart" c ON c.id=i."cartId"
+          WHERE c."tokenHash"=${hash} ORDER BY p.id FOR SHARE OF p
+        `;
         const cart = await tx.cart.findUniqueOrThrow({
           where: { tokenHash: hash },
           include: {

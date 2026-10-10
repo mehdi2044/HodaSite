@@ -1,7 +1,12 @@
 import Decimal from "decimal.js";
 import type { Prisma } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
-import { payCoinDebt, settleDebt, walletDebt } from "@/modules/fitting/ledger";
+import {
+  grantCoinsBatch,
+  payCoinDebt,
+  settleDebt,
+  walletDebt,
+} from "@/modules/fitting/ledger";
 
 function fixture(base: string, balances: string[], grants: string[] = []) {
   const Exact = Decimal.clone({ precision: 100 });
@@ -13,6 +18,17 @@ function fixture(base: string, balances: string[], grants: string[] = []) {
   }));
   const credits = grants.map((balance, i) => ({ id: `grant-${i}`, balance }));
   const mock = {
+    $executeRaw: vi.fn(async (query: Prisma.Sql) => {
+      for (let i = 0; i < query.values.length; i += 2) {
+        if (query.sql.includes('UPDATE "FittingWallet"'))
+          wallet.debt = String(query.values[i + 1]);
+        else
+          lots.find((l) => l.id === query.values[i])!.balance = String(
+            query.values[i + 1],
+          );
+      }
+      return query.values.length / 2;
+    }),
     fittingWallet: {
       findUniqueOrThrow: vi.fn(async () => wallet),
       update: vi.fn(
@@ -74,6 +90,51 @@ function fixture(base: string, balances: string[], grants: string[] = []) {
 }
 
 describe("fitting debt across bounded liability tranches", () => {
+  it("uses a bounded set of statements for 1000 recipients and skips an existing source", async () => {
+    const ids = Array.from({ length: 1000 }, (_, i) => `customer-${i}`);
+    const mock = {
+      fittingWallet: { createMany: vi.fn(async () => ({ count: 1000 })) },
+      $queryRaw: vi.fn(async () =>
+        ids.map((customerId) => ({ customerId, debt: "0" })),
+      ),
+      $executeRaw: vi.fn(),
+      fittingCoinDebtOverflow: { findMany: vi.fn(async () => []) },
+      fittingCoinGrant: {
+        findMany: vi.fn(async () => [{ customerId: ids[0] }]),
+        createMany: vi.fn(async () => ({ count: 999 })),
+      },
+      fittingCoinEntry: { createMany: vi.fn(async () => ({ count: 999 })) },
+    };
+    await grantCoinsBatch(
+      mock as unknown as Prisma.TransactionClient,
+      ids,
+      "manual:fixture",
+      "MANUAL",
+      "12.5001",
+    );
+    expect(mock.fittingWallet.createMany).toHaveBeenCalledTimes(1);
+    expect(mock.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(mock.fittingCoinGrant.findMany).toHaveBeenCalledTimes(1);
+    expect(mock.fittingCoinDebtOverflow.findMany).toHaveBeenCalledTimes(1);
+    expect(mock.$executeRaw).not.toHaveBeenCalled();
+    expect(mock.fittingCoinGrant.createMany).toHaveBeenCalledExactlyOnceWith({
+      data: ids.slice(1).map((customerId) => ({
+        customerId,
+        sourceKey: "manual:fixture",
+        reason: "MANUAL",
+        amount: "12.5001",
+        balance: "12.5001",
+      })),
+    });
+    expect(mock.fittingCoinEntry.createMany).toHaveBeenCalledExactlyOnceWith({
+      data: ids.slice(1).map((customerId) => ({
+        customerId,
+        sourceKey: "grant:manual:fixture",
+        reason: "MANUAL",
+        amount: "12.5001",
+      })),
+    });
+  });
   it("reports the complete sum without losing four-decimal precision above 20 digits", async () => {
     const f = fixture("99999999999999.9999", []);
     f.mock.fittingCoinDebtOverflow.aggregate.mockResolvedValueOnce({

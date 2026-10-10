@@ -91,6 +91,14 @@ export async function saveProduct(
     await validateReferences(input);
     const saved = await withMutation(() =>
       db.$transaction(async (tx) => {
+        if (input.id)
+          await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${input.id} FOR UPDATE`;
+        const classification = input.id
+          ? await tx.product.findUniqueOrThrow({
+              where: { id: input.id },
+              select: { coinPackCoins: true },
+            })
+          : null;
         const scalar = {
           slugI18n: input.slugI18n,
           titleI18n: input.titleI18n,
@@ -138,10 +146,11 @@ export async function saveProduct(
           searchText: productSearchText(input),
         } satisfies Prisma.ProductUncheckedUpdateInput;
         if (
-          current &&
-          Boolean(current.coinPackCoins) !== Boolean(input.coinPackCoins) &&
+          classification &&
+          Boolean(classification.coinPackCoins) !==
+            Boolean(input.coinPackCoins) &&
           (await tx.orderItem.count({
-            where: { variant: { productId: current.id } },
+            where: { variant: { productId: input.id } },
           }))
         )
           throw new z.ZodError([]);

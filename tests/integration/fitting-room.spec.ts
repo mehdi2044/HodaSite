@@ -1483,6 +1483,122 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("credits the supported 1000-person audience atomically with debt offsets and replay", async () => {
+      const ids = Array.from({ length: 1000 }, () => randomUUID());
+      customers.push(...ids);
+      await db.customer.createMany({
+        data: ids.map((id) => ({
+          id,
+          email: `batch-${id}@example.com`,
+          isGuest: false,
+          preferredMarketId: marketId,
+        })),
+      });
+      await db.fittingWallet.createMany({
+        data: ids.map((customerId, i) => ({
+          id: customerId,
+          customerId,
+          debt: i % 3 === 0 ? "5.0001" : "0",
+        })),
+      });
+      await db.fittingCoinDebtOverflow.createMany({
+        data: ids.flatMap((customerId, i) =>
+          i % 3 === 1
+            ? [
+                {
+                  customerId,
+                  sourceKey: "fixture-debt",
+                  amount: "5",
+                  balance: "3.5",
+                },
+              ]
+            : [],
+        ),
+      });
+      const request = {
+        marketId,
+        requestKey: randomUUID(),
+        customerIds: ids,
+        amount: "12.5001",
+        expiresAt: null,
+        reason: "batch fixture",
+        confirm: true,
+      };
+      await grantFittingCoins(request);
+      await grantFittingCoins(request);
+      const grants = await db.fittingCoinGrant.findMany({
+        where: {
+          customerId: { in: ids },
+          sourceKey: `manual:${request.requestKey}`,
+        },
+      });
+      expect(grants).toHaveLength(1000);
+      const byId = new Map(grants.map((g) => [g.customerId, g]));
+      for (const [i, id] of ids.entries()) {
+        expect(byId.get(id)?.amount.toString()).toBe("12.5001");
+        expect(byId.get(id)?.balance.toString()).toBe(
+          i % 3 === 0 ? "7.5" : i % 3 === 1 ? "9.0001" : "12.5001",
+        );
+      }
+      expect(
+        await db.fittingWallet.count({
+          where: { customerId: { in: ids }, debt: { gt: 0 } },
+        }),
+      ).toBe(0);
+      expect(
+        await db.fittingCoinDebtOverflow.count({
+          where: { customerId: { in: ids }, balance: { gt: 0 } },
+        }),
+      ).toBe(0);
+      expect(
+        await db.fittingCoinEntry.count({
+          where: {
+            customerId: { in: ids },
+            sourceKey: `grant:manual:${request.requestKey}`,
+          },
+        }),
+      ).toBe(1000);
+      expect(
+        await db.auditLog.count({
+          where: {
+            action: "fitting.coins.grant",
+            entityId: request.requestKey,
+          },
+        }),
+      ).toBe(1);
+    });
+    it("keeps overflow liability identities immutable while permitting repayment", async () => {
+      const a = await customer("0"),
+        b = await customer("0");
+      const lot = await db.fittingCoinDebtOverflow.create({
+        data: {
+          customerId: a.id,
+          sourceKey: "immutable-fixture",
+          amount: "5.0001",
+          balance: "5.0001",
+        },
+      });
+      for (const data of [
+        { id: randomUUID() },
+        { customerId: b.id },
+        { sourceKey: "changed" },
+        { amount: "6" },
+        { createdAt: new Date("2000-01-01T00:00:00Z") },
+      ])
+        await expect(
+          db.fittingCoinDebtOverflow.update({ where: { id: lot.id }, data }),
+        ).rejects.toThrow("Fitting debt identity is immutable");
+      await expect(
+        db.fittingCoinDebtOverflow.delete({ where: { id: lot.id } }),
+      ).rejects.toThrow("Fitting debt identity is immutable");
+      const paid = await db.fittingCoinDebtOverflow.update({
+        where: { id: lot.id },
+        data: { balance: "4.0001" },
+      });
+      expect(paid.amount.toString()).toBe("5.0001");
+      expect(paid.balance.toString()).toBe("4.0001");
+      expect(paid.createdAt).toEqual(lot.createdAt);
+    });
     it("saves versioned admin settings and grants exact batch credits idempotently", async () => {
       const a = await customer("0"),
         b = await customer("0"),
