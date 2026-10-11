@@ -1,3 +1,41 @@
+# Department shelves — visual QA (2026-10-12, Istanbul)
+
+final result: passed
+
+Scope: isolated visual slice only.
+
+## Comparison evidence
+
+Source visual truth: the previous homepage at PR57 head `e962754`, server-rendered with the same fixture catalog, fonts and CSS as the implementation. This is a continuation of the existing design, not pixel matching to a new mockup. The intentional differences are four category shelves of five products, their portrait headings, native mobile scrolling and the studio's lower placement. The shared header was not changed and is outside this isolated component capture.
+
+Source and implementation are together in each browser capture:
+- `docs/reviews/phase-05e/fa-mobile.jpg`: Persian RTL, 390 CSS px per frame, 1:1 scale.
+- `docs/reviews/phase-05e/tr-mobile.jpg`: Turkish LTR, 390 CSS px per frame, 1:1 scale.
+- `docs/reviews/phase-05e/en-desktop.jpg`: English LTR, 1280 CSS px per frame, scaled equally to 620 displayed px (620/1280). The desktop comparison is for overall structure; readable typography and prices are inspected separately in the unscaled mobile captures.
+
+Combined capture dimensions are 1348 × 926 pixels for FA/TR and 1341 × 921 pixels for EN. Each source/implementation frame uses the same CSS viewport, density and display scale stated above. The captures include the comparison canvas; both frame sides have the same scale and device density. Mobile usable document width is 375px after the browser scrollbar, with no document overflow. Desktop usable width is 1265px with no document overflow. Source contains the previous mixed “new arrivals” strip; implementation contains department-specific strips. That content/order change is intended. Studio rendering and wishlist hydration are omitted/mocked in the fixture. Actual `HomepageBlocks`, `ProductShelf`, `ProductCard` and `ResponsiveImage` produce the inspected markup; fixtures replace database/pricing calls. The report proves visual rendering, not commerce/database behavior.
+
+## Required surfaces and findings
+
+- Fonts/typography: original self-hosted Inter and Vazirmatn retained. Persian computed font is Vazirmatn. Department headings are clearly larger than card copy, with readable mobile names and exact-format prices; no clipped text was observed at rest.
+- Spacing/layout: portrait and heading align using logical layout; two full mobile cards and a native scrollbar show the browsing affordance. Desktop has five equal tracks, with no rail overflow. All four sections contain five cards. Parent document widths match client widths.
+- Colors/tokens: existing warm background, text, merchant accent, borders and framed-image shadows retained. Keyboard focus remains visible on the native rail.
+- Images: existing disclosed demo media reused, with original subjects and product crops. Loaded card images have nonzero natural width; no broken images remained in the final captures. No replacement artwork was generated.
+- Copy/content: existing product names, demo disclosures, prices and locale/market product links retained. The demo campaign now describes all four departments; merchant copy is guarded from automatic upgrade.
+
+No actionable P0/P1/P2 visual finding remains. Before final capture, the temporary fixture's extra card wrapper was removed to preserve the actual direct-child CSS structure, and its image/font serving was repaired. Those were fixture preparation failures, not production design iterations. No production visual fix was made after the first valid combined comparison.
+
+## Interactions and limits
+
+- Browser QA: native rail focused and scrolled with ArrowLeft in Persian; tab navigation to the fifth product moved the horizontal position to -516px (335px client / 852px scroll width). Locale comparison controls were exercised. Canonical category/product hrefs were inspected in the accessibility tree.
+- Console inspection: observed errors were extension metadata messages, not application errors. The static fixture has no hydrated commerce runtime.
+- Existing reduced-motion/fine-pointer guards are unchanged; their actual behavior remains covered by the existing real-route E2E suite.
+- Local lint, TypeScript and 4,117 unit tests pass. Three database-backed browser cases were added for department counts, category navigation, loaded images, fifth-product navigation and studio order. PostgreSQL and real-route browser execution remain CI gates; no local backend success, physical-phone acceptance or owner approval is claimed.
+
+Implementation checklist: run current-head CI and automated review; obtain owner design review; then continue product/category/cart/account/admin design. This page slice does not close issues #48/#49.
+
+---
+
 # Editorial depth continuation — visual QA
 
 The owner accepted the PR #44 upper-page composition and requested creative three-dimensional detail in the continuation. This slice preserves that header/hero and extends its framed imagery to categories, products and the existing CMS service strip. There is no supplied lower-page mockup; this review checks visual coherence and usability, not pixel equivalence to an invented reference.

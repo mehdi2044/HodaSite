@@ -459,13 +459,8 @@ export async function seedStyleStorefront(
   await upgradeStyleComposition(db);
 }
 
-/** Compare-and-swap only the exact, untouched previous demo. No market overrides. */
-export async function upgradeStyleComposition(db: PrismaClient) {
-  const home = await db.homepage.findUnique({
-    where: { id: "seed-homepage-global" },
-  });
-  if (!home || home.deletedAt || home.marketId !== null) return;
-  const previous = legacyHomepageBlocks.map((block, index) =>
+function previousSpatialComposition() {
+  return legacyHomepageBlocks.map((block, index) =>
     index === 0
       ? {
           ...block,
@@ -476,7 +471,10 @@ export async function upgradeStyleComposition(db: PrismaClient) {
         }
       : block,
   );
-  if (!isDeepStrictEqual(home.blocks, previous)) return;
+}
+
+/** Retained verbatim so even a one-field merchant edit fails the upgrade guard. */
+export function previousStyleComposition() {
   const blocks = structuredClone(
     legacyHomepageBlocks,
   ) as Prisma.InputJsonObject[];
@@ -498,6 +496,57 @@ export async function upgradeStyleComposition(db: PrismaClient) {
   };
   blocks.splice(1, 0, styleLookBlock);
   blocks[3] = { ...blocks[3], source: { mode: "latest", limit: 8 } };
+  return blocks;
+}
+
+export function departmentStyleComposition() {
+  const previous = previousStyleComposition();
+  return [
+    {
+      ...previous[0],
+      title: text(
+        "انتخاب‌های تازه\nبرای هر روز",
+        "Her gün için\nyeni seçimler",
+        "Fresh choices\nfor every day",
+      ),
+      body: text(
+        "پوشاک زنانه، مردانه، کودک و اکسسوری؛ انتخابت را از اینجا شروع کن.",
+        "Kadın, erkek, çocuk ve aksesuar. Seçimine buradan başla.",
+        "Women, men, kids and accessories. Start with what feels like you.",
+      ),
+    },
+    previous[2],
+    ...[
+      ["women", text("زنان", "Kadın", "Women")],
+      ["men", text("مردان", "Erkek", "Men")],
+      ["kids", text("کودکان", "Çocuk", "Kids")],
+      ["accessories", text("اکسسوری", "Aksesuar", "Accessories")],
+    ].map(([department, title]) => ({
+      type: "ProductStrip",
+      title,
+      source: {
+        mode: "category",
+        referenceId: `seed-category-${department}`,
+        limit: 5,
+      },
+    })),
+    styleLookBlock,
+    previous[4],
+  ] as Prisma.InputJsonObject[];
+}
+
+/** Compare-and-swap only exact, untouched prior demos. No market overrides. */
+export async function upgradeStyleComposition(db: PrismaClient) {
+  const home = await db.homepage.findUnique({
+    where: { id: "seed-homepage-global" },
+  });
+  if (!home || home.deletedAt || home.marketId !== null) return;
+  if (
+    !isDeepStrictEqual(home.blocks, previousSpatialComposition()) &&
+    !isDeepStrictEqual(home.blocks, previousStyleComposition())
+  )
+    return;
+  const blocks = departmentStyleComposition();
   await db.homepage.updateMany({
     where: { id: home.id, updatedAt: home.updatedAt },
     data: { blocks },

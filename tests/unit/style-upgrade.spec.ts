@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@prisma/client";
-import { upgradeStyleComposition } from "../../prisma/style-seed";
+import {
+  upgradeStyleComposition,
+  previousStyleComposition,
+} from "../../prisma/style-seed";
+import { homepageBlocksSchema } from "@/modules/content/homepage";
 import {
   legacyHomepageBlocks,
   spatialCampaignTitle,
@@ -43,14 +47,44 @@ describe("prepared demo composition upgrade", () => {
     await upgradeStyleComposition(db);
     const args = updateMany.mock.calls[0][0] as {
       where: { updatedAt: Date };
-      data: { blocks: Array<{ type: string; layout?: string }> };
+      data: {
+        blocks: Array<{
+          type: string;
+          layout?: string;
+          source?: { mode: string; referenceId: string; limit: number };
+        }>;
+      };
     };
     expect(args.where.updatedAt).toEqual(new Date(0));
     expect(args.data.blocks[0].layout).toBe("editorial");
-    expect(args.data.blocks[1].type).toBe("ShopLook");
+    expect(args.data.blocks[1].type).toBe("CategoryCards");
+    expect(args.data.blocks.slice(2, 6).map((block) => block.source)).toEqual(
+      ["women", "men", "kids", "accessories"].map((department) => ({
+        mode: "category",
+        referenceId: `seed-category-${department}`,
+        limit: 5,
+      })),
+    );
+    expect(args.data.blocks[6].type).toBe("ShopLook");
+    expect(homepageBlocksSchema.safeParse(args.data.blocks).success).toBe(true);
     const second = fixture(args.data.blocks);
     await upgradeStyleComposition(second.db);
     expect(second.updateMany).not.toHaveBeenCalled();
+  });
+  it("upgrades the exact previous style demo while preserving a reordered or edited one", async () => {
+    const pristine = fixture(previousStyleComposition());
+    await upgradeStyleComposition(pristine.db);
+    expect(pristine.updateMany).toHaveBeenCalledOnce();
+    const reordered = previousStyleComposition();
+    [reordered[1], reordered[2]] = [reordered[2], reordered[1]];
+    const changedOrder = fixture(reordered);
+    await upgradeStyleComposition(changedOrder.db);
+    expect(changedOrder.updateMany).not.toHaveBeenCalled();
+    const edited = previousStyleComposition();
+    edited[3] = { ...edited[3], source: { mode: "latest", limit: 5 } };
+    const changedLimit = fixture(edited);
+    await upgradeStyleComposition(changedLimit.db);
+    expect(changedLimit.updateMany).not.toHaveBeenCalled();
   });
   it.each([{ marketId: "merchant-market" }, { deletedAt: new Date() }])(
     "preserves market overrides and deleted content: %j",

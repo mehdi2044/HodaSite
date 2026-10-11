@@ -2252,6 +2252,77 @@ html[lang="fa"] body,
   }
 }
 
+/* Department shelves use the existing CMS sources and merchant-owned media. */
+.shop-shelf-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  min-width: 0;
+}
+.shop-shelf-title {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+.shop-shelf-title h2 {
+  margin-block: 0.35rem 0;
+  font-size: clamp(1.75rem, 4vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.shop-shelf-portrait {
+  display: block;
+  flex: 0 0 72px;
+  height: 90px;
+  padding: 0.2rem;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  background: var(--surface);
+  box-shadow:
+    4px 4px 0 var(--background),
+    5px 5px 0 color-mix(in srgb, var(--text) 18%, transparent);
+}
+.shop-shelf-portrait img {
+  width: 100%;
+  height: 100%;
+}
+.shop-department-shelf {
+  border-block-start: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+.shop-homepage .shop-department-shelf .shop-product-rail {
+  display: flex;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  padding: 0.4rem 0.2rem 1rem;
+  gap: 1rem;
+}
+.shop-department-shelf .shop-product-rail > article {
+  flex: 0 0 calc((100% - 1rem) / 2);
+  scroll-snap-align: start;
+}
+.shop-department-shelf .shop-product-rail:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+@media (min-width: 768px) {
+  .shop-shelf-portrait {
+    flex-basis: 100px;
+    height: 125px;
+  }
+  .shop-department-shelf .shop-product-rail > article {
+    flex-basis: calc((100% - 2rem) / 3);
+  }
+}
+@media (min-width: 1024px) {
+  .shop-homepage .shop-department-shelf .shop-product-rail {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: visible;
+  }
+}
+
 /* D74: prepared outfit studio. Logical positioning keeps the same composition in RTL. */
 .look-studio {
   padding-block: 3.5rem;
