@@ -293,6 +293,15 @@ export async function createFittingSession(
     db.$transaction(
       async (tx) => {
         await requireCustomer(tx, customerId);
+        // Product → Integration → wallet → Media matches checkout/edit writers.
+        // Pin classification before reading the variants, and retain the locks
+        // through the immutable snapshot, charge and queued job commit.
+        await tx.$queryRaw(Prisma.sql`
+          SELECT p.id FROM "Product" p
+          JOIN "Variant" v ON v."productId"=p.id
+          WHERE v.id IN (${Prisma.join(input.variantIds)})
+          ORDER BY p.id FOR SHARE OF p
+        `);
         // Shared dispatch cap and admin settings are serialized before the customer wallet.
         await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR UPDATE`;
         await lockWallet(tx, customerId);

@@ -1080,6 +1080,189 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         registerFittingJobs();
       }
     });
+    it.each(
+      (["coin", "draft", "archived", "market"] as const).flatMap((change) =>
+        (["editor", "session"] as const).map(
+          (first) => [change, first] as const,
+        ),
+      ),
+    )(
+      "serializes %s product edits and fitting creation with %s first",
+      async (change, first) => {
+        const c = await customer();
+        const template = await db.variant.findUniqueOrThrow({
+          where: { id: "seed-style-v2-women-tee-m" },
+          include: { product: true },
+        });
+        const marker = randomUUID();
+        const product = await db.product.create({
+          data: {
+            categoryId: template.product.categoryId,
+            gender: template.product.gender,
+            titleI18n: {
+              fa: "آزمون انتخاب",
+              tr: "Seçim testi",
+              en: "Selection test",
+            },
+            slugI18n: { fa: marker, tr: marker, en: marker },
+            descriptionI18n: {
+              fa: "شرح آزمون",
+              tr: "Test açıklaması",
+              en: "Test description",
+            },
+            status: "ACTIVE",
+            basePriceAmount: "1",
+            fittingSlot: "TOP",
+            marketIds: [marketId],
+            media: { create: { mediaId: "seed-fashion-v2-women-tee" } },
+            variants: {
+              create: {
+                colorId: template.colorId,
+                sizeId: template.sizeId,
+                sku: `SELECTION-${marker}`.toUpperCase(),
+              },
+            },
+          },
+          include: { variants: true },
+        });
+        const variant = product.variants[0];
+        const warehouse = await db.warehouse.findFirstOrThrow({
+          where: { isActive: true },
+        });
+        await db.stockItem.create({
+          data: {
+            warehouseId: warehouse.id,
+            variantId: variant.id,
+            onHand: 2,
+          },
+        });
+        const other = await db.market.findUniqueOrThrow({
+          where: { code: "CA" },
+        });
+        const form = new FormData();
+        form.set("id", product.id);
+        for (const [suffix, locale] of [
+          ["Fa", "fa"],
+          ["Tr", "tr"],
+          ["En", "en"],
+        ])
+          for (const [field, json] of [
+            ["title", product.titleI18n],
+            ["slug", product.slugI18n],
+            ["description", product.descriptionI18n],
+          ])
+            form.set(
+              `${field}${suffix}`,
+              String((json as Record<string, unknown>)[locale]),
+            );
+        form.set("categoryId", product.categoryId);
+        form.set("gender", product.gender);
+        form.set(
+          "status",
+          change === "draft"
+            ? "DRAFT"
+            : change === "archived"
+              ? "ARCHIVED"
+              : "ACTIVE",
+        );
+        form.set("basePriceAmount", "1");
+        form.set("weightGrams", String(product.weightGrams));
+        form.set("coinPackCoins", change === "coin" ? "100" : "");
+        form.set("fittingSlot", change === "coin" ? "" : "TOP");
+        form.set("marketIds", change === "market" ? other.id : marketId);
+        form.set("mediaIds", JSON.stringify(["seed-fashion-v2-women-tee"]));
+        form.set(
+          "variants",
+          JSON.stringify([
+            {
+              id: variant.id,
+              colorId: variant.colorId,
+              sizeId: variant.sizeId,
+              sku: variant.sku,
+              isActive: true,
+            },
+          ]),
+        );
+        const request = input({ variantIds: [variant.id] });
+        const createRequest = () =>
+          createFittingSession(c.id, marketId, "en", request).then(
+            (value) => ({ status: "fulfilled" as const, value }),
+            (reason: unknown) => ({ status: "rejected" as const, reason }),
+          );
+        const barrier = transactionBarrier(
+          db,
+          first === "editor" ? "product" : "fittingSession",
+          first === "editor" ? "update" : "create",
+          (raw) => {
+            const input = raw as {
+              where?: { id?: string };
+              data?: { customerId?: string };
+            };
+            return first === "editor"
+              ? input.where?.id === product.id
+              : input.data?.customerId === c.id;
+          },
+        );
+        let editing: ReturnType<typeof saveProduct> | undefined,
+          creating: ReturnType<typeof createRequest> | undefined;
+        try {
+          if (first === "editor") editing = saveProduct(null, form);
+          else creating = createRequest();
+          await Promise.race([
+            barrier.entered,
+            (editing ?? creating)!.then(() => {
+              throw Error("operation missed barrier");
+            }),
+          ]);
+          if (first === "editor") creating = createRequest();
+          else editing = saveProduct(null, form);
+          await vi.waitFor(async () => {
+            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            expect(row.blocked).toBe(true);
+          });
+          barrier.release();
+          const [edit, result] = await Promise.all([editing!, creating!]);
+          expect(edit).toEqual({ ok: true });
+          const sessions = await db.fittingSession.findMany({
+            where: { customerId: c.id },
+          });
+          if (first === "editor") {
+            expect(result.status).toBe("rejected");
+            if (result.status === "rejected")
+              expect(result.reason).toMatchObject({
+                message: "INVALID_SELECTION",
+              });
+            expect(sessions).toHaveLength(0);
+            expect(await balance(c.id)).toBe("100");
+          } else {
+            expect(result.status).toBe("fulfilled");
+            expect(sessions).toHaveLength(1);
+            expect(sessions[0].snapshot).toMatchObject({
+              items: [{ productId: product.id, variantId: variant.id }],
+            });
+            expect(sessions[0].status).toBe("QUEUED");
+            expect(await balance(c.id)).toBe("87.5");
+            expect(
+              await createFittingSession(c.id, marketId, "en", request),
+            ).toEqual({ id: sessions[0].id, status: "QUEUED" });
+            expect(await balance(c.id)).toBe("87.5");
+          }
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, reason: "FITTING" },
+            }),
+          ).toBe(first === "editor" ? 0 : 1);
+        } finally {
+          barrier.release();
+          await Promise.allSettled([editing, creating]);
+          barrier.restore();
+          await db.stockItem.deleteMany({ where: { variantId: variant.id } });
+          await db.product.delete({ where: { id: product.id } });
+        }
+      },
+    );
     it("serializes simultaneous requests without overspend", async () => {
       const c = await customer("50");
       const results = await Promise.allSettled(
