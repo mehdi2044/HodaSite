@@ -45,8 +45,9 @@ export async function saveHomepage(
     const mediaIds = [...new Set(blockMediaIds(blocks))];
     await withMutation(() =>
       db.$transaction(async (tx) => {
-        await lockMediaReferences(tx, mediaIds, { readyImages: true });
+        // Match product writers: acquire catalog locks before media locks.
         await validateLookReferences(blocks, marketId, tx);
+        await lockMediaReferences(tx, mediaIds, { readyImages: true });
         const before = await tx.homepage.findFirst({
           where: { marketId, deletedAt: null },
         });

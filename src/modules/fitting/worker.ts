@@ -38,6 +38,8 @@ export async function renderFitting(
 }
 async function renderFittingAttempt(id: string, provider: FittingProvider) {
   const snapshot = await db.$transaction(async (tx) => {
+    // Serialize admission with the admin kill switch before locking the session/wallet.
+    await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
     await tx.$queryRaw`SELECT id FROM "FittingSession" WHERE id=${id} FOR UPDATE`;
     const s = await tx.fittingSession.findUniqueOrThrow({ where: { id } });
     if (s.status === "RUNNING") {

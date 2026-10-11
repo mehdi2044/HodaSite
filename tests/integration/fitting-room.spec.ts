@@ -68,6 +68,7 @@ import { ProviderFailure } from "@/modules/integrations/fitting";
 import { GET as imageGET } from "@/app/api/fitting/[id]/image/route";
 import { storage } from "@/modules/integrations/storage";
 import { returnFixture } from "../helpers/returns";
+import { transactionBarrier } from "../helpers/transaction-barrier";
 import { requestReturn, manageReturn } from "@/modules/returns/service";
 import { unusableFittingResponses } from "../helpers/fitting-provider-responses";
 import {
@@ -85,7 +86,10 @@ import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
 import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
-import { duplicateProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
+import {
+  duplicateProduct,
+  saveProduct,
+} from "@/app/admin/(dashboard)/catalog/products/actions";
 import { mediaReplaceHandler } from "@/modules/media/replace";
 import type { StorageProvider } from "@/modules/integrations/storage";
 
@@ -164,8 +168,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       marketId = (await db.market.findUniqueOrThrow({ where: { code: "TR" } }))
         .id;
       ownerId = (
-        await db.user.findFirstOrThrow({
-          where: { roles: { some: { role: { key: "owner" } } } },
+        await db.user.findUniqueOrThrow({
+          where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
         })
       ).id;
       bytes = await sharp({
@@ -497,6 +501,179 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(audits);
     });
+    it.each(["editor", "homepage"] as const)(
+      "serializes homepage references and product AI alt edits with %s first",
+      async (first) => {
+        state.actor = ownerId;
+        const blocks = homepageBlocksSchema.parse([styleLookBlock]);
+        const block = blocks[0];
+        if (block.type !== "ShopLook") throw new Error("Missing shop look");
+        const template = await db.product.findUniqueOrThrow({
+          where: { id: block.looks[0].items[0].productId },
+          include: {
+            variants: true,
+            media: { orderBy: { sortOrder: "asc" } },
+            collections: true,
+          },
+        });
+        const variant = template.variants.find(
+          (v) => v.colorId === block.looks[0].items[0].colorId,
+        )!;
+        const marker = randomUUID();
+        const product = await db.product.create({
+          data: {
+            categoryId: template.categoryId,
+            gender: template.gender,
+            titleI18n: { fa: "آزمون قفل", tr: "Kilit testi", en: "Lock test" },
+            slugI18n: { fa: marker, tr: marker, en: marker },
+            descriptionI18n: {
+              fa: "شرح آزمون",
+              tr: "Test açıklaması",
+              en: "Test description",
+            },
+            status: "ACTIVE",
+            basePriceAmount: "1",
+            fittingSlot: template.fittingSlot,
+            marketIds: [marketId],
+            media: { create: { mediaId: template.media[0].mediaId } },
+            variants: {
+              create: {
+                colorId: variant.colorId,
+                sizeId: variant.sizeId,
+                sku: `LOCK-${marker}`.toUpperCase(),
+              },
+            },
+          },
+          include: { variants: true, media: true, collections: true },
+        });
+        block.looks[0].items[0].productId = product.id;
+        const mediaId = product.media[0].mediaId;
+        block.looks[0].mediaId = mediaId;
+        const media = await db.media.findUniqueOrThrow({
+          where: { id: mediaId },
+        });
+        const previous = await db.homepage.findUnique({ where: { marketId } });
+        const form = new FormData();
+        form.set("id", product.id);
+        for (const [suffix, locale] of [
+          ["Fa", "fa"],
+          ["Tr", "tr"],
+          ["En", "en"],
+        ]) {
+          for (const [field, json] of [
+            ["title", product.titleI18n],
+            ["slug", product.slugI18n],
+            ["description", product.descriptionI18n],
+            ["care", product.careI18n],
+          ])
+            form.set(
+              `${field}${suffix}`,
+              String((json as Record<string, unknown>)[locale] ?? ""),
+            );
+        }
+        form.set("categoryId", product.categoryId);
+        form.set("gender", product.gender);
+        form.set("status", product.status);
+        form.set("basePriceAmount", product.basePriceAmount.toString());
+        form.set("weightGrams", String(product.weightGrams));
+        form.set("fittingSlot", product.fittingSlot ?? "");
+        for (const id of product.marketIds) form.append("marketIds", id);
+        for (const collection of product.collections)
+          form.append("collectionIds", collection.id);
+        form.set(
+          "mediaIds",
+          JSON.stringify(product.media.map((m) => m.mediaId)),
+        );
+        form.set(
+          "variants",
+          JSON.stringify(
+            product.variants.map((v) => ({
+              id: v.id,
+              colorId: v.colorId,
+              sizeId: v.sizeId,
+              sku: v.sku,
+              isActive: v.isActive,
+              priceOverrideUsd: v.priceOverrideUsd?.toString() ?? "",
+            })),
+          ),
+        );
+        const alt = `Concurrent alt ${randomUUID()}`;
+        form.set(
+          "aiAlts",
+          JSON.stringify([{ key: `alt.${mediaId}.en`, value: alt }]),
+        );
+        const homeForm = new FormData();
+        homeForm.set("marketId", marketId);
+        homeForm.set("blocks", JSON.stringify(blocks));
+        const barrier = transactionBarrier(
+          db,
+          first === "editor" ? "product" : "homepage",
+          first === "editor" ? "update" : "findFirst",
+          (raw) => {
+            const input = raw as { where?: { id?: string; marketId?: string } };
+            return first === "editor"
+              ? input.where?.id === product.id
+              : input.where?.marketId === marketId;
+          },
+        );
+        let edit: ReturnType<typeof saveProduct> | undefined,
+          home: ReturnType<typeof saveHomepage> | undefined;
+        try {
+          if (first === "editor") edit = saveProduct(null, form);
+          else home = saveHomepage(null, homeForm);
+          await Promise.race([
+            barrier.entered,
+            (edit ?? home)!.then(() => {
+              throw Error("writer did not reach barrier");
+            }),
+          ]);
+          if (first === "editor") home = saveHomepage(null, homeForm);
+          else edit = saveProduct(null, form);
+          await vi.waitFor(async () => {
+            const [row] = await db.$queryRaw<
+              { blocked: boolean }[]
+            >`SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked`;
+            expect(row.blocked).toBe(true);
+          });
+          barrier.release();
+          const results = await Promise.all([edit, home]);
+          expect(results).toEqual([
+            expect.objectContaining({ ok: true }),
+            expect.objectContaining({ ok: true }),
+          ]);
+          expect(
+            (await db.media.findUniqueOrThrow({ where: { id: mediaId } }))
+              .altI18n,
+          ).toMatchObject({ en: alt });
+          expect(
+            (await db.homepage.findUniqueOrThrow({ where: { marketId } }))
+              .blocks,
+          ).toEqual(blocks);
+        } finally {
+          barrier.release();
+          await Promise.allSettled([edit, home]);
+          barrier.restore();
+          await db.media.update({
+            where: { id: mediaId },
+            data: {
+              altI18n:
+                media.altI18n as import("@prisma/client").Prisma.InputJsonValue,
+            },
+          });
+          if (previous)
+            await db.homepage.update({
+              where: { id: previous.id },
+              data: {
+                blocks:
+                  previous.blocks as import("@prisma/client").Prisma.InputJsonValue,
+                deletedAt: previous.deletedAt,
+              },
+            });
+          else await db.homepage.deleteMany({ where: { marketId } });
+          await db.product.delete({ where: { id: product.id } });
+        }
+      },
+    );
     it.each([
       "PRODUCT",
       "CATEGORY",
@@ -849,6 +1026,89 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ).rejects.toThrow("REQUEST_CONFLICT");
       expect(await balance(c.id)).toBe("87.5");
     });
+    it.each(["disable", "dispatch"] as const)(
+      "serializes the admin kill switch and queued dispatch with %s first",
+      async (first) => {
+        state.actor = ownerId;
+        const c = await customer(),
+          session = await create(c.id);
+        const old = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const provider = { render: vi.fn(async () => bytes) };
+        const barrier = transactionBarrier(
+          db,
+          first === "disable" ? "integration" : "fittingSession",
+          first === "disable" ? "upsert" : "update",
+          (raw) => {
+            const input = raw as {
+              where?: { id?: string; key?: string };
+              data?: { status?: string };
+            };
+            return first === "disable"
+              ? input.where?.key === "fitting-room"
+              : input.where?.id === session.id &&
+                  input.data?.status === "RUNNING";
+          },
+        );
+        const disable = () =>
+          saveFittingSettings({
+            config: { ...defaultConfig, enabled: false },
+            version: old.updatedAt.toISOString(),
+            confirm: true,
+          });
+        let settings: ReturnType<typeof disable> | undefined,
+          rendering: ReturnType<typeof renderFitting> | undefined;
+        try {
+          if (first === "disable") settings = disable();
+          else rendering = renderFitting(session.id, provider);
+          await Promise.race([
+            barrier.entered,
+            (settings ?? rendering)!.then(() => {
+              throw Error("operation did not reach barrier");
+            }),
+          ]);
+          if (first === "disable")
+            rendering = renderFitting(session.id, provider);
+          else settings = disable();
+          await vi.waitFor(async () => {
+            const [row] = await db.$queryRaw<
+              { blocked: boolean }[]
+            >`SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked`;
+            expect(row.blocked).toBe(true);
+          });
+          barrier.release();
+          await Promise.all([settings, rendering]);
+          const result = await db.fittingSession.findUniqueOrThrow({
+            where: { id: session.id },
+          });
+          expect(result.status).toBe(first === "disable" ? "FAILED" : "DONE");
+          expect(provider.render).toHaveBeenCalledTimes(
+            first === "disable" ? 0 : 1,
+          );
+          expect(await balance(c.id)).toBe(
+            first === "disable" ? "100" : "87.5",
+          );
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, sourceKey: `refund:${session.id}` },
+            }),
+          ).toBe(first === "disable" ? 1 : 0);
+          expect(
+            (
+              await db.integration.findUniqueOrThrow({
+                where: { key: "fitting-room" },
+              })
+            ).isActive,
+          ).toBe(false);
+          if (result.storageKey) outputKeys.push(result.storageKey);
+        } finally {
+          barrier.release();
+          await Promise.allSettled([settings, rendering]);
+          barrier.restore();
+        }
+      },
+    );
     it.each(["QUEUED", "DONE"] as const)(
       "recovers an existing %s session after the feature is disabled",
       async (status) => {
