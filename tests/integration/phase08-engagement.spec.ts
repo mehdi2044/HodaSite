@@ -41,6 +41,8 @@ import {
   scheduleStockAlerts,
 } from "@/modules/engagement/stock-jobs";
 import { runJobs } from "@/modules/jobs";
+import { reserveStock } from "@/modules/inventory";
+import { transactionBarrier } from "../helpers/transaction-barrier";
 const suffix = randomUUID().replaceAll("-", "").slice(0, 10);
 let marketId = "",
   productId = "",
@@ -468,6 +470,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       { firstOperation: "delivery", change: "classification" },
       { firstOperation: "editor", change: "variant" },
       { firstOperation: "editor", change: "stock" },
+      { firstOperation: "delivery", change: "stock" },
+      { firstOperation: "editor", change: "reservation" },
+      { firstOperation: "delivery", change: "reservation" },
     ] as const)(
       "serializes stock-alert state with $firstOperation first and a $change edit",
       async ({ firstOperation, change }) => {
@@ -506,7 +511,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
         const variant = product.variants[0];
         const warehouse = await db.warehouse.findFirstOrThrow();
-        await db.stockItem.create({
+        const stock = await db.stockItem.create({
           data: { variantId: variant.id, warehouseId: warehouse.id, onHand: 0 },
         });
         let release!: () => void, notify!: () => void;
@@ -519,6 +524,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         let worker: Promise<unknown> | undefined,
           editor: Promise<unknown> | undefined;
         let jobId: string | undefined;
+        let reservationBarrier:
+          ReturnType<typeof transactionBarrier> | undefined;
         actor.send.mockReset().mockResolvedValue({ id: "fixture" });
         try {
           process.env.EMAIL_PROVIDER = "smtp";
@@ -557,32 +564,56 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           });
           await scheduleStockAlerts();
           registerStockJobs();
-          const edit = (hold: boolean) =>
-            db.$transaction(
-              async (tx) => {
-                await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${product.id} FOR UPDATE`;
-                if (change === "classification")
-                  await tx.product.update({
-                    where: { id: product.id },
-                    data: { coinPackCoins: "100" },
-                  });
-                else if (change === "variant")
-                  await tx.variant.update({
-                    where: { id: variant.id },
-                    data: { isActive: false },
-                  });
-                else
-                  await tx.stockItem.updateMany({
-                    where: { variantId: variant.id },
-                    data: { onHand: 0 },
-                  });
-                if (hold) {
-                  notify();
-                  await released;
-                }
-              },
-              { timeout: 30000 },
+          if (change === "reservation" && firstOperation === "editor") {
+            reservationBarrier = transactionBarrier(
+              db,
+              "stockItem",
+              "update",
+              (input) =>
+                (input as { where: { id: string } }).where.id === stock.id,
             );
+            void reservationBarrier.entered.then(notify);
+          }
+          const edit = (hold: boolean) =>
+            change === "reservation"
+              ? reserveStock([
+                  {
+                    warehouseId: warehouse.id,
+                    variantId: variant.id,
+                    quantity: 2,
+                    kind: "HOLD",
+                    expiresAt: new Date(Date.now() + 60000),
+                    referenceId: `ENG-RACE-${id}`,
+                  },
+                ])
+              : db.$transaction(
+                  async (tx) => {
+                    if (change === "stock")
+                      await tx.$queryRaw`SELECT id FROM "StockItem" WHERE "variantId"=${variant.id} ORDER BY "warehouseId",id FOR UPDATE`;
+                    else
+                      await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${product.id} FOR UPDATE`;
+                    if (change === "classification")
+                      await tx.product.update({
+                        where: { id: product.id },
+                        data: { coinPackCoins: "100" },
+                      });
+                    else if (change === "variant")
+                      await tx.variant.update({
+                        where: { id: variant.id },
+                        data: { isActive: false },
+                      });
+                    else
+                      await tx.stockItem.updateMany({
+                        where: { variantId: variant.id },
+                        data: { onHand: 0 },
+                      });
+                    if (hold) {
+                      notify();
+                      await released;
+                    }
+                  },
+                  { timeout: 30000 },
+                );
           if (firstOperation === "editor") {
             editor = edit(true);
             await admitted;
@@ -598,17 +629,29 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             editor = edit(false);
           }
           await vi.waitFor(async () => {
+            const stockOnly = change === "stock" || change === "reservation";
             const statement =
               firstOperation === "editor"
-                ? '%SELECT id FROM "Product" WHERE id=%FOR SHARE%'
-                : '%SELECT id FROM "Product" WHERE id=%FOR UPDATE%';
+                ? stockOnly
+                  ? '%FROM "StockItem"%FOR SHARE%'
+                  : '%SELECT id FROM "Product" WHERE id=%FOR SHARE%'
+                : stockOnly
+                  ? '%FROM "StockItem"%FOR UPDATE%'
+                  : '%SELECT id FROM "Product" WHERE id=%FOR UPDATE%';
+            const blockingPid = reservationBarrier?.pid ?? 0;
             const rows = await db.$queryRaw<
               { count: bigint }[]
-            >`SELECT count(*)::bigint AS count FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE ${statement}`;
+            >`SELECT count(*)::bigint AS count FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE ${statement} AND (${blockingPid}=0 OR ${blockingPid}=ANY(pg_blocking_pids(pid)))`;
             expect(rows[0].count).toBeGreaterThan(0n);
           });
           release();
+          reservationBarrier?.release();
           await Promise.all([worker, editor]);
+          reservationBarrier?.restore();
+          if (change === "reservation")
+            expect(
+              await db.stockItem.findUniqueOrThrow({ where: { id: stock.id } }),
+            ).toMatchObject({ onHand: 2, reserved: 2 });
           expect(actor.send).toHaveBeenCalledTimes(
             firstOperation === "editor" ? 0 : 1,
           );
@@ -636,13 +679,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               : { active: false },
           );
           if (change !== "classification") {
+            await db.reservation.deleteMany({
+              where: { variantId: variant.id },
+            });
             await db.variant.update({
               where: { id: variant.id },
               data: { isActive: true },
             });
             await db.stockItem.updateMany({
               where: { variantId: variant.id },
-              data: { onHand: 2 },
+              data: { onHand: 2, reserved: 0 },
             });
             await db.job.update({
               where: { id: jobId },
@@ -658,12 +704,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           }
         } finally {
           release();
+          reservationBarrier?.release();
           await Promise.allSettled(
             [worker, editor].filter((p) => p !== undefined),
           );
+          reservationBarrier?.restore();
           actor.send.mockReset().mockResolvedValue({ id: "fixture" });
           if (jobId) await db.job.deleteMany({ where: { id: jobId } });
           await db.stockAlert.deleteMany({ where: { variantId: variant.id } });
+          await db.reservation.deleteMany({ where: { variantId: variant.id } });
           await db.stockItem.deleteMany({ where: { variantId: variant.id } });
           await db.variant.delete({ where: { id: variant.id } });
           await db.product.delete({ where: { id: product.id } });

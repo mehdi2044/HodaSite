@@ -69,9 +69,9 @@ export function registerStockJobs() {
         await tx.$queryRaw`SELECT id FROM "Variant" WHERE id=${alert.variantId} FOR SHARE`;
         const variant = await tx.variant.findUniqueOrThrow({
           where: { id: alert.variantId },
-          include: { stockItems: true },
         });
-        if (!variant.isActive) throw new JobDeferredError("VARIANT_UNAVAILABLE");
+        if (!variant.isActive)
+          throw new JobDeferredError("VARIANT_UNAVAILABLE");
         if (
           !alert.market.isActive ||
           !alert.market.enabledLocales.includes(alert.locale) ||
@@ -86,7 +86,12 @@ export function registerStockJobs() {
           if (!(await catalogCoinPacksEnabled(tx)))
             throw new JobDeferredError("COIN_PACK_DISABLED");
         }
-        if (!variant.stockItems.some((s) => s.onHand > s.reserved))
+        // Reservations/adjustments lock StockItem directly, without Product or
+        // Variant. Wait for admitted writes and hold availability through send.
+        const stocks = await tx.$queryRaw<
+          { id: string; onHand: number; reserved: number }[]
+        >`SELECT id, "onHand", reserved FROM "StockItem" WHERE "variantId"=${alert.variantId} ORDER BY "warehouseId",id FOR SHARE`;
+        if (!stocks.some((s) => s.onHand > s.reserved))
           throw new JobDeferredError("STOCK_UNAVAILABLE");
         const site = await tx.siteSettings.findUnique({
             where: { id: "default" },

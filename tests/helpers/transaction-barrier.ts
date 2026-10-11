@@ -3,7 +3,8 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 /** Pause one actual ORM operation after its PostgreSQL locks are acquired. */
 export function transactionBarrier(
   db: PrismaClient,
-  delegate: "product" | "homepage" | "integration" | "fittingSession",
+  delegate:
+    "product" | "homepage" | "integration" | "fittingSession" | "stockItem",
   method: string,
   matches: (input: unknown) => boolean,
 ) {
