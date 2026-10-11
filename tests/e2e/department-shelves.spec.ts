@@ -1,5 +1,41 @@
 import { test, expect } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+import { styleProducts } from "../../prisma/style-seed";
 import { shoppingProof } from "./helpers/shopping-proof";
+
+const db = new PrismaClient();
+let originalDates: Array<{ id: string; createdAt: Date; updatedAt: Date }> = [];
+test.beforeAll(async () => {
+  // Integration suites create incomplete-language products. This visual/navigation
+  // proof explicitly uses the 20 fully translated demo fixtures, then restores them.
+  const ids = styleProducts.map(([key]) => `seed-style-v2-${key}`);
+  originalDates = await db.product.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, createdAt: true, updatedAt: true },
+    orderBy: { id: "asc" },
+  });
+  expect(originalDates).toHaveLength(20);
+  const start = Date.now() + 86400000;
+  await db.$transaction(
+    originalDates.map((p, index) =>
+      db.product.update({
+        where: { id: p.id },
+        data: { createdAt: new Date(start + index) },
+      }),
+    ),
+  );
+});
+test.afterAll(async () => {
+  try {
+    await db.$transaction(
+      originalDates.map(({ id, createdAt, updatedAt }) =>
+        db.product.update({ where: { id }, data: { createdAt, updatedAt } }),
+      ),
+    );
+  } finally {
+    await db.$disconnect();
+  }
+});
 
 for (const [locale, market, labels] of [
   ["fa", "IR", ["زنان", "مردان", "کودکان", "اکسسوری"]],
