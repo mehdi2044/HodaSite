@@ -8,7 +8,9 @@ import {
 } from "@/modules/notifications";
 import { normalizeSeo, localized, seoPath } from "@/lib/seo";
 import { normalizeBrand } from "@/lib/brand";
+import { catalogCoinPacksEnabled } from "@/modules/catalog/visibility";
 export async function scheduleStockAlerts() {
+  const allowCoinPacks = await catalogCoinPacksEnabled();
   // Stock predicate is inside the bounded query: unavailable rows cannot starve later alerts.
   const rows = await db.$queryRaw<{ id: string; generation: number }[]>`
     SELECT a.id, a.generation FROM "StockAlert" a
@@ -19,6 +21,7 @@ export async function scheduleStockAlerts() {
     WHERE a.active AND a."notifiedAt" IS NULL AND c."isActive" AND NOT c."isGuest"
       AND m."isActive" AND a.locale=ANY(m."enabledLocales")
       AND v."isActive" AND p.status='ACTIVE' AND p."deletedAt" IS NULL AND m.id=ANY(p."marketIds")
+      AND (p."coinPackCoins" IS NULL OR ${allowCoinPacks})
       AND EXISTS (SELECT 1 FROM "StockItem" s WHERE s."variantId"=v.id AND s."onHand">s.reserved)
       AND NOT EXISTS (SELECT 1 FROM "Job" j WHERE j.id='stock-' || a.id || '-' || a.generation)
     ORDER BY a."createdAt", a.id LIMIT 100`;
@@ -45,7 +48,7 @@ export function registerStockJobs() {
           include: {
             customer: true,
             market: true,
-            variant: { include: { stockItems: true, product: true } },
+            variant: { select: { productId: true } },
           },
         });
         if (
@@ -57,17 +60,38 @@ export function registerStockJobs() {
           alert.customer.isGuest
         )
           return;
-        const p = alert.variant.product;
+        // Product edits take UPDATE locks. Hold classification through delivery,
+        // then re-read it after any admitted reclassification has committed.
+        await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${alert.variant.productId} FOR SHARE`;
+        const p = await tx.product.findUniqueOrThrow({
+          where: { id: alert.variant.productId },
+        });
+        await tx.$queryRaw`SELECT id FROM "Variant" WHERE id=${alert.variantId} FOR SHARE`;
+        const variant = await tx.variant.findUniqueOrThrow({
+          where: { id: alert.variantId },
+        });
+        if (!variant.isActive)
+          throw new JobDeferredError("VARIANT_UNAVAILABLE");
         if (
           !alert.market.isActive ||
           !alert.market.enabledLocales.includes(alert.locale) ||
-          !alert.variant.isActive ||
           p.status !== "ACTIVE" ||
           p.deletedAt ||
           !p.marketIds.includes(alert.marketId)
         )
           return;
-        if (!alert.variant.stockItems.some((s) => s.onHand > s.reserved))
+        if (p.coinPackCoins !== null) {
+          // Hold the live sales gate through delivery, just as checkout does.
+          await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
+          if (!(await catalogCoinPacksEnabled(tx)))
+            throw new JobDeferredError("COIN_PACK_DISABLED");
+        }
+        // Reservations/adjustments lock StockItem directly, without Product or
+        // Variant. Wait for admitted writes and hold availability through send.
+        const stocks = await tx.$queryRaw<
+          { id: string; onHand: number; reserved: number }[]
+        >`SELECT id, "onHand", reserved FROM "StockItem" WHERE "variantId"=${alert.variantId} ORDER BY "warehouseId",id FOR SHARE`;
+        if (!stocks.some((s) => s.onHand > s.reserved))
           throw new JobDeferredError("STOCK_UNAVAILABLE");
         const site = await tx.siteSettings.findUnique({
             where: { id: "default" },

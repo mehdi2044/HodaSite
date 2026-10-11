@@ -1,3 +1,4 @@
+import { formatStorefrontAmount } from "../../src/modules/catalog/format";
 import { randomUUID, createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { expect, test } from "@playwright/test";
@@ -158,7 +159,7 @@ for (const [locale, marketCode, province, city, postalCode] of [
       );
       await expect(page.getByLabel(t.couponCodes)).toHaveValue(code);
       await expect(page.getByTestId("discount-line")).toContainText(
-        `37.0000 ${market.currency}`,
+        formatStorefrontAmount("37.0000", market.currency, locale),
       );
       const cartTotal = await page
         .locator("aside dl div")
@@ -184,11 +185,13 @@ for (const [locale, marketCode, province, city, postalCode] of [
       const expectedTotal = await page
         .locator('[name="expectedTotal"]')
         .inputValue();
-      expect(cartTotal).toContain(`${expectedTotal} ${market.currency}`);
+      expect(cartTotal).toBe(
+        formatStorefrontAmount(expectedTotal, market.currency, locale),
+      );
       // Returning to the cart must retain the selected delivery discount and total.
       await page.goto(`/${locale}/cart`);
       await expect(page.getByTestId("discount-line")).toContainText(
-        `37.0000 ${market.currency}`,
+        formatStorefrontAmount("37.0000", market.currency, locale),
       );
       await db.cart.update({
         where: { id: cart.id },

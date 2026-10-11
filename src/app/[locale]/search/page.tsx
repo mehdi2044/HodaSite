@@ -38,6 +38,7 @@ export default async function SearchPage({
       <SearchBox
         locale={safe}
         marketId={market.id}
+        marketCode={market.code}
         label={t("search")}
         placeholder={t("searchPlaceholder")}
         initial={q}

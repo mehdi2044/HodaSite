@@ -89,7 +89,12 @@ export async function AdminShell({
         <Link href="/admin/content/homepage">{t("homepage")}</Link>
         <Link href="/admin/content/translations">{t("translations")}</Link>
         {(await can(user.id, "ai.settings.manage")) && (
-          <Link href="/admin/settings/ai">{ai("settings")}</Link>
+          <>
+            <Link href="/admin/settings/ai">{ai("settings")}</Link>
+            <Link href="/admin/settings/fitting">
+              {(await getTranslations("fitting"))("adminTitle")}
+            </Link>
+          </>
         )}
         {(await can(user.id, "ai.product.generate")) && (
           <Link href="/admin/ai/review">{ai("queue")}</Link>

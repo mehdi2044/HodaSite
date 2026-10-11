@@ -878,6 +878,8 @@ model Product {
   status                      ProductStatus            @default(DRAFT)
   basePriceAmount             Decimal                  @db.Decimal(18, 4)
   basePriceCurrency           String                   @default("USD")
+  coinPackCoins               Decimal?                 @db.Decimal(18, 4)
+  fittingSlot                 String?
   compareAtPriceAmount        Decimal?                 @db.Decimal(18, 4)
   defaultPurchaseCostAmount   Decimal?                 @db.Decimal(18, 4)
   defaultPurchaseCostCurrency String?
@@ -1038,15 +1040,20 @@ enum ReturnStatus {
 }
 
 model Customer {
-  crmProfiles       CrmProfile[]
-  crmNotes          CrmNote[]
-  consents          MarketingConsent[]
-  consentEvents     ConsentEvent[]
-  privacyRequests   PrivacyRequest[]
-  wishlists         Wishlist[]
-  reviews           Review[]
-  stockAlerts       StockAlert[]
-  pushSubscriptions PushSubscription[]
+  fittingWallet       FittingWallet?
+  fittingDebtOverflow FittingCoinDebtOverflow[]
+  fittingGrants       FittingCoinGrant[]
+  fittingEntries      FittingCoinEntry[]
+  fittingSessions     FittingSession[]
+  crmProfiles         CrmProfile[]
+  crmNotes            CrmNote[]
+  consents            MarketingConsent[]
+  consentEvents       ConsentEvent[]
+  privacyRequests     PrivacyRequest[]
+  wishlists           Wishlist[]
+  reviews             Review[]
+  stockAlerts         StockAlert[]
+  pushSubscriptions   PushSubscription[]
 
   id                  String          @id @default(cuid())
   email               String          @unique
@@ -1180,55 +1187,55 @@ model OrderSequence {
 
 model Order {
   promotionEvaluation PromotionOrderEvaluation?
-  creditUses        CreditUse[]
-  invoices          Invoice[]
-  id                String          @id @default(cuid())
-  number            String          @unique
-  marketId          String
-  market            Market          @relation(fields: [marketId], references: [id], onDelete: Restrict)
-  customerId        String
-  customer          Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  cartId            String          @unique
-  cart              Cart            @relation(fields: [cartId], references: [id], onDelete: Restrict)
-  guestTokenHash    String
-  status            OrderStatus     @default(PENDING_PAYMENT)
-  locale            String
-  currency          String
-  subtotalAmount    Decimal         @db.Decimal(18, 4)
-  feeTotalAmount    Decimal         @db.Decimal(18, 4)
-  discountAmount    Decimal         @default(0) @db.Decimal(18, 4)
-  totalAmount       Decimal         @db.Decimal(18, 4)
-  totalAmountTry    Decimal         @db.Decimal(18, 4)
-  totalAmountUsd    Decimal         @db.Decimal(18, 4)
-  fxSnapshot        Json
-  bankSnapshot      Json
-  contactSnapshot   Json
-  holdExpiresAt     DateTime        @db.Timestamptz(3)
-  paymentDeadlineAt DateTime        @db.Timestamptz(3)
-  shippingAddress   Json
-  billingAddress    Json
-  customerNote      String          @default("")
-  adminNote         String          @default("")
-  placedAt          DateTime        @default(now()) @db.Timestamptz(3)
-  paidAt            DateTime?       @db.Timestamptz(3)
-  shippedAt         DateTime?       @db.Timestamptz(3)
-  deliveredAt       DateTime?       @db.Timestamptz(3)
-  cancelledAt       DateTime?       @db.Timestamptz(3)
-  cancelReason      String?
-  parentOrderId     String?
-  parent            Order?          @relation("ExchangeOrders", fields: [parentOrderId], references: [id], onDelete: Restrict)
-  exchanges         Order[]         @relation("ExchangeOrders")
-  kind              OrderKind       @default(SALE)
-  items             OrderItem[]
-  fees              OrderFee[]
-  events            OrderEvent[]
-  payments          Payment[]
-  reservations      Reservation[]
-  returns           ReturnRequest[]
-  refunds           Refund[]
-  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
-  shipments         Shipment[]
+  creditUses          CreditUse[]
+  invoices            Invoice[]
+  id                  String                    @id @default(cuid())
+  number              String                    @unique
+  marketId            String
+  market              Market                    @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  customerId          String
+  customer            Customer                  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  cartId              String                    @unique
+  cart                Cart                      @relation(fields: [cartId], references: [id], onDelete: Restrict)
+  guestTokenHash      String
+  status              OrderStatus               @default(PENDING_PAYMENT)
+  locale              String
+  currency            String
+  subtotalAmount      Decimal                   @db.Decimal(18, 4)
+  feeTotalAmount      Decimal                   @db.Decimal(18, 4)
+  discountAmount      Decimal                   @default(0) @db.Decimal(18, 4)
+  totalAmount         Decimal                   @db.Decimal(18, 4)
+  totalAmountTry      Decimal                   @db.Decimal(18, 4)
+  totalAmountUsd      Decimal                   @db.Decimal(18, 4)
+  fxSnapshot          Json
+  bankSnapshot        Json
+  contactSnapshot     Json
+  holdExpiresAt       DateTime                  @db.Timestamptz(3)
+  paymentDeadlineAt   DateTime                  @db.Timestamptz(3)
+  shippingAddress     Json
+  billingAddress      Json
+  customerNote        String                    @default("")
+  adminNote           String                    @default("")
+  placedAt            DateTime                  @default(now()) @db.Timestamptz(3)
+  paidAt              DateTime?                 @db.Timestamptz(3)
+  shippedAt           DateTime?                 @db.Timestamptz(3)
+  deliveredAt         DateTime?                 @db.Timestamptz(3)
+  cancelledAt         DateTime?                 @db.Timestamptz(3)
+  cancelReason        String?
+  parentOrderId       String?
+  parent              Order?                    @relation("ExchangeOrders", fields: [parentOrderId], references: [id], onDelete: Restrict)
+  exchanges           Order[]                   @relation("ExchangeOrders")
+  kind                OrderKind                 @default(SALE)
+  items               OrderItem[]
+  fees                OrderFee[]
+  events              OrderEvent[]
+  payments            Payment[]
+  reservations        Reservation[]
+  returns             ReturnRequest[]
+  refunds             Refund[]
+  createdAt           DateTime                  @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                  @updatedAt @db.Timestamptz(3)
+  shipments           Shipment[]
 
   @@index([marketId, status])
   @@index([customerId])
@@ -2310,4 +2317,90 @@ model PromotionUsageRelease {
   reason       String
   createdAt    DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime                 @updatedAt @db.Timestamptz(3)
+}
+
+model FittingWallet {
+  id         String   @id
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  debt       Decimal  @default(0) @db.Decimal(18, 4)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model FittingCoinDebtOverflow {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  sourceKey  String
+  amount     Decimal  @db.Decimal(18, 4)
+  balance    Decimal  @db.Decimal(18, 4)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, sourceKey])
+  @@index([customerId, createdAt])
+}
+
+model FittingCoinGrant {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  sourceKey     String
+  reason        String
+  orderId       String?
+  orderItemId   String?
+  ruleSnapshot  Json?
+  amount        Decimal   @db.Decimal(18, 4)
+  balance       Decimal   @db.Decimal(18, 4)
+  expiresAt     DateTime? @db.Timestamptz(3)
+  revokedAt     DateTime? @db.Timestamptz(3)
+  revokedAmount Decimal   @default(0) @db.Decimal(18, 4)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, sourceKey])
+  @@index([customerId, expiresAt])
+  @@index([orderId])
+}
+
+// Append-only service-unit journal; coins are not cash or StoreCredit.
+model FittingCoinEntry {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  sourceKey  String
+  amount     Decimal  @db.Decimal(18, 4)
+  reason     String
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([customerId, sourceKey])
+  @@index([customerId, createdAt])
+}
+
+model FittingSession {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId    String
+  requestKey  String
+  fingerprint String
+  status      String    @default("QUEUED")
+  modelId     String
+  snapshot    Json
+  allocations Json
+  costCoins   Decimal   @db.Decimal(18, 4)
+  storageKey  String?
+  errorCode   String?
+  savedName   String?
+  savedAt     DateTime? @db.Timestamptz(3)
+  startedAt   DateTime? @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, requestKey])
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@index([createdAt])
 }

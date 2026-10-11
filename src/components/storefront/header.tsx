@@ -1,3 +1,4 @@
+import { variantImages } from "@/modules/catalog/variant-images";
 import { seoPath } from "@/lib/seo-urls";
 import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
@@ -53,18 +54,9 @@ export async function Header({
   ]);
 
   const cart = await readCart();
-  const cartMedia = cart?.items.length
-    ? await db.productMedia.findMany({
-        where: {
-          productId: {
-            in: cart.items.slice(0, 5).map((item) => item.variant.product.id),
-          },
-          media: { status: "READY", kind: "image", deletedAt: null },
-        },
-        include: { media: true },
-        orderBy: { sortOrder: "asc" },
-      })
-    : [];
+  const cartMedia = await variantImages(
+    cart?.items.slice(0, 5).map((item) => item.variant) ?? [],
+  );
   return (
     <>
       <header
@@ -160,9 +152,7 @@ export async function Header({
                       locale
                     ] ?? "",
                   quantity: i.quantity,
-                  image: cartMedia.find(
-                    (m) => m.productId === i.variant.product.id,
-                  )?.media,
+                  image: cartMedia.get(i.variantId),
                 })) ?? []
               }
             />

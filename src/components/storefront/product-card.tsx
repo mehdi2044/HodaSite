@@ -1,14 +1,11 @@
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { WishlistHeart } from "@/components/engagement/wishlist";
 import { seoPath } from "@/lib/seo-urls";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { LinkPending } from "./link-pending";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
-import {
-  catalogText,
-  formatCatalogCurrency,
-  type CatalogLocale,
-} from "@/modules/catalog";
+import { catalogText, type CatalogLocale } from "@/modules/catalog";
 import { getDisplayPrice } from "@/modules/pricing";
 
 type CardProduct = {
@@ -81,6 +78,19 @@ export async function ProductCard({
               {t("noImage")}
             </div>
           )}
+          {product.media[1]?.media &&
+            product.media[1].media.url !== image?.url && (
+              <div className="shop-card-alternate" aria-hidden="true">
+                <ResponsiveImage
+                  media={product.media[1].media}
+                  role="catalog"
+                  locale={locale}
+                  sizes="(max-width:640px) 50vw, 25vw"
+                  className="h-full w-full"
+                  imgClassName="h-full w-full object-cover"
+                />
+              </div>
+            )}
           {isDemoFashionMedia(image) && (
             <span className="shop-demo-badge">{t("demoImage")}</span>
           )}
@@ -93,7 +103,7 @@ export async function ProductCard({
           </div>
           <h3 className="font-medium">{title}</h3>
           <p className="shop-card-price mt-2 text-sm font-semibold" dir="ltr">
-            {formatCatalogCurrency(price.amount, currency, locale)}
+            {formatStorefrontAmount(price.amount, currency, locale)}
           </p>
         </div>
         <LinkPending />

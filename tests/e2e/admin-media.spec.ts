@@ -18,6 +18,9 @@ async function login(page: Page) {
 test("media grid, trash and brand picker produce a responsive picture", async ({
   page,
 }) => {
+  // Queue readiness may consume its own 30-second poll budget; replacement,
+  // trash, brand selection and streaming still need time to run afterwards.
+  test.setTimeout(60000);
   await login(page);
   const image = await sharp({
     create: { width: 640, height: 480, channels: 3, background: "#e8792a" },
@@ -37,7 +40,7 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
       async () => {
         // Seed and integration fixtures leave jobs ahead of this upload; a
         // tick claims only 10. Drive the real queue on every poll and keep
-        // inter-batch waits short within the unchanged 30-second budget.
+        // inter-batch waits short within the readiness poll's 30-second budget.
         const tick = await page.request.post("/api/cron/tick", {
           headers: { authorization: `Bearer ${CRON_SECRET}` },
         });

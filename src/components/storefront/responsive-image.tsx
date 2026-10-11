@@ -17,7 +17,7 @@ export type ResponsiveImageMedia = {
 
 /** Seed artwork is visibly disclosed and never presented as exact merchandise. */
 export function isDemoFashionMedia(media?: ResponsiveImageMedia) {
-  return /^demo-fashion-v1-(coat|shirt|kids|bag)\.webp$/.test(
+  return /^demo-fashion-(v1-(coat|shirt|kids|bag)|v2-[a-z-]+)\.webp$/.test(
     media?.originalName ?? "",
   );
 }

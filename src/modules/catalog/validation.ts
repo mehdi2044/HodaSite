@@ -66,6 +66,14 @@ export const productInputSchema = z
     tags: z.array(z.string().trim().min(1).max(40)).max(30).default([]),
     status: z.enum(["DRAFT", "ACTIVE", "ARCHIVED"]),
     basePriceAmount: money,
+    coinPackCoins: money
+      .pipe(z.string().refine((v) => new Decimal(v).gt(0)))
+      .optional()
+      .or(z.literal("")),
+    fittingSlot: z
+      .enum(["TOP", "BOTTOM", "ONE_PIECE", "LAYER", "ACCESSORY", "SHOES"])
+      .optional()
+      .or(z.literal("")),
     compareAtPriceAmount: money.optional().or(z.literal("")),
     defaultPurchaseCostAmount: money.optional().or(z.literal("")),
     defaultPurchaseCostCurrency: z

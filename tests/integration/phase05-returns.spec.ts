@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import Decimal from "decimal.js";
 import { describe, expect, it, vi, afterEach } from "vitest";
 const session = vi.hoisted(() => ({
   userId: null as string | null,
@@ -18,6 +19,7 @@ import { cancelOrder } from "@/modules/orders/service";
 import { manageReturnAction } from "@/app/admin/(dashboard)/returns/actions";
 import { requestReturnAction } from "@/app/[locale]/returns/actions";
 import { returnFixture } from "../helpers/returns";
+import { functionalFxCollision } from "../helpers/functional-fx";
 import { shippingActor, shippingForm } from "../helpers/shipping";
 afterEach(() => {
   session.userId = null;
@@ -67,6 +69,46 @@ async function received(
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "phase05 returns and store credit transactions",
   () => {
+    it.each(["IR", "CA"] as const)(
+      "%s exchange snapshots the TR reference despite another TRY market",
+      async (code) => {
+        const collision = await functionalFxCollision(db);
+        try {
+          const f = await received(
+            { code, replacementPrice: "15" },
+            "RESTOCK",
+            true,
+          );
+          const resolved = await manageReturn(f.actor.id, {
+            returnId: f.request.id,
+            version: 2,
+            operation: "EXCHANGE",
+          });
+          const order = await db.order.findUniqueOrThrow({
+            where: { id: resolved.exchangeOrderId! },
+          });
+          const snapshot = order.fxSnapshot as {
+            marketPerUsd: string;
+            tryPerUsd: string;
+          };
+          expect(order.kind).toBe("EXCHANGE");
+          expect(order.currency).toBe(f.market.currency);
+          expect(snapshot.tryPerUsd).toBe(collision.rate);
+          expect(order.totalAmountTry.toString()).toBe(
+            new Decimal(order.totalAmount.toString())
+              .div(snapshot.marketPerUsd)
+              .mul(collision.rate)
+              .toDecimalPlaces(4)
+              .toFixed(),
+          );
+        } finally {
+          await db.market.update({
+            where: { id: collision.other.id },
+            data: { isActive: false },
+          });
+        }
+      },
+    );
     it("idempotently creates one request, caps concurrent requests at the purchased quantity", async () => {
       const f = await returnFixture(db, { quantity: 1 }),
         v = input(f);

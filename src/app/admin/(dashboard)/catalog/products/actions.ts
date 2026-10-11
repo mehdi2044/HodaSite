@@ -53,6 +53,8 @@ export async function saveProduct(
       tags: splitList(data.get("tags")),
       status,
       basePriceAmount: String(data.get("basePriceAmount") || ""),
+      coinPackCoins: optional(data, "coinPackCoins"),
+      fittingSlot: optional(data, "fittingSlot"),
       compareAtPriceAmount: optional(data, "compareAtPriceAmount"),
       defaultPurchaseCostAmount: optional(data, "defaultPurchaseCostAmount"),
       defaultPurchaseCostCurrency:
@@ -89,6 +91,13 @@ export async function saveProduct(
     await validateReferences(input);
     const saved = await withMutation(() =>
       db.$transaction(async (tx) => {
+        if (input.id)
+          await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${input.id} FOR UPDATE`;
+        const classification = input.id
+          ? await tx.product.findUniqueOrThrow({
+              where: { id: input.id },
+            })
+          : null;
         const scalar = {
           slugI18n: input.slugI18n,
           titleI18n: input.titleI18n,
@@ -105,6 +114,10 @@ export async function saveProduct(
           status: input.status,
           basePriceAmount: new Prisma.Decimal(input.basePriceAmount),
           basePriceCurrency: "USD",
+          coinPackCoins: input.coinPackCoins
+            ? new Prisma.Decimal(input.coinPackCoins)
+            : null,
+          fittingSlot: input.fittingSlot || null,
           compareAtPriceAmount: input.compareAtPriceAmount
             ? new Prisma.Decimal(input.compareAtPriceAmount)
             : null,
@@ -131,6 +144,15 @@ export async function saveProduct(
           marketIds: input.marketIds,
           searchText: productSearchText(input),
         } satisfies Prisma.ProductUncheckedUpdateInput;
+        if (
+          classification &&
+          Boolean(classification.coinPackCoins) !==
+            Boolean(input.coinPackCoins) &&
+          (await tx.orderItem.count({
+            where: { variant: { productId: input.id } },
+          }))
+        )
+          throw new z.ZodError([]);
         const product = input.id
           ? await tx.product.update({
               where: { id: input.id },
@@ -212,10 +234,29 @@ export async function saveProduct(
               : "catalog.product.create",
             entityType: "Product",
             entityId: product.id,
-            before: current as object | undefined,
+            before: classification
+              ? ({
+                  ...classification,
+                  basePriceAmount: classification.basePriceAmount.toString(),
+                  coinPackCoins:
+                    classification.coinPackCoins?.toString() ?? null,
+                  compareAtPriceAmount:
+                    classification.compareAtPriceAmount?.toString() ?? null,
+                  defaultPurchaseCostAmount:
+                    classification.defaultPurchaseCostAmount?.toString() ??
+                    null,
+                } as object)
+              : undefined,
             after: {
               status: product.status,
               basePriceAmount: product.basePriceAmount.toString(),
+              coinPackCoins: product.coinPackCoins?.toString() ?? null,
+              fittingSlot: product.fittingSlot,
+              compareAtPriceAmount:
+                product.compareAtPriceAmount?.toString() ?? null,
+              defaultPurchaseCostAmount:
+                product.defaultPurchaseCostAmount?.toString() ?? null,
+              defaultPurchaseCostCurrency: product.defaultPurchaseCostCurrency,
             },
           },
         });
@@ -401,6 +442,8 @@ export async function duplicateProduct(
             defaultPurchaseCostAmount: source.defaultPurchaseCostAmount,
             defaultPurchaseCostCurrency: source.defaultPurchaseCostCurrency,
             weightGrams: source.weightGrams,
+            fittingSlot: source.fittingSlot,
+            coinPackCoins: source.coinPackCoins,
             seoI18n: source.seoI18n as Prisma.InputJsonValue,
             marketIds: source.marketIds,
             searchText: `${source.searchText} copy`,
@@ -455,7 +498,17 @@ export async function duplicateProduct(
             entityType: "Product",
             entityId: created.id,
             before: { sourceId: source.id },
-            after: { status: "DRAFT" },
+            after: {
+              status: "DRAFT",
+              basePriceAmount: created.basePriceAmount.toString(),
+              coinPackCoins: created.coinPackCoins?.toString() ?? null,
+              fittingSlot: created.fittingSlot,
+              compareAtPriceAmount:
+                created.compareAtPriceAmount?.toString() ?? null,
+              defaultPurchaseCostAmount:
+                created.defaultPurchaseCostAmount?.toString() ?? null,
+              defaultPurchaseCostCurrency: created.defaultPurchaseCostCurrency,
+            },
           },
         });
         return created;

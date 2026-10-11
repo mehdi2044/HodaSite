@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { getMarkets, getSiteSettings } from "@/modules/settings";
 import { pageBlocksSchema } from "@/modules/content";
 import {
+  catalogCoinPacksEnabled,
+  catalogVisibilityWhere,
+} from "@/modules/catalog/visibility";
+import {
   localized,
   normalizeSeo,
   SEO_LOCALES,
@@ -13,7 +17,8 @@ const SIZE = 1000;
 const kinds = ["home", "p", "c", "pages"] as const;
 const document = (tag: string, body: string) =>
   `<?xml version="1.0" encoding="UTF-8"?><${tag} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</${tag}>`;
-const productWhere = (marketId: string) => ({
+const productWhere = (marketId: string, allowCoinPacks: boolean) => ({
+  ...catalogVisibilityWhere(allowCoinPacks),
   deletedAt: null,
   status: "ACTIVE" as const,
   marketIds: { has: marketId },
@@ -27,6 +32,7 @@ export async function getSitemapIndex() {
   const [site, markets] = await Promise.all([getSiteSettings(), getMarkets()]);
   const config = normalizeSeo(site?.seo);
   if (!config.indexingEnabled) return document("sitemapindex", "");
+  const allowCoinPacks = await catalogCoinPacksEnabled();
   const sections = await Promise.all(
     markets
       .filter(
@@ -36,7 +42,7 @@ export async function getSitemapIndex() {
       .map(async (m) => {
         const counts = await Promise.all([
           Promise.resolve(1),
-          db.product.count({ where: productWhere(m.id) }),
+          db.product.count({ where: productWhere(m.id, allowCoinPacks) }),
           db.category.count({ where: { deletedAt: null } }),
           db.page.count({ where: pageWhere(m.id) }),
         ]);
@@ -75,7 +81,7 @@ export async function getSitemapPage(code: string, kind: string, part: string) {
         : []
       : kind === "p"
         ? await db.product.findMany({
-            where: productWhere(market.id),
+            where: productWhere(market.id, await catalogCoinPacksEnabled()),
             select,
             ...pagination,
           })

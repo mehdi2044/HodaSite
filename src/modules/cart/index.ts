@@ -35,8 +35,35 @@ export async function changeCart(
   quantity: number,
   add = false,
 ) {
-  if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > 100)
+  return changeCartBatch(locale, [{ variantId, quantity }], add);
+}
+
+/** A prepared look is one cart mutation, never a loop of independent adds. */
+export async function addCartItems(
+  locale: "fa" | "tr" | "en",
+  variantIds: string[],
+) {
+  if (
+    !variantIds.length ||
+    variantIds.length > 4 ||
+    new Set(variantIds).size !== variantIds.length
+  )
     throw new CommerceError("INVALID_QUANTITY");
+  return changeCartBatch(
+    locale,
+    variantIds.map((variantId) => ({ variantId, quantity: 1 })),
+    true,
+  );
+}
+
+async function changeCartBatch(
+  locale: "fa" | "tr" | "en",
+  changes: { variantId: string; quantity: number }[],
+  add: boolean,
+) {
+  for (const { quantity } of changes)
+    if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > 100)
+      throw new CommerceError("INVALID_QUANTITY");
   return withMutation(async () => {
     const { market } = await getRequestContext(locale),
       customer = await currentCustomer();
@@ -82,25 +109,40 @@ export async function changeCart(
         include: { items: true },
       });
       if (latest.completedAt) throw new CommerceError("CART_COMPLETED");
+      if (latest.expiresAt <= new Date())
+        throw new CommerceError("CART_COMPLETED");
+      if (latest.marketId !== market.id)
+        throw new CommerceError("MARKET_CHANGED");
       if (latest.customerId && latest.customerId !== customer?.id)
         throw new CommerceError("FORBIDDEN");
-      const old = latest.items.find((i) => i.variantId === variantId),
-        next = add ? (old?.quantity ?? 0) + quantity : quantity;
-      if (next > 100) throw new CommerceError("INVALID_QUANTITY");
       const proposed = latest.items
-        .filter((i) => i.variantId !== variantId)
-        .map((i) => ({ variantId: i.variantId, quantity: i.quantity }));
-      if (next) proposed.push({ variantId, quantity: next });
+        .filter(
+          (item) =>
+            !changes.some((change) => change.variantId === item.variantId),
+        )
+        .map((item) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+        }));
+      const updates = changes.map(({ variantId, quantity }) => {
+        const old = latest.items.find((item) => item.variantId === variantId);
+        const next = add ? (old?.quantity ?? 0) + quantity : quantity;
+        if (next > 100) throw new CommerceError("INVALID_QUANTITY");
+        if (next) proposed.push({ variantId, quantity: next });
+        return { variantId, next };
+      });
       if (proposed.length > 100) throw new CommerceError("CART_LIMIT");
       if (proposed.length)
         await quoteCart({ marketId: latest.marketId, locale, items: proposed });
-      if (next)
-        await tx.cartItem.upsert({
-          where: { cartId_variantId: { cartId, variantId } },
-          create: { cartId, variantId, quantity: next },
-          update: { quantity: next },
-        });
-      else await tx.cartItem.deleteMany({ where: { cartId, variantId } });
+      for (const { variantId, next } of updates) {
+        if (next)
+          await tx.cartItem.upsert({
+            where: { cartId_variantId: { cartId, variantId } },
+            create: { cartId, variantId, quantity: next },
+            update: { quantity: next },
+          });
+        else await tx.cartItem.deleteMany({ where: { cartId, variantId } });
+      }
       await tx.cart.update({
         where: { id: cartId },
         data: { revision: { increment: 1 } },

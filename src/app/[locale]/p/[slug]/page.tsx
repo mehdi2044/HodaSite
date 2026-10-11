@@ -1,3 +1,6 @@
+import { formatStorefrontAmount } from "@/modules/catalog/format";
+import { ShopLook } from "@/components/storefront/shop-look";
+import { relevantLookBlocks } from "@/modules/outfits";
 import { getSeoSettings } from "@/modules/seo";
 import { publicReviews } from "@/modules/engagement";
 import {
@@ -24,7 +27,6 @@ import { db } from "@/lib/db";
 import {
   catalogText,
   findProductBySlug,
-  formatCatalogCurrency,
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
@@ -120,7 +122,10 @@ export default async function ProductPage({
       select: { inventory: true },
     }),
   ]);
-  const relatedPrices = await getDisplayPrices(related.items, market);
+  const [relatedPrices, looks] = await Promise.all([
+    getDisplayPrices(related.items, market),
+    relevantLookBlocks(market.id, { productId: product.id }),
+  ]);
   const inventorySettings = siteSettings.inventory as {
     lowStockThreshold?: unknown;
   };
@@ -151,7 +156,7 @@ export default async function ProductPage({
   const variantDisplayPrices = new Map(
     [...variantPrices].map(([id, price]) => [
       id,
-      formatCatalogCurrency(price.amount, currency, safe),
+      formatStorefrontAmount(price.amount, currency, safe),
     ]),
   );
   const amount = basePrice.amount;
@@ -273,11 +278,11 @@ export default async function ProductPage({
             initial={
               variantDisplayPrices.get(
                 product.variants.find((variant) => variant.isActive)?.id ?? "",
-              ) ?? formatCatalogCurrency(amount, currency, safe)
+              ) ?? formatStorefrontAmount(amount, currency, safe)
             }
             compare={
               compareAmount
-                ? formatCatalogCurrency(compareAmount, currency, safe)
+                ? formatStorefrontAmount(compareAmount, currency, safe)
                 : undefined
             }
           />
@@ -320,7 +325,7 @@ export default async function ProductPage({
                 ),
                 price:
                   variantDisplayPrices.get(v.id) ??
-                  formatCatalogCurrency(amount, currency, safe),
+                  formatStorefrontAmount(amount, currency, safe),
                 color: {
                   hex: v.color.hex,
                   name: catalogText(v.color.nameI18n, safe),
@@ -336,7 +341,7 @@ export default async function ProductPage({
                 lowStock: t("lowStock"),
                 outOfStock: t("outOfStock"),
               }}
-              basePrice={formatCatalogCurrency(amount, currency, safe)}
+              basePrice={formatStorefrontAmount(amount, currency, safe)}
             />
           </div>
           <details className="mt-7 border-t pt-5">
@@ -401,6 +406,9 @@ export default async function ProductPage({
           )}
         </section>
       </div>
+      {looks.map((block, index) => (
+        <ShopLook key={index} block={block} locale={safe} market={market} />
+      ))}
       <section className="mt-20">
         <h2 className="text-3xl font-semibold">{t("related")}</h2>
         <div className="mt-7 grid grid-cols-2 gap-4 md:grid-cols-4">

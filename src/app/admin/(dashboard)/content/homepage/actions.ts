@@ -4,7 +4,11 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
-import { lockMediaReferences } from "@/modules/media/reference-lock";
+import { validateLookReferences } from "@/modules/outfits";
+import {
+  blockMediaIds,
+  lockMediaReferences,
+} from "@/modules/media/reference-lock";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
@@ -38,33 +42,15 @@ export async function saveHomepage(
         throw new z.ZodError([]);
     }
 
-    const mediaIds = [
-      ...new Set(
-        blocks.flatMap((block) =>
-          (block.type === "Hero" || block.type === "Banner") && block.mediaId
-            ? [block.mediaId]
-            : [],
-        ),
-      ),
-    ];
-    if (mediaIds.length) {
-      const count = await db.media.count({
-        where: {
-          id: { in: mediaIds },
-          kind: "image",
-          status: "READY",
-          deletedAt: null,
-        },
-      });
-      if (count !== mediaIds.length) throw new z.ZodError([]);
-    }
-
-    const before = await db.homepage.findFirst({
-      where: { marketId, deletedAt: null },
-    });
+    const mediaIds = [...new Set(blockMediaIds(blocks))];
     await withMutation(() =>
       db.$transaction(async (tx) => {
-        await lockMediaReferences(tx, mediaIds);
+        // Match product writers: acquire catalog locks before media locks.
+        await validateLookReferences(blocks, marketId, tx);
+        await lockMediaReferences(tx, mediaIds, { readyImages: true });
+        const before = await tx.homepage.findFirst({
+          where: { marketId, deletedAt: null },
+        });
         const saved = before
           ? await tx.homepage.update({
               where: { id: before.id },

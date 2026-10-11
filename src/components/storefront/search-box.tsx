@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { seoPath } from "@/lib/seo-urls";
 import { useEffect, useState } from "react";
 
 type Item = {
@@ -11,12 +12,14 @@ type Item = {
 export function SearchBox({
   locale,
   marketId,
+  marketCode,
   label,
   placeholder,
   initial,
 }: {
   locale: "fa" | "tr" | "en";
   marketId: string;
+  marketCode: string;
   label: string;
   placeholder: string;
   initial: string;
@@ -60,12 +63,20 @@ export function SearchBox({
         <button className="button">{label}</button>
       </form>
       {items.length > 0 && (
-        <ul className="absolute inset-x-0 top-14 z-20 rounded-token border bg-surface p-2 shadow-xl">
+        <ul
+          data-testid="search-suggestions"
+          className="absolute inset-x-0 top-14 z-20 rounded-token border bg-surface p-2 shadow-xl"
+        >
           {items.map((item) => (
             <li key={item.id}>
               <Link
                 className="block min-h-11 rounded-[8px] px-3 py-3 hover:bg-bg"
-                href={`/${locale}/p/${encodeURIComponent(item.slugI18n[locale] || item.slugI18n.en)}`}
+                href={seoPath(
+                  locale,
+                  marketCode,
+                  "p",
+                  item.slugI18n[locale] || item.slugI18n.en,
+                )}
               >
                 {item.titleI18n[locale] || item.titleI18n.en}
               </Link>

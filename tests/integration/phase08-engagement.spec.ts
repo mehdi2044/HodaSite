@@ -41,6 +41,8 @@ import {
   scheduleStockAlerts,
 } from "@/modules/engagement/stock-jobs";
 import { runJobs } from "@/modules/jobs";
+import { reserveStock } from "@/modules/inventory";
+import { transactionBarrier } from "../helpers/transaction-barrier";
 const suffix = randomUUID().replaceAll("-", "").slice(0, 10);
 let marketId = "",
   productId = "",
@@ -463,5 +465,386 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
+    it.each([
+      { firstOperation: "editor", change: "classification" },
+      { firstOperation: "delivery", change: "classification" },
+      { firstOperation: "editor", change: "variant" },
+      { firstOperation: "editor", change: "stock" },
+      { firstOperation: "delivery", change: "stock" },
+      { firstOperation: "editor", change: "reservation" },
+      { firstOperation: "delivery", change: "reservation" },
+    ] as const)(
+      "serializes stock-alert state with $firstOperation first and a $change edit",
+      async ({ firstOperation, change }) => {
+        const integration = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const site = await db.siteSettings.findUniqueOrThrow({
+          where: { id: "default" },
+        });
+        const env = process.env.EMAIL_PROVIDER;
+        const source = await db.variant.findUniqueOrThrow({
+          where: { id: variantId },
+          include: { product: true },
+        });
+        const id = randomUUID();
+        const product = await db.product.create({
+          data: {
+            categoryId: source.product.categoryId,
+            gender: source.product.gender,
+            titleI18n: { en: "Unsold classification fixture" },
+            slugI18n: { en: id },
+            descriptionI18n: {},
+            status: "ACTIVE",
+            marketIds: [marketId],
+            basePriceAmount: "10",
+            coinPackCoins: change === "classification" ? null : "100",
+            variants: {
+              create: {
+                colorId: source.colorId,
+                sizeId: source.sizeId,
+                sku: `ENG-RACE-${id}`,
+              },
+            },
+          },
+          include: { variants: true },
+        });
+        const variant = product.variants[0];
+        const warehouse = await db.warehouse.findFirstOrThrow();
+        const stock = await db.stockItem.create({
+          data: { variantId: variant.id, warehouseId: warehouse.id, onHand: 0 },
+        });
+        let release!: () => void, notify!: () => void;
+        const released = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        const admitted = new Promise<void>((resolve) => {
+          notify = resolve;
+        });
+        let worker: Promise<unknown> | undefined,
+          editor: Promise<unknown> | undefined;
+        let jobId: string | undefined;
+        let reservationBarrier:
+          ReturnType<typeof transactionBarrier> | undefined;
+        actor.send.mockReset().mockResolvedValue({ id: "fixture" });
+        try {
+          process.env.EMAIL_PROVIDER = "smtp";
+          await db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: change !== "classification",
+              config: {
+                ...(integration.config as Record<string, unknown>),
+                enabled: change !== "classification",
+                coinSalesEnabled: change !== "classification",
+              },
+            },
+          });
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: {
+              seo: {
+                origin: "https://shop.example.com",
+                indexingEnabled: false,
+              },
+            },
+          });
+          actor.id = first;
+          await setStockAlert(context(), {
+            variantId: variant.id,
+            active: true,
+          });
+          const alert = await db.stockAlert.findFirstOrThrow({
+            where: { customerId: first, variantId: variant.id },
+          });
+          jobId = `stock-${alert.id}-${alert.generation}`;
+          await db.stockItem.updateMany({
+            where: { variantId: variant.id },
+            data: { onHand: 2 },
+          });
+          await scheduleStockAlerts();
+          registerStockJobs();
+          if (change === "reservation" && firstOperation === "editor") {
+            reservationBarrier = transactionBarrier(
+              db,
+              "stockItem",
+              "update",
+              (input) =>
+                (input as { where: { id: string } }).where.id === stock.id,
+            );
+            void reservationBarrier.entered.then(notify);
+          }
+          const edit = (hold: boolean) =>
+            change === "reservation"
+              ? reserveStock([
+                  {
+                    warehouseId: warehouse.id,
+                    variantId: variant.id,
+                    quantity: 2,
+                    kind: "HOLD",
+                    expiresAt: new Date(Date.now() + 60000),
+                    referenceId: `ENG-RACE-${id}`,
+                  },
+                ])
+              : db.$transaction(
+                  async (tx) => {
+                    if (change === "stock")
+                      await tx.$queryRaw`SELECT id FROM "StockItem" WHERE "variantId"=${variant.id} ORDER BY "warehouseId",id FOR UPDATE`;
+                    else
+                      await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${product.id} FOR UPDATE`;
+                    if (change === "classification")
+                      await tx.product.update({
+                        where: { id: product.id },
+                        data: { coinPackCoins: "100" },
+                      });
+                    else if (change === "variant")
+                      await tx.variant.update({
+                        where: { id: variant.id },
+                        data: { isActive: false },
+                      });
+                    else
+                      await tx.stockItem.updateMany({
+                        where: { variantId: variant.id },
+                        data: { onHand: 0 },
+                      });
+                    if (hold) {
+                      notify();
+                      await released;
+                    }
+                  },
+                  { timeout: 30000 },
+                );
+          if (firstOperation === "editor") {
+            editor = edit(true);
+            await admitted;
+            worker = runJobs(["stock-alert"]);
+          } else {
+            actor.send.mockImplementationOnce(async () => {
+              notify();
+              await released;
+              return { id: "fixture" };
+            });
+            worker = runJobs(["stock-alert"]);
+            await admitted;
+            editor = edit(false);
+          }
+          await vi.waitFor(async () => {
+            const stockOnly = change === "stock" || change === "reservation";
+            const statement =
+              firstOperation === "editor"
+                ? stockOnly
+                  ? '%FROM "StockItem"%FOR SHARE%'
+                  : '%SELECT id FROM "Product" WHERE id=%FOR SHARE%'
+                : stockOnly
+                  ? '%FROM "StockItem"%FOR UPDATE%'
+                  : '%SELECT id FROM "Product" WHERE id=%FOR UPDATE%';
+            const blockingPid = reservationBarrier?.pid ?? 0;
+            const rows = await db.$queryRaw<
+              { count: bigint }[]
+            >`SELECT count(*)::bigint AS count FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE ${statement} AND (${blockingPid}=0 OR ${blockingPid}=ANY(pg_blocking_pids(pid)))`;
+            expect(rows[0].count).toBeGreaterThan(0n);
+          });
+          release();
+          reservationBarrier?.release();
+          await Promise.all([worker, editor]);
+          reservationBarrier?.restore();
+          if (change === "reservation")
+            expect(
+              await db.stockItem.findUniqueOrThrow({ where: { id: stock.id } }),
+            ).toMatchObject({ onHand: 2, reserved: 2 });
+          expect(actor.send).toHaveBeenCalledTimes(
+            firstOperation === "editor" ? 0 : 1,
+          );
+          expect(
+            await db.job.findUniqueOrThrow({ where: { id: jobId } }),
+          ).toMatchObject(
+            firstOperation === "editor"
+              ? {
+                  status: "PENDING",
+                  attempts: 0,
+                  lastError:
+                    change === "classification"
+                      ? "COIN_PACK_DISABLED"
+                      : change === "variant"
+                        ? "VARIANT_UNAVAILABLE"
+                        : "STOCK_UNAVAILABLE",
+                }
+              : { status: "DONE", attempts: 0 },
+          );
+          expect(
+            await db.stockAlert.findUniqueOrThrow({ where: { id: alert.id } }),
+          ).toMatchObject(
+            firstOperation === "editor"
+              ? { active: true, notifiedAt: null }
+              : { active: false },
+          );
+          if (change !== "classification") {
+            await db.reservation.deleteMany({
+              where: { variantId: variant.id },
+            });
+            await db.variant.update({
+              where: { id: variant.id },
+              data: { isActive: true },
+            });
+            await db.stockItem.updateMany({
+              where: { variantId: variant.id },
+              data: { onHand: 2, reserved: 0 },
+            });
+            await db.job.update({
+              where: { id: jobId },
+              data: { runAt: new Date(Date.now() - 1000) },
+            });
+            await runJobs(["stock-alert"]);
+            expect(actor.send).toHaveBeenCalledTimes(1);
+            expect(
+              await db.stockAlert.findUniqueOrThrow({
+                where: { id: alert.id },
+              }),
+            ).toMatchObject({ active: false });
+          }
+        } finally {
+          release();
+          reservationBarrier?.release();
+          await Promise.allSettled(
+            [worker, editor].filter((p) => p !== undefined),
+          );
+          reservationBarrier?.restore();
+          actor.send.mockReset().mockResolvedValue({ id: "fixture" });
+          if (jobId) await db.job.deleteMany({ where: { id: jobId } });
+          await db.stockAlert.deleteMany({ where: { variantId: variant.id } });
+          await db.reservation.deleteMany({ where: { variantId: variant.id } });
+          await db.stockItem.deleteMany({ where: { variantId: variant.id } });
+          await db.variant.delete({ where: { id: variant.id } });
+          await db.product.delete({ where: { id: product.id } });
+          await db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: integration.isActive,
+              config: integration.config!,
+            },
+          });
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: { seo: site.seo! },
+          });
+          if (env === undefined) delete process.env.EMAIL_PROVIDER;
+          else process.env.EMAIL_PROVIDER = env;
+        }
+      },
+    );
+    it.each([
+      { enabled: false, coinSalesEnabled: true },
+      { enabled: true, coinSalesEnabled: false },
+    ])(
+      "defers coin-pack stock alerts under disabled sales without consuming delivery or retry: %j",
+      async (off) => {
+        const integration = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const site = await db.siteSettings.findUniqueOrThrow({
+          where: { id: "default" },
+        });
+        const env = process.env.EMAIL_PROVIDER;
+        const config = integration.config as Record<string, unknown>;
+        const enable = (toggles: typeof off) =>
+          db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: toggles.enabled,
+              config: { ...config, ...toggles },
+            },
+          });
+        let jobId: string | undefined;
+        actor.send.mockClear();
+        try {
+          process.env.EMAIL_PROVIDER = "smtp";
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: {
+              seo: {
+                origin: "https://shop.example.com",
+                indexingEnabled: false,
+              },
+            },
+          });
+          await db.product.update({
+            where: { id: productId },
+            data: { coinPackCoins: "100" },
+          });
+          await enable({ enabled: true, coinSalesEnabled: true });
+          actor.id = first;
+          await db.stockItem.updateMany({
+            where: { variantId },
+            data: { onHand: 0 },
+          });
+          await setStockAlert(context(), { variantId, active: true });
+          const alert = await db.stockAlert.findFirstOrThrow({
+            where: { customerId: first, variantId },
+          });
+          jobId = `stock-${alert.id}-${alert.generation}`;
+          await db.stockItem.updateMany({
+            where: { variantId },
+            data: { onHand: 2 },
+          });
+          await enable(off);
+          await scheduleStockAlerts();
+          expect(await db.job.findUnique({ where: { id: jobId } })).toBeNull();
+          await enable({ enabled: true, coinSalesEnabled: true });
+          await scheduleStockAlerts();
+          expect(await db.job.count({ where: { id: jobId } })).toBe(1);
+          await enable(off);
+          registerStockJobs();
+          await runJobs(["stock-alert"]);
+          expect(actor.send).not.toHaveBeenCalled();
+          expect(
+            await db.job.findUniqueOrThrow({ where: { id: jobId } }),
+          ).toMatchObject({
+            status: "PENDING",
+            attempts: 0,
+            lastError: "COIN_PACK_DISABLED",
+          });
+          expect(
+            await db.stockAlert.findUniqueOrThrow({ where: { id: alert.id } }),
+          ).toMatchObject({ active: true, notifiedAt: null });
+          await enable({ enabled: true, coinSalesEnabled: true });
+          await db.job.update({
+            where: { id: jobId },
+            data: { runAt: new Date(0) },
+          });
+          await runJobs(["stock-alert"]);
+          expect(actor.send).toHaveBeenCalledTimes(1);
+          expect(actor.send.mock.calls[0][0]).toMatchObject({
+            idempotencyKey: jobId,
+          });
+          expect(
+            await db.job.findUniqueOrThrow({ where: { id: jobId } }),
+          ).toMatchObject({ status: "DONE", attempts: 0 });
+          await scheduleStockAlerts();
+          await runJobs(["stock-alert"]);
+          expect(actor.send).toHaveBeenCalledTimes(1);
+        } finally {
+          await db.integration.update({
+            where: { id: integration.id },
+            data: {
+              isActive: integration.isActive,
+              config: integration.config!,
+            },
+          });
+          await db.product.update({
+            where: { id: productId },
+            data: { coinPackCoins: null },
+          });
+          await db.siteSettings.update({
+            where: { id: site.id },
+            data: {
+              seo: site.seo as import("@prisma/client").Prisma.InputJsonValue,
+            },
+          });
+          if (env === undefined) delete process.env.EMAIL_PROVIDER;
+          else process.env.EMAIL_PROVIDER = env;
+          if (jobId) await db.job.deleteMany({ where: { id: jobId } });
+        }
+      },
+    );
   },
 );

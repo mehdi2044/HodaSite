@@ -59,6 +59,21 @@ export async function updateCartAction(locale: string, form: FormData) {
     return { ok: true };
   });
 }
+export async function addLookAction(locale: string, form: FormData) {
+  return safe(async () => {
+    const l = localeSchema.parse(locale);
+    const { market } = await getRequestContext(l);
+    const { addPreparedLook } = await import("@/modules/outfits");
+    await addPreparedLook(
+      l,
+      market.id,
+      z.string().min(1).max(100).parse(form.get("lookId")),
+      form.getAll("variantId"),
+    );
+    revalidatePath(`/${l}/cart`);
+    return { ok: true };
+  });
+}
 export async function switchCartAction(locale: string) {
   return safe(async () => {
     await changeCartMarket(localeSchema.parse(locale));

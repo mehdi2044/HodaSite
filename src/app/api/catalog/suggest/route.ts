@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { normalizeSearchText } from "@/modules/catalog";
+import {
+  catalogCoinPacksEnabled,
+  catalogVisibilityWhere,
+} from "@/modules/catalog/visibility";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -9,6 +13,7 @@ export async function GET(request: Request) {
   if (q.length < 2 || !market) return NextResponse.json({ items: [] });
   const items = await db.product.findMany({
     where: {
+      ...catalogVisibilityWhere(await catalogCoinPacksEnabled()),
       deletedAt: null,
       status: "ACTIVE",
       marketIds: { has: market },
@@ -21,7 +26,7 @@ export async function GET(request: Request) {
     { items },
     {
       headers: {
-        "Cache-Control": "public, max-age=30, stale-while-revalidate=60",
+        "Cache-Control": "private, no-store",
       },
     },
   );

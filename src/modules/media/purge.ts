@@ -10,6 +10,7 @@ import {
 import type { StorageProvider } from "@/modules/integrations/storage";
 import { z } from "zod";
 import type { JobContext } from "@/modules/jobs";
+import { fittingUsesImage } from "./fitting-references";
 
 export const MEDIA_PURGE_OBJECTS_JOB = "media-purge-objects";
 const cleanupPayload = z.object({
@@ -130,12 +131,15 @@ export async function purgeOne(
           WHERE snapshot->>'logoMediaId' = ${current.id})
         OR EXISTS (SELECT 1 FROM "Page" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "Integration" WHERE key='fitting-room' AND jsonb_path_exists(
+          config, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
       ) AS used
     `;
     // Include draft and soft-deleted content: restoration must remain possible.
     if (references.used) return null;
+    if (await fittingUsesImage(current.storageKey, tx)) return null;
     const keys = [current.storageKey];
     for (const widths of Object.values(
       (current.variants as MediaVariants | null) ?? {},

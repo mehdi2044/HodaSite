@@ -13,8 +13,20 @@ type SourceOption = {
   root?: boolean;
   mediaUrl?: string;
 };
+type LookProductOption = {
+  id: string;
+  title: string;
+  colors: { id: string; title: string }[];
+};
 type Locale = "fa" | "tr" | "en";
 type Labels = Record<
+  | "shopLook"
+  | "lookName"
+  | "addLook"
+  | "lookProducts"
+  | "lookColor"
+  | "lookDepartment"
+  | "lookHelp"
   | "title"
   | "description"
   | "global"
@@ -56,6 +68,8 @@ const locales: Locale[] = ["fa", "tr", "en"];
 const text = () => ({ fa: "", tr: "", en: "" });
 
 function fresh(type: HomepageBlock["type"]): HomepageBlock {
+  if (type === "ShopLook")
+    return { type, title: text(), body: text(), looks: [] };
   if (type === "Hero" || type === "Banner")
     return { type, title: text(), body: text(), ctaLabel: text() };
   if (type === "CategoryCards" || type === "ProductStrip")
@@ -75,6 +89,7 @@ export function HomepageBuilder({
   action,
   categories,
   collections,
+  products,
   compositions,
   mediaUrls,
   markets,
@@ -83,6 +98,7 @@ export function HomepageBuilder({
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>;
   categories: SourceOption[];
   collections: SourceOption[];
+  products: LookProductOption[];
   compositions: Record<string, HomepageBlock[]>;
   mediaUrls: Record<string, string>;
   markets: { id: string; code: string }[];
@@ -219,6 +235,7 @@ export function HomepageBuilder({
               <BlockFields
                 categories={categories}
                 collections={collections}
+                products={products}
                 block={block}
                 index={index}
                 labels={labels}
@@ -239,6 +256,7 @@ export function HomepageBuilder({
                 }
               >
                 {[
+                  "ShopLook",
                   "Hero",
                   "CategoryCards",
                   "ProductStrip",
@@ -246,7 +264,9 @@ export function HomepageBuilder({
                   "TrustBar",
                   "RichText",
                 ].map((type) => (
-                  <option key={type}>{type}</option>
+                  <option key={type} value={type}>
+                    {type === "ShopLook" ? labels.shopLook : type}
+                  </option>
                 ))}
               </select>
             </label>
@@ -324,6 +344,7 @@ export function HomepageBuilder({
 }
 
 function BlockFields({
+  products,
   categories,
   collections,
   block,
@@ -333,6 +354,7 @@ function BlockFields({
   update,
   setUrls,
 }: {
+  products: LookProductOption[];
   categories: SourceOption[];
   collections: SourceOption[];
   block: HomepageBlock;
@@ -377,6 +399,207 @@ function BlockFields({
         />
       </label>
     ));
+  if (block.type === "ShopLook") {
+    const changeLook = (
+      lookIndex: number,
+      next: (typeof block.looks)[number],
+    ) =>
+      update(index, {
+        ...block,
+        looks: block.looks.map((look, i) => (i === lookIndex ? next : look)),
+      });
+    return (
+      <>
+        {localized("title")}
+        {localized("body")}
+        <p className="text-sm text-muted">{labels.lookHelp}</p>
+        {block.looks.map((look, lookIndex) => (
+          <fieldset
+            key={look.id}
+            className="grid gap-3 rounded-token border p-3"
+          >
+            <legend>
+              {labels.lookName} {lookIndex + 1}
+            </legend>
+            {locales.map((language) => (
+              <label key={language}>
+                {labels.lookName} ({language})
+                <Input
+                  value={look.label[language]}
+                  required
+                  onChange={(event) =>
+                    changeLook(lookIndex, {
+                      ...look,
+                      label: { ...look.label, [language]: event.target.value },
+                    })
+                  }
+                />
+              </label>
+            ))}
+            <label>
+              {labels.lookDepartment}
+              <select
+                className="input"
+                value={look.categoryId}
+                required
+                onChange={(event) =>
+                  changeLook(lookIndex, {
+                    ...look,
+                    categoryId: event.target.value,
+                  })
+                }
+              >
+                <option value="">{labels.chooseSource}</option>
+                {categories
+                  .filter((category) => category.root)
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <MediaPicker
+              name={`unused-look-${look.id}`}
+              label={labels.selectImage}
+              defaultMediaId={look.mediaId}
+              defaultUrl={urls[look.mediaId]}
+              onSelect={(id, url) => {
+                setUrls((all) => ({ ...all, [id]: url }));
+                changeLook(lookIndex, { ...look, mediaId: id });
+              }}
+            />
+            {look.items.map((item, itemIndex) => (
+              <div key={itemIndex} className="grid gap-2 border-t pt-3">
+                <label>
+                  {labels.lookProducts} {itemIndex + 1}
+                  <select
+                    className="input"
+                    required
+                    value={item.productId}
+                    onChange={(event) =>
+                      changeLook(lookIndex, {
+                        ...look,
+                        items: look.items.map((value, i) =>
+                          i === itemIndex
+                            ? {
+                                productId: event.target.value,
+                                colorId:
+                                  products.find(
+                                    (product) =>
+                                      product.id === event.target.value,
+                                  )?.colors[0]?.id ?? "",
+                              }
+                            : value,
+                        ),
+                      })
+                    }
+                  >
+                    <option value="">{labels.chooseSource}</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {labels.lookColor}
+                  <select
+                    className="input"
+                    value={item.colorId}
+                    required
+                    onChange={(event) =>
+                      changeLook(lookIndex, {
+                        ...look,
+                        items: look.items.map((value, i) =>
+                          i === itemIndex
+                            ? { ...value, colorId: event.target.value }
+                            : value,
+                        ),
+                      })
+                    }
+                  >
+                    <option value="">{labels.chooseSource}</option>
+                    {products
+                      .find((product) => product.id === item.productId)
+                      ?.colors.map((color) => (
+                        <option key={color.id} value={color.id}>
+                          {color.title}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={look.items.length <= 2}
+                  onClick={() =>
+                    changeLook(lookIndex, {
+                      ...look,
+                      items: look.items.filter((_, i) => i !== itemIndex),
+                    })
+                  }
+                >
+                  {labels.remove}
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={look.items.length >= 4}
+              onClick={() =>
+                changeLook(lookIndex, {
+                  ...look,
+                  items: [...look.items, { productId: "", colorId: "" }],
+                })
+              }
+            >
+              {labels.add} {labels.lookProducts}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() =>
+                update(index, {
+                  ...block,
+                  looks: block.looks.filter((_, i) => i !== lookIndex),
+                })
+              }
+            >
+              {labels.remove} {labels.lookName}
+            </Button>
+          </fieldset>
+        ))}
+        <Button
+          type="button"
+          disabled={block.looks.length >= 8}
+          onClick={() =>
+            update(index, {
+              ...block,
+              looks: [
+                ...block.looks,
+                {
+                  id: crypto.randomUUID(),
+                  label: text(),
+                  categoryId:
+                    categories.find((category) => category.root)?.id ?? "",
+                  mediaId: "",
+                  items: [
+                    { productId: "", colorId: "" },
+                    { productId: "", colorId: "" },
+                  ],
+                },
+              ],
+            })
+          }
+        >
+          {labels.addLook}
+        </Button>
+      </>
+    );
+  }
   if (block.type === "Hero" || block.type === "Banner")
     return (
       <>
@@ -599,6 +822,8 @@ function previewHtml(
     esc(value[locale] || value.fa || value.en || "");
   const body = blocks
     .map((block) => {
+      if (block.type === "ShopLook")
+        return `<section><h2>${local(block.title)}</h2><p>${local(block.body)}</p><div class="look-preview">${block.looks.map((look) => `<article>${urls[look.mediaId] ? `<img src="${esc(urls[look.mediaId])}" alt="">` : ""}<h3>${local(look.label)}</h3><p>${esc(labels.lookProducts)}: ${look.items.length}</p></article>`).join("")}</div></section>`;
       if (block.type === "Hero" && block.layout === "spatial")
         return `<section class="spatial"><div><h2>${local(block.title)
           .split(/\r?\n/)
@@ -624,5 +849,5 @@ function previewHtml(
       return `<section><p>${local(block.text)}</p></section>`;
     })
     .join("");
-  return `<!doctype html><html dir="${locale === "fa" ? "rtl" : "ltr"}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src http: https: data: blob:; style-src 'unsafe-inline'"><style>*{box-sizing:border-box}body{margin:0;font:16px system-ui;color:#181714;background:#fffdf8}section{padding:32px 20px}.hero{position:relative;isolation:isolate;min-height:320px;overflow:hidden;color:white;display:flex;flex-direction:column;justify-content:end}.hero:after{position:absolute;inset:0;z-index:-1;background:#0007;content:""}.hero img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}.hero h2{font-size:clamp(32px,8vw,72px);margin:0}.placeholder{min-height:140px;border:1px dashed #aaa;display:grid;place-items:center;color:#777}.trust{display:flex;gap:24px;flex-wrap:wrap;background:#f4eee5}span{min-height:44px;display:inline-flex;align-items:center}.spatial{position:relative;min-height:720px;background:#191712;color:#fbf8f3;overflow:hidden}.spatial>div:first-child{position:relative;z-index:4;padding-top:430px;pointer-events:none}.spatial h2{font-size:42px;line-height:1.05;margin:0}.spatial h2 span,.spatial h2 em{display:block}.spatial h2 em{color:#e8792a;font-weight:400}.planes{position:absolute;inset:0}.planes article{position:absolute;background:#fbf8f3;color:#191712;box-shadow:0 15px 30px #0005}.planes img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0%}.planes b{position:absolute;bottom:-8px;inset-inline-start:-4px;padding:10px;background:#fbf8f3;font-size:11px}.planes article:nth-child(1){top:36px;inset-inline-start:27%;width:64%;height:380px}.planes article:nth-child(2){top:26px;inset-inline-end:3%;width:25%;height:150px;rotate:4deg}.planes article:nth-child(3){top:200px;inset-inline-start:5%;width:26%;height:155px;rotate:-5deg}.planes article:nth-child(4){top:335px;inset-inline-end:5%;width:25%;height:128px;rotate:5deg}@media(min-width:900px){.spatial{height:720px}.spatial>div:first-child{position:absolute;bottom:10%;padding:0;width:65%}.spatial h2{font-size:72px}.planes article:nth-child(1){top:6%;inset-inline-start:41%;width:43%;height:87%}.planes article:nth-child(2){top:5%;width:16%;height:34%}.planes article:nth-child(3){top:51%;inset-inline-start:83%;width:14%;height:29%}.planes article:nth-child(4){top:auto;bottom:3%;inset-inline-end:20%;width:15%;height:27%}} </style><body>${body}</body></html>`;
+  return `<!doctype html><html dir="${locale === "fa" ? "rtl" : "ltr"}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src http: https: data: blob:; style-src 'unsafe-inline'"><style>.look-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px}.look-preview img{width:100%;aspect-ratio:3/4;object-fit:cover}*{box-sizing:border-box}body{margin:0;font:16px system-ui;color:#181714;background:#fffdf8}section{padding:32px 20px}.hero{position:relative;isolation:isolate;min-height:320px;overflow:hidden;color:white;display:flex;flex-direction:column;justify-content:end}.hero:after{position:absolute;inset:0;z-index:-1;background:#0007;content:""}.hero img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}.hero h2{font-size:clamp(32px,8vw,72px);margin:0}.placeholder{min-height:140px;border:1px dashed #aaa;display:grid;place-items:center;color:#777}.trust{display:flex;gap:24px;flex-wrap:wrap;background:#f4eee5}span{min-height:44px;display:inline-flex;align-items:center}.spatial{position:relative;min-height:720px;background:#191712;color:#fbf8f3;overflow:hidden}.spatial>div:first-child{position:relative;z-index:4;padding-top:430px;pointer-events:none}.spatial h2{font-size:42px;line-height:1.05;margin:0}.spatial h2 span,.spatial h2 em{display:block}.spatial h2 em{color:#e8792a;font-weight:400}.planes{position:absolute;inset:0}.planes article{position:absolute;background:#fbf8f3;color:#191712;box-shadow:0 15px 30px #0005}.planes img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0%}.planes b{position:absolute;bottom:-8px;inset-inline-start:-4px;padding:10px;background:#fbf8f3;font-size:11px}.planes article:nth-child(1){top:36px;inset-inline-start:27%;width:64%;height:380px}.planes article:nth-child(2){top:26px;inset-inline-end:3%;width:25%;height:150px;rotate:4deg}.planes article:nth-child(3){top:200px;inset-inline-start:5%;width:26%;height:155px;rotate:-5deg}.planes article:nth-child(4){top:335px;inset-inline-end:5%;width:25%;height:128px;rotate:5deg}@media(min-width:900px){.spatial{height:720px}.spatial>div:first-child{position:absolute;bottom:10%;padding:0;width:65%}.spatial h2{font-size:72px}.planes article:nth-child(1){top:6%;inset-inline-start:41%;width:43%;height:87%}.planes article:nth-child(2){top:5%;width:16%;height:34%}.planes article:nth-child(3){top:51%;inset-inline-start:83%;width:14%;height:29%}.planes article:nth-child(4){top:auto;bottom:3%;inset-inline-end:20%;width:15%;height:27%}} </style><body>${body}</body></html>`;
 }

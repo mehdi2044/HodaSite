@@ -23,9 +23,14 @@ export function formatCatalogCurrency(
   amount: Decimal.Value,
   currency: "IRT" | "TRY" | "CAD" | "USD",
   locale: "fa" | "tr" | "en",
+  preservePrecision = false,
 ) {
-  const decimals = currency === "IRT" ? 0 : 2;
-  const raw = new Decimal(amount).toFixed(decimals);
+  const value = new Decimal(amount);
+  const decimals = Math.max(
+    currency === "IRT" ? 0 : 2,
+    preservePrecision ? value.decimalPlaces() : 0,
+  );
+  const raw = value.toFixed(decimals);
   const localized = grouped(
     raw,
     locale === "fa" ? "٬" : locale === "tr" ? "." : ",",
@@ -45,4 +50,37 @@ export function formatCatalogDate(date: Date, locale: "fa" | "tr" | "en") {
         : "en-CA",
     { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" },
   ).format(date);
+}
+
+/** Display only; quote values and submitted monetary snapshots stay exact. */
+export function formatStorefrontAmount(
+  amount: Decimal.Value,
+  currency: string,
+  locale: string,
+) {
+  if (
+    ["IRT", "TRY", "CAD", "USD"].includes(currency) &&
+    ["fa", "tr", "en"].includes(locale)
+  )
+    return formatCatalogCurrency(
+      amount,
+      currency as "IRT" | "TRY" | "CAD" | "USD",
+      locale as "fa" | "tr" | "en",
+      true,
+    );
+  return `${new Decimal(amount).toString()} ${currency}`;
+}
+
+/** Service units retain Decimal precision; never pass a wallet balance through Number. */
+export function formatServiceUnits(
+  value: Decimal.Value,
+  locale: "fa" | "tr" | "en",
+) {
+  const raw = new Decimal(value).toFixed();
+  const result = grouped(
+    raw,
+    locale === "fa" ? "٬" : locale === "tr" ? "." : ",",
+    locale === "fa" ? "٫" : locale === "tr" ? "," : ".",
+  );
+  return locale === "fa" ? toPersianDigits(result) : result;
 }

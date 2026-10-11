@@ -43,6 +43,9 @@ registerNotificationJobs();
 registerInvoiceJobs();
 registerAiJobs();
 registerStockJobs();
+// Register only; the handler performs all runtime IO after a claimed job.
+import { registerFittingJobs } from "@/modules/fitting";
+registerFittingJobs();
 
 export async function POST(req: Request) {
   const secret = process.env.CRON_SECRET;

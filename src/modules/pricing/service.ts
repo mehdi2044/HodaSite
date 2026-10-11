@@ -340,15 +340,47 @@ export async function ensureFxRefreshScheduled() {
 }
 
 /** One effective FX lookup and one manual-price query for an entire listing. */
+type DisplayProduct = Parameters<typeof getDisplayPrice>[0] & {
+  variants: NonNullable<Parameters<typeof getDisplayPrice>[1]>[];
+};
 export async function getDisplayPrices(
-  products: Array<
-    Parameters<typeof getDisplayPrice>[0] & {
-      variants: NonNullable<Parameters<typeof getDisplayPrice>[1]>[];
-    }
-  >,
+  products: DisplayProduct[],
   market: Parameters<typeof getDisplayPrice>[2],
 ) {
-  if (!products.length)
+  return priceSelections(
+    products.map((product) => ({
+      key: product.id,
+      product,
+      variant: product.variants[0] ?? null,
+    })),
+    market,
+  );
+}
+/** Every selected size shares one effective-rate snapshot and one manual-price query. */
+export async function getVariantDisplayPrices(
+  products: DisplayProduct[],
+  market: Parameters<typeof getDisplayPrice>[2],
+) {
+  return priceSelections(
+    products.flatMap((product) =>
+      product.variants.map((variant) => ({
+        key: variant.id,
+        product,
+        variant,
+      })),
+    ),
+    market,
+  );
+}
+async function priceSelections(
+  selections: {
+    key: string;
+    product: Parameters<typeof getDisplayPrice>[0];
+    variant: Parameters<typeof getDisplayPrice>[1];
+  }[],
+  market: Parameters<typeof getDisplayPrice>[2],
+) {
+  if (!selections.length)
     return new Map<string, ReturnType<typeof calculateDisplayPrice>>();
   const at = new Date();
   const [active, manuals] = await Promise.all([
@@ -362,12 +394,20 @@ export async function getDisplayPrices(
           { OR: [{ validUntil: null }, { validUntil: { gt: at } }] },
           {
             OR: [
-              { productId: { in: products.map((p) => p.id) } },
+              {
+                productId: {
+                  in: [...new Set(selections.map((s) => s.product.id))],
+                },
+              },
               {
                 variantId: {
-                  in: products.flatMap((p) =>
-                    p.variants[0] ? [p.variants[0].id] : [],
-                  ),
+                  in: [
+                    ...new Set(
+                      selections.flatMap((s) =>
+                        s.variant ? [s.variant.id] : [],
+                      ),
+                    ),
+                  ],
                 },
               },
             ],
@@ -386,13 +426,12 @@ export async function getDisplayPrices(
       byVariant.set(manual.variantId, manual);
   }
   return new Map(
-    products.map((product) => {
-      const variant = product.variants[0],
-        manual =
-          (variant ? byVariant.get(variant.id) : undefined) ??
-          byProduct.get(product.id);
+    selections.map(({ key, product, variant }) => {
+      const manual =
+        (variant ? byVariant.get(variant.id) : undefined) ??
+        byProduct.get(product.id);
       return [
-        product.id,
+        key,
         calculateDisplayPrice({
           baseAmount:
             variant?.priceOverrideUsd?.toString() ??

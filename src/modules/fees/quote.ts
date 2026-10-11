@@ -71,6 +71,12 @@ export async function quoteCart(
   });
   if (variants.length !== new Set(items.map((item) => item.variantId)).size)
     throw new Error("One or more variants are unavailable");
+  if (variants.some((v) => v.product.coinPackCoins)) {
+    const { fittingConfig } = await import("@/modules/fitting");
+    const fitting = await fittingConfig();
+    if (!fitting.enabled || !fitting.coinSalesEnabled)
+      throw new Error("Coin pack sales are disabled");
+  }
   const quoteItems = await Promise.all(
     items.map(async (item) => {
       if (!Number.isInteger(item.quantity) || item.quantity <= 0)
@@ -92,7 +98,10 @@ export async function quoteCart(
         unitPrice: price.amount,
         fxRate: price.rate,
         categoryId: variant.product.categoryId,
-        weightGrams: variant.weightGrams ?? variant.product.weightGrams,
+        weightGrams: variant.product.coinPackCoins
+          ? 0
+          : (variant.weightGrams ?? variant.product.weightGrams),
+        ...(variant.product.coinPackCoins ? { shippable: false } : {}),
         lengthCm: dimensions?.lengthCm,
         widthCm: dimensions?.widthCm,
         heightCm: dimensions?.heightCm,
@@ -168,7 +177,13 @@ export async function quoteCart(
   const shippingOptions = inputs
     .filter(
       (r) =>
-        r.type === "SHIPPING" && r.selectable && feeRuleApplies(r, context),
+        r.type === "SHIPPING" &&
+        r.selectable &&
+        quoteItems.some((i) => i.shippable !== false) &&
+        feeRuleApplies(r, {
+          ...context,
+          items: quoteItems.filter((i) => i.shippable !== false),
+        }),
     )
     .map((r) => ({
       id: r.id,

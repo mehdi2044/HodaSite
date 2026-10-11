@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { localized, seoPath } from "@/lib/seo";
+import {
+  catalogCoinPacksEnabled,
+  catalogVisibilityWhere,
+} from "@/modules/catalog/visibility";
 const inputSchema = z.object({
   locale: z.enum(["fa", "tr", "en"]),
   market: z.string().max(40),
@@ -23,6 +27,7 @@ export async function resolveSlugRedirect(raw: unknown) {
   const slugWhere = { slugI18n: { path: [locale], equals: slug } };
   if (kind === "p") {
     const visibility = {
+      ...catalogVisibilityWhere(await catalogCoinPacksEnabled()),
       status: "ACTIVE" as const,
       deletedAt: null,
       marketIds: { has: market.id },

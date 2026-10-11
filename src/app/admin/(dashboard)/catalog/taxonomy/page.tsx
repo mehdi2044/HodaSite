@@ -1,3 +1,5 @@
+import { categoryPathLabel } from "@/modules/catalog";
+import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
@@ -49,6 +51,8 @@ export default async function CatalogTaxonomyPage({
         orderBy: { createdAt: "desc" },
       }),
     ]);
+  const locale = await getLocale();
+  const ft = await getTranslations("fitting");
   const query = await searchParams;
   const editKind = String(query.editKind ?? "");
   const editId = String(query.editId ?? "");
@@ -193,6 +197,7 @@ export default async function CatalogTaxonomyPage({
       />
       <Card>
         <h2 className="text-xl font-semibold">{t("categories")}</h2>
+        <p className="muted mt-2">{ft("categoryTreeHelp")}</p>
         <CatalogActionForm
           action={saveTaxonomy}
           className="mt-4 grid gap-3 md:grid-cols-2"
@@ -231,7 +236,7 @@ export default async function CatalogTaxonomyPage({
               <option value="">{t("noParent")}</option>
               {categories.map((row) => (
                 <option key={row.id} value={row.id}>
-                  {title(row.titleI18n)}
+                  {categoryPathLabel(categories, row.id, locale)}
                 </option>
               ))}
             </Select>

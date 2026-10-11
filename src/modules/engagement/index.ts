@@ -7,6 +7,8 @@ import {
   catalogText,
   catalogProductInclude,
   formatCatalogCurrency,
+  catalogCoinPacksEnabled,
+  catalogVisibilityWhere,
 } from "@/modules/catalog";
 import { getDisplayPrices } from "@/modules/pricing";
 import { seoPath } from "@/lib/seo-urls";
@@ -41,6 +43,7 @@ export async function publicCards(raw: unknown, rawIds: unknown) {
       status: "ACTIVE",
       deletedAt: null,
       marketIds: { has: market.id },
+      ...catalogVisibilityWhere(await catalogCoinPacksEnabled()),
     },
     include: catalogProductInclude,
   });
@@ -97,6 +100,7 @@ export async function mergeWishlist(raw: unknown, rawIds: unknown) {
           deletedAt: null,
           marketIds: { has: marketId },
           wishlists: { none: { customerId: c.id, marketId } },
+          ...catalogVisibilityWhere(await catalogCoinPacksEnabled(tx)),
         },
         take: Math.max(0, 100 - existing),
         select: { id: true },
