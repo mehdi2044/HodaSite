@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   products: vi.fn(),
   prices: vi.fn(),
   singlePrice: vi.fn(),
+  context: vi.fn(),
 }));
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
@@ -13,9 +14,7 @@ vi.mock("next-intl/server", () => ({
 vi.mock("@/modules/fitting", () => ({ fittingConfig: mocks.config }));
 vi.mock("@/lib/db", () => ({ db: { product: { findMany: mocks.products } } }));
 vi.mock("@/lib/request-context", () => ({
-  getRequestContext: async () => ({
-    market: { id: "market-ca", code: "CA", currency: "CAD" },
-  }),
+  getRequestContext: mocks.context,
 }));
 vi.mock("@/modules/pricing", () => ({
   getDisplayPrices: mocks.prices,
@@ -23,8 +22,6 @@ vi.mock("@/modules/pricing", () => ({
 }));
 vi.mock("@/modules/catalog", () => ({
   catalogText: (text: Record<string, string>, locale: string) => text[locale],
-  formatCatalogCurrency: (amount: string, currency: string) =>
-    `${currency} ${amount}`,
 }));
 import CoinPacksPage from "@/app/[locale]/fitting-room/coins/page";
 
@@ -34,6 +31,9 @@ describe("coin pack listing", () => {
     vi.resetAllMocks();
     mocks.config.mockResolvedValue({ enabled: true, coinSalesEnabled: true });
     mocks.prices.mockResolvedValue(new Map());
+    mocks.context.mockResolvedValue({
+      market: { id: "market-ca", code: "CA", currency: "CAD" },
+    });
   });
   afterEach(() => vi.unstubAllGlobals());
   it("prices a large listing in one batch and retains each pack's price and market", async () => {
@@ -58,10 +58,39 @@ describe("coin pack listing", () => {
     });
     expect(mocks.singlePrice).not.toHaveBeenCalled();
     expect(html.match(/<article/g)).toHaveLength(1000);
-    expect(html).toContain("CAD 1.25");
-    expect(html).toContain("CAD 1000.25");
+    expect(html).toContain("CA$1,25");
+    expect(html).toContain("CA$1.000,25");
     expect(html.includes("/tr/m/CA/p/pack-999")).toBe(true);
   });
+  it.each([
+    { currency: "USD", locale: "en", expected: "$37.1251" },
+    { currency: "CAD", locale: "en", expected: "CA$37.1251" },
+    { currency: "TRY", locale: "tr", expected: "₺37,1251" },
+    { currency: "IRT", locale: "fa", expected: "۳۷٫۱۲۵۱ تومان" },
+  ] as const)(
+    "renders the exact pack price: $currency/$locale",
+    async ({ currency, locale, expected }) => {
+      mocks.context.mockResolvedValue({
+        market: { id: "market-ca", code: "CA", currency },
+      });
+      mocks.products.mockResolvedValue([
+        {
+          id: "pack",
+          coinPackCoins: "100",
+          titleI18n: { [locale]: "Pack" },
+          slugI18n: { [locale]: "pack" },
+          variants: [{ id: "variant" }],
+        },
+      ]);
+      mocks.prices.mockResolvedValue(
+        new Map([["pack", { amount: "37.1251" }]]),
+      );
+      const html = renderToStaticMarkup(
+        await CoinPacksPage({ params: Promise.resolve({ locale }) }),
+      );
+      expect(html).toContain(`<strong>${expected}</strong>`);
+    },
+  );
   it.each([
     { enabled: false, coinSalesEnabled: true },
     { enabled: true, coinSalesEnabled: false },

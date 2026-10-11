@@ -4,7 +4,8 @@ import { fittingConfig } from "@/modules/fitting";
 import { db } from "@/lib/db";
 import { getRequestContext } from "@/lib/request-context";
 import { getDisplayPrices } from "@/modules/pricing";
-import { catalogText, formatCatalogCurrency } from "@/modules/catalog";
+import { catalogText } from "@/modules/catalog";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { seoPath } from "@/lib/seo-urls";
 import { z } from "zod";
 export const dynamic = "force-dynamic";
@@ -59,9 +60,9 @@ export default async function Page({
                 </span>
                 <h2>{catalogText(p.titleI18n, locale)}</h2>
                 <strong>
-                  {formatCatalogCurrency(
+                  {formatStorefrontAmount(
                     price.amount,
-                    market.currency as "IRT" | "TRY" | "CAD",
+                    market.currency,
                     locale,
                   )}
                 </strong>

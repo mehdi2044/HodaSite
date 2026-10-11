@@ -120,6 +120,7 @@ for (const [locale, market] of [
       await expect(studio.locator(".look-total strong")).toHaveText(
         expectedSubtotal,
       );
+      await shoppingProof(page, info, `prepared-precision-${locale}-390`);
       await expect(studio.locator(".look-add")).toBeEnabled();
       await studio.locator(".look-add").click();
       await expect(studio.locator(".look-add")).toContainText(
@@ -163,6 +164,13 @@ for (const [locale, market] of [
         .first();
       await garment.click();
       await expect(page.locator(".shop-product-title")).toBeVisible();
+      await page
+        .getByRole("button", { name: "M", exact: true })
+        .first()
+        .click();
+      await expect(page.getByTestId("product-price")).toContainText(
+        firstPiecePrice,
+      );
       await expect(page.getByTestId("shop-look-studio")).toBeVisible();
       await shoppingProof(page, info, `prepared-product-${locale}`);
       const nested = await db.category.findUniqueOrThrow({

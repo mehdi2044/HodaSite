@@ -917,6 +917,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       form.set("gender", template.product.gender);
       form.set("status", "DRAFT");
       form.set("basePriceAmount", "1.0001");
+      form.set("compareAtPriceAmount", "2.0001");
+      form.set("defaultPurchaseCostAmount", "0.5001");
+      form.set("defaultPurchaseCostCurrency", "USD");
       form.set("weightGrams", "100");
       form.set("marketIds", marketId);
       const variant = {
@@ -925,7 +928,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         sku: `AUDIT-${marker}`.toUpperCase(),
       };
       form.set("variants", JSON.stringify([variant]));
-      const values = ["100.0001", "250.1251", "1000.0001", null];
+      const values = ["999999999999.9999", "250.1251", "1000.0001", null];
       let productId = "";
       try {
         for (const [index, value] of values.entries()) {
@@ -956,11 +959,17 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             coinPackCoins: value,
             fittingSlot: value === null ? "TOP" : null,
             basePriceAmount: "1.0001",
+            compareAtPriceAmount: "2.0001",
+            defaultPurchaseCostAmount: "0.5001",
+            defaultPurchaseCostCurrency: "USD",
           });
           if (index > 0)
             expect(audits[index].before).toMatchObject({
               coinPackCoins: values[index - 1],
               fittingSlot: null,
+              basePriceAmount: "1.0001",
+              compareAtPriceAmount: "2.0001",
+              defaultPurchaseCostAmount: "0.5001",
             });
           else expect(audits[index].before).toBeNull();
         }

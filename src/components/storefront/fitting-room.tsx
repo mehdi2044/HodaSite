@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { requestSchema } from "@/modules/fitting/contracts";
 import { ResponsiveImage } from "./responsive-image";
 import {
-  formatCatalogCurrency,
+  formatStorefrontAmount,
   formatServiceUnits,
 } from "@/modules/catalog/format";
 export type FittingProduct = {
@@ -515,7 +515,7 @@ export function FittingRoom({
                         {item.owned
                           ? labels.owned
                           : item.amount
-                            ? formatCatalogCurrency(
+                            ? formatStorefrontAmount(
                                 item.amount,
                                 currency,
                                 locale,

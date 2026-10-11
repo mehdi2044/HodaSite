@@ -1,3 +1,4 @@
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { relevantLookBlocks } from "@/modules/outfits";
 import { getSeoSettings } from "@/modules/seo";
@@ -26,7 +27,6 @@ import { db } from "@/lib/db";
 import {
   catalogText,
   findProductBySlug,
-  formatCatalogCurrency,
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
@@ -156,7 +156,7 @@ export default async function ProductPage({
   const variantDisplayPrices = new Map(
     [...variantPrices].map(([id, price]) => [
       id,
-      formatCatalogCurrency(price.amount, currency, safe),
+      formatStorefrontAmount(price.amount, currency, safe),
     ]),
   );
   const amount = basePrice.amount;
@@ -278,11 +278,11 @@ export default async function ProductPage({
             initial={
               variantDisplayPrices.get(
                 product.variants.find((variant) => variant.isActive)?.id ?? "",
-              ) ?? formatCatalogCurrency(amount, currency, safe)
+              ) ?? formatStorefrontAmount(amount, currency, safe)
             }
             compare={
               compareAmount
-                ? formatCatalogCurrency(compareAmount, currency, safe)
+                ? formatStorefrontAmount(compareAmount, currency, safe)
                 : undefined
             }
           />
@@ -325,7 +325,7 @@ export default async function ProductPage({
                 ),
                 price:
                   variantDisplayPrices.get(v.id) ??
-                  formatCatalogCurrency(amount, currency, safe),
+                  formatStorefrontAmount(amount, currency, safe),
                 color: {
                   hex: v.color.hex,
                   name: catalogText(v.color.nameI18n, safe),
@@ -341,7 +341,7 @@ export default async function ProductPage({
                 lowStock: t("lowStock"),
                 outOfStock: t("outOfStock"),
               }}
-              basePrice={formatCatalogCurrency(amount, currency, safe)}
+              basePrice={formatStorefrontAmount(amount, currency, safe)}
             />
           </div>
           <details className="mt-7 border-t pt-5">

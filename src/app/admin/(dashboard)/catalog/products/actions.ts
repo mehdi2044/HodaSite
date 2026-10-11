@@ -234,12 +234,29 @@ export async function saveProduct(
               : "catalog.product.create",
             entityType: "Product",
             entityId: product.id,
-            before: classification as object | undefined,
+            before: classification
+              ? ({
+                  ...classification,
+                  basePriceAmount: classification.basePriceAmount.toString(),
+                  coinPackCoins:
+                    classification.coinPackCoins?.toString() ?? null,
+                  compareAtPriceAmount:
+                    classification.compareAtPriceAmount?.toString() ?? null,
+                  defaultPurchaseCostAmount:
+                    classification.defaultPurchaseCostAmount?.toString() ??
+                    null,
+                } as object)
+              : undefined,
             after: {
               status: product.status,
               basePriceAmount: product.basePriceAmount.toString(),
               coinPackCoins: product.coinPackCoins?.toString() ?? null,
               fittingSlot: product.fittingSlot,
+              compareAtPriceAmount:
+                product.compareAtPriceAmount?.toString() ?? null,
+              defaultPurchaseCostAmount:
+                product.defaultPurchaseCostAmount?.toString() ?? null,
+              defaultPurchaseCostCurrency: product.defaultPurchaseCostCurrency,
             },
           },
         });
@@ -486,6 +503,11 @@ export async function duplicateProduct(
               basePriceAmount: created.basePriceAmount.toString(),
               coinPackCoins: created.coinPackCoins?.toString() ?? null,
               fittingSlot: created.fittingSlot,
+              compareAtPriceAmount:
+                created.compareAtPriceAmount?.toString() ?? null,
+              defaultPurchaseCostAmount:
+                created.defaultPurchaseCostAmount?.toString() ?? null,
+              defaultPurchaseCostCurrency: created.defaultPurchaseCostCurrency,
             },
           },
         });
