@@ -5,6 +5,7 @@ import {
   beforeAll,
   beforeEach,
   afterAll,
+  afterEach,
   describe,
   expect,
   it,
@@ -40,7 +41,11 @@ import {
 } from "@/modules/orders/service";
 import { requestReturn, manageReturn } from "@/modules/returns/service";
 import { configSchema } from "@/modules/fitting/contracts";
-import { walletView, createFittingSession } from "@/modules/fitting";
+import {
+  walletView,
+  createFittingSession,
+  refundSession,
+} from "@/modules/fitting";
 import {
   lockWallet,
   grantCoins,
@@ -53,6 +58,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "cancelled exchange coin entitlement: PostgreSQL",
   () => {
     let ownerId: string, marketId: string;
+    const pendingSessions: string[] = [];
     let original: Awaited<ReturnType<typeof db.integration.findUnique>>;
     beforeAll(async () => {
       ownerId = (
@@ -106,6 +112,17 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       else await db.integration.deleteMany({ where: { key: "fitting-room" } });
       vi.unstubAllEnvs();
+    });
+    afterEach(async () => {
+      for (const id of pendingSessions.splice(0)) {
+        await db.job.deleteMany({
+          where: {
+            type: "fitting-render",
+            payload: { path: ["sessionId"], equals: id },
+          },
+        });
+        await db.$transaction((tx) => refundSession(tx, id, "FIXTURE_CLEANUP"));
+      }
     });
     async function exchange(
       order: { id: string; customerId: string; items: { id: string }[] },
@@ -233,14 +250,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       "actual checkout/payment and repeated manual cancellation; spent=%s",
       async (spent) => {
         const f = await actualPackSale();
-        if (spent)
-          await createFittingSession(f.customer.id, marketId, "en", {
-            requestKey: randomUUID(),
-            modelId: "woman",
-            variantIds: ["seed-style-v2-women-tee-m"],
-            expectedCostCoins: "12.5",
-            confirm: true,
-          });
+        if (spent) {
+          const session = await createFittingSession(
+            f.customer.id,
+            marketId,
+            "en",
+            {
+              requestKey: randomUUID(),
+              modelId: "woman",
+              variantIds: ["seed-style-v2-women-tee-m"],
+              expectedCostCoins: "12.5",
+              confirm: true,
+            },
+          );
+          pendingSessions.push(session.id);
+        }
         const child = await exchange(f.order, f.variants[1].id);
         expect(child.status).toBe("PENDING_PAYMENT");
         await Promise.all([
