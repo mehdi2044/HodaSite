@@ -31,6 +31,7 @@ vi.mock("@/modules/integrations/storage", () => ({
   storage: { put: vi.fn(async () => ""), delete: vi.fn(async () => {}) },
 }));
 import { db } from "@/lib/db";
+import { functionalFxCollision } from "../helpers/functional-fx";
 import { opaqueToken, tokenHash, unseal } from "@/lib/secure-tokens";
 import { placeOrder, addressSchema } from "@/modules/checkout";
 import { InsufficientOrderStock } from "@/modules/inventory/orders";
@@ -51,9 +52,9 @@ import { requestCustomerOtp, verifyCustomerOtp } from "@/modules/customers/otp";
 
 context.requests = new AsyncLocalStorage<Map<string, string>>();
 const hasDb = Boolean(process.env.TEST_DATABASE_URL);
-async function fixture(quantity = 3) {
+async function fixture(quantity = 3, code: "IR" | "TR" | "CA" = "TR") {
   const suffix = randomUUID(),
-    market = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
+    market = await db.market.findUniqueOrThrow({ where: { code } });
   const source = await db.variant.findFirstOrThrow({
     include: { product: true },
   });
@@ -91,23 +92,24 @@ async function fixture(quantity = 3) {
   });
   const token = opaqueToken();
   context.cookies.set("hoda.cart", token);
-  context.cookies.set("market", "TR");
+  context.cookies.set("market", code);
   const address = addressSchema.parse({
     firstName: "Test",
     lastName: "Buyer",
     email: `commerce-${suffix}@example.com`,
     phone: "+90 555 000 0000",
-    country: "TR",
-    province: "İstanbul",
-    city: "Kadıköy",
+    country: code,
+    province: { IR: "تهران", TR: "İstanbul", CA: "ON" }[code],
+    city: { IR: "تهران", TR: "Kadıköy", CA: "Toronto" }[code],
+    postalCode: { IR: "1234567890", TR: "", CA: "M5V 2T6" }[code],
     line1: "Example Street 10",
   });
   const cart = await db.cart.create({
     data: {
       tokenHash: tokenHash(token),
       marketId: market.id,
-      locale: "tr",
-      currency: "TRY",
+      locale: market.defaultLocale,
+      currency: market.currency,
       expiresAt: new Date(Date.now() + 86400000),
       checkout: address,
       items: { create: { variantId: variant.id, quantity: 1 } },
@@ -142,6 +144,37 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe.skipIf(!hasDb)("phase 04 transactional commerce", () => {
+  it.each(["IR", "CA"] as const)(
+    "%s checkout snapshots the TR reference despite another TRY market",
+    async (code) => {
+      const collision = await functionalFxCollision(db);
+      try {
+        const f = await fixture(3, code);
+        const result = await placeOrder(f.address, true, 0);
+        const order = await db.order.findUniqueOrThrow({
+          where: { number: result.number },
+        });
+        const snapshot = order.fxSnapshot as {
+          marketPerUsd: string;
+          tryPerUsd: string;
+        };
+        expect(order.currency).toBe(f.market.currency);
+        expect(snapshot.tryPerUsd).toBe(collision.rate);
+        expect(order.totalAmountTry.toString()).toBe(
+          new Decimal(order.totalAmount.toString())
+            .div(snapshot.marketPerUsd)
+            .mul(collision.rate)
+            .toDecimalPlaces(4)
+            .toFixed(),
+        );
+      } finally {
+        await db.market.update({
+          where: { id: collision.other.id },
+          data: { isActive: false },
+        });
+      }
+    },
+  );
   it.each([1, 2])(
     "handles concurrent checkout with %i units without customer creation races",
     async (quantity) => {

@@ -87,10 +87,16 @@ for (const locale of ["fa", "tr", "en"] as const) {
         })),
       });
       await customerLogin(page, email, locale);
-      await page.evaluate(() => {
-        document.cookie = "market=TR; path=/";
-      });
+      const market = markets.find(
+        (m) => m.code === { fa: "IR", tr: "TR", en: "CA" }[locale],
+      )!;
+      await page.evaluate((code) => {
+        document.cookie = `market=${code}; path=/`;
+      }, market.code);
       await page.goto(`/${locale}/fitting-room?q=${marker}`);
+      await expect(page).toHaveURL(
+        new RegExp(`/${locale}/fitting-room\\?q=${marker}$`),
+      );
       const room = page.getByTestId("fitting-room"),
         card = room.locator(".fitting-product").filter({
           has: page.getByRole("heading", { name: title, exact: true }),
@@ -111,7 +117,6 @@ for (const locale of ["fa", "tr", "en"] as const) {
       const customer = await db.customer.findUniqueOrThrow({
         where: { email },
       });
-      const market = markets.find((m) => m.code === "TR")!;
       // The stored selection format is the same one written after a fitting request.
       await page.evaluate(
         ({ key, id }) =>
@@ -146,6 +151,11 @@ for (const locale of ["fa", "tr", "en"] as const) {
         }),
       ).toBe(0);
     } finally {
+      // Restore shared settings first so fixture cleanup cannot leak a toggle.
+      await db.integration.update({
+        where: { id: old.id },
+        data: { isActive: old.isActive, config: old.config! },
+      });
       await db.cartItem.deleteMany({
         where: { variantId: { in: variantIds } },
       });
@@ -154,10 +164,6 @@ for (const locale of ["fa", "tr", "en"] as const) {
       });
       await db.product.deleteMany({ where: { id: productId } });
       await db.size.deleteMany({ where: { id: { in: sizeIds } } });
-      await db.integration.update({
-        where: { id: old.id },
-        data: { isActive: old.isActive, config: old.config! },
-      });
     }
   });
   test(`${locale}: fixed models, actual variant color, wardrobe and no-charge provider fallback`, async ({

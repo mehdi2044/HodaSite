@@ -75,8 +75,8 @@ export async function exchangeReturn(
     (n, i) => n.add(String(i.lineTotalAmount)),
     new Decimal(0),
   );
-  const tryMarket = await tx.market.findFirstOrThrow({
-    where: { currency: "TRY" },
+  const tryMarket = await tx.market.findUniqueOrThrow({
+    where: { code: "TR", currency: "TRY" },
   });
   const tryRate =
     market.currency === "TRY" ? rate! : (await getActiveRate(tryMarket)).rate;

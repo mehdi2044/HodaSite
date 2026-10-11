@@ -2,6 +2,9 @@ import { test, expect } from "@playwright/test";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { shoppingProof } from "./helpers/shopping-proof";
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
 
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
@@ -137,10 +140,26 @@ for (const [locale, market] of [
       await shoppingProof(page, info, `prepared-cart-${locale}`);
       await page.goto(`/${locale}/checkout`);
       await expect(page.locator(".shop-checkout-piece")).toHaveCount(3);
-      await expect(page.locator(".shop-checkout-summary")).toContainText(
-        expectedSubtotal,
-      );
       await expect(page.locator(".shop-checkout-summary img")).toHaveCount(3);
+      const address = {
+        firstName: "Test",
+        lastName: "Buyer",
+        email: `prepared-${randomUUID()}@example.com`,
+        phone: "+90 555 000 0000",
+        province: { fa: "تهران", tr: "İstanbul", en: "ON" }[locale],
+        city: { fa: "تهران", tr: "Kadıköy", en: "Toronto" }[locale],
+        postalCode: { fa: "1234567890", tr: "34710", en: "M5V 2T6" }[locale],
+        line1: "Example Street 10",
+      };
+      for (const [field, value] of Object.entries(address))
+        await page.locator(`main input[name=${field}]`).fill(value);
+      await page
+        .getByRole("button", { name: { fa, tr, en }[locale].commerce.next, exact: true })
+        .click();
+      await expect(page).toHaveURL(/checkout\?step=2$/);
+      await expect(
+        page.locator(".shop-checkout-layout section dl dd").first(),
+      ).toHaveText(expectedSubtotal);
       await shoppingProof(page, info, `prepared-checkout-${locale}`);
       const marketRow = await db.market.findFirstOrThrow({
         where: { code: market },

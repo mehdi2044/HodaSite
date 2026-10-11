@@ -158,8 +158,10 @@ export async function placeOrder(
         const rates = new Set(quote.items.map((i) => i.fxRate));
         if (rates.size !== 1) throw new CommerceError("PRICE_CHANGED");
         const marketRate = quote.items[0].fxRate;
-        const tryMarket = await tx.market.findFirstOrThrow({
-          where: { currency: "TRY" },
+        // The TR market owns the functional-currency FX reference. Currency
+        // alone is not unique: another TRY market may have no rate or a different one.
+        const tryMarket = await tx.market.findUniqueOrThrow({
+          where: { code: "TR", currency: "TRY" },
         });
         const tryRate =
           cart.market.currency === "TRY"
