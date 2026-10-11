@@ -1831,6 +1831,46 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(1);
     });
+    it("preserves primary wallet debt and identity against deletion or reassignment while permitting real repayment", async () => {
+      const a = await customer("0"),
+        b = await customer("0");
+      const original = await db.fittingWallet.create({
+        data: { id: a.id, customerId: a.id, debt: "5.0001" },
+      });
+      for (const data of [
+        { id: randomUUID() },
+        { customerId: b.id },
+        { createdAt: new Date("2000-01-01T00:00:00Z") },
+      ])
+        await expect(
+          db.fittingWallet.update({ where: { id: original.id }, data }),
+        ).rejects.toThrow("Fitting wallet identity is immutable");
+      await expect(
+        db.fittingWallet.delete({ where: { id: original.id } }),
+      ).rejects.toThrow("Fitting wallet identity is immutable");
+      const retained = await db.$transaction((tx) => lockWallet(tx, a.id));
+      expect(retained.debt.toString()).toBe("5.0001");
+      expect((await walletView(a.id)).debt).toBe("5.0001");
+      await db.$transaction(async (tx) => {
+        await lockWallet(tx, a.id);
+        await grantCoins(tx, a.id, "wallet-guard-repayment", "MANUAL", "20");
+      });
+      expect(await walletView(a.id)).toMatchObject({
+        debt: "0",
+        balance: "14.9999",
+      });
+      const repaid = await db.fittingWallet.findUniqueOrThrow({
+        where: { id: original.id },
+      });
+      expect(repaid).toMatchObject({
+        id: original.id,
+        customerId: a.id,
+        createdAt: original.createdAt,
+      });
+      await expect(
+        db.fittingWallet.delete({ where: { id: original.id } }),
+      ).rejects.toThrow("Fitting wallet identity is immutable");
+    });
     it("keeps overflow liability identities immutable while permitting repayment", async () => {
       const a = await customer("0"),
         b = await customer("0");
