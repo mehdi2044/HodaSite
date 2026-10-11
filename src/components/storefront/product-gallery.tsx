@@ -112,6 +112,11 @@ export function ProductGallery({
                 className="shop-gallery-image"
                 imgClassName="h-full w-full object-cover"
               />
+              {isDemoFashionMedia(item.media) && (
+                <span className="shop-gallery-demo-badge">
+                  {t("demoImage")}
+                </span>
+              )}
             </button>
           ))
         ) : (
@@ -136,7 +141,10 @@ export function ProductGallery({
         </div>
       )}
       {isDemoFashionMedia(current?.media) && (
-        <p className="shop-demo-note">{t("demoImageNote")}</p>
+        <details className="shop-demo-disclosure">
+          <summary>{t("imageDisclosure")}</summary>
+          <p>{t("demoImageNote")}</p>
+        </details>
       )}
       {items.length > 1 && (
         <div className="shop-gallery-dots">

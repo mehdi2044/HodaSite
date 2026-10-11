@@ -2884,3 +2884,539 @@ html[lang="fa"] body,
 .fitting-product label,
 .fitting-wallet small { font-size: .875rem; }
 .fitting-product select { font-size: 1rem; min-height: 44px; }
+
+/* 05f: product, collection, bag and admin continue the merchant's editorial theme. */
+.shop-product-page .shop-breadcrumbs,
+.shop-category-page .shop-breadcrumbs {
+  gap: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  margin-block-end: 1.5rem;
+}
+.shop-product-page .shop-back-link {
+  margin-block-end: 0.5rem;
+}
+.shop-product-page .shop-gallery {
+  align-self: start;
+}
+.shop-product-page .shop-gallery-track {
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  padding: 0.3rem;
+  background: var(--surface);
+}
+.shop-gallery-slide {
+  position: relative;
+}
+.shop-gallery-demo-badge {
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.7rem;
+  border-radius: 4px;
+}
+.shop-demo-disclosure {
+  margin-block-start: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.shop-demo-disclosure summary {
+  min-height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.shop-demo-disclosure summary::after {
+  content: "+";
+}
+.shop-demo-disclosure[open] summary::after {
+  content: "−";
+}
+.shop-demo-disclosure p {
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+}
+.shop-product-information .shop-product-details {
+  margin-block-start: 2rem;
+}
+.shop-product-information details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  gap: 1rem;
+  cursor: pointer;
+}
+.shop-product-information details summary::after {
+  content: "+";
+  font-weight: 400;
+}
+.shop-product-information details[open] summary::after {
+  content: "−";
+}
+.shop-purchase-panel {
+  border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  border-radius: 4px;
+  padding: 1.25rem;
+  margin-block-start: 1.5rem;
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--text) 6%, transparent);
+}
+.shop-product-options .shop-option-group legend {
+  margin-block-end: 0.8rem;
+}
+.shop-product-options .shop-option-group button {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+.shop-product-options .shop-stock-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.shop-product-options .shop-stock-status::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  background: currentColor;
+  border-radius: 50%;
+}
+.shop-category-copy {
+  min-width: 0;
+}
+.shop-category-with-image {
+  grid-template-columns: minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 1.5rem;
+}
+.shop-category-portrait {
+  display: block;
+  width: 88px;
+  height: 116px;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  padding: 0.25rem;
+  background: var(--surface);
+  box-shadow:
+    5px 5px 0 var(--background),
+    6px 6px 0 color-mix(in srgb, var(--text) 16%, transparent);
+}
+.shop-category-portrait img {
+  width: 100%;
+  height: 100%;
+}
+.shop-category-with-image h1 {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+}
+.shop-catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-block: 1.5rem;
+  padding-block: 1rem;
+  border-block: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+.shop-catalog-toolbar .shop-filter-toggle {
+  min-width: 12rem;
+  gap: 1.25rem;
+  border-radius: 4px;
+}
+.shop-results-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.shop-catalog-grid {
+  gap: 1.5rem 1rem;
+}
+.shop-catalog-empty {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 3rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  background: var(--surface);
+  text-align: center;
+  line-height: 1.8;
+}
+.shop-cart-heading {
+  align-items: center;
+}
+.shop-bag-count {
+  color: var(--muted);
+  margin-block-start: 0.5rem;
+  font-size: 0.9rem;
+}
+.shop-summary-jump {
+  min-height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  padding-block: 0.75rem;
+  text-decoration: none;
+}
+.shop-cart-page .shop-cart-layout > section {
+  align-content: start;
+}
+.shop-cart-page .shop-cart-item-body {
+  min-width: 0;
+}
+.shop-cart-page .shop-cart-item-body > a {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+.shop-cart-page .shop-cart-image {
+  padding: 0.2rem;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+}
+.shop-cart-page .shop-cart-controls {
+  gap: 0.75rem;
+}
+.shop-cart-page .shop-cart-controls label {
+  display: grid;
+  gap: 0.35rem;
+}
+.shop-cart-page .shop-order-summary {
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--text) 5%, transparent);
+  scroll-margin-block-start: 7rem;
+}
+.shop-cart-page .shop-order-summary dl > div {
+  gap: 1rem;
+  align-items: baseline;
+}
+.shop-cart-page .shop-order-summary dd {
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+.shop-cart-page .shop-order-summary dl > div:last-child {
+  font-size: 1.3rem;
+  padding-block: 1rem;
+}
+.shop-cart-empty {
+  padding-block: 4rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 55dvh;
+  text-align: center;
+}
+.shop-cart-empty h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+}
+.shop-cart-empty .button {
+  display: inline-flex;
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .shop-category-with-image {
+    grid-template-columns: minmax(0, 1fr) 180px;
+  }
+  .shop-category-portrait {
+    width: 180px;
+    height: 225px;
+  }
+  .shop-catalog-grid {
+    gap: 2rem 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .shop-product-page .shop-product-layout {
+    gap: 3rem;
+  }
+  .shop-cart-page .shop-cart-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+    gap: 3rem;
+  }
+  .shop-cart-page .shop-order-summary {
+    position: sticky;
+    top: 7rem;
+  }
+  .shop-cart-page .shop-cart-item {
+    grid-template-columns: 128px minmax(0, 1fr);
+  }
+  .shop-cart-page .shop-cart-image {
+    width: 128px;
+  }
+  .shop-summary-jump {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shop-product-options .shop-option-group button {
+    transition: none;
+  }
+}
+
+/* Administration keeps records/actions intact; navigation owns its scrolling. */
+.admin {
+  grid-template-columns: 18rem minmax(0, 1fr);
+  background: var(--background);
+}
+.admin-skip {
+  position: absolute;
+  inset-inline-start: 1rem;
+  top: -10rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  color: var(--text);
+}
+.admin-skip:focus {
+  top: 0.5rem;
+}
+.admin .sidebar {
+  display: block;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--text);
+  color: var(--background);
+  padding: 1.5rem 1rem;
+}
+.admin-brand {
+  display: grid;
+  gap: 0.3rem;
+  margin-block-end: 1.5rem;
+  padding-inline: 0.75rem;
+}
+.admin-brand strong {
+  font-size: 1.75rem;
+  font-weight: 500;
+}
+.admin-brand span {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+.admin .sidebar > label {
+  padding-inline: 0.75rem;
+  margin-block-end: 1rem;
+}
+.admin .sidebar select {
+  width: 100%;
+  min-height: 44px;
+}
+.admin-menu-toggle {
+  display: none;
+}
+.admin-nav-search {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  margin: 1rem 0.5rem;
+}
+.admin-nav-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--background) 25%, transparent);
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+}
+.admin-nav-groups > details {
+  border-block-start: 1px solid
+    color-mix(in srgb, var(--background) 15%, transparent);
+  padding-block: 0.5rem;
+}
+.admin-nav-groups summary {
+  min-height: 44px;
+  padding: 0.75rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.admin .sidebar .admin-nav-groups a {
+  white-space: normal;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  margin: 0.15rem 0.25rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  color: inherit;
+  border-radius: 4px;
+}
+.admin .sidebar .admin-nav-groups a:hover {
+  background: color-mix(in srgb, var(--background) 12%, transparent);
+}
+.admin .sidebar .admin-nav-groups a[aria-current="page"] {
+  background: var(--background);
+  color: var(--text);
+  border-inline-start: 3px solid var(--primary);
+}
+.admin-nav-groups > p {
+  padding: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+.admin-workspace {
+  max-width: 1400px;
+  padding: 2rem;
+}
+.admin-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding-block-end: 1.5rem;
+  margin-block-end: 2rem;
+  border-block-end: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+}
+.admin-user {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.admin-user > span {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.admin-user bdi {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.admin-topbar-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  padding-inline: 1rem;
+}
+.admin-dashboard h1,
+.admin-catalog h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 500;
+  margin-block-end: 0.5rem;
+}
+.admin-stat-card {
+  padding: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--text) 4%, transparent);
+}
+.admin-stat-card h2 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.admin-stat-card p {
+  font-size: 2rem;
+  overflow-wrap: anywhere;
+}
+.admin .input,
+.admin input[type="search"],
+.admin select,
+.admin-catalog input {
+  min-height: 44px;
+}
+.admin-catalog .rounded-token {
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: none;
+}
+.admin-catalog th {
+  font-size: 0.8rem;
+  padding-block: 1rem;
+}
+.admin-catalog td {
+  padding-block: 1rem;
+  vertical-align: top;
+}
+.admin-catalog td > a {
+  line-height: 1.8;
+  font-weight: 500;
+}
+.admin-table-empty {
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--muted);
+}
+@media (max-width: 1023px) {
+  .admin {
+    display: block;
+  }
+  .admin .sidebar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(8rem, auto);
+    gap: 0.75rem;
+    position: relative;
+    height: auto;
+    padding: 1rem;
+    overflow: visible;
+  }
+  .admin-brand {
+    margin: 0;
+    align-content: center;
+    padding: 0;
+  }
+  .admin-brand strong {
+    font-size: 1.5rem;
+  }
+  .admin .sidebar > label {
+    margin: 0;
+    padding: 0;
+    font-size: 0.75rem;
+  }
+  .admin-navigation {
+    grid-column: 1/-1;
+  }
+  .admin-menu-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--background) 25%, transparent);
+    border-radius: 4px;
+    color: inherit;
+    font-size: 0.9rem;
+  }
+  .admin-navigation nav[data-open="false"] {
+    display: none;
+  }
+  .admin-navigation nav[data-open="true"] {
+    max-height: 65dvh;
+    overflow-y: auto;
+    padding-block-start: 0.75rem;
+  }
+  .admin-workspace {
+    padding: 1.25rem;
+  }
+  .admin-topbar {
+    gap: 1rem;
+    margin-block-end: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shop-product-page .shop-product-overview { grid-column: 2; grid-row: 1; }
+  .shop-product-page .shop-gallery { grid-column: 1; grid-row: 1 / span 2; position: sticky; top: 7rem; }
+  .shop-product-page .shop-product-information:not(.shop-product-overview) { grid-column: 2; grid-row: 2; }
+}

@@ -1,3 +1,5 @@
+import { db } from "@/lib/db";
+import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { categoryRootId } from "@/modules/catalog/tree";
 import { relevantLookBlocks } from "@/modules/outfits";
@@ -92,27 +94,55 @@ export default async function CategoryPage({
     page: Number(one(query.page) || 1),
     after: one(query.after),
   });
-  const [prices, looks] = await Promise.all([
+  const [prices, looks, categoryMedia] = await Promise.all([
     getDisplayPrices(result.items, market),
     relevantLookBlocks(market.id, {
       categoryId: categoryRootId(facets.categories, category.id) ?? undefined,
     }),
+    category.mediaId
+      ? db.media.findFirst({
+          where: {
+            id: category.mediaId,
+            kind: "image",
+            status: "READY",
+            deletedAt: null,
+          },
+        })
+      : Promise.resolve(null),
   ]);
   const children = facets.categories.filter(
     (item) => item.parentId === category.id,
   );
   return (
     <main
-      className="shell shop-page py-10 md:py-16"
+      className="shell shop-page shop-category-page py-10 md:py-16"
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <header className="shop-category-intro mb-8">
-        <h1 className="text-4xl font-semibold">
-          {catalogText(category.titleI18n, safe)}
-        </h1>
-        <p className="mt-3 max-w-3xl text-muted">
-          {catalogText(category.descriptionI18n, safe)}
-        </p>
+      <nav className="shop-breadcrumbs" aria-label={t("breadcrumbs")}>
+        <Link href={seoPath(safe, market.code)}>{t("home")}</Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{catalogText(category.titleI18n, safe)}</span>
+      </nav>
+      <header
+        className={`shop-category-intro mb-8 ${categoryMedia ? "shop-category-with-image" : ""}`}
+      >
+        <div className="shop-category-copy">
+          <h1 className="text-4xl font-semibold">
+            {catalogText(category.titleI18n, safe)}
+          </h1>
+          <p className="mt-3 max-w-3xl text-muted">
+            {catalogText(category.descriptionI18n, safe)}
+          </p>
+        </div>
+        {categoryMedia && (
+          <ResponsiveImage
+            media={categoryMedia}
+            locale={safe}
+            role="editorial"
+            sizes="(min-width:768px) 180px, 88px"
+            className="shop-category-portrait"
+          />
+        )}
       </header>
       {children.length > 0 && (
         <nav className="shop-subcategories" aria-label={t("filters")}>
@@ -132,38 +162,40 @@ export default async function CategoryPage({
           ))}
         </nav>
       )}
-      <CatalogFilter
-        labels={{
-          filters: t("filters"),
-          brand: t("brand"),
-          color: t("color"),
-          size: t("size"),
-          material: t("material"),
-          minPrice: t("minPrice"),
-          maxPrice: t("maxPrice"),
-          available: t("available"),
-          sort: t("sort"),
-          apply: t("apply"),
-          all: t("all"),
-        }}
-        options={{
-          brands: facets.brands.map((x) => ({
-            id: x.id,
-            label: catalogText(x.nameI18n, safe),
-          })),
-          colors: facets.colors.map((x) => ({
-            id: x.id,
-            label: catalogText(x.nameI18n, safe),
-          })),
-          sizes: facets.sizes.map((x) => ({ id: x.id, label: x.value })),
-          materials: facets.materials,
-        }}
-      />
-      <p className="my-5 text-sm text-muted">
-        {t("results", { count: result.total })}
-      </p>
+      <div className="shop-catalog-toolbar">
+        <CatalogFilter
+          labels={{
+            filters: t("filters"),
+            brand: t("brand"),
+            color: t("color"),
+            size: t("size"),
+            material: t("material"),
+            minPrice: t("minPrice"),
+            maxPrice: t("maxPrice"),
+            available: t("available"),
+            sort: t("sort"),
+            apply: t("apply"),
+            all: t("all"),
+          }}
+          options={{
+            brands: facets.brands.map((x) => ({
+              id: x.id,
+              label: catalogText(x.nameI18n, safe),
+            })),
+            colors: facets.colors.map((x) => ({
+              id: x.id,
+              label: catalogText(x.nameI18n, safe),
+            })),
+            sizes: facets.sizes.map((x) => ({ id: x.id, label: x.value })),
+            materials: facets.materials,
+          }}
+        />
+        <p className="shop-results-count" role="status">
+          {t("results", { count: result.total })}
+        </p>
+      </div>
       {result.items.length ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div className="shop-catalog-grid grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {result.items.map((product) => (
             <ProductCard
               key={product.id}
@@ -174,8 +206,19 @@ export default async function CategoryPage({
           ))}
         </div>
       ) : (
-        <div className="grid min-h-52 place-items-center rounded-token bg-surface text-muted">
-          {t("empty")}
+        <div className="shop-catalog-empty">
+          <p>{t("empty")}</p>
+          <Link
+            className="shop-section-link"
+            href={seoPath(
+              safe,
+              market.code,
+              "c",
+              catalogText(category.slugI18n, safe),
+            )}
+          >
+            {(await getTranslations("shopping"))("reset")}
+          </Link>
         </div>
       )}
       {result.pages > result.page && (

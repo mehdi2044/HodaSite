@@ -1,3 +1,9 @@
+## 2026-10-12 — Phase 05f: product/category/bag/admin continuation
+
+Implemented the four authorized design surfaces in docs/phases/phase-05f.md using the existing merchant theme and real components. Product overview precedes the gallery on mobile; selection precedes description; compact image disclosure preserves the full demo warning. Category gains portrait/breadcrumb/result toolbar/active-filter count/empty recovery. Bag gains count/summary anchor/sticky desktop quote. Admin gains grouped server-permitted links, section search, mobile Escape/focus behavior, topbar and localized catalog labels. No schema, permission, pricing, stock, payment or backup changes.
+
+Matched actual-component before/after fixture QA in FA/TR mobile and EN desktop is recorded in design-qa.md and docs/reviews/phase-05f/. One P2 mobile title overlap was corrected and recaptured. Fixtures do not prove backend commerce. Four navigation unit tests and six real FA/TR/EN E2E cases were added; existing regressions retained. Local full lint and TypeScript pass; the prior full unit run passed 4,121 tests, and the subsequent five demo guard tests pass (14 focused navigation/upgrade/guard cases passed). Playwright discovers all six new cases. Manual check: open a category, apply/reset sorting; select a product size, inspect image disclosure/zoom, add to bag and use summary link; in admin mobile, open the menu, search a section, navigate and press Escape. Switch FA/TR/EN and repeat at desktop width. Current-head CI/review and owner #48/#49/device acceptance remain required. PR57 is merged; PR59's latest review correction c317e6f adds live family/all-active-market preconditions in a serializable transaction before optional demo rewrite, with five regression tests. PR59 still awaits fresh gates and is not claimed merged.
+
 # وضعیت پیشرفت پروژه
 
 ## پیگیری CI صفحهٔ اصلی و ادغام پایه — ۲۰۲۶-۱۰-۱۲ (استانبول)

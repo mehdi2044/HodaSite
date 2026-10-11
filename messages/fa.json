@@ -267,7 +267,7 @@
     "sort": "مرتب‌سازی",
     "apply": "اعمال",
     "all": "همه",
-    "results": "{count} محصول",
+    "results": "{count, number} محصول",
     "loadMore": "نمایش بیشتر",
     "empty": "محصولی با این فیلترها پیدا نشد.",
     "search": "جست‌وجو",
@@ -289,7 +289,8 @@
     "taxExcluded": "مالیات و هزینه‌ها هنگام ثبت سفارش محاسبه می‌شود",
     "inStock": "موجود",
     "lowStock": "موجودی رو به پایان",
-    "outOfStock": "ناموجود"
+    "outOfStock": "ناموجود",
+    "description": "جزئیات محصول"
   },
   "homepage": {
     "empty": "هنوز محتوایی برای صفحهٔ اصلی منتشر نشده است.",
@@ -469,7 +470,8 @@
     "addRow": "افزودن ردیف",
     "variantStock": "موجودی: {onHand} · قابل فروش: {available}",
     "manageStock": "دریافت و مدیریت موجودی",
-    "seoKeywords": "کلیدواژه‌های سئو"
+    "seoKeywords": "کلیدواژه‌های سئو",
+    "emptyList": "محصولی با این فیلترها پیدا نشد."
   },
   "phase03Admin": {
     "amount": "مبلغ",
@@ -1122,7 +1124,19 @@
     "fa": "فارسی",
     "tr": "Türkçe",
     "en": "English",
-    "languageError": "تغییر زبان انجام نشد. دوباره تلاش کنید."
+    "languageError": "تغییر زبان انجام نشد. دوباره تلاش کنید.",
+    "navigation": "ناوبری مدیریت",
+    "searchNavigation": "جست‌وجوی بخش‌های مدیریت",
+    "navigationEmpty": "بخشی با این نام پیدا نشد.",
+    "menu": "منوی مدیریت",
+    "groupOverview": "نمای کلی",
+    "groupCommerce": "سفارش‌ها و مشتریان",
+    "groupCatalog": "کالا و موجودی",
+    "groupContent": "محتوا و ظاهر",
+    "groupFinance": "قیمت‌گذاری و مالی",
+    "groupSettings": "تنظیمات فروشگاه",
+    "groupSystem": "سیستم و دسترسی",
+    "skipContent": "رفتن به محتوای مدیریت"
   },
   "mobileStorefront": {
     "navigation": "دسترسی سریع فروشگاه",
@@ -1183,7 +1197,9 @@
     "collectionPreview": "نگاهی به استایل روزمره",
     "carousel": "گالری پیمایشی",
     "backCollection": "بازگشت به دسته‌بندی",
-    "fullImage": "دیدن تصویر کامل"
+    "fullImage": "دیدن تصویر کامل",
+    "imageDisclosure": "دربارهٔ این تصویر",
+    "itemsCount": "{count, number} کالا"
   },
   "finance": {
     "eyebrow": "امور مالی · گزارش تراکنش‌ها",

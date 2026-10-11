@@ -114,7 +114,11 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();
     await page.locator(".shop-zoom-close").click();
     await expect(page.locator(".shop-gallery-zoom")).not.toBeVisible();
-    await expect(page.locator(".shop-demo-note")).toBeVisible();
+    await expect(
+      page.locator(".shop-gallery-demo-badge").first(),
+    ).toBeVisible();
+    await page.locator(".shop-demo-disclosure summary").click();
+    await expect(page.locator(".shop-demo-disclosure p")).toBeVisible();
     await expect(page.locator(".shop-add-button")).toBeEnabled();
     await page.evaluate(() => scrollTo(0, 0));
     await shoppingProof(page, info, `fashion-product-${locale}`);

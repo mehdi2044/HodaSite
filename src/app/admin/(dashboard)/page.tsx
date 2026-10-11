@@ -1,8 +1,10 @@
 import { auth } from "@/modules/auth";
 import { visibleOrderMarkets } from "@/modules/orders";
 import { db } from "@/lib/db";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 export default async function Dashboard() {
+  const locale = await getLocale();
+  const number = new Intl.NumberFormat(locale);
   const t = await getTranslations("commerce"),
     ids = await visibleOrderMarkets((await auth())?.user?.id ?? ""),
     today = new Date();
@@ -21,28 +23,30 @@ export default async function Dashboard() {
     }),
   ]);
   return (
-    <section className="grid gap-6">
+    <section className="admin-dashboard grid gap-6">
       <h1 className="text-2xl font-semibold">{t("dashboard")}</h1>
       <div className="grid gap-5 md:grid-cols-3">
-        <article className="card">
+        <article className="card admin-stat-card">
           <h2>{t("todaySales")}</h2>
           {sales.length ? (
             sales.map((s) => (
               <p className="mt-4 text-2xl font-semibold" key={s.currency}>
-                {s._sum.totalAmount?.toString()} {s.currency}
+                <bdi dir="ltr">
+                  {s._sum.totalAmount?.toString()} {s.currency}
+                </bdi>
               </p>
             ))
           ) : (
-            <p className="mt-4 text-2xl">0</p>
+            <p className="mt-4 text-2xl">{number.format(0)}</p>
           )}
         </article>
-        <article className="card">
+        <article className="card admin-stat-card">
           <h2>{t("pendingReviews")}</h2>
-          <p className="mt-4 text-2xl">{pending}</p>
+          <p className="mt-4 text-2xl">{number.format(pending)}</p>
         </article>
-        <article className="card">
+        <article className="card admin-stat-card">
           <h2>{t("todayOrders")}</h2>
-          <p className="mt-4 text-2xl">{orders}</p>
+          <p className="mt-4 text-2xl">{number.format(orders)}</p>
         </article>
       </div>
     </section>

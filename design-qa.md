@@ -1,3 +1,41 @@
+# Phase 05f — storefront and admin continuation visual QA
+
+Date: 2026-10-12 (Istanbul). Target: extend the current merchant theme in actual product/category/bag/admin components. Source: their preceding implementation on PR59, rendered with the same fixture catalog and quote. No external reference image. Scope: the four requested surfaces, not final owner approval for all storefront/admin pages.
+
+Final result: passed for the inspected visual fixture scope. PostgreSQL-backed acceptance and current-head CI/review remain pending on the design PR.
+
+## Matched comparison and evidence
+
+Each combined screenshot labels source (left) and implementation (right). FA/TR frames use 390 × 844 CSS px at scale 1; EN frames use 1280 × 900 CSS px, equally scaled to 620px on the comparison canvas. Device density is identical between sides. Browser scrollbar leaves 375/1265px usable document width. Combined captures are 1363 × 936px except category-fa-mobile.jpg (812 × 920px). All files are in docs/reviews/phase-05f/.
+
+| Surface | Mobile evidence | Desktop evidence |
+| --- | --- | --- |
+| Product | product-fa-mobile.jpg, product-tr-mobile.jpg, product-tr-selection.jpg | product-en-desktop.jpg |
+| Category | category-fa-mobile.jpg, category-tr-mobile.jpg | category-en-desktop.jpg |
+| Bag | cart-fa-mobile.jpg, cart-tr-mobile.jpg | cart-en-desktop.jpg |
+| Admin | admin-fa-mobile.jpg, admin-tr-mobile.jpg | admin-en-desktop.jpg |
+
+The same real async pages and child components generated both sides. Existing imagery/font files, merchant tokens, localized copy and a coherent exact quote are used. Gallery/options/filter/admin-navigation clients are hydrated from their actual component implementations. Temporary mocks replace DB/auth/SEO/provider/action boundaries; commerce actions reject rather than invent a purchase. Header, wishlist and prepared-look modules are omitted/mocked on both sides. Preview rows are illustrative merchandise, not live stock or prices. Admin fixture identity is owner@example.com; no real customer data.
+
+## Observations and iteration
+
+- Product keeps framed imagery, real color/size/stock controls, zoom and fixed mobile purchase action. Title/price appear before imagery on mobile, and beside imagery on desktop. Description follows selection. The short demo badge remains visible; the complete image disclosure is expandable. Existing fonts/colors and merchant copy are preserved.
+- Category adds canonical breadcrumb and existing category portrait, a horizontal result/filter toolbar, count of active URL filters, and reset navigation for an empty result. Existing product grid and imagery remain; no broken final images or horizontal document overflow were observed.
+- Bag retains original amounts, quote lines, quantity/removal and coupon controls. Item count and mobile summary anchor are visible; desktop summary is sticky at 112px. The same quote supplies source and implementation.
+- Admin replaces the overflowing flat link rail with a grouped sidebar, section search and mobile in-flow disclosure. Identity/alerts/sign-out sit in the topbar. Real page count/money data are formatted without new calculations. Product table locale/labels and empty state are explicit; permission predicates are unchanged.
+
+P2 found in the first product mobile comparison: the fixed purchase action covered the title because overview followed the long gallery. Resolved by moving the actual overview before the gallery in DOM, with desktop grid placement retained. Initial evidence is product-fa-mobile-initial.jpg; product-fa-mobile.jpg is the rechecked final. The final title/price are visible above the photograph and keyboard-focusable selection controls remain reachable. No actionable P0/P1/P2 visual finding remains in the inspected scope.
+
+## Interaction checks and limits
+
+Browser: product zoom opens/closes with Escape; full demo disclosure expands; keyboard focus reaches size selection. Filter sheet opens, price-ascending selection applies, closes and shows localized active count. Admin mobile menu opens; section search filters only supplied destinations; Escape closes and returns focus to the toggle. All four final frames contain their document widths. FA RTL, TR labels and EN desktop were inspected. Final image checks report zero missing/unloaded images; captures made before loading were replaced. Console inspection found extension metadata errors only, with no application error.
+
+Native reduced-motion handling and 44px targets are retained in CSS. Actual route/locale changes, real cart writes/quote navigation, permissions and financial/backup regressions are not proven by this fixture. Six new FA/TR/EN E2E cases cover category sort/reset, product overview/selection/disclosure/zoom/add-to-bag/summary and admin locale/menu/search/active route/Escape. Existing gallery/color/size and auth/commerce suites remain required in CI. Local PostgreSQL is unavailable.
+
+Local TypeScript/lint and unit results are recorded on the design PR. Full owner visual acceptance (#48/#49), physical-device testing, merchant photography and production release remain separate.
+
+---
+
 # Department shelves — visual QA (2026-10-12, Istanbul)
 
 final result: passed

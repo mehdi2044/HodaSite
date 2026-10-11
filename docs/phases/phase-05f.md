@@ -1,0 +1,17 @@
+# Phase 05f — Product, category, bag and admin design continuation
+
+Owner authorized merging the prior delivery and continuing all four surfaces in order on 2026-10-12 (Istanbul). Extend the existing merchant theme and real page/components; preserve commerce contracts and permissions. This is a design implementation, not final owner approval or production release acceptance.
+
+## Scope and acceptance
+
+- Product: keep real color/size/stock/price selection, gallery/zoom and mobile purchase button. Put description after selection, retain explicit demo-image disclosure in a compact expandable section, and use coherent framed imagery/details/purchase spacing. Verify variant/media/price changes and adding to the real bag.
+- Category: canonical breadcrumb, existing category media in a framed intro, readable result/filter toolbar, active-filter count and recoverable empty result. Preserve URL query filtering/sorting/reset/pagination and market/locale navigation.
+- Bag: item count, mobile anchor to the real summary, clearer image/quantity controls, exact existing quote/discount/fee/coupon lines, desktop sticky summary and themed empty state. Preserve mismatch/requote, quantity/remove and checkout paths.
+- Admin: group the existing server-supplied links, label the most specific active route, search those visible sections only, and offer an in-flow mobile menu with Escape/focus return. All old server permission predicates remain. Move identity/sign-out/alerts to a readable topbar and style current KPI/table/form surfaces. Product names follow the selected admin locale; empty product results are explicit.
+- FA/TR/EN, 390/1280px, real keyboard/touch targets, document containment and native reduced-motion behavior. DB UI overrides continue to override base messages; no merchant copy or settings writes.
+
+## Constraints and evidence
+
+No schema, auth, payment, pricing, stock, provider or backup contract changes. No new analytics/KPI calculations, global record-search service or fictional shopping state. The navigation search is explicitly for admin sections. UI integration changes go through a new branch/PR; no direct main pushes. Local checks and current-head CI/review evidence belong on that PR.
+
+Capture before/after renders at matched viewports using actual components. Fixture QA proves layout/control behavior only; PostgreSQL-backed navigation, commerce, permission and backup regressions run in CI. Owner visual acceptance (#48/#49), physical-device acceptance, merchant photography and production rollout remain separate.

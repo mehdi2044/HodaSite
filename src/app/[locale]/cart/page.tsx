@@ -27,10 +27,10 @@ export default async function CartPage({
     { market } = await getRequestContext(locale);
   if (!cart?.items.length)
     return (
-      <main className="shell shop-empty py-12">
+      <main className="shell shop-empty shop-cart-empty py-12">
         <h1 className="text-3xl font-semibold">{t("cart")}</h1>
         <p className="my-6 text-muted">{t("empty")}</p>
-        <Link className="button" href={`/${locale}`}>
+        <Link className="button" href={seoPath(locale, market.code)}>
           {t("continueShopping")}
         </Link>
       </main>
@@ -51,13 +51,27 @@ export default async function CartPage({
     cart.checkout,
   ).catch(() => null);
   return (
-    <main className="shell shop-page grid gap-8 py-10">
+    <main
+      className="shell shop-page shop-cart-page grid gap-8 py-10"
+      dir={locale === "fa" ? "rtl" : "ltr"}
+    >
       <header className="shop-cart-heading">
-        <h1 className="text-3xl font-semibold">{t("cart")}</h1>
+        <div>
+          <h1 className="text-3xl font-semibold">{t("cart")}</h1>
+          <p className="shop-bag-count">
+            {shopping("itemsCount", {
+              count: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+            })}
+          </p>
+        </div>
         <Link className="shop-back-link" href={`/${locale}/search`}>
           {t("continueShopping")} ↗
         </Link>
       </header>
+      <a className="shop-summary-jump" href="#cart-summary">
+        {shopping("summary")}
+        <span aria-hidden="true">↓</span>
+      </a>
       {mismatch && (
         <section className="rounded-token border border-warning p-5">
           <p>{t("marketWarning")}</p>
@@ -66,7 +80,7 @@ export default async function CartPage({
           </CommerceForm>
         </section>
       )}
-      <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
+      <div className="shop-cart-layout grid gap-8 lg:grid-cols-[1fr_22rem]">
         <section className="grid gap-4">
           {cart.items.map((item) => (
             <article
@@ -77,7 +91,7 @@ export default async function CartPage({
                 <ResponsiveImage
                   media={images.get(item.variantId)!}
                   locale={locale as "fa" | "tr" | "en"}
-                  sizes="96px"
+                  sizes="(min-width:1024px) 128px,96px"
                   role="thumbnail"
                   className="shop-cart-image"
                 />
@@ -163,8 +177,14 @@ export default async function CartPage({
             </article>
           ))}
         </section>
-        <aside className="shop-order-summary h-fit rounded-token bg-surface p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-semibold">{shopping("summary")}</h2>
+        <aside
+          id="cart-summary"
+          aria-labelledby="cart-summary-title"
+          className="shop-order-summary h-fit rounded-token bg-surface p-6 shadow-sm"
+        >
+          <h2 id="cart-summary-title" className="mb-5 text-xl font-semibold">
+            {shopping("summary")}
+          </h2>
           {quote ? (
             <>
               <dl className="grid gap-3">

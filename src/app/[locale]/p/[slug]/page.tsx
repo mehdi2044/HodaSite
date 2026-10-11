@@ -212,7 +212,7 @@ export default async function ProductPage({
     { columns?: string[]; rows?: string[][] } | undefined;
   return (
     <main
-      className="shell shop-page py-10 md:py-16"
+      className="shell shop-page shop-product-page py-10 md:py-16"
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
       <script
@@ -253,21 +253,7 @@ export default async function ProductPage({
         <span>{catalogText(product.titleI18n, safe)}</span>
       </nav>
       <div className="shop-product-layout grid gap-10 lg:grid-cols-2">
-        <ProductGallery
-          base={product.media.map((item) => ({
-            id: item.id,
-            media: item.media,
-          }))}
-          variants={product.variants.map((variant) => ({
-            colorId: variant.colorId,
-            media: variant.media.map((item) => ({
-              id: item.id,
-              media: item.media,
-            })),
-          }))}
-          locale={safe}
-        />
-        <section className="shop-product-information">
+        <section className="shop-product-information shop-product-overview">
           <p className="shop-eyebrow text-sm text-muted">
             {product.brand ? catalogText(product.brand.nameI18n, safe) : ""}
           </p>
@@ -301,10 +287,23 @@ export default async function ProductPage({
               </span>
             )}
           </div>
-          <p className="my-7 whitespace-pre-wrap leading-8 text-muted">
-            {catalogText(product.descriptionI18n, safe)}
-          </p>
-          <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl">
+        </section>
+        <ProductGallery
+          base={product.media.map((item) => ({
+            id: item.id,
+            media: item.media,
+          }))}
+          variants={product.variants.map((variant) => ({
+            colorId: variant.colorId,
+            media: variant.media.map((item) => ({
+              id: item.id,
+              media: item.media,
+            })),
+          }))}
+          locale={safe}
+        />
+        <section className="shop-product-information">
+          <div className="storefront-purchase shop-purchase-panel sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl">
             <ProductOptions
               variants={product.variants.map((v) => ({
                 id: v.id,
@@ -344,6 +343,14 @@ export default async function ProductPage({
               basePrice={formatStorefrontAmount(amount, currency, safe)}
             />
           </div>
+          <details className="shop-product-details mt-7 border-t pt-5" open>
+            <summary className="cursor-pointer font-medium">
+              {t("description")}
+            </summary>
+            <p className="mt-3 whitespace-pre-wrap leading-8 text-muted">
+              {catalogText(product.descriptionI18n, safe)}
+            </p>
+          </details>
           <details className="mt-7 border-t pt-5">
             <summary className="cursor-pointer font-medium">
               {t("sizeGuide")}

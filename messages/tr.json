@@ -267,7 +267,7 @@
     "sort": "Sıralama",
     "apply": "Uygula",
     "all": "Tümü",
-    "results": "{count} ürün",
+    "results": "{count, number} ürün",
     "loadMore": "Daha fazla göster",
     "empty": "Bu filtrelerle ürün bulunamadı.",
     "search": "Ara",
@@ -289,7 +289,8 @@
     "taxExcluded": "Vergi ve ücretler ödeme sırasında hesaplanır",
     "inStock": "Stokta",
     "lowStock": "Son ürünler",
-    "outOfStock": "Stokta yok"
+    "outOfStock": "Stokta yok",
+    "description": "Ürün detayları"
   },
   "homepage": {
     "empty": "Ana sayfa içeriği henüz yayımlanmadı.",
@@ -469,7 +470,8 @@
     "addRow": "Satır ekle",
     "variantStock": "Stok: {onHand} · Satılabilir: {available}",
     "manageStock": "Stok al ve yönet",
-    "seoKeywords": "SEO anahtar kelimeleri"
+    "seoKeywords": "SEO anahtar kelimeleri",
+    "emptyList": "Bu filtrelerle ürün bulunamadı."
   },
   "phase03Admin": {
     "amount": "Tutar",
@@ -1122,7 +1124,19 @@
     "fa": "فارسی",
     "tr": "Türkçe",
     "en": "English",
-    "languageError": "Dil değiştirilemedi. Tekrar deneyin."
+    "languageError": "Dil değiştirilemedi. Tekrar deneyin.",
+    "navigation": "Yönetim gezinmesi",
+    "searchNavigation": "Yönetim bölümlerinde ara",
+    "navigationEmpty": "Bu adla bir bölüm bulunamadı.",
+    "menu": "Yönetim menüsü",
+    "groupOverview": "Genel bakış",
+    "groupCommerce": "Siparişler ve müşteriler",
+    "groupCatalog": "Ürünler ve stok",
+    "groupContent": "İçerik ve tasarım",
+    "groupFinance": "Fiyatlandırma ve finans",
+    "groupSettings": "Mağaza ayarları",
+    "groupSystem": "Sistem ve erişim",
+    "skipContent": "Yönetim içeriğine geç"
   },
   "mobileStorefront": {
     "navigation": "Mağaza kısayolları",
@@ -1183,7 +1197,9 @@
     "collectionPreview": "Günlük stile bir bakış",
     "carousel": "Kayan galeri",
     "backCollection": "Kategoriye dön",
-    "fullImage": "Tam görseli aç"
+    "fullImage": "Tam görseli aç",
+    "imageDisclosure": "Bu görsel hakkında",
+    "itemsCount": "{count, number} ürün"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",
