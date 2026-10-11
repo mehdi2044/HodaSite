@@ -72,9 +72,9 @@ export const openAiFittingProvider: FittingProvider = {
     if (!response.ok) {
       // Releasing an error body must not change the already-known HTTP outcome.
       await response.body?.cancel().catch(() => {});
-      throw new ProviderFailure(
-        response.status >= 400 && response.status < 500,
-      );
+      // A received rejection cannot deliver an image. Refund service units,
+      // including 5xx outcomes; transport failures without a response stay uncertain.
+      throw new ProviderFailure(true);
     }
     const reader = response.body?.getReader();
     if (!reader) throw new ProviderFailure(true);

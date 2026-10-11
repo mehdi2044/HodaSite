@@ -14,7 +14,11 @@ import {
 
 const state = vi.hoisted(() => ({
   customerId: "",
+  actorId: "",
   cookies: new Map<string, string>(),
+}));
+vi.mock("@/modules/auth", () => ({
+  auth: async () => (state.actorId ? { user: { id: state.actorId } } : null),
 }));
 vi.mock("next/headers", () => ({
   headers: async () => new Headers(),
@@ -53,6 +57,8 @@ import {
   revokeReturnedCoins,
 } from "@/modules/fitting/ledger";
 import { returnFixture } from "../helpers/returns";
+import { saveFittingSettings } from "@/modules/fitting/settings";
+import { transactionBarrier } from "../helpers/transaction-barrier";
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "cancelled exchange coin entitlement: PostgreSQL",
@@ -75,6 +81,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     beforeEach(async () => {
       state.cookies.clear();
+      state.actorId = ownerId;
       const config = configSchema.parse({
         enabled: true,
         coinSalesEnabled: true,
@@ -166,7 +173,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         include: { items: true },
       });
     }
-    async function actualPackSale() {
+    async function actualPackSale(
+      options: { approve?: boolean; pack?: boolean } = {},
+    ) {
       const customer = await db.customer.create({
         data: { email: `pack-${randomUUID()}@example.com`, isGuest: false },
       });
@@ -176,7 +185,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         quantity: 1,
         price: "100",
         replacementPrice: "200",
-        coinPackCoins: "100",
+        coinPackCoins: options.pack === false ? undefined : "100",
       });
       // The return-only helper does not publish its fixture in any market.
       // This sale must pass the same public eligibility checks as checkout.
@@ -233,17 +242,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         "fixture",
         "test",
       );
-      await approvePayment(order.id, ownerId);
-      await approvePayment(order.id, ownerId);
-      expect((await walletView(f.customer.id)).balance).toBe("100");
-      await db.$transaction(async (tx) => {
-        for (const [from, to] of [
-          ["PAID", "PROCESSING"],
-          ["PROCESSING", "SHIPPED"],
-          ["SHIPPED", "DELIVERED"],
-        ] as const)
-          await transition(tx, { id: order.id, status: from }, to, ownerId);
-      });
+      if (options.approve !== false) {
+        await approvePayment(order.id, ownerId);
+        await approvePayment(order.id, ownerId);
+        expect((await walletView(f.customer.id)).balance).toBe(
+          options.pack === false ? "25" : "100",
+        );
+        await db.$transaction(async (tx) => {
+          for (const [from, to] of [
+            ["PAID", "PROCESSING"],
+            ["PROCESSING", "SHIPPED"],
+            ["SHIPPED", "DELIVERED"],
+          ] as const)
+            await transition(tx, { id: order.id, status: from }, to, ownerId);
+        });
+      }
       return {
         ...f,
         order: await db.order.findUniqueOrThrow({
@@ -252,6 +265,104 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       };
     }
+    it.each(
+      (["disable", "ratio"] as const).flatMap((change) =>
+        (["settings", "payment"] as const).map(
+          (first) => [change, first] as const,
+        ),
+      ),
+    )(
+      "serializes %s settings and real payment approval with %s first",
+      async (change, first) => {
+        const f = await actualPackSale({ approve: false, pack: false });
+        const old = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const config = configSchema.parse(old.config);
+        const save = () =>
+          saveFittingSettings({
+            config: {
+              ...config,
+              enabled: change !== "disable",
+              rewards: [
+                {
+                  marketId,
+                  spendAmount: "100",
+                  coins: change === "ratio" ? "10" : "25",
+                },
+              ],
+            },
+            version: old.updatedAt.toISOString(),
+            confirm: true,
+          });
+        const barrier = transactionBarrier(
+          db,
+          "integration",
+          first === "settings" ? "upsert" : "findUnique",
+          (raw) => {
+            const input = raw as { where?: { key?: string } };
+            return input.where?.key === "fitting-room";
+          },
+        );
+        let saving: ReturnType<typeof save> | undefined,
+          approving: ReturnType<typeof approvePayment> | undefined;
+        try {
+          if (first === "settings") saving = save();
+          else approving = approvePayment(f.order.id, ownerId);
+          await Promise.race([
+            barrier.entered,
+            (saving ?? approving)!.then(() => {
+              throw Error("operation missed barrier");
+            }),
+          ]);
+          if (first === "settings")
+            approving = approvePayment(f.order.id, ownerId);
+          else saving = save();
+          await vi.waitFor(async () => {
+            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            expect(row.blocked).toBe(true);
+          });
+          barrier.release();
+          await Promise.all([saving, approving]);
+          const expected =
+            first === "payment" ? "25" : change === "ratio" ? "10" : "0";
+          expect(
+            (await db.order.findUniqueOrThrow({ where: { id: f.order.id } }))
+              .status,
+          ).toBe("PAID");
+          expect((await walletView(f.customer.id)).balance).toBe(expected);
+          await approvePayment(f.order.id, ownerId);
+          expect((await walletView(f.customer.id)).balance).toBe(expected);
+          const grant = await db.fittingCoinGrant.findUnique({
+            where: {
+              customerId_sourceKey: {
+                customerId: f.customer.id,
+                sourceKey: `reward:${f.order.id}`,
+              },
+            },
+          });
+          if (expected === "0") expect(grant).toBeNull();
+          else {
+            expect(grant?.amount.toString()).toBe(expected);
+            expect(grant?.ruleSnapshot).toMatchObject({
+              coins: expected,
+              eligibleNetSpend: "100",
+            });
+          }
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: f.customer.id, reason: "PURCHASE" },
+            }),
+          ).toBe(expected === "0" ? 0 : 1);
+        } finally {
+          barrier.release();
+          await Promise.allSettled([saving, approving]);
+          barrier.restore();
+        }
+      },
+    );
     it.each([false, true])(
       "actual checkout/payment and repeated manual cancellation; spent=%s",
       async (spent) => {

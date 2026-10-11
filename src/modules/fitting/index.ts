@@ -43,6 +43,8 @@ export async function walletView(customerId: string) {
   return withMutation(() =>
     db.$transaction(async (tx) => {
       await requireCustomer(tx, customerId);
+      // Welcome/daily grants use the same Integration → wallet order as payment rewards.
+      await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
       await lockWallet(tx, customerId);
       const c = await readConfig(tx);
       if (c.enabled) await allowances(tx, customerId, c, new Date());

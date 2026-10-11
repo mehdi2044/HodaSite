@@ -1015,6 +1015,77 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(copy.variants).toHaveLength(source.variants.length);
       },
     );
+    it.each(
+      (["disable", "welcome"] as const).flatMap((change) =>
+        (["settings", "wallet"] as const).map(
+          (first) => [change, first] as const,
+        ),
+      ),
+    )(
+      "serializes %s settings and welcome grants with %s first",
+      async (change, first) => {
+        await configure({ welcomeCoins: "100" });
+        const c = await customer("0");
+        const old = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        });
+        const config = configSchema.parse(old.config);
+        const save = () =>
+          saveFittingSettings({
+            config: {
+              ...config,
+              enabled: change !== "disable",
+              welcomeCoins: change === "welcome" ? "50" : "100",
+            },
+            version: old.updatedAt.toISOString(),
+            confirm: true,
+          });
+        const barrier = transactionBarrier(
+          db,
+          "integration",
+          first === "settings" ? "upsert" : "findUnique",
+          (raw) => {
+            const input = raw as { where?: { key?: string } };
+            return input.where?.key === "fitting-room";
+          },
+        );
+        let saving: ReturnType<typeof save> | undefined,
+          viewing: ReturnType<typeof walletView> | undefined;
+        try {
+          if (first === "settings") saving = save();
+          else viewing = walletView(c.id);
+          await Promise.race([
+            barrier.entered,
+            (saving ?? viewing)!.then(() => {
+              throw Error("operation missed barrier");
+            }),
+          ]);
+          if (first === "settings") viewing = walletView(c.id);
+          else saving = save();
+          await vi.waitFor(async () => {
+            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+              SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked
+            `;
+            expect(row.blocked).toBe(true);
+          });
+          barrier.release();
+          await Promise.all([saving, viewing]);
+          const expected =
+            first === "wallet" ? "100" : change === "welcome" ? "50" : "0";
+          expect((await viewing!).balance).toBe(expected);
+          expect((await walletView(c.id)).balance).toBe(expected);
+          expect(
+            await db.fittingCoinEntry.count({
+              where: { customerId: c.id, reason: "WELCOME" },
+            }),
+          ).toBe(expected === "0" ? 0 : 1);
+        } finally {
+          barrier.release();
+          await Promise.allSettled([saving, viewing]);
+          barrier.restore();
+        }
+      },
+    );
     it("does not grant welcome/daily credit while disabled", async () => {
       await configure({
         enabled: false,

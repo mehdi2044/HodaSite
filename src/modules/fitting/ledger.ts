@@ -341,6 +341,8 @@ export async function creditPaidOrder(
     include: { items: true, fees: true, promotionEvaluation: true },
   });
   if (!order.paidAt || order.kind !== "SALE") return;
+  // Settings writers must serialize before the config read and wallet grant.
+  await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
   const config = await readConfig(tx);
   if (
     !config.enabled &&

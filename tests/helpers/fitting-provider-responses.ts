@@ -1,5 +1,9 @@
 /** Unusable responses after a single completed HTTP dispatch; no network or paid service. */
 export const unusableFittingResponses = [
+  ...([500, 502, 503, 504] as const).map((status) => ({
+    name: `received HTTP ${status}`,
+    response: () => new Response("provider rejected request", { status }),
+  })),
   { name: "malformed JSON", response: () => new Response("{") },
   { name: "missing image", response: () => new Response("{}") },
   {

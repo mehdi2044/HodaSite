@@ -85,7 +85,7 @@ describe("fitting provider request boundary", () => {
   it.each([
     [400, true],
     [429, true],
-    [500, false],
+    [500, true],
   ] as const)(
     "classifies HTTP %i without retry",
     async (status, definitive) => {
