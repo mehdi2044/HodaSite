@@ -900,6 +900,77 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("audits exact coin entitlement from creation through repeated edits and garment reclassification", async () => {
+      state.actor = ownerId;
+      const marker = randomUUID();
+      const template = await db.variant.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee-m" },
+        include: { product: true },
+      });
+      const form = new FormData();
+      for (const suffix of ["Fa", "Tr", "En"]) {
+        form.set(`title${suffix}`, "Entitlement audit fixture");
+        form.set(`description${suffix}`, "Entitlement audit fixture");
+        form.set(`slug${suffix}`, marker);
+      }
+      form.set("categoryId", template.product.categoryId);
+      form.set("gender", template.product.gender);
+      form.set("status", "DRAFT");
+      form.set("basePriceAmount", "1.0001");
+      form.set("weightGrams", "100");
+      form.set("marketIds", marketId);
+      const variant = {
+        colorId: template.colorId,
+        sizeId: template.sizeId,
+        sku: `AUDIT-${marker}`.toUpperCase(),
+      };
+      form.set("variants", JSON.stringify([variant]));
+      const values = ["100.0001", "250.1251", "1000.0001", null];
+      let productId = "";
+      try {
+        for (const [index, value] of values.entries()) {
+          form.set("coinPackCoins", value ?? "");
+          form.set("fittingSlot", value === null ? "TOP" : "");
+          expect(await saveProduct(null, form)).toEqual({ ok: true });
+          const product = await db.product.findFirstOrThrow({
+            where: { slugI18n: { path: ["en"], equals: marker } },
+            include: { variants: true },
+          });
+          productId = product.id;
+          form.set("id", productId);
+          form.set(
+            "variants",
+            JSON.stringify([{ ...variant, id: product.variants[0].id }]),
+          );
+          const audits = await db.auditLog.findMany({
+            where: { entityType: "Product", entityId: productId },
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          });
+          expect(audits).toHaveLength(index + 1);
+          expect(
+            audits.map(
+              (a) => (a.after as Record<string, unknown>).coinPackCoins,
+            ),
+          ).toEqual(values.slice(0, index + 1));
+          expect(audits[index].after).toMatchObject({
+            coinPackCoins: value,
+            fittingSlot: value === null ? "TOP" : null,
+            basePriceAmount: "1.0001",
+          });
+          if (index > 0)
+            expect(audits[index].before).toMatchObject({
+              coinPackCoins: values[index - 1],
+              fittingSlot: null,
+            });
+          else expect(audits[index].before).toBeNull();
+        }
+      } finally {
+        if (productId) {
+          await db.variant.deleteMany({ where: { productId } });
+          await db.product.delete({ where: { id: productId } });
+        }
+      }
+    });
     it.each(["seed-fitting-pack-100", "seed-style-v2-women-tee"])(
       "preserves fitting metadata when the admin duplicates %s",
       async (sourceId) => {
@@ -928,6 +999,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(copy.coinPackCoins?.toString() ?? null).toBe(
           source.coinPackCoins?.toString() ?? null,
         );
+        expect(audit.after).toMatchObject({
+          coinPackCoins: copy.coinPackCoins?.toString() ?? null,
+          fittingSlot: copy.fittingSlot,
+        });
         expect(copy.variants).toHaveLength(source.variants.length);
       },
     );

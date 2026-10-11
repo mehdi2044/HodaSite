@@ -5,7 +5,7 @@ import Decimal from "decimal.js";
 import Link from "next/link";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import { CommerceForm, type CommerceResult } from "./commerce-form";
-import { formatCatalogCurrency } from "@/modules/catalog/format";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import type { PreparedLookView } from "@/modules/outfits/types";
 
 export type StudioLabels = Record<
@@ -127,7 +127,7 @@ function LookSelection({
     new Decimal(0),
   );
   const format = (amount: string) =>
-    formatCatalogCurrency(amount, currency, locale);
+    formatStorefrontAmount(amount, currency, locale);
   return (
     <div className="look-layout">
       <div className="look-visual">

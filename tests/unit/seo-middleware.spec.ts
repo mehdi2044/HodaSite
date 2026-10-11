@@ -63,6 +63,8 @@ describe("SEO routing transport boundaries", () => {
     ["next-router-prefetch", "1"],
     ["purpose", "prefetch"],
     ["sec-purpose", "prefetch;prerender"],
+    ["sec-fetch-dest", "empty"],
+    ["next-url", "/en/fitting-room"],
   ])(
     "never changes the chosen market during background prefetch: %j",
     async (name, value) => {
@@ -86,6 +88,14 @@ describe("SEO routing transport boundaries", () => {
       }
     },
   );
+  it("persists a foreground document's canonical market after a conflicting choice", async () => {
+    const response = await invoke(
+      new NextRequest("http://127.0.0.1:3000/fa/m/IR/p/dress", {
+        headers: { cookie: "market=TR", "sec-fetch-dest": "document" },
+      }),
+    );
+    expect(response.headers.get("set-cookie")).toContain("market=IR;");
+  });
   it("keeps explicit-market redirects on the same origin for PWA starts without cookies", async () => {
     const response = await invoke(
       new NextRequest("http://127.0.0.1:3000/en?market=TR"),

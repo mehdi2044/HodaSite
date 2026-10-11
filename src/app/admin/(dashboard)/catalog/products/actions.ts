@@ -96,7 +96,6 @@ export async function saveProduct(
         const classification = input.id
           ? await tx.product.findUniqueOrThrow({
               where: { id: input.id },
-              select: { coinPackCoins: true },
             })
           : null;
         const scalar = {
@@ -235,10 +234,12 @@ export async function saveProduct(
               : "catalog.product.create",
             entityType: "Product",
             entityId: product.id,
-            before: current as object | undefined,
+            before: classification as object | undefined,
             after: {
               status: product.status,
               basePriceAmount: product.basePriceAmount.toString(),
+              coinPackCoins: product.coinPackCoins?.toString() ?? null,
+              fittingSlot: product.fittingSlot,
             },
           },
         });
@@ -480,7 +481,12 @@ export async function duplicateProduct(
             entityType: "Product",
             entityId: created.id,
             before: { sourceId: source.id },
-            after: { status: "DRAFT" },
+            after: {
+              status: "DRAFT",
+              basePriceAmount: created.basePriceAmount.toString(),
+              coinPackCoins: created.coinPackCoins?.toString() ?? null,
+              fittingSlot: created.fittingSlot,
+            },
           },
         });
         return created;

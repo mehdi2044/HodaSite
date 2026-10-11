@@ -7,6 +7,32 @@ import { tokenHash } from "../../src/lib/secure-tokens";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
 
+test("canonical RSC prefetch preserves an explicit market even when Flight headers are stripped", async ({
+  page,
+  context,
+}) => {
+  await ensureMaintenanceOff(page.request);
+  await context.addCookies([
+    { name: "market", value: "TR", url: "http://127.0.0.1:3000" },
+  ]);
+  const response = await page.request.get("/en/m/CA/c/women", {
+    headers: {
+      "next-router-prefetch": "1",
+      rsc: "1",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "next-url": "/en/fitting-room",
+    },
+  });
+  expect(response.status()).toBe(200);
+  expect(response.headers()["set-cookie"] ?? "").not.toMatch(
+    /(?:^|[;,]\s*)market=/,
+  );
+  expect(
+    (await context.cookies()).find((c) => c.name === "market")?.value,
+  ).toBe("TR");
+});
+
 test("canonical cart link refreshes the header and engagement market context", async ({
   page,
   context,

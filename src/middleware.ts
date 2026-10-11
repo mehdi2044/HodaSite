@@ -234,11 +234,16 @@ async function applicationMiddleware(req: NextAuthRequest) {
     return NextResponse.next({ request: { headers: req.headers } });
   }
 
-  // Background prefetches must never change a shopper's chosen market.
-  const isPrefetch =
+  // Next's middleware adapter strips Flight headers, including
+  // next-router-prefetch. Browser fetch metadata survives: RSC/prefetch/action
+  // responses must not overwrite an explicit choice made while they were in
+  // flight. Active canonical client navigation is synchronized by the header.
+  const isBackgroundRequest =
     req.headers.has("next-router-prefetch") ||
     req.headers.get("purpose") === "prefetch" ||
-    req.headers.get("sec-purpose")?.includes("prefetch") === true;
+    req.headers.get("sec-purpose")?.includes("prefetch") === true ||
+    req.headers.get("sec-fetch-dest") === "empty" ||
+    req.headers.has("next-url");
 
   // --- Everything else: storefront ---
   const canonical = parseSeoPath(pathname);
@@ -294,7 +299,7 @@ async function applicationMiddleware(req: NextAuthRequest) {
       const response = NextResponse.rewrite(target, {
         request: { headers: requestHeaders },
       });
-      if (!isPrefetch)
+      if (!isBackgroundRequest)
         response.cookies.set("market", market.code, {
           path: "/",
           maxAge: MARKET_COOKIE_MAX_AGE,
@@ -331,7 +336,7 @@ async function applicationMiddleware(req: NextAuthRequest) {
           pathname.replace(`/${urlLocale}`, `/${market.defaultLocale}`) ||
           `/${market.defaultLocale}`;
         const redirectRes = NextResponse.redirect(url);
-        if (!isPrefetch)
+        if (!isBackgroundRequest)
           redirectRes.cookies.set("market", market.code, {
             path: "/",
             maxAge: MARKET_COOKIE_MAX_AGE,
@@ -339,7 +344,7 @@ async function applicationMiddleware(req: NextAuthRequest) {
         return redirectRes;
       }
       const res = intlMiddleware(req);
-      if (market && market.code !== cookieCode && !isPrefetch) {
+      if (market && market.code !== cookieCode && !isBackgroundRequest) {
         res.cookies.set("market", market.code, {
           path: "/",
           maxAge: MARKET_COOKIE_MAX_AGE,
