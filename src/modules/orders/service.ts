@@ -286,10 +286,20 @@ export async function cancelOrder(
         ))
     )
       return;
+    // Serialize with direct/descendant returns before releasing the exchange's
+    // credit. Payment approval uses this same replacement-order lock.
+    if (order.kind === "EXCHANGE") {
+      const { lockRewardSource } = await import("@/modules/fitting/ledger");
+      await lockRewardSource(tx, order.id);
+    }
     await transition(tx, order, "CANCELLED", userId, reason);
     await releaseCancelledOrderPromotions(tx, order.id);
     await releaseOrderInventory(tx, order.id);
     await releaseCredit(tx, order.id);
+    if (order.kind === "EXCHANGE") {
+      const { revokeReturnedCoins } = await import("@/modules/fitting");
+      await revokeReturnedCoins(tx, order.id);
+    }
     await tx.payment.updateMany({
       where: { orderId, status: { in: ["PENDING", "SUBMITTED"] } },
       data: { status: "VOIDED" },

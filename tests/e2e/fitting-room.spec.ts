@@ -37,6 +37,16 @@ for (const locale of ["fa", "tr", "en"] as const) {
         has: page.locator('option[value="seed-style-v2-women-tee-charcoal-m"]'),
       });
       await expect(tee).toBeVisible();
+      expect(
+        await tee
+          .locator("select")
+          .evaluate((select) => parseFloat(getComputedStyle(select).fontSize)),
+      ).toBeGreaterThanOrEqual(16);
+      expect(
+        await tee
+          .locator("select")
+          .evaluate((select) => select.getBoundingClientRect().height),
+      ).toBeGreaterThanOrEqual(44);
       const ivory = await db.productMedia.findFirstOrThrow({
         where: { productId: "seed-style-v2-women-tee" },
         orderBy: { sortOrder: "asc" },

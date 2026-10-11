@@ -6,6 +6,7 @@ import {
   payCoinDebt,
   settleDebt,
   walletDebt,
+  coinBalance,
 } from "@/modules/fitting/ledger";
 
 function fixture(base: string, balances: string[], grants: string[] = []) {
@@ -90,6 +91,21 @@ function fixture(base: string, balances: string[], grants: string[] = []) {
 }
 
 describe("fitting debt across bounded liability tranches", () => {
+  it.each([101, 1000])(
+    "sums %i maximum spendable lots without losing four decimals",
+    (count) => {
+      const grants = Array.from({ length: count }, () => ({
+        balance: "99999999999999.9999",
+      }));
+      const Exact = Decimal.clone({ precision: 100 });
+      const expected = new Exact(grants[0].balance).mul(count).toFixed();
+      expect(coinBalance(grants).toFixed()).toBe(expected);
+      expect(
+        coinBalance([...grants, { balance: "0.0001" }].reverse()).toFixed(),
+      ).toBe(new Exact(expected).add("0.0001").toFixed());
+      expect(coinBalance([]).toFixed()).toBe("0");
+    },
+  );
   it("uses a bounded set of statements for 1000 recipients and skips an existing source", async () => {
     const ids = Array.from({ length: 1000 }, (_, i) => `customer-${i}`);
     const mock = {

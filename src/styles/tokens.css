@@ -2803,3 +2803,13 @@ html[lang="fa"] body,
 @media(min-width:900px){.fitting-layout {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}.fitting-stage {position:sticky;top:8rem;align-self:start;}.fitting-packs {grid-template-columns:repeat(3,minmax(0,1fr));}.fitting-saved>div {grid-template-columns:repeat(4,minmax(0,1fr));}}
 
 .fitting-image {display:block;} .fitting-models .fitting-image {width:2.5rem;height:3.25rem;} .fitting-portrait .fitting-image img {object-fit:contain;object-position:center top;}
+
+/* Fitting controls remain readable on touch screens and avoid iOS form zoom. */
+.fitting-selection,
+.fitting-product > div { min-width: 0; }
+.fitting-product { grid-template-columns: 5.5rem minmax(0, 1fr); }
+.fitting-product h3 { font-size: 1rem; }
+.fitting-product p,
+.fitting-product label,
+.fitting-wallet small { font-size: .875rem; }
+.fitting-product select { font-size: 1rem; min-height: 44px; }

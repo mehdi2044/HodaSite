@@ -21,6 +21,7 @@ import {
   settleDebt,
   walletDebt,
   payCoinDebt,
+  coinBalance,
 } from "./ledger";
 export { creditPaidOrder, revokeReturnedCoins } from "./ledger";
 
@@ -47,9 +48,7 @@ export async function walletView(customerId: string) {
       await settleDebt(tx, customerId);
       const grants = await usableGrants(tx, customerId, new Date());
       return {
-        balance: grants
-          .reduce((s, g) => s.add(g.balance.toString()), new Decimal(0))
-          .toFixed(),
+        balance: coinBalance(grants).toFixed(),
         debt: (await walletDebt(tx, customerId)).toFixed(),
         dailyExpires:
           grants.find((g) => g.reason === "DAILY")?.expiresAt?.toISOString() ??

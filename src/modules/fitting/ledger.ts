@@ -30,6 +30,13 @@ export async function lockWallet(
 // Aggregate liabilities can exceed a single numeric(18,4) row. Keep ample
 // precision for sums without changing the precision of individual coin entries.
 const DebtDecimal = Decimal.clone({ precision: 100 });
+/** Aggregate spendable lots with the same precision as aggregate liability. */
+export function coinBalance(grants: { balance: { toString(): string } }[]) {
+  return grants.reduce(
+    (total, grant) => total.add(grant.balance.toString()),
+    new DebtDecimal(0),
+  );
+}
 export async function walletDebt(
   tx: Prisma.TransactionClient,
   customerId: string,
@@ -436,6 +443,15 @@ export async function revokeReturnedCoins(
   const rootId = await lockRewardSource(tx, orderId);
   if (!rootId) return;
   orderId = rootId;
+  const cancelledReplacements = await tx.order.findMany({
+    where: {
+      parentOrderId: orderId,
+      kind: "EXCHANGE",
+      status: "CANCELLED",
+      paidAt: null,
+    },
+    select: { id: true },
+  });
   const order = await tx.order.findUniqueOrThrow({
     where: { id: orderId },
     include: {
@@ -445,7 +461,13 @@ export async function revokeReturnedCoins(
       returns: {
         where: {
           status: "RESOLVED",
-          resolution: { in: ["REFUND", "STORE_CREDIT"] },
+          OR: [
+            { resolution: { in: ["REFUND", "STORE_CREDIT"] } },
+            {
+              resolution: "EXCHANGE",
+              exchangeOrderId: { in: cancelledReplacements.map((o) => o.id) },
+            },
+          ],
         },
         include: { items: true },
       },
@@ -470,7 +492,9 @@ export async function revokeReturnedCoins(
       );
     }
   // Replacement quantities map one-for-one to their original sale item, even
-  // through repeated exchanges. Price differences are not new reward spend.
+  // through repeated exchanges. An unpaid cancelled replacement releases its
+  // return credit, so its parent return is now terminal too. A paid/intermediate
+  // exchange retains entitlement and must not be counted a second time.
   const descendants = await tx.$queryRaw<
     { rootId: string; quantity: bigint }[]
   >`
@@ -490,8 +514,15 @@ export async function revokeReturnedCoins(
     FROM lineage l
     JOIN "ReturnItem" r ON r."orderItemId"=l.id
     JOIN "ReturnRequest" rr ON rr.id=r."returnRequestId"
+    LEFT JOIN "Order" replacement ON replacement.id=rr."exchangeOrderId"
     WHERE l.id<>l."rootId" AND rr.status='RESOLVED'
-      AND rr.resolution IN ('REFUND', 'STORE_CREDIT')
+      AND rr."orderId"=l."orderId"
+      AND (rr.resolution IN ('REFUND', 'STORE_CREDIT') OR
+        (rr.resolution='EXCHANGE' AND replacement.kind='EXCHANGE'
+          AND replacement."parentOrderId"=l."orderId"
+          AND replacement."customerId"=${order.customerId}
+          AND replacement."marketId"=${order.marketId}
+          AND replacement.status='CANCELLED' AND replacement."paidAt" IS NULL))
     GROUP BY l."rootId"
   `;
   const descendantQuantities = new Map(
