@@ -2288,6 +2288,133 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ).debt.toString(),
       ).toBe("0");
     });
+    it("matches Arabic keyboard letters, both digit sets, diacritics and zero-width Persian searches", async () => {
+      const c = await customer();
+      const marker = `fit${randomUUID().replaceAll("-", "")}`;
+      const template = await db.variant.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee-m" },
+        include: { product: true },
+      });
+      const product = await db.product.create({
+        data: {
+          categoryId: template.product.categoryId,
+          gender: "WOMEN",
+          titleI18n: { fa: "کیک ۱۲۳", en: "Search fixture" },
+          slugI18n: { en: marker },
+          descriptionI18n: {},
+          status: "ACTIVE",
+          basePriceAmount: "1",
+          fittingSlot: "TOP",
+          marketIds: [marketId],
+          searchText: `${marker} کیک 123`,
+          variants: {
+            create: {
+              colorId: template.colorId,
+              sizeId: template.sizeId,
+              sku: marker,
+            },
+          },
+          media: { create: { mediaId: "seed-fashion-v2-women-tee" } },
+        },
+      });
+      try {
+        for (const query of [
+          "كيك ۱۲۳",
+          "كِيك ١٢٣",
+          "ک\u200cیک 123",
+          "کیک ۱۲۳",
+        ]) {
+          const products = await fittingProducts(
+            c.id,
+            marketId,
+            "fa",
+            `${marker} ${query}`,
+          );
+          expect(products.map((p) => p.productId)).toEqual([product.id]);
+        }
+      } finally {
+        await db.product.delete({ where: { id: product.id } });
+      }
+    });
+    it("keeps every size of a 500-variant garment without hiding a later garment in another fitting slot", async () => {
+      const c = await customer();
+      const marker = `fit${randomUUID().replaceAll("-", "")}`;
+      const template = await db.variant.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee-m" },
+        include: { product: true },
+      });
+      const productIds = [`0-${marker}`, `1-${marker}`];
+      const sizeIds = Array.from(
+        { length: 500 },
+        (_, i) => `${marker}-size-${i}`,
+      );
+      try {
+        await db.size.createMany({
+          data: sizeIds.map((id, i) => ({
+            id,
+            scale: "INTL",
+            value: String(i),
+            groupKey: marker,
+          })),
+        });
+        for (const [index, id] of productIds.entries()) {
+          await db.product.create({
+            data: {
+              id,
+              categoryId: template.product.categoryId,
+              gender: "WOMEN",
+              titleI18n: { en: index ? "Bottom fixture" : "Top fixture" },
+              slugI18n: { en: id },
+              descriptionI18n: {},
+              status: "ACTIVE",
+              basePriceAmount: "1",
+              fittingSlot: index ? "BOTTOM" : "TOP",
+              marketIds: [marketId],
+              searchText: marker,
+              variants: {
+                create: (index ? sizeIds.slice(0, 1) : sizeIds).map(
+                  (sizeId, i) => ({
+                    id: `${id}-variant-${i}`,
+                    colorId: template.colorId,
+                    sizeId,
+                    sku: `${id}-${i}`,
+                  }),
+                ),
+              },
+              media: { create: { mediaId: "seed-fashion-v2-women-tee" } },
+            },
+          });
+        }
+        const warehouse = await db.warehouse.findFirstOrThrow({
+          where: { isActive: true },
+        });
+        await db.stockItem.createMany({
+          data: productIds.map((id) => ({
+            variantId: `${id}-variant-0`,
+            warehouseId: warehouse.id,
+            onHand: 10,
+          })),
+        });
+        const products = await fittingProducts(c.id, marketId, "en", marker);
+        expect(
+          products.filter((p) => p.productId === productIds[0]),
+        ).toHaveLength(500);
+        expect(
+          products.filter((p) => p.productId === productIds[1]),
+        ).toHaveLength(1);
+        expect(products.filter((p) => p.available).map((p) => p.slot)).toEqual([
+          "TOP",
+          "BOTTOM",
+        ]);
+        expect(products.every((p) => p.amount !== null)).toBe(true);
+      } finally {
+        await db.stockItem.deleteMany({
+          where: { variant: { productId: { in: productIds } } },
+        });
+        await db.product.deleteMany({ where: { id: { in: productIds } } });
+        await db.size.deleteMany({ where: { id: { in: sizeIds } } });
+      }
+    });
     it("batches fitting catalog prices with a single manual-price and FX lookup", async () => {
       const c = await customer();
       const realMany = db.marketPrice.findMany.bind(db.marketPrice),

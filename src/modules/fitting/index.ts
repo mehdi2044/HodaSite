@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { catalogText } from "@/modules/catalog/localized";
+import { normalizeSearchText } from "@/modules/catalog/search";
 import { getVariantDisplayPrices } from "@/modules/pricing";
 import {
   requestSchema,
@@ -135,31 +136,55 @@ export async function fittingProducts(
   owned = false,
 ) {
   const ownedIds = await ownedVariantIds(db, customerId);
-  const rows = await db.variant.findMany({
-    where: owned
-      ? { id: { in: [...ownedIds] } }
-      : {
-          isActive: true,
-          color: { deletedAt: null },
-          size: { deletedAt: null },
-          product: {
+  const search = normalizeSearchText(query);
+  const eligibleVariant: Prisma.VariantWhereInput = owned
+    ? { id: { in: [...ownedIds] } }
+    : {
+        isActive: true,
+        color: { deletedAt: null },
+        size: { deletedAt: null },
+      };
+  const rows = (
+    await db.product.findMany({
+      where: owned
+        ? { variants: { some: eligibleVariant } }
+        : {
             deletedAt: null,
             status: "ACTIVE",
             coinPackCoins: null,
             fittingSlot: { not: null },
             marketIds: { has: marketId },
             category: { deletedAt: null },
-            ...(query
+            variants: { some: eligibleVariant },
+            ...(search
               ? {
-                  searchText: { contains: query, mode: "insensitive" as const },
+                  searchText: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
                 }
               : {}),
           },
+      include: {
+        ...variantInclude.product.include,
+        variants: {
+          where: eligibleVariant,
+          include: {
+            color: true,
+            size: true,
+            media: variantInclude.media,
+            stockItems: true,
+          },
+          orderBy: { id: "asc" },
         },
-    include: variantInclude,
-    orderBy: [{ productId: "asc" }, { id: "asc" }],
-    take: 300,
-  });
+      },
+      // Bound products first so a large color/size range cannot hide other garments.
+      orderBy: { id: "asc" },
+      take: 60,
+    })
+  ).flatMap(({ variants, ...product }) =>
+    variants.map((variant) => ({ ...variant, product })),
+  );
   const market = await db.market.findUniqueOrThrow({ where: { id: marketId } });
   const pricedProducts = new Map<
     string,
