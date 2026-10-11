@@ -1,3 +1,7 @@
+import { seoPath } from "@/lib/seo";
+import { variantImages } from "@/modules/catalog/variant-images";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
+import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
 import { Iso } from "@/components/storefront/iso";
@@ -54,8 +58,10 @@ export default async function CheckoutPage({
     draft = cart.checkout as Record<string, string>;
   const parsed = addressSchema.safeParse(draft);
   if (step > 1 && !parsed.success) redirect(`/${locale}/checkout`);
+  const images = await variantImages(cart.items.map((item) => item.variant));
+  const shopping = await getTranslations("shopping");
   return (
-    <main className="shell shop-checkout max-w-3xl py-10">
+    <main className="shell shop-checkout py-10">
       <h1 className="text-3xl font-semibold">{t("checkout")}</h1>
       <ol className="shop-checkout-steps">
         {["contact", "review", "payment"].map((key, i) => (
@@ -76,185 +82,242 @@ export default async function CheckoutPage({
         revision={cart.revision}
         codes={(cart.checkout as Record<string, unknown>).couponCodes}
       />
-      <section className="rounded-token border border-black/10 bg-surface p-6">
-        {step === 1 ? (
-          <>
-            <p className="mb-5">
-              {customer ? (
-                <Iso>{customer.email}</Iso>
-              ) : (
-                <Link
-                  className="underline"
-                  href={`/${locale}/account/login?next=/${locale}/checkout`}
-                >
-                  {t("guestOrLogin")}
-                </Link>
-              )}
-            </p>
-            <AddressForm locale={locale}>
-              <input type="hidden" name="country" value={cart.market.code} />
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  "firstName",
-                  "lastName",
-                  "email",
-                  "phone",
-                  "province",
-                  "city",
-                  "line1",
-                  "line2",
-                  "postalCode",
-                  "birthDate",
-                  "gender",
-                ].map((key) => (
-                  <label key={key}>
-                    {t(key)}
-                    <input
-                      className="input mt-2 w-full"
-                      name={key}
-                      list={
-                        key === "province" ? "checkout-provinces" : undefined
-                      }
-                      autoComplete={
-                        (
-                          {
-                            firstName: "given-name",
-                            lastName: "family-name",
-                            email: "email",
-                            phone: "tel",
-                            province: "address-level1",
-                            city: "address-level2",
-                            line1: "address-line1",
-                            line2: "address-line2",
-                            postalCode: "postal-code",
-                            birthDate: "bday",
-                          } as Record<string, string>
-                        )[key]
-                      }
-                      inputMode={
-                        key === "phone"
-                          ? "tel"
-                          : key === "email"
+      <div className="shop-checkout-layout">
+        <section className="rounded-token border border-black/10 bg-surface p-6">
+          {step === 1 ? (
+            <>
+              <p className="mb-5">
+                {customer ? (
+                  <Iso>{customer.email}</Iso>
+                ) : (
+                  <Link
+                    className="underline"
+                    href={`/${locale}/account/login?next=/${locale}/checkout`}
+                  >
+                    {t("guestOrLogin")}
+                  </Link>
+                )}
+              </p>
+              <AddressForm locale={locale}>
+                <input type="hidden" name="country" value={cart.market.code} />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    "firstName",
+                    "lastName",
+                    "email",
+                    "phone",
+                    "province",
+                    "city",
+                    "line1",
+                    "line2",
+                    "postalCode",
+                    "birthDate",
+                    "gender",
+                  ].map((key) => (
+                    <label key={key}>
+                      {t(key)}
+                      <input
+                        className="input mt-2 w-full"
+                        name={key}
+                        list={
+                          key === "province" ? "checkout-provinces" : undefined
+                        }
+                        autoComplete={
+                          (
+                            {
+                              firstName: "given-name",
+                              lastName: "family-name",
+                              email: "email",
+                              phone: "tel",
+                              province: "address-level1",
+                              city: "address-level2",
+                              line1: "address-line1",
+                              line2: "address-line2",
+                              postalCode: "postal-code",
+                              birthDate: "bday",
+                            } as Record<string, string>
+                          )[key]
+                        }
+                        inputMode={
+                          key === "phone"
+                            ? "tel"
+                            : key === "email"
+                              ? "email"
+                              : undefined
+                        }
+                        dir={
+                          ["phone", "email", "postalCode"].includes(key)
+                            ? "ltr"
+                            : "auto"
+                        }
+                        type={
+                          key === "email"
                             ? "email"
-                            : undefined
-                      }
-                      dir={
-                        ["phone", "email", "postalCode"].includes(key)
-                          ? "ltr"
-                          : "auto"
-                      }
-                      type={
-                        key === "email"
-                          ? "email"
-                          : key === "birthDate"
-                            ? "date"
-                            : "text"
-                      }
-                      readOnly={key === "email" && !!customer}
-                      defaultValue={
-                        key === "email" && customer
-                          ? customer.email
-                          : (draft[key] ??
-                            (
-                              customer as unknown as Record<
-                                string,
-                                string
-                              > | null
-                            )?.[key] ??
-                            "")
-                      }
-                      required={[
-                        "firstName",
-                        "lastName",
-                        "email",
-                        "phone",
-                        "province",
-                        "city",
-                        "line1",
-                      ].includes(key)}
-                    />
-                  </label>
-                ))}
-              </div>
-              <datalist id="checkout-provinces">
-                {(provinces[cart.market.code] ?? []).map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-              <label>
-                {t("note")}
-                <textarea
-                  className="input mt-2 w-full"
-                  name="note"
-                  defaultValue={draft.note}
-                />
-              </label>
-              <button className="button">{t("next")}</button>
-            </AddressForm>
-          </>
-        ) : step === 2 ? (
-          <>
-            <h2 className="mb-4 text-xl">{t("review")}</h2>
-            <QuoteSummary cart={cart} address={parsed.data!} locale={locale} />
-            <p className="my-5 text-muted">
-              <bdi dir="auto">{draft.line1}</bdi> ·{" "}
-              <bdi dir="auto">{draft.city}</bdi> ·{" "}
-              <bdi dir="auto">{draft.province}</bdi>
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <ShippingSelection cart={cart} locale={locale} />
-              <Link
-                className="px-4 py-3 underline"
-                href={`/${locale}/checkout`}
-              >
-                {t("edit")}
-              </Link>
-            </div>
-          </>
-        ) : (
-          <CommerceForm action={placeOrderAction.bind(null, locale)}>
-            <h2 className="text-xl font-semibold">{t("bankTransfer")}</h2>
-            <p>{t("paymentIntro")}</p>
-            <QuoteSummary
-              cart={cart}
-              address={parsed.data!}
-              locale={locale}
-              confirm
-            />
-            <input
-              type="hidden"
-              name="address"
-              value={JSON.stringify(parsed.data)}
-            />
-            <input type="hidden" name="revision" value={cart.revision} />
-            {customer && (
-              <label className="flex items-center gap-3">
-                <input type="checkbox" name="useCredit" />
-                <span>{(await getTranslations("returns"))("useCredit")}</span>
-              </label>
-            )}
-
-            <label className="flex items-center gap-3">
-              <input type="checkbox" name="terms" required />
-              <span>
-                {t("acceptTerms")}{" "}
+                            : key === "birthDate"
+                              ? "date"
+                              : "text"
+                        }
+                        readOnly={key === "email" && !!customer}
+                        defaultValue={
+                          key === "email" && customer
+                            ? customer.email
+                            : (draft[key] ??
+                              (
+                                customer as unknown as Record<
+                                  string,
+                                  string
+                                > | null
+                              )?.[key] ??
+                              "")
+                        }
+                        required={[
+                          "firstName",
+                          "lastName",
+                          "email",
+                          "phone",
+                          "province",
+                          "city",
+                          "line1",
+                        ].includes(key)}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <datalist id="checkout-provinces">
+                  {(provinces[cart.market.code] ?? []).map((p) => (
+                    <option key={p} value={p} />
+                  ))}
+                </datalist>
+                <label>
+                  {t("note")}
+                  <textarea
+                    className="input mt-2 w-full"
+                    name="note"
+                    defaultValue={draft.note}
+                  />
+                </label>
+                <button className="button">{t("next")}</button>
+              </AddressForm>
+            </>
+          ) : step === 2 ? (
+            <>
+              <h2 className="mb-4 text-xl">{t("review")}</h2>
+              <QuoteSummary
+                cart={cart}
+                address={parsed.data!}
+                locale={locale}
+              />
+              <p className="my-5 text-muted">
+                <bdi dir="auto">{draft.line1}</bdi> ·{" "}
+                <bdi dir="auto">{draft.city}</bdi> ·{" "}
+                <bdi dir="auto">{draft.province}</bdi>
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <ShippingSelection cart={cart} locale={locale} />
                 <Link
-                  className="underline"
-                  href={
-                    termsSlug ? `/${locale}/pages/${termsSlug}` : `/${locale}`
-                  }
+                  className="px-4 py-3 underline"
+                  href={`/${locale}/checkout`}
                 >
-                  {t("terms")}
+                  {t("edit")}
                 </Link>
-              </span>
-            </label>
-            {!termsSlug && <p role="alert">{t("errors.TERMS_REQUIRED")}</p>}
-            <button className="button" disabled={!termsSlug}>
-              {t("placeOrder")}
-            </button>
-          </CommerceForm>
-        )}
-      </section>
+              </div>
+            </>
+          ) : (
+            <CommerceForm action={placeOrderAction.bind(null, locale)}>
+              <h2 className="text-xl font-semibold">{t("bankTransfer")}</h2>
+              <p>{t("paymentIntro")}</p>
+              <QuoteSummary
+                cart={cart}
+                address={parsed.data!}
+                locale={locale}
+                confirm
+              />
+              <input
+                type="hidden"
+                name="address"
+                value={JSON.stringify(parsed.data)}
+              />
+              <input type="hidden" name="revision" value={cart.revision} />
+              {customer && (
+                <label className="flex items-center gap-3">
+                  <input type="checkbox" name="useCredit" />
+                  <span>{(await getTranslations("returns"))("useCredit")}</span>
+                </label>
+              )}
+
+              <label className="flex items-center gap-3">
+                <input type="checkbox" name="terms" required />
+                <span>
+                  {t("acceptTerms")}{" "}
+                  <Link
+                    className="underline"
+                    href={
+                      termsSlug ? `/${locale}/pages/${termsSlug}` : `/${locale}`
+                    }
+                  >
+                    {t("terms")}
+                  </Link>
+                </span>
+              </label>
+              {!termsSlug && <p role="alert">{t("errors.TERMS_REQUIRED")}</p>}
+              <button className="button" disabled={!termsSlug}>
+                {t("placeOrder")}
+              </button>
+            </CommerceForm>
+          )}
+        </section>
+        <aside className="shop-checkout-summary">
+          <h2 className="text-xl font-semibold">{shopping("summary")}</h2>
+          {cart.items.map((item) => {
+            const media = images.get(item.variantId);
+            return (
+              <article className="shop-checkout-piece" key={item.id}>
+                {media && (
+                  <ResponsiveImage
+                    media={media}
+                    locale={locale as "fa" | "tr" | "en"}
+                    role="thumbnail"
+                    sizes="72px"
+                  />
+                )}
+                <div>
+                  <Link
+                    href={seoPath(
+                      locale as "fa" | "tr" | "en",
+                      cart.market.code,
+                      "p",
+                      (item.variant.product.slugI18n as Record<string, string>)[
+                        locale
+                      ],
+                    )}
+                  >
+                    {
+                      (
+                        item.variant.product.titleI18n as Record<string, string>
+                      )[locale]
+                    }
+                  </Link>
+                  <p className="text-sm text-muted">
+                    {
+                      (item.variant.color.nameI18n as Record<string, string>)[
+                        locale
+                      ]
+                    }{" "}
+                    · <Iso>{item.variant.size.value}</Iso>
+                  </p>
+                  <p className="text-sm">
+                    {t("quantity")}:{" "}
+                    {new Intl.NumberFormat(locale).format(item.quantity)}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+          <Link href={`/${locale}/cart`} className="shop-back-link">
+            {t("edit")} · {t("cart")}
+          </Link>
+        </aside>
+      </div>
     </main>
   );
 }
@@ -293,7 +356,7 @@ async function QuoteSummary({
         <dt>{t("subtotal")}</dt>
         <dd>
           <Iso>
-            {quote.subtotal} {cart.currency}
+            {formatStorefrontAmount(quote.subtotal, cart.currency, locale)}
           </Iso>
         </dd>
       </div>
@@ -302,17 +365,21 @@ async function QuoteSummary({
           <dt>{l.label}</dt>
           <dd>
             <Iso>
-              {l.chargedAmount} {cart.currency}
+              {formatStorefrontAmount(l.chargedAmount, cart.currency, locale)}
             </Iso>
           </dd>
         </div>
       ))}
-      <DiscountLines lines={quote.discountLines} currency={cart.currency} />
+      <DiscountLines
+        lines={quote.discountLines}
+        currency={cart.currency}
+        locale={locale}
+      />
       <div className="flex justify-between border-t pt-3 text-lg font-semibold">
         <dt>{t("total")}</dt>
         <dd>
           <Iso>
-            {quote.total} {cart.currency}
+            {formatStorefrontAmount(quote.total, cart.currency, locale)}
           </Iso>
         </dd>
       </div>

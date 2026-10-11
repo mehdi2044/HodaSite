@@ -1,5 +1,7 @@
 "use client";
-import { switchedMarketPath } from "@/lib/seo-urls";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { parseSeoPath, switchedMarketPath } from "@/lib/seo-urls";
 
 const YEAR = 60 * 60 * 24 * 365;
 
@@ -18,6 +20,31 @@ export function MarketSwitcher({
   }[];
   ariaLabel: string;
 }) {
+  const pathname = usePathname();
+  // A prefetched canonical page can be served from the router cache. Persist
+  // its market only when the shopper actually opens that page.
+  useEffect(() => {
+    document.cookie = `market=${current}; path=/; max-age=${YEAR}`;
+  }, [current]);
+  useEffect(() => {
+    // Shared layouts survive client navigation. The active canonical route
+    // wins over a retained layout prop, without touching background requests.
+    const route = parseSeoPath(window.location.pathname);
+    if (
+      route &&
+      markets.some(
+        (m) =>
+          m.code === route.market &&
+          m.isActive &&
+          m.enabledLocales.includes(route.locale),
+      )
+    ) {
+      document.cookie = `market=${route.market}; path=/; max-age=${YEAR}`;
+      // The locale layout also owns menus, announcements, footer and wishlist
+      // context. Crossing markets needs a new document, as the switcher does.
+      if (route.market !== current) window.location.reload();
+    }
+  }, [pathname, markets, current]);
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
     document.cookie = `market=${code}; path=/; max-age=${YEAR}`;
@@ -38,7 +65,7 @@ export function MarketSwitcher({
   return (
     <select
       aria-label={ariaLabel}
-      defaultValue={current}
+      value={current}
       onChange={onChange}
       className="min-h-11 rounded-full border border-black/10 bg-transparent px-3 text-sm"
     >

@@ -1,7 +1,10 @@
+import { seoPath } from "@/lib/seo-urls";
+import Decimal from "decimal.js";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { currentCustomer } from "@/modules/customers";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
-import { db } from "@/lib/db";
+import { variantImages } from "@/modules/catalog/variant-images";
 import { Iso } from "@/components/storefront/iso";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import Link from "next/link";
@@ -32,14 +35,7 @@ export default async function CartPage({
         </Link>
       </main>
     );
-  const images = await db.productMedia.findMany({
-    where: {
-      productId: { in: cart.items.map((i) => i.variant.product.id) },
-      media: { kind: "image", status: "READY", deletedAt: null },
-    },
-    include: { media: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const images = await variantImages(cart.items.map((item) => item.variant));
   const mismatch = cart.marketId !== market.id;
   const quote = await quoteSavedCart(
     {
@@ -56,9 +52,12 @@ export default async function CartPage({
   ).catch(() => null);
   return (
     <main className="shell shop-page grid gap-8 py-10">
-      <h1 className="text-3xl font-semibold">
-        {t("cart")} <span className="text-lg text-muted">{cart.currency}</span>
-      </h1>
+      <header className="shop-cart-heading">
+        <h1 className="text-3xl font-semibold">{t("cart")}</h1>
+        <Link className="shop-back-link" href={`/${locale}/search`}>
+          {t("continueShopping")} ↗
+        </Link>
+      </header>
       {mismatch && (
         <section className="rounded-token border border-warning p-5">
           <p>{t("marketWarning")}</p>
@@ -74,12 +73,9 @@ export default async function CartPage({
               key={item.id}
               className="shop-cart-item rounded-token border border-black/10 bg-surface p-5"
             >
-              {images.find((m) => m.productId === item.variant.product.id) && (
+              {images.get(item.variantId) && (
                 <ResponsiveImage
-                  media={
-                    images.find((m) => m.productId === item.variant.product.id)!
-                      .media
-                  }
+                  media={images.get(item.variantId)!}
                   locale={locale as "fa" | "tr" | "en"}
                   sizes="96px"
                   role="thumbnail"
@@ -89,7 +85,14 @@ export default async function CartPage({
               <div className="shop-cart-item-body">
                 <Link
                   className="text-lg font-semibold"
-                  href={`/${locale}/p/${(item.variant.product.slugI18n as Record<string, string>)[locale]}`}
+                  href={seoPath(
+                    locale,
+                    cart.market.code,
+                    "p",
+                    (item.variant.product.slugI18n as Record<string, string>)[
+                      locale
+                    ],
+                  )}
                 >
                   {
                     (item.variant.product.titleI18n as Record<string, string>)[
@@ -104,14 +107,27 @@ export default async function CartPage({
                     ]
                   }{" "}
                   · <Iso>{item.variant.size.value}</Iso>
-                  <br />
-                  <small>
-                    <Iso>{item.variant.sku}</Iso>
-                  </small>
                 </p>
+                {quote?.items.find(
+                  (line) => line.variantId === item.variantId,
+                ) && (
+                  <p className="my-3 font-semibold">
+                    <Iso>
+                      {formatStorefrontAmount(
+                        new Decimal(
+                          quote.items.find(
+                            (line) => line.variantId === item.variantId,
+                          )!.unitPrice,
+                        ).mul(item.quantity),
+                        cart.currency,
+                        locale,
+                      )}
+                    </Iso>
+                  </p>
+                )}
                 <CommerceForm
                   action={updateCartAction.bind(null, locale)}
-                  className="flex flex-wrap items-end gap-3"
+                  className="shop-cart-controls flex flex-wrap items-end gap-3"
                 >
                   <input
                     type="hidden"
@@ -156,7 +172,11 @@ export default async function CartPage({
                   <dt>{t("subtotal")}</dt>
                   <dd>
                     <Iso>
-                      {quote.subtotal} {cart.currency}
+                      {formatStorefrontAmount(
+                        quote.subtotal,
+                        cart.currency,
+                        locale,
+                      )}
                     </Iso>
                   </dd>
                 </div>
@@ -165,7 +185,11 @@ export default async function CartPage({
                     <dt>{line.label}</dt>
                     <dd>
                       <Iso>
-                        {line.chargedAmount} {cart.currency}
+                        {formatStorefrontAmount(
+                          line.chargedAmount,
+                          cart.currency,
+                          locale,
+                        )}
                       </Iso>
                     </dd>
                   </div>
@@ -173,12 +197,17 @@ export default async function CartPage({
                 <DiscountLines
                   lines={quote.discountLines}
                   currency={cart.currency}
+                  locale={locale}
                 />
                 <div className="flex justify-between border-t pt-4 text-lg font-semibold">
                   <dt>{t("total")}</dt>
                   <dd>
                     <Iso>
-                      {quote.total} {cart.currency}
+                      {formatStorefrontAmount(
+                        quote.total,
+                        cart.currency,
+                        locale,
+                      )}
                     </Iso>
                   </dd>
                 </div>

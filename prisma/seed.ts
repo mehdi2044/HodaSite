@@ -1,5 +1,8 @@
+import { buildProductSearchText } from "../scripts/catalog-search";
 import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
+import { seedFittingRoom } from "./fitting-seed";
+import { seedStyleStorefront } from "./style-seed";
 import { seedFashionStorefront } from "./fashion-seed";
 import { seedShipping } from "./shipping-seed";
 import { PrismaClient, FxMode } from "@prisma/client";
@@ -334,7 +337,7 @@ async function main() {
       name: "Canada",
       currency: "CAD",
       defaultLocale: "en",
-      enabledLocales: ["en", "fa"],
+      enabledLocales: ["en", "fa", "tr"],
       holdHours: 6,
       fxMode: FxMode.AUTO_ACCEPT,
       roundingRule: { mode: "HALF_UP", increment: "0.01" },
@@ -360,6 +363,8 @@ async function main() {
   await seedDemoMedia();
   await seedCatalog();
   await seedFashionStorefront(db, putMediaFile);
+  await seedFittingRoom(db);
+  await seedStyleStorefront(db, putMediaFile);
   await seedPhase03(user.id);
   await seedPhase04();
   await seedLedgerAccounts(db);
@@ -922,7 +927,12 @@ async function seedCatalog() {
           },
         },
         marketIds: allowedMarkets,
-        searchText: `${titles.fa} ${titles.tr} ${titles.en} seed new`,
+        searchText: buildProductSearchText([
+          titles.fa,
+          titles.tr,
+          titles.en,
+          "seed new",
+        ]),
       },
     });
     for (let n = 0; n < 2; n += 1) {
@@ -1042,7 +1052,10 @@ async function seedPhase03(ownerId: string) {
       },
     },
   });
-  const variants = await db.variant.findMany({ orderBy: { sku: "asc" } });
+  const variants = await db.variant.findMany({
+    orderBy: { sku: "asc" },
+    include: { product: { select: { coinPackCoins: true } } },
+  });
   for (const variant of variants) {
     const stock = await db.stockItem.upsert({
       where: {
@@ -1069,10 +1082,10 @@ async function seedPhase03(ownerId: string) {
         variantId: variant.id,
         qtyReceived: 10,
         qtyRemaining: 10,
-        unitCostAmount: "500",
+        unitCostAmount: variant.product.coinPackCoins ? "0" : "500",
         unitCostCurrency: "TRY",
-        unitCostAmountTry: "500",
-        unitCostAmountUsd: "14.2857",
+        unitCostAmountTry: variant.product.coinPackCoins ? "0" : "500",
+        unitCostAmountUsd: variant.product.coinPackCoins ? "0" : "14.2857",
         fxRateSnapshot: { TRY_PER_USD: "35" },
         receivedAt: new Date("2026-09-09T00:00:00Z"),
       },
@@ -1098,7 +1111,11 @@ async function seedPhase03(ownerId: string) {
   const byCode = Object.fromEntries(
     markets.map((market) => [market.code, market]),
   );
-  const simulatorVariant = variants[0];
+  // CP2-03 belongs to the original SH-001 garment, independent of new SKUs.
+  const simulatorVariant = variants.find(
+    (variant) =>
+      variant.sku.startsWith("SH-001-") && !variant.product.coinPackCoins,
+  );
   if (simulatorVariant) {
     await db.variant.update({
       where: { id: simulatorVariant.id },

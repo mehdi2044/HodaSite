@@ -1,3 +1,5 @@
+import { ShopLook } from "@/components/storefront/shop-look";
+import { relevantLookBlocks } from "@/modules/outfits";
 import { getSeoSettings } from "@/modules/seo";
 import { publicReviews } from "@/modules/engagement";
 import {
@@ -120,7 +122,10 @@ export default async function ProductPage({
       select: { inventory: true },
     }),
   ]);
-  const relatedPrices = await getDisplayPrices(related.items, market);
+  const [relatedPrices, looks] = await Promise.all([
+    getDisplayPrices(related.items, market),
+    relevantLookBlocks(market.id, { productId: product.id }),
+  ]);
   const inventorySettings = siteSettings.inventory as {
     lowStockThreshold?: unknown;
   };
@@ -401,6 +406,9 @@ export default async function ProductPage({
           )}
         </section>
       </div>
+      {looks.map((block, index) => (
+        <ShopLook key={index} block={block} locale={safe} market={market} />
+      ))}
       <section className="mt-20">
         <h2 className="text-3xl font-semibold">{t("related")}</h2>
         <div className="mt-7 grid grid-cols-2 gap-4 md:grid-cols-4">

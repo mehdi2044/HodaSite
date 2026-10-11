@@ -4,3 +4,5 @@ export * from "./customers";
 export * from "./segments";
 export * from "./preferences";
 export { promotionCustomerEvidence } from "./promotion-evidence";
+
+export { segmentQuery } from "./segment-query";

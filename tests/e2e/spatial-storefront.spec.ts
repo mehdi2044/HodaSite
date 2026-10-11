@@ -94,12 +94,12 @@ for (const [locale, market, labels] of [
     await expect(page).toHaveURL(href!);
   });
 
-  test(`${locale}: four editorial planes, real category routes, history and full images`, async ({
+  test(`${locale}: editorial category cards, real routes, history and full images`, async ({
     page,
   }, info) => {
     test.setTimeout(120000);
     await page.goto(`/${locale}/m/${market}`);
-    const departments = page.getByTestId("hero-departments");
+    const departments = page.getByTestId("home-categories");
     await expect(departments.getByRole("link")).toHaveCount(4);
     for (const width of [360, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 900 });

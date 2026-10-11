@@ -105,4 +105,52 @@ describe.skipIf(!hasDb)("catalog search and market visibility", () => {
       data: { status: "ACTIVE" },
     });
   });
+  it("hides archived, processing, failed and non-image media while preserving their catalog links", async () => {
+    const variant = await db.variant.findFirstOrThrow({ where: { productId } });
+    const images = [];
+    for (let i = 0; i < 6; i++) {
+      const image = await db.media.create({
+        data: {
+          kind: i === 4 ? "document" : "image",
+          status: i === 2 ? "PROCESSING" : i === 3 ? "FAILED" : "READY",
+          storageKey: `media/catalog-${suffix}-${i}.webp`,
+          originalName: "catalog-test.webp",
+          url: `/media/catalog-${suffix}-${i}.webp`,
+          bytes: 1,
+          mime: "image/webp",
+          productMedia: { create: { productId, sortOrder: i } },
+          variantMedia: { create: { variantId: variant.id, sortOrder: i } },
+        },
+      });
+      images.push(image);
+    }
+    try {
+      // Bulk soft deletion retains the relation and object. The hover must skip it.
+      await db.media.update({
+        where: { id: images[1].id },
+        data: { deletedAt: new Date() },
+      });
+      const expected = [images[0].id, images[5].id];
+      const listing = await listCatalogProducts(marketId, "en");
+      const detail = await findProductBySlug(marketId, "en", `shirt-${suffix}`);
+      for (const product of [
+        listing.items.find((p) => p.id === productId),
+        detail,
+      ]) {
+        expect(product?.media.map((link) => link.media.id)).toEqual(expected);
+        expect(product?.variants[0].media.map((link) => link.media.id)).toEqual(
+          expected,
+        );
+      }
+      expect(await db.productMedia.count({ where: { productId } })).toBe(6);
+      expect(
+        await db.variantMedia.count({ where: { variantId: variant.id } }),
+      ).toBe(6);
+    } finally {
+      const ids = images.map((image) => image.id);
+      await db.productMedia.deleteMany({ where: { mediaId: { in: ids } } });
+      await db.variantMedia.deleteMany({ where: { mediaId: { in: ids } } });
+      await db.media.deleteMany({ where: { id: { in: ids } } });
+    }
+  });
 });

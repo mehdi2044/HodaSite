@@ -50,6 +50,15 @@ export async function placeOrder(
       async (tx) => {
         const hash = tokenHash(token);
         await tx.$queryRaw`SELECT id FROM "Cart" WHERE "tokenHash"=${hash} FOR UPDATE`;
+        // Quote providers may read through a separate connection. Hold product
+        // classification stable before loading snapshots and until order commit.
+        await tx.$queryRaw`
+          SELECT p.id FROM "Product" p
+          JOIN "Variant" v ON v."productId"=p.id
+          JOIN "CartItem" i ON i."variantId"=v.id
+          JOIN "Cart" c ON c.id=i."cartId"
+          WHERE c."tokenHash"=${hash} ORDER BY p.id FOR SHARE OF p
+        `;
         const cart = await tx.cart.findUniqueOrThrow({
           where: { tokenHash: hash },
           include: {
@@ -76,8 +85,15 @@ export async function placeOrder(
           throw new CommerceError("CART_EMPTY");
         if (cart.revision !== expectedRevision)
           throw new CommerceError("CART_CHANGED");
+        if (cart.items.some((i) => i.variant.product.coinPackCoins))
+          await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR SHARE`;
         if (address.country !== cart.market.code)
           throw new CommerceError("ADDRESS_MARKET");
+        if (
+          cart.items.some((i) => i.variant.product.coinPackCoins) &&
+          (!customer || customer.isGuest || !customer.isActive)
+        )
+          throw new CommerceError("LOGIN_REQUIRED");
         if (customer && address.email !== customer.email)
           throw new CommerceError("EMAIL_MISMATCH");
         const settings = await tx.siteSettings.findUnique({
@@ -226,6 +242,9 @@ export async function placeOrder(
                     sku: v.sku,
                     color: v.color.nameI18n,
                     size: v.size.value,
+                    ...(v.product.coinPackCoins
+                      ? { coinPackCoins: v.product.coinPackCoins.toString() }
+                      : {}),
                   },
                   unitPriceAmount: item.unitPrice,
                   quantity: item.quantity,

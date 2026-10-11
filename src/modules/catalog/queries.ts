@@ -3,6 +3,7 @@ import { getDisplayPrices } from "@/modules/pricing";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { normalizeSearchText } from "./search";
+import { catalogCoinPacksEnabled, catalogVisibilityWhere } from "./visibility";
 
 export type CatalogLocale = "fa" | "tr" | "en";
 
@@ -26,7 +27,11 @@ export type CatalogFilters = {
 export const catalogProductInclude = {
   brand: true,
   category: true,
-  media: { orderBy: { sortOrder: "asc" as const }, include: { media: true } },
+  media: {
+    where: { media: { kind: "image", status: "READY", deletedAt: null } },
+    orderBy: { sortOrder: "asc" as const },
+    include: { media: true },
+  },
   variants: {
     where: { isActive: true },
     orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }],
@@ -35,6 +40,7 @@ export const catalogProductInclude = {
       size: true,
       stockItems: true,
       media: {
+        where: { media: { kind: "image", status: "READY", deletedAt: null } },
         orderBy: { sortOrder: "asc" as const },
         include: { media: true },
       },
@@ -49,6 +55,7 @@ export async function listCatalogProducts(
   locale: CatalogLocale,
   filters: CatalogFilters = {},
 ) {
+  const allowCoinPacks = await catalogCoinPacksEnabled();
   const page =
     Number.isSafeInteger(filters.page) && filters.page! > 0
       ? Math.min(100000, filters.page!)
@@ -66,6 +73,10 @@ export async function listCatalogProducts(
       WHERE "deletedAt" IS NULL
         AND "status" = 'ACTIVE'::"ProductStatus"
         AND ${marketId} = ANY("marketIds")
+        AND ("coinPackCoins" IS NULL OR ${allowCoinPacks})
+        AND ("coinPackCoins" IS NULL OR EXISTS (
+          SELECT 1 FROM "Variant" pv WHERE pv."productId" = "Product".id AND pv."isActive" = true
+        ))
         AND ("searchVector" @@ plainto_tsquery('simple', ${query}) OR similarity("searchText", ${query}) >= 0.18)
       ORDER BY ts_rank("searchVector", plainto_tsquery('simple', ${query})) DESC,
                similarity("searchText", ${query}) DESC
@@ -104,11 +115,14 @@ export async function listCatalogProducts(
   }
 
   const where: Prisma.ProductWhereInput = {
+    ...catalogVisibilityWhere(allowCoinPacks),
     deletedAt: null,
     status: "ACTIVE",
     marketIds: { has: marketId },
     ...(matchingIds ? { id: { in: matchingIds } } : {}),
-    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    ...(filters.categoryId
+      ? { categoryId: { in: await categoryFamily(filters.categoryId) } }
+      : {}),
     ...(filters.collectionId
       ? { collections: { some: { id: filters.collectionId } } }
       : {}),
@@ -234,6 +248,9 @@ export async function findProductBySlug(
   const slug = safeDecode(encodedSlug);
   return db.product.findFirst({
     where: {
+      ...(options.includeInactive
+        ? {}
+        : catalogVisibilityWhere(await catalogCoinPacksEnabled())),
       deletedAt: null,
       ...(options.includeInactive ? {} : { status: "ACTIVE" as const }),
       marketIds: { has: marketId },
@@ -247,7 +264,13 @@ export async function findProductBySlug(
           color: true,
           size: true,
           stockItems: true,
-          media: { orderBy: { sortOrder: "asc" }, include: { media: true } },
+          media: {
+            where: {
+              media: { kind: "image", status: "READY", deletedAt: null },
+            },
+            orderBy: { sortOrder: "asc" },
+            include: { media: true },
+          },
         },
       },
     },
@@ -255,6 +278,7 @@ export async function findProductBySlug(
 }
 
 export async function catalogFacets() {
+  const visibility = catalogVisibilityWhere(await catalogCoinPacksEnabled());
   const [brands, colors, sizes, categories, materialRows] = await Promise.all([
     db.brand.findMany({ where: { deletedAt: null }, orderBy: { slug: "asc" } }),
     db.color.findMany({ where: { deletedAt: null }, orderBy: { code: "asc" } }),
@@ -267,7 +291,12 @@ export async function catalogFacets() {
       orderBy: { sortOrder: "asc" },
     }),
     db.product.findMany({
-      where: { deletedAt: null, status: "ACTIVE", material: { not: null } },
+      where: {
+        ...visibility,
+        deletedAt: null,
+        status: "ACTIVE",
+        material: { not: null },
+      },
       distinct: ["material"],
       select: { material: true },
       orderBy: { material: "asc" },
@@ -290,4 +319,33 @@ function safeDecode(value: string) {
   } catch {
     return value;
   }
+}
+
+/** Only live descendants; a visited set also bounds malformed category cycles. */
+export async function categoryFamily(id: string) {
+  const categories = await db.category.findMany({
+    where: { deletedAt: null },
+    select: { id: true, parentId: true },
+  });
+  const children = new Map<string, string[]>();
+  const found = new Set<string>();
+  let exists = false;
+  for (const category of categories) {
+    if (category.id === id) exists = true;
+    const parentId = category.parentId;
+    if (parentId) {
+      const list = children.get(parentId) ?? [];
+      list.push(category.id);
+      children.set(parentId, list);
+    }
+  }
+  if (!exists) return [];
+  const pending = [id];
+  for (let index = 0; index < pending.length; index++) {
+    const current = pending[index];
+    if (found.has(current)) continue;
+    found.add(current);
+    for (const child of children.get(current) ?? []) pending.push(child);
+  }
+  return [...found];
 }

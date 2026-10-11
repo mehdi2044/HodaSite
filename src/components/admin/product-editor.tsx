@@ -45,6 +45,8 @@ export type ProductEditorValue = {
   tags: string;
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   basePriceAmount: string;
+  coinPackCoins?: string;
+  fittingSlot?: string;
   compareAtPriceAmount: string;
   defaultPurchaseCostAmount: string;
   defaultPurchaseCostCurrency: "USD" | "TRY" | "CAD" | "IRT";
@@ -90,6 +92,7 @@ export function ProductEditor({
   stockByVariant: Record<string, { onHand: number; reserved: number }>;
 }) {
   const t = useTranslations("catalogAdmin");
+  const ft = useTranslations("fitting");
   const [tab, setTab] = useState<(typeof TABS)[number]>(TABS[0]);
   const [mediaIds, setMediaIds] = useState(initial.mediaIds);
   const [variants, setVariants] = useState(initial.variants);
@@ -214,6 +217,31 @@ export function ProductEditor({
           </Button>
         ))}
       </div>
+
+      <Card className="grid gap-3 md:grid-cols-2">
+        <label>
+          {ft("packCoins")}
+          <Input
+            name="coinPackCoins"
+            defaultValue={initial.coinPackCoins ?? ""}
+            placeholder="100 / 500 / 1000"
+          />
+        </label>
+        <label>
+          {ft("slot")}
+          <Select name="fittingSlot" defaultValue={initial.fittingSlot ?? ""}>
+            <option value="">{ft("none")}</option>
+            {["TOP", "BOTTOM", "ONE_PIECE", "LAYER", "ACCESSORY", "SHOES"].map(
+              (slot) => (
+                <option key={slot} value={slot}>
+                  {ft(`slots.${slot}`)}
+                </option>
+              ),
+            )}
+          </Select>
+        </label>
+        <p className="muted text-sm">{ft("packHelp")}</p>
+      </Card>
 
       <section hidden={tab !== "general"}>
         <Card className="grid gap-4">

@@ -81,6 +81,19 @@ export async function ProductCard({
               {t("noImage")}
             </div>
           )}
+          {product.media[1]?.media &&
+            product.media[1].media.url !== image?.url && (
+              <div className="shop-card-alternate" aria-hidden="true">
+                <ResponsiveImage
+                  media={product.media[1].media}
+                  role="catalog"
+                  locale={locale}
+                  sizes="(max-width:640px) 50vw, 25vw"
+                  className="h-full w-full"
+                  imgClassName="h-full w-full object-cover"
+                />
+              </div>
+            )}
           {isDemoFashionMedia(image) && (
             <span className="shop-demo-badge">{t("demoImage")}</span>
           )}

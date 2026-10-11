@@ -17,6 +17,8 @@ it.each([
 });
 it.each([
   "/en/checkout",
+  "/fa/fitting-room",
+  "/tr/fitting-room/coins",
   "/fa/account/wishlist",
   "/tr/orders/TR-123/pay",
   "/fa/m/IR/p/%D9%84%D8%A8%D8%A7%D8%B3",

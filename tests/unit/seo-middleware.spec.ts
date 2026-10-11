@@ -59,6 +59,33 @@ describe("SEO routing transport boundaries", () => {
     );
     expect(response.headers.get("set-cookie")).toContain("market=IR;");
   });
+  it.each([
+    ["next-router-prefetch", "1"],
+    ["purpose", "prefetch"],
+    ["sec-purpose", "prefetch;prerender"],
+  ])(
+    "never changes the chosen market during background prefetch: %j",
+    async (name, value) => {
+      for (const pathname of ["/fa/m/IR/p/dress", "/fa", "/fa?market=TR"]) {
+        const response = await invoke(
+          new NextRequest(`http://127.0.0.1:3000${pathname}`, {
+            headers: { [name]: value, cookie: "market=TR" },
+          }),
+        );
+        expect(response.headers.get("set-cookie") ?? "").not.toContain(
+          "market=",
+        );
+        if (pathname.includes("/m/IR/")) {
+          expect(
+            response.headers.get("x-middleware-request-x-hoda-seo-market"),
+          ).toBe("IR");
+          expect(response.headers.get("x-middleware-rewrite")).toBe(
+            "http://127.0.0.1:3000/fa/p/dress",
+          );
+        }
+      }
+    },
+  );
   it("keeps explicit-market redirects on the same origin for PWA starts without cookies", async () => {
     const response = await invoke(
       new NextRequest("http://127.0.0.1:3000/en?market=TR"),

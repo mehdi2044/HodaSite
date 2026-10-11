@@ -373,3 +373,56 @@ describe("taxable fee settings", () => {
     );
   });
 });
+
+describe("service coin packs", () => {
+  const rules: FeeRuleInput[] = [
+    {
+      ...active,
+      id: "shipping",
+      type: "SHIPPING",
+      method: "FIXED",
+      params: { amount: "20" },
+    },
+    {
+      ...active,
+      id: "customs",
+      type: "CUSTOMS",
+      method: "PERCENT",
+      params: { percent: "8", of: "subtotal" },
+    },
+    {
+      ...active,
+      id: "tax",
+      type: "TAX",
+      method: "PERCENT",
+      params: { percent: "10", of: "subtotal" },
+    },
+  ];
+  it("does not charge shipping or customs on an all-service purchase", () => {
+    const q = computeFees(rules, {
+      currency: "CAD",
+      volumetricDivisor: "5000",
+      items: [
+        { quantity: 1, unitPrice: "100", weightGrams: 0, shippable: false },
+      ],
+    });
+    expect(q.lines.map((l) => [l.type, l.amount])).toEqual([["TAX", "10"]]);
+    expect(q.total).toBe("110");
+  });
+  it("ships physical garments while excluding coin packs from customs", () => {
+    const q = computeFees(rules, {
+      currency: "CAD",
+      volumetricDivisor: "5000",
+      items: [
+        { quantity: 1, unitPrice: "200", weightGrams: 500 },
+        { quantity: 1, unitPrice: "100", weightGrams: 0, shippable: false },
+      ],
+    });
+    expect(q.lines.map((l) => [l.type, l.amount])).toEqual([
+      ["SHIPPING", "20"],
+      ["CUSTOMS", "16"],
+      ["TAX", "30"],
+    ]);
+    expect(q.total).toBe("366");
+  });
+});

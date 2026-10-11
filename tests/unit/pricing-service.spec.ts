@@ -27,6 +27,7 @@ import {
   ensureFxRefreshScheduled,
   getDisplayPrice,
   getDisplayPrices,
+  getVariantDisplayPrices,
   getFxConfiguration,
   isRateStale,
   persistFxRate,
@@ -280,4 +281,41 @@ it("batch pricing preserves variant overrides and Decimal values with constant q
   expect(result.get("p2")?.amount).toBe("8");
   expect(m.db.marketPrice.findMany).toHaveBeenCalledTimes(1);
   expect(m.db.fxOverride.findFirst).toHaveBeenCalledTimes(1);
+});
+it("prices every size in a thousand-variant set with one FX and manual-price lookup", async () => {
+  m.db.marketPrice.findMany.mockResolvedValue([
+    {
+      variantId: "v-1",
+      productId: null,
+      amount: "17.1234",
+      compareAtAmount: null,
+    },
+    { variantId: null, productId: "p1", amount: "999", compareAtAmount: null },
+  ]);
+  const products = ["p1", "p2"].map((id, index) => ({
+    id,
+    basePriceAmount: "0.2",
+    compareAtPriceAmount: null,
+    variants: Array.from({ length: 500 }, (_, i) => ({
+      id: `v-${index * 500 + i}`,
+      priceOverrideUsd: i === 1 ? "0.3" : null,
+    })),
+  }));
+  const result = await getVariantDisplayPrices(products, {
+    ...market,
+    roundingRule: { increment: "0.0001", mode: "HALF_UP" },
+  });
+  expect(result.size).toBe(1000);
+  expect(result.get("v-1")?.amount).toBe("17.1234");
+  expect(result.get("v-499")?.amount).toBe("999");
+  expect(result.get("v-501")?.amount).toBe("12");
+  expect(result.get("v-999")?.amount).toBe("8");
+  expect(m.db.marketPrice.findMany).toHaveBeenCalledTimes(1);
+  expect(m.db.marketPrice.findFirst).not.toHaveBeenCalled();
+  expect(m.db.fxOverride.findFirst).toHaveBeenCalledTimes(1);
+  expect(m.db.fxQuote.findFirst).toHaveBeenCalledTimes(1);
+  const query = m.db.marketPrice.findMany.mock.calls[0][0];
+  expect(query.where.AND[1].OR[0].productId.in).toEqual(["p1", "p2"]);
+  expect(query.where.AND[1].OR[1].variantId.in).toHaveLength(1000);
+  expect(query.where.AND[1].OR[1].variantId.in).toContain("v-999");
 });

@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { rejects } from "node:assert/strict";
 const db = new PrismaClient();
 const id = "ci-ledger-restore-proof";
 const file = "/tmp/hoda-ledger-restore-proof.json";
@@ -21,6 +22,25 @@ try {
     });
     if (accounts.length !== 2) throw Error("missing ledger chart");
     await db.$transaction(async (tx) => {
+      await tx.customer.create({
+        data: {
+          id,
+          email: "ci-ledger-restore-proof@example.com",
+          isGuest: false,
+        },
+      });
+      await tx.fittingWallet.create({
+        data: { id, customerId: id, debt: "5.0001" },
+      });
+      await tx.fittingCoinDebtOverflow.create({
+        data: {
+          id,
+          customerId: id,
+          sourceKey: id,
+          amount: "9.0001",
+          balance: "7.0001",
+        },
+      });
       await tx.journalEntry.create({
         data: {
           id,
@@ -71,8 +91,12 @@ try {
     where: { entityType: "JournalEntry", entityId: id },
     orderBy: { id: "asc" },
   });
+  const wallet = await db.fittingWallet.findUniqueOrThrow({ where: { id } });
+  const overflow = await db.fittingCoinDebtOverflow.findUniqueOrThrow({
+    where: { id },
+  });
   const digest = createHash("sha256")
-    .update(JSON.stringify({ entry, audit }))
+    .update(JSON.stringify({ entry, audit, wallet, overflow }))
     .digest("hex");
   if (process.argv[2] === "prepare") await writeFile(file, digest);
   else {
@@ -88,8 +112,20 @@ try {
       blocked = true;
     }
     if (!blocked) throw Error("ledger immutability missing after restore");
+    await rejects(
+      db.fittingWallet.delete({ where: { id } }),
+      /Fitting wallet identity is immutable/,
+    );
+    await rejects(
+      db.fittingWallet.update({ where: { id }, data: { id: `${id}-changed` } }),
+      /Fitting wallet identity is immutable/,
+    );
+    await rejects(
+      db.fittingCoinDebtOverflow.delete({ where: { id } }),
+      /Fitting debt identity is immutable/,
+    );
     console.log(
-      "Ledger amounts, rates, audit and immutability survived restore",
+      "Ledger amounts, rates, audit, fitting liabilities and immutability survived restore",
     );
   }
 } finally {
