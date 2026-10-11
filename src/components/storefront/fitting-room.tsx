@@ -188,6 +188,14 @@ export function FittingRoom({
                 (owned ? setExtraOwned : setExtraShop)((rows) =>
                   mergeProducts(rows, r.products!),
                 );
+                if (!oldRequest.success)
+                  setSelection((current) =>
+                    current.filter(
+                      (id) =>
+                        !ids.includes(id) ||
+                        r.products!.some((p) => p.variantId === id),
+                    ),
+                  );
               })
               .catch(() => {});
         }
@@ -490,7 +498,9 @@ export function FittingRoom({
                   item = chosen ?? group[0];
                 const pageKey = `${source}:${item.productId}`,
                   cursor =
-                    pageKey in cursors ? cursors[pageKey] : group[0].nextCursor;
+                    pageKey in cursors
+                      ? cursors[pageKey]
+                      : group.find((p) => p.nextCursor)?.nextCursor;
                 return (
                   <article
                     key={item.productId}

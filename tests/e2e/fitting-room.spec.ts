@@ -124,6 +124,10 @@ for (const locale of ["fa", "tr", "en"] as const) {
       await page.reload();
       await expect(card.locator("select")).toHaveValue(variantIds[11]);
       await expect(room.locator(".fitting-chip")).toContainText("SIZE11");
+      await expect(more).toBeVisible();
+      await more.click();
+      await expect(select.locator("option")).toHaveCount(13);
+      await expect(select).toHaveValue(variantIds[11]);
       await room.locator(".fitting-add").click();
       await expect(
         room.locator(".fitting-selection [role=status]"),
