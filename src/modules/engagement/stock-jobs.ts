@@ -48,7 +48,7 @@ export function registerStockJobs() {
           include: {
             customer: true,
             market: true,
-            variant: { include: { stockItems: true, product: true } },
+            variant: { include: { stockItems: true } },
           },
         });
         if (
@@ -60,7 +60,12 @@ export function registerStockJobs() {
           alert.customer.isGuest
         )
           return;
-        const p = alert.variant.product;
+        // Product edits take UPDATE locks. Hold classification through delivery,
+        // then re-read it after any admitted reclassification has committed.
+        await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${alert.variant.productId} FOR SHARE`;
+        const p = await tx.product.findUniqueOrThrow({
+          where: { id: alert.variant.productId },
+        });
         if (
           !alert.market.isActive ||
           !alert.market.enabledLocales.includes(alert.locale) ||
