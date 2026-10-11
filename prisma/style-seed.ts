@@ -536,7 +536,7 @@ export function departmentStyleComposition() {
 }
 
 /** Compare-and-swap only exact, untouched prior demos. No market overrides. */
-export async function upgradeStyleComposition(db: PrismaClient) {
+export async function upgradeStyleComposition(db: Pick<PrismaClient, "homepage">) {
   const home = await db.homepage.findUnique({
     where: { id: "seed-homepage-global" },
   });
