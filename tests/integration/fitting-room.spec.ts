@@ -2636,7 +2636,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await db.product.delete({ where: { id: product.id } });
       }
     });
-    it("keeps every size of a 500-variant garment without hiding a later garment in another fitting slot", async () => {
+    it("pages through every size of a 500-variant garment without hiding a later fitting slot or pricing unbounded rows", async () => {
       const c = await customer();
       const marker = `fit${randomUUID().replaceAll("-", "")}`;
       const template = await db.variant.findUniqueOrThrow({
@@ -2698,7 +2698,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         const products = await fittingProducts(c.id, marketId, "en", marker);
         expect(
           products.filter((p) => p.productId === productIds[0]),
-        ).toHaveLength(500);
+        ).toHaveLength(10);
         expect(
           products.filter((p) => p.productId === productIds[1]),
         ).toHaveLength(1);
@@ -2707,12 +2707,97 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           "BOTTOM",
         ]);
         expect(products.every((p) => p.amount !== null)).toBe(true);
+        const top = products.filter((p) => p.productId === productIds[0]);
+        let cursor = top[0].nextCursor;
+        while (cursor) {
+          const page = await fittingProducts(c.id, marketId, "en", "", false, {
+            productId: productIds[0],
+            after: cursor,
+          });
+          expect(page.length).toBeLessThanOrEqual(10);
+          expect(
+            page.every(
+              (p) => p.amount !== null && p.productId === productIds[0],
+            ),
+          ).toBe(true);
+          top.push(...page);
+          cursor = page[0]?.nextCursor ?? null;
+        }
+        expect(top).toHaveLength(500);
+        expect(new Set(top.map((p) => p.variantId)).size).toBe(500);
+        const recovered = await fittingProducts(
+          c.id,
+          marketId,
+          "en",
+          "",
+          false,
+          { variantIds: [top[499].variantId] },
+        );
+        expect(recovered.map((p) => p.variantId)).toEqual([top[499].variantId]);
+        expect(
+          await fittingProducts(c.id, marketId, "en", "", true, {
+            variantIds: [top[499].variantId],
+          }),
+        ).toEqual([]);
       } finally {
         await db.stockItem.deleteMany({
           where: { variant: { productId: { in: productIds } } },
         });
         await db.product.deleteMany({ where: { id: { in: productIds } } });
         await db.size.deleteMany({ where: { id: { in: sizeIds } } });
+      }
+    });
+    it("pages fitting products without dropping the 31st garment", async () => {
+      const c = await customer();
+      const marker = `fit${randomUUID().replaceAll("-", "")}`;
+      const template = await db.variant.findUniqueOrThrow({
+        where: { id: "seed-style-v2-women-tee-m" },
+        include: { product: true },
+      });
+      const ids = Array.from(
+        { length: 31 },
+        (_, i) => `0-${marker}-${String(i).padStart(2, "0")}`,
+      );
+      try {
+        for (const id of ids)
+          await db.product.create({
+            data: {
+              id,
+              categoryId: template.product.categoryId,
+              gender: "WOMEN",
+              titleI18n: { en: "Paged product" },
+              slugI18n: { en: id },
+              descriptionI18n: {},
+              status: "ACTIVE",
+              basePriceAmount: "1",
+              marketIds: [marketId],
+              fittingSlot: "TOP",
+              searchText: marker,
+              media: { create: { mediaId: "seed-fashion-v2-women-tee" } },
+              variants: {
+                create: {
+                  colorId: template.colorId,
+                  sizeId: template.sizeId,
+                  sku: id,
+                },
+              },
+            },
+          });
+        const first = await fittingProducts(c.id, marketId, "en", marker);
+        expect(first.map((p) => p.productId)).toEqual(ids.slice(0, 30));
+        expect(first[0].nextProductCursor).toBe(ids[29]);
+        const next = await fittingProducts(
+          c.id,
+          marketId,
+          "en",
+          marker,
+          false,
+          { afterProduct: first[0].nextProductCursor! },
+        );
+        expect(next.map((p) => p.productId)).toEqual([ids[30]]);
+        expect(next[0].nextProductCursor).toBeNull();
+      } finally {
+        await db.product.deleteMany({ where: { id: { in: ids } } });
       }
     });
     it("batches fitting catalog prices with a single manual-price and FX lookup", async () => {

@@ -21,11 +21,9 @@ export function MarketSwitcher({
   ariaLabel: string;
 }) {
   const pathname = usePathname();
-  // A prefetched canonical page can be served from the router cache. Persist
-  // its market only when the shopper actually opens that page.
-  useEffect(() => {
-    document.cookie = `market=${current}; path=/; max-age=${YEAR}`;
-  }, [current]);
+  // Middleware persists the validated cookie/default on foreground requests.
+  // Mount effects must not overwrite a just-selected market with stale props
+  // from either the desktop or mobile copy of this control.
   useEffect(() => {
     // Shared layouts survive client navigation. The active canonical route
     // wins over a retained layout prop, without touching background requests.

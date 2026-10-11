@@ -463,9 +463,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
-    it.each(["editor", "delivery"] as const)(
-      "serializes stock-alert classification with %s admitted first",
-      async (firstOperation) => {
+    it.each([
+      { firstOperation: "editor", change: "classification" },
+      { firstOperation: "delivery", change: "classification" },
+      { firstOperation: "editor", change: "variant" },
+      { firstOperation: "editor", change: "stock" },
+    ] as const)(
+      "serializes stock-alert state with $firstOperation first and a $change edit",
+      async ({ firstOperation, change }) => {
         const integration = await db.integration.findUniqueOrThrow({
           where: { key: "fitting-room" },
         });
@@ -488,6 +493,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             status: "ACTIVE",
             marketIds: [marketId],
             basePriceAmount: "10",
+            coinPackCoins: change === "classification" ? null : "100",
             variants: {
               create: {
                 colorId: source.colorId,
@@ -519,11 +525,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await db.integration.update({
             where: { id: integration.id },
             data: {
-              isActive: false,
+              isActive: change !== "classification",
               config: {
                 ...(integration.config as Record<string, unknown>),
-                enabled: false,
-                coinSalesEnabled: false,
+                enabled: change !== "classification",
+                coinSalesEnabled: change !== "classification",
               },
             },
           });
@@ -555,10 +561,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             db.$transaction(
               async (tx) => {
                 await tx.$queryRaw`SELECT id FROM "Product" WHERE id=${product.id} FOR UPDATE`;
-                await tx.product.update({
-                  where: { id: product.id },
-                  data: { coinPackCoins: "100" },
-                });
+                if (change === "classification")
+                  await tx.product.update({
+                    where: { id: product.id },
+                    data: { coinPackCoins: "100" },
+                  });
+                else if (change === "variant")
+                  await tx.variant.update({
+                    where: { id: variant.id },
+                    data: { isActive: false },
+                  });
+                else
+                  await tx.stockItem.updateMany({
+                    where: { variantId: variant.id },
+                    data: { onHand: 0 },
+                  });
                 if (hold) {
                   notify();
                   await released;
@@ -602,7 +619,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               ? {
                   status: "PENDING",
                   attempts: 0,
-                  lastError: "COIN_PACK_DISABLED",
+                  lastError:
+                    change === "classification"
+                      ? "COIN_PACK_DISABLED"
+                      : change === "variant"
+                        ? "VARIANT_UNAVAILABLE"
+                        : "STOCK_UNAVAILABLE",
                 }
               : { status: "DONE", attempts: 0 },
           );
@@ -613,6 +635,27 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               ? { active: true, notifiedAt: null }
               : { active: false },
           );
+          if (change !== "classification") {
+            await db.variant.update({
+              where: { id: variant.id },
+              data: { isActive: true },
+            });
+            await db.stockItem.updateMany({
+              where: { variantId: variant.id },
+              data: { onHand: 2 },
+            });
+            await db.job.update({
+              where: { id: jobId },
+              data: { runAt: new Date(Date.now() - 1000) },
+            });
+            await runJobs(["stock-alert"]);
+            expect(actor.send).toHaveBeenCalledTimes(1);
+            expect(
+              await db.stockAlert.findUniqueOrThrow({
+                where: { id: alert.id },
+              }),
+            ).toMatchObject({ active: false });
+          }
         } finally {
           release();
           await Promise.allSettled(

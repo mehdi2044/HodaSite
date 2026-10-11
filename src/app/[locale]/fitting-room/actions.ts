@@ -9,13 +9,58 @@ import {
   walletView,
   saveLook,
   FittingError,
+  fittingConfig,
+  fittingProducts,
 } from "@/modules/fitting";
 import { addCartItems } from "@/modules/cart";
 import { revalidatePath } from "next/cache";
 async function customer() {
   const c = await currentCustomer();
-  if (!c || c.isGuest) throw new FittingError("LOGIN_REQUIRED");
+  if (!c || c.isGuest || !c.isActive) throw new FittingError("LOGIN_REQUIRED");
   return c;
+}
+export async function loadFittingVariants(locale: string, raw: unknown) {
+  return safe(async () => {
+    const l = z.enum(["fa", "tr", "en"]).parse(locale);
+    const input = z
+      .object({
+        marketId: z.string().min(1).max(100),
+        productId: z.string().min(1).max(100).optional(),
+        after: z.string().min(1).max(100).optional(),
+        variantIds: z
+          .array(z.string().min(1).max(100))
+          .min(1)
+          .max(4)
+          .optional(),
+        owned: z.boolean(),
+        afterProduct: z.string().min(1).max(100).optional(),
+        query: z.string().max(100).optional(),
+      })
+      .strict()
+      .refine((v) =>
+        v.productId
+          ? !v.variantIds && !v.afterProduct && !v.query
+          : v.variantIds
+            ? !v.after && !v.afterProduct && !v.query
+            : !!v.afterProduct && !v.after,
+      )
+      .parse(raw);
+    const c = await customer(),
+      { market } = await getRequestContext(l);
+    if (market.id !== input.marketId)
+      throw new FittingError("REQUEST_CONFLICT");
+    if (!(await fittingConfig()).enabled) throw new FittingError("DISABLED");
+    return {
+      products: await fittingProducts(
+        c.id,
+        market.id,
+        l,
+        input.query ?? "",
+        input.owned,
+        input,
+      ),
+    };
+  });
 }
 async function safe<T extends object>(fn: () => Promise<T>) {
   try {

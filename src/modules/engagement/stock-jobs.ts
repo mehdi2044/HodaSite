@@ -48,7 +48,7 @@ export function registerStockJobs() {
           include: {
             customer: true,
             market: true,
-            variant: { include: { stockItems: true } },
+            variant: { select: { productId: true } },
           },
         });
         if (
@@ -66,10 +66,15 @@ export function registerStockJobs() {
         const p = await tx.product.findUniqueOrThrow({
           where: { id: alert.variant.productId },
         });
+        await tx.$queryRaw`SELECT id FROM "Variant" WHERE id=${alert.variantId} FOR SHARE`;
+        const variant = await tx.variant.findUniqueOrThrow({
+          where: { id: alert.variantId },
+          include: { stockItems: true },
+        });
+        if (!variant.isActive) throw new JobDeferredError("VARIANT_UNAVAILABLE");
         if (
           !alert.market.isActive ||
           !alert.market.enabledLocales.includes(alert.locale) ||
-          !alert.variant.isActive ||
           p.status !== "ACTIVE" ||
           p.deletedAt ||
           !p.marketIds.includes(alert.marketId)
@@ -81,7 +86,7 @@ export function registerStockJobs() {
           if (!(await catalogCoinPacksEnabled(tx)))
             throw new JobDeferredError("COIN_PACK_DISABLED");
         }
-        if (!alert.variant.stockItems.some((s) => s.onHand > s.reserved))
+        if (!variant.stockItems.some((s) => s.onHand > s.reserved))
           throw new JobDeferredError("STOCK_UNAVAILABLE");
         const site = await tx.siteSettings.findUnique({
             where: { id: "default" },

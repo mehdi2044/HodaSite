@@ -19,7 +19,21 @@ export type FittingProduct = {
   amount: string | null;
   owned: boolean;
   available: boolean;
+  nextCursor?: string | null;
+  nextProductCursor?: string | null;
 };
+export type FittingVariantRequest = {
+  marketId: string;
+  owned: boolean;
+  productId?: string;
+  after?: string;
+  variantIds?: string[];
+  afterProduct?: string;
+  query?: string;
+};
+function mergeProducts(old: FittingProduct[], fresh: FittingProduct[]) {
+  return [...new Map([...old, ...fresh].map((p) => [p.variantId, p])).values()];
+}
 export type FittingModel = {
   id: string;
   label: string;
@@ -56,11 +70,14 @@ export function FittingRoom({
   readSession,
   save,
   addToBag,
+  loadVariants,
+  searchQuery = "",
   saved = [],
 }: {
   customerId?: string;
   marketId: string;
   enabled?: boolean;
+  searchQuery?: string;
   models: FittingModel[];
   products: FittingProduct[];
   ownedProducts: FittingProduct[];
@@ -80,6 +97,9 @@ export function FittingRoom({
   readSession: (id: string) => Promise<Result>;
   save: (id: string, name: string) => Promise<Result>;
   addToBag: (ids: string[]) => Promise<Result>;
+  loadVariants?: (
+    input: FittingVariantRequest,
+  ) => Promise<{ ok: boolean; error?: string; products?: FittingProduct[] }>;
   saved?: { id: string; name: string | null; imageUrl: string }[];
 }) {
   const [modelId, setModelId] = useState(models[0]?.id ?? ""),
@@ -93,6 +113,16 @@ export function FittingRoom({
     [name, setName] = useState(""),
     [message, setMessage] = useState(""),
     [savedLooks, setSaved] = useState(saved);
+  const [extraShop, setExtraShop] = useState<FittingProduct[]>([]),
+    [extraOwned, setExtraOwned] = useState<FittingProduct[]>([]),
+    [cursors, setCursors] = useState<Record<string, string | null>>({}),
+    [loadingVariants, setLoadingVariants] = useState<string | null>(null);
+  const [catalogCursors, setCatalogCursors] = useState<
+      Record<string, string | null>
+    >({}),
+    [catalogIds, setCatalogIds] = useState<Record<string, string[]>>({});
+  const shopProducts = mergeProducts(extraShop, products),
+    wardrobeProducts = mergeProducts(extraOwned, ownedProducts);
   const pending = useRef<Parameters<typeof generate>[0] | null>(null);
   const persistenceKey = customerId
     ? `hoda:fitting:${customerId}:${marketId}`
@@ -131,6 +161,7 @@ export function FittingRoom({
               (id: unknown) =>
                 typeof id === "string" &&
                 (oldRequest.success ||
+                  loadVariants ||
                   (oldWardrobeIds.has(id) ? ownedProducts : products).some(
                     (p) => p.variantId === id,
                   )),
@@ -138,6 +169,29 @@ export function FittingRoom({
             .slice(0, 4),
         );
       setWardrobeSelection([...oldWardrobeIds].slice(0, 4));
+      if (loadVariants && Array.isArray(old.selection)) {
+        for (const owned of [false, true]) {
+          const ids = old.selection
+            .filter(
+              (id: unknown): id is string =>
+                typeof id === "string" &&
+                oldWardrobeIds.has(id) === owned &&
+                !(owned ? ownedProducts : products).some(
+                  (p) => p.variantId === id,
+                ),
+            )
+            .slice(0, 4);
+          if (ids.length)
+            void loadVariants({ marketId, owned, variantIds: ids })
+              .then((r) => {
+                if (!live || !r.ok || !r.products) return;
+                (owned ? setExtraOwned : setExtraShop)((rows) =>
+                  mergeProducts(rows, r.products!),
+                );
+              })
+              .catch(() => {});
+        }
+      }
       if (old.request) {
         if (oldRequest.success) pending.current = oldRequest.data;
       }
@@ -175,20 +229,33 @@ export function FittingRoom({
           ? "MEN"
           : "KIDS";
   const all = [
-    ...products,
-    ...ownedProducts.filter(
-      (v) => !products.some((p) => p.variantId === v.variantId),
+    ...shopProducts,
+    ...wardrobeProducts.filter(
+      (v) => !shopProducts.some((p) => p.variantId === v.variantId),
     ),
   ];
   const selected = selection
     .map((id) =>
-      (wardrobeSelection.includes(id) ? ownedProducts : products).find(
+      (wardrobeSelection.includes(id) ? wardrobeProducts : shopProducts).find(
         (p) => p.variantId === id,
       ),
     )
     .filter((v): v is FittingProduct => !!v);
-  const candidates = (source === "shop" ? products : ownedProducts).filter(
-    (p) => p.gender === gender || p.gender === "UNISEX",
+  const currentProductIds = new Set([
+    ...(source === "shop" ? products : ownedProducts).map((p) => p.productId),
+    ...(catalogIds[`${searchQuery}:${source}`] ?? []),
+  ]);
+  const catalogKey = `${searchQuery}:${source}`,
+    catalogCursor =
+      catalogKey in catalogCursors
+        ? catalogCursors[catalogKey]
+        : (source === "shop" ? products : ownedProducts)[0]?.nextProductCursor;
+  const candidates = (
+    source === "shop" ? shopProducts : wardrobeProducts
+  ).filter(
+    (p) =>
+      currentProductIds.has(p.productId) &&
+      (p.gender === gender || p.gender === "UNISEX"),
   );
   const groups = [...new Set(candidates.map((p) => p.productId))].map((id) =>
     candidates.filter((p) => p.productId === id),
@@ -421,6 +488,9 @@ export function FittingRoom({
                     (p) => p.productId === group[0].productId,
                   ),
                   item = chosen ?? group[0];
+                const pageKey = `${source}:${item.productId}`,
+                  cursor =
+                    pageKey in cursors ? cursors[pageKey] : group[0].nextCursor;
                 return (
                   <article
                     key={item.productId}
@@ -472,6 +542,48 @@ export function FittingRoom({
                           ))}
                         </select>
                       </label>
+                      {loadVariants && cursor && (
+                        <button
+                          className="button mt-2"
+                          disabled={locked || loadingVariants !== null}
+                          aria-label={`${labels.moreVariants} ${item.title}`}
+                          onClick={async () => {
+                            setLoadingVariants(pageKey);
+                            setError("");
+                            try {
+                              const r = await loadVariants({
+                                marketId,
+                                productId: item.productId,
+                                after: cursor,
+                                owned: source === "wardrobe",
+                              });
+                              if (!r.ok || !r.products) {
+                                setError(
+                                  labels[`error_${r.error}`] ?? labels.error,
+                                );
+                                return;
+                              }
+                              (source === "wardrobe"
+                                ? setExtraOwned
+                                : setExtraShop)((rows) =>
+                                mergeProducts(rows, r.products!),
+                              );
+                              setCursors((old) => ({
+                                ...old,
+                                [pageKey]: r.products![0]?.nextCursor ?? null,
+                              }));
+                            } catch {
+                              setError(labels.error);
+                            } finally {
+                              setLoadingVariants(null);
+                            }
+                          }}
+                        >
+                          {loadingVariants === pageKey
+                            ? labels.loadingVariants
+                            : labels.moreVariants}
+                        </button>
+                      )}
                     </div>
                   </article>
                 );
@@ -480,6 +592,52 @@ export function FittingRoom({
               <p>{labels.emptyWardrobe}</p>
             )}
           </div>
+          {loadVariants && catalogCursor && (
+            <button
+              className="button"
+              disabled={locked || loadingVariants !== null}
+              onClick={async () => {
+                setLoadingVariants(`catalog:${catalogKey}`);
+                setError("");
+                try {
+                  const r = await loadVariants({
+                    marketId,
+                    owned: source === "wardrobe",
+                    afterProduct: catalogCursor,
+                    query: source === "shop" ? searchQuery : "",
+                  });
+                  if (!r.ok || !r.products) {
+                    setError(labels[`error_${r.error}`] ?? labels.error);
+                    return;
+                  }
+                  (source === "wardrobe" ? setExtraOwned : setExtraShop)(
+                    (rows) => mergeProducts(rows, r.products!),
+                  );
+                  setCatalogIds((old) => ({
+                    ...old,
+                    [catalogKey]: [
+                      ...new Set([
+                        ...(old[catalogKey] ?? []),
+                        ...r.products!.map((p) => p.productId),
+                      ]),
+                    ],
+                  }));
+                  setCatalogCursors((old) => ({
+                    ...old,
+                    [catalogKey]: r.products![0]?.nextProductCursor ?? null,
+                  }));
+                } catch {
+                  setError(labels.error);
+                } finally {
+                  setLoadingVariants(null);
+                }
+              }}
+            >
+              {loadingVariants === `catalog:${catalogKey}`
+                ? labels.loadingVariants
+                : labels.moreProducts}
+            </button>
+          )}
           <div className="fitting-selection">
             <h2>
               {labels.selection} <span>{selected.length}/4</span>

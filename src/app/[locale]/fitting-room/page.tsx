@@ -17,6 +17,7 @@ import {
   readFitting,
   saveFitting,
   addFittingItems,
+  loadFittingVariants,
 } from "./actions";
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -90,6 +91,9 @@ export default async function Page({
     "priceUnavailable",
     "colorSize",
     "choose",
+    "moreVariants",
+    "moreProducts",
+    "loadingVariants",
     "unavailable",
     "emptyWardrobe",
     "selection",
@@ -129,7 +133,7 @@ export default async function Page({
         </form>
       )}
       <FittingRoom
-        key={`${c.id}:${market.id}`}
+        key={`${c.id}:${market.id}:${locale}`}
         customerId={c.id}
         marketId={market.id}
         enabled={config.enabled}
@@ -146,6 +150,8 @@ export default async function Page({
         readSession={readFitting}
         save={saveFitting}
         addToBag={addFittingItems.bind(null, locale)}
+        loadVariants={loadFittingVariants.bind(null, locale)}
+        searchQuery={q}
         saved={saved}
       />
     </main>

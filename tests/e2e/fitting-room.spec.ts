@@ -11,6 +11,151 @@ import { returnFixture } from "../helpers/returns";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
 for (const locale of ["fa", "tr", "en"] as const) {
+  test(`${locale}: paged sizes retain choices, recover after reload and add the later size to cart`, async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    const old = await db.integration.findUniqueOrThrow({
+      where: { key: "fitting-room" },
+    });
+    const marker = randomUUID().replaceAll("-", "");
+    const productId = `0-page-${marker}`;
+    const variantIds = Array.from(
+      { length: 12 },
+      (_, i) => `${marker}-variant-${String(i).padStart(2, "0")}`,
+    );
+    const sizeIds = Array.from({ length: 12 }, (_, i) => `${marker}-size-${i}`);
+    const template = await db.variant.findUniqueOrThrow({
+      where: { id: "seed-style-v2-women-tee-m" },
+      include: { product: true },
+    });
+    const markets = await db.market.findMany({ where: { isActive: true } });
+    const email = `fit-page-${marker}@example.com`;
+    const title = {
+      fa: "رنگ و سایز آزمایشی",
+      tr: "Test renk ve beden",
+      en: "Test colors and sizes",
+    }[locale];
+    try {
+      await db.integration.update({
+        where: { id: old.id },
+        data: {
+          isActive: true,
+          config: { ...(old.config as Record<string, unknown>), enabled: true },
+        },
+      });
+      await db.size.createMany({
+        data: sizeIds.map((id, i) => ({
+          id,
+          scale: "INTL",
+          value: `SIZE${i}`,
+          groupKey: marker,
+        })),
+      });
+      await db.product.create({
+        data: {
+          id: productId,
+          categoryId: template.product.categoryId,
+          gender: "WOMEN",
+          titleI18n: { fa: title, tr: title, en: title },
+          slugI18n: { fa: marker, tr: marker, en: marker },
+          descriptionI18n: {},
+          status: "ACTIVE",
+          basePriceAmount: "1",
+          marketIds: markets.map((m) => m.id),
+          fittingSlot: "TOP",
+          searchText: marker,
+          media: { create: { mediaId: "seed-fashion-v2-women-tee" } },
+          variants: {
+            create: variantIds.map((id, i) => ({
+              id,
+              colorId: template.colorId,
+              sizeId: sizeIds[i],
+              sku: `${marker}-${i}`,
+            })),
+          },
+        },
+      });
+      const warehouse = await db.warehouse.findFirstOrThrow({
+        where: { isActive: true },
+      });
+      await db.stockItem.createMany({
+        data: variantIds.map((variantId) => ({
+          variantId,
+          warehouseId: warehouse.id,
+          onHand: 2,
+        })),
+      });
+      await customerLogin(page, email, locale);
+      await page.evaluate(() => {
+        document.cookie = "market=TR; path=/";
+      });
+      await page.goto(`/${locale}/fitting-room?q=${marker}`);
+      const room = page.getByTestId("fitting-room"),
+        card = room.locator(".fitting-product").filter({
+          has: page.getByRole("heading", { name: title, exact: true }),
+        });
+      const select = card.locator("select");
+      await expect(select.locator("option")).toHaveCount(11);
+      await select.selectOption(variantIds[0]);
+      const more = card.getByRole("button", {
+        name: `${{ fa, tr, en }[locale].fitting.moreVariants} ${title}`,
+        exact: true,
+      });
+      await more.click();
+      await expect(select.locator("option")).toHaveCount(13);
+      await expect(select).toHaveValue(variantIds[0]);
+      await expect(more).toHaveCount(0);
+      await select.selectOption(variantIds[11]);
+      await expect(room.locator(".fitting-chip")).toContainText("SIZE11");
+      const customer = await db.customer.findUniqueOrThrow({
+        where: { email },
+      });
+      const market = markets.find((m) => m.code === "TR")!;
+      // The stored selection format is the same one written after a fitting request.
+      await page.evaluate(
+        ({ key, id }) =>
+          sessionStorage.setItem(
+            key,
+            JSON.stringify({ selection: [id], wardrobeSelection: [] }),
+          ),
+        { key: `hoda:fitting:${customer.id}:${market.id}`, id: variantIds[11] },
+      );
+      await page.reload();
+      await expect(card.locator("select")).toHaveValue(variantIds[11]);
+      await expect(room.locator(".fitting-chip")).toContainText("SIZE11");
+      await room.locator(".fitting-add").click();
+      await expect(
+        room.locator(".fitting-selection [role=status]"),
+      ).toContainText({ fa, tr, en }[locale].fitting.added);
+      expect(
+        await db.cartItem.count({
+          where: {
+            variantId: variantIds[11],
+            cart: { customerId: customer.id },
+          },
+        }),
+      ).toBe(1);
+      expect(
+        await db.fittingCoinEntry.count({
+          where: { customerId: customer.id, reason: "FITTING" },
+        }),
+      ).toBe(0);
+    } finally {
+      await db.cartItem.deleteMany({
+        where: { variantId: { in: variantIds } },
+      });
+      await db.stockItem.deleteMany({
+        where: { variantId: { in: variantIds } },
+      });
+      await db.product.deleteMany({ where: { id: productId } });
+      await db.size.deleteMany({ where: { id: { in: sizeIds } } });
+      await db.integration.update({
+        where: { id: old.id },
+        data: { isActive: old.isActive, config: old.config! },
+      });
+    }
+  });
   test(`${locale}: fixed models, actual variant color, wardrobe and no-charge provider fallback`, async ({
     page,
   }, info) => {
@@ -420,6 +565,13 @@ test("pending fitting requests survive market changes without leaking selection 
       switcher.selectOption("TR"),
     ]);
     await expect(switcher).toHaveValue("TR");
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          document.cookie.split("; ").find((c) => c.startsWith("market=")),
+        ),
+      )
+      .toBe("market=TR");
     await expect(room.locator(".fitting-chip")).toHaveCount(1);
     await expect(room.locator(".fitting-generate")).toContainText(
       en.fitting.retry,

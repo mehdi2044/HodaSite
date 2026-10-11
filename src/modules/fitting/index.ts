@@ -134,56 +134,97 @@ export async function fittingProducts(
   locale: "fa" | "tr" | "en",
   query = "",
   owned = false,
+  page: {
+    productId?: string;
+    after?: string;
+    variantIds?: string[];
+    afterProduct?: string;
+  } = {},
 ) {
-  const ownedIds = await ownedVariantIds(db, customerId);
+  const ownedIds = owned
+    ? await ownedVariantIds(db, customerId)
+    : new Set<string>();
   const search = normalizeSearchText(query);
-  const eligibleVariant: Prisma.VariantWhereInput = owned
+  const baseVariant: Prisma.VariantWhereInput = owned
     ? { id: { in: [...ownedIds] } }
     : {
         isActive: true,
         color: { deletedAt: null },
         size: { deletedAt: null },
       };
-  const rows = (
-    await db.product.findMany({
-      where: owned
-        ? { variants: { some: eligibleVariant } }
-        : {
-            deletedAt: null,
-            status: "ACTIVE",
-            coinPackCoins: null,
-            fittingSlot: { not: null },
-            marketIds: { has: marketId },
-            category: { deletedAt: null },
-            variants: { some: eligibleVariant },
-            ...(search
-              ? {
-                  searchText: {
-                    contains: search,
-                    mode: "insensitive" as const,
-                  },
-                }
+  const image = {
+    status: "READY",
+    deletedAt: null,
+    mime: { startsWith: "image/" },
+  } satisfies Prisma.MediaWhereInput;
+  const eligibleVariant: Prisma.VariantWhereInput = {
+    AND: [
+      baseVariant,
+      ...(page.after ? [{ id: { gt: page.after } }] : []),
+      ...(page.variantIds ? [{ id: { in: page.variantIds } }] : []),
+    ],
+    OR: [
+      { media: { some: { media: image } } },
+      { product: { media: { some: { media: image } } } },
+    ],
+  };
+  const productPage = await db.product.findMany({
+    where: owned
+      ? {
+          ...(page.productId
+            ? { id: page.productId }
+            : page.afterProduct
+              ? { id: { gt: page.afterProduct } }
               : {}),
-          },
-      include: {
-        ...variantInclude.product.include,
-        variants: {
-          where: eligibleVariant,
-          include: {
-            color: true,
-            size: true,
-            media: variantInclude.media,
-            stockItems: true,
-          },
-          orderBy: { id: "asc" },
+          variants: { some: eligibleVariant },
+        }
+      : {
+          ...(page.productId
+            ? { id: page.productId }
+            : page.afterProduct
+              ? { id: { gt: page.afterProduct } }
+              : {}),
+          deletedAt: null,
+          status: "ACTIVE",
+          coinPackCoins: null,
+          fittingSlot: { not: null },
+          marketIds: { has: marketId },
+          category: { deletedAt: null },
+          variants: { some: eligibleVariant },
+          ...(search
+            ? {
+                searchText: {
+                  contains: search,
+                  mode: "insensitive" as const,
+                },
+              }
+            : {}),
         },
+    include: {
+      ...variantInclude.product.include,
+      variants: {
+        where: eligibleVariant,
+        include: {
+          color: true,
+          size: true,
+          media: variantInclude.media,
+          stockItems: true,
+        },
+        orderBy: { id: "asc" },
+        take: 11,
       },
-      // Bound products first so a large color/size range cannot hide other garments.
-      orderBy: { id: "asc" },
-      take: 60,
-    })
-  ).flatMap(({ variants, ...product }) =>
-    variants.map((variant) => ({ ...variant, product })),
+    },
+    // Bound products first so a large color/size range cannot hide other garments.
+    orderBy: { id: "asc" },
+    take: 31,
+  });
+  const nextProductCursor = productPage.length > 30 ? productPage[29].id : null;
+  const rows = productPage.slice(0, 30).flatMap(({ variants, ...product }) =>
+    variants.slice(0, 10).map((variant) => ({
+      ...variant,
+      product,
+      nextCursor: variants.length > 10 ? variants[9].id : null,
+    })),
   );
   const market = await db.market.findUniqueOrThrow({ where: { id: marketId } });
   const pricedProducts = new Map<
@@ -226,6 +267,8 @@ export async function fittingProducts(
         owned,
         available:
           v.stockItems.reduce((n, s) => n + s.onHand - s.reserved, 0) > 0,
+        nextCursor: v.nextCursor,
+        nextProductCursor,
       },
     ];
   });
