@@ -64,6 +64,63 @@ beforeEach(() => {
   ]);
 });
 describe("prepared look server contract", () => {
+  it.each([true, false])(
+    "excludes inactive sizes from offers and pricing; active sibling=%s",
+    async (active) => {
+      mocks.media.mockResolvedValue([{ id: "look-photo" }]);
+      mocks.categories.mockResolvedValue([{ id: "women" }]);
+      const variant = {
+        colorId: "charcoal",
+        color: { nameI18n: { en: "Charcoal" }, deletedAt: null },
+        size: { value: "M", deletedAt: null },
+        stockItems: [{ onHand: 10, reserved: 0 }],
+        media: [],
+      };
+      mocks.products.mockResolvedValue([
+        {
+          id: "tee",
+          titleI18n: { en: "Tee" },
+          slugI18n: { en: "tee" },
+          media: [],
+          variants: [
+            { ...variant, id: "inactive", isActive: false },
+            ...(active ? [{ ...variant, id: "active", isActive: true }] : []),
+          ],
+        },
+      ]);
+      vi.mocked(getVariantDisplayPrices).mockResolvedValue(
+        new Map([
+          [
+            "active",
+            { amount: "20" } as Awaited<ReturnType<typeof getDisplayPrice>>,
+          ],
+        ]),
+      );
+      const looks = await preparedLooks(
+        {
+          type: "ShopLook",
+          looks: [
+            {
+              id: "outfit",
+              label: { en: "City" },
+              categoryId: "women",
+              mediaId: "look-photo",
+              items: [{ productId: "tee", colorId: "charcoal" }],
+            },
+          ],
+        } as Parameters<typeof preparedLooks>[0],
+        { id: "CA", code: "CA" } as Parameters<typeof preparedLooks>[1],
+        "en",
+      );
+      const priced = vi.mocked(getVariantDisplayPrices).mock.calls[0][0];
+      expect(priced.flatMap((p) => p.variants.map((v) => v.id))).toEqual(
+        active ? ["active"] : [],
+      );
+      if (active)
+        expect(looks[0].items[0].variants.map((v) => v.id)).toEqual(["active"]);
+      else expect(looks).toEqual([]);
+    },
+  );
   it.each(["READY", "PENDING", "DELETED"])(
     "uses the selected color photograph only when available: %s",
     async (status) => {
@@ -90,6 +147,7 @@ describe("prepared look server contract", () => {
           variants: [
             {
               id: "charcoal-m",
+              isActive: true,
               colorId: "charcoal",
               color: {
                 nameI18n: { en: "Charcoal" },

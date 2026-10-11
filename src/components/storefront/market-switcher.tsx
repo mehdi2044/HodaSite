@@ -38,9 +38,13 @@ export function MarketSwitcher({
           m.isActive &&
           m.enabledLocales.includes(route.locale),
       )
-    )
+    ) {
       document.cookie = `market=${route.market}; path=/; max-age=${YEAR}`;
-  }, [pathname, markets]);
+      // The locale layout also owns menus, announcements, footer and wishlist
+      // context. Crossing markets needs a new document, as the switcher does.
+      if (route.market !== current) window.location.reload();
+    }
+  }, [pathname, markets, current]);
   function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
     document.cookie = `market=${code}; path=/; max-age=${YEAR}`;

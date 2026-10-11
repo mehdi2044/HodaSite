@@ -67,6 +67,7 @@ export async function preparedLooks(
       ...product,
       variants: product.variants.filter(
         (variant) =>
+          variant.isActive &&
           chosenColors.get(product.id)?.has(variant.colorId) &&
           !variant.color.deletedAt &&
           !variant.size.deletedAt,
@@ -88,6 +89,7 @@ export async function preparedLooks(
         const product = byId.get(item.productId)!;
         const eligible = product.variants.filter(
           (variant) =>
+            variant.isActive &&
             variant.colorId === item.colorId &&
             !variant.color.deletedAt &&
             !variant.size.deletedAt,

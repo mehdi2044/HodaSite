@@ -319,12 +319,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     it("deadline cancellation releases credit and reverses the source pack once", async () => {
       const f = await actualPackSale(),
         child = await exchange(f.order, f.variants[1].id);
-      await db.order.update({
-        where: { id: child.id },
-        data: { paymentDeadlineAt: new Date(Date.now() - 1000) },
-      });
-      await cancelUnpaidOrders();
-      await cancelUnpaidOrders();
+      // Advance the cron's explicit clock; financial deadlines are immutable.
+      const now = new Date(child.paymentDeadlineAt.getTime() + 1000);
+      await cancelUnpaidOrders(now);
+      await cancelUnpaidOrders(now);
       expect(
         await db.order.findUniqueOrThrow({ where: { id: child.id } }),
       ).toMatchObject({ status: "CANCELLED", paidAt: null });
