@@ -62,8 +62,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     let original: Awaited<ReturnType<typeof db.integration.findUnique>>;
     beforeAll(async () => {
       ownerId = (
-        await db.user.findFirstOrThrow({
-          where: { roles: { some: { role: { key: "owner" } } } },
+        await db.user.findUniqueOrThrow({
+          where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
         })
       ).id;
       marketId = (await db.market.findUniqueOrThrow({ where: { code: "TR" } }))
