@@ -178,6 +178,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         replacementPrice: "200",
         coinPackCoins: "100",
       });
+      // The return-only helper does not publish its fixture in any market.
+      // This sale must pass the same public eligibility checks as checkout.
+      await db.product.update({
+        where: { id: f.variants[0].productId },
+        data: { marketIds: [marketId] },
+      });
       const token = randomUUID();
       state.customerId = f.customer.id;
       state.cookies.set("hoda.cart", token);
