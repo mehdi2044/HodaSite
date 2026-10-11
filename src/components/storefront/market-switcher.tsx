@@ -29,7 +29,7 @@ export function MarketSwitcher({
   useEffect(() => {
     // Shared layouts survive client navigation. The active canonical route
     // wins over a retained layout prop, without touching background requests.
-    const route = parseSeoPath(pathname);
+    const route = parseSeoPath(window.location.pathname);
     if (
       route &&
       markets.some(
@@ -65,7 +65,7 @@ export function MarketSwitcher({
   return (
     <select
       aria-label={ariaLabel}
-      defaultValue={current}
+      value={current}
       onChange={onChange}
       className="min-h-11 rounded-full border border-black/10 bg-transparent px-3 text-sm"
     >
