@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { styleProducts } from "../prisma/style-products";
 
 type Category = { id: string; parentId: string | null; deletedAt: Date | null };
@@ -8,6 +8,10 @@ type Product = {
   marketIds: string[];
   status: string;
   deletedAt: Date | null;
+  coinPackCoins: Prisma.Decimal | null;
+  media: Array<{
+    media: { kind: string; status: string; deletedAt: Date | null };
+  }>;
 };
 
 /** A global demo rewrite needs all twenty products in their live family in every active market. */
@@ -34,6 +38,13 @@ export function isCompleteStyleCatalog(
       !product ||
       product.deletedAt ||
       product.status !== "ACTIVE" ||
+      product.coinPackCoins !== null ||
+      !product.media.some(
+        ({ media }) =>
+          media.kind === "image" &&
+          media.status === "READY" &&
+          media.deletedAt === null,
+      ) ||
       marketIds.some((id) => !product.marketIds.includes(id))
     )
       return false;
@@ -65,6 +76,14 @@ export async function hasCompleteStyleCatalog(
         marketIds: true,
         status: true,
         deletedAt: true,
+        coinPackCoins: true,
+        // Match the ProductCard's live product-image eligibility. A variant
+        // image alone cannot prevent that card's no-image fallback.
+        media: {
+          select: {
+            media: { select: { kind: true, status: true, deletedAt: true } },
+          },
+        },
       },
     }),
     db.category.findMany({
