@@ -20,7 +20,7 @@ export function ShopSheet({
         className="shop-filter-toggle"
         onClick={() => ref.current?.showModal()}
         aria-haspopup="dialog"
-        aria-label={title}
+        aria-label={badge ? `${title} (${badge})` : title}
       >
         {title}
         <span aria-hidden="true">{badge ?? "＋"}</span>

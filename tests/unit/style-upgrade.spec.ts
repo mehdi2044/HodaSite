@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@prisma/client";
+import { styleProducts } from "../../prisma/style-products";
 import {
   upgradeStyleComposition,
   previousStyleComposition,
@@ -34,14 +35,54 @@ function fixture(blocks: unknown, extras = {}) {
   const updateMany = vi.fn<(args: unknown) => Promise<{ count: number }>>(
     async () => ({ count: 1 }),
   );
+  const products = styleProducts.map(([key]) => ({
+    id: `seed-style-v2-${key}`,
+    categoryId: `seed-category-${key.split("-")[0]}`,
+    marketIds: ["ir", "tr", "ca"],
+    status: "ACTIVE",
+    deletedAt: null as Date | null,
+  }));
+  const categories = ["women", "men", "kids", "accessories"].map((key) => ({
+    id: `seed-category-${key}`,
+    parentId: null as string | null,
+    deletedAt: null,
+  }));
+  const tx = {
+    homepage: { findUnique: async () => home, updateMany },
+    product: { findMany: async () => products },
+    category: { findMany: async () => categories },
+    market: { findMany: async () => ["ir", "tr", "ca"].map((id) => ({ id })) },
+  };
+  const transaction = vi.fn(
+    async (work: (client: typeof tx) => Promise<unknown>) => work(tx),
+  );
   return {
     db: {
-      homepage: { findUnique: async () => home, updateMany },
+      $transaction: transaction,
     } as unknown as PrismaClient,
     updateMany,
+    products,
+    categories,
+    transaction,
   };
 }
 describe("prepared demo composition upgrade", () => {
+  it.each(["category", "status", "deletion", "market", "root"])(
+    "preserves the homepage on seed/reseed after a merchant changes %s",
+    async (change) => {
+      const f = fixture(previousStyleComposition());
+      if (change === "category") f.products[0].categoryId = "seed-category-men";
+      if (change === "status") f.products[0].status = "DRAFT";
+      if (change === "deletion") f.products[0].deletedAt = new Date();
+      if (change === "market") f.products[0].marketIds = ["ir", "ca"];
+      if (change === "root") f.categories[0].parentId = "seed-category-men";
+      expect(await upgradeStyleComposition(f.db)).toBe("incomplete");
+      expect(f.updateMany).not.toHaveBeenCalled();
+      expect(f.transaction).toHaveBeenCalledWith(expect.any(Function), {
+        isolationLevel: "Serializable",
+      });
+    },
+  );
   it("moves depth below the main campaign, with optimistic revision protection", async () => {
     const { db, updateMany } = fixture(original());
     await upgradeStyleComposition(db);

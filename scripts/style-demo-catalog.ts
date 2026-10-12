@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { styleProducts } from "../prisma/style-seed";
+import { styleProducts } from "../prisma/style-products";
 
 type Category = { id: string; parentId: string | null; deletedAt: Date | null };
 type Product = {
@@ -18,13 +18,25 @@ export function isCompleteStyleCatalog(
 ) {
   if (!marketIds.length) return false;
   const categoryById = new Map(categories.map((row) => [row.id, row]));
+  // Department families must be disjoint. Reparenting a root under another
+  // department would let that shelf pick products from both families.
+  const roots = new Set(
+    styleProducts.map(([key]) => `seed-category-${key.split("-")[0]}`),
+  );
+  for (const id of roots) {
+    const root = categoryById.get(id);
+    if (!root || root.deletedAt || root.parentId !== null) return false;
+  }
   const productById = new Map(products.map((row) => [row.id, row]));
   return styleProducts.every(([key]) => {
     const product = productById.get(`seed-style-v2-${key}`);
     if (
-      !product || product.deletedAt || product.status !== "ACTIVE" ||
+      !product ||
+      product.deletedAt ||
+      product.status !== "ACTIVE" ||
       marketIds.some((id) => !product.marketIds.includes(id))
-    ) return false;
+    )
+      return false;
     const rootId = `seed-category-${key.split("-")[0]}`;
     let categoryId: string | null = product.categoryId;
     const visited = new Set<string>();
@@ -39,17 +51,30 @@ export function isCompleteStyleCatalog(
   });
 }
 
-export async function requireCompleteStyleCatalog(
+export async function hasCompleteStyleCatalog(
   db: Pick<PrismaClient, "product" | "category" | "market">,
 ) {
   const [products, categories, markets] = await Promise.all([
     db.product.findMany({
-      where: { id: { in: styleProducts.map(([key]) => `seed-style-v2-${key}`) } },
-      select: { id: true, categoryId: true, marketIds: true, status: true, deletedAt: true },
+      where: {
+        id: { in: styleProducts.map(([key]) => `seed-style-v2-${key}`) },
+      },
+      select: {
+        id: true,
+        categoryId: true,
+        marketIds: true,
+        status: true,
+        deletedAt: true,
+      },
     }),
-    db.category.findMany({ select: { id: true, parentId: true, deletedAt: true } }),
+    db.category.findMany({
+      select: { id: true, parentId: true, deletedAt: true },
+    }),
     db.market.findMany({ where: { isActive: true }, select: { id: true } }),
   ]);
-  if (!isCompleteStyleCatalog(products, categories, markets.map(({ id }) => id)))
-    throw new Error("The complete style demo catalog in every active market is required");
+  return isCompleteStyleCatalog(
+    products,
+    categories,
+    markets.map(({ id }) => id),
+  );
 }

@@ -23,10 +23,8 @@ for (const [locale, market, messages] of [
     const categoryHref = await browse.getAttribute("href");
     await browse.click();
     await expect(page.locator(".shop-category-portrait img")).toBeVisible();
-    const toggle = page.getByRole("button", {
-      name: messages.catalog.filters,
-      exact: true,
-    });
+    const toggle = page.locator(".shop-filter-toggle");
+    await expect(toggle).toHaveAccessibleName(messages.catalog.filters);
     await toggle.click();
     const sheet = page.locator("dialog.shop-sheet");
     await expect(sheet).toBeVisible();
@@ -39,6 +37,9 @@ for (const [locale, market, messages] of [
     await expect(toggle.locator("span")).toHaveText(
       new Intl.NumberFormat(locale).format(1),
     );
+    await expect(toggle).toHaveAccessibleName(
+      `${messages.catalog.filters} (${new Intl.NumberFormat(locale).format(1)})`,
+    );
     await toggle.click();
     await sheet
       .getByRole("button", { name: messages.shopping.reset, exact: true })
@@ -46,6 +47,7 @@ for (const [locale, market, messages] of [
     await expect(page).toHaveURL(
       (url) => url.pathname === categoryHref && url.search === "",
     );
+    await expect(toggle).toHaveAccessibleName(messages.catalog.filters);
     await page.goto(
       `/${locale}/m/${market}/p/${encodeURIComponent(locale === "fa" ? "نمونه-women-tee" : "demo-women-tee")}`,
     );
@@ -83,10 +85,26 @@ for (const [locale, market, messages] of [
     await page.keyboard.press("Escape");
     await expect(page.locator("dialog.shop-gallery-zoom")).not.toBeVisible();
     await purchase.locator("button[aria-pressed]").last().click();
+    const variantId = await purchase.locator('[name="variantId"]').inputValue();
+    expect(variantId).not.toBe("");
     await page
       .getByRole("button", { name: messages.catalog.addToCart, exact: true })
       .click();
+    await expect(
+      purchase.locator(".shop-product-submit").getByRole("status"),
+    ).toHaveText(messages.commerce.saved);
+    await page
+      .getByTestId("mobile-bottom-navigation")
+      .locator(`a[href="/${locale}/cart"]`)
+      .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/cart`));
+    const cartItem = page.locator(".shop-cart-item").filter({
+      has: page.locator(`input[name="variantId"][value="${variantId}"]`),
+    });
+    await expect(cartItem).toHaveCount(1);
+    await expect(
+      cartItem.locator('[name="quantity"][type="number"]'),
+    ).toHaveValue("1");
     await expect(page.locator(".shop-bag-count")).toBeVisible();
     await page.locator(".shop-summary-jump").click();
     await expect(page).toHaveURL(/#cart-summary$/);

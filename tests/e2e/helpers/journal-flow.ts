@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { test, expect } from "@playwright/test";
 import { shoppingProof } from "./shopping-proof";
+import { followAdminLink } from "./admin-navigation";
 import fa from "../../../messages/fa.json";
 import tr from "../../../messages/tr.json";
 import en from "../../../messages/en.json";
@@ -48,11 +49,7 @@ export function journalBrowserFlows() {
         await page.getByRole("button", { name: "ورود امن" }).click();
         await expect(page).toHaveURL(/\/admin$/);
         await page.locator('[name="adminLocale"]').selectOption(locale);
-        const ledgerLink = page.locator(
-          'aside a[href="/admin/finance/journal"]',
-        );
-        await expect(ledgerLink).toHaveText(t.title);
-        await ledgerLink.click();
+        await followAdminLink(page, "/admin/finance/journal", t.title);
         const list = page.getByTestId("journal-list");
         await expect(
           list.getByRole("heading", { name: t.title }),

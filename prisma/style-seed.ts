@@ -1,3 +1,5 @@
+import { styleProducts } from "./style-products";
+import { hasCompleteStyleCatalog } from "../scripts/style-demo-catalog";
 import { buildProductSearchText } from "../scripts/catalog-search";
 import type { PrismaClient, Prisma } from "@prisma/client";
 import { readFile } from "node:fs/promises";
@@ -8,149 +10,7 @@ import sharp from "sharp";
 import { legacyHomepageBlocks, spatialCampaignTitle } from "./demo-homepage";
 
 const text = (fa: string, tr: string, en: string) => ({ fa, tr, en });
-// Fictional, explicitly labelled demo merchandise. Existing merchant records are never rewritten.
-export const styleProducts = [
-  [
-    "women-tee",
-    "tops",
-    "IVORY",
-    "24",
-    text("تی‌شرت نخی صبا", "Saba pamuklu tişört", "Saba cotton tee"),
-  ],
-  [
-    "women-trousers",
-    "bottoms",
-    "SAND",
-    "58",
-    text("شلوار پیلی‌دار آوا", "Ava pileli pantolon", "Ava pleated trousers"),
-  ],
-  [
-    "women-coat",
-    "outerwear",
-    "SAND",
-    "112",
-    text("بارانی رها", "Raha trençkot", "Raha trench coat"),
-  ],
-  [
-    "women-knit",
-    "tops",
-    "IVORY",
-    "64",
-    text("بافت نارون", "Narvan triko", "Narvan knit"),
-  ],
-  [
-    "women-dress",
-    "one-pieces",
-    "RUST",
-    "78",
-    text("پیراهن میدی مهتاب", "Mahtab midi elbise", "Mahtab midi dress"),
-  ],
-  [
-    "men-shirt",
-    "tops",
-    "NAVY",
-    "68",
-    text("اورشرت سپهر", "Sepehr üst gömlek", "Sepehr overshirt"),
-  ],
-  [
-    "men-tee",
-    "tops",
-    "IVORY",
-    "26",
-    text("تی‌شرت نخی سام", "Sam pamuklu tişört", "Sam cotton tee"),
-  ],
-  [
-    "men-chino",
-    "bottoms",
-    "SAND",
-    "54",
-    text("شلوار چینو بردیا", "Bardia chino pantolon", "Bardia chinos"),
-  ],
-  [
-    "men-knit",
-    "tops",
-    "CHARCOAL",
-    "72",
-    text("پلیور آراد", "Arad kazak", "Arad sweater"),
-  ],
-  [
-    "men-hoodie",
-    "tops",
-    "FOREST",
-    "62",
-    text("هودی روزبه", "Roozbeh kapüşonlu", "Roozbeh hoodie"),
-  ],
-  [
-    "kids-knit",
-    "tops",
-    "SAGE",
-    "38",
-    text("ژاکت بافت باران", "Baran triko hırka", "Baran knit cardigan"),
-  ],
-  [
-    "kids-hoodie",
-    "tops",
-    "RUST",
-    "32",
-    text("هودی رایان", "Rayan kapüşonlu", "Rayan hoodie"),
-  ],
-  [
-    "kids-trousers",
-    "bottoms",
-    "IVORY",
-    "28",
-    text("شلوار نرم آریو", "Ario rahat pantolon", "Ario soft joggers"),
-  ],
-  [
-    "kids-dress",
-    "one-pieces",
-    "LILAC",
-    "42",
-    text("پیراهن نیلوفر", "Niloufar elbise", "Niloufar dress"),
-  ],
-  [
-    "kids-set",
-    "one-pieces",
-    "SAGE",
-    "48",
-    text("ست راحتی نیلا", "Nila rahat takım", "Nila lounge set"),
-  ],
-  [
-    "accessories-bag",
-    "",
-    "COGNAC",
-    "86",
-    text("کیف دستی هانا", "Hana tote çanta", "Hana tote"),
-  ],
-  [
-    "accessories-scarf",
-    "",
-    "IVORY",
-    "34",
-    text("شال بافت سرو", "Sarv triko atkı", "Sarv knit scarf"),
-  ],
-  [
-    "accessories-belt",
-    "",
-    "COGNAC",
-    "30",
-    text("کمربند آرو", "Aro kemer", "Aro belt"),
-  ],
-  [
-    "accessories-cap",
-    "",
-    "NAVY",
-    "22",
-    text("کلاه کادن", "Kaden şapka", "Kaden cap"),
-  ],
-  [
-    "accessories-socks",
-    "",
-    "MULTI",
-    "16",
-    text("جوراب رنگین", "Rangin çorap seti", "Rangin sock trio"),
-  ],
-] as const;
+export { styleProducts } from "./style-products";
 
 const productId = (key: string) => `seed-style-v2-${key}`;
 const mediaId = (key: string) => `seed-fashion-v2-${key}`;
@@ -535,20 +395,28 @@ export function departmentStyleComposition() {
   ] as Prisma.InputJsonObject[];
 }
 
-/** Compare-and-swap only exact, untouched prior demos. No market overrides. */
-export async function upgradeStyleComposition(db: Pick<PrismaClient, "homepage">) {
-  const home = await db.homepage.findUnique({
-    where: { id: "seed-homepage-global" },
-  });
-  if (!home || home.deletedAt || home.marketId !== null) return;
-  if (
-    !isDeepStrictEqual(home.blocks, previousSpatialComposition()) &&
-    !isDeepStrictEqual(home.blocks, previousStyleComposition())
-  )
-    return;
-  const blocks = departmentStyleComposition();
-  await db.homepage.updateMany({
-    where: { id: home.id, updatedAt: home.updatedAt },
-    data: { blocks },
-  });
+/** Both seed/reseed and the CLI use one serializable catalog-and-homepage check. */
+export async function upgradeStyleComposition(
+  db: Pick<PrismaClient, "$transaction">,
+) {
+  return db.$transaction(
+    async (tx) => {
+      const home = await tx.homepage.findUnique({
+        where: { id: "seed-homepage-global" },
+      });
+      if (!home || home.deletedAt || home.marketId !== null) return "unchanged";
+      if (
+        !isDeepStrictEqual(home.blocks, previousSpatialComposition()) &&
+        !isDeepStrictEqual(home.blocks, previousStyleComposition())
+      )
+        return "unchanged";
+      if (!(await hasCompleteStyleCatalog(tx))) return "incomplete";
+      const result = await tx.homepage.updateMany({
+        where: { id: home.id, updatedAt: home.updatedAt },
+        data: { blocks: departmentStyleComposition() },
+      });
+      return result.count ? "upgraded" : "unchanged";
+    },
+    { isolationLevel: "Serializable" },
+  );
 }

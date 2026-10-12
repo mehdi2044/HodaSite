@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { test, expect } from "@playwright/test";
 import { returnFixture } from "../helpers/returns";
 import { shoppingProof } from "./helpers/shopping-proof";
+import { followAdminLink } from "./helpers/admin-navigation";
 import fa from "../../messages/fa.json";
 import tr from "../../messages/tr.json";
 import en from "../../messages/en.json";
@@ -71,9 +72,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
       await page.getByRole("button", { name: "ورود امن" }).click();
       await expect(page).toHaveURL(/\/admin$/);
       await page.locator('[name="adminLocale"]').selectOption(locale);
-      const link = page.locator('aside a[href="/admin/finance"]');
-      await expect(link).toHaveText(t.title);
-      await link.click();
+      await followAdminLink(page, "/admin/finance", t.title);
       const panel = page.getByTestId("finance-report");
       await expect(panel.getByRole("heading", { name: t.title })).toBeVisible();
       expect(
