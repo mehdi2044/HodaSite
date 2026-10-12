@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { styleProducts } from "../../prisma/style-products";
 import {
   upgradeStyleComposition,
@@ -41,6 +41,16 @@ function fixture(blocks: unknown, extras = {}) {
     marketIds: ["ir", "tr", "ca"],
     status: "ACTIVE",
     deletedAt: null as Date | null,
+    coinPackCoins: null as Prisma.Decimal | null,
+    media: [
+      {
+        media: {
+          kind: "image",
+          status: "READY",
+          deletedAt: null as Date | null,
+        },
+      },
+    ],
   }));
   const categories = ["women", "men", "kids", "accessories"].map((key) => ({
     id: `seed-category-${key}`,
@@ -67,7 +77,19 @@ function fixture(blocks: unknown, extras = {}) {
   };
 }
 describe("prepared demo composition upgrade", () => {
-  it.each(["category", "status", "deletion", "market", "root"])(
+  it.each([
+    "category",
+    "status",
+    "deletion",
+    "market",
+    "root",
+    "missing-image",
+    "trashed-image",
+    "processing-image",
+    "failed-image",
+    "video",
+    "coin-pack",
+  ])(
     "preserves the homepage on seed/reseed after a merchant changes %s",
     async (change) => {
       const f = fixture(previousStyleComposition());
@@ -76,6 +98,16 @@ describe("prepared demo composition upgrade", () => {
       if (change === "deletion") f.products[0].deletedAt = new Date();
       if (change === "market") f.products[0].marketIds = ["ir", "ca"];
       if (change === "root") f.categories[0].parentId = "seed-category-men";
+      if (change === "missing-image") f.products[0].media = [];
+      if (change === "trashed-image")
+        f.products[0].media[0].media.deletedAt = new Date();
+      if (change === "processing-image")
+        f.products[0].media[0].media.status = "PROCESSING";
+      if (change === "failed-image")
+        f.products[0].media[0].media.status = "FAILED";
+      if (change === "video") f.products[0].media[0].media.kind = "video";
+      if (change === "coin-pack")
+        f.products[0].coinPackCoins = new Prisma.Decimal("100");
       expect(await upgradeStyleComposition(f.db)).toBe("incomplete");
       expect(f.updateMany).not.toHaveBeenCalled();
       expect(f.transaction).toHaveBeenCalledWith(expect.any(Function), {
