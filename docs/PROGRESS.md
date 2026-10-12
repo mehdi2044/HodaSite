@@ -1,3 +1,12 @@
+## 2026-10-13 — نشان تصویر دسته و آماده‌سازی پذیرش یکپارچه
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70, D74.
+
+- یافتهٔ CONTENT-001 بازبینی PR60 رفع شد: portrait دسته از تشخیص مشترک تصویر نمونه و متن `shopping.demoImage` استفاده می‌کند؛ caption قابل مشاهده و معنایی فقط برای artwork نمونه است و عکس واقعی فروشنده نشان نمی‌گیرد. شش تست render فارسی/ترکی/انگلیسی هر دو نسل artwork و عکس فروشنده را پوشش می‌دهند؛ E2E همان سه زبان نمایش نشان و تصویر دسته را ثبت می‌کند.
+- lint، TypeScript، whitespace و تمام ۴٬۱۶۵ تست واحد در ۱۰۳ فایل موفق‌اند. CI343 روی نسخهٔ پیشین b667140 هر چهار job، ۹٬۰۶۹ واحد/PostgreSQL، ۱۷۸ مرورگر و بازیابی Local/S3 را گذراند؛ اصلاح نشان به CI تازه نیاز دارد. شواهد جاری در PR60 ثبت می‌شوند.
+- تصاویر واقعی CI343 برای خانه/ویترین، محصول، سبد، checkout WebKit و مدیریت موبایل/دسکتاپ بازبینی شد. [مسیر پذیرش و حدود شواهد](reviews/PHASE05F_ACCEPTANCE.md) نسخه‌ها، قاب‌ها و تست دستی سه‌زبانه را ثبت می‌کند. این تصاویر پیش‌نمایش تعاملی یا آزمون گوشی فیزیکی نیستند؛ محیط کامل باید Next.js/PostgreSQL/storage موجود را حفظ کند.
+- تست دستی: دستهٔ دارای تصویر نمونه باید caption محلی داشته باشد؛ با عکس واقعی آزمایشی، caption نباشد. سپس انتخاب سایز→افزودن→سبد→checkout را روی محیط نمونه و گوشی طی کنید. داده، schema و قرارداد خرید تغییر نکرده‌اند. پذیرش #48/#49 و gateهای D70 بازند؛ ادغام یا انتشار انجام نشده است.
+
 ## 2026-10-12 — Phase 05f: product/category/bag/admin continuation
 
 Implemented the four authorized design surfaces in docs/phases/phase-05f.md using the existing merchant theme and real components. Product overview precedes the gallery on mobile; selection precedes description; compact image disclosure preserves the full demo warning. Category gains portrait/breadcrumb/result toolbar/active-filter count/empty recovery. Bag gains count/summary anchor/sticky desktop quote. Admin gains grouped server-permitted links, section search, mobile Escape/focus behavior, topbar and localized catalog labels. No schema, permission, pricing, stock, payment or backup changes.

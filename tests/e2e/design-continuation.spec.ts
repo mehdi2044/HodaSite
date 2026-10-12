@@ -26,6 +26,13 @@ for (const [locale, market, messages] of [
     const categoryHref = await browse.getAttribute("href");
     await browse.click();
     await expect(page.locator(".shop-category-portrait img")).toBeVisible();
+    await expect(page.locator(".shop-category-artwork figcaption")).toHaveText(
+      messages.shopping.demoImage,
+    );
+    await expect(
+      page.locator(".shop-category-artwork figcaption"),
+    ).toBeVisible();
+    await shoppingProof(page, info, `${locale}-category`);
     const toggle = page.locator(".shop-filter-toggle");
     await expect(toggle).toHaveAccessibleName(messages.catalog.filters);
     await toggle.click();

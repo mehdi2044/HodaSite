@@ -1,4 +1,4 @@
-import { ResponsiveImage } from "@/components/storefront/responsive-image";
+import { CategoryPortrait } from "@/components/storefront/category-portrait";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { categoryRootId } from "@/modules/catalog/tree";
 import { relevantLookBlocks } from "@/modules/outfits";
@@ -73,11 +73,12 @@ export default async function CategoryPage({
 }) {
   const [{ locale, slug }, query] = await Promise.all([params, searchParams]);
   const safe = locale as CatalogLocale;
-  const [{ market }, category, facets, t] = await Promise.all([
+  const [{ market }, category, facets, t, shopping] = await Promise.all([
     getRequestContext(locale),
     findCategoryBySlug(safe, slug),
     catalogFacets(),
     getTranslations("catalog"),
+    getTranslations("shopping"),
   ]);
   if (!category) notFound();
   const result = await listCatalogProducts(market.id, safe, {
@@ -126,12 +127,10 @@ export default async function CategoryPage({
           </p>
         </div>
         {categoryMedia && (
-          <ResponsiveImage
+          <CategoryPortrait
             media={categoryMedia}
             locale={safe}
-            role="editorial"
-            sizes="(min-width:768px) 180px, 88px"
-            className="shop-category-portrait"
+            demoLabel={shopping("demoImage")}
           />
         )}
       </header>
@@ -208,7 +207,7 @@ export default async function CategoryPage({
               catalogText(category.slugI18n, safe),
             )}
           >
-            {(await getTranslations("shopping"))("reset")}
+            {shopping("reset")}
           </Link>
         </div>
       )}

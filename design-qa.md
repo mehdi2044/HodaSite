@@ -1,5 +1,7 @@
 # Phase 05f — storefront and admin continuation visual QA
 
+Follow-up: CI343 on `b667140` passed all four jobs, 9,069 unit/PostgreSQL tests and 178 browser tests. Actual CI screenshots were inspected; [the integrated acceptance record](docs/reviews/PHASE05F_ACCEPTANCE.md) identifies each source, its limits and the remaining phone/owner checks. The later category disclosure correction requires its own current-head CI; the earlier fixture results below are retained as historical comparison evidence.
+
 Date: 2026-10-12 (Istanbul). Target: extend the current merchant theme in actual product/category/bag/admin components. Source: their preceding implementation on PR59, rendered with the same fixture catalog and quote. No external reference image. Scope: the four requested surfaces, not final owner approval for all storefront/admin pages.
 
 Final result: passed for the inspected visual fixture scope. PostgreSQL-backed acceptance and current-head CI/review remain pending on the design PR.
