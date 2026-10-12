@@ -1,15 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { upgradeStyleComposition } from "../prisma/style-seed";
-import { requireCompleteStyleCatalog } from "./style-demo-catalog";
 
 // Existing preview only: no general seed, commercial records, stock or media writes.
 const db = new PrismaClient();
 async function main() {
   try {
-    await db.$transaction(async (tx) => {
-      await requireCompleteStyleCatalog(tx);
-      await upgradeStyleComposition(tx);
-    }, { isolationLevel: "Serializable" });
+    const result = await upgradeStyleComposition(db);
+    if (result === "incomplete")
+      throw new Error("The complete style demo catalog is required");
     console.log(
       "Untouched demo composition checked; merchant edits and market overrides preserved. No products, prices, stock or payments changed.",
     );

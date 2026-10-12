@@ -38,9 +38,9 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await expect
     .poll(
       async () => {
-        // Seed and integration fixtures leave jobs ahead of this upload; a
-        // tick claims only 10. Drive the real queue on every poll and keep
-        // inter-batch waits short within the readiness poll's 30-second budget.
+        // A tick claims only 10 jobs. Drive the real queue on every poll;
+        // CI uses a dedicated seeded browser DB, isolated from integration
+        // fixtures, so their unrelated backlog cannot consume this budget.
         const tick = await page.request.post("/api/cron/tick", {
           headers: { authorization: `Bearer ${CRON_SECRET}` },
         });
