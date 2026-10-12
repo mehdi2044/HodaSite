@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { styleProducts } from "../../prisma/style-seed";
 import { isCompleteStyleCatalog } from "../../scripts/style-demo-catalog";
 
+type Image = { kind: string; status: string; deletedAt: Date | null };
+
 function fixture() {
   const categories = ["women", "men", "kids", "accessories"].flatMap(
     (department) => [
@@ -10,11 +12,17 @@ function fixture() {
         id: `seed-category-${department}`,
         parentId: null,
         deletedAt: null as Date | null,
+        media: {
+          kind: "image",
+          status: "READY",
+          deletedAt: null,
+        } as Image | null,
       },
       {
         id: `${department}-child`,
         parentId: `seed-category-${department}`,
         deletedAt: null as Date | null,
+        media: null as Image | null,
       },
     ],
   );
@@ -47,6 +55,19 @@ describe("existing demo catalog rewrite precondition", () => {
     products[0].categoryId = "men-child";
     expect(isCompleteStyleCatalog(products, categories, markets)).toBe(false);
   });
+  it.each(["missing", "deleted", "processing", "failed", "video"])(
+    "declines when a department cover is %s",
+    (change) => {
+      const { products, categories, markets } = fixture();
+      const root = categories[0];
+      if (change === "deleted") root.media!.deletedAt = new Date();
+      if (change === "processing") root.media!.status = "PROCESSING";
+      if (change === "failed") root.media!.status = "FAILED";
+      if (change === "video") root.media!.kind = "video";
+      if (change === "missing") root.media = null;
+      expect(isCompleteStyleCatalog(products, categories, markets)).toBe(false);
+    },
+  );
   it("declines when a product is unavailable in one active market", () => {
     const { products, categories, markets } = fixture();
     products[0].marketIds = ["ir", "ca"];

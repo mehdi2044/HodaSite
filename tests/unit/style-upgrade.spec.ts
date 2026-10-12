@@ -56,6 +56,11 @@ function fixture(blocks: unknown, extras = {}) {
     id: `seed-category-${key}`,
     parentId: null as string | null,
     deletedAt: null,
+    media: { kind: "image", status: "READY", deletedAt: null } as {
+      kind: string;
+      status: string;
+      deletedAt: Date | null;
+    } | null,
   }));
   const tx = {
     homepage: { findUnique: async () => home, updateMany },
@@ -77,6 +82,20 @@ function fixture(blocks: unknown, extras = {}) {
   };
 }
 describe("prepared demo composition upgrade", () => {
+  it.each(["missing", "deleted", "processing", "failed", "video"])(
+    "preserves the homepage when a department cover is %s",
+    async (change) => {
+      const f = fixture(previousStyleComposition());
+      const root = f.categories[0];
+      if (change === "deleted") root.media!.deletedAt = new Date();
+      if (change === "processing") root.media!.status = "PROCESSING";
+      if (change === "failed") root.media!.status = "FAILED";
+      if (change === "video") root.media!.kind = "video";
+      if (change === "missing") root.media = null;
+      expect(await upgradeStyleComposition(f.db)).toBe("incomplete");
+      expect(f.updateMany).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     "category",
     "status",
