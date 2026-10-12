@@ -1,7 +1,13 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { styleProducts } from "../prisma/style-products";
 
-type Category = { id: string; parentId: string | null; deletedAt: Date | null };
+type Image = { kind: string; status: string; deletedAt: Date | null };
+type Category = {
+  id: string;
+  parentId: string | null;
+  deletedAt: Date | null;
+  media: Image | null;
+};
 type Product = {
   id: string;
   categoryId: string;
@@ -9,10 +15,13 @@ type Product = {
   status: string;
   deletedAt: Date | null;
   coinPackCoins: Prisma.Decimal | null;
-  media: Array<{
-    media: { kind: string; status: string; deletedAt: Date | null };
-  }>;
+  media: Array<{ media: Image }>;
 };
+
+const liveImage = (media: Image | null) =>
+  media?.kind === "image" &&
+  media.status === "READY" &&
+  media.deletedAt === null;
 
 /** A global demo rewrite needs all twenty products in their live family in every active market. */
 export function isCompleteStyleCatalog(
@@ -29,7 +38,13 @@ export function isCompleteStyleCatalog(
   );
   for (const id of roots) {
     const root = categoryById.get(id);
-    if (!root || root.deletedAt || root.parentId !== null) return false;
+    if (
+      !root ||
+      root.deletedAt ||
+      root.parentId !== null ||
+      !liveImage(root.media)
+    )
+      return false;
   }
   const productById = new Map(products.map((row) => [row.id, row]));
   return styleProducts.every(([key]) => {
@@ -39,12 +54,7 @@ export function isCompleteStyleCatalog(
       product.deletedAt ||
       product.status !== "ACTIVE" ||
       product.coinPackCoins !== null ||
-      !product.media.some(
-        ({ media }) =>
-          media.kind === "image" &&
-          media.status === "READY" &&
-          media.deletedAt === null,
-      ) ||
+      !product.media.some(({ media }) => liveImage(media)) ||
       marketIds.some((id) => !product.marketIds.includes(id))
     )
       return false;
@@ -87,7 +97,12 @@ export async function hasCompleteStyleCatalog(
       },
     }),
     db.category.findMany({
-      select: { id: true, parentId: true, deletedAt: true },
+      select: {
+        id: true,
+        parentId: true,
+        deletedAt: true,
+        media: { select: { kind: true, status: true, deletedAt: true } },
+      },
     }),
     db.market.findMany({ where: { isActive: true }, select: { id: true } }),
   ]);
