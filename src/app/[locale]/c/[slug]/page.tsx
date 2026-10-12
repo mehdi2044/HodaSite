@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { categoryRootId } from "@/modules/catalog/tree";
@@ -18,6 +17,7 @@ import {
   catalogFacets,
   catalogText,
   findCategoryBySlug,
+  findCategoryCover,
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
@@ -99,16 +99,7 @@ export default async function CategoryPage({
     relevantLookBlocks(market.id, {
       categoryId: categoryRootId(facets.categories, category.id) ?? undefined,
     }),
-    category.mediaId
-      ? db.media.findFirst({
-          where: {
-            id: category.mediaId,
-            kind: "image",
-            status: "READY",
-            deletedAt: null,
-          },
-        })
-      : Promise.resolve(null),
+    findCategoryCover(category.mediaId),
   ]);
   const children = facets.categories.filter(
     (item) => item.parentId === category.id,

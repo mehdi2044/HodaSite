@@ -5,6 +5,9 @@ import fa from "../../messages/fa.json";
 import tr from "../../messages/tr.json";
 import en from "../../messages/en.json";
 
+// Admin search must follow the selected UI language, independently of the browser.
+test.use({ locale: "en-US" });
+
 for (const [locale, market, messages] of [
   ["fa", "IR", fa],
   ["tr", "TR", tr],
@@ -147,6 +150,21 @@ for (const [locale, market, messages] of [
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await toggle.click();
     await expect(nav).toBeVisible();
+    if (locale === "tr") {
+      const search = nav.getByLabel(messages.adminShell.searchNavigation);
+      await search.fill("içerik");
+      await expect(nav.locator("summary")).toHaveText([
+        messages.adminShell.groupContent,
+      ]);
+      await expect(nav.getByRole("link")).not.toHaveCount(0);
+      await search.fill("iletişim");
+      await expect(
+        nav.getByRole("link", {
+          name: messages.adminShell.contact,
+          exact: true,
+        }),
+      ).toBeVisible();
+    }
     await nav
       .getByLabel(messages.adminShell.searchNavigation)
       .fill(messages.adminShell.products);

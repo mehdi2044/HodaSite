@@ -29,17 +29,46 @@ describe("admin navigation presentation", () => {
     expect(activeAdminHref("/admin/unknown", groups)).toBeUndefined();
   });
   it("normalizes common Arabic keyboard forms without changing destinations", () => {
-    const result = filterAdminNavigation(groups, "كودك");
+    const result = filterAdminNavigation(groups, "كودك", "fa");
     expect(result.flatMap((group) => group.links)).toEqual([
       groups[2].links[0],
     ]);
   });
   it("lets a group name find its links and preserves the supplied order", () => {
-    expect(filterAdminNavigation(groups, "مالی")).toEqual([groups[1]]);
-    expect(filterAdminNavigation(groups, "  ")).toEqual(groups);
+    expect(filterAdminNavigation(groups, "مالی", "fa")).toEqual([groups[1]]);
+    expect(filterAdminNavigation(groups, "  ", "fa")).toEqual(groups);
   });
   it("does not manufacture a hidden or unauthorized destination", () => {
-    expect(filterAdminNavigation(groups, "restore")).toEqual([]);
+    expect(filterAdminNavigation(groups, "restore", "en")).toEqual([]);
     expect(activeAdminHref("/admin/system/backups", groups)).toBeUndefined();
+  });
+  it.each(["içerik", "İÇERİK", "tasarım"])(
+    "uses the selected Turkish locale for group search: %s",
+    (query) => {
+      const turkish = [
+        {
+          title: "İçerik ve tasarım",
+          links: [{ href: "/admin/content", label: "Ana sayfa" }],
+        },
+      ];
+      expect(filterAdminNavigation(turkish, query, "tr")).toEqual(turkish);
+    },
+  );
+  it("uses Turkish dotted and dotless I rules for individual links", () => {
+    const turkish = [
+      {
+        title: "Mağaza",
+        links: [
+          { href: "/admin/returns", label: "İadeler" },
+          { href: "/admin/settings/theme", label: "Işık" },
+        ],
+      },
+    ];
+    expect(filterAdminNavigation(turkish, "iadeler", "tr")[0].links).toEqual([
+      turkish[0].links[0],
+    ]);
+    expect(filterAdminNavigation(turkish, "IŞIK", "tr")[0].links).toEqual([
+      turkish[0].links[1],
+    ]);
   });
 });

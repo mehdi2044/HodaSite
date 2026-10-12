@@ -239,6 +239,14 @@ export async function findCategoryBySlug(
   });
 }
 
+/** Public category portraits share catalog media lifecycle rules. */
+export async function findCategoryCover(mediaId: string | null) {
+  if (!mediaId) return null;
+  return db.media.findFirst({
+    where: { id: mediaId, kind: "image", status: "READY", deletedAt: null },
+  });
+}
+
 export async function findProductBySlug(
   marketId: string,
   locale: CatalogLocale,

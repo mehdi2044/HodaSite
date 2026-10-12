@@ -15,10 +15,10 @@ export function activeAdminHref(pathname: string, groups: AdminNavGroup[]) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
-function searchable(value: string) {
+function searchable(value: string, locale: string) {
   return value
     .normalize("NFKC")
-    .toLocaleLowerCase()
+    .toLocaleLowerCase(locale)
     .replace(/[يى]/g, "ی")
     .replace(/ك/g, "ک")
     .replace(/[\u200c\u064b-\u065f]/g, "")
@@ -26,14 +26,20 @@ function searchable(value: string) {
 }
 
 /** Search only the server-supplied navigation; it cannot add a privileged destination. */
-export function filterAdminNavigation(groups: AdminNavGroup[], query: string) {
-  const needle = searchable(query);
+export function filterAdminNavigation(
+  groups: AdminNavGroup[],
+  query: string,
+  locale: string,
+) {
+  const needle = searchable(query, locale);
   return groups
     .map((group) => ({
       ...group,
-      links: searchable(group.title).includes(needle)
+      links: searchable(group.title, locale).includes(needle)
         ? group.links
-        : group.links.filter((link) => searchable(link.label).includes(needle)),
+        : group.links.filter((link) =>
+            searchable(link.label, locale).includes(needle),
+          ),
     }))
     .filter((group) => group.links.length > 0);
 }

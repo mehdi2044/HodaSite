@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useId, useRef, useState } from "react";
 import {
   activeAdminHref,
@@ -17,12 +18,13 @@ export function AdminNavigation({
   labels: { navigation: string; search: string; empty: string; menu: string };
 }) {
   const pathname = usePathname();
+  const locale = useLocale();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const id = useId();
   const toggle = useRef<HTMLButtonElement>(null);
   const active = activeAdminHref(pathname, groups);
-  const visible = filterAdminNavigation(groups, query);
+  const visible = filterAdminNavigation(groups, query, locale);
   return (
     <div
       className="admin-navigation"
