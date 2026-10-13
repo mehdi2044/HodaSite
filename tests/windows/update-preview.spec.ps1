@@ -163,3 +163,6 @@ try {
     Remove-Variable HodaPreviewTest -Scope Global -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
+# All assertions completed. The last negative scenario deliberately left the
+# simulated native exit status at 1; do not report that expected failure as CI failure.
+$global:LASTEXITCODE = 0
