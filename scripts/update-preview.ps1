@@ -37,6 +37,25 @@ function Wait-Preview {
         if (-not $ready) { throw "Preview did not pass the HTTP check: $route" }
     }
 }
+function Confirm-PreviewServices([string[]]$Services) {
+    $restarts = @{}
+    for ($sample = 0; $sample -lt 3; $sample++) {
+        foreach ($service in $Services) {
+            $container = Read-Container $service
+            if (-not $container.State.Running -or $container.State.Restarting -or $container.State.Status -ne 'running') {
+                throw "Preview service is not running normally: $service"
+            }
+            if ($container.State.PSObject.Properties['Health'] -and $container.State.Health.Status -ne 'healthy') {
+                throw "Preview service is not healthy: $service"
+            }
+            if ($restarts.ContainsKey($service) -and $container.RestartCount -ne $restarts[$service]) {
+                throw "Preview service restarted during verification: $service"
+            }
+            $restarts[$service] = $container.RestartCount
+        }
+        if ($sample -lt 2) { Start-Sleep -Seconds 2 }
+    }
+}
 
 Push-Location -LiteralPath $RepositoryPath
 try {
@@ -170,6 +189,7 @@ try {
     docker @dc up -d --no-deps --no-build @services
     Check-Step 'Start updated preview'
     Wait-Preview
+    Confirm-PreviewServices -Services $services
     docker @dc ps app ops
     Check-Step 'Confirm running preview services'
     Write-Host "PREVIEW_DELIVERY_OK $ExpectedCommit"
@@ -193,6 +213,7 @@ try {
             docker @rollbackDc up -d --no-deps --no-build --pull never @services
             Check-Step 'Restart previous preview images'
             Wait-Preview
+            Confirm-PreviewServices -Services $services
             Write-Warning 'PREVIOUS_PREVIEW_RECOVERED. No database reset or restore was performed.'
         } catch {
             Write-Warning 'Automatic service recovery could not finish. Keep the recovery folder and previous image tags; send the error text for recovery help.'

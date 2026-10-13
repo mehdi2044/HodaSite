@@ -45,8 +45,24 @@ function global:docker {
     $global:LASTEXITCODE = 0
     if ($a[0] -eq 'inspect') {
         $service = $a[1] -replace '-id$', ''
+        $state = @{ Running = $s.Running; Restarting = $false; Status = $(if ($s.Running) { 'running' } else { 'exited' }) }
+        $restartCount = 0
+        if ($s.Head -eq $s.New) {
+            if (($s.Case -eq 'ops-exited' -and $service -eq 'ops') -or ($s.Case -eq 'cron-exited' -and $service -eq 'cron')) {
+                $state.Running = $false; $state.Status = 'exited'
+            }
+            if ($service -eq 'ops') {
+                if ($s.Case -eq 'ops-restarting') { $state.Restarting = $true }
+                if ($s.Case -eq 'ops-unhealthy') { $state.Health = @{ Status = 'unhealthy' } }
+                if ($s.Case -eq 'ops-churn') { $s.OpsReads++; $restartCount = $s.OpsReads }
+            }
+        }
+        if ($s.Case -eq 'recovery-health' -and $s.Head -eq $s.Old -and $s.Recovered -and $service -eq 'ops') {
+            $state.Health = @{ Status = 'unhealthy' }
+        }
         return (@{
             Id = "$service-id"; Image = "original-$service-image"; Mounts = @()
+            State = $state; RestartCount = $restartCount
             Config = @{
                 Cmd = @('pnpm', 'dev'); Entrypoint = @('docker-entrypoint.sh')
                 Env = @('DATABASE_URL=postgresql://fixture:fixture@postgres:5432/hoda')
@@ -75,7 +91,7 @@ function global:docker {
     }
     if ($a -contains 'stop') { $s.Stops++; $s.Running = $false; return }
     if ($a -contains 'build' -and $a -notcontains 'run') {
-        if ($s.Case -in @('imagebuild', 'rollback')) { $global:LASTEXITCODE = 1 }
+        if ($s.Case -in @('imagebuild', 'rollback', 'recovery-health')) { $global:LASTEXITCODE = 1 }
         return
     }
     if ($a -contains 'up') {
@@ -126,7 +142,7 @@ function global:Invoke-WebRequest {
 function global:Start-Sleep { }
 
 try {
-    foreach ($case in @('clean', 'report', 'tracked', 'untracked', 'backup', 'verify', 'checkout', 'imagebuild', 'appbuild', 'import', 'startup', 'http', 'rollback')) {
+    foreach ($case in @('clean', 'report', 'tracked', 'untracked', 'backup', 'verify', 'checkout', 'imagebuild', 'appbuild', 'import', 'startup', 'http', 'ops-exited', 'cron-exited', 'ops-restarting', 'ops-unhealthy', 'ops-churn', 'rollback', 'recovery-health')) {
         $repo = Join-Path $fixture $case
         New-Item -ItemType Directory -Path $repo -Force | Out-Null
         'FIXTURE_ONLY=true' | Set-Content -LiteralPath (Join-Path $repo '.env')
@@ -134,7 +150,7 @@ try {
         $global:HodaPreviewTest = @{
             Case = $case; Repo = $repo; Head = $oldSha; Old = $oldSha; New = $newSha
             Calls = [Collections.Generic.List[string]]::new(); Stops = 0; Running = $true
-            Recovered = $false; DemoApplied = 0; Label = ''
+            Recovered = $false; DemoApplied = 0; Label = ''; OpsReads = 0
         }
         $failed = $false
         $log = Join-Path $repo 'result.log'
@@ -147,8 +163,8 @@ try {
             Assert-Preview ($s.Head -eq $newSha -and $s.Running -and $s.DemoApplied -eq 1) "$case delivery state"
         } elseif ($case -in @('tracked', 'untracked')) {
             Assert-Preview ($failed -and $s.Stops -eq 0 -and $s.Head -eq $oldSha) "$case must stop before touching services"
-        } elseif ($case -eq 'rollback') {
-            Assert-Preview ($failed -and $output -match 'Automatic service recovery could not finish' -and -not $s.Running) 'report failed recovery honestly'
+        } elseif ($case -in @('rollback', 'recovery-health')) {
+            Assert-Preview ($failed -and $output -match 'Automatic service recovery could not finish' -and $output -notmatch 'PREVIOUS_PREVIEW_RECOVERED') 'report failed recovery honestly'
         } else {
             Assert-Preview ($failed -and $s.Recovered -and $s.Running -and $s.Head -eq $oldSha) "$case must recover old code/images: $output"
             Assert-Preview ($output -match 'PREVIOUS_PREVIEW_RECOVERED') "$case recovery needs health proof"
