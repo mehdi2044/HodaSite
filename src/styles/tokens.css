@@ -2988,6 +2988,9 @@ html[lang="fa"] body,
 .shop-category-copy {
   min-width: 0;
 }
+.shop-category-intro:not(.shop-category-with-image) .shop-category-copy {
+  grid-column: 1 / -1;
+}
 .shop-category-with-image {
   grid-template-columns: minmax(0, 1fr) 88px;
   align-items: center;

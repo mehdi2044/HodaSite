@@ -1,6 +1,7 @@
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import { shoppingProof } from "./helpers/shopping-proof";
 
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
@@ -68,7 +69,8 @@ test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
 
 test("category edit preserves its cover and exposes the shared image picker", async ({
   page,
-}) => {
+}, info) => {
+  test.setTimeout(60_000);
   await login(page);
   const url =
     "/admin/catalog/taxonomy?editKind=category&editId=seed-category-women";
@@ -109,6 +111,37 @@ test("category edit preserves its cover and exposes the shared image picker", as
       (await db.category.findUniqueOrThrow({ where: { id: category.id } }))
         .mediaId,
     ).toBeNull();
+    const storefront = await page.context().newPage();
+    try {
+      await storefront.setViewportSize({ width: 1280, height: 900 });
+      for (const [locale, market] of [
+        ["fa", "IR"],
+        ["tr", "TR"],
+        ["en", "CA"],
+      ]) {
+        const slug = (category.slugI18n as Record<string, string>)[locale];
+        await storefront.goto(
+          `/${locale}/m/${market}/c/${encodeURIComponent(slug)}`,
+        );
+        const intro = storefront.locator(".shop-category-intro");
+        await expect(intro).toBeVisible();
+        await expect(intro).not.toHaveClass(/shop-category-with-image/);
+        const headerBox = await intro.boundingBox();
+        const copyBox = await intro
+          .locator(".shop-category-copy")
+          .boundingBox();
+        expect(headerBox).not.toBeNull();
+        expect(copyBox).not.toBeNull();
+        expect(Math.abs(headerBox!.width - copyBox!.width)).toBeLessThan(2);
+        await shoppingProof(
+          storefront,
+          info,
+          `design-category-no-cover-${locale}-1280`,
+        );
+      }
+    } finally {
+      await storefront.close();
+    }
     await db.category.update({
       where: { id: category.id },
       data: { mediaId: before },

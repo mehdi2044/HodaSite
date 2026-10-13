@@ -546,4 +546,40 @@ export function requireLocalPreview(env: NodeJS.ProcessEnv) {
     throw new PreviewImportError(
       "Demo imports are restricted to a local development preview.",
     );
+  let database: URL;
+  try {
+    database = new URL(env.DATABASE_URL ?? "");
+  } catch {
+    throw new PreviewImportError("A local preview PostgreSQL URL is required.");
+  }
+  // `postgres` is the database service in the verified development Compose
+  // project. A loopback storefront URL must never authorize a hosted database.
+  const queryOptions = new Set([
+    "schema",
+    "connection_limit",
+    "pool_timeout",
+    "connect_timeout",
+    "socket_timeout",
+  ]);
+  if (
+    !["postgres:", "postgresql:"].includes(database.protocol) ||
+    !["localhost", "127.0.0.1", "[::1]", "postgres"].includes(
+      database.hostname,
+    ) ||
+    database.pathname.length < 2 ||
+    [...database.searchParams.keys()].some((key) => !queryOptions.has(key))
+  )
+    throw new PreviewImportError(
+      "The database must use loopback or the local Compose postgres service, without routing overrides.",
+    );
+  const mediaRoot = env.MEDIA_DIR ?? "/data/media";
+  if (
+    ![undefined, "local"].includes(env.STORAGE_PROVIDER) ||
+    !(path.posix.isAbsolute(mediaRoot) || path.win32.isAbsolute(mediaRoot)) ||
+    /^(?:\\\\|\/\/)/.test(mediaRoot) ||
+    mediaRoot.includes("://")
+  )
+    throw new PreviewImportError(
+      "Preview imports require local filesystem storage with an absolute local media directory; remote storage is not supported.",
+    );
 }
