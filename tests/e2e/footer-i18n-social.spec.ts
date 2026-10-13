@@ -42,3 +42,54 @@ test("the footer has no Persian text on /tr or /en", async ({ page }) => {
     expect(PERSIAN_RANGE.test(footerText)).toBe(false);
   }
 });
+
+for (const [locale, market] of [
+  ["fa", "IR"],
+  ["tr", "TR"],
+  ["en", "CA"],
+] as const) {
+  // Labels are loaded below from the same translation bundle used by the app.
+  test(`${locale}: footer columns stay compact and privacy controls remain usable`, async ({
+    page,
+  }, info) => {
+    const messages = (await import(`../../messages/${locale}.json`)).default;
+    await page.goto(`/${locale}/m/${market}`);
+    const footer = page.locator("footer");
+    await footer
+      .getByRole("button", { name: messages.consent.settings, exact: true })
+      .click();
+    await expect(
+      footer.getByRole("region", { name: messages.consent.title, exact: true }),
+    ).toBeVisible();
+    await footer
+      .getByRole("button", { name: messages.consent.reject, exact: true })
+      .click();
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await footer.scrollIntoViewIfNeeded();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      const contact = footer.locator(".shop-footer-contact");
+      const spacing = await contact
+        .locator('a[href^="mailto:"], a[href^="tel:"]')
+        .evaluateAll((links) => {
+          if (links.length < 2) return null;
+          return (
+            links[1].getBoundingClientRect().top -
+            links[0].getBoundingClientRect().bottom
+          );
+        });
+      expect(spacing).not.toBeNull();
+      expect(spacing!).toBeLessThan(20);
+      await expect(
+        footer.getByRole("heading", { name: messages.footer.linksTitle }),
+      ).toBeVisible();
+      await footer.screenshot({
+        path: info.outputPath(`shopping-footer-${locale}-${width}.png`),
+      });
+    }
+  });
+}

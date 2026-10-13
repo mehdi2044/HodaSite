@@ -1,3 +1,15 @@
+# Owner lower-homepage review — 2026-10-13
+
+Input: four owner screenshots of the installed preview. The header/spatial campaign was accepted; repeated equal category/product imagery and the stretched footer were rejected.
+
+Implementation: new category mosaic and separate latest-product rail; compact footer with configured brand/tagline, grouped links/contact/social and its existing privacy controls; category cover picker restores the missing form field. The gallery is not limited to four categories and retains canonical locale/market navigation. Hero/header files and all commerce calculations are unchanged. No new imagery or trust claims.
+
+Initial verification: actual CategoryGallery, ProductShelf, ProductCard and FooterView render with FA/TR/EN fixtures. This is only server-render evidence. Local browser installation failed and cloud-browser local-file navigation was blocked; no visual pass is inferred. Current-head CI must supply actual route captures before acceptance. The legacy latest-products composition is now explicitly exercised and restored by fashion-storefront.spec.ts; fresh-seed department shelves retain their separate test. Footer tests capture all three locales at 390/1280px and verify compact email/phone spacing plus privacy reopen/reject. Existing keyboard/category links, fine-pointer motion and reduced-motion checks remain enforced. The admin regression saves a category and verifies its cover remains after reload.
+
+Remaining: inspect current-head CI images, owner review of the updated local preview, install the separate new demo catalog safely, and physical-device acceptance. Changes are not applied to the owner's running database or code by this report.
+
+---
+
 # Phase 05f — storefront and admin continuation visual QA
 
 Follow-up: CI343 on `b667140` passed all four jobs, 9,069 unit/PostgreSQL tests and 178 browser tests. Actual CI screenshots were inspected; [the integrated acceptance record](docs/reviews/PHASE05F_ACCEPTANCE.md) identifies each source, its limits and the remaining phone/owner checks. The later category disclosure correction requires its own current-head CI; the earlier fixture results below are retained as historical comparison evidence.

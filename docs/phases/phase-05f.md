@@ -15,3 +15,14 @@ Owner authorized merging the prior delivery and continuing all four surfaces in 
 No schema, auth, payment, pricing, stock, provider or backup contract changes. No new analytics/KPI calculations, global record-search service or fictional shopping state. The navigation search is explicitly for admin sections. UI integration changes go through a new branch/PR; no direct main pushes. Local checks and current-head CI/review evidence belong on that PR.
 
 Capture before/after renders at matched viewports using actual components. Fixture QA proves layout/control behavior only; PostgreSQL-backed navigation, commerce, permission and backup regressions run in CI. Owner visual acceptance (#48/#49), physical-device acceptance, merchant photography and production rollout remain separate.
+
+
+## Owner homepage review — 2026-10-13
+
+The owner accepts the upper campaign/header but rejects repetition between category navigation and new arrivals, the sparse lower page and stretched footer columns. Continue this design phase; acceptance of the whole shop is still open.
+
+- Replace equal category frames with a responsive editorial mosaic using existing CMS order/limit and merchant media. Support additional roots (up to the existing CMS limit), no-image/empty states, localized labels and visible demo-artwork disclosure. Preserve category routes, image presentation metadata and reduced-motion behavior.
+- Give latest-product shelves their own shopping layout with a native mobile rail. Do not fabricate discounts, stock, service claims or product reviews.
+- Use the configured brand/tagline and compact footer navigation/contact/social columns; put the existing consent controls inside its closing row without changing consent decisions or loading rules.
+- Expose the existing authorized category-image field through the shared media picker. Editing a category must preserve its previously selected cover. No auth/schema/commerce/seed changes.
+- Verify category links and pointer/reduced-motion behavior, footer containment/compact contact spacing/privacy choices at 390/1280px in FA/TR/EN, and category-cover persistence through the real admin save flow.

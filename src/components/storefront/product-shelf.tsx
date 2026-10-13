@@ -6,6 +6,7 @@ import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
 export function ProductShelf({
   title,
   ordinal,
+  latest = false,
   locale,
   department,
   browseHref,
@@ -16,6 +17,7 @@ export function ProductShelf({
 }: {
   title: string;
   ordinal: number;
+  latest?: boolean;
   locale: "fa" | "tr" | "en";
   department?: { id: string; media?: ResponsiveImageMedia | null };
   browseHref?: string;
@@ -26,7 +28,7 @@ export function ProductShelf({
 }) {
   return (
     <section
-      className={`shell shop-home-section ${department ? "shop-department-shelf" : ""}`}
+      className={`shell shop-home-section ${department ? "shop-department-shelf" : latest ? "shop-latest-shelf" : ""}`}
       data-testid="home-product-strip"
       data-department-id={department?.id}
       aria-label={title}
@@ -60,7 +62,7 @@ export function ProductShelf({
           className="shop-product-rail"
           role="region"
           aria-label={title}
-          tabIndex={department ? 0 : undefined}
+          tabIndex={department || latest ? 0 : undefined}
         >
           {children}
         </div>

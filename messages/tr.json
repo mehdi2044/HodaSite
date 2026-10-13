@@ -43,7 +43,8 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "linksTitle": "Mağaza rehberi"
   },
   "media": {
     "title": "Medya kütüphanesi",
@@ -471,7 +472,8 @@
     "variantStock": "Stok: {onHand} · Satılabilir: {available}",
     "manageStock": "Stok al ve yönet",
     "seoKeywords": "SEO anahtar kelimeleri",
-    "emptyList": "Bu filtrelerle ürün bulunamadı."
+    "emptyList": "Bu filtrelerle ürün bulunamadı.",
+    "categoryImage": "Kategori görseli"
   },
   "phase03Admin": {
     "amount": "Tutar",
@@ -1199,7 +1201,9 @@
     "backCollection": "Kategoriye dön",
     "fullImage": "Tam görseli aç",
     "imageDisclosure": "Bu görsel hakkında",
-    "itemsCount": "{count, number} ürün"
+    "itemsCount": "{count, number} ürün",
+    "categoryExplore": "Kendi stilini keşfet",
+    "browseCategory": "Koleksiyonu keşfet"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",

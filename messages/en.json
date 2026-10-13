@@ -43,7 +43,8 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "linksTitle": "Store guide"
   },
   "media": {
     "title": "Media library",
@@ -471,7 +472,8 @@
     "variantStock": "On hand: {onHand} · Sellable: {available}",
     "manageStock": "Receive and manage stock",
     "seoKeywords": "SEO keywords",
-    "emptyList": "No products match these filters."
+    "emptyList": "No products match these filters.",
+    "categoryImage": "Category image"
   },
   "phase03Admin": {
     "amount": "Amount",
@@ -1199,7 +1201,9 @@
     "backCollection": "Back to collection",
     "fullImage": "View full image",
     "imageDisclosure": "About this image",
-    "itemsCount": "{count, plural, one {# item} other {# items}}"
+    "itemsCount": "{count, plural, one {# item} other {# items}}",
+    "categoryExplore": "Find your own style",
+    "browseCategory": "Explore collection"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",

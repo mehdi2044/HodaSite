@@ -43,7 +43,8 @@
     "x": "X",
     "tiktok": "تیک‌تاک",
     "youtube": "یوتیوب",
-    "linkedin": "لینکدین"
+    "linkedin": "لینکدین",
+    "linksTitle": "راهنمای فروشگاه"
   },
   "media": {
     "title": "کتابخانه رسانه",
@@ -471,7 +472,8 @@
     "variantStock": "موجودی: {onHand} · قابل فروش: {available}",
     "manageStock": "دریافت و مدیریت موجودی",
     "seoKeywords": "کلیدواژه‌های سئو",
-    "emptyList": "محصولی با این فیلترها پیدا نشد."
+    "emptyList": "محصولی با این فیلترها پیدا نشد.",
+    "categoryImage": "تصویر دسته‌بندی"
   },
   "phase03Admin": {
     "amount": "مبلغ",
@@ -1199,7 +1201,9 @@
     "backCollection": "بازگشت به دسته‌بندی",
     "fullImage": "دیدن تصویر کامل",
     "imageDisclosure": "دربارهٔ این تصویر",
-    "itemsCount": "{count, number} کالا"
+    "itemsCount": "{count, number} کالا",
+    "categoryExplore": "استایل خودت را پیدا کن",
+    "browseCategory": "دیدن مجموعه"
   },
   "finance": {
     "eyebrow": "امور مالی · گزارش تراکنش‌ها",

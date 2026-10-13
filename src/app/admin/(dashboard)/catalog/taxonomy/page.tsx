@@ -1,3 +1,4 @@
+import { MediaPicker } from "@/components/admin/media-picker";
 import { categoryPathLabel } from "@/modules/catalog";
 import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -31,6 +32,7 @@ export default async function CatalogTaxonomyPage({
         orderBy: { slug: "asc" },
       }),
       db.category.findMany({
+        include: { media: true },
         where: { deletedAt: null },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       }),
@@ -220,6 +222,13 @@ export default async function CatalogTaxonomyPage({
             prefix="description"
             label={t("description")}
             value={categoryEdit?.descriptionI18n}
+          />
+          <MediaPicker
+            key={categoryEdit?.id ?? "new-category"}
+            name="mediaId"
+            label={t("categoryImage")}
+            defaultMediaId={categoryEdit?.mediaId}
+            defaultUrl={categoryEdit?.media?.url}
           />
           <label>
             {t("gender")}

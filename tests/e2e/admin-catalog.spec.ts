@@ -61,3 +61,31 @@ test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
     .first();
   await expect(editForm.locator('input[name="id"]')).toHaveValue(/seed-brand/);
 });
+
+test("category edit preserves its cover and exposes the shared image picker", async ({
+  page,
+}) => {
+  await login(page);
+  const url =
+    "/admin/catalog/taxonomy?editKind=category&editId=seed-category-women";
+  await page.goto(url);
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('input[name="kind"][value="category"]') });
+  const cover = form.locator('input[name="mediaId"]');
+  const before = await cover.inputValue();
+  expect(before).not.toBe("");
+  await expect(
+    form.getByText("تصویر دسته‌بندی", { exact: true }),
+  ).toBeVisible();
+  await form.getByRole("button", { name: "انتخاب رسانه", exact: true }).click();
+  await expect(form.locator("dialog[open]")).toBeVisible();
+  await form
+    .locator("dialog")
+    .getByRole("button", { name: "بستن", exact: true })
+    .click();
+  await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+  await page.reload();
+  await expect(cover).toHaveValue(before);
+});

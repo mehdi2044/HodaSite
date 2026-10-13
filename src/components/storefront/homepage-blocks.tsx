@@ -1,3 +1,4 @@
+import { CategoryGallery } from "./category-gallery";
 import { ShopLook } from "./shop-look";
 import { SpatialHero } from "./spatial-hero";
 import { seoPath } from "@/lib/seo-urls";
@@ -188,6 +189,7 @@ export async function HomepageBlocks({
               key={index}
               title={localizedValue(block.title, locale)}
               ordinal={index + 1}
+              latest={block.source.mode === "latest"}
               locale={locale}
               department={
                 category
@@ -224,75 +226,40 @@ export async function HomepageBlocks({
         }
         if (block.type === "CategoryCards")
           return (
-            <section
+            <CategoryGallery
               key={index}
-              className="shell shop-home-section shop-category-section"
-              data-testid="home-categories"
-            >
-              <div className="shop-section-heading">
-                <span className="shop-section-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {localizedValue(block.title, locale)}
-                </h2>
-              </div>
-              {!categories.length && (
-                <p className="shop-inline-empty">{t("emptyCategories")}</p>
-              )}
-              <div className="shop-category-grid">
-                {categories
-                  .slice(0, block.source.limit)
-                  .map((category, categoryIndex) => (
-                    <Link
-                      key={category.id}
-                      href={seoPath(
-                        locale,
-                        market.code,
-                        "c",
-                        localizedValue(
-                          category.slugI18n as Record<Locale, string>,
-                          locale,
-                        ),
-                      )}
-                      className="shop-category-card group"
-                      aria-label={localizedValue(
-                        category.titleI18n as Record<Locale, string>,
-                        locale,
-                      )}
-                    >
-                      <div className="shop-category-plane">
-                        {category.media &&
-                          category.media.status === "READY" &&
-                          !category.media.deletedAt && (
-                            <ResponsiveImage
-                              media={category.media}
-                              locale={locale}
-                              sizes="(max-width:640px) 50vw,25vw"
-                              role="editorial"
-                              className="shop-category-image"
-                              imgClassName="h-full w-full object-cover"
-                            />
-                          )}
-                      </div>
-                      <h3 className="shop-category-name">
-                        <span
-                          className="shop-category-number"
-                          aria-hidden="true"
-                        >
-                          {String(categoryIndex + 1).padStart(2, "0")}
-                        </span>
-                        <span>
-                          {localizedValue(
-                            category.titleI18n as Record<Locale, string>,
-                            locale,
-                          )}
-                        </span>
-                      </h3>
-                    </Link>
-                  ))}
-              </div>
-            </section>
+              title={localizedValue(block.title, locale)}
+              ordinal={index + 1}
+              locale={locale}
+              intro={t("categoryExplore")}
+              browseLabel={t("browseCategory")}
+              demoLabel={t("demoImage")}
+              emptyLabel={t("emptyCategories")}
+              categories={categories
+                .slice(0, block.source.limit)
+                .map((category) => ({
+                  id: category.id,
+                  title: localizedValue(
+                    category.titleI18n as Record<Locale, string>,
+                    locale,
+                  ),
+                  href: seoPath(
+                    locale,
+                    market.code,
+                    "c",
+                    localizedValue(
+                      category.slugI18n as Record<Locale, string>,
+                      locale,
+                    ),
+                  ),
+                  media:
+                    category.media?.kind === "image" &&
+                    category.media.status === "READY" &&
+                    !category.media.deletedAt
+                      ? category.media
+                      : undefined,
+                }))}
+            />
           );
         if (block.type === "TrustBar")
           return (
