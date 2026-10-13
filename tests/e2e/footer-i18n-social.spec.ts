@@ -1,3 +1,6 @@
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
 import { test, expect } from "@playwright/test";
 import { ensureMaintenanceOff } from "./helpers/maintenance";
 
@@ -52,7 +55,7 @@ for (const [locale, market] of [
   test(`${locale}: footer columns stay compact and privacy controls remain usable`, async ({
     page,
   }, info) => {
-    const messages = (await import(`../../messages/${locale}.json`)).default;
+    const messages = { fa, tr, en }[locale];
     await page.goto(`/${locale}/m/${market}`);
     const footer = page.locator("footer");
     await footer

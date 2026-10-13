@@ -69,11 +69,12 @@ export function CategoryGallery({
             <span className="shop-discovery-number" aria-hidden="true">
               {number.format(index + 1)}
             </span>
-            {isDemoFashionMedia(category.media) && (
-              <span className="shop-discovery-demo">{demoLabel}</span>
-            )}
             <div className="shop-discovery-caption">
               <h3>{category.title}</h3>
+              {isDemoFashionMedia(category.media) && (
+                <span className="shop-discovery-demo">{demoLabel}</span>
+              )}
+
               <span className="shop-discovery-cta">
                 {browseLabel}
                 <span className="shop-discovery-arrow" aria-hidden="true">
