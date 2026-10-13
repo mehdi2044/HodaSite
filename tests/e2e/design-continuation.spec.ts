@@ -62,6 +62,36 @@ for (const [locale, market, messages] of [
       `/${locale}/m/${market}/p/${encodeURIComponent(locale === "fa" ? "نمونه-women-tee" : "demo-women-tee")}`,
     );
     const purchase = page.locator(".shop-purchase-panel");
+    for (const width of [768, 1023]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        window.scrollTo(0, 0);
+      });
+      const overviewBox = await page
+        .locator(".shop-product-overview")
+        .boundingBox();
+      const galleryBox = await page.locator(".shop-gallery").boundingBox();
+      const informationBox = await page
+        .locator(".shop-product-information:not(.shop-product-overview)")
+        .boundingBox();
+      expect(overviewBox).not.toBeNull();
+      expect(galleryBox).not.toBeNull();
+      expect(informationBox).not.toBeNull();
+      expect(Math.abs(overviewBox!.x - informationBox!.x)).toBeLessThan(2);
+      expect(Math.abs(overviewBox!.width - informationBox!.width)).toBeLessThan(
+        2,
+      );
+      expect(informationBox!.y).toBeLessThan(
+        galleryBox!.y + galleryBox!.height,
+      );
+      await shoppingProof(
+        page,
+        info,
+        `design-product-tablet-${locale}-${width}`,
+      );
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     expect(
       await page
         .locator(".shop-product-overview")

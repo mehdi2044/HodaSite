@@ -3561,7 +3561,7 @@ html[lang="fa"] body,
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .shop-product-page .shop-product-overview { grid-column: 2; grid-row: 1; }
   .shop-product-page .shop-gallery { grid-column: 1; grid-row: 1 / span 2; position: sticky; top: 7rem; }
   .shop-product-page .shop-product-information:not(.shop-product-overview) { grid-column: 2; grid-row: 2; }
