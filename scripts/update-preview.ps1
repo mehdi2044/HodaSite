@@ -12,6 +12,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+$writersStopped = $false
+$checkoutChanged = $false
 function Check-Step([string]$Step) {
     if ($LASTEXITCODE -ne 0) { throw "Stopped at: $Step" }
 }
@@ -22,6 +24,18 @@ function Read-Container([string]$Service) {
     $raw = docker inspect $ids[0]
     Check-Step "Inspect $Service"
     return @($raw | ConvertFrom-Json)[0]
+}
+function Wait-Preview {
+    foreach ($route in @('/fa', '/tr', '/en', '/admin/login')) {
+        $ready = $false
+        for ($attempt = 0; $attempt -lt 15; $attempt++) {
+            try {
+                $response = Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3000$route" -TimeoutSec 30
+                if ($response.StatusCode -eq 200) { $ready = $true; break }
+            } catch { Start-Sleep -Seconds 2 }
+        }
+        if (-not $ready) { throw "Preview did not pass the HTTP check: $route" }
+    }
 }
 
 Push-Location -LiteralPath $RepositoryPath
@@ -35,6 +49,14 @@ try {
     $dirty = git status --porcelain --untracked-files=no
     Check-Step 'Check local edits'
     if ($dirty) { throw 'Tracked files have local edits. They have been preserved; update stopped.' }
+    $untracked = @(git -c core.quotePath=false ls-files --others --exclude-standard)
+    Check-Step 'Check untracked build inputs'
+    foreach ($file in $untracked) {
+        # Keep personal reports, but do not execute unreviewed application files.
+        if ($file -notmatch '^(?:[^/\\]+\.(?:md|txt|pdf)|docs[/\\].+\.(?:md|txt|pdf))$') {
+            throw 'Untracked build inputs exist. Files were preserved; move them outside the checkout before delivery.'
+        }
+    }
     $target = git rev-parse --verify "$ExpectedCommit^{commit}"
     Check-Step 'Resolve reviewed commit'
     if ($target.Trim() -cne $ExpectedCommit) { throw 'Reviewed commit mismatch.' }
@@ -102,11 +124,18 @@ try {
         docker image tag $live[$service].Image "${ProjectName}-${service}:before-$stamp"
         Check-Step "Preserve $service image"
     }
+    $rollbackOverride = Join-Path $recovery 'previous-images.json'
+    @{ services = @{
+        app = @{ image = "${ProjectName}-app:before-$stamp" }
+        ops = @{ image = "${ProjectName}-ops:before-$stamp" }
+    } } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $rollbackOverride -Encoding ASCII
+    $rollbackDc = $dc + @('-f', $rollbackOverride)
     $runningCron = @(docker @dc ps --status running --quiet cron)
     Check-Step 'Inspect scheduler'
     $services = @('app', 'ops')
     if ($runningCron.Count) { $services += 'cron' }
     Write-Host 'Stopping preview writers for a consistent database and media backup...'
+    $writersStopped = $true
     docker @dc stop @services
     Check-Step 'Stop preview writers'
     $label = "before-delivery-$stamp"
@@ -120,6 +149,8 @@ try {
     Check-Step 'Verify safety backup by isolated restore'
     docker cp "$($live['ops'].Id):$($backupDir[0])" $recovery
     Check-Step 'Copy verified recovery archive'
+    # Even a failed checkout can have touched files before an I/O error.
+    $checkoutChanged = $true
     git switch -c "preview/delivery-$stamp" $ExpectedCommit
     Check-Step 'Switch to reviewed delivery'
     docker @dc build app ops
@@ -138,22 +169,35 @@ try {
     }
     docker @dc up -d --no-deps --no-build @services
     Check-Step 'Start updated preview'
-    $baseUrl = 'http://localhost:3000'
-    foreach ($route in @('/fa', '/tr', '/en', '/admin/login')) {
-        $ready = $false
-        for ($attempt = 0; $attempt -lt 15; $attempt++) {
-            try {
-                $response = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl$route" -TimeoutSec 30
-                if ($response.StatusCode -eq 200) { $ready = $true; break }
-            } catch { Start-Sleep -Seconds 2 }
-        }
-        if (-not $ready) { throw "Preview did not pass the HTTP check: $route" }
-    }
+    Wait-Preview
     docker @dc ps app ops
+    Check-Step 'Confirm running preview services'
     Write-Host "PREVIEW_DELIVERY_OK $ExpectedCommit"
     Write-Host "Recovery copy: $recovery"
     Write-Host 'Storefront: http://localhost:3000/fa | Admin: http://localhost:3000/admin'
 } catch {
-    Write-Warning 'Update stopped. No database reset or restore was performed. Keep the recovery folder and send the error text; do not run the general seed.'
-    throw
+    $deliveryError = $_
+    if ($writersStopped) {
+        try {
+            Write-Warning 'Delivery failed. Recovering the previous compatible application; committed demo data will be retained.'
+            docker @dc stop @services
+            Check-Step 'Stop incomplete delivery'
+            if ($checkoutChanged) {
+                git switch --detach $oldCommit
+                Check-Step 'Recover previous source revision'
+                # The dependency/schema guards above make this code rollback compatible.
+                # Rebuild the old source so a compiled startup cannot serve the failed build.
+                docker @rollbackDc run --rm --no-deps app pnpm build
+                Check-Step 'Rebuild previous application'
+            }
+            docker @rollbackDc up -d --no-deps --no-build --pull never @services
+            Check-Step 'Restart previous preview images'
+            Wait-Preview
+            Write-Warning 'PREVIOUS_PREVIEW_RECOVERED. No database reset or restore was performed.'
+        } catch {
+            Write-Warning 'Automatic service recovery could not finish. Keep the recovery folder and previous image tags; send the error text for recovery help.'
+        }
+    }
+    Write-Warning 'Delivery was not completed. Existing data and recovery material were retained; do not run the general seed.'
+    throw $deliveryError
 } finally { Pop-Location }

@@ -2,6 +2,9 @@ import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { styleProducts } from "../../prisma/style-seed";
 import { shoppingProof } from "./helpers/shopping-proof";
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
 
 const db = new PrismaClient();
 let originalDates: Array<{ id: string; createdAt: Date; updatedAt: Date }> = [];
@@ -52,6 +55,9 @@ for (const [locale, market, labels] of [
     for (const [index, label] of labels.entries()) {
       const shelf = shelves.nth(index);
       await expect(shelf.getByRole("heading", { level: 2 })).toHaveText(label);
+      await expect(shelf.locator(".shop-shelf-artwork figcaption")).toHaveText(
+        { fa, tr, en }[locale].shopping.demoImage,
+      );
       const cards = shelf.locator(".shop-product-card");
       await expect(cards).toHaveCount(5);
       const browse = shelf.locator(".shop-section-link");

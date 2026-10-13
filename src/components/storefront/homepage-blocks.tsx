@@ -206,6 +206,7 @@ export async function HomepageBlocks({
               browseHref={browseHref}
               browseLabel={t("viewAll")}
               emptyLabel={t("emptyCollection")}
+              demoLabel={t("demoImage")}
               empty={!productRows[index]?.items.length}
             >
               {productRows[index]?.items

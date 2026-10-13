@@ -141,6 +141,9 @@ jobs:
           $parseErrors = $null
           [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/update-preview.ps1'), [ref]$tokens, [ref]$parseErrors) | Out-Null
           if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+      - name: Exercise updater failure recovery and untracked-file guards
+        shell: pwsh
+        run: ./tests/windows/update-preview.spec.ps1
 
   # Real runtime: brings the production stack up and exercises migrate,
   # health, and a full backup/verify/restore cycle inside `ops`. Slower than

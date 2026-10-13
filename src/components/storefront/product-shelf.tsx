@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
+import {
+  ResponsiveImage,
+  isDemoFashionMedia,
+  type ResponsiveImageMedia,
+} from "./responsive-image";
 
 /** CMS category sources gain an editorial shelf; catalog and price logic stay upstream. */
 export function ProductShelf({
@@ -12,6 +16,7 @@ export function ProductShelf({
   browseHref,
   browseLabel,
   emptyLabel,
+  demoLabel,
   empty,
   children,
 }: {
@@ -23,6 +28,7 @@ export function ProductShelf({
   browseHref?: string;
   browseLabel: string;
   emptyLabel: string;
+  demoLabel: string;
   empty: boolean;
   children: ReactNode;
 }) {
@@ -35,13 +41,20 @@ export function ProductShelf({
     >
       <div className="shop-shelf-heading">
         {department?.media && (
-          <ResponsiveImage
-            media={department.media}
-            locale={locale}
-            role="editorial"
-            sizes="(min-width:768px) 100px, 72px"
-            className="shop-shelf-portrait"
-          />
+          <figure className="shop-shelf-artwork">
+            <ResponsiveImage
+              media={department.media}
+              locale={locale}
+              role="editorial"
+              sizes="(min-width:768px) 100px, 72px"
+              className="shop-shelf-portrait"
+            />
+            {isDemoFashionMedia(department.media) && (
+              <figcaption className="shop-demo-caption mt-2">
+                {demoLabel}
+              </figcaption>
+            )}
+          </figure>
         )}
         <div className="shop-shelf-title">
           <span className="shop-section-number" aria-hidden="true">
