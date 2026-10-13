@@ -113,7 +113,8 @@
     "fitContain": "Show whole image",
     "focalX": "Horizontal focus",
     "focalY": "Vertical focus",
-    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original."
+    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original.",
+    "clearSelection": "Clear image"
   },
   "contentNavigation": {
     "main": "Main navigation",
@@ -473,7 +474,11 @@
     "manageStock": "Receive and manage stock",
     "seoKeywords": "SEO keywords",
     "emptyList": "No products match these filters.",
-    "categoryImage": "Category image"
+    "categoryImage": "Category image",
+    "clearFilters": "Clear filters",
+    "taxonomySections": "Catalog sections",
+    "categoryPlacementHelp": "Root categories appear in the storefront category bar. To show more on the homepage, increase the card limit in the category block settings.",
+    "configureHomepage": "Configure homepage layout"
   },
   "phase03Admin": {
     "amount": "Amount",
@@ -1138,7 +1143,18 @@
     "groupFinance": "Pricing and finance",
     "groupSettings": "Store settings",
     "groupSystem": "System and access",
-    "skipContent": "Skip to admin content"
+    "skipContent": "Skip to admin content",
+    "everydayTasks": "Where will you start today?",
+    "everydayTasksHelp": "Everyday store tasks, with direct access to the settings you need.",
+    "taskProduct": "Add a product",
+    "taskProductHelp": "Add photography, colors and sizes, then prepare your product for publishing.",
+    "taskCategories": "Manage categories",
+    "taskCategoriesHelp": "Create categories and subcategories, and choose a cover for each collection.",
+    "taskHomepage": "Arrange the storefront",
+    "taskHomepageHelp": "Set the section order, product counts and copy on your homepage.",
+    "taskMedia": "Image library",
+    "taskMediaHelp": "Upload photography and adjust its mobile and desktop presentation.",
+    "openSection": "Open section"
   },
   "mobileStorefront": {
     "navigation": "Shop shortcuts",

@@ -3356,6 +3356,140 @@ html[lang="fa"] body,
   text-align: center;
   color: var(--muted);
 }
+.admin-catalog-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+}
+.admin-catalog-filters input[type="search"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+.admin-filter-reset,
+.admin-context-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.admin-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block-end: 1.25rem;
+}
+.admin-bulk-actions select {
+  width: auto;
+  max-width: 100%;
+}
+.admin-section-heading h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  font-weight: 650;
+}
+.admin-section-heading p,
+.admin-context-help {
+  color: var(--muted);
+  line-height: 1.9;
+  margin-block: 0.5rem 1rem;
+}
+.admin-task-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.admin-task-card {
+  display: grid;
+  align-content: start;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0.75rem;
+  padding: clamp(1rem, 2.4vw, 1.75rem);
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 4%, transparent);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+.admin-task-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--text) 9%, transparent);
+}
+.admin-task-card:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.admin-task-card strong {
+  font-size: 1.1rem;
+}
+.admin-task-card > span:not(.admin-task-number):not(.admin-task-open) {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.admin-task-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+.admin-task-open {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-block-start: 0.5rem;
+}
+.admin-section-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.admin-section-jumps a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.admin-section-jumps a:hover {
+  border-color: var(--primary);
+}
+.admin-section-jumps span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.admin-taxonomy [id^="taxonomy-"] {
+  scroll-margin-block-start: 1.5rem;
+}
+@media (min-width: 1100px) {
+  .admin-catalog-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .admin-catalog-filters input[type="search"] {
+    grid-column: span 3;
+  }
+}
+@media (max-width: 480px) {
+  .admin-task-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-task-card {
+    transition: none;
+  }
+  .admin-task-card:hover {
+    transform: none;
+  }
+}
 @media (max-width: 1023px) {
   .admin {
     display: block;

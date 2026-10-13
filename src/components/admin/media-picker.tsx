@@ -25,12 +25,14 @@ export function MediaPicker({
   defaultMediaId,
   defaultUrl,
   onSelect,
+  allowClear = false,
 }: {
   name: string;
   label: string;
   defaultMediaId?: string | null;
   defaultUrl?: string | null;
   onSelect?: (mediaId: string, url: string) => void;
+  allowClear?: boolean;
 }) {
   const t = useTranslations("media");
   const [mediaId, setMediaId] = useState(defaultMediaId ?? "");
@@ -65,6 +67,12 @@ export function MediaPicker({
     dialogRef.current?.close();
   }
 
+  function clear() {
+    setMediaId("");
+    setPreview("");
+    onSelect?.("", "");
+  }
+
   async function uploadNew(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -83,7 +91,7 @@ export function MediaPicker({
     <div className="grid gap-1">
       <span>{label}</span>
       <input type="hidden" name={name} value={mediaId} />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {preview && (
           // Admin-only preview thumbnail, not the storefront — plain <img>
           // is fine (same precedent as media-upload-field.tsx).
@@ -96,6 +104,11 @@ export function MediaPicker({
         <Button type="button" variant="secondary" size="sm" onClick={open}>
           {t("chooseMedia")}
         </Button>
+        {allowClear && mediaId && (
+          <Button type="button" variant="ghost" size="sm" onClick={clear}>
+            {t("clearSelection")}
+          </Button>
+        )}
       </div>
 
       <dialog

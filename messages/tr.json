@@ -113,7 +113,8 @@
     "fitContain": "Görselin tamamı",
     "focalX": "Yatay odak",
     "focalY": "Dikey odak",
-    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir."
+    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir.",
+    "clearSelection": "Görseli kaldır"
   },
   "contentNavigation": {
     "main": "Ana navigasyon",
@@ -473,7 +474,11 @@
     "manageStock": "Stok al ve yönet",
     "seoKeywords": "SEO anahtar kelimeleri",
     "emptyList": "Bu filtrelerle ürün bulunamadı.",
-    "categoryImage": "Kategori görseli"
+    "categoryImage": "Kategori görseli",
+    "clearFilters": "Filtreleri temizle",
+    "taxonomySections": "Katalog bölümleri",
+    "categoryPlacementHelp": "Ana kategoriler mağazanın kategori çubuğunda görünür. Ana sayfada daha fazla kategori göstermek için kategori bloğunun kart sayısını artırın.",
+    "configureHomepage": "Ana sayfa düzenini ayarla"
   },
   "phase03Admin": {
     "amount": "Tutar",
@@ -1138,7 +1143,18 @@
     "groupFinance": "Fiyatlandırma ve finans",
     "groupSettings": "Mağaza ayarları",
     "groupSystem": "Sistem ve erişim",
-    "skipContent": "Yönetim içeriğine geç"
+    "skipContent": "Yönetim içeriğine geç",
+    "everydayTasks": "Bugün nereden başlayalım?",
+    "everydayTasksHelp": "Mağazanın günlük işleri ve ilgili ayarlara doğrudan erişim.",
+    "taskProduct": "Ürün ekle",
+    "taskProductHelp": "Görselleri, renkleri ve bedenleri ekleyerek ürünü yayına hazırlayın.",
+    "taskCategories": "Kategorileri yönet",
+    "taskCategoriesHelp": "Kategori ve alt kategoriler oluşturun, koleksiyon görsellerini seçin.",
+    "taskHomepage": "Vitrini düzenle",
+    "taskHomepageHelp": "Ana sayfa bölümlerini, ürün sayılarını ve metinlerini ayarlayın.",
+    "taskMedia": "Görsel kütüphanesi",
+    "taskMediaHelp": "Görsel yükleyin, mobil ve masaüstü sunumunu ayarlayın.",
+    "openSection": "Bölümü aç"
   },
   "mobileStorefront": {
     "navigation": "Mağaza kısayolları",

@@ -146,6 +146,24 @@ for (const [locale, market, messages] of [
         messages.commerce.dashboard,
       );
     }
+    const tasks = page.locator(".admin-task-grid");
+    await expect(tasks.getByRole("link")).toHaveCount(4);
+    const categoryTask = tasks.getByRole("link", {
+      name: new RegExp(messages.adminShell.taskCategories),
+    });
+    await expect(categoryTask).toHaveAttribute(
+      "href",
+      "/admin/catalog/taxonomy#taxonomy-category",
+    );
+    await shoppingProof(page, info, `design-dashboard-${locale}-390`);
+    await categoryTask.click();
+    await expect(page.locator("#taxonomy-category h2")).toBeInViewport();
+    await expect(
+      page.getByRole("navigation", {
+        name: messages.catalogAdmin.taxonomySections,
+      }),
+    ).toBeAttached();
+    await page.goto("/admin");
     const toggle = page.getByRole("button", {
       name: messages.adminShell.menu,
       exact: true,
@@ -197,5 +215,19 @@ for (const [locale, market, messages] of [
       await page.setViewportSize({ width, height: 900 });
       await shoppingProof(page, info, `design-admin-${locale}-${width}`);
     }
+    const filters = page.locator(".admin-catalog-filters");
+    await filters.locator('[name="q"]').fill("no-matching-product-xyz");
+    await filters
+      .getByRole("button", { name: messages.catalogAdmin.apply, exact: true })
+      .click();
+    await expect(page.locator(".admin-table-empty")).toBeVisible();
+    await page
+      .getByRole("link", {
+        name: messages.catalogAdmin.clearFilters,
+        exact: true,
+      })
+      .click();
+    await expect(page).toHaveURL(/\/admin\/catalog\/products$/);
+    await expect(page.locator(".admin-table-empty")).toHaveCount(0);
   });
 }

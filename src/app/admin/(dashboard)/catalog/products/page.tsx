@@ -73,7 +73,7 @@ export default async function ProductsPage({
         </Link>
       </div>
       <Card>
-        <form method="get" className="flex flex-wrap gap-2">
+        <form method="get" className="admin-catalog-filters">
           <input
             className="h-10 rounded-[8px] border border-black/15 px-3"
             name="q"
@@ -131,6 +131,11 @@ export default async function ProductsPage({
           <button className="button" type="submit">
             {t("apply")}
           </button>
+          {(q || status || categoryId || brandId || marketId) && (
+            <Link className="admin-filter-reset" href="/admin/catalog/products">
+              {t("clearFilters")}
+            </Link>
+          )}
         </form>
       </Card>
       <Card>
@@ -140,7 +145,7 @@ export default async function ProductsPage({
             "use server";
             await setProductStatus(null, data);
           }}
-          className="mb-3 flex flex-wrap gap-2"
+          className="admin-bulk-actions"
         >
           <Select name="status" defaultValue="ACTIVE">
             <option value="ACTIVE">{t("activate")}</option>

@@ -2,11 +2,39 @@ import { auth } from "@/modules/auth";
 import { visibleOrderMarkets } from "@/modules/orders";
 import { db } from "@/lib/db";
 import { getLocale, getTranslations } from "next-intl/server";
+import Link from "next/link";
+import { can } from "@/modules/access";
 export default async function Dashboard() {
   const locale = await getLocale();
   const number = new Intl.NumberFormat(locale);
+  const userId = (await auth())?.user?.id ?? "";
+  const nav = await getTranslations("adminShell");
+  const tasks = [
+    [
+      "catalog.product.create",
+      "/admin/catalog/products/new",
+      "taskProduct",
+      "taskProductHelp",
+    ],
+    [
+      "catalog.product.view",
+      "/admin/catalog/taxonomy#taxonomy-category",
+      "taskCategories",
+      "taskCategoriesHelp",
+    ],
+    [
+      "content.homepage.write",
+      "/admin/content/homepage",
+      "taskHomepage",
+      "taskHomepageHelp",
+    ],
+    ["media.upload", "/admin/media", "taskMedia", "taskMediaHelp"],
+  ] as const;
+  const allowed = await Promise.all(
+    tasks.map(([permission]) => can(userId, permission)),
+  );
   const t = await getTranslations("commerce"),
-    ids = await visibleOrderMarkets((await auth())?.user?.id ?? ""),
+    ids = await visibleOrderMarkets(userId),
     today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   const [sales, pending, orders] = await Promise.all([
@@ -49,6 +77,34 @@ export default async function Dashboard() {
           <p className="mt-4 text-2xl">{number.format(orders)}</p>
         </article>
       </div>
+      {allowed.some(Boolean) && (
+        <section
+          className="admin-task-section"
+          aria-labelledby="admin-tasks-heading"
+        >
+          <div className="admin-section-heading">
+            <h2 id="admin-tasks-heading">{nav("everydayTasks")}</h2>
+            <p>{nav("everydayTasksHelp")}</p>
+          </div>
+          <div className="admin-task-grid">
+            {tasks.map(
+              ([, href, title, help], index) =>
+                allowed[index] && (
+                  <Link className="admin-task-card" href={href} key={href}>
+                    <span className="admin-task-number" aria-hidden="true">
+                      {number.format(index + 1)}
+                    </span>
+                    <strong>{nav(title)}</strong>
+                    <span>{nav(help)}</span>
+                    <span className="admin-task-open">
+                      {nav("openSection")} <span aria-hidden="true">↗</span>
+                    </span>
+                  </Link>
+                ),
+            )}
+          </div>
+        </section>
+      )}
     </section>
   );
 }

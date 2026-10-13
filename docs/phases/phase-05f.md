@@ -26,3 +26,7 @@ The owner accepts the upper campaign/header but rejects repetition between categ
 - Use the configured brand/tagline and compact footer navigation/contact/social columns; put the existing consent controls inside its closing row without changing consent decisions or loading rules.
 - Expose the existing authorized category-image field through the shared media picker. Editing a category must preserve its previously selected cover. No auth/schema/commerce/seed changes.
 - Verify category links and pointer/reduced-motion behavior, footer containment/compact contact spacing/privacy choices at 390/1280px in FA/TR/EN, and category-cover persistence through the real admin save flow.
+
+## Owner-authorized completion — 2026-10-13
+
+Complete ADMIN-001 with optional cover clearing and stale-cover recovery; improve daily admin task entry, taxonomy navigation and catalog filter recovery. Deliver the missing sample catalog through a local-preview-only additive operator tool and a pinned PowerShell updater with verified backup. Preserve the approved hero, merchant data and all commercial contracts. No production enablement or general seed. PR60 consolidates the already-included #59/#61 history and targets main directly; the previous retarget-after-#59 sequence is superseded for this delivery. Owner design/device acceptance and D70 merge approval remain distinct.

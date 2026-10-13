@@ -1,5 +1,9 @@
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
+test.afterAll(() => db.$disconnect());
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -88,4 +92,52 @@ test("category edit preserves its cover and exposes the shared image picker", as
   await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
   await page.reload();
   await expect(cover).toHaveValue(before);
+  const category = await db.category.findUniqueOrThrow({
+    where: { id: "seed-category-women" },
+  });
+  const media = await db.media.findUniqueOrThrow({ where: { id: before } });
+  try {
+    await form
+      .getByRole("button", { name: "پاک‌کردن تصویر", exact: true })
+      .click();
+    await expect(cover).toHaveValue("");
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue("");
+    expect(
+      (await db.category.findUniqueOrThrow({ where: { id: category.id } }))
+        .mediaId,
+    ).toBeNull();
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: before },
+    });
+    await db.media.update({
+      where: { id: before },
+      data: { deletedAt: new Date() },
+    });
+    await page.reload();
+    await expect(cover).toHaveValue(before);
+    await form
+      .getByRole("button", { name: "پاک‌کردن تصویر", exact: true })
+      .click();
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue("");
+    expect(
+      (await db.category.findUniqueOrThrow({ where: { id: category.id } }))
+        .mediaId,
+    ).toBeNull();
+  } finally {
+    await db.media.update({
+      where: { id: before },
+      data: { deletedAt: media.deletedAt, updatedAt: media.updatedAt },
+    });
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: before, updatedAt: category.updatedAt },
+    });
+  }
 });
