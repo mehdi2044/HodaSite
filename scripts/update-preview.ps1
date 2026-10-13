@@ -126,6 +126,10 @@ try {
     Check-Step 'Build preview images'
     docker @dc run --rm --no-deps app pnpm exec prisma generate
     Check-Step 'Generate matching Prisma client'
+    # Existing previews may use next start instead of the default next dev.
+    # Refresh the shared .next output before restoring the captured startup command.
+    docker @dc run --rm --no-deps app pnpm build
+    Check-Step 'Build the reviewed application'
     if ($IncludeDemoCatalog) {
         docker @dc run --rm --no-deps app pnpm exec tsx scripts/import-preview-style.ts
         Check-Step 'Read-only demo catalog plan'
