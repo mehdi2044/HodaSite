@@ -11,27 +11,33 @@ export default async function Dashboard() {
   const nav = await getTranslations("adminShell");
   const tasks = [
     [
-      "catalog.product.create",
+      ["catalog.product.view", "catalog.product.create"],
       "/admin/catalog/products/new",
       "taskProduct",
       "taskProductHelp",
     ],
     [
-      "catalog.product.view",
+      ["catalog.product.view", "catalog.product.edit"],
       "/admin/catalog/taxonomy#taxonomy-category",
       "taskCategories",
       "taskCategoriesHelp",
     ],
     [
-      "content.homepage.write",
+      ["content.homepage.read", "content.homepage.write"],
       "/admin/content/homepage",
       "taskHomepage",
       "taskHomepageHelp",
     ],
-    ["media.upload", "/admin/media", "taskMedia", "taskMediaHelp"],
+    [["media.upload"], "/admin/media", "taskMedia", "taskMediaHelp"],
   ] as const;
   const allowed = await Promise.all(
-    tasks.map(([permission]) => can(userId, permission)),
+    tasks.map(async ([permissions]) =>
+      (
+        await Promise.all(
+          permissions.map((permission) => can(userId, permission)),
+        )
+      ).every(Boolean),
+    ),
   );
   const t = await getTranslations("commerce"),
     ids = await visibleOrderMarkets(userId),
