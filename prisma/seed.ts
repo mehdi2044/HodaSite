@@ -2,6 +2,7 @@ import { buildProductSearchText } from "../scripts/catalog-search";
 import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
 import { seedFittingRoom } from "./fitting-seed";
+import { seedFreshModa4Homepage } from "./moda4-homepage-seed";
 import { seedStyleStorefront } from "./style-seed";
 import { seedModa4BrandMedia, MODA4_BRAND_MEDIA } from "./moda4-brand";
 import { MODA4_LIGHT, MODA4_DARK, MODA4_FONTS } from "../scripts/moda4-theme";
@@ -180,6 +181,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   ],
 };
 async function main() {
+  const freshModa4Demo =
+    (await db.siteSettings.count()) === 0 &&
+    (await db.homepage.count()) === 0 &&
+    (await db.product.count()) === 0 &&
+    (await db.order.count()) === 0;
   for (const key of roles)
     await db.role.upsert({
       where: { key },
@@ -353,6 +359,7 @@ async function main() {
   await seedFashionStorefront(db, putMediaFile);
   await seedFittingRoom(db);
   await seedStyleStorefront(db, putMediaFile);
+  await seedFreshModa4Homepage(db, putMediaFile, freshModa4Demo);
   await seedPhase03(user.id);
   await seedPhase04();
   await seedLedgerAccounts(db);

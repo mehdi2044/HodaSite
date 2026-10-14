@@ -31,7 +31,13 @@ export async function POST(req: Request) {
     if (await isMaintenanceOn())
       return NextResponse.json({ error: "maintenance" }, { status: 503 });
 
-    const file = (await req.formData()).get("file");
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return NextResponse.json({ error: "invalid_file" }, { status: 400 });
+    }
+    const file = form.get("file");
     if (!(file instanceof File))
       return NextResponse.json({ error: "invalid_file" }, { status: 400 });
     if (file.size === 0)

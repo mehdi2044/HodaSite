@@ -176,14 +176,8 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
         },
       });
     } else {
-      const home = await db.homepage.findFirst({
-        where: { marketId: market.id },
-      });
-      if (home)
-        await db.homepage.update({
-          where: { id: home.id },
-          data: { deletedAt: new Date() },
-        });
+      // This is an owned *_test DB: remove only the homepage created by this test.
+      await db.homepage.deleteMany({ where: { marketId: market.id } });
     }
     await shop.close();
   }
@@ -385,11 +379,7 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
               : (data.draftBlocks as Prisma.InputJsonValue),
         },
       });
-    } else
-      await db.homepage.updateMany({
-        where: { marketId: market.id },
-        data: { deletedAt: new Date() },
-      });
+    } else await db.homepage.deleteMany({ where: { marketId: market.id } });
     if (uploaded)
       await db.media.update({
         where: { id: uploaded },

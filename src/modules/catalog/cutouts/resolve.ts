@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import {
   cutoutGeometrySchema,
@@ -18,7 +19,7 @@ export function cutoutPublicImage(media: Media) {
   };
 }
 /** Select the actual color/size identity before choosing an optional override. */
-export async function currentCatalogCutout(
+async function readCurrentCatalogCutout(
   variantId: string,
   marketId: string,
   client: Prisma.TransactionClient = db,
@@ -70,6 +71,18 @@ export async function currentCatalogCutout(
   )
     return null;
   return { row, geometry: geometry.data, validation: validation.data, variant };
+}
+const requestCutout = cache((variantId: string, marketId: string) =>
+  readCurrentCatalogCutout(variantId, marketId, db),
+);
+export function currentCatalogCutout(
+  variantId: string,
+  marketId: string,
+  client: Prisma.TransactionClient = db,
+) {
+  return client === db
+    ? requestCutout(variantId, marketId)
+    : readCurrentCatalogCutout(variantId, marketId, client);
 }
 export async function publicCatalogCutout(variantId: string, marketId: string) {
   const current = await currentCatalogCutout(variantId, marketId);
