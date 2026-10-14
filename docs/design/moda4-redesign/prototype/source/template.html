@@ -1,0 +1,1901 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MODA4 — Autumn / Winter 26</title>
+<link rel="icon" type="image/svg+xml" href="{{MARK}}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200..800&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Caveat:wght@500;700&family=Fredoka:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F7F4EF; --ink:#141210; --stone:#6B645C; --line:rgba(20,18,16,.12); --sand:#ECE5DA; --sand-2:#E2D8CA;
+  --accent:#FF6A1A; --accent-ink:#B93D0B; --white:#fff; --ok:#2E7D4F;
+  --fa:Vazirmatn, Tahoma, sans-serif; --serif:"Bodoni Moda", "Didot", Georgia, serif; --hand:Caveat, "Comic Sans MS", cursive; --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --hdr:72px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+.ring-wrap{overflow:hidden}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--fa);font-weight:400;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:48px}
+.lat{font-family:var(--serif);direction:ltr;direction:ltr;right:12px;left:auto}
+.mono{font-family:var(--mono)}
+.hand{font-family:var(--hand)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.page{display:none}
+.page.on{display:block;animation:pageIn .5s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- crayon + lace ---------- */
+.cbtn{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 30px;font-weight:600;font-size:15px;letter-spacing:.01em;color:var(--paper);white-space:nowrap;transition:transform .2s}
+.cbtn::before{content:"";position:absolute;inset:0;z-index:-2;border-radius:999px;background:var(--btn,var(--ink));filter:url(#crayon)}
+.cbtn::after{content:"";position:absolute;inset:5px;z-index:-1;border-radius:999px;border:1.2px dashed rgba(255,255,255,.42)}
+.cbtn:hover{transform:translateY(-2px) rotate(-.6deg)}
+.cbtn:active{transform:translateY(0)}
+.cbtn.accent{--btn:var(--accent);color:var(--ink)}
+.cbtn.accent::after{border-color:rgba(20,18,16,.35)}
+.cbtn.light{--btn:var(--paper);color:var(--ink)}
+.cbtn.light::after{border-color:rgba(20,18,16,.3)}
+.cbtn.ghost{color:var(--ink)}
+.cbtn.ghost::before{background:transparent;border:2.2px solid var(--ink)}
+.cbtn.ghost::after{display:none}
+.cbtn.ghost.inv{color:var(--paper)}
+.cbtn.ghost.inv::before{border-color:var(--paper)}
+.cbtn.sm{min-height:44px;padding:0 20px;font-size:14px}
+.cbtn.block{width:100%}
+.cbtn[disabled]{opacity:.45;cursor:default;transform:none}
+.scribble{position:relative;display:inline-block}
+.scribble::after{content:"";position:absolute;inset-inline:-4%;bottom:-.18em;height:.42em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3'/%3E%3C/filter%3E%3Cpath d='M3 13 C40 4 80 16 120 8 S180 6 197 10' fill='none' stroke='%23FF6A1A' stroke-width='5' stroke-linecap='round' filter='url(%23c)'/%3E%3C/svg%3E") no-repeat center/100% 100%;z-index:-1}
+.lace-b{position:relative}
+.lace-b::after{content:"";position:absolute;inset-inline:0;top:100%;height:12px;background:var(--lace-light) repeat-x top/26px 12px;pointer-events:none}
+.lace-t{position:relative}
+.lace-t::before{content:"";position:absolute;inset-inline:0;bottom:100%;height:12px;background:var(--lace-dark) repeat-x bottom/26px 12px;pointer-events:none}
+:root{
+  --lace-light:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12' viewBox='0 0 26 12'%3E%3Cpath fill-rule='evenodd' fill='%23F7F4EF' d='M0 0h26v2.5a13 9.5 0 0 1-26 0zM13 4.2a1.6 1.6 0 1 0 .01 0z'/%3E%3Ccircle cx='0' cy='9.6' r='1' fill='%23F7F4EF'/%3E%3Ccircle cx='26' cy='9.6' r='1' fill='%23F7F4EF'/%3E%3C/svg%3E");
+  --lace-dark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12' viewBox='0 0 26 12'%3E%3Cpath fill-rule='evenodd' fill='%23141210' d='M0 12h26V9.5a13 9.5 0 0 0-26 0zM13 7.8a1.6 1.6 0 1 0 .01 0z'/%3E%3Ccircle cx='0' cy='2.4' r='1' fill='%23141210'/%3E%3Ccircle cx='26' cy='2.4' r='1' fill='%23141210'/%3E%3C/svg%3E");
+}
+
+/* ---------- announcement + header ---------- */
+.ann{background:var(--ink);color:var(--paper);font-size:12.5px;height:36px;overflow:hidden;position:relative;z-index:41}
+.ann .wrap{height:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ann .rot{position:relative;height:36px;flex:1;text-align:center}
+.ann .rot span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(12px);transition:all .5s}
+.ann .rot span.on{opacity:1;transform:none}
+.ann .mk{display:flex;gap:2px;font-family:var(--mono);font-size:11px}
+.ann .mk button{padding:4px 9px;border-radius:999px;color:var(--paper);opacity:.65}
+.ann .mk button[aria-pressed=true]{opacity:1;background:rgba(247,244,239,.16)}
+.hdr{position:sticky;top:0;z-index:40;height:var(--hdr);transition:background .35s,color .35s}
+.hdr.solid{background:var(--paper)}
+.hdr.solid.lace-b::after{opacity:1}
+.hdr.lace-b::after{opacity:0;transition:opacity .35s}
+.hdr .wrap{height:100%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px}
+.hdr.over:not(.solid){color:var(--ink)}
+.hdr.over:not(.solid)::before{content:"";position:absolute;inset:0 0 -40px;background:linear-gradient(rgba(247,244,239,.7),rgba(247,244,239,0));z-index:-1;pointer-events:none}
+.navs{display:flex;gap:2px;align-items:center;height:100%}
+.navs>a,.navs>.dd>a{display:inline-flex;align-items:center;height:44px;padding:0 13px;font-size:14px;font-weight:500;position:relative}
+.navs>a::after,.navs>.dd>a::after{content:"";position:absolute;inset-inline:12px;bottom:6px;height:6px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6 C25 2 50 9 75 4 S95 5 98 5' fill='none' stroke='%23FF6A1A' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/100% 100%;transform:scaleX(0);transform-origin:right;transition:transform .3s}
+.navs>a:hover::after,.navs>.dd:hover>a::after,.navs>.dd.open>a::after{transform:scaleX(1)}
+.navs .try{gap:7px}
+.navs .try svg{color:var(--accent);width:16px;height:16px}
+.logo{font-family:var(--serif);font-weight:600;font-size:27px;letter-spacing:.14em;direction:ltr;white-space:nowrap;text-align:center}
+.logo i{font-style:italic;font-weight:400;letter-spacing:0;color:var(--accent-ink)}
+.tools{display:flex;gap:2px;align-items:center;justify-content:flex-end}
+.ib{width:44px;height:44px;border-radius:999px;display:grid;place-items:center;position:relative;transition:background .2s}
+.ib:hover{background:rgba(20,18,16,.06)}
+.ib .n{position:absolute;top:5px;inset-inline-start:4px;min-width:18px;height:18px;border-radius:999px;background:var(--accent);color:var(--ink);font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.burger{display:none}
+/* mega */
+.dd{position:static;height:100%;display:flex;align-items:center}
+.mega{position:absolute;inset-inline:0;top:100%;background:var(--paper);border-top:1px solid var(--line);opacity:0;visibility:hidden;transform:translateY(-6px);transition:all .28s;box-shadow:0 30px 60px -30px rgba(20,18,16,.25)}
+.dd:hover .mega,.dd.open .mega,.dd:focus-within .mega{opacity:1;visibility:visible;transform:none}
+.mega .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 1.2fr 1.2fr;gap:32px;padding-block:36px 44px;height:auto}
+.mega h4{margin:0 0 14px;font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--stone)}
+.mega ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mega li a{font-size:15px}
+.mega li a:hover{color:var(--accent-ink)}
+.mega .tile{display:flex;flex-direction:column;gap:10px}
+.mega .tile .im{aspect-ratio:3/4;background:var(--sand);overflow:hidden;border-radius:4px}
+.mega .tile img{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform .6s}
+.mega .tile:hover img{transform:scale(1.04)}
+.mega .tile b{font-weight:500;font-size:14px}
+.mega .tile span{font-size:12px;color:var(--stone)}
+
+/* ---------- hero slider ---------- */
+.hero{position:relative;margin-top:calc(var(--hdr) * -1);height:max(50vw, min(92vh, 940px));min-height:600px;overflow:hidden;background:var(--sand)}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity 1.1s ease,visibility 1.1s}
+.slide.on{opacity:1;visibility:visible}
+.slide picture,.slide picture img{position:absolute;inset:0;width:100%;height:100%}
+.slide picture img{object-fit:cover;object-position:var(--x,50%) 0%;transform:scale(1.07);transition:transform 7.5s ease-out}
+.slide.on picture img{transform:scale(1)}
+.slide .copy{position:absolute;top:calc(var(--hdr) + 7%);bottom:16%;width:min(46%,620px);display:flex;flex-direction:column;justify-content:center;gap:22px;z-index:2}
+.slide .copy.r{inset-inline-start:7%}
+.slide .copy.l{inset-inline-end:7%}
+.slide .copy>*{opacity:0;transform:translateY(22px);transition:all .9s cubic-bezier(.2,.8,.2,1)}
+.slide.on .copy>*{opacity:1;transform:none}
+.slide.on .copy>*:nth-child(2){transition-delay:.12s}
+.slide.on .copy>*:nth-child(3){transition-delay:.24s}
+.slide.on .copy>*:nth-child(4){transition-delay:.36s}
+.slide.on .copy>*:nth-child(5){transition-delay:.48s}
+.eyb{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;direction:ltr;text-align:right;display:flex;gap:10px;align-items:center;justify-content:flex-start}
+.copy h1,.copy h2{margin:0;font-family:var(--serif);font-weight:400;direction:ltr;text-align:right;font-size:clamp(56px,7.4vw,128px);line-height:.92;letter-spacing:-.025em}
+.copy h1 em,.copy h2 em{font-style:italic}
+.copy .fa{font-size:clamp(18px,1.7vw,24px);font-weight:300;letter-spacing:.01em}
+.copy .fa b{font-weight:600}
+.copy p{margin:0;font-size:15.5px;line-height:1.95;color:#3B352F;max-width:440px}
+.copy .acts{display:flex;gap:12px;flex-wrap:wrap}
+.float{position:absolute;z-index:1;pointer-events:none;filter:drop-shadow(0 30px 30px rgba(60,40,20,.28));transition:transform .25s ease-out}
+.float img{width:100%}
+.float .note{position:absolute;font-family:var(--hand);font-size:24px;color:var(--ink);white-space:nowrap;direction:ltr}
+.float .note svg{position:absolute;inset:-14px -22px;width:calc(100% + 44px);height:calc(100% + 28px)}
+.hero-ui{position:absolute;inset-inline:0;bottom:28px;z-index:3}
+.hero-ui .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.bars{display:flex;gap:10px;flex:1;max-width:520px}
+.bars button{flex:1;display:flex;flex-direction:column;gap:9px;text-align:start;font-size:12px;padding-block:6px}
+.bars button i{display:block;height:2px;background:rgba(20,18,16,.18);position:relative;overflow:hidden}
+.bars button i::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:right}
+.bars button.on i::after{animation:fill var(--dur,7s) linear forwards}
+.bars button.done i::after{transform:scaleX(1)}
+.hero.paused .bars button.on i::after{animation-play-state:paused}
+@keyframes fill{to{transform:scaleX(1)}}
+.bars button span{opacity:.55;transition:opacity .3s}
+.bars button.on span{opacity:1;font-weight:600}
+.arrows{display:flex;gap:8px}
+.arrows .ib{background:rgba(247,244,239,.75);backdrop-filter:blur(6px)}
+
+/* ---------- sections ---------- */
+.sec{padding-block:120px 40px}
+.sh{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:40px;flex-wrap:wrap}
+.sh .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;display:block;margin-bottom:12px;text-align:right}
+.sh h2{margin:0;font-weight:300;font-size:clamp(30px,3.2vw,46px);letter-spacing:-.01em;line-height:1.25}
+.sh h2 .lat{font-style:italic;font-weight:400}
+.more{font-size:14px;font-weight:600;display:inline-flex;gap:8px;align-items:center}
+.more svg{width:18px;height:18px}
+
+/* categories */
+.cats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.cat{display:flex;flex-direction:column;gap:14px}
+.cat .im{aspect-ratio:3/4;overflow:hidden;background:var(--sand);border-radius:6px;position:relative}
+.cat img{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.cat:hover img{transform:scale(1.05)}
+.cat .lab{display:flex;justify-content:space-between;align-items:baseline}
+.cat .lab b{font-weight:500;font-size:17px}
+.cat .lab span{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--stone);direction:ltr}
+
+/* product cards */
+.rail{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:18px;scrollbar-width:thin}
+.rail .pc{flex:0 0 clamp(220px,22vw,320px);scroll-snap-align:start}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:44px 20px}
+.pc{display:flex;flex-direction:column;gap:12px;min-width:0;perspective:900px}
+.pc .im{position:relative;aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:var(--sand);transform-style:preserve-3d;transition:transform .35s ease-out,box-shadow .35s}
+.pc:hover .im{box-shadow:0 26px 40px -24px rgba(20,18,16,.45)}
+.pc .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;transition:opacity .5s}
+.pc .im img.alt{opacity:0}
+.pc:hover .im img.alt{opacity:1}
+.pc .flag{position:absolute;top:12px;inset-inline-start:12px;z-index:2;font-family:var(--hand);font-size:20px;line-height:1;padding:4px 10px 6px;background:var(--paper);border-radius:999px;direction:ltr;right:12px;left:auto}
+.heart{position:absolute;top:8px;inset-inline-end:8px;z-index:2;width:44px;height:44px;border-radius:999px;display:grid;place-items:center}
+.heart svg{width:20px;height:20px;transition:transform .2s}
+.heart:hover svg{transform:scale(1.15)}
+.heart[aria-pressed=true] svg{fill:var(--accent);stroke:var(--accent-ink)}
+.qa{position:absolute;inset-inline:10px;bottom:10px;z-index:2;background:rgba(247,244,239,.94);backdrop-filter:blur(8px);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;opacity:0;transform:translateY(10px) translateZ(30px);transition:all .3s}
+.pc:hover .qa,.pc:focus-within .qa{opacity:1;transform:translateZ(30px)}
+.qa small{font-size:12px;color:var(--stone)}
+.szs{display:flex;gap:5px;direction:ltr}
+.szs button{flex:1;min-height:34px;min-width:34px;border-radius:8px;border:1px solid rgba(20,18,16,.18);font-family:var(--mono);font-size:12px;transition:all .15s}
+.szs button:hover{border-color:var(--ink)}
+.szs button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.szs button:disabled{border-style:dashed;color:#9A9188;text-decoration:line-through;cursor:not-allowed}
+.pc .meta{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pc .meta a{font-size:15px;font-weight:500}
+.pc .meta a:hover{color:var(--accent-ink)}
+.price{font-family:var(--mono);font-size:13.5px;white-space:nowrap;direction:ltr}
+.sw{display:flex;gap:7px;align-items:center}
+.sw button{width:16px;height:16px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(20,18,16,.2);position:relative}
+.sw button[aria-pressed=true]::after{content:"";position:absolute;inset:-4px;border-radius:999px;border:1.5px solid var(--ink)}
+.sw span{font-size:12px;color:var(--stone);margin-inline-start:4px}
+
+/* fitting 3D ad */
+.fit3d{position:relative;background:#EFE9E0;overflow:hidden}
+.fit3d .wrap{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr);gap:40px;align-items:center;padding-block:96px}
+.fit3d .txt{display:flex;flex-direction:column;gap:22px}
+.fit3d h2{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(44px,5vw,84px);line-height:.95;direction:ltr;text-align:right;letter-spacing:-.02em}
+.fit3d h2 em{font-style:italic}
+.fit3d .fa{font-size:22px;font-weight:300}
+.fit3d p{margin:0;color:#3B352F;font-size:15.5px;line-height:1.95}
+.sets{display:flex;gap:8px}
+.chip{min-height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,18,16,.22);font-size:13.5px;display:inline-flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed=true],.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.scene-box{position:relative;width:100%;aspect-ratio:1100/640}
+.scene{position:absolute;top:0;left:0;width:1100px;height:640px;transform-origin:0 0;direction:ltr;perspective:1300px;perspective-origin:50% 35%}
+.floor{position:absolute;left:-200px;right:-200px;bottom:20px;height:150px;background:radial-gradient(ellipse at 60% 0%,rgba(120,95,70,.18),transparent 70%);transform:rotateX(70deg);transform-origin:bottom}
+.rack{position:absolute;left:40px;top:70px;width:560px;height:520px;transform-style:preserve-3d;transform:rotateY(18deg)}
+.rack .rail{position:absolute;left:0;right:0;top:40px;height:8px;border-radius:8px;background:linear-gradient(#3a332c,#141210);box-shadow:0 2px 0 rgba(255,255,255,.3) inset}
+.rack .leg{position:absolute;top:40px;width:8px;height:470px;border-radius:6px;background:linear-gradient(90deg,#3a332c,#141210)}
+.rack .leg.a{left:6px}.rack .leg.b{right:6px}
+.rack .base{position:absolute;bottom:4px;width:70px;height:8px;border-radius:8px;background:#141210}
+.rack .base.a{left:-25px}.rack .base.b{right:-25px}
+.garm{position:absolute;top:28px;transform-origin:50% 0;transform-style:preserve-3d;will-change:transform}
+.garm .hang{width:64px;height:44px;margin:0 auto -6px;display:block;color:#5b5047}
+.garm img{filter:drop-shadow(0 16px 14px rgba(60,40,20,.25))}
+.garm.sway{animation:sway 4s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotateY(-26deg) rotateZ(-.8deg)}50%{transform:rotateY(-20deg) rotateZ(.8deg)}}
+.manq{position:absolute;left:760px;top:40px;width:220px;height:560px;z-index:1}
+.manq svg{width:100%;height:100%;overflow:visible}
+.reveal{position:absolute;z-index:20;left:705px;top:30px;width:330px;height:440px;border-radius:200px 200px 10px 10px;overflow:hidden;opacity:0;transform:scale(.92);transition:opacity .9s,transform .9s;box-shadow:0 40px 60px -30px rgba(60,40,20,.5)}
+.reveal img{width:100%;height:100%;object-fit:cover;object-position:top}
+.reveal.on{opacity:1;transform:none}
+.badge-ready{position:absolute;z-index:20;left:760px;top:490px;font-family:var(--hand);font-size:30px;opacity:0;transition:opacity .6s .4s;white-space:nowrap}
+.badge-ready.on{opacity:1}
+.scan{position:absolute;z-index:19;left:705px;width:330px;height:3px;top:30px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;box-shadow:0 0 18px var(--accent)}
+.scan.go{animation:scan 1.2s ease-in-out;opacity:1}
+@keyframes scan{from{top:30px}to{top:470px}}
+.step-lab{position:absolute;right:20px;top:10px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--stone)}
+
+/* shop the look banner */
+.stl{position:relative;height:max(46vw,640px);max-height:900px;overflow:hidden;background:#C9B293}
+.stl>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:70% 0%}
+.hot{position:absolute;z-index:2}
+.hot button{width:40px;height:40px;border-radius:999px;background:rgba(247,244,239,.95);display:grid;place-items:center;font-family:var(--serif);font-weight:700;box-shadow:0 0 0 0 rgba(247,244,239,.6);animation:pulse 2.4s infinite}
+.hot.on button{background:var(--accent)}
+@keyframes pulse{70%{box-shadow:0 0 0 16px rgba(247,244,239,0)}100%{box-shadow:0 0 0 0 rgba(247,244,239,0)}}
+.stl .panel{position:absolute;inset-inline-end:6%;top:50%;transform:translateY(-50%);width:min(420px,40%);background:rgba(247,244,239,.94);backdrop-filter:blur(12px);border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:18px;box-shadow:0 40px 80px -40px rgba(20,18,16,.45)}
+.stl .panel h3{margin:0;font-family:var(--serif);font-weight:400;font-size:44px;direction:ltr;text-align:right;line-height:1}
+.stl .panel h3 em{font-style:italic}
+.it{display:flex;gap:14px;align-items:center;padding:12px;border-radius:12px;transition:background .25s}
+.it.on{background:rgba(255,106,26,.12)}
+.it .im{width:58px;height:58px;border-radius:10px;background:var(--sand);display:grid;place-items:center;flex:none}
+.it .im img{max-width:48px;max-height:50px;width:auto;height:auto;object-fit:contain}
+.it .tx{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+.it .tx div{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.it .szs button{flex:0 0 auto;min-width:38px;min-height:30px}
+.tot{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:16px}
+.tot small{display:block;font-size:12px;color:var(--stone)}
+.tot b{font-family:var(--serif);font-size:30px;font-weight:600;direction:ltr;display:block}
+
+/* lookbook ring */
+.ring-wrap{position:relative;height:450px;perspective:1500px;perspective-origin:50% 40%;margin-top:10px}
+.ring{position:absolute;left:50%;top:20px;width:270px;height:360px;margin-left:-135px;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.8,.2,1);cursor:grab}
+.ring.drag{transition:none;cursor:grabbing}
+.look{position:absolute;inset:0;border-radius:140px 140px 8px 8px;overflow:hidden;background:var(--sand);backface-visibility:hidden;transition:opacity .6s,filter .6s}
+.look img{width:100%;height:100%;object-fit:cover;object-position:top;pointer-events:none}
+.look figcaption{position:absolute;inset-inline:0;bottom:0;padding:44px 18px 16px;background:linear-gradient(transparent,rgba(20,18,16,.62));color:var(--paper);display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.look figcaption b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:24px;direction:ltr}
+.look figcaption span{font-size:12.5px}
+.ring-ctrl{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:-30px;position:relative;z-index:2}
+.ring-ctrl .ib{border:1px solid var(--line)}
+.ring-ctrl .lbl{font-family:var(--serif);font-style:italic;font-size:22px;min-width:200px;text-align:center;direction:ltr}
+
+/* kids banner */
+.kb{position:relative;height:max(42vw,560px);max-height:820px;overflow:hidden;background:#E8DCCB}
+.kb>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:27% 0%}
+.kb .copy{position:absolute;inset-inline-start:8%;top:0;bottom:0;width:min(44%,560px);display:flex;flex-direction:column;justify-content:center;gap:20px}
+.kb .copy h2{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(52px,6.2vw,108px);line-height:.92;direction:ltr;text-align:right}
+.kb .copy h2 em{font-style:italic}
+.kb .stick{position:absolute;right:50%;left:auto;bottom:auto;top:22%;width:120px;height:auto;filter:drop-shadow(0 22px 22px rgba(60,40,20,.25));transform:rotate(8deg)}
+
+/* services */
+.svc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-block:1px solid var(--line)}
+.svc div{padding:34px 26px;display:flex;flex-direction:column;gap:10px;border-inline-start:1px solid var(--line)}
+.svc div:first-child{border-inline-start:0}
+.svc svg{width:28px;height:28px;color:var(--accent-ink)}
+.svc b{font-weight:600;font-size:16px}
+.svc span{font-size:13.5px;color:var(--stone);line-height:1.8}
+
+/* footer */
+.ft{background:var(--ink);color:var(--paper);margin-top:110px}
+.ft .wrap{padding-block:72px 28px;display:flex;flex-direction:column;gap:56px}
+.ft-top{display:grid;grid-template-columns:1.3fr 2fr;gap:56px}
+.news{display:flex;flex-direction:column;gap:16px}
+.news h3{margin:0;font-family:var(--serif);font-weight:400;font-size:40px;direction:ltr;text-align:right;line-height:1}
+.news h3 em{font-style:italic}
+.news p{margin:0;font-size:14px;color:#BDB4A8;line-height:1.8}
+.nbox{display:flex;gap:6px;border-bottom:1.5px solid rgba(247,244,239,.45);padding-bottom:8px}
+.nbox input{flex:1;min-width:0;background:transparent;border:0;color:var(--paper);font-size:15px;min-height:46px;outline-offset:4px}
+.nbox input::placeholder{color:#9E968B}
+.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.cols div{display:flex;flex-direction:column;gap:12px;font-size:14px}
+.cols h4{margin:0 0 4px;font-size:12px;font-weight:500;color:#9E968B;letter-spacing:.06em}
+.cols a:hover{color:var(--accent)}
+.word{font-family:var(--serif);font-weight:500;font-size:clamp(64px,15vw,230px);letter-spacing:.06em;line-height:.85;direction:ltr;text-align:center;white-space:nowrap}
+.word i{font-style:italic;font-weight:400;color:var(--accent);letter-spacing:0}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:12.5px;color:#9E968B;border-top:1px solid rgba(247,244,239,.14);padding-top:22px}
+.pay{display:flex;gap:8px}
+.pay span{border:1px solid rgba(247,244,239,.25);border-radius:6px;padding:4px 9px;font-family:var(--mono);font-size:11px}
+
+/* ---------- shop page ---------- */
+.shop-hd{padding-block:56px 26px;display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap}
+.shop-hd h1{margin:0;font-weight:300;font-size:clamp(36px,4vw,60px)}
+.shop-hd h1 .lat{font-style:italic;font-weight:400;color:var(--stone);font-size:.62em;margin-inline-start:12px}
+.crumb{font-size:13px;color:var(--stone);display:flex;gap:8px;margin-bottom:12px}
+.fbar{position:sticky;top:calc(var(--hdr) + 12px);z-index:20;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0 18px;background:linear-gradient(var(--paper) 80%,transparent)}
+.fbar .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.fbar .chips::-webkit-scrollbar{display:none}
+.fbar select{min-height:40px;border-radius:999px;border:1px solid rgba(20,18,16,.22);padding:0 14px;background:transparent}
+.empty{grid-column:1/-1;text-align:center;padding:60px 0;color:var(--stone)}
+
+/* ---------- product page ---------- */
+.pdp{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:56px;padding-block:28px 80px;align-items:start}
+.gal{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px}
+.thumbs{display:flex;flex-direction:column;gap:10px;position:sticky;top:calc(var(--hdr) + 20px)}
+.thumbs button{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:var(--sand);border:1.5px solid transparent;padding:0}
+.thumbs button[aria-pressed=true]{border-color:var(--ink)}
+.thumbs img{width:100%;height:100%;object-fit:cover;object-position:top}
+.shots{display:flex;flex-direction:column;gap:14px}
+.shot{position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:var(--sand);cursor:zoom-in}
+.shot img{width:100%;height:100%;object-fit:cover;object-position:top}
+.shot.cut{display:grid;place-items:center}
+.shot.cut img{width:72%;height:auto;object-fit:contain;filter:drop-shadow(0 30px 30px rgba(60,40,20,.25))}
+.shot .zoom{position:absolute;bottom:14px;inset-inline-end:14px;background:rgba(247,244,239,.9);border-radius:999px;width:44px;height:44px;display:grid;place-items:center}
+.buy{position:sticky;top:calc(var(--hdr) + 20px);display:flex;flex-direction:column;gap:22px}
+.buy .crumb{margin:0}
+.buy h1{margin:0;font-size:36px;font-weight:400;letter-spacing:-.01em}
+.buy .lat-n{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--stone);direction:ltr;text-align:right}
+.bp{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.bp b{font-family:var(--serif);font-size:30px;font-weight:600;direction:ltr}
+.bp small{font-size:12.5px;color:var(--stone)}
+.lbl{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.lbl b{font-weight:600}
+.lbl button{font-size:13px;text-decoration:underline;text-underline-offset:5px;min-height:32px}
+.bigsw{display:flex;gap:12px}
+.bigsw button{width:38px;height:38px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(20,18,16,.2);position:relative}
+.bigsw button[aria-pressed=true]::after{content:"";position:absolute;inset:-5px;border-radius:999px;border:1.5px solid var(--ink)}
+.bigsz{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;direction:ltr}
+.bigsz button{min-height:50px;border-radius:10px;font-family:var(--mono);font-size:14px;border:1px solid rgba(20,18,16,.2);background:var(--white);transition:all .15s}
+.bigsz button:hover{border-color:var(--ink)}
+.bigsz button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bigsz button:disabled{background:transparent;border-style:dashed;color:#9A9188;text-decoration:line-through;cursor:not-allowed}
+.stock{font-size:13px;color:var(--ok);display:flex;gap:8px;align-items:center}
+.stock i{width:8px;height:8px;border-radius:999px;background:var(--ok)}
+.addrow{display:flex;gap:10px}
+.addrow .cbtn{flex:1}
+.round{width:54px;height:54px;flex:none;border-radius:999px;border:1.5px solid var(--ink);display:grid;place-items:center}
+.round[aria-pressed=true] svg{fill:var(--accent);stroke:var(--accent-ink)}
+.perks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;font-size:12.5px;color:var(--stone)}
+.perks div{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:12px 6px;border:1px solid var(--line);border-radius:10px}
+.perks svg{width:20px;height:20px;color:var(--ink)}
+.acc{border-top:1px solid var(--line)}
+.acc details{border-bottom:1px solid var(--line)}
+.acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:56px;font-weight:500;font-size:15px}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:"+";font-size:22px;font-weight:300;transition:transform .3s}
+.acc details[open] summary::after{transform:rotate(45deg)}
+.acc p{margin:0 0 18px;font-size:14px;line-height:1.95;color:#3B352F}
+.guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-family:var(--mono);font-size:12px;text-align:center;margin-bottom:18px}
+.guide span:nth-child(-n+4){color:var(--stone)}
+.sticky-buy{display:none}
+
+/* lightbox */
+.lb{position:fixed;inset:0;z-index:90;background:rgba(247,244,239,.97);display:none;align-items:center;justify-content:center}
+.lb.on{display:flex}
+.lb img{max-width:92vw;max-height:92vh;object-fit:contain}
+.lb .x{position:absolute;top:18px;inset-inline-end:18px;background:var(--white)}
+
+/* ---------- drawers / overlays ---------- */
+.scrim{position:fixed;inset:0;z-index:70;background:rgba(20,18,16,.38);opacity:0;visibility:hidden;transition:all .35s}
+.scrim.on{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;bottom:0;inset-inline-end:0;z-index:80;width:min(440px,100vw);background:var(--paper);transform:translateX(-105%);transition:transform .45s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+[dir=rtl] .drawer{transform:translateX(-105%)}
+.drawer.on{transform:none}
+.drawer.menu{inset-inline-end:auto;inset-inline-start:0;transform:translateX(105%)}
+.drawer.menu.on{transform:none}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.dh b{font-weight:600}
+.db{flex:1;overflow-y:auto;padding:8px 22px}
+.df{padding:18px 22px 22px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.ci{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.ci .im{width:84px;aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:var(--sand);flex:none}
+.ci img{width:100%;height:100%;object-fit:cover;object-position:top}
+.ci .tx{flex:1;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ci .tx small{color:var(--stone)}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;width:max-content}
+.qty button{width:34px;height:34px}
+.qty span{min-width:22px;text-align:center;font-family:var(--mono);font-size:13px}
+.rm{font-size:12px;color:var(--stone);text-decoration:underline;align-self:flex-start}
+.sub{display:flex;justify-content:space-between;font-size:15px}
+.sub b{font-family:var(--serif);font-size:24px;direction:ltr}
+.prog{font-size:12.5px;color:var(--stone);line-height:1.7}
+.mm{padding:10px 22px}
+.mm details{border-bottom:1px solid var(--line)}
+.mm summary{list-style:none;cursor:pointer;min-height:58px;display:flex;justify-content:space-between;align-items:center;font-size:18px}
+.mm summary::-webkit-details-marker{display:none}
+.mm summary::after{content:"+";font-weight:300;font-size:24px}
+.mm details[open] summary::after{content:"–"}
+.mm ul{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:12px;font-size:15px;color:#3B352F}
+.mm>a{display:flex;min-height:58px;align-items:center;font-size:18px;border-bottom:1px solid var(--line)}
+.search{position:fixed;inset-inline:0;top:0;z-index:85;background:var(--paper);transform:translateY(-102%);transition:transform .45s cubic-bezier(.2,.8,.2,1);box-shadow:0 30px 60px -30px rgba(20,18,16,.3)}
+.search.on{transform:none}
+.search .wrap{padding-block:26px 40px;display:flex;flex-direction:column;gap:22px}
+.sbox{display:flex;align-items:center;gap:14px;border-bottom:1.5px solid var(--ink);padding-bottom:10px}
+.sbox input{flex:1;border:0;background:transparent;font-size:26px;font-weight:300;min-height:56px;outline:none}
+.sres{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.sres a{display:flex;flex-direction:column;gap:8px;font-size:13px}
+.sres .im{aspect-ratio:3/4;border-radius:6px;overflow:hidden;background:var(--sand)}
+.sres img{width:100%;height:100%;object-fit:cover;object-position:top}
+.trend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--stone)}
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,30px);z-index:95;background:var(--ink);color:var(--paper);padding:14px 22px;border-radius:999px;font-size:14px;opacity:0;transition:all .35s;pointer-events:none;display:flex;gap:10px;align-items:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast svg{color:var(--accent);width:18px;height:18px}
+
+/* ---------- fitting page ---------- */
+.frp{padding-block:40px 80px}
+.frp-hd{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:30px}
+.frp-hd h1{margin:0;font-family:var(--serif);font-weight:400;font-size:clamp(44px,5vw,76px);direction:ltr;text-align:right;line-height:1}
+.frp-hd h1 em{font-style:italic}
+.coin{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:var(--white);border:1px solid var(--line);font-size:14px}
+.coin b{font-family:var(--serif);font-size:22px}
+.frg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:36px;align-items:start}
+.stage{position:relative;aspect-ratio:3/4;border-radius:220px 220px 12px 12px;overflow:hidden;background:var(--sand);position:sticky;top:calc(var(--hdr) + 20px)}
+.stage>img{width:100%;height:100%;object-fit:cover;object-position:top;transition:opacity .6s}
+.stage .st{position:absolute;top:26px;left:50%;transform:translateX(-50%);background:rgba(247,244,239,.9);border-radius:999px;padding:8px 16px;font-size:12.5px;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.stage .st i{width:8px;height:8px;border-radius:999px;background:var(--stone)}
+.stage.done .st i{background:var(--accent)}
+.stage .layers{position:absolute;inset-inline:16px;bottom:16px;display:flex;gap:8px;justify-content:center}
+.stage .layers span{width:58px;height:58px;border-radius:12px;background:rgba(247,244,239,.92);display:grid;place-items:center}
+.stage .layers img{max-width:48px;max-height:48px;width:auto;height:auto;object-fit:contain}
+.stage .sc{position:absolute;inset-inline:0;height:120px;top:-120px;background:linear-gradient(transparent,rgba(255,106,26,.35),transparent);opacity:0}
+.stage.busy .sc{animation:scan2 1.4s ease-in-out infinite;opacity:1}
+@keyframes scan2{from{top:-120px}to{top:100%}}
+.models{display:flex;gap:10px;margin-bottom:18px}
+.models button{width:64px;aspect-ratio:3/4;border-radius:32px 32px 6px 6px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--sand)}
+.models button[aria-pressed=true]{border-color:var(--accent)}
+.models img{width:100%;height:100%;object-fit:cover;object-position:top}
+.pick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pk{position:relative;border-radius:12px;background:var(--white);border:1.5px solid var(--line);padding:12px 10px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:all .2s}
+.pk:hover{border-color:rgba(20,18,16,.4);transform:translateY(-2px)}
+.pk[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,106,26,.18)}
+.pk .im{height:130px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pk .im img{height:120px;width:auto;max-width:100%;object-fit:contain}
+.pk span{font-size:13px;font-weight:500}
+.pk small{font-size:12px;color:var(--stone);font-family:var(--mono)}
+.pk i{position:absolute;top:8px;inset-inline-start:8px;width:24px;height:24px;border-radius:999px;background:var(--accent);color:var(--ink);font-style:normal;font-weight:700;font-size:12px;display:none;place-items:center}
+.pk[aria-pressed=true] i{display:grid}
+.disc{font-size:12px;color:var(--stone);line-height:1.8;margin:14px 0}
+
+/* ---------- account ---------- */
+.acct{min-height:calc(100vh - var(--hdr) - 36px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:var(--t-bg,var(--paper));transition:background .6s}
+.acct .art{position:relative;overflow:hidden;background:var(--t-soft,var(--sand));transition:background .6s}
+.acct .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;transition:opacity .7s}
+.acct .art .cap{position:absolute;inset-inline:40px;bottom:40px;color:var(--paper);z-index:2}
+.acct .art .cap h2{margin:0;font-family:var(--serif);font-weight:400;font-size:64px;line-height:.95;direction:ltr;text-align:right}
+.acct .art .cap h2 em{font-style:italic}
+.acct .art::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(20,18,16,.55))}
+.acct .form{display:flex;flex-direction:column;justify-content:center;padding:56px clamp(24px,6vw,96px);gap:26px;max-width:640px;width:100%;justify-self:center}
+.steps{display:flex;gap:8px}
+.steps i{height:3px;flex:1;border-radius:3px;background:rgba(20,18,16,.12);transition:background .4s}
+.steps i.on{background:var(--t-accent,var(--ink))}
+.acct h1{margin:0;font-weight:300;font-size:38px;line-height:1.3}
+.acct h1 .lat{font-style:italic}
+.acct .lead{margin:0;color:var(--stone);font-size:15px;line-height:1.9}
+.fld{display:flex;flex-direction:column;gap:8px}
+.fld label{font-size:13px;font-weight:500}
+.fld input,.fld select{min-height:54px;border-radius:12px;border:1.5px solid rgba(20,18,16,.18);background:var(--white);padding:0 16px;font-size:16px;transition:border-color .2s}
+.fld input:focus,.fld select:focus{border-color:var(--t-accent,var(--ink));outline:none}
+.otp{display:flex;gap:10px;direction:ltr;justify-content:flex-end}
+.otp input{width:56px;height:64px;border-radius:12px;border:1.5px solid rgba(20,18,16,.18);text-align:center;font-family:var(--mono);font-size:24px;background:var(--white)}
+.otp input:focus{border-color:var(--t-accent,var(--ink));outline:none}
+.gsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gsel button{min-height:92px;border-radius:14px;border:1.5px solid rgba(20,18,16,.16);background:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:14px;transition:all .25s}
+.gsel button i{width:28px;height:28px;border-radius:999px;display:block}
+.gsel button[aria-pressed=true]{border-color:var(--t-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--t-accent) 22%,transparent)}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tags .chip[aria-pressed=true]{background:var(--t-accent,var(--ink));border-color:var(--t-accent,var(--ink))}
+.acct .cbtn,.prof .cbtn{--btn:var(--t-accent,var(--ink))}
+.hint{font-size:12.5px;color:var(--stone);line-height:1.8}
+.lnk{font-size:13px;text-decoration:underline;text-underline-offset:4px;color:var(--t-accent,var(--ink))}
+.view{display:none;flex-direction:column;gap:22px}
+.view.on{display:flex;animation:pageIn .45s ease}
+
+/* themes */
+[data-theme=women]{--t-bg:#F8EEEA;--t-soft:#EBD3CC;--t-accent:#A8434F;--t-deep:#4E1C25;--t-name:"Rosé"}
+[data-theme=men]{--t-bg:#EDF1F5;--t-soft:#CBD6E2;--t-accent:#2D4A6E;--t-deep:#132238}
+[data-theme=neutral]{--t-bg:#F3EEE4;--t-soft:#E0D5C2;--t-accent:#6E5E3A;--t-deep:#2A2519}
+
+/* ---------- profile ---------- */
+.prof{background:var(--t-bg);transition:background .6s;padding-bottom:40px}
+.pcover{position:relative;background:var(--t-deep);color:var(--paper);overflow:hidden;transition:background .6s}
+.pcover .wrap{padding-block:56px 70px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+.pcover::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 30%,color-mix(in srgb,var(--t-accent) 70%,transparent),transparent 55%),radial-gradient(circle at 10% 110%,color-mix(in srgb,var(--t-soft) 35%,transparent),transparent 45%);transition:all .6s}
+.pcover>*{position:relative}
+.ava{width:112px;height:112px;border-radius:999px;display:grid;place-items:center;position:relative;flex:none}
+.ava svg{position:absolute;inset:-6px;width:124px;height:124px}
+.ava b{font-family:var(--serif);font-size:44px;font-weight:500}
+.pcover h1{margin:0;font-weight:300;font-size:40px}
+.pcover h1 b{font-weight:600}
+.pcover .sub2{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px;opacity:.85}
+.pcover .sub2 span{border:1px solid rgba(247,244,239,.3);border-radius:999px;padding:5px 12px}
+.pcover .themes{margin-inline-start:auto;display:flex;gap:8px;align-items:center;font-size:12.5px}
+.pcover .themes button{width:34px;height:34px;border-radius:999px;border:2px solid rgba(247,244,239,.4)}
+.pcover .themes button[aria-pressed=true]{border-color:var(--paper);box-shadow:0 0 0 3px rgba(247,244,239,.25)}
+.lace-p{height:12px;background:var(--lace-p) repeat-x top/26px 12px;transform:scaleY(-1);margin-top:-12px;position:relative}
+.playout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:40px;padding-top:36px}
+.pnav{display:flex;flex-direction:column;gap:4px;position:sticky;top:calc(var(--hdr) + 20px);align-self:start}
+.pnav button{display:flex;gap:12px;align-items:center;min-height:48px;padding:0 16px;border-radius:12px;font-size:14.5px;text-align:start;transition:all .2s}
+.pnav button:hover{background:rgba(20,18,16,.05)}
+.pnav button[aria-current=true]{background:var(--white);color:var(--t-accent);font-weight:600;box-shadow:0 10px 30px -20px rgba(20,18,16,.4)}
+.pnav button svg{width:20px;height:20px}
+.pmain{display:flex;flex-direction:column;gap:26px;min-width:0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat{background:var(--white);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:6px}
+.stat small{font-size:12.5px;color:var(--stone)}
+.stat b{font-family:var(--serif);font-size:38px;font-weight:500;color:var(--t-accent);line-height:1}
+.card{background:var(--white);border-radius:18px;padding:26px}
+.card h3{margin:0 0 18px;font-weight:500;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card h3 a{font-size:13px;color:var(--t-accent);font-weight:500}
+.order{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.order .ims{display:flex}
+.order .ims span{width:60px;aspect-ratio:3/4;border-radius:8px;overflow:hidden;background:var(--sand);outline:3px solid var(--white)}
+.order .ims span+span{margin-inline-start:-14px}
+.order .ims img{width:100%;height:100%;object-fit:cover;object-position:top}
+.tl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:24px;position:relative}
+.tl::before{content:"";position:absolute;top:11px;inset-inline:10%;height:2px;background:rgba(20,18,16,.1)}
+.tl .bar{position:absolute;top:11px;inset-inline-start:10%;width:calc(80% * .5);height:2px;background:var(--t-accent)}
+.tl div{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12.5px;text-align:center;position:relative;color:var(--stone)}
+.tl div i{width:24px;height:24px;border-radius:999px;background:var(--white);border:2px solid rgba(20,18,16,.15);display:grid;place-items:center}
+.tl div.done{color:var(--ink)}
+.tl div.done i{background:var(--t-accent);border-color:var(--t-accent)}
+.tl div.done i::after{content:"";width:8px;height:5px;border-inline-start:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.tl div.now i{border-color:var(--t-accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--t-accent) 18%,transparent)}
+.wd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.wd figure{margin:0;display:flex;flex-direction:column;gap:8px}
+.wd .im{aspect-ratio:3/4;border-radius:70px 70px 8px 8px;overflow:hidden;background:var(--sand)}
+.wd img{width:100%;height:100%;object-fit:cover;object-position:top}
+.wd figcaption{font-size:13px}
+.wd .new{border:1.5px dashed rgba(20,18,16,.25);display:grid;place-items:center;color:var(--stone);font-size:13px;text-align:center;gap:6px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:12px 18px;font-size:14px}
+.kv span{color:var(--stone)}
+.mysz{display:flex;gap:8px;flex-wrap:wrap}
+.mysz span{padding:8px 14px;border-radius:999px;background:color-mix(in srgb,var(--t-accent) 12%,#fff);color:var(--t-deep);font-size:13px}
+
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+  .wrap{padding-inline:28px}
+  .navs{display:none}
+  .burger{display:grid}
+  .hdr .wrap{grid-template-columns:auto 1fr auto}
+  .logo{text-align:center}
+  .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .fit3d .wrap{grid-template-columns:1fr}
+  .pdp{grid-template-columns:1fr}
+  .buy{position:static}
+  .ft-top{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  :root{--hdr:60px}
+  .wrap{padding-inline:16px}
+  .ann .mk{display:none}
+  .logo{font-size:21px;letter-spacing:.1em}
+  .tools .hide-s{display:none}
+  .hero{height:auto;min-height:0;aspect-ratio:auto}
+  .hero{height:min(92svh,780px);min-height:640px}
+  .slide picture img{object-position:50% 0%}
+  .slide::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 38%,rgba(247,244,239,.92) 72%)}
+  .slide .copy,.slide .copy.r,.slide .copy.l{inset-inline:20px;width:auto;top:auto;bottom:96px;gap:14px}
+  .copy h1,.copy h2{font-size:56px}
+  .copy p{display:none}
+  .float{display:none}
+  .hero-ui{bottom:22px}
+  .bars button span{display:none}
+  .arrows{display:none}
+  .sec{padding-block:72px 24px}
+  .cats{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:30px 12px}
+  .qa{display:none}
+  .pc .meta{flex-direction:column;gap:2px}
+  .pc .meta a{font-size:14px}
+  .fit3d .wrap{padding-block:64px;gap:24px}
+  .stl{height:auto;max-height:none}
+  .stl>img{position:relative;height:auto;aspect-ratio:3/4;object-position:70% 0}
+  .stl .panel{position:relative;inset:auto;transform:none;width:auto;margin:-60px 16px 0;padding:22px}
+  .hot{display:none}
+  .ring-wrap{height:470px}
+  .ring{width:220px;height:293px;margin-left:-110px}
+  .kb{height:auto;max-height:none;display:flex;flex-direction:column}
+  .kb>img{position:relative;height:auto;aspect-ratio:4/5;object-position:27% 0}
+  .kb .copy{position:relative;inset:auto;width:auto;padding:28px 16px 0}
+  .kb .stick{display:none}
+  .svc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .svc div:nth-child(3){border-inline-start:0}
+  .svc div{border-top:1px solid var(--line)}
+  .cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ft{margin-top:70px}
+  .ft .wrap{padding-bottom:100px}
+  .gal{grid-template-columns:1fr}
+  .thumbs{display:none}
+  .shots{flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;gap:8px;margin-inline:-16px;padding-inline:16px}
+  .shot{flex:0 0 86%;scroll-snap-align:center}
+  .sticky-buy{display:flex;position:fixed;inset-inline:0;bottom:0;z-index:50;background:var(--paper);padding:12px 16px calc(12px + env(safe-area-inset-bottom));gap:12px;align-items:center;box-shadow:0 -10px 30px rgba(20,18,16,.12)}
+  .sticky-buy .cbtn{flex:1}
+  .sres{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .frg{grid-template-columns:1fr}
+  .stage{position:relative;top:0;max-width:420px;margin:0 auto;width:100%}
+  .pick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .acct{grid-template-columns:1fr}
+  .acct .art{height:300px}
+  .acct .art .cap{inset-inline:20px;bottom:20px}
+  .acct .art .cap h2{font-size:44px}
+  .otp input{width:44px;height:56px}
+  .playout{grid-template-columns:1fr}
+  .pnav{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .pnav button{white-space:nowrap}
+  .pcover .themes{margin-inline-start:0}
+  .two{grid-template-columns:1fr}
+  .wd{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tl div{font-size:11px}
+  .viewer{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* preview switcher */
+.viewer{position:fixed;bottom:18px;left:18px;z-index:60;display:flex;gap:2px;background:rgba(20,18,16,.92);padding:5px;border-radius:999px;box-shadow:0 14px 30px rgba(0,0,0,.25)}
+.viewer a{color:var(--paper);font-size:12.5px;padding:8px 13px;border-radius:999px;white-space:nowrap}
+.viewer a.on{background:var(--accent);color:var(--ink)}
+</style>
+<style>
+:root{--lace-p:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='12' viewBox='0 0 26 12'%3E%3Cpath fill-rule='evenodd' fill='%23000' fill-opacity='0' d='M0 0h26v2.5a13 9.5 0 0 1-26 0z'/%3E%3C/svg%3E")}
+</style>
+<style>
+/* ===== v3 additions ===== */
+:root{--k1:#F8D7E3;--k2:#CFEEDF;--k3:#CFE4F8;--k4:#FFF0B3;--k5:#E4DAF7;--k6:#FFDCCB;--kid:"Fredoka", Vazirmatn, sans-serif}
+/* logo */
+.logo{display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.logo svg{height:30px;width:auto;display:block;overflow:visible}
+.logo .hk{transform-box:fill-box;transform-origin:50% 100%}
+.logo:hover .hk,.word:hover .hk{animation:swing 1.4s ease-in-out}
+@keyframes swing{15%{transform:rotate(16deg)}35%{transform:rotate(-12deg)}55%{transform:rotate(7deg)}75%{transform:rotate(-3deg)}100%{transform:none}}
+.word{display:block;color:var(--paper)}
+.word svg{width:min(100%,1100px);height:auto;display:block;overflow:visible;margin:24px auto 0}
+.drawer .logo svg{height:24px}
+/* loader */
+#loader{position:fixed;inset:0;z-index:300;background:var(--paper);display:grid;place-items:center;transition:opacity .7s .1s,visibility .7s .1s}
+#loader.out{opacity:0;visibility:hidden}
+#loader .lg{width:min(64vw,440px);color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:22px}
+#loader svg{width:100%;height:auto;clip-path:inset(0 100% 0 0);animation:lreveal 1.1s .15s cubic-bezier(.7,0,.2,1) forwards;overflow:visible}
+#loader .hk{transform-box:fill-box;transform-origin:50% 100%;animation:swing 1.6s 1.1s ease-in-out}
+#loader i{display:block;width:120px;height:2px;background:rgba(20,18,16,.12);position:relative;overflow:hidden}
+#loader i::after{content:"";position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:right;animation:lbar 1.3s .1s ease forwards}
+@keyframes lreveal{to{clip-path:inset(0 0 0 0)}}
+@keyframes lbar{to{transform:scaleX(1)}}
+/* reveal */
+[data-rv]{opacity:0;transform:translateY(46px);transition:opacity 1.1s cubic-bezier(.2,.8,.2,1),transform 1.1s cubic-bezier(.2,.8,.2,1)}
+[data-rv].in{opacity:1;transform:none}
+/* split title */
+.split .ch{display:inline-block;opacity:0;transform:translateY(.5em) rotateX(-70deg);transform-origin:50% 100%;transition:opacity .7s,transform .9s cubic-bezier(.2,.8,.2,1)}
+.slide.on .split .ch{opacity:1;transform:none}
+/* glare */
+.pc .im::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.38),transparent 42%);opacity:0;transition:opacity .35s;mix-blend-mode:soft-light}
+.pc:hover .im::after{opacity:1}
+.pc .im img.cutimg{object-fit:contain;padding:14% 12% 10%;filter:drop-shadow(0 18px 16px rgba(80,60,60,.18));transition:transform .5s}
+.pc:hover .im img.cutimg{transform:translateY(-6px) scale(1.03)}
+/* crossing bands */
+.bands{position:relative;height:190px;overflow:hidden;margin-top:-1px}
+.band{position:absolute;left:-5%;right:-5%;top:50%;padding:14px 0;overflow:hidden;white-space:nowrap;direction:ltr}
+.band.a{background:var(--ink);color:var(--paper);transform:translateY(-50%) rotate(-3deg)}
+.band.b{background:var(--accent);color:var(--ink);transform:translateY(-50%) rotate(2.4deg)}
+.band .tk{display:inline-flex;gap:34px;align-items:center;font-family:var(--serif);font-size:34px;font-style:italic;direction:ltr;animation:mq2 30s linear infinite;width:max-content}
+.band.b .tk{animation-direction:reverse;font-style:normal;font-family:var(--mono);font-size:15px;letter-spacing:.3em}
+.band .tk svg{width:18px;height:18px;fill:currentColor}
+@keyframes mq2{to{transform:translateX(-50%)}}
+/* four worlds prism */
+.w4{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+.w4 .txt{display:flex;flex-direction:column;gap:22px}
+.w4 h2{margin:0;font-weight:300;font-size:clamp(34px,3.6vw,54px);line-height:1.2}
+.w4 h2 .lat{font-style:italic;font-weight:400}
+.w4 h2 .lat b{color:var(--accent-ink);font-weight:400}
+.w4 p{margin:0;color:#3B352F;line-height:1.95;font-size:15.5px;max-width:460px}
+.w4 .tabs4{display:flex;gap:8px;flex-wrap:wrap}
+.prism-stage{position:relative;height:620px;perspective:1600px;perspective-origin:50% 30%;display:grid;place-items:center;touch-action:pan-y}
+.prism{position:relative;width:330px;height:440px;transform-style:preserve-3d;transition:transform 1.2s cubic-bezier(.2,.8,.2,1);cursor:grab}
+.prism.drag{transition:none;cursor:grabbing}
+.face{position:absolute;inset:0;overflow:hidden;border-radius:4px;backface-visibility:hidden;background:var(--sand);display:block;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.face img{width:100%;height:100%;object-fit:cover;object-position:top;pointer-events:none}
+.face .fl{position:absolute;inset-inline:0;bottom:0;padding:60px 22px 20px;background:linear-gradient(transparent,rgba(20,18,16,.6));color:var(--paper);display:flex;justify-content:space-between;align-items:end}
+.face .fl b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:30px;direction:ltr}
+.face .fl span{font-size:15px}
+.face .no{position:absolute;top:16px;inset-inline-start:16px;font-family:var(--serif);font-size:56px;line-height:1;color:var(--paper);opacity:.9;direction:ltr}
+.face.kid{background:linear-gradient(160deg,var(--k1),var(--k4) 55%,var(--k2))}
+.face.kid img{position:absolute;width:62%;height:auto;object-fit:contain}
+.face.acc{background:linear-gradient(160deg,#F1E9DD,#E2D3BF)}
+.cap-t,.cap-b{position:absolute;left:0;top:55px;width:330px;height:330px;background:var(--ink);backface-visibility:hidden;display:grid;place-items:center}
+.cap-t svg{width:46%;height:auto}
+.prism-shadow{position:absolute;bottom:40px;left:50%;width:360px;height:60px;margin-left:-180px;background:radial-gradient(ellipse,rgba(20,18,16,.28),transparent 70%);filter:blur(6px)}
+/* kids pastel world */
+.kids-world{position:relative;overflow:hidden;background:linear-gradient(160deg,#FDE7EE 0%,#FFF6D6 45%,#DDF3E8 100%);margin-top:110px}
+.kids-world .wrap{position:relative;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:30px;align-items:center;padding-block:100px 90px;z-index:1}
+.kids-world h2{margin:0;font-family:var(--kid);font-weight:600;font-size:clamp(52px,6vw,96px);line-height:.95;direction:ltr;text-align:right;color:#5B4A6B}
+.kids-world h2 span{color:#F28BA8}
+.kids-world .fa{font-family:var(--kid);font-size:22px;font-weight:500;color:#5B4A6B}
+.kids-world p{margin:0;color:#6B5E73;font-size:15.5px;line-height:1.95}
+.kids-world .txt{display:flex;flex-direction:column;gap:20px}
+.cbtn.pastel{--btn:#F6A9BE;color:#3E2F48}
+.cbtn.pastel::after{border-color:rgba(62,47,72,.35)}
+.cbtn.mint{--btn:#9FD9BE;color:#24443A}
+.cbtn.mint::after{border-color:rgba(36,68,58,.35)}
+.bub{position:absolute;border-radius:999px;opacity:.75;animation:bob 7s ease-in-out infinite;pointer-events:none}
+@keyframes bob{50%{transform:translateY(-26px) rotate(8deg)}}
+.cloud{position:absolute;pointer-events:none;opacity:.9;animation:drift 40s linear infinite}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-140vw)}}
+.star{position:absolute;pointer-events:none;animation:twinkle 3s ease-in-out infinite}
+@keyframes twinkle{50%{transform:scale(.6) rotate(20deg);opacity:.5}}
+.tt{position:relative;height:540px;perspective:1300px;perspective-origin:50% 20%}
+.tt-ring{position:absolute;left:50%;top:40px;width:0;height:0;transform-style:preserve-3d}
+.tt-item{position:absolute;left:-90px;top:0;width:180px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transform-style:preserve-3d}
+.tt-item img{height:250px;width:auto;max-width:200px;object-fit:contain;filter:drop-shadow(0 18px 14px rgba(90,60,90,.18));position:relative;z-index:2;transition:transform .4s}
+.tt-item:hover img{transform:translateY(-10px)}
+.pod{width:170px;height:44px;margin-top:-22px;border-radius:50%;background:var(--c);position:relative;box-shadow:0 12px 0 -1px color-mix(in srgb,var(--c) 78%,#5B4A6B),0 34px 26px -12px rgba(91,74,107,.3)}
+.tt-item .ttl{margin-top:24px;background:rgba(255,255,255,.85);border-radius:999px;padding:6px 14px;font-family:var(--kid);font-size:14px;color:#5B4A6B;white-space:nowrap;display:flex;gap:8px}
+.tt-item .ttl b{font-family:var(--mono);font-weight:500;font-size:12.5px}
+.tt-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-family:var(--kid);font-size:14px;color:#8C7A97}
+/* kidsmode */
+body.kidsmode{--paper:#FFF9F5}
+body.kidsmode .shop-hd h1{font-family:var(--kid);font-weight:600;color:#5B4A6B}
+body.kidsmode .shop-hd h1 .lat{font-family:var(--kid);color:#F28BA8;font-style:normal}
+body.kidsmode .chip.on,body.kidsmode .chip[aria-pressed=true]{background:#F6A9BE;border-color:#F6A9BE;color:#3E2F48}
+body.kidsmode .chip{border-color:#EBC9D6}
+body.kidsmode .cbtn:not(.ghost){--btn:#F6A9BE;color:#3E2F48}
+body.kidsmode .cbtn:not(.ghost)::after{border-color:rgba(62,47,72,.35)}
+body.kidsmode .pc .im{border-radius:22px}
+body.kidsmode .pc .flag{background:#FFF0B3}
+body.kidsmode .shot{border-radius:26px}
+body.kidsmode .shot.cut{background:linear-gradient(160deg,var(--k1),var(--k4) 60%,var(--k2))}
+body.kidsmode .buy h1{font-family:var(--kid);font-weight:600;color:#5B4A6B}
+body.kidsmode .bigsz button[aria-pressed=true]{background:#5B4A6B;border-color:#5B4A6B}
+.kid-hd{position:relative;border-radius:32px;overflow:hidden;background:linear-gradient(120deg,#FDE7EE,#FFF6D6 50%,#DDF3E8);padding:34px 40px;margin-top:28px;display:none}
+body.kidsmode .kid-hd{display:block}
+body.kidsmode .shop-hd{display:none}
+.kid-hd h1{margin:0;font-family:var(--kid);font-weight:600;font-size:clamp(40px,5vw,72px);color:#5B4A6B;line-height:1}
+.kid-hd h1 span{color:#F28BA8}
+.kid-hd p{margin:10px 0 0;color:#6B5E73;font-size:15px}
+.kid-hd img{position:absolute;bottom:-10px;height:150px;filter:drop-shadow(0 14px 12px rgba(90,60,90,.2))}
+/* try-on */
+.mode{display:inline-flex;background:var(--white);border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+.mode button{min-height:40px;padding:0 16px;border-radius:999px;font-size:13.5px;display:inline-flex;gap:6px;align-items:center}
+.mode button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.frg3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:start}
+.tleft{position:sticky;top:calc(var(--hdr) + 16px);display:flex;flex-direction:column;gap:14px}
+.avs{display:flex;gap:8px;justify-content:center}
+.tstage{position:relative;height:640px;border-radius:280px 280px 24px 24px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#FBF7F1,#E9DFD1 70%);perspective:1100px;perspective-origin:50% 40%;touch-action:pan-y;cursor:grab;transition:background .6s}
+.tstage.kid{background:radial-gradient(ellipse at 50% 30%,#FFFDF7,#F7DCE6 55%,#D9EFE5)}
+.tstage.drag{cursor:grabbing}
+.turn{position:absolute;left:50%;top:44px;width:220px;height:560px;margin-left:-110px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.tstage.drag .turn{transition:none}
+.turn .body{position:absolute;inset:0;transform-origin:50% 100%}
+.turn .body svg{width:100%;height:100%;overflow:visible}
+.turn .lay{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 100%}
+.turn .lay img{position:absolute;filter:drop-shadow(0 10px 10px rgba(60,40,20,.22));transform-origin:50% 0;animation:dressIn .8s cubic-bezier(.2,.9,.2,1.15) both}
+@keyframes dressIn{from{opacity:0;transform:translate3d(0,-90px,60px) rotateY(80deg) scale(.6)}to{opacity:1}}
+.turn .lay img.out{animation:dressOut .35s ease forwards}
+@keyframes dressOut{to{opacity:0;transform:translate3d(0,40px,30px) scale(.8)}}
+.podium{position:absolute;left:50%;bottom:18px;width:300px;height:64px;margin-left:-150px;border-radius:50%;background:radial-gradient(ellipse at 50% 35%,#fff,#E3D6C5 70%);box-shadow:0 18px 0 -4px #D2C2AD,0 40px 40px -16px rgba(60,40,20,.35)}
+.tstage.kid .podium{background:radial-gradient(ellipse at 50% 35%,#fff,#F6C9D8 70%);box-shadow:0 18px 0 -4px #EBB0C4,0 40px 40px -16px rgba(120,60,90,.3)}
+.drag-hint{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--stone);background:rgba(255,255,255,.75);border-radius:999px;padding:6px 12px;white-space:nowrap;display:flex;gap:6px;align-items:center;z-index:3}
+.ai-out{position:absolute;inset:0;z-index:5;opacity:0;visibility:hidden;transition:all .7s}
+.ai-out.on{opacity:1;visibility:visible}
+.ai-out img{width:100%;height:100%;object-fit:cover;object-position:top}
+.ai-out .tag{position:absolute;top:22px;left:50%;transform:translateX(-50%);background:rgba(247,244,239,.92);border-radius:999px;padding:7px 14px;font-size:12px;white-space:nowrap}
+.ai-out .x{position:absolute;bottom:18px;left:50%;transform:translateX(-50%)}
+.tstage .scan2{position:absolute;inset-inline:0;height:140px;top:-140px;background:linear-gradient(transparent,rgba(255,106,26,.32),transparent);z-index:4;opacity:0}
+.tstage.busy .scan2{opacity:1;animation:scan2 1.3s ease-in-out infinite}
+.empty-hint{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);font-family:var(--hand);font-size:24px;color:var(--stone);white-space:nowrap;z-index:2;transition:opacity .4s}
+.tools2{display:flex;gap:8px;justify-content:center}
+.tpanel{display:flex;flex-direction:column;gap:16px}
+.slotf{display:flex;gap:6px;flex-wrap:wrap}
+.slotf .chip{min-height:36px;font-size:13px}
+.tgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ti{position:relative;border-radius:14px;background:var(--white);border:1.5px solid var(--line);padding:10px 8px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .25s,border-color .25s,box-shadow .25s;perspective:600px}
+.ti:hover{transform:translateY(-3px);border-color:rgba(20,18,16,.35);box-shadow:0 16px 30px -18px rgba(20,18,16,.4)}
+.ti[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,106,26,.16)}
+.ti .im{height:104px;width:100%;display:flex;align-items:center;justify-content:center}
+.ti .im img{height:96px;width:auto;max-width:100%;object-fit:contain;transition:transform .4s}
+.ti:hover .im img{transform:rotateY(14deg) scale(1.05)}
+.ti span{font-size:12px;font-weight:500;text-align:center;line-height:1.4}
+.ti small{font-size:11px;color:var(--stone);font-family:var(--mono)}
+.ti em{position:absolute;top:6px;inset-inline-start:6px;font-style:normal;font-size:10.5px;background:var(--sand);border-radius:999px;padding:2px 7px;color:#5A5148}
+.ti[aria-pressed=true] em{background:var(--accent);color:var(--ink)}
+.sel3{background:var(--white);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.sel3 h3{margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between}
+.srow{display:flex;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.srow .im{width:44px;height:44px;border-radius:10px;background:var(--sand);display:grid;place-items:center;flex:none}
+.srow .im img{max-width:38px;max-height:38px}
+.srow select{min-height:36px;border-radius:999px;border:1px solid var(--line);padding:0 10px;background:transparent;font-size:12.5px}
+.srow .x{width:32px;height:32px;border-radius:999px;display:grid;place-items:center;color:var(--stone)}
+.stot{display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--ink);padding-top:12px}
+.stot b{font-family:var(--serif);font-size:26px;direction:ltr}
+.acts3{display:flex;gap:8px;flex-wrap:wrap}
+.howto{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.howto div{background:rgba(255,255,255,.6);border:1px dashed rgba(20,18,16,.18);border-radius:14px;padding:12px;font-size:12.5px;line-height:1.7;color:#4A433C}
+.howto b{display:block;font-family:var(--serif);font-size:22px;color:var(--accent-ink)}
+@media (max-width:1100px){.w4{grid-template-columns:1fr}.kids-world .wrap{grid-template-columns:1fr}.frg3{grid-template-columns:1fr}.tleft{position:static}}
+@media (max-width:760px){
+  .bands{height:130px}.band .tk{font-size:24px}
+  .prism-stage{height:470px}.prism{width:240px;height:320px}.cap-t,.cap-b{width:240px;height:240px;top:40px}
+  .tt{height:440px}.tt-item img{height:190px}.pod{width:130px}
+  .kids-world .wrap{padding-block:64px 50px}
+  .tstage{height:560px}.turn{transform:scale(.88);top:20px}
+  .tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .howto{grid-template-columns:1fr}
+  .kid-hd{padding:26px 22px}.kid-hd img{height:100px}
+}
+
+</style>
+</head>
+<body>
+<div id="loader" aria-hidden="true"><div class="lg">{{LOGO}}<i></i></div></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="crayon" x="-5%" y="-20%" width="110%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="11" result="g"/>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2.2" result="gm"/>
+      <feComposite in="d" in2="gm" operator="in"/>
+    </filter>
+    <filter id="crayon-line"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>
+  </defs>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v2M16 6a4 4 0 1 1-8 0 4 4 0 0 1 8 0"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 7h14l1 14H4L5 7Zm3 0V6a4 4 0 0 1 8 0v1"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7M7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/></symbol>
+  <symbol id="i-return" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6l-7-3ZM9 12l2 2 4-4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><path d="M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M10 7v6M7 10h6"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol>
+  <symbol id="i-hanger" viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 1 2-2c0 1-2 1.5-2 3l9 6.5a1 1 0 0 1-.6 1.8H3.6a1 1 0 0 1-.6-1.8L12 9"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19 12l2-1-1-3-2 .3-1.4-1.4L17 5l-3-1-1 2h-2L10 4 7 5l.3 2L6 8.3 4 8l-1 3 2 1v0l-2 1 1 3 2-.3L7.4 17 7 19l3 1 1-2h2l1 2 3-1-.3-2 1.4-1.3 2 .3 1-3z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11ZM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z"/></symbol>
+</svg>
+
+<!-- announcement -->
+<div class="ann">
+  <div class="wrap">
+    <div class="mk" role="group" aria-label="بازار خرید"><button type="button" data-mkt="IR" aria-pressed="true">IR</button><button type="button" data-mkt="TR" aria-pressed="false">TR</button><button type="button" data-mkt="CA" aria-pressed="false">CA</button></div>
+    <div class="rot" id="annRot"><span class="on">کالکشن پاییز و زمستان ۱۴۰۵ رسید — <a href="#shop-w" style="text-decoration:underline;text-underline-offset:4px">ببینید</a></span><span>ارسال به ایران، ترکیه و کانادا با رهگیری مرحله‌به‌مرحله</span><span>اتاق پروی هوشمند: قبل از خرید، ست را روی مدل ببینید</span></div>
+    <div class="mk"><button type="button" aria-pressed="true">فا</button><button type="button" aria-pressed="false">TR</button><button type="button" aria-pressed="false">EN</button></div>
+  </div>
+</div>
+
+<!-- header -->
+<header class="hdr lace-b" id="hdr">
+  <div class="wrap">
+    <nav class="navs" aria-label="منوی اصلی" id="navs"></nav>
+    <button type="button" class="ib burger" aria-label="منو" data-open="menu"><svg class="i"><use href="#i-menu"/></svg></button>
+    <a href="#home" class="logo" aria-label="MODA4، صفحهٔ اصلی">{{LOGO}}</a>
+    <div class="tools">
+      <button type="button" class="ib" aria-label="جستجو" data-open="search"><svg class="i"><use href="#i-search"/></svg></button>
+      <a href="#account" class="ib hide-s" aria-label="حساب کاربری"><svg class="i"><use href="#i-user"/></svg></a>
+      <a href="#profile" class="ib hide-s" aria-label="علاقه‌مندی‌ها"><svg class="i"><use href="#i-heart"/></svg></a>
+      <button type="button" class="ib" aria-label="سبد خرید" data-open="cart"><svg class="i"><use href="#i-bag"/></svg><span class="n" id="bagN">۲</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ================= HOME ================= -->
+<main id="pg-home" class="page">
+  <section class="hero" id="hero" aria-roledescription="carousel" aria-label="کمپین‌های فصل">
+    <div class="slide on" style="--x:30%">
+      <picture><source media="(max-width:760px)" srcset="{{IMG:look-women-coat}}"><img src="{{IMG:ban/look-women-coat-wide}}" alt="مدل با بارانی رها و کیف دستی هانا در فضای سنگی روشن"></picture>
+      <div class="float" style="inset-inline-start:52%;top:46%;width:130px" data-depth="22"><img src="{{IMG:cut/women-knit}}" alt=""><span class="note" style="bottom:-44px;left:0">Narvan knit · $64<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
+      <div class="copy r">
+        <div class="eyb">Autumn / Winter 26 <span>—</span> Look 01</div>
+        <h1>City <em>Layers</em></h1>
+        <div class="fa"><b>لایه‌های شهری</b> — بارانی، بافت و رنگ‌های خاکی</div>
+        <p>ست کامل را ببین، هر قطعه را با سایز خودش انتخاب کن یا اول روی مدل امتحانش کن.</p>
+        <div class="acts"><a href="#shop-w" class="cbtn">خرید کالکشن زنانه</a><a href="#fitting" class="cbtn ghost"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>امتحان روی مدل</a></div>
+      </div>
+    </div>
+    <div class="slide" style="--x:70%">
+      <picture><source media="(max-width:760px)" srcset="{{IMG:look-men}}"><img src="{{IMG:ban/look-men-wide}}" alt="مدل مرد با اورشرت سرمه‌ای و چینوی شنی"></picture>
+      <div class="float" style="inset-inline-end:53%;top:40%;width:150px" data-depth="26"><img src="{{IMG:cut/men-knit}}" alt=""><span class="note" style="bottom:-46px;left:0">Arad sweater · $72<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
+      <div class="copy l">
+        <div class="eyb">Menswear <span>—</span> Look 02</div>
+        <h2>Easy <em>Days</em></h2>
+        <div class="fa"><b>روزهای بی‌تکلف</b> — اورشرت، تی‌شرت نخی، چینو</div>
+        <p>سه قطعه که با هم یا جدا کار می‌کنند؛ برای هر روز هفته.</p>
+        <div class="acts"><a href="#look" class="cbtn">خرید کل ست</a><a href="#shop-m" class="cbtn ghost">همهٔ مردانه</a></div>
+      </div>
+    </div>
+    <div class="slide" style="--x:27%">
+      <picture><source media="(max-width:760px)" srcset="{{IMG:look-kids}}"><img src="{{IMG:ban/look-kids-wide}}" alt="پسربچه با ژاکت بافت سبز و شلوار کرم"></picture>
+      <div class="float" style="inset-inline-start:52%;top:44%;width:140px" data-depth="30"><img src="{{IMG:cut/kids-hoodie}}" alt=""><span class="note" style="bottom:-44px;left:0">Rayan hoodie · $32<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
+      <div class="copy r">
+        <div class="eyb">Kids <span>—</span> Look 03</div>
+        <h2>Ready to <em>Play</em></h2>
+        <div class="fa"><b>برای روزهای بازی</b> — نرم، رنگی، بادوام</div>
+        <p>بافت‌های نرم و پارچه‌های نخی برای بدوبدوهای پاییزی.</p>
+        <div class="acts"><a href="#shop-k" class="cbtn">خرید بچگانه</a></div>
+      </div>
+    </div>
+    <div class="slide" style="--x:72%">
+      <picture><source media="(max-width:760px)" srcset="{{IMG:look-women-knit}}"><img src="{{IMG:ban/look-women-knit-wide}}" alt="مدل با بافت کرم، شلوار پیلی‌دار و کیف کنیاکی"></picture>
+      <div class="copy l">
+        <div class="eyb">AI Fitting Room <span>—</span> New</div>
+        <h2>Try before <em>you buy</em></h2>
+        <div class="fa"><b>اتاق پروی هوشمند</b> — ترکیبت را روی مدل ببین</div>
+        <p>تا چهار قطعه انتخاب کن؛ هوش مصنوعی آن را روی مدل فروشگاه می‌پوشاند. خریدهای قبلی‌ات هم در «کمد من» هستند.</p>
+        <div class="acts"><a href="#fitting" class="cbtn accent"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>ورود به اتاق پرو</a></div>
+      </div>
+    </div>
+    <div class="hero-ui">
+      <div class="wrap">
+        <div class="bars" id="bars"><button type="button" class="on"><i></i><span>City Layers</span></button><button type="button"><i></i><span>Easy Days</span></button><button type="button"><i></i><span>Ready to Play</span></button><button type="button"><i></i><span>Try before you buy</span></button></div>
+        <div class="arrows"><button type="button" class="ib" aria-label="کمپین قبلی" id="hPrev"><svg class="i"><use href="#i-right"/></svg></button><button type="button" class="ib" aria-label="کمپین بعدی" id="hNext"><svg class="i"><use href="#i-left"/></svg></button></div>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="bands" aria-hidden="true">
+    <div class="band b"><div class="tk" id="tkB"></div></div>
+    <div class="band a"><div class="tk" id="tkA"></div></div>
+  </div>
+
+  <section class="wrap sec" data-rv>
+    <div class="w4">
+      <div class="txt">
+        <span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;text-align:right">FOUR WORLDS — ONE WARDROBE</span>
+        <h2>چهار جهان، یک کمد <span class="lat">Moda<b>4</b></span></h2>
+        <p>«۴» در MODA4 یعنی چهار جهان: زنانه، مردانه، بچگانه و اکسسوری — همه با یک سلیقه و یک کیفیت. منشور را بچرخان یا یکی از جهان‌ها را انتخاب کن.</p>
+        <div class="tabs4" id="tabs4"><button type="button" class="chip on" data-f="0">زنانه</button><button type="button" class="chip" data-f="1">مردانه</button><button type="button" class="chip" data-f="2">بچگانه</button><button type="button" class="chip" data-f="3">اکسسوری</button></div>
+        <div><a href="#shop-w" class="cbtn" id="w4go">ورود به دنیای زنانه</a></div>
+      </div>
+      <div class="prism-stage" id="prismStage">
+        <div class="prism" id="prism">
+          <a class="face" href="#shop-w" draggable="false" style="transform:rotateY(0deg) translateZ(165px)"><img src="{{IMG:look-women-coat}}" alt="زنانه" draggable="false"><span class="no">01</span><span class="fl"><span>زنانه</span><b>Women</b></span></a>
+          <a class="face" href="#shop-m" draggable="false" style="transform:rotateY(90deg) translateZ(165px)"><img src="{{IMG:look-men}}" alt="مردانه" draggable="false"><span class="no">02</span><span class="fl"><span>مردانه</span><b>Men</b></span></a>
+          <a class="face kid" href="#shop-k" draggable="false" style="transform:rotateY(180deg) translateZ(165px)"><img src="{{IMG:cut/kids-dress}}" alt="" draggable="false" style="top:12%;left:6%;transform:rotate(-8deg)"><img src="{{IMG:cut/kids-hoodie}}" alt="" draggable="false" style="top:34%;right:2%;width:56%;transform:rotate(7deg)"><span class="no" style="color:#5B4A6B">03</span><span class="fl" style="background:linear-gradient(transparent,rgba(91,74,107,.55))"><span>بچگانه</span><b>Kids</b></span></a>
+          <a class="face acc" href="#shop-a" draggable="false" style="transform:rotateY(270deg) translateZ(165px)"><img src="{{IMG:accessories-bag}}" alt="اکسسوری" draggable="false"><span class="no">04</span><span class="fl"><span>اکسسوری</span><b>Accessories</b></span></a>
+          <div class="cap-t" style="transform:rotateX(90deg) translateZ(55px)">{{LOGO}}</div>
+        </div>
+        <div class="prism-shadow"></div>
+      </div>
+    </div>
+  </section>
+  <section class="wrap sec" data-rv>
+    <div class="sh"><div><span class="k">NEW IN — THIS WEEK</span><h2>تازه‌ها <span class="lat">New in</span></h2></div><a href="#shop-all" class="more">مشاهده همه <svg class="i"><use href="#i-left"/></svg></a></div>
+    <div class="rail" id="newRail"></div>
+  </section>
+
+  <section class="fit3d" id="fit3d" style="margin-top:100px">
+    <div class="wrap">
+      <div class="txt">
+        <span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;text-align:right">AI FITTING ROOM</span>
+        <h2>From the rail <em>to you.</em></h2>
+        <div class="fa">از رگال، مستقیم تن مانکن</div>
+        <p>لباس‌ها را از رگال بردار، روی مانکن بچین و در یک لحظه ست کامل را روی مدل واقعی ببین. بعد در «کمد من» ذخیره کن یا یکجا به سبد ببر.</p>
+        <div class="sets" role="group" aria-label="انتخاب ست نمایش"><button type="button" class="chip" aria-pressed="true" data-set="0">ست زنانه</button><button type="button" class="chip" aria-pressed="false" data-set="1">ست مردانه</button><button type="button" class="chip" id="replay" aria-label="پخش دوباره"><svg class="i" style="width:16px;height:16px"><use href="#i-return"/></svg>دوباره</button></div>
+        <div><a href="#fitting" class="cbtn accent"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>خودت امتحان کن</a></div>
+      </div>
+      <div class="scene-box" id="sceneBox">
+        <div class="scene" id="scene">
+          <div class="step-lab" id="stepLab">01 — PICK</div>
+          <div class="floor"></div>
+          <div class="rack" id="rack">
+            <span class="leg a"></span><span class="leg b"></span><span class="base a"></span><span class="base b"></span><span class="rail"></span>
+          </div>
+          <div class="manq" aria-hidden="true">
+            <svg viewBox="0 0 220 560" filter="url(#crayon-line)">
+              <g fill="#F4EEE6" stroke="#4A4038" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+                <ellipse cx="110" cy="48" rx="30" ry="36"/>
+                <path d="M98 82h24l2 20H96z"/>
+                <path d="M62 112c14-12 32-12 48-12s34 0 48 12l14 104c-6 6-14 6-20 0l-8-60-4 78c4 22 6 44 6 64H70c0-20 2-42 6-64l-4-78-8 60c-6 6-14 6-20 0z"/>
+                <path d="M72 300h76l-6 236h-24l-8-196-8 196H78z"/>
+              </g>
+              <path d="M110 536v14M70 552h80" stroke="#4A4038" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="scan" id="scan"></div>
+          <div class="reveal" id="reveal"><img id="revealImg" src="{{IMG:look-women-knit}}" alt="ست کامل روی مدل"></div>
+          <div class="badge-ready" id="ready">Your look is ready ✦</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stl" id="look" style="margin-top:0">
+    <img src="{{IMG:ban/look-men-wide}}" alt="ست روزهای بی‌تکلف روی مدل">
+    <div class="hot" style="top:40%;left:65%" data-i="0"><button type="button" aria-label="اورشرت سپهر">1</button></div>
+    <div class="hot" style="top:29%;left:69.5%" data-i="1"><button type="button" aria-label="تی‌شرت نخی سام">2</button></div>
+    <div class="hot" style="top:66%;left:70.5%" data-i="2"><button type="button" aria-label="شلوار چینو بردیا">3</button></div>
+    <div class="panel">
+      <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--stone);direction:ltr;text-align:right">SHOP THE LOOK — 02</span>
+      <h3>Easy <em>Days</em></h3>
+      <div id="lookItems"></div>
+      <div class="tot"><div><small>جمع ست</small><b>$148</b></div><button type="button" class="cbtn" id="addLook">افزودن ست به سبد</button></div>
+    </div>
+  </section>
+
+  <section class="wrap sec" data-rv>
+    <div class="sh" style="justify-content:center;text-align:center"><div><span class="k" style="text-align:center">LOOKBOOK — AW26</span><h2>لوک‌بوک فصل <span class="lat">Lookbook</span></h2></div></div>
+    <div class="ring-wrap" id="ringWrap"><div class="ring" id="ring"></div></div>
+    <div class="ring-ctrl"><button type="button" class="ib" aria-label="لوک قبلی" id="rPrev"><svg class="i"><use href="#i-right"/></svg></button><span class="lbl" id="rLbl">City Layers</span><button type="button" class="ib" aria-label="لوک بعدی" id="rNext"><svg class="i"><use href="#i-left"/></svg></button></div>
+  </section>
+
+
+  <section class="kids-world" id="kids">
+    <span class="bub" style="width:90px;height:90px;background:#F8D7E3;top:12%;right:6%"></span>
+    <span class="bub" style="width:46px;height:46px;background:#CFE4F8;top:70%;right:42%;animation-delay:-2s"></span>
+    <span class="bub" style="width:130px;height:130px;background:#FFF0B3;bottom:-30px;left:8%;animation-delay:-4s"></span>
+    <span class="bub" style="width:60px;height:60px;background:#E4DAF7;top:20%;left:38%;animation-delay:-1s"></span>
+    <svg class="cloud" style="top:8%;left:100%;width:220px" viewBox="0 0 200 80" aria-hidden="true"><path fill="#fff" d="M30 70h140a28 28 0 0 0-8-55 40 40 0 0 0-74-6 30 30 0 0 0-52 25A24 24 0 0 0 30 70z"/></svg>
+    <svg class="cloud" style="top:58%;left:120%;width:160px;animation-duration:55s" viewBox="0 0 200 80" aria-hidden="true"><path fill="#fff" d="M30 70h140a28 28 0 0 0-8-55 40 40 0 0 0-74-6 30 30 0 0 0-52 25A24 24 0 0 0 30 70z"/></svg>
+    <svg class="star" style="top:16%;left:20%;width:26px" viewBox="0 0 24 24" aria-hidden="true"><path fill="#F6A9BE" d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6Z"/></svg>
+    <svg class="star" style="bottom:20%;right:30%;width:20px;animation-delay:-1.4s" viewBox="0 0 24 24" aria-hidden="true"><path fill="#9FD9BE" d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6Z"/></svg>
+    <div class="wrap">
+      <div class="txt" data-rv>
+        <span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:#8C7A97;direction:ltr;text-align:right">MODA4 KIDS — PASTEL WORLD</span>
+        <h2>Little <span>Wanderers</span></h2>
+        <div class="fa">دنیای پاستیلی کوچولوها</div>
+        <p>بافت‌های نرم، نخ‌های لطیف و رنگ‌های آرام پاستیلی؛ برای بدوبدوهای پاییزی و قصه‌های شب.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><a href="#shop-k" class="cbtn pastel">دیدن بچگانه</a><a href="#fitting-kid" class="cbtn mint">پرو روی مانکن کودک</a></div>
+      </div>
+      <div class="tt" id="tt"><div class="tt-ring" id="ttRing"></div><span class="tt-hint">روی هر لباس بزن · ✦ · Tap a piece</span></div>
+    </div>
+  </section>
+  <section class="wrap" style="margin-top:110px">
+    <div class="svc" data-rv>
+      <div><svg class="i"><use href="#i-truck"/></svg><b>ارسال به سه کشور</b><span>ایران، ترکیه و کانادا؛ با رهگیری مرحله‌به‌مرحله.</span></div>
+      <div><svg class="i"><use href="#i-return"/></svg><b>بازگشت آسان</b><span>درخواست بازگشت یا تعویض از صفحهٔ سفارش.</span></div>
+      <div><svg class="i"><use href="#i-shield"/></svg><b>قیمت شفاف</b><span>بدون تخفیف ساختگی و تایمر جعلی.</span></div>
+      <div><svg class="i"><use href="#i-chat"/></svg><b>پشتیبانی واقعی</b><span>واتساپ، تلگرام، اینستاگرام و تلفن.</span></div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= SHOP ================= -->
+<main id="pg-shop" class="page">
+  <div class="wrap">
+
+    <div class="kid-hd" data-rv>
+      <h1>Little <span>Wanderers</span></h1>
+      <p id="kidSub">دنیای پاستیلی کوچولوها — نرم، رنگی، بادوام</p>
+      <img src="{{IMG:cut/kids-dress}}" alt="" style="left:30%;transform:rotate(-8deg)">
+      <img src="{{IMG:cut/kids-hoodie}}" alt="" style="left:14%;transform:rotate(7deg);height:130px">
+      <img src="{{IMG:cut/kids-knit}}" alt="" style="left:2%;transform:rotate(-4deg);height:110px">
+    </div>
+    <div class="shop-hd">
+      <div><div class="crumb"><a href="#home">خانه</a><span>/</span><span id="shopCrumb">زنانه</span></div><h1><span id="shopTitle">زنانه</span><span class="lat" id="shopLat">Women</span></h1></div>
+      <span class="mono" style="font-size:12px;color:var(--stone)" id="shopCount"></span>
+    </div>
+    <div class="fbar">
+      <div class="chips" id="subChips"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="chips" id="sizeChips" aria-label="فیلتر سایز"></div>
+        <label class="sr" for="sort">مرتب‌سازی</label>
+        <select id="sort"><option value="new">جدیدترین</option><option value="asc">قیمت: کم به زیاد</option><option value="desc">قیمت: زیاد به کم</option></select>
+      </div>
+    </div>
+    <div class="grid" id="shopGrid"></div>
+  </div>
+</main>
+
+<!-- ================= PRODUCT ================= -->
+<main id="pg-product" class="page">
+  <div class="wrap">
+    <div class="pdp">
+      <div class="gal"><div class="thumbs" id="thumbs"></div><div class="shots" id="shots"></div></div>
+      <aside class="buy">
+        <div class="crumb" id="pCrumb"></div>
+        <div><h1 id="pName"></h1><div class="lat-n" id="pLat"></div></div>
+        <div class="bp"><b id="pPrice"></b><small>[شامل / بدون مالیات — طبق تنظیم بازار]</small></div>
+        <div style="display:flex;flex-direction:column;gap:12px"><div class="lbl"><b>رنگ: <span id="pColor"></span></b></div><div class="bigsw" id="pSw"></div></div>
+        <div style="display:flex;flex-direction:column;gap:12px"><div class="lbl"><b>سایز: <span id="pSize">—</span></b><button type="button" id="openGuide">راهنمای سایز</button></div><div class="bigsz" id="pSizes"></div><div class="stock"><i></i><span id="pStock">موجود؛ آمادهٔ ارسال</span></div></div>
+        <div class="addrow"><button type="button" class="cbtn" id="pAdd">سایز را انتخاب کن</button><button type="button" class="round" aria-pressed="false" aria-label="افزودن به علاقه‌مندی‌ها" data-like><svg class="i"><use href="#i-heart"/></svg></button></div>
+        <a href="#fitting" class="cbtn ghost"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>روی مدل امتحانش کن</a>
+        <div class="perks"><div><svg class="i"><use href="#i-truck"/></svg>ارسال به ۳ کشور</div><div><svg class="i"><use href="#i-return"/></svg>بازگشت آسان</div><div><svg class="i"><use href="#i-shield"/></svg>پرداخت امن</div></div>
+        <div class="acc">
+          <details open id="dDesc"><summary>توضیحات</summary><p id="pDesc"></p></details>
+          <details id="dGuide"><summary>راهنمای سایز</summary><div class="guide"><span>سایز</span><span>سینه</span><span>کمر</span><span>قد</span><span>S</span><span>[cm]</span><span>[cm]</span><span>[cm]</span><span>M</span><span>[cm]</span><span>[cm]</span><span>[cm]</span><span>L</span><span>[cm]</span><span>[cm]</span><span>[cm]</span></div></details>
+          <details><summary>جنس و نگهداری</summary><p>[جنس، آستر و دستور نگهداری از پنل ادمین]</p></details>
+          <details><summary>ارسال و بازگشت</summary><p>هزینه و زمان ارسال بر اساس بازار شما پیش از پرداخت شفاف نمایش داده می‌شود. درخواست بازگشت یا تعویض از صفحهٔ سفارش ثبت می‌شود.</p></details>
+        </div>
+      </aside>
+    </div>
+    <section style="padding-block:20px 40px">
+      <div class="sh"><div><span class="k">COMPLETE THE LOOK</span><h2>ست را کامل کن</h2></div></div>
+      <div class="grid" id="related"></div>
+    </section>
+  </div>
+  <div class="sticky-buy"><div style="display:flex;flex-direction:column"><b id="sbName" style="font-size:14px;font-weight:500"></b><span class="price" id="sbPrice"></span></div><button type="button" class="cbtn sm" id="sbAdd">افزودن به سبد</button></div>
+</main>
+
+<!-- ================= FITTING ================= -->
+
+<main id="pg-fitting" class="page">
+  <div class="wrap frp">
+    <div class="frp-hd">
+      <div><span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;display:block;text-align:right;margin-bottom:10px">MODA4 FITTING ROOM</span><h1>Your <em>fitting room</em></h1><div style="font-size:20px;font-weight:300;margin-top:8px">اتاق پرو و کمد من — لباس را انتخاب کن، همان لحظه تن مانکن می‌رود</div></div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+        <div class="mode" role="group" aria-label="حالت پرو"><button type="button" aria-pressed="true" data-mode="instant"><svg class="i" style="width:16px;height:16px"><use href="#i-hanger"/></svg>پروی فوری · رایگان</button><button type="button" aria-pressed="false" data-mode="ai"><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>نمای واقعی با هوش مصنوعی</button></div>
+        <div class="coin">موجودی سکه <b id="coinN">۸</b><a href="#fitting" class="lnk">خرید بسته</a></div>
+      </div>
+    </div>
+    <div class="howto" style="margin-bottom:26px">
+      <div><b>۱</b>مانکن را انتخاب کن (زن، مرد یا کودک) و با کشیدن، آن را بچرخان.</div>
+      <div><b>۲</b>تا چهار قطعه بزن؛ هر قطعه همان لحظه سر جای درستش می‌نشیند (بالاتنه، پایین‌تنه، رو، اکسسوری).</div>
+      <div><b>۳</b>اگر خواستی، با یک سکه «نمای واقعی» بگیر، در کمد ذخیره کن یا همه را یکجا به سبد ببر.</div>
+    </div>
+    <div class="frg3">
+      <div class="tleft">
+        <div class="avs" id="avs" role="group" aria-label="انتخاب مانکن"><button type="button" class="chip" aria-pressed="true" data-av="w">مانکن زن</button><button type="button" class="chip" aria-pressed="false" data-av="m">مانکن مرد</button><button type="button" class="chip" aria-pressed="false" data-av="k">مانکن کودک</button></div>
+        <div class="tstage" id="tstage">
+          <span class="drag-hint"><svg class="i" style="width:14px;height:14px"><use href="#i-return"/></svg>بکش تا بچرخد</span>
+          <div class="podium"></div>
+          <div class="turn" id="turn">
+            <div class="body" id="mBody">
+              <svg viewBox="0 0 220 560" aria-hidden="true">
+                <g filter="url(#crayon-line)" fill="#FBF7F1" stroke="#4A4038" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
+                  <ellipse cx="110" cy="48" rx="30" ry="36"/>
+                  <path d="M98 82h24l2 20H96z"/>
+                  <path d="M62 112c14-12 32-12 48-12s34 0 48 12l14 104c-6 6-14 6-20 0l-8-60-4 78c4 22 6 44 6 64H70c0-20 2-42 6-64l-4-78-8 60c-6 6-14 6-20 0z"/>
+                  <path d="M72 300h76l-6 236h-24l-8-196-8 196H78z"/>
+                </g>
+              </svg>
+            </div>
+            <div class="lay" id="lay"></div>
+          </div>
+          <span class="empty-hint" id="emptyHint">یک لباس انتخاب کن ←</span>
+          <div class="scan2"></div>
+          <div class="ai-out" id="aiOut"><img id="aiImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="نمای واقعی ترکیب"><span class="tag">نمای واقعی — نمونهٔ نمایشی</span><button type="button" class="cbtn light sm x" id="aiClose">بازگشت به مانکن</button></div>
+        </div>
+        <div class="tools2"><button type="button" class="chip" id="rotL" aria-label="چرخش به چپ"><svg class="i" style="width:16px;height:16px"><use href="#i-right"/></svg></button><button type="button" class="chip" id="rot0">نمای روبه‌رو</button><button type="button" class="chip" id="rotR" aria-label="چرخش به راست"><svg class="i" style="width:16px;height:16px"><use href="#i-left"/></svg></button><button type="button" class="chip" id="clearAll">پاک کردن همه</button></div>
+      </div>
+      <div class="tpanel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="sets" role="tablist"><button type="button" class="chip" role="tab" aria-pressed="true" data-src="0">محصولات جدید</button><button type="button" class="chip" role="tab" aria-pressed="false" data-src="1">کمد من</button></div>
+          <span class="mono" style="font-size:12px;color:var(--stone)" id="pickN">0 / 4</span>
+        </div>
+        <div class="slotf" id="slotf"></div>
+        <div class="tgrid" id="tgrid"></div>
+        <div class="sel3">
+          <h3>ترکیب تو <span class="mono" style="font-size:12px;color:var(--stone);font-weight:400" id="selN"></span></h3>
+          <div id="selList"></div>
+          <div class="stot"><span>جمع</span><b id="selSum">$0</b></div>
+          <div class="acts3"><button type="button" class="cbtn" id="addAll" disabled>افزودن همه به سبد</button><button type="button" class="cbtn accent" id="aiGo" disabled><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>نمای واقعی (۱ سکه)</button><button type="button" class="cbtn ghost sm" id="saveLook" disabled>ذخیره در کمد</button></div>
+        </div>
+        <p class="disc">پروی فوری برای دیدن ترکیب رنگ و استایل است و اندازهٔ دقیق را نشان نمی‌دهد؛ سایز را با راهنمای سایز هر کالا مقایسه کن. در نمای واقعی، خطای قطعی ساخت سکه را برمی‌گرداند.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= ACCOUNT ================= -->
+<main id="pg-account" class="page">
+  <div class="acct" id="acct" data-theme="neutral">
+    <div class="art">
+      <img id="acctImg" src="{{IMG:look-women-knit}}" alt="">
+      <div class="cap"><h2>Join the <em>club.</em></h2><div style="font-size:16px;margin-top:10px">کمد شخصی، سایزهای ذخیره‌شده و اتاق پرو مخصوص تو</div></div>
+    </div>
+    <div class="form">
+      <div class="steps" aria-hidden="true"><i class="on" id="s1"></i><i id="s2"></i><i id="s3"></i></div>
+      <form class="view on" id="v1" onsubmit="return false">
+        <h1>ورود یا ثبت‌نام <span class="lat">Welcome</span></h1>
+        <p class="lead">بدون رمز عبور. ایمیلت را بنویس تا یک کد یک‌بار مصرف برایت بفرستیم.</p>
+        <div class="fld"><label for="em">ایمیل</label><input id="em" type="email" dir="ltr" placeholder="name@example.com" autocomplete="email"></div>
+        <button type="submit" class="cbtn block" id="toOtp">ارسال کد</button>
+        <span class="hint">با ادامه، شرایط استفاده و حریم خصوصی را می‌پذیری. ایمیل فقط برای ورود و اطلاع‌رسانی‌هایی که خودت فعال کنی استفاده می‌شود.</span>
+      </form>
+      <form class="view" id="v2" onsubmit="return false">
+        <h1>کد را وارد کن</h1>
+        <p class="lead">کد ۶ رقمی به <bdi dir="ltr" id="emShow">name@example.com</bdi> فرستاده شد.</p>
+        <div class="otp" id="otp"><input inputmode="numeric" maxlength="1" aria-label="رقم ۱"><input inputmode="numeric" maxlength="1" aria-label="رقم ۲"><input inputmode="numeric" maxlength="1" aria-label="رقم ۳"><input inputmode="numeric" maxlength="1" aria-label="رقم ۴"><input inputmode="numeric" maxlength="1" aria-label="رقم ۵"><input inputmode="numeric" maxlength="1" aria-label="رقم ۶"></div>
+        <button type="submit" class="cbtn block" id="toProf">تأیید</button>
+        <div style="display:flex;justify-content:space-between"><button type="button" class="lnk" data-back="1">تغییر ایمیل</button><span class="hint" id="resend">ارسال دوباره تا ۰:۴۵</span></div>
+      </form>
+      <form class="view" id="v3" onsubmit="return false">
+        <h1>پروفایلت را بساز <span class="lat">Your style</span></h1>
+        <div class="fld"><label for="nm">نام</label><input id="nm" placeholder="مثلاً سارا" autocomplete="given-name"></div>
+        <div class="fld"><label>تم پروفایل بر اساس</label>
+          <div class="gsel" id="gsel">
+            <button type="button" data-g="women" aria-pressed="false"><i style="background:#A8434F"></i>زن</button>
+            <button type="button" data-g="men" aria-pressed="false"><i style="background:#2D4A6E"></i>مرد</button>
+            <button type="button" data-g="neutral" aria-pressed="true"><i style="background:#6E5E3A"></i>ترجیح می‌دهم نگویم</button>
+          </div>
+          <span class="hint">فقط برای شخصی‌سازی رنگ پروفایل و پیشنهادها؛ هر وقت خواستی عوضش کن.</span>
+        </div>
+        <div class="fld"><label>سایز معمولت</label><div class="tags" id="szTags"><button type="button" class="chip" aria-pressed="false">XS</button><button type="button" class="chip" aria-pressed="false">S</button><button type="button" class="chip" aria-pressed="true">M</button><button type="button" class="chip" aria-pressed="false">L</button><button type="button" class="chip" aria-pressed="false">XL</button></div></div>
+        <div class="fld"><label>چه استایلی دوست داری؟</label><div class="tags" id="styTags"><button type="button" class="chip" aria-pressed="true">مینیمال</button><button type="button" class="chip" aria-pressed="false">کلاسیک</button><button type="button" class="chip" aria-pressed="false">اسپرت</button><button type="button" class="chip" aria-pressed="true">رنگ‌های خاکی</button><button type="button" class="chip" aria-pressed="false">رسمی</button><button type="button" class="chip" aria-pressed="false">لایه‌پوشی</button></div></div>
+        <button type="submit" class="cbtn block" id="done">ساخت پروفایل</button>
+      </form>
+    </div>
+  </div>
+</main>
+
+<!-- ================= PROFILE ================= -->
+<main id="pg-profile" class="page">
+  <div class="prof" id="prof" data-theme="women">
+    <div class="pcover lace-b" style="--lace-light:none">
+      <div class="wrap">
+        <div class="ava"><svg viewBox="0 0 124 124" aria-hidden="true"><circle cx="62" cy="62" r="56" fill="none" stroke="#FF6A1A" stroke-width="3" stroke-dasharray="6 5" filter="url(#crayon-line)"/></svg><b id="avaL">س</b></div>
+        <div><h1>سلام، <b id="pName2">سارا</b></h1><div class="sub2"><span id="themeName">تم Rosé</span><span>عضو از مهر ۱۴۰۵</span><span>بازار: ایران</span></div></div>
+        <div class="themes" role="group" aria-label="تم پروفایل"><span>تم:</span><button type="button" data-g="women" aria-label="تم Rosé" style="background:#A8434F"></button><button type="button" data-g="men" aria-label="تم Slate" style="background:#2D4A6E"></button><button type="button" data-g="neutral" aria-label="تم Sand" style="background:#6E5E3A"></button></div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="playout">
+        <nav class="pnav" aria-label="بخش‌های پروفایل">
+          <button type="button" aria-current="true"><svg class="i"><use href="#i-dash"/></svg>داشبورد</button>
+          <button type="button"><svg class="i"><use href="#i-box"/></svg>سفارش‌ها</button>
+          <button type="button"><svg class="i"><use href="#i-hanger"/></svg>کمد من</button>
+          <button type="button"><svg class="i"><use href="#i-heart"/></svg>علاقه‌مندی‌ها</button>
+          <button type="button"><svg class="i"><use href="#i-pin"/></svg>آدرس‌ها</button>
+          <button type="button"><svg class="i"><use href="#i-gear"/></svg>تنظیمات</button>
+        </nav>
+        <div class="pmain">
+          <div class="stats">
+            <div class="stat"><small>سفارش در راه</small><b>۱</b></div>
+            <div class="stat"><small>موجودی سکهٔ اتاق پرو</small><b id="coinP">۸</b></div>
+            <div class="stat"><small>علاقه‌مندی‌ها</small><b>۶</b></div>
+            <div class="stat"><small>استایل‌های کمد من</small><b>۳</b></div>
+          </div>
+          <div class="card">
+            <h3>سفارش در راه <a href="#profile">همهٔ سفارش‌ها</a></h3>
+            <div class="order">
+              <div class="ims"><span><img src="{{IMG:women-coat}}" alt=""></span><span><img src="{{IMG:accessories-bag}}" alt=""></span></div>
+              <div style="display:flex;flex-direction:column;gap:4px"><b style="font-weight:500">سفارش <bdi dir="ltr" class="mono">SH-MW-1023</bdi></b><span style="font-size:13px;color:var(--stone)">۲ قطعه · بارانی رها، کیف دستی هانا</span></div>
+              <a href="#profile" class="cbtn sm" style="margin-inline-start:auto">رهگیری مرسوله</a>
+            </div>
+            <div class="tl"><span class="bar"></span><div class="done"><i></i>ثبت سفارش</div><div class="done"><i></i>تأیید پرداخت</div><div class="done now"><i></i>آماده‌سازی</div><div><i></i>ارسال</div><div><i></i>تحویل</div></div>
+          </div>
+          <div class="card">
+            <h3>کمد من <a href="#fitting">ساخت استایل تازه</a></h3>
+            <div class="wd">
+              <figure><div class="im"><img src="{{IMG:look-women-knit}}" alt=""></div><figcaption>آرام و روشن</figcaption></figure>
+              <figure><div class="im"><img src="{{IMG:look-women-coat}}" alt=""></div><figcaption>لایه‌های شهری</figcaption></figure>
+              <figure><div class="im"><img src="{{IMG:coat}}" alt=""></div><figcaption>بارانی روز بارانی</figcaption></figure>
+              <a href="#fitting" class="im new" style="border-radius:70px 70px 8px 8px;aspect-ratio:3/4"><span><svg class="i" style="margin:0 auto 6px;color:var(--t-accent)"><use href="#i-spark"/></svg>استایل جدید<br>در اتاق پرو</span></a>
+            </div>
+          </div>
+          <div class="two">
+            <div class="card"><h3>سایزهای من <a href="#profile">ویرایش</a></h3><div class="mysz"><span>بالاتنه: M</span><span>شلوار: 38</span><span>کفش: 39</span><span>قد: [cm]</span></div><p class="hint" style="margin:14px 0 0">در صفحهٔ محصول، سایز پیشنهادی بر اساس همین اطلاعات انتخاب می‌شود.</p></div>
+            <div class="card"><h3>تنظیمات خرید</h3><div class="kv"><span>زبان</span><b style="font-weight:500">فارسی</b><span>بازار و ارز</span><b style="font-weight:500">ایران — تومان</b><span>اطلاع‌رسانی</span><b style="font-weight:500">موجود شدن کالا، وضعیت سفارش</b></div></div>
+          </div>
+          <div class="card"><h3>علاقه‌مندی‌ها <a href="#shop-all">ادامهٔ خرید</a></h3><div class="grid" id="wishGrid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:24px 14px"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="ft lace-t">
+  <div class="wrap">
+    <div class="ft-top">
+      <form class="news" onsubmit="return false">
+        <h3>Stay in <em>the loop.</em></h3>
+        <p>کالکشن‌های تازه، لوک‌بوک‌ها و اخبار اتاق پرو — فقط با تأیید ایمیل، هر وقت خواستی لغو کن.</p>
+        <div class="nbox"><label for="news" class="sr">ایمیل</label><input id="news" type="email" placeholder="ایمیل شما" dir="ltr"><button type="submit" class="cbtn accent sm">عضویت</button></div>
+      </form>
+      <div class="cols">
+        <div><h4>فروشگاه</h4><a href="#shop-w">زنانه</a><a href="#shop-m">مردانه</a><a href="#shop-k">بچگانه</a><a href="#shop-a">اکسسوری</a></div>
+        <div><h4>تجربه</h4><a href="#fitting">اتاق پرو هوشمند</a><a href="#look">خرید ست</a><a href="#home">لوک‌بوک</a></div>
+        <div><h4>راهنما</h4><a href="#profile">رهگیری سفارش</a><a href="#product-women-coat">راهنمای سایز</a><a href="#home">بازگشت و تعویض</a><a href="#home">روش‌های پرداخت</a></div>
+        <div><h4>حساب</h4><a href="#account">ورود / ثبت‌نام</a><a href="#profile">پروفایل من</a><a href="#profile">علاقه‌مندی‌ها</a></div>
+      </div>
+    </div>
+    <div class="word" aria-hidden="true">{{LOGO}}</div>
+    <div class="legal"><span>مد، آرام و ماندگار · Iran · Türkiye · Canada</span><div class="pay"><span>CARD</span><span>BANK</span><span>IBAN</span></div></div>
+  </div>
+</footer>
+
+<!-- drawers -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="cart" aria-label="سبد خرید" aria-hidden="true">
+  <div class="dh"><b>سبد خرید (<span id="cartN">۲</span>)</b><button type="button" class="ib" aria-label="بستن" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="db" id="cartList"></div>
+  <div class="df"><div class="sub"><span>جمع اقلام</span><b id="cartSum">$198</b></div><span class="prog">هزینهٔ ارسال و مالیات بر اساس بازار شما در مرحلهٔ بعد شفاف نمایش داده می‌شود.</span><a href="#home" class="cbtn block" data-close>ادامه و پرداخت</a></div>
+</aside>
+<aside class="drawer menu" id="menu" aria-label="منو" aria-hidden="true">
+  <div class="dh"><a href="#home" class="logo" aria-label="MODA4" data-close>{{LOGO}}</a><button type="button" class="ib" aria-label="بستن" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="db mm" id="mobileMenu"></div>
+</aside>
+<div class="search" id="search" aria-hidden="true">
+  <div class="wrap">
+    <div class="sbox"><svg class="i"><use href="#i-search"/></svg><label for="q" class="sr">جستجو</label><input id="q" placeholder="دنبال چه می‌گردی؟ مثلاً بارانی، بافت، کیف" autocomplete="off"><button type="button" class="ib" aria-label="بستن جستجو" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="trend"><span>پرجستجو:</span><button type="button" class="chip" data-q="بارانی">بارانی</button><button type="button" class="chip" data-q="بافت">بافت</button><button type="button" class="chip" data-q="هودی">هودی</button><button type="button" class="chip" data-q="کیف">کیف</button></div>
+    <div class="sres" id="sres"></div>
+  </div>
+</div>
+<div class="lb" id="lb" role="dialog" aria-label="بزرگ‌نمایی تصویر"><img id="lbImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt=""><button type="button" class="ib x" aria-label="بستن" id="lbX"><svg class="i"><use href="#i-x"/></svg></button></div>
+<div class="toast" id="toast"><svg class="i"><use href="#i-bag"/></svg><span id="toastT"></span></div>
+
+<nav class="viewer" aria-label="صفحه‌های پیش‌نمایش">
+  <a href="#home" data-view="home">خانه</a><a href="#shop-w" data-view="shop">دسته</a><a href="#product-women-coat" data-view="product">محصول</a><a href="#fitting" data-view="fitting">اتاق پرو</a><a href="#account" data-view="account">ثبت‌نام</a><a href="#profile" data-view="profile">پروفایل</a>
+</nav>
+
+<script>
+(function(){
+var IMG = {{IMGMAP}};
+var PASTELS = ['#F8D7E3','#CFEEDF','#CFE4F8','#FFF0B3','#E4DAF7','#FFDCCB'];
+var $ = function(s, r){ return (r || document).querySelector(s); };
+var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var fa = function(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'[d]; }); };
+var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- data ---------- */
+var P = [
+  {id:'women-coat', n:'بارانی رها', en:'Raha trench coat', p:112, d:'w', s:'outer', c:[['#C9B391','شنی','women-coat']], alt:'look-women-coat', tag:'New', desc:'بارانی تا زانو، تک‌ردیف، با کمربند کمری و دکمه‌های قهوه‌ای تیره. جلوباز می‌پوشد و روی بافت و تی‌شرت لایه می‌شود.'},
+  {id:'women-knit', n:'بافت نارون', en:'Narvan knit', p:64, d:'w', s:'knit', c:[['#EFE7DA','عاجی','women-knit']], alt:'look-women-knit', tag:'', desc:'بافت یقه‌گرد با راه‌های ریز و فرم آزاد.'},
+  {id:'women-dress', n:'پیراهن میدی مهتاب', en:'Mahtab midi dress', p:78, d:'w', s:'dress', c:[['#B5583A','زنگاری','women-dress']], alt:'', tag:'', desc:'پیراهن میدی آستین‌بلند با بند کمری ساده.'},
+  {id:'women-trousers', n:'شلوار پیلی‌دار آوا', en:'Ava pleated trousers', p:58, d:'w', s:'bottom', c:[['#D8CBB6','جو دوسری','women-trousers']], alt:'look-women-knit', tag:'', desc:'شلوار فاق‌بلند و گشاد با پیلی جلو.'},
+  {id:'women-tee', n:'تی‌شرت نخی صبا', en:'Saba cotton tee', p:24, d:'w', s:'tee', c:[['#F3EEE6','عاجی','women-tee'],['#3A3A3C','زغالی','women-tee-charcoal']], alt:'', tag:'', desc:'تی‌شرت نخی یقه‌گرد، ساده و بی‌لوگو.'},
+  {id:'men-shirt', n:'اورشرت سپهر', en:'Sepehr overshirt', p:68, d:'m', s:'shirt', c:[['#1F2A44','سرمه‌ای','men-shirt']], alt:'look-men', tag:'New', desc:'اورشرت آستین‌بلند با جیب‌های رو و دکمه‌های تیره.'},
+  {id:'men-tee', n:'تی‌شرت نخی سام', en:'Sam cotton tee', p:26, d:'m', s:'tee', c:[['#F1ECE2','عاجی','men-tee'],['#1F2A44','سرمه‌ای','men-tee-navy']], alt:'', tag:'', desc:'تی‌شرت نخی یقه‌گرد مردانه.'},
+  {id:'men-chino', n:'شلوار چینو بردیا', en:'Bardia chinos', p:54, d:'m', s:'bottom', c:[['#CDBB9C','شنی','men-chino']], alt:'look-men', tag:'', desc:'چینوی راسته با رنگ شنی.'},
+  {id:'men-knit', n:'پلیور آراد', en:'Arad sweater', p:72, d:'m', s:'knit', c:[['#3A3A3C','زغالی','men-knit']], alt:'', tag:'', desc:'پلیور پشمی یقه‌گرد.'},
+  {id:'men-hoodie', n:'هودی روزبه', en:'Roozbeh hoodie', p:62, d:'m', s:'knit', c:[['#2F4A3A','سبز جنگلی','men-hoodie']], alt:'', tag:'', desc:'هودی نخی ساده بدون چاپ.'},
+  {id:'kids-knit', n:'ژاکت بافت باران', en:'Baran cardigan', p:38, d:'k', s:'boy', c:[['#9DB290','مریم‌گلی','kids-knit']], alt:'look-kids', tag:'', desc:'ژاکت بافت یقه‌گرد با دکمه‌های کرم.'},
+  {id:'kids-hoodie', n:'هودی رایان', en:'Rayan hoodie', p:32, d:'k', s:'boy', c:[['#B5583A','زنگاری','kids-hoodie'],['#9DB290','مریم‌گلی','kids-hoodie-sage']], alt:'', tag:'New', desc:'هودی ساده بچگانه.'},
+  {id:'kids-dress', n:'پیراهن نیلوفر', en:'Niloufar dress', p:42, d:'k', s:'girl', c:[['#B9A6D6','یاسی','kids-dress']], alt:'look-girl', tag:'', desc:'پیراهن نخی آستین‌بلند دخترانه.'},
+  {id:'kids-set', n:'ست راحتی نیلا', en:'Nila lounge set', p:48, d:'k', s:'set', c:[['#9DB290','مریم‌گلی','kids-set']], alt:'', tag:'', desc:'ست سویشرت و شلوار راحتی نخی.'},
+  {id:'kids-trousers', n:'شلوار نرم آریو', en:'Ario joggers', p:28, d:'k', s:'set', c:[['#EFE7DA','عاجی','kids-trousers']], alt:'look-kids', tag:'', desc:'شلوار راحتی نرم نخی.'},
+  {id:'accessories-bag', n:'کیف دستی هانا', en:'Hana tote', p:86, d:'a', s:'bag', c:[['#8B4A25','کنیاکی','accessories-bag']], alt:'look-women-coat', tag:'', desc:'کیف دستی چرمی با دو دستهٔ باریک، بدون لوگو.'},
+  {id:'accessories-scarf', n:'شال بافت سرو', en:'Sarv knit scarf', p:34, d:'a', s:'scarf', c:[['#EFE7DA','عاجی','accessories-scarf']], alt:'', tag:'', desc:'شال بافت ریب با ریشه.'},
+  {id:'accessories-belt', n:'کمربند آرو', en:'Aro belt', p:30, d:'a', s:'belt', c:[['#5A3420','قهوه‌ای','accessories-belt']], alt:'', tag:'', desc:'کمربند چرمی با سگک برنجی ساده.'},
+  {id:'accessories-cap', n:'کلاه کادن', en:'Kaden cap', p:22, d:'a', s:'hat', c:[['#1F2A44','سرمه‌ای','accessories-cap']], alt:'', tag:'', desc:'کلاه نخی بدون لوگو.'},
+  {id:'accessories-socks', n:'جوراب رنگین', en:'Rangin sock trio', p:16, d:'a', s:'socks', c:[['#B5583A','سه‌رنگ','accessories-socks']], alt:'', tag:'', desc:'سه جفت جوراب نخی در رنگ‌های عاجی، زنگاری و مریم‌گلی.'}
+];
+var byId = {}; P.forEach(function(p){ byId[p.id] = p; });
+var DEPTS = {
+  w:{fa:'زنانه', en:'Women', subs:[['outer','پوشاک بیرونی'],['knit','بافت و پلیور'],['dress','پیراهن'],['bottom','شلوار و دامن'],['tee','تی‌شرت و تاپ']], feat:['look-women-coat','ست لایه‌های شهری','کالکشن پاییز ۱۴۰۵'], feat2:['women-dress','پیراهن‌های فصل','تازه رسیده']},
+  m:{fa:'مردانه', en:'Men', subs:[['shirt','اورشرت و پیراهن'],['knit','پلیور و هودی'],['bottom','شلوار و چینو'],['tee','تی‌شرت']], feat:['look-men','ست روزهای بی‌تکلف','سه قطعه، یک ست'], feat2:['men-knit','بافت‌های زمستانی','پشم و نخ']},
+  k:{fa:'بچگانه', en:'Kids', subs:[['girl','دخترانه'],['boy','پسرانه'],['set','ست و راحتی']], feat:['look-kids','برای روزهای بازی','نرم و بادوام'], feat2:['look-girl','دخترانه','پیراهن و شلوار']},
+  a:{fa:'اکسسوری', en:'Accessories', subs:[['bag','کیف'],['scarf','شال و روسری'],['belt','کمربند'],['hat','کلاه'],['socks','جوراب']], feat:['accessories-bag','کیف دستی هانا','چرم کنیاکی'], feat2:['accessories-scarf','شال‌های بافت','گرم و نرم']}
+};
+var SIZES = {w:['XS','S','M','L','XL'], m:['S','M','L','XL','XXL'], k:['4Y','6Y','8Y','10Y','12Y'], a:['One size']};
+
+/* ---------- state ---------- */
+var liked = {'women-coat':1, 'women-knit':1, 'accessories-bag':1, 'men-shirt':1, 'kids-dress':1, 'accessories-scarf':1};
+var cart = [{id:'women-coat', size:'M', q:1}, {id:'accessories-bag', size:'One size', q:1}];
+var coins = 8;
+var theme = 'women', userName = 'سارا';
+
+/* ---------- product card ---------- */
+function card(p){
+  var sizes = SIZES[p.d], c0 = p.c[0], kid = p.d === 'k' && IMG['cut/' + c0[2]];
+  var pbg = PASTELS[(p.id.length + p.p) % PASTELS.length];
+  return '<article class="pc" data-id="' + p.id + '"><div class="im"' + (kid ? ' style="background:linear-gradient(160deg,' + pbg + ',#FFF9F0)"' : '') + '>' +
+    (kid ? '<img class="cutimg" src="' + IMG['cut/' + c0[2]] + '" alt="' + p.n + '" loading="lazy">' : '<img src="' + IMG[c0[2]] + '" alt="' + p.n + '" loading="lazy">') +
+    (p.alt ? '<img class="alt" src="' + IMG[p.alt] + '" alt="" loading="lazy">' : '') +
+    (p.tag ? '<span class="flag">' + p.tag + '!</span>' : '') +
+    '<button type="button" class="heart" aria-pressed="' + (!!liked[p.id]) + '" aria-label="افزودن به علاقه‌مندی‌ها" data-like="' + p.id + '"><svg class="i"><use href="#i-heart"/></svg></button>' +
+    '<div class="qa"><small>افزودن سریع</small><div class="szs">' + sizes.map(function(s, i){ return '<button type="button" data-quick="' + p.id + '" data-size="' + s + '"' + (i === sizes.length - 1 && sizes.length > 1 ? ' disabled' : '') + '>' + s + '</button>'; }).join('') + '</div></div>' +
+    '</div><div class="meta"><a href="#product-' + p.id + '">' + p.n + '</a><span class="price">$' + p.p + '</span></div>' +
+    '<div class="sw">' + p.c.map(function(c, i){ return '<button type="button" aria-pressed="' + (i === 0) + '" aria-label="' + c[1] + '" data-swatch="' + c[2] + '" style="background:' + c[0] + '"></button>'; }).join('') + '<span>' + (p.c.length > 1 ? p.c.length + ' رنگ' : c0[1]) + '</span></div></article>';
+}
+function bindTilt(root){
+  if (reduce || !matchMedia('(hover:hover)').matches) return;
+  $$('.pc .im', root).forEach(function(im){
+    im.addEventListener('mousemove', function(e){
+      var r = im.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      im.style.transform = 'rotateY(' + (x * 10) + 'deg) rotateX(' + (-y * 8) + 'deg)';
+    });
+    im.addEventListener('mouseleave', function(){ im.style.transform = ''; });
+  });
+}
+function renderInto(el, list){ el.innerHTML = list.map(card).join(''); bindTilt(el); }
+
+/* ---------- nav + mega ---------- */
+var navHtml = '', mobHtml = '';
+['w','m','k','a'].forEach(function(k){
+  var D = DEPTS[k];
+  navHtml += '<div class="dd"><a href="#shop-' + k + '" aria-haspopup="true">' + D.fa + '</a><div class="mega"><div class="wrap">' +
+    '<div><h4>' + D.fa + '</h4><ul><li><a href="#shop-' + k + '">همهٔ ' + D.fa + '</a></li>' + D.subs.map(function(s){ return '<li><a href="#shop-' + k + '-' + s[0] + '">' + s[1] + '</a></li>'; }).join('') + '</ul></div>' +
+    '<div><h4>مجموعه‌ها</h4><ul><li><a href="#shop-' + k + '">تازه‌ها</a></li><li><a href="#look">ست‌های آماده</a></li><li><a href="#fitting">امتحان روی مدل</a></li></ul></div>' +
+    '<div><h4>راهنما</h4><ul><li><a href="#product-women-coat">راهنمای سایز</a></li><li><a href="#home">مراقبت از لباس</a></li></ul></div>' +
+    [D.feat, D.feat2].map(function(f){ return '<a class="tile" href="#shop-' + k + '"><div class="im"><img src="' + IMG[f[0]] + '" alt=""></div><b>' + f[1] + '</b><span>' + f[2] + '</span></a>'; }).join('') +
+    '</div></div></div>';
+  mobHtml += '<details><summary>' + D.fa + ' <span class="lat" style="font-style:italic;color:var(--stone);font-size:15px;margin-inline-start:auto;margin-inline-end:12px">' + D.en + '</span></summary><ul><li><a href="#shop-' + k + '" data-close>همهٔ ' + D.fa + '</a></li>' + D.subs.map(function(s){ return '<li><a href="#shop-' + k + '-' + s[0] + '" data-close>' + s[1] + '</a></li>'; }).join('') + '</ul></details>';
+});
+navHtml += '<a href="#fitting" class="try"><svg class="i"><use href="#i-spark"/></svg>اتاق پرو</a>';
+$('#navs').innerHTML = navHtml;
+mobHtml += '<a href="#fitting" data-close>اتاق پروی هوشمند ✦</a><a href="#account" data-close>ورود / ثبت‌نام</a><a href="#profile" data-close>پروفایل من</a>';
+$('#mobileMenu').innerHTML = mobHtml;
+$$('.dd').forEach(function(dd){ dd.addEventListener('mouseleave', function(){ dd.classList.remove('open'); }); });
+
+/* ---------- router ---------- */
+var anchors = {look:'home', fit3d:'home'};
+var current = '';
+function route(){
+  var h = (location.hash || '#home').slice(1), page = h, arg = '';
+  if (h.indexOf('shop-') === 0){ page = 'shop'; arg = h.slice(5); }
+  else if (h.indexOf('product-') === 0){ page = 'product'; arg = h.slice(8); }
+  else if (h === 'fitting-kid') page = 'fitting';
+  else if (anchors[h]) page = anchors[h];
+  if (!$('#pg-' + page)) page = 'home';
+  $$('.page').forEach(function(p){ p.classList.toggle('on', p.id === 'pg-' + page); });
+  $$('[data-view]').forEach(function(a){ a.classList.toggle('on', a.dataset.view === page); });
+  $('#hdr').classList.toggle('over', page === 'home');
+  if (page === 'shop') renderShop(arg || 'all');
+  if (page === 'product') renderProduct(byId[arg] ? arg : 'women-coat');
+  if (page === 'profile') renderProfile();
+  if (h === 'fitting-kid') setAv('k');
+  document.body.classList.toggle('kidsmode', (page === 'shop' && arg.charAt(0) === 'k') || (page === 'product' && !!byId[arg] && byId[arg].d === 'k'));
+  setTimeout(observeRv, 50);
+  closeAll();
+  if (anchors[h]){ var el = document.getElementById(h); setTimeout(function(){ el.scrollIntoView({behavior:'smooth'}); }, 60); }
+  else window.scrollTo(0, 0);
+  current = page; onScroll();
+}
+window.addEventListener('hashchange', route);
+
+/* header solid on scroll */
+function onScroll(){ $('#hdr').classList.toggle('solid', current !== 'home' || window.scrollY > 40); }
+window.addEventListener('scroll', onScroll, {passive:true});
+
+/* announcement rotate */
+var ai = 0; setInterval(function(){ var s = $$('#annRot span'); s[ai].classList.remove('on'); ai = (ai + 1) % s.length; s[ai].classList.add('on'); }, 4200);
+$$('[data-mkt]').forEach(function(b){ b.addEventListener('click', function(){ $$('[data-mkt]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); toast('بازار: ' + {IR:'ایران',TR:'ترکیه',CA:'کانادا'}[b.dataset.mkt]); }); });
+
+/* ---------- hero slider ---------- */
+var slides = $$('.slide'), bars = $$('#bars button'), si = 0, DUR = 7000, timer = null, paused = false;
+function go(n){
+  slides[si].classList.remove('on'); bars.forEach(function(b, i){ b.classList.remove('on'); b.classList.toggle('done', i < n); });
+  si = (n + slides.length) % slides.length; slides[si].classList.add('on');
+  void bars[si].offsetWidth; bars[si].classList.add('on'); bars.forEach(function(b, i){ if (i < si) b.classList.add('done'); else if (i > si) b.classList.remove('done'); });
+  schedule();
+}
+function schedule(){ clearTimeout(timer); if (!paused) timer = setTimeout(function(){ go(si + 1); }, DUR); }
+document.documentElement.style.setProperty('--dur', DUR + 'ms');
+bars.forEach(function(b, i){ b.addEventListener('click', function(){ go(i); }); });
+$('#hNext').addEventListener('click', function(){ go(si + 1); });
+$('#hPrev').addEventListener('click', function(){ go(si - 1); });
+var hero = $('#hero');
+hero.addEventListener('mouseenter', function(){ paused = true; hero.classList.add('paused'); clearTimeout(timer); });
+hero.addEventListener('mouseleave', function(){ paused = false; hero.classList.remove('paused'); schedule(); });
+hero.addEventListener('mousemove', function(e){
+  if (reduce) return; var r = hero.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+  $$('.float', slides[si]).forEach(function(f){ var d = +f.dataset.depth; f.style.transform = 'translate3d(' + (-x * d) + 'px,' + (-y * d) + 'px,0) rotate(' + (x * 6) + 'deg)'; });
+});
+var tx0 = null; hero.addEventListener('touchstart', function(e){ tx0 = e.touches[0].clientX; }, {passive:true});
+hero.addEventListener('touchend', function(e){ if (tx0 === null) return; var dx = e.changedTouches[0].clientX - tx0; if (Math.abs(dx) > 40) go(si + (dx > 0 ? 1 : -1)); tx0 = null; });
+bars[0].classList.add('on'); schedule();
+
+/* ---------- home lists ---------- */
+renderInto($('#newRail'), ['women-coat','men-shirt','women-knit','kids-hoodie','accessories-bag','women-dress','men-knit','kids-dress'].map(function(id){ return byId[id]; }));
+
+/* shop the look */
+var lookIds = ['men-shirt','men-tee','men-chino'], lookSz = ['M','M','L'];
+function renderLook(){
+  $('#lookItems').innerHTML = lookIds.map(function(id, i){ var p = byId[id];
+    return '<div class="it" data-i="' + i + '"><div class="im"><img src="' + IMG['cut/' + id] + '" alt=""></div><div class="tx"><div><b style="font-weight:500">' + (i + 1) + '. ' + p.n + '</b><span class="price">$' + p.p + '</span></div><div class="szs" style="justify-content:flex-start">' +
+    SIZES.m.slice(0, 4).map(function(s){ return '<button type="button" aria-pressed="' + (lookSz[i] === s) + '" data-ls="' + i + '" data-size="' + s + '">' + s + '</button>'; }).join('') + '</div></div></div>'; }).join('');
+}
+renderLook();
+$$('.hot').forEach(function(h){ h.addEventListener('click', function(){ var i = +h.dataset.i; $$('.hot').forEach(function(x){ x.classList.toggle('on', x === h); }); $$('#lookItems .it').forEach(function(it, j){ it.classList.toggle('on', j === i); }); }); });
+$('#addLook').addEventListener('click', function(){ lookIds.forEach(function(id, i){ addCart(id, lookSz[i], true); }); toast('ست روزهای بی‌تکلف به سبد اضافه شد'); });
+
+/* lookbook ring */
+var LOOKS = [['look-women-coat','City Layers','لایه‌های شهری','#shop-w'],['look-men','Easy Days','روزهای بی‌تکلف','#look'],['look-women-knit','Soft Neutrals','آرام و روشن','#shop-w'],['look-kids','Ready to Play','برای روزهای بازی','#shop-k'],['coat','Rain Ready','آمادهٔ باران','#product-women-coat'],['look-girl','Little Wanderers','کوچولوهای کنجکاو','#shop-k']];
+var ring = $('#ring'), ra = 0, step = 360 / LOOKS.length;
+function radius(){ return window.innerWidth < 760 ? 300 : 430; }
+function layoutRing(){
+  ring.innerHTML = LOOKS.map(function(l, i){ return '<figure class="look" style="transform:rotateY(' + (i * step) + 'deg) translateZ(' + radius() + 'px)"><a href="' + l[3] + '" draggable="false"><img src="' + IMG[l[0]] + '" alt="' + l[2] + '" draggable="false"></a><figcaption><b>' + l[1] + '</b><span>' + l[2] + '</span></figcaption></figure>'; }).join('');
+  spin(0);
+}
+function spin(d){
+  ra += d; ring.style.transform = 'translateZ(' + (-radius()) + 'px) rotateY(' + ra + 'deg)';
+  var idx = ((Math.round(-ra / step) % LOOKS.length) + LOOKS.length) % LOOKS.length;
+  $('#rLbl').textContent = LOOKS[idx][1];
+  $$('.look', ring).forEach(function(f, i){ var ang = ((i * step + ra) % 360 + 540) % 360 - 180; var a = Math.abs(ang); f.style.opacity = a > 100 ? .25 : 1 - a / 260; f.style.filter = a > 30 ? 'saturate(.6)' : 'none'; });
+}
+layoutRing(); window.addEventListener('resize', layoutRing);
+$('#rNext').addEventListener('click', function(){ spin(-step); });
+$('#rPrev').addEventListener('click', function(){ spin(step); });
+(function(){ var sx = null, base = 0, moved = false;
+  var rw = $('#ringWrap');
+  rw.addEventListener('pointerdown', function(e){ sx = e.clientX; base = ra; moved = false; ring.classList.add('drag'); });
+  window.addEventListener('pointermove', function(e){ if (sx === null) return; var dx = e.clientX - sx; if (Math.abs(dx) > 4) moved = true; ra = base + dx * .3; spin(0); });
+  window.addEventListener('pointerup', function(){ if (sx === null) return; sx = null; ring.classList.remove('drag'); ra = Math.round(ra / step) * step; spin(0); });
+  rw.addEventListener('click', function(e){ if (moved){ e.preventDefault(); e.stopPropagation(); } }, true);
+})();
+var autoRing = setInterval(function(){ if (current === 'home' && !reduce && !document.hidden) spin(-step); }, 4800);
+
+/* ---------- 3D fitting ad ---------- */
+var RACK = [
+  {k:'women-knit', x:30, w:118}, {k:'men-shirt', x:118, w:120}, {k:'women-trousers', x:200, w:72},
+  {k:'men-tee', x:262, w:116}, {k:'accessories-bag', x:352, w:92}, {k:'men-chino', x:430, w:66}, {k:'women-coat', x:478, w:80}
+];
+var SETS = [
+  {items:[['women-knit',870-95,140,190,7],['women-trousers',870-56,330,112,5],['accessories-bag',900,250,86,8]], reveal:'look-women-knit'},
+  {items:[['men-tee',870-88,140,176,6],['men-shirt',870-100,136,200,7],['men-chino',870-53,332,106,5]], reveal:'look-men'}
+];
+var rackEl = $('#rack'), gEls = {};
+RACK.forEach(function(g){
+  var el = document.createElement('div'); el.className = 'garm sway'; el.dataset.w = g.w; el.style.left = g.x + 'px'; el.style.width = g.w + 'px'; el.style.animationDelay = (-Math.random() * 4) + 's';
+  el.innerHTML = '<svg class="hang" viewBox="0 0 64 44" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M32 14a5 5 0 1 1 5-5c0 3-5 4-5 8L5 36h54L32 17"/></svg><img src="' + IMG['cut/' + g.k] + '" alt="" style="width:100%">';
+  el._g = g; rackEl.appendChild(el); gEls[g.k] = el;
+});
+function fitScene(){ var box = $('#sceneBox'), s = box.clientWidth / 1100; if (s > 0) $('#scene').style.transform = 'scale(' + s + ')'; }
+if (window.ResizeObserver) new ResizeObserver(fitScene).observe($('#sceneBox')); window.addEventListener('resize', fitScene);
+var setIdx = 0, running = false, anims = [], runId = 0;
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function resetScene(){
+  anims.forEach(function(a){ a.cancel(); }); anims = [];
+  Object.keys(gEls).forEach(function(k){ var el = gEls[k]; if (el.parentNode !== rackEl){ rackEl.appendChild(el); } el.style.left = el._g.x + 'px'; el.style.top = ''; el.style.zIndex = ''; el.classList.add('sway'); el.style.opacity = 1; $('.hang', el).style.opacity = 1; });
+  $('#reveal').classList.remove('on'); $('#ready').classList.remove('on'); $('.manq').style.opacity = 1;
+}
+function rackPos(el){
+  // garment top-center in scene coordinates (rack is rotated, so measure)
+  var sc = $('#scene').getBoundingClientRect(), r = el.getBoundingClientRect(), s = sc.width / 1100;
+  return {x:(r.left + r.width / 2 - sc.left) / s, y:(r.top - sc.top) / s, w:r.width / s};
+}
+async function play(){
+  var my = ++runId; running = true; resetScene(); var S = SETS[setIdx];
+  $('#revealImg').src = IMG[S.reveal]; $('#stepLab').textContent = '01 — PICK';
+  await wait(700); if (my !== runId) return;
+  for (var i = 0; i < S.items.length; i++){
+    var it = S.items[i], el = gEls[it[0]], from = rackPos(el);
+    el.classList.remove('sway');
+    var tw = it[3], sc = tw / +el.dataset.w;
+    $('#scene').appendChild(el); el.style.left = (from.x - el._g.w / 2) + 'px'; el.style.top = from.y + 'px'; el.style.zIndex = it[4];
+    var dx = (it[1] + tw / 2) - from.x, dy = it[2] - 38 * sc - from.y;
+    var a = el.animate([
+      {transform:'translate(0,0) rotateY(-24deg) scale(1)', offset:0},
+      {transform:'translate(0,-70px) rotateY(0deg) scale(1.08)', offset:.22},
+      {transform:'translate(' + (dx * .55) + 'px,' + (dy - 160) + 'px) rotateY(200deg) rotateZ(-6deg) scale(' + ((1 + sc) / 2) + ')', offset:.62},
+      {transform:'translate(' + dx + 'px,' + dy + 'px) rotateY(360deg) scale(' + sc + ')', offset:1}
+    ], {duration:reduce ? 1 : 1500, easing:'cubic-bezier(.45,.05,.2,1)', fill:'forwards'});
+    var h = $('.hang', el).animate([{opacity:1},{opacity:0}], {duration:500, delay:500, fill:'forwards'});
+    anims.push(a, h);
+    $('#stepLab').textContent = '0' + (i + 1) + ' — DRESS';
+    await wait(reduce ? 50 : 1250); if (my !== runId) return;
+  }
+  await wait(600); if (my !== runId) return;
+  $('#stepLab').textContent = '04 — GENERATE';
+  var scan = $('#scan'); scan.classList.remove('go'); void scan.offsetWidth; scan.classList.add('go');
+  await wait(1100); if (my !== runId) return;
+  S.items.forEach(function(it){ anims.push(gEls[it[0]].animate([{opacity:1},{opacity:0}], {duration:500, fill:'forwards'})); });
+  $('.manq').style.opacity = 0; $('#reveal').classList.add('on'); $('#ready').classList.add('on');
+  $('#stepLab').textContent = '05 — YOUR LOOK';
+  await wait(3600); if (my !== runId) return;
+  setIdx = (setIdx + 1) % SETS.length; updateSetChips(); running = false;
+  if (inView) play();
+}
+function updateSetChips(){ $$('[data-set]').forEach(function(b){ b.setAttribute('aria-pressed', +b.dataset.set === setIdx); }); }
+$$('[data-set]').forEach(function(b){ b.addEventListener('click', function(){ setIdx = +b.dataset.set; updateSetChips(); play(); }); });
+$('#replay').addEventListener('click', function(){ play(); });
+var inView = false;
+new IntersectionObserver(function(es){ es.forEach(function(e){ inView = e.isIntersecting; if (inView && !running) play(); }); }, {threshold:.35}).observe($('#fit3d'));
+$('.manq').style.transition = 'opacity .6s';
+
+/* ---------- shop ---------- */
+var shopState = {sub:'', size:''};
+function renderShop(arg){
+  var parts = arg.split('-'), d = parts[0], sub = parts[1] || '';
+  var D = DEPTS[d]; shopState.d = d; shopState.sub = sub;
+  $('#shopTitle').textContent = D ? D.fa : 'همهٔ محصولات'; $('#shopLat').textContent = D ? D.en : 'All';
+  $('#shopCrumb').textContent = D ? D.fa : 'همه';
+  var subs = D ? [['', 'همه']].concat(D.subs) : [['', 'همه']];
+  $('#subChips').innerHTML = subs.map(function(s){ return '<a class="chip' + (s[0] === sub ? ' on' : '') + '" href="#shop-' + d + (s[0] ? '-' + s[0] : '') + '">' + s[1] + '</a>'; }).join('');
+  var sz = D ? SIZES[d] : SIZES.w;
+  $('#sizeChips').innerHTML = (sz.length > 1 ? sz.slice(0, 4) : []).map(function(s){ return '<button type="button" class="chip" aria-pressed="' + (shopState.size === s) + '" data-fs="' + s + '">' + s + '</button>'; }).join('');
+  drawShop();
+}
+function drawShop(){
+  var list = P.filter(function(p){ return (!DEPTS[shopState.d] || p.d === shopState.d) && (!shopState.sub || p.s === shopState.sub); });
+  var so = $('#sort').value; if (so === 'asc') list = list.slice().sort(function(a, b){ return a.p - b.p; }); if (so === 'desc') list = list.slice().sort(function(a, b){ return b.p - a.p; });
+  if (list.length) renderInto($('#shopGrid'), list); else $('#shopGrid').innerHTML = '<div class="empty">در این زیرمجموعه هنوز محصولی نیست.</div>';
+  $('#shopCount').textContent = fa(list.length) + ' محصول';
+}
+$('#sort').addEventListener('change', drawShop);
+$('#sizeChips').addEventListener('click', function(e){ var b = e.target.closest('[data-fs]'); if (!b) return; shopState.size = shopState.size === b.dataset.fs ? '' : b.dataset.fs; $$('[data-fs]').forEach(function(x){ x.setAttribute('aria-pressed', x.dataset.fs === shopState.size); }); });
+
+/* ---------- product ---------- */
+var cur = null, curSize = '', curColor = 0;
+function renderProduct(id){
+  cur = byId[id]; curSize = ''; curColor = 0;
+  var D = DEPTS[cur.d];
+  $('#pCrumb').innerHTML = '<a href="#home">خانه</a><span>/</span><a href="#shop-' + cur.d + '">' + D.fa + '</a><span>/</span><span>' + cur.n + '</span>';
+  $('#pName').textContent = cur.n; $('#pLat').textContent = cur.en; $('#pPrice').textContent = '$' + cur.p; $('#pDesc').textContent = cur.desc;
+  $('#sbName').textContent = cur.n; $('#sbPrice').textContent = '$' + cur.p;
+  $('#pSw').innerHTML = cur.c.map(function(c, i){ return '<button type="button" aria-pressed="' + (i === 0) + '" aria-label="' + c[1] + '" data-pc="' + i + '" style="background:' + c[0] + '"></button>'; }).join('');
+  var sz = SIZES[cur.d];
+  $('#pSizes').innerHTML = sz.map(function(s, i){ return '<button type="button" aria-pressed="false" data-ps="' + s + '"' + (i === sz.length - 1 && sz.length > 1 ? ' disabled' : '') + '>' + s + '</button>'; }).join('');
+  $('#pSizes').style.gridTemplateColumns = 'repeat(' + Math.min(sz.length, 5) + ',minmax(0,1fr))';
+  if (sz.length === 1) curSize = sz[0];
+  $('.round[data-like]').setAttribute('data-like', cur.id); $('.round[data-like]').setAttribute('aria-pressed', !!liked[cur.id]);
+  drawGallery(); updateAdd();
+  var rel = P.filter(function(p){ return p.id !== cur.id && (p.d === cur.d || p.d === 'a'); }).slice(0, 4);
+  renderInto($('#related'), rel);
+}
+function drawGallery(){
+  var c = cur.c[curColor], imgs = [[c[2], 'p']];
+  if (cur.alt) imgs.unshift([cur.alt, 'p']);
+  if (IMG['cut/' + cur.id] && curColor === 0) imgs.push(['cut/' + cur.id, 'cut']);
+  cur.c.forEach(function(o, i){ if (i !== curColor) imgs.push([o[2], 'p']); });
+  $('#shots').innerHTML = imgs.map(function(im, i){ return '<div class="shot' + (im[1] === 'cut' ? ' cut' : '') + '" id="shot' + i + '" data-zoom="' + im[0] + '"><img src="' + IMG[im[0]] + '" alt="' + cur.n + '، تصویر ' + fa(i + 1) + '"><span class="zoom" aria-hidden="true"><svg class="i" style="width:18px;height:18px"><use href="#i-zoom"/></svg></span></div>'; }).join('');
+  $('#thumbs').innerHTML = imgs.map(function(im, i){ return '<button type="button" aria-pressed="' + (i === 0) + '" aria-label="تصویر ' + fa(i + 1) + '" data-shot="' + i + '"><img src="' + IMG[im[0]] + '" alt=""></button>'; }).join('');
+  $('#pColor').textContent = c[1];
+}
+function updateAdd(){
+  var t = curSize ? 'افزودن به سبد — ' + curSize : 'سایز را انتخاب کن';
+  $('#pAdd').textContent = t; $('#sbAdd').textContent = curSize ? 'افزودن — ' + curSize : 'انتخاب سایز';
+  $('#pSize').textContent = curSize || '—';
+}
+$('#pSizes').addEventListener('click', function(e){ var b = e.target.closest('[data-ps]'); if (!b || b.disabled) return; curSize = b.dataset.ps; $$('[data-ps]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); updateAdd(); });
+$('#pSw').addEventListener('click', function(e){ var b = e.target.closest('[data-pc]'); if (!b) return; curColor = +b.dataset.pc; $$('[data-pc]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); drawGallery(); });
+$('#thumbs').addEventListener('click', function(e){ var b = e.target.closest('[data-shot]'); if (!b) return; $$('#thumbs button').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); $('#shot' + b.dataset.shot).scrollIntoView({behavior:'smooth', block:'start'}); });
+$('#shots').addEventListener('click', function(e){ var s = e.target.closest('[data-zoom]'); if (!s) return; $('#lbImg').src = IMG[s.dataset.zoom]; $('#lb').classList.add('on'); });
+$('#lbX').addEventListener('click', function(){ $('#lb').classList.remove('on'); });
+$('#lb').addEventListener('click', function(e){ if (e.target === this) this.classList.remove('on'); });
+function pdpAdd(){ if (!curSize){ $('#pSizes').animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}], {duration:300}); $('#pSizes').scrollIntoView({behavior:'smooth', block:'center'}); return; } addCart(cur.id, curSize); }
+$('#pAdd').addEventListener('click', pdpAdd); $('#sbAdd').addEventListener('click', pdpAdd);
+$('#openGuide').addEventListener('click', function(){ $('#dGuide').open = true; $('#dGuide').scrollIntoView({behavior:'smooth', block:'center'}); });
+
+/* ---------- cart ---------- */
+function addCart(id, size, silent){
+  var ex = cart.filter(function(c){ return c.id === id && c.size === size; })[0];
+  if (ex) ex.q++; else cart.push({id:id, size:size, q:1});
+  drawCart(); if (!silent){ toast(byId[id].n + ' (' + size + ') به سبد اضافه شد'); }
+  $('#bagN').animate([{transform:'scale(1)'},{transform:'scale(1.5)'},{transform:'scale(1)'}], {duration:400});
+}
+function drawCart(){
+  var n = 0, sum = 0;
+  $('#cartList').innerHTML = cart.length ? cart.map(function(c, i){ var p = byId[c.id]; n += c.q; sum += c.q * p.p;
+    return '<div class="ci"><div class="im"><img src="' + IMG[p.c[0][2]] + '" alt=""></div><div class="tx"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-weight:500">' + p.n + '</b><span class="price">$' + (p.p * c.q) + '</span></div><small>سایز ' + c.size + ' · ' + p.c[0][1] + '</small><div style="display:flex;justify-content:space-between;align-items:center"><div class="qty"><button type="button" aria-label="کم کردن" data-qd="' + i + '">−</button><span>' + c.q + '</span><button type="button" aria-label="زیاد کردن" data-qi="' + i + '">+</button></div><button type="button" class="rm" data-rm="' + i + '">حذف</button></div></div></div>'; }).join('') : '<p style="padding:40px 0;text-align:center;color:var(--stone)">سبدت خالی است.</p>';
+  $('#bagN').textContent = fa(n); $('#cartN').textContent = fa(n); $('#cartSum').textContent = '$' + sum;
+}
+$('#cartList').addEventListener('click', function(e){ var t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.qi) cart[+t.dataset.qi].q++;
+  if (t.dataset.qd){ var c = cart[+t.dataset.qd]; c.q--; if (!c.q) cart.splice(+t.dataset.qd, 1); }
+  if (t.dataset.rm) cart.splice(+t.dataset.rm, 1);
+  drawCart();
+});
+drawCart();
+
+/* ---------- overlays ---------- */
+function openP(id){ closeAll(); var el = $('#' + id); el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); if (id !== 'search') $('#scrim').classList.add('on'); if (id === 'search'){ setTimeout(function(){ $('#q').focus(); }, 300); drawSearch(''); } }
+function closeAll(){ $$('.drawer,.search').forEach(function(d){ d.classList.remove('on'); d.setAttribute('aria-hidden', 'true'); }); $('#scrim').classList.remove('on'); }
+$$('[data-open]').forEach(function(b){ b.addEventListener('click', function(){ openP(b.dataset.open); }); });
+$('#scrim').addEventListener('click', closeAll);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape'){ closeAll(); $('#lb').classList.remove('on'); } });
+function drawSearch(q){
+  var list = q ? P.filter(function(p){ return p.n.indexOf(q) > -1 || p.en.toLowerCase().indexOf(q.toLowerCase()) > -1 || DEPTS[p.d].fa.indexOf(q) > -1; }) : P.slice(0, 6);
+  $('#sres').innerHTML = list.slice(0, 6).map(function(p){ return '<a href="#product-' + p.id + '" data-close><div class="im"><img src="' + IMG[p.c[0][2]] + '" alt=""></div><span>' + p.n + '</span><span class="price">$' + p.p + '</span></a>'; }).join('') || '<p style="grid-column:1/-1;color:var(--stone)">چیزی پیدا نشد؛ کلمهٔ کوتاه‌تری امتحان کن.</p>';
+}
+$('#q').addEventListener('input', function(){ drawSearch(this.value.trim()); });
+$$('[data-q]').forEach(function(b){ b.addEventListener('click', function(){ $('#q').value = b.dataset.q; drawSearch(b.dataset.q); }); });
+var tt; function toast(t){ $('#toastT').textContent = t; $('#toast').classList.add('on'); clearTimeout(tt); tt = setTimeout(function(){ $('#toast').classList.remove('on'); }, 2600); }
+
+/* ---------- global delegated clicks ---------- */
+document.addEventListener('click', function(e){
+  var c = e.target.closest('[data-close]'); if (c){ closeAll(); }
+  var lk = e.target.closest('[data-like]');
+  if (lk){ var id = lk.dataset.like; liked[id] = !liked[id]; if (!liked[id]) delete liked[id]; $$('[data-like="' + id + '"]').forEach(function(x){ x.setAttribute('aria-pressed', !!liked[id]); }); toast(liked[id] ? 'به علاقه‌مندی‌ها اضافه شد' : 'از علاقه‌مندی‌ها حذف شد'); return; }
+  var q = e.target.closest('[data-quick]');
+  if (q && !q.disabled){ addCart(q.dataset.quick, q.dataset.size); return; }
+  var sw = e.target.closest('[data-swatch]');
+  if (sw){ var pc = sw.closest('.pc'); $$('[data-swatch]', pc).forEach(function(x){ x.setAttribute('aria-pressed', x === sw); }); var mi = $('.im img', pc); mi.src = mi.classList.contains('cutimg') && IMG['cut/' + sw.dataset.swatch] ? IMG['cut/' + sw.dataset.swatch] : IMG[sw.dataset.swatch]; return; }
+  var ls = e.target.closest('[data-ls]');
+  if (ls){ var i = +ls.dataset.ls; lookSz[i] = ls.dataset.size; renderLook(); return; }
+  var tag = e.target.closest('.tags .chip');
+  if (tag){ var single = tag.parentNode.id === 'szTags'; if (single) $$('.chip', tag.parentNode).forEach(function(x){ x.setAttribute('aria-pressed', x === tag); }); else tag.setAttribute('aria-pressed', tag.getAttribute('aria-pressed') !== 'true'); }
+});
+
+/* ---------- account + profile ---------- */
+var THEMES = {women:['Rosé','look-women-knit'], men:['Slate','look-men'], neutral:['Sand','accessories-scarf']};
+function setTheme(g){ theme = g; $('#acct').dataset.theme = g; $('#prof').dataset.theme = g;
+  $$('[data-g]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.g === g); });
+  var im = $('#acctImg'); im.style.opacity = 0; setTimeout(function(){ im.src = IMG[THEMES[g][1]]; im.style.opacity = 1; }, 250);
+  $('#themeName').textContent = 'تم ' + THEMES[g][0];
+}
+function view(n){ $$('.view').forEach(function(v, i){ v.classList.toggle('on', i === n - 1); }); ['s1','s2','s3'].forEach(function(s, i){ $('#' + s).classList.toggle('on', i < n); }); }
+$('#toOtp').addEventListener('click', function(){ var v = $('#em').value.trim() || 'name@example.com'; $('#emShow').textContent = v; view(2); setTimeout(function(){ $('#otp input').focus(); }, 100); countdown(); });
+var otps = $$('#otp input');
+otps.forEach(function(inp, i){ inp.addEventListener('input', function(){ inp.value = inp.value.replace(/\D/g, '').slice(-1); if (inp.value && otps[i + 1]) otps[i + 1].focus(); });
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Backspace' && !inp.value && otps[i - 1]) otps[i - 1].focus(); }); });
+$('#toProf').addEventListener('click', function(){ view(3); });
+$$('[data-back]').forEach(function(b){ b.addEventListener('click', function(){ view(+b.dataset.back); }); });
+$$('#gsel [data-g], .themes [data-g]').forEach(function(b){ b.addEventListener('click', function(){ setTheme(b.dataset.g); }); });
+$('#done').addEventListener('click', function(){ userName = $('#nm').value.trim() || 'مهمان'; location.hash = '#profile'; toast('پروفایلت ساخته شد'); });
+var cd; function countdown(){ var t = 45; clearInterval(cd); cd = setInterval(function(){ t--; $('#resend').textContent = t > 0 ? 'ارسال دوباره تا ۰:' + fa(t < 10 ? '0' + t : t) : ''; if (t <= 0){ clearInterval(cd); $('#resend').innerHTML = '<button type="button" class="lnk">ارسال دوباره کد</button>'; } }, 1000); }
+function renderProfile(){
+  $('#pName2').textContent = userName; $('#avaL').textContent = userName.charAt(0);
+  renderInto($('#wishGrid'), Object.keys(liked).map(function(id){ return byId[id]; }));
+}
+$$('.pnav button').forEach(function(b){ b.addEventListener('click', function(){ $$('.pnav button').forEach(function(x){ x.setAttribute('aria-current', x === b); }); }); });
+setTheme('neutral'); $('#prof').dataset.theme = 'women'; theme = 'women';
+$$('.themes [data-g]').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.g === 'women'); });
+$('#themeName').textContent = 'تم Rosé';
+$('#gsel [data-g="neutral"]').setAttribute('aria-pressed', 'true');
+
+/* ===================== v3 additions ===================== */
+
+/* loader */
+window.addEventListener('load', function(){ setTimeout(function(){ $('#loader').classList.add('out'); }, reduce ? 0 : 1500); });
+setTimeout(function(){ $('#loader').classList.add('out'); }, 3500);
+
+/* split hero titles into letters */
+$$('.slide h1, .slide h2').forEach(function(h){
+  h.classList.add('split'); var i = 0;
+  (function walk(node){ Array.prototype.slice.call(node.childNodes).forEach(function(n){
+    if (n.nodeType === 3){ var frag = document.createDocumentFragment(); n.textContent.split('').forEach(function(c){ if (c === ' '){ frag.appendChild(document.createTextNode(' ')); return; } var s = document.createElement('span'); s.className = 'ch'; s.textContent = c; s.style.transitionDelay = (0.15 + i++ * 0.035) + 's'; frag.appendChild(s); }); node.replaceChild(frag, n); }
+    else if (n.nodeType === 1) walk(n);
+  }); })(h);
+});
+
+/* crossing bands */
+(function(){
+  var star = '<svg viewBox="0 0 24 24"><path d="M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6Z"/></svg>';
+  var a = ['MODA4', 'Autumn / Winter 26', 'Women', 'Men', 'Kids', 'Accessories', 'Try before you buy'];
+  var b = ['FREE TRY-ON', 'IRAN', 'TÜRKİYE', 'CANADA', 'NEW SEASON', 'FOUR WORLDS'];
+  function row(list){ var s = list.map(function(w){ return '<span>' + w + '</span>' + star; }).join(''); return s + s + s + s; }
+  $('#tkA').innerHTML = row(a); $('#tkB').innerHTML = row(b);
+})();
+
+/* scroll reveal */
+var rvObs = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); rvObs.unobserve(e.target); } }); }, {threshold:.12});
+function observeRv(){ $$('[data-rv]:not(.in)').forEach(function(el){ rvObs.observe(el); }); }
+observeRv();
+
+/* glare on product tilt */
+document.addEventListener('mousemove', function(e){
+  var im = e.target.closest && e.target.closest('.pc .im'); if (!im) return;
+  var r = im.getBoundingClientRect(); im.style.setProperty('--gx', ((e.clientX - r.left) / r.width * 100) + '%'); im.style.setProperty('--gy', ((e.clientY - r.top) / r.height * 100) + '%');
+});
+
+/* magnetic buttons */
+if (!reduce && matchMedia('(hover:hover)').matches){
+  document.addEventListener('mousemove', function(e){
+    var b = e.target.closest && e.target.closest('.cbtn'); $$('.cbtn.mag').forEach(function(x){ if (x !== b){ x.classList.remove('mag'); x.style.translate = ''; } });
+    if (!b || b.disabled) return; var r = b.getBoundingClientRect();
+    b.classList.add('mag'); b.style.translate = ((e.clientX - r.left - r.width / 2) * .18) + 'px ' + ((e.clientY - r.top - r.height / 2) * .3) + 'px';
+  });
+}
+
+/* hero image scroll parallax */
+window.addEventListener('scroll', function(){ if (current !== 'home' || reduce) return; var y = window.scrollY; if (y > 1000) return; $$('.slide.on picture img').forEach(function(im){ im.style.translate = '0 ' + (y * .18) + 'px'; }); }, {passive:true});
+
+/* four worlds prism */
+(function(){
+  var prism = $('#prism'), stage = $('#prismStage'), idx = 0, ang = 0, timer;
+  var go = [['#shop-w','ورود به دنیای زنانه'],['#shop-m','ورود به دنیای مردانه'],['#shop-k','ورود به دنیای بچگانه'],['#shop-a','دیدن اکسسوری']];
+  function layout(){
+    var w = prism.offsetWidth, h = prism.offsetHeight;
+    $$('.face', prism).forEach(function(f, i){ f.style.transform = 'rotateY(' + (i * 90) + 'deg) translateZ(' + (w / 2) + 'px)'; });
+    var c = $('.cap-t', prism); c.style.width = c.style.height = w + 'px'; c.style.top = ((h - w) / 2) + 'px'; c.style.transform = 'rotateX(90deg) translateZ(' + (h / 2) + 'px)';
+    set();
+  }
+  function set(){ prism.style.transform = 'rotateX(-9deg) rotateY(' + ang + 'deg)'; var i = ((Math.round(-ang / 90) % 4) + 4) % 4; idx = i;
+    $$('#tabs4 .chip').forEach(function(c, j){ c.classList.toggle('on', j === i); }); $('#w4go').href = go[i][0]; $('#w4go').textContent = go[i][1]; }
+  function to(i){ var cur = Math.round(-ang / 90); var target = i; var d = ((target - cur) % 4 + 4) % 4; if (d === 3) d = -1; ang = -(cur + d) * 90; set(); }
+  function auto(){ clearInterval(timer); timer = setInterval(function(){ if (current === 'home' && !document.hidden && !reduce) { ang -= 90; set(); } }, 3800); }
+  $$('#tabs4 .chip').forEach(function(c){ c.addEventListener('click', function(){ to(+c.dataset.f); auto(); }); });
+  var sx = null, base = 0, moved = false;
+  stage.addEventListener('pointerdown', function(e){ sx = e.clientX; base = ang; moved = false; prism.classList.add('drag'); clearInterval(timer); });
+  window.addEventListener('pointermove', function(e){ if (sx === null) return; var dx = e.clientX - sx; if (Math.abs(dx) > 5) moved = true; ang = base + dx * .45; set(); });
+  window.addEventListener('pointerup', function(){ if (sx === null) return; sx = null; prism.classList.remove('drag'); ang = Math.round(ang / 90) * 90; set(); auto(); });
+  stage.addEventListener('click', function(e){ if (moved){ e.preventDefault(); e.stopPropagation(); } }, true);
+  stage.addEventListener('mouseenter', function(){ clearInterval(timer); }); stage.addEventListener('mouseleave', auto);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(prism); layout(); auto();
+})();
+
+/* kids turntable (billboarded items on a rotating ring) */
+(function(){
+  var items = [['kids-dress','پیراهن نیلوفر',42,'#E4DAF7'],['kids-hoodie','هودی رایان',32,'#FFDCCB'],['kids-knit','ژاکت بافت باران',38,'#CFEEDF'],['kids-set','ست راحتی نیلا',48,'#CFE4F8'],['kids-hoodie-sage','هودی رایان · مریم‌گلی',32,'#F8D7E3'],['kids-trousers','شلوار نرم آریو',28,'#FFF0B3']];
+  var ring = $('#ttRing'), n = items.length, a = 0, speed = .14, paused = false;
+  ring.innerHTML = items.map(function(it){ var pid = it[0] === 'kids-hoodie-sage' ? 'kids-hoodie' : it[0];
+    return '<a class="tt-item" href="#product-' + pid + '" style="--c:' + it[3] + '"><img src="' + IMG['cut/' + it[0]] + '" alt="' + it[1] + '" draggable="false"><span class="pod"></span><span class="ttl">' + it[1] + '<b>$' + it[2] + '</b></span></a>'; }).join('');
+  var els = $$('.tt-item', ring);
+  function R(){ return window.innerWidth < 760 ? 120 : 270; }
+  function frame(){
+    if (!paused && current === 'home' && !reduce) a += speed;
+    els.forEach(function(el, i){ var t = i * 360 / n + a, rad = t * Math.PI / 180, z = Math.cos(rad);
+      el.style.transform = 'rotateY(' + t + 'deg) translateZ(' + R() + 'px) rotateY(' + (-t) + 'deg) scale(' + (0.82 + z * .18) + ')';
+      el.style.zIndex = Math.round(z * 100) + 100; el.style.filter = z < -0.2 ? 'saturate(.7) brightness(1.04)' : 'none'; el.style.opacity = .55 + (z + 1) * .225; });
+    requestAnimationFrame(frame);
+  }
+  $('#tt').addEventListener('mouseenter', function(){ paused = true; }); $('#tt').addEventListener('mouseleave', function(){ paused = false; });
+  var sx = null, base = 0;
+  $('#tt').addEventListener('pointerdown', function(e){ sx = e.clientX; base = a; });
+  window.addEventListener('pointermove', function(e){ if (sx !== null) a = base + (e.clientX - sx) * .3; });
+  window.addEventListener('pointerup', function(){ sx = null; });
+  frame();
+})();
+
+/* ===================== layered try-on ===================== */
+/* garment geometry in mannequin units (viewBox 220x560): [slot, top y, width, center x offset, z] */
+var GEO = {
+  'women-knit':['top',98,190,0,2], 'women-tee':['top',100,172,0,2], 'women-trousers':['bottom',290,112,0,1], 'women-coat':['outer',90,182,0,3], 'women-dress':['dress',94,186,0,2],
+  'men-shirt':['top',94,202,0,2], 'men-tee':['top',100,176,0,2], 'men-knit':['top',96,198,0,2], 'men-hoodie':['top',70,198,0,2], 'men-chino':['bottom',292,106,0,1],
+  'kids-knit':['top',100,200,0,2], 'kids-hoodie':['top',80,204,0,2], 'kids-hoodie-sage':['top',80,204,0,2], 'kids-dress':['dress',96,232,0,2], 'kids-set':['dress',92,232,0,2], 'kids-trousers':['bottom',292,140,0,1],
+  'accessories-bag':['bag',208,86,74,5], 'accessories-scarf':['scarf',94,112,0,4], 'accessories-cap':['hat',-2,80,4,5]
+};
+var SLOTNAME = {top:'بالاتنه', bottom:'پایین‌تنه', dress:'پیراهن / ست', outer:'رو', scarf:'شال', bag:'کیف', hat:'کلاه'};
+var AV = {
+  w:{items:['women-knit','women-tee','women-coat','women-dress','women-trousers','accessories-bag','accessories-scarf','accessories-cap'], ai:function(s){ return s.indexOf('women-coat') > -1 ? 'look-women-coat' : 'look-women-knit'; }, scale:1},
+  m:{items:['men-shirt','men-tee','men-knit','men-hoodie','men-chino','accessories-scarf','accessories-cap'], ai:function(){ return 'look-men'; }, scale:1},
+  k:{items:['kids-knit','kids-hoodie','kids-hoodie-sage','kids-dress','kids-set','kids-trousers','accessories-cap'], ai:function(s){ return (s.indexOf('kids-dress') > -1) ? 'look-girl' : 'look-kids'; }, scale:.74}
+};
+var WARDROBE = {w:['women-coat','accessories-bag'], m:['men-tee'], k:['kids-knit']};
+var av = 'w', sel = [], tsrc = 0, slotFilter = '', rotY = 0, sizes = {};
+function pidOf(id){ return id === 'kids-hoodie-sage' ? 'kids-hoodie' : id; }
+function drawTry(){
+  var A = AV[av], list = (tsrc ? WARDROBE[av] : A.items).filter(function(id){ return !slotFilter || GEO[id][0] === slotFilter || (slotFilter === 'acc' && ['bag','scarf','hat'].indexOf(GEO[id][0]) > -1); });
+  var slots = [['', 'همه']]; ['top','bottom','dress','outer'].forEach(function(s){ if (A.items.some(function(id){ return GEO[id][0] === s; })) slots.push([s, SLOTNAME[s]]); }); slots.push(['acc', 'اکسسوری']);
+  $('#slotf').innerHTML = slots.map(function(s){ return '<button type="button" class="chip' + (s[0] === slotFilter ? ' on' : '') + '" data-sf="' + s[0] + '">' + s[1] + '</button>'; }).join('');
+  $('#tgrid').innerHTML = list.map(function(id){ var p = byId[pidOf(id)], on = sel.indexOf(id) > -1;
+    return '<button type="button" class="ti" aria-pressed="' + on + '" data-ti="' + id + '"><em>' + SLOTNAME[GEO[id][0]] + '</em><div class="im"><img src="' + IMG['cut/' + id] + '" alt=""></div><span>' + p.n + (id === 'kids-hoodie-sage' ? ' · مریم‌گلی' : '') + '</span><small>$' + p.p + '</small></button>'; }).join('') || '<p class="hint" style="grid-column:1/-1">در کمد تو برای این بخش هنوز چیزی نیست.</p>';
+  drawSel();
+}
+function drawLayers(added){
+  var A = AV[av], k = A.scale, lay = $('#lay');
+  var keep = {}; $$('img', lay).forEach(function(im){ if (sel.indexOf(im.dataset.id) < 0){ im.classList.add('out'); setTimeout(function(){ im.remove(); }, 340); } else keep[im.dataset.id] = im; });
+  sel.forEach(function(id){
+    var g = GEO[id], im = keep[id];
+    if (!im){ im = document.createElement('img'); im.src = IMG['cut/' + id]; im.alt = byId[pidOf(id)].n; im.dataset.id = id; lay.appendChild(im); }
+    var w = g[2] * k, cx = 110 + g[3] * k, top = 560 - (560 - g[1]) * k;
+    im.style.width = w + 'px'; im.style.left = (cx - w / 2) + 'px'; im.style.top = top + 'px'; im.style.zIndex = g[4];
+    im.style.transform = 'translateZ(' + (g[4] * 9) + 'px)';
+  });
+  $('#mBody').style.transform = 'scale(' + k + ')';
+  $('#emptyHint').style.opacity = sel.length ? 0 : 1;
+}
+function drawSel(){
+  var sum = 0;
+  $('#selList').innerHTML = sel.map(function(id){ var p = byId[pidOf(id)]; sum += p.p; var sz = SIZES[p.d], cur = sizes[id] || (sz.length > 1 ? sz[1] : sz[0]); sizes[id] = cur;
+    return '<div class="srow"><div class="im"><img src="' + IMG['cut/' + id] + '" alt=""></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><b style="font-weight:500">' + p.n + '</b><span class="price" style="color:var(--stone)">$' + p.p + ' · ' + SLOTNAME[GEO[id][0]] + '</span></div><label class="sr" for="sz-' + id + '">سایز</label><select id="sz-' + id + '" data-szs="' + id + '">' + sz.map(function(s){ return '<option' + (s === cur ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select><button type="button" class="x" aria-label="حذف ' + p.n + '" data-rmsel="' + id + '"><svg class="i" style="width:16px;height:16px"><use href="#i-x"/></svg></button></div>'; }).join('') || '<p class="hint" style="margin:0">هنوز قطعه‌ای انتخاب نکرده‌ای.</p>';
+  $('#selSum').textContent = '$' + sum; $('#selN').textContent = sel.length ? fa(sel.length) + ' قطعه' : '';
+  $('#pickN').textContent = sel.length + ' / 4';
+  $('#addAll').disabled = !sel.length; $('#saveLook').disabled = !sel.length; $('#aiGo').disabled = !sel.length || coins < 1;
+  $('#coinN').textContent = fa(coins); $('#coinP').textContent = fa(coins);
+}
+function toggle(id){
+  var i = sel.indexOf(id);
+  if (i > -1) sel.splice(i, 1);
+  else {
+    var s = GEO[id][0];
+    sel = sel.filter(function(x){ var t = GEO[x][0]; if (t === s) return false; if (s === 'dress' && (t === 'top' || t === 'bottom')) return false; if ((s === 'top' || s === 'bottom') && t === 'dress') return false; return true; });
+    if (sel.length >= 4){ toast('حداکثر چهار قطعه — یکی را بردار'); return; }
+    sel.push(id);
+  }
+  $('#aiOut').classList.remove('on'); drawTry(); drawLayers();
+}
+function setAv(a){ av = a; sel = []; slotFilter = ''; $$('#avs .chip').forEach(function(c){ c.setAttribute('aria-pressed', c.dataset.av === a); }); $('#tstage').classList.toggle('kid', a === 'k'); $('#aiOut').classList.remove('on'); drawTry(); drawLayers(); }
+function setRot(d){ rotY = Math.max(-55, Math.min(55, d)); var s = window.innerWidth < 760 ? ' scale(.88)' : ''; $('#turn').style.transform = 'rotateY(' + rotY + 'deg)' + s; }
+$('#tgrid').addEventListener('click', function(e){ var b = e.target.closest('[data-ti]'); if (b) toggle(b.dataset.ti); });
+$('#slotf').addEventListener('click', function(e){ var b = e.target.closest('[data-sf]'); if (!b) return; slotFilter = b.dataset.sf; drawTry(); });
+$('#selList').addEventListener('click', function(e){ var b = e.target.closest('[data-rmsel]'); if (b) toggle(b.dataset.rmsel); });
+$('#selList').addEventListener('change', function(e){ var s = e.target.closest('[data-szs]'); if (s) sizes[s.dataset.szs] = s.value; });
+$$('#avs .chip').forEach(function(c){ c.addEventListener('click', function(){ setAv(c.dataset.av); }); });
+$$('[data-src]').forEach(function(b){ b.addEventListener('click', function(){ tsrc = +b.dataset.src; $$('[data-src]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); drawTry(); }); });
+$('#clearAll').addEventListener('click', function(){ sel = []; drawTry(); drawLayers(); $('#aiOut').classList.remove('on'); });
+$('#rotL').addEventListener('click', function(){ setRot(rotY - 25); }); $('#rotR').addEventListener('click', function(){ setRot(rotY + 25); }); $('#rot0').addEventListener('click', function(){ setRot(0); });
+(function(){ var st = $('#tstage'), sx = null, base = 0;
+  st.addEventListener('pointerdown', function(e){ if (e.target.closest('button')) return; sx = e.clientX; base = rotY; st.classList.add('drag'); });
+  window.addEventListener('pointermove', function(e){ if (sx !== null) setRot(base + (e.clientX - sx) * .35); });
+  window.addEventListener('pointerup', function(){ if (sx === null) return; sx = null; st.classList.remove('drag'); });
+})();
+$('#addAll').addEventListener('click', function(){ sel.forEach(function(id){ addCart(pidOf(id), sizes[id], true); }); toast(fa(sel.length) + ' قطعه به سبد اضافه شد'); });
+$('#saveLook').addEventListener('click', function(){ toast('این ترکیب در «کمد من» ذخیره شد'); });
+$$('[data-mode]').forEach(function(b){ b.addEventListener('click', function(){ $$('[data-mode]').forEach(function(x){ x.setAttribute('aria-pressed', x === b); }); if (b.dataset.mode === 'ai'){ if (sel.length) runAi(); else toast('اول چند قطعه انتخاب کن'); } else $('#aiOut').classList.remove('on'); }); });
+function runAi(){
+  if (coins < 1){ toast('سکه کافی نیست'); return; }
+  var st = $('#tstage'); st.classList.add('busy'); $('#aiGo').disabled = true;
+  setTimeout(function(){ st.classList.remove('busy'); coins--; $('#aiImg').src = IMG[AV[av].ai(sel)]; $('#aiOut').classList.add('on'); drawSel(); toast('نمای واقعی ساخته شد — یک سکه مصرف شد'); }, reduce ? 10 : 2400);
+}
+$('#aiGo').addEventListener('click', runAi);
+$('#aiClose').addEventListener('click', function(){ $('#aiOut').classList.remove('on'); $$('[data-mode]').forEach(function(x){ x.setAttribute('aria-pressed', x.dataset.mode === 'instant'); }); });
+setAv('w'); sel = ['women-knit','women-trousers']; drawTry(); drawLayers(); setRot(-14);
+
+route();
+})();
+</script>
+</body>
+</html>
