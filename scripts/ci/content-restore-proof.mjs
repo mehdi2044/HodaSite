@@ -13,7 +13,7 @@ try {
     const actor = await db.user.findFirstOrThrow({ where: { roles: { some: { role: { key: "owner" } } } } });
     const blocks = [{ type: "RichText", text: { fa: "پیش‌نویس آزمون بازگردانی", tr: "Geri yükleme taslağı", en: "Restore draft proof" } }];
     await db.$transaction(async tx => {
-      await tx.market.create({ data: { id, code: "CI-CONTENT-RESTORE", name: "Synthetic content restore fixture", currency: source.currency,
+      await tx.market.create({ data: { id, code: "CI-CONTENT-RESTORE", name: "Synthetic content restore fixture", isActive: false, currency: source.currency,
         defaultLocale: "en", enabledLocales: ["fa", "tr", "en"], roundingRule: source.roundingRule, holdHours: 1, paymentDeadlineHours: 1, fxMode: source.fxMode } });
       await tx.homepage.create({ data: { id, marketId: id, isPublished: false, version: 7,
         blocks: [], draftBlocks: blocks, draftRevisionId: revisionId, publishedRevisionId: null,

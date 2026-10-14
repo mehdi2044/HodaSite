@@ -25,6 +25,10 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
   const image = await db.media.findUniqueOrThrow({
     where: { id: "seed-fashion-v2-look-women-coat" },
   });
+  const observations: Record<string, unknown> = {
+    viewport: { width: 390, height: 844 },
+    previewEnabled: process.env.HODASITE_PREVIEW === "1",
+  };
   const shop = await context.newPage();
   try {
     await db.market.update({
@@ -142,6 +146,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect(
       page.getByLabel(`${en.scenes.title} — English`, { exact: true }),
     ).toHaveValue(titles.en);
+    const publishStarted = Date.now();
     await page
       .getByRole("button", { name: en.scenes.publishRevision, exact: true })
       .click();
@@ -157,11 +162,17 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect(shop.getByRole("heading", { name: titles.en })).toBeVisible({
       timeout: 15000,
     });
+    observations.publishToOpenStoreMs = Date.now() - publishStarted;
+    if (process.env.HODASITE_PREVIEW === "1")
+      expect(observations.publishToOpenStoreMs as number).toBeLessThanOrEqual(
+        5000,
+      );
     const scene = shop.getByTestId("shoppable-scene");
     await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
     await expect(
       scene.getByRole("button", { name: en.scenes.addScene }),
     ).toBeDisabled();
+    const priceStarted = Date.now();
     const beforePrice = await scene
       .locator(".scene-price-list strong")
       .first()
@@ -176,6 +187,8 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
         { timeout: 15000 },
       )
       .not.toBe(beforePrice);
+    observations.priceToOpenStoreMs = Date.now() - priceStarted;
+    expect(observations.priceToOpenStoreMs as number).toBeLessThanOrEqual(5000);
     // The readonly preview uses the same live resolver and refreshes open forms.
     await page
       .getByRole("combobox", { name: en.scenes.previewLanguage, exact: true })
@@ -227,14 +240,71 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
         path: info.outputPath(`r3-scene-${locale}-390.png`),
       });
     }
+    await shop.setViewportSize({ width: 1440, height: 1000 });
+    await shop.goto("/en/m/CA");
+    await expect(shop.getByRole("heading", { name: titles.en })).toBeVisible();
+    await shop.screenshot({ path: info.outputPath("r3-scene-en-1440.png") });
+    await page.bringToFront();
+    await page
+      .getByLabel(`${en.scenes.title} — English`, { exact: true })
+      .fill("Next revision proof");
+    await draftForm
+      .getByRole("button", { name: en.scenes.saveDraft, exact: true })
+      .click();
+    await expect(draftForm.locator(":scope > [role=status]")).toBeVisible();
+    const next = await db.homepage.findUniqueOrThrow({
+      where: { id: saved.id },
+    });
+    await page
+      .getByRole("button", { name: en.scenes.publishRevision, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.homepage.findUniqueOrThrow({ where: { id: saved.id } }))
+            .publishedRevisionId,
+      )
+      .toBe(next.draftRevisionId);
+    await page
+      .getByRole("combobox", { name: en.scenes.history, exact: true })
+      .selectOption(saved.draftRevisionId!);
+    await page
+      .getByRole("link", { name: en.scenes.previewRevision, exact: true })
+      .click();
+    await expect(
+      page.getByLabel(`${en.scenes.title} — English`, { exact: true }),
+    ).toHaveValue(titles.en);
+    await page
+      .getByRole("button", { name: en.scenes.publishRevision, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.homepage.findUniqueOrThrow({ where: { id: saved.id } }))
+            .publishedRevisionId,
+      )
+      .toBe(saved.draftRevisionId);
+    expect(
+      (
+        await db.cart.findUniqueOrThrow({
+          where: { tokenHash: tokenHash(cookie!.value) },
+          include: { items: true },
+        })
+      ).items,
+    ).toHaveLength(2);
+    await info.attach("r3-observations", {
+      body: Buffer.from(JSON.stringify(observations)),
+      contentType: "application/json",
+    });
+    await shop.setViewportSize({ width: 390, height: 844 });
     // A failed physical image has an explicit fallback and readable catalog list.
     await shop.route("**/media/**", (route) => route.abort());
     await shop.reload();
     await expect(
       shop
         .getByTestId("shoppable-scene")
-        .getByText(en.scenes.missingImage)
-        .first(),
+        .locator('[data-scene-frame="mobile"]')
+        .getByText(en.scenes.missingImage),
     ).toBeVisible();
     await expect(
       shop.getByTestId("shoppable-scene").locator(".scene-price-list article"),

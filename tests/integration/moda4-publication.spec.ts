@@ -21,6 +21,10 @@ const session = vi.hoisted(() => ({ actor: null as string | null }));
 vi.mock("@/modules/auth", () => ({
   auth: async () => (session.actor ? { user: { id: session.actor } } : null),
 }));
+import {
+  resolveShoppableScene,
+  scenePriceRange,
+} from "@/modules/content/scenes/resolve";
 import { POST as previewPOST } from "@/app/api/admin/scenes/preview/route";
 
 const text = { fa: "صحنهٔ آزمون", tr: "Sahne testi", en: "Scene proof" };
@@ -194,6 +198,84 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expectedVersion: edited.version,
       });
       expect((await row()).publishedRevisionId).toBe(edited.revisionId);
+    });
+    it("resolves actual size prices, current FX and live stock without invalidating photographed pixels", async () => {
+      const ca = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+      const current = await row();
+      const scene = (current.draftBlocks as unknown as HomepageBlock[]).flatMap(
+        (b) => ("scene" in b && b.scene ? [b.scene] : []),
+      )[0];
+      const variants = await db.variant.findMany({
+        where: { productId: "seed-style-v2-women-coat", isActive: true },
+        orderBy: { id: "asc" },
+      });
+      const stock = await db.stockItem.findMany({
+        where: { variantId: variants[0].id },
+      });
+      const override = await db.fxOverride.create({
+        data: {
+          marketId: ca.id,
+          rate: "1.12500001",
+          validFrom: new Date(Date.now() - 1000),
+          note: "Synthetic live scene FX proof",
+          createdBy: owner,
+        },
+      });
+      try {
+        await db.variant.update({
+          where: { id: variants[0].id },
+          data: { priceOverrideUsd: "51.1234" },
+        });
+        await db.variant.update({
+          where: { id: variants[1].id },
+          data: { priceOverrideUsd: "79.5678" },
+        });
+        const first = await resolveShoppableScene(scene, ca, "en");
+        expect(first.reason).toBe(null);
+        expect(first.currency).toBe(ca.currency);
+        const firstAmounts = first.pieces[0].variants
+          .filter((v) => v.available > 0)
+          .map((v) => v.amount!);
+        expect(new Set(firstAmounts).size).toBeGreaterThan(1);
+        expect(first.pieces[0].range).toEqual(scenePriceRange(firstAmounts));
+        await db.fxOverride.update({
+          where: { id: override.id },
+          data: { rate: "1.87500001" },
+        });
+        const repriced = await resolveShoppableScene(scene, ca, "en");
+        expect(repriced.reason).toBe(null);
+        expect(repriced.pieces[0].range).not.toEqual(first.pieces[0].range);
+        await db.stockItem.updateMany({
+          where: { variantId: variants[0].id },
+          data: { onHand: 0, reserved: 0 },
+        });
+        const unavailable = await resolveShoppableScene(scene, ca, "en");
+        expect(unavailable.reason).toBe(null);
+        expect(
+          unavailable.pieces[0].variants.find((v) => v.id === variants[0].id)
+            ?.available,
+        ).toBe(0);
+        expect(unavailable.pieces[0].range).toEqual(
+          scenePriceRange(
+            unavailable.pieces[0].variants
+              .filter((v) => v.available > 0)
+              .map((v) => v.amount!),
+          ),
+        );
+      } finally {
+        await db.fxOverride.delete({ where: { id: override.id } });
+        for (const variant of variants)
+          await db.variant.update({
+            where: { id: variant.id },
+            data: { priceOverrideUsd: variant.priceOverrideUsd },
+          });
+        for (const item of stock)
+          await db.stockItem.update({
+            where: { id: item.id },
+            data: { onHand: item.onHand, reserved: item.reserved },
+          });
+      }
+      expect((await row()).version).toBe(current.version);
     });
     it("serializes same-version drafts and denies an outside-market actor without revision/audit changes", async () => {
       const before = await row();

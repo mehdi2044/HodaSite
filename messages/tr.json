@@ -2553,6 +2553,8 @@
     "labelSide": "Fiyat etiketi tarafı",
     "sideStart": "Başlangıç",
     "sideEnd": "Bitiş",
-    "shortLabel": "Kısa etiket (isteğe bağlı)"
+    "shortLabel": "Kısa etiket (isteğe bağlı)",
+    "previewRevision": "Seçili sürümü önizle",
+    "viewingRevision": "{version} sürümü görüntüleniyor; bu önizlemeyi açmak kaydetmez veya yayımlamaz."
   }
 }

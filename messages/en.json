@@ -2553,6 +2553,8 @@
     "labelSide": "Price label side",
     "sideStart": "Start",
     "sideEnd": "End",
-    "shortLabel": "Short label (optional)"
+    "shortLabel": "Short label (optional)",
+    "previewRevision": "Preview selected revision",
+    "viewingRevision": "Viewing revision {version}; it is not saved or published by opening this preview."
   }
 }

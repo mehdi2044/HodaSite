@@ -29,6 +29,7 @@ type Product = {
 type Props = {
   initialBlocks: HomepageBlock[];
   version: number;
+  viewedRevision: { id: string; at: string; version: number } | null;
   homepageId: string | null;
   draftRevisionId: string | null;
   publishedRevisionId: string | null;
@@ -178,17 +179,24 @@ export function SceneEditor(props: Props) {
       );
   }, [scene, channel]);
   const [revisionId, setRevision] = useState(
-    props.history.some((revision) => revision.id === props.draftRevisionId)
-      ? props.draftRevisionId!
-      : (props.history[0]?.id ?? ""),
+    props.viewedRevision?.id ??
+      (props.history.some((revision) => revision.id === props.draftRevisionId)
+        ? props.draftRevisionId!
+        : (props.history[0]?.id ?? "")),
   );
   useEffect(() => {
     setRevision(
-      props.history.some((revision) => revision.id === props.draftRevisionId)
-        ? props.draftRevisionId!
-        : (props.history[0]?.id ?? ""),
+      props.viewedRevision?.id ??
+        (props.history.some((revision) => revision.id === props.draftRevisionId)
+          ? props.draftRevisionId!
+          : (props.history[0]?.id ?? "")),
     );
-  }, [props.draftRevisionId, props.history]);
+  }, [props.draftRevisionId, props.history, props.viewedRevision]);
+  const historyOptions =
+    props.viewedRevision &&
+    !props.history.some((r) => r.id === props.viewedRevision!.id)
+      ? [...props.history, props.viewedRevision]
+      : props.history;
   const [at, setAt] = useState("");
   const blocks = useMemo(() => {
     const all = structuredClone(props.initialBlocks);
@@ -711,6 +719,13 @@ export function SceneEditor(props: Props) {
           )}
           <div className="card grid gap-3">
             <h2>{t("publication")}</h2>
+            {props.viewedRevision && (
+              <p role="status">
+                {t("viewingRevision", {
+                  version: props.viewedRevision.version,
+                })}
+              </p>
+            )}
             {dirty && <p role="status">{t("saveBeforePublish")}</p>}
             <label>
               {t("history")}
@@ -720,7 +735,7 @@ export function SceneEditor(props: Props) {
                 onChange={(e) => setRevision(e.target.value)}
               >
                 <option value="">{t("none")}</option>
-                {props.history.map((revision) => (
+                {historyOptions.map((revision) => (
                   <option key={revision.id} value={revision.id}>
                     {t("revision", { version: revision.version })} ·{" "}
                     {revision.at}
@@ -728,6 +743,14 @@ export function SceneEditor(props: Props) {
                 ))}
               </select>
             </label>
+            {revisionId && !dirty && (
+              <a
+                className="button"
+                href={`/admin/content/homepage/scenes?${new URLSearchParams({ scope: props.scope, revision: revisionId })}`}
+              >
+                {t("previewRevision")}
+              </a>
+            )}
             {props.hasMoreHistory && (
               <a
                 className="button"

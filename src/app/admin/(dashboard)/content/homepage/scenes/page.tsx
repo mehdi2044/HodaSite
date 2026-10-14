@@ -5,7 +5,10 @@ import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
 import { homepageBlocksSchema } from "@/modules/content/homepage";
-import { homepageRevisionHistory } from "@/modules/content/publication";
+import {
+  homepageRevisionHistory,
+  REVISION_FORMAT,
+} from "@/modules/content/publication";
 import { SceneEditor } from "@/components/admin/scene-editor";
 import {
   saveSceneDraft,
@@ -17,7 +20,7 @@ export const metadata = { robots: { index: false, follow: false } };
 export default async function ScenesAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ scope?: string; after?: string }>;
+  searchParams: Promise<{ scope?: string; revision?: string; after?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/admin/login");
@@ -48,9 +51,46 @@ export default async function ScenesAdmin({
     }),
     can(userId, "content.homepage.write", marketId ? { marketId } : undefined),
   ]);
+  let viewedRevision: { id: string; at: string; version: number } | null = null;
+  let revisionBlocks: unknown;
+  if (query.revision) {
+    if (
+      !row ||
+      typeof query.revision !== "string" ||
+      !/^[A-Za-z0-9_-]{1,100}$/.test(query.revision)
+    )
+      notFound();
+    const revision = await db.auditLog.findFirst({
+      where: {
+        id: query.revision,
+        entityType: "Homepage",
+        entityId: row.id,
+        action: "content.homepage.revision",
+      },
+    });
+    const snapshot = revision?.after as {
+      format?: unknown;
+      blocks?: unknown;
+      version?: unknown;
+    } | null;
+    if (
+      !revision ||
+      snapshot?.format !== REVISION_FORMAT ||
+      typeof snapshot.version !== "number" ||
+      !Number.isInteger(snapshot.version)
+    )
+      notFound();
+    revisionBlocks = snapshot.blocks;
+    viewedRevision = {
+      id: revision.id,
+      at: revision.createdAt.toISOString(),
+      version: snapshot.version,
+    };
+  }
   const parsed = homepageBlocksSchema.safeParse(
-    row?.draftBlocks ?? row?.blocks ?? global?.blocks ?? [],
+    revisionBlocks ?? row?.draftBlocks ?? row?.blocks ?? global?.blocks ?? [],
   );
+  if (viewedRevision && !parsed.success) notFound();
   const productMarket = marketId ? { has: marketId } : undefined;
   const [products, history] = await Promise.all([
     db.product.findMany({
@@ -145,6 +185,7 @@ export default async function ScenesAdmin({
       <p className="text-muted mt-2">{t("editorIntro")}</p>
       <SceneEditor
         initialBlocks={blocks}
+        viewedRevision={viewedRevision}
         version={row?.version ?? 0}
         homepageId={row?.id ?? null}
         draftRevisionId={row?.draftRevisionId ?? null}
