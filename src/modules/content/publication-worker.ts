@@ -22,7 +22,9 @@ const payload = z
   })
   .strict();
 export async function executeHomepagePublication(job: JobContext) {
-  const input = payload.parse(job.payload);
+  const parsed = payload.safeParse(job.payload);
+  if (!parsed.success) throw new JobPermanentError("INVALID_PAYLOAD");
+  const input = parsed.data;
   try {
     await publishHomepageRevision(input.actorId, {
       homepageId: input.homepageId,

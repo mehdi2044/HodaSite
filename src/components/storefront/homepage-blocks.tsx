@@ -1,3 +1,5 @@
+import { ShoppableScene } from "./shoppable-scene";
+import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { ShopLook } from "./shop-look";
 import { SpatialHero } from "./spatial-hero";
 import { seoPath } from "@/lib/seo-urls";
@@ -38,7 +40,7 @@ export async function HomepageBlocks({
       ),
     ),
   ];
-  const [media, productRows, categories] = await Promise.all([
+  const [media, productRows, categories, sceneViews] = await Promise.all([
     mediaIds.length
       ? await db.media.findMany({
           where: {
@@ -62,6 +64,13 @@ export async function HomepageBlocks({
       take: 12,
       include: { media: true },
     }),
+    Promise.all(
+      blocks.map((block) =>
+        "scene" in block && block.scene
+          ? resolveShoppableScene(block.scene, market, locale)
+          : Promise.resolve(null),
+      ),
+    ),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
   const prices = await getDisplayPrices(
@@ -71,6 +80,26 @@ export async function HomepageBlocks({
   return (
     <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
       {blocks.map((block, index) => {
+        if (sceneViews[index])
+          return (
+            <ShoppableScene
+              key={sceneViews[index]!.id}
+              view={sceneViews[index]!}
+              locale={locale}
+              first={index === 0}
+              body={
+                "body" in block ? localizedValue(block.body, locale) : undefined
+              }
+              cta={
+                "ctaUrl" in block && block.ctaUrl
+                  ? {
+                      href: storefrontHref(block.ctaUrl, locale),
+                      label: localizedValue(block.ctaLabel, locale),
+                    }
+                  : undefined
+              }
+            />
+          );
         if (block.type === "ShopLook")
           return (
             <div className="shell" key={index}>

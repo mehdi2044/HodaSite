@@ -24,16 +24,36 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     let owner: string, marketId: string, scoped: string, referenceId: string;
     let blocks: HomepageBlock[];
     let originalPrice: Prisma.Decimal;
+    let originalMarkets: string[];
     beforeAll(async () => {
       setMaintenanceFlag(false);
+      await db.market.update({
+        where: { code: "CA" },
+        data: { isActive: true },
+      });
       registerHomepagePublicationJobs();
       owner = (
         await db.user.findUniqueOrThrow({
           where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
         })
       ).id;
-      marketId = (await db.market.findUniqueOrThrow({ where: { code: "CA" } }))
-        .id;
+      const ca = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+      marketId = (
+        await db.market.create({
+          data: {
+            code: `R3${randomUUID().replaceAll("-", "").slice(0, 12)}`,
+            name: "R3 publication fixture",
+            currency: ca.currency,
+            defaultLocale: "en",
+            enabledLocales: ["fa", "tr", "en"],
+            roundingRule: ca.roundingRule as Prisma.InputJsonValue,
+            markupPercent: ca.markupPercent,
+            holdHours: 6,
+            paymentDeadlineHours: 48,
+            fxMode: "REQUIRE_APPROVAL",
+          },
+        })
+      ).id;
       const tr = await db.market.findUniqueOrThrow({ where: { code: "TR" } });
       const role = await db.role.findUniqueOrThrow({
         where: { key: "marketing" },
@@ -53,6 +73,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         include: { media: true, variants: { include: { media: true } } },
       });
       originalPrice = product.basePriceAmount;
+      originalMarkets = product.marketIds;
+      await db.product.update({
+        where: { id: product.id },
+        data: { marketIds: [...product.marketIds, marketId] },
+      });
       const variant =
         product.variants.find((v) => v.media.length) ?? product.variants[0];
       referenceId = (variant.media[0] ?? product.media[0]).mediaId;
@@ -87,8 +112,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       if (originalPrice)
         await db.product.update({
           where: { id: "seed-style-v2-women-coat" },
-          data: { basePriceAmount: originalPrice },
+          data: { basePriceAmount: originalPrice, marketIds: originalMarkets },
         });
+      if (marketId) {
+        await db.homepage.updateMany({
+          where: { marketId },
+          data: { deletedAt: new Date() },
+        });
+        await db.market.update({
+          where: { id: marketId },
+          data: { isActive: false },
+        });
+      }
       if (scoped)
         await db.user.update({
           where: { id: scoped },

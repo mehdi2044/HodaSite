@@ -153,6 +153,7 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
         old.success ? old.data : [],
         input.confirmSceneIds,
       );
+      await assertCan(actorId, "content.homepage.write", scope(input.marketId));
       const row =
         before ??
         (await tx.homepage.create({
@@ -264,6 +265,7 @@ export async function publishHomepageRevision(actorId: string, raw: unknown) {
         [],
         true,
       );
+      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
       const nextVersion = row.version + 1;
       await tx.homepage.update({
         where: { id: row.id },
@@ -337,6 +339,7 @@ export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
         [],
         true,
       );
+      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
       const nextVersion = row.version + 1;
       await tx.homepage.update({
         where: { id: row.id },
@@ -382,16 +385,35 @@ export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
 export async function homepageRevisionHistory(
   actorId: string,
   homepageId: string,
+  after?: string,
 ) {
   const row = await db.homepage.findFirstOrThrow({
     where: { id: identity.parse(homepageId), deletedAt: null },
   });
   await assertCan(actorId, "content.homepage.read", scope(row.marketId));
+  const cursor = after
+    ? await db.auditLog.findFirstOrThrow({
+        where: {
+          id: identity.parse(after),
+          entityType: "Homepage",
+          entityId: row.id,
+          action: "content.homepage.revision",
+        },
+      })
+    : null;
   return db.auditLog.findMany({
     where: {
       entityType: "Homepage",
       entityId: row.id,
       action: "content.homepage.revision",
+      ...(cursor
+        ? {
+            OR: [
+              { createdAt: { lt: cursor.createdAt } },
+              { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+            ],
+          }
+        : {}),
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: 50,
