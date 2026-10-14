@@ -51,7 +51,10 @@ export function ProductOptions({
   );
   const available = variants.filter((v) => v.colorId === color);
   const [size, setSize] = useState(
-    available.find((item) => item.isActive && item.available > 0)?.sizeId ?? "",
+    (
+      available.find((item) => item.isActive && item.available > 0) ??
+      available.find((item) => item.isActive)
+    )?.sizeId ?? "",
   );
   const selected = variants.find(
     (variant) => variant.colorId === color && variant.sizeId === size,
@@ -59,11 +62,19 @@ export function ProductOptions({
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("catalog-color", { detail: color }));
   }, [color]);
-  const announcePrice = (variant?: Variant) =>
+  useEffect(() => {
     window.dispatchEvent(
       new CustomEvent("catalog-price", {
-        detail: variant?.price ?? basePrice,
+        detail: selected?.price ?? basePrice,
       }),
+    );
+    window.dispatchEvent(
+      new CustomEvent("catalog-variant", { detail: selected?.id ?? "" }),
+    );
+  }, [variants, color, size, selected?.id, selected?.price, basePrice]);
+  const announcePrice = (variant?: Variant) =>
+    window.dispatchEvent(
+      new CustomEvent("catalog-price", { detail: variant?.price ?? basePrice }),
     );
   return (
     <div className="grid gap-5">
@@ -80,11 +91,18 @@ export function ProductOptions({
               key={id}
               type="button"
               title={item.name}
+              aria-label={item.name}
+              disabled={
+                !variants.some(
+                  (variant) => variant.colorId === id && variant.isActive,
+                )
+              }
               aria-pressed={id === color}
               onClick={() => {
-                const next = variants.find(
-                  (v) => v.colorId === id && v.isActive && v.available > 0,
-                );
+                const next =
+                  variants.find(
+                    (v) => v.colorId === id && v.isActive && v.available > 0,
+                  ) ?? variants.find((v) => v.colorId === id && v.isActive);
                 setColor(id);
                 window.dispatchEvent(
                   new CustomEvent("catalog-color", { detail: id }),
@@ -115,7 +133,7 @@ export function ProductOptions({
                 setSize(v.sizeId);
                 announcePrice(v);
               }}
-              className="min-h-11 min-w-12 rounded-[8px] border px-3 disabled:cursor-not-allowed disabled:opacity-35 aria-pressed:bg-text aria-pressed:text-bg"
+              className="min-h-11 min-w-12 rounded-[8px] border px-3 disabled:cursor-not-allowed disabled:border-dashed disabled:line-through disabled:opacity-35 aria-pressed:bg-text aria-pressed:text-bg"
             >
               {v.size.value}
             </button>
@@ -140,6 +158,13 @@ export function ProductOptions({
         <input type="hidden" name="variantId" value={selected?.id ?? ""} />
         <input type="hidden" name="quantity" value="1" />
         <input type="hidden" name="mode" value="add" />
+        <p className="moda-mobile-buy-price">
+          <bdi>{selected?.price ?? basePrice}</bdi>
+          <span>
+            {colors.find(([id]) => id === color)?.[1].name} ·{" "}
+            {selected?.size.value}
+          </span>
+        </p>
         <button
           className="shop-add-button button w-full"
           disabled={!selected || !selected.isActive || selected.available <= 0}

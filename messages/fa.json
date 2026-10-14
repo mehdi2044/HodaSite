@@ -493,7 +493,8 @@
     "addRow": "افزودن ردیف",
     "variantStock": "موجودی: {onHand} · قابل فروش: {available}",
     "manageStock": "دریافت و مدیریت موجودی",
-    "seoKeywords": "کلیدواژه‌های سئو"
+    "seoKeywords": "کلیدواژه‌های سئو",
+    "newArrival": "نمایش نشان تازه‌رسیده"
   },
   "phase03Admin": {
     "amount": "مبلغ",
@@ -1212,7 +1213,17 @@
     "collectionPreview": "نگاهی به استایل روزمره",
     "carousel": "گالری پیمایشی",
     "backCollection": "بازگشت به دسته‌بندی",
-    "fullImage": "دیدن تصویر کامل"
+    "fullImage": "دیدن تصویر کامل",
+    "activeFilters": "فیلترهای فعال",
+    "removeFilter": "حذف فیلتر {filter}",
+    "decreaseQuantity": "کاهش تعداد {product}",
+    "increaseQuantity": "افزایش تعداد {product}",
+    "quickAddSize": "افزودن سایز {size} به سبد",
+    "cardColor": "رنگ محصول",
+    "sortName": "نام محصول",
+    "cardOutOfStock": "ناموجود",
+    "productDescription": "توضیحات محصول",
+    "tryOnModel": "امتحان روی مدل"
   },
   "finance": {
     "eyebrow": "امور مالی · گزارش تراکنش‌ها",

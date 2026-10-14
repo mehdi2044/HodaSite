@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { CommerceForm } from "./commerce-form";
+import { updateCartAction } from "@/app/[locale]/commerce-actions";
 import { useEffect, useRef, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
@@ -18,6 +20,7 @@ export function CartDrawer({
   locale: string;
   items: {
     id?: string;
+    variantId?: string;
     title: string;
     quantity: number;
     image?: ResponsiveImageMedia;
@@ -109,6 +112,57 @@ export function CartDrawer({
                   <p className="moda-price">
                     <Iso>{item.price}</Iso>
                   </p>
+                )}
+                {item.variantId && (
+                  <CommerceForm
+                    action={updateCartAction.bind(null, locale)}
+                    className="moda-drawer-quantity"
+                  >
+                    <input
+                      type="hidden"
+                      name="variantId"
+                      value={item.variantId}
+                    />
+                    <input type="hidden" name="mode" value="set" />
+                    <button
+                      type="submit"
+                      name="quantity"
+                      value={Math.max(0, item.quantity - 1)}
+                      disabled={marketMismatch}
+                      aria-label={shopping("decreaseQuantity", {
+                        product: item.title,
+                      })}
+                    >
+                      −
+                    </button>
+                    <bdi>
+                      {new Intl.NumberFormat(locale).format(item.quantity)}
+                    </bdi>
+                    <button
+                      type="submit"
+                      name="quantity"
+                      value={Math.min(100, item.quantity + 1)}
+                      disabled={
+                        marketMismatch ||
+                        quoteUnavailable ||
+                        item.quantity >= 100
+                      }
+                      aria-label={shopping("increaseQuantity", {
+                        product: item.title,
+                      })}
+                    >
+                      ＋
+                    </button>
+                    <button
+                      type="submit"
+                      name="quantity"
+                      value="0"
+                      disabled={marketMismatch}
+                      className="moda-drawer-remove"
+                    >
+                      {shopping("remove")}
+                    </button>
+                  </CommerceForm>
                 )}
               </div>
             </article>

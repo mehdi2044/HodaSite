@@ -1,5 +1,6 @@
 "use client";
 
+import { NEW_ARRIVAL_TAG } from "@/modules/catalog/merchandising";
 import { ProductAi } from "./product-ai";
 import { attributesSchema, type Proposal } from "@/modules/ai/proposals";
 import { useMemo, useState } from "react";
@@ -309,7 +310,26 @@ export function ProductEditor({
               label={t("originCountry")}
               defaultValue={initial.originCountry}
             />
-            <Field name="tags" label={t("tags")} defaultValue={initial.tags} />
+            <Field
+              name="tags"
+              label={t("tags")}
+              defaultValue={initial.tags
+                .split(",")
+                .map((tag) => tag.trim())
+                .filter((tag) => tag !== NEW_ARRIVAL_TAG)
+                .join(", ")}
+            />
+            <input type="hidden" name="merchandisingFields" value="1" />
+            <label className="flex items-center gap-2 min-h-11">
+              <input
+                type="checkbox"
+                name="newArrival"
+                defaultChecked={initial.tags
+                  .split(",")
+                  .some((tag) => tag.trim() === NEW_ARRIVAL_TAG)}
+              />
+              {t("newArrival")}
+            </label>
           </div>
           <fieldset>
             <legend>{t("collections")}</legend>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { categoryRootId } from "@/modules/catalog/tree";
 import { seoPath } from "@/lib/seo-urls";
 import {
   catalogText,
@@ -148,8 +149,52 @@ export async function relevantLookBlocks(
   filter: { categoryId?: string; productId?: string },
 ) {
   const home = await getHomepage(marketId);
-  return home.blocks.flatMap((block) => {
+  const blocks = home.blocks.filter((block) => block.enabled !== false);
+  const sceneProductIds = [
+    ...new Set(
+      blocks.flatMap((block) =>
+        block.type === "ShopLook"
+          ? (block.scene?.pieces.map((piece) => piece.productId) ?? [])
+          : [],
+      ),
+    ),
+  ];
+  const [products, categories] =
+    filter.categoryId && sceneProductIds.length
+      ? await Promise.all([
+          db.product.findMany({
+            where: {
+              id: { in: sceneProductIds },
+              status: "ACTIVE",
+              deletedAt: null,
+              marketIds: { has: marketId },
+              coinPackCoins: null,
+              category: { deletedAt: null },
+            },
+            select: { id: true, categoryId: true },
+          }),
+          db.category.findMany({
+            where: { deletedAt: null },
+            select: { id: true, parentId: true },
+          }),
+        ])
+      : [[], []];
+  return blocks.flatMap((block) => {
     if (block.type !== "ShopLook") return [];
+    if (block.scene)
+      return block.scene.pieces.some(
+        (piece) =>
+          filter.productId === piece.productId ||
+          (filter.categoryId &&
+            products.some(
+              (product) =>
+                product.id === piece.productId &&
+                categoryRootId(categories, product.categoryId) ===
+                  filter.categoryId,
+            )),
+      )
+        ? [block]
+        : [];
     const looks = block.looks.filter(
       (look) =>
         (filter.categoryId && look.categoryId === filter.categoryId) ||

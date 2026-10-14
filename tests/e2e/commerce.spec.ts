@@ -9,6 +9,10 @@ import tr from "../../messages/tr.json";
 const db = new PrismaClient();
 const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 async function submit(page: Page, field: string) {
+  if (field === "variantId") {
+    await page.locator(".shop-product-submit .shop-add-button").click();
+    return;
+  }
   await page
     .locator("form")
     .filter({

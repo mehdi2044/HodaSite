@@ -1,3 +1,7 @@
+import { hasNewArrival } from "@/modules/catalog/merchandising";
+import { WishlistHeart } from "@/components/engagement/wishlist";
+import { resolveContentTarget } from "@/modules/content/moda4-targets";
+import { initialProductVariant } from "@/modules/catalog/selection";
 import { ServicePolicySummary } from "@/components/storefront/service-policy";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ShopLook } from "@/components/storefront/shop-look";
@@ -31,7 +35,11 @@ import {
   listCatalogProducts,
   type CatalogLocale,
 } from "@/modules/catalog";
-import { getDisplayPrice, getDisplayPrices } from "@/modules/pricing";
+import {
+  getDisplayPrice,
+  getDisplayPrices,
+  getVariantDisplayPrices,
+} from "@/modules/pricing";
 
 export async function generateMetadata({
   params,
@@ -124,8 +132,9 @@ export default async function ProductPage({
       select: { inventory: true },
     }),
   ]);
-  const [relatedPrices, looks] = await Promise.all([
+  const [relatedPrices, relatedVariantPrices, looks] = await Promise.all([
     getDisplayPrices(related.items, market),
+    getVariantDisplayPrices(related.items, market),
     relevantLookBlocks(market.id, { productId: product.id }),
   ]);
   const inventorySettings = siteSettings.inventory as {
@@ -144,16 +153,13 @@ export default async function ProductPage({
       ? market.currency
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
-  const variantPrices = new Map(
-    await Promise.all(
-      product.variants.map(
-        async (variant) =>
-          [
-            variant.id,
-            await getDisplayPrice(product, variant, market),
-          ] as const,
-      ),
-    ),
+  const visibleVariants = product.variants.filter(
+    (variant) => !variant.color.deletedAt && !variant.size.deletedAt,
+  );
+  const selectedVariant = initialProductVariant(visibleVariants, query.color);
+  const variantPrices = await getVariantDisplayPrices(
+    [{ ...product, variants: visibleVariants }],
+    market,
   );
   const variantDisplayPrices = new Map(
     [...variantPrices].map(([id, price]) => [
@@ -161,6 +167,9 @@ export default async function ProductPage({
       formatStorefrontAmount(price.amount, currency, safe),
     ]),
   );
+  const fittingHref = product.fittingSlot
+    ? await resolveContentTarget({ kind: "fitting" }, market.id, safe)
+    : null;
   const amount = basePrice.amount;
   const compareAmount = basePrice.compareAtAmount;
   const [seoSettings, rating] = await Promise.all([
@@ -197,7 +206,7 @@ export default async function ProductPage({
           )
         : undefined,
     },
-    offers: product.variants
+    offers: visibleVariants
       .filter((v) => v.isActive)
       .map((v) =>
         schemaOffer(
@@ -256,11 +265,13 @@ export default async function ProductPage({
       </nav>
       <div className="shop-product-layout grid gap-10 lg:grid-cols-2">
         <ProductGallery
+          key={`${product.id}:${query.color ?? ""}`}
           base={product.media.map((item) => ({
             id: item.id,
             media: item.media,
           }))}
-          variants={product.variants.map((variant) => ({
+          variants={visibleVariants.map((variant) => ({
+            id: variant.id,
             colorId: variant.colorId,
             media: variant.media.map((item) => ({
               id: item.id,
@@ -268,14 +279,8 @@ export default async function ProductPage({
             })),
           }))}
           locale={safe}
-          initialColorId={
-            product.variants.some(
-              (v) =>
-                v.isActive && !v.color.deletedAt && v.colorId === query.color,
-            )
-              ? query.color
-              : undefined
-          }
+          initialColorId={selectedVariant?.colorId}
+          initialVariantId={selectedVariant?.id}
         />
         <section className="shop-product-information">
           <p className="shop-eyebrow text-sm text-muted">
@@ -284,11 +289,18 @@ export default async function ProductPage({
           <h1 className="shop-product-title mt-2 text-4xl font-semibold">
             {catalogText(product.titleI18n, safe)}
           </h1>
+          {safe !== "en" &&
+            catalogText(product.titleI18n, "en") !==
+              catalogText(product.titleI18n, safe) && (
+              <p className="moda-product-latin" lang="en" dir="ltr">
+                {catalogText(product.titleI18n, "en")}
+              </p>
+            )}
           <ProductPrice
+            key={`${product.id}:${query.color ?? ""}`}
             initial={
-              variantDisplayPrices.get(
-                product.variants.find((variant) => variant.isActive)?.id ?? "",
-              ) ?? formatStorefrontAmount(amount, currency, safe)
+              variantDisplayPrices.get(selectedVariant?.id ?? "") ??
+              formatStorefrontAmount(amount, currency, safe)
             }
             compare={
               compareAmount
@@ -300,7 +312,7 @@ export default async function ProductPage({
             {market.priceIncludesTax ? t("taxIncluded") : t("taxExcluded")}
           </p>
           <div className="mt-3 flex gap-2">
-            {Date.now() - product.createdAt.getTime() < 30 * 86400000 && (
+            {hasNewArrival(product.tags) && (
               <span className="rounded-full bg-text px-3 py-1 text-xs text-bg">
                 {t("newBadge")}
               </span>
@@ -311,22 +323,19 @@ export default async function ProductPage({
               </span>
             )}
           </div>
-          <p className="my-7 whitespace-pre-wrap leading-8 text-muted">
-            {catalogText(product.descriptionI18n, safe)}
-          </p>
+          <div className="moda-product-actions">
+            <WishlistHeart productId={product.id} />
+            {fittingHref && (
+              <Link className="button button-outline" href={fittingHref}>
+                {shopping("tryOnModel")}
+              </Link>
+            )}
+          </div>
           <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl">
             <ProductOptions
-              initialColorId={
-                product.variants.some(
-                  (v) =>
-                    v.isActive &&
-                    !v.color.deletedAt &&
-                    v.colorId === query.color,
-                )
-                  ? query.color
-                  : undefined
-              }
-              variants={product.variants.map((v) => ({
+              key={`${product.id}:${query.color ?? ""}`}
+              initialColorId={selectedVariant?.colorId}
+              variants={visibleVariants.map((v) => ({
                 id: v.id,
                 colorId: v.colorId,
                 sizeId: v.sizeId,
@@ -364,6 +373,14 @@ export default async function ProductPage({
               basePrice={formatStorefrontAmount(amount, currency, safe)}
             />
           </div>
+          <details className="mt-7 border-t pt-5">
+            <summary className="cursor-pointer font-medium">
+              {shopping("productDescription")}
+            </summary>
+            <p className="my-5 whitespace-pre-wrap leading-8 text-muted">
+              {catalogText(product.descriptionI18n, safe)}
+            </p>
+          </details>
           <details className="mt-7 border-t pt-5">
             <summary className="cursor-pointer font-medium">
               {t("sizeGuide")}
@@ -444,6 +461,7 @@ export default async function ProductPage({
               <ProductCard
                 key={x.id}
                 product={{ ...x, displayPrice: relatedPrices.get(x.id) }}
+                variantPrices={relatedVariantPrices}
                 locale={safe}
                 market={market}
               />
@@ -451,6 +469,7 @@ export default async function ProductPage({
         </div>
       </section>
       <ProductEngagement
+        hideWishlist
         returnPath={seoPath(
           safe,
           market.code,

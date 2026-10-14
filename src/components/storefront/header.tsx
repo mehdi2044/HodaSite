@@ -222,6 +222,7 @@ export async function Header({
               items={
                 cart?.items.map((item) => ({
                   id: item.id,
+                  variantId: item.variantId,
                   title:
                     (item.variant.product.titleI18n as Record<string, string>)[
                       locale

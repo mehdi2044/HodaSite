@@ -6,7 +6,7 @@ import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { ShopLook } from "./shop-look";
 import { SpatialHero } from "./spatial-hero";
 import { seoPath } from "@/lib/seo-urls";
-import { getDisplayPrices } from "@/modules/pricing";
+import { getDisplayPrices, getVariantDisplayPrices } from "@/modules/pricing";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { storefrontHref } from "@/modules/content/storefront-links";
@@ -81,10 +81,11 @@ export async function HomepageBlocks({
     ),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
-  const prices = await getDisplayPrices(
-    productRows.flatMap((rows) => rows?.items ?? []),
-    market,
-  );
+  const listingProducts = productRows.flatMap((rows) => rows?.items ?? []);
+  const [prices, variantPrices] = await Promise.all([
+    getDisplayPrices(listingProducts, market),
+    getVariantDisplayPrices(listingProducts, market),
+  ]);
   return (
     <LiveHomepage preview={preview}>
       <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
@@ -244,6 +245,7 @@ export async function HomepageBlocks({
                           ...product,
                           displayPrice: prices.get(product.id),
                         }}
+                        variantPrices={variantPrices}
                         locale={locale}
                         market={market}
                       />

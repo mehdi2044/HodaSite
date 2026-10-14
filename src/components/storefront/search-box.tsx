@@ -29,6 +29,7 @@ export function SearchBox({
   const [q, setQ] = useState(initial);
   const [items, setItems] = useState<Item[]>([]);
   const sequence = useRef(0);
+  useEffect(() => setQ(initial), [initial]);
   useEffect(() => {
     const turn = ++sequence.current;
     setItems([]);
@@ -63,6 +64,7 @@ export function SearchBox({
         method="get"
         className="my-7 flex gap-2"
       >
+        <input type="hidden" name="market" value={marketCode} />
         {collectionId && (
           <input type="hidden" name="collectionId" value={collectionId} />
         )}

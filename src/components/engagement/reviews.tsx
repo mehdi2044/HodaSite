@@ -15,10 +15,12 @@ export async function ProductEngagement({
   productId,
   variants,
   returnPath,
+  hideWishlist = false,
 }: {
   context: { marketId: string; locale: "fa" | "tr" | "en" };
   productId: string;
   returnPath: string;
+  hideWishlist?: boolean;
   variants: { id: string; sku: string; available: boolean }[];
 }) {
   const [t, c, reviews] = await Promise.all([
@@ -46,7 +48,7 @@ export async function ProductEngagement({
   );
   return (
     <section className="my-12 grid gap-6">
-      <WishlistHeart productId={productId} />
+      {!hideWishlist && <WishlistHeart productId={productId} />}
       <h2 className="text-3xl">{t("reviews")}</h2>
       {reviews.items.map((r) => (
         <article key={r.id} className="grid gap-3 rounded-token border p-5">

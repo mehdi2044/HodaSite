@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { getDisplayPrices } from "@/modules/pricing";
+import { CatalogFilter } from "@/components/storefront/catalog-filter";
+import { listingFilters } from "@/modules/catalog/listing-query";
+import { getDisplayPrices, getVariantDisplayPrices } from "@/modules/pricing";
 import { getTranslations } from "next-intl/server";
 import { ProductCard } from "@/components/storefront/product-card";
 import { SearchBox } from "@/components/storefront/search-box";
 import { getRequestContext } from "@/lib/request-context";
-import { listCatalogProducts, type CatalogLocale } from "@/modules/catalog";
+import {
+  catalogFacets,
+  catalogText,
+  listCatalogProducts,
+  type CatalogLocale,
+} from "@/modules/catalog";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 
@@ -28,18 +35,21 @@ export default async function SearchPage({
     : null;
   if (collectionId && !collection) notFound();
   const safe = locale as CatalogLocale;
-  const [{ market }, t] = await Promise.all([
+  const [{ market }, t, facets] = await Promise.all([
     getRequestContext(locale),
     getTranslations("catalog"),
+    catalogFacets(),
   ]);
   const result = await listCatalogProducts(market.id, safe, {
     q,
     collectionId: collection?.id,
     limit: 24,
-    after: one(query.after),
-    page: Number(one(query.page) ?? 1),
+    ...listingFilters(query),
   });
-  const prices = await getDisplayPrices(result.items, market);
+  const [prices, variantPrices] = await Promise.all([
+    getDisplayPrices(result.items, market),
+    getVariantDisplayPrices(result.items, market),
+  ]);
   return (
     <main
       className="shell shop-page py-10 md:py-16"
@@ -60,12 +70,48 @@ export default async function SearchPage({
         initial={q}
         collectionId={collection?.id}
       />
+      <CatalogFilter
+        labels={{
+          filters: t("filters"),
+          brand: t("brand"),
+          color: t("color"),
+          size: t("size"),
+          material: t("material"),
+          minPrice: t("minPrice"),
+          maxPrice: t("maxPrice"),
+          available: t("available"),
+          sort: t("sort"),
+          apply: t("apply"),
+          all: t("all"),
+        }}
+        options={{
+          brands: facets.brands.map((item) => ({
+            id: item.id,
+            label: catalogText(item.nameI18n, safe),
+          })),
+          colors: facets.colors.map((item) => ({
+            id: item.id,
+            label: catalogText(item.nameI18n, safe),
+          })),
+          sizes: facets.sizes.map((item) => ({
+            id: item.id,
+            label: item.value,
+          })),
+          materials: facets.materials,
+        }}
+      />
       <p className="mb-5 text-sm text-muted">
         {t("results", { count: result.total })}
       </p>
       {!result.items.length && (
         <div className="shop-empty">
           <p>{(await getTranslations("shopping"))("emptySearch")}</p>
+          <Link
+            className="button button-outline"
+            href={`?${new URLSearchParams({ market: market.code, ...(collection ? { collectionId: collection.id } : {}) })}`}
+          >
+            {(await getTranslations("shopping"))("reset")}
+          </Link>
         </div>
       )}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -73,6 +119,7 @@ export default async function SearchPage({
           <ProductCard
             key={product.id}
             product={{ ...product, displayPrice: prices.get(product.id) }}
+            variantPrices={variantPrices}
             locale={safe}
             market={market}
           />
@@ -81,7 +128,7 @@ export default async function SearchPage({
       {result.nextCursor && (
         <Link
           className="button mt-8 inline-block"
-          href={`?${new URLSearchParams({ q, after: result.nextCursor, page: String(result.page + 1), ...(collection ? { collectionId: collection.id } : {}) })}`}
+          href={`?${new URLSearchParams({ ...Object.fromEntries(Object.entries(query).filter((entry): entry is [string, string] => typeof entry[1] === "string")), q, after: result.nextCursor, page: String(result.page + 1), ...(collection ? { collectionId: collection.id } : {}) })}`}
         >
           {t("loadMore")}
         </Link>
