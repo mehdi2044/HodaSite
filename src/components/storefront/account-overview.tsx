@@ -36,7 +36,16 @@ export async function AccountOverview({
         where: {
           customerId: actor.id,
           marketId: market.id,
-          status: { in: [...STEPS, "AWAITING_VERIFICATION", "NEEDS_REVIEW"] },
+          status: {
+            in: [
+              "PENDING_PAYMENT",
+              "AWAITING_VERIFICATION",
+              "NEEDS_REVIEW",
+              "PAID",
+              "PROCESSING",
+              "SHIPPED",
+            ],
+          },
         },
         orderBy: { placedAt: "desc" },
         take: 1,
@@ -70,7 +79,12 @@ export async function AccountOverview({
       status: { in: ["PAID", "PROCESSING", "SHIPPED"] },
     },
   });
-  const order = orders[0],
+  const order =
+      orders[0] ??
+      (await db.order.findFirst({
+        where: { customerId: actor.id, marketId: market.id },
+        orderBy: { placedAt: "desc" },
+      })),
     progress = order
       ? Math.max(
           0,
@@ -131,22 +145,27 @@ export async function AccountOverview({
           </dl>
           {order && (
             <section className="moda-account-panel">
-              <h2>{t("latestOrder")}</h2>
+              <h2>{t(orders.length ? "activeOrder" : "latestOrder")}</h2>
               <Link href={`/${locale}/orders/${order.number}/pay`}>
                 <bdi>{order.number}</bdi> ·{" "}
                 {commerce(`statuses.${order.status}`)}
               </Link>
-              <ol className="moda-order-timeline">
-                {STEPS.map((status, index) => (
-                  <li
-                    key={status}
-                    data-reached={index <= progress}
-                    aria-current={index === progress ? "step" : undefined}
-                  >
-                    {commerce(`statuses.${status}`)}
-                  </li>
-                ))}
-              </ol>
+              {(STEPS.some((status) => status === order.status) ||
+                ["AWAITING_VERIFICATION", "NEEDS_REVIEW"].includes(
+                  order.status,
+                )) && (
+                <ol className="moda-order-timeline">
+                  {STEPS.map((status, index) => (
+                    <li
+                      key={status}
+                      data-reached={index <= progress}
+                      aria-current={index === progress ? "step" : undefined}
+                    >
+                      {commerce(`statuses.${status}`)}
+                    </li>
+                  ))}
+                </ol>
+              )}
             </section>
           )}
           <section id="wardrobe" className="moda-account-panel">

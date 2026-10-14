@@ -2829,7 +2829,7 @@
     "overview": "Overview",
     "wardrobe": "My wardrobe",
     "marketScope": "Orders and wishlist: {market}. Fitting coins and saved AI looks belong to your whole account.",
-    "inTransit": "Orders in progress",
+    "inTransit": "Preparing or shipping",
     "coins": "Fitting coins",
     "savedAiLooks": "Saved AI looks",
     "latestOrder": "Latest order",
@@ -2849,6 +2849,7 @@
       "email": "Email",
       "code": "Verification code",
       "profile": "Profile"
-    }
+    },
+    "activeOrder": "Current order"
   }
 }
