@@ -18,6 +18,8 @@ vi.mock("next/cache", () => ({
   revalidateTag: () => {},
   unstable_cache: (fn: unknown) => fn,
 }));
+import { sceneReferenceFingerprint } from "@/modules/content/scenes/references";
+import { blockScenes } from "@/modules/content/block-scenes";
 import { addShoppableScene } from "@/modules/content/scenes/purchase";
 import {
   saveHomepageDraft,
@@ -55,7 +57,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         where: { id: { in: ids } },
         include: { media: true, product: { include: { media: true } } },
       });
-      const saved = await saveHomepageDraft(owner.id, {
+      const proposal = {
         marketId: state.market.id,
         expectedVersion: previous?.version ?? 0,
         confirmSceneIds: ["scene-cart-proof"],
@@ -82,6 +84,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                 mobile: { x: 0.5, y: 0.4 },
               })),
             },
+          },
+        ],
+      };
+      const saved = await saveHomepageDraft(owner.id, {
+        ...proposal,
+        expectedSceneFingerprints: [
+          {
+            sceneId: "scene-cart-proof",
+            fingerprint: await sceneReferenceFingerprint(
+              blockScenes(proposal.blocks)[0],
+              [state.market.id],
+            ),
           },
         ],
       });

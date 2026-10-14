@@ -7,6 +7,7 @@ export type ImageFormat = (typeof IMAGE_FORMATS)[number];
 
 export const MAX_IMAGE_BYTES = 10_000_000;
 export const MAX_PDF_BYTES = 5_000_000;
+export const MAX_VIDEO_BYTES = 30_000_000;
 export const MAX_IMAGE_DIMENSION = 8000;
 
 export const RASTER_MIME = new Set([
@@ -24,6 +25,8 @@ export const ALLOWED_MIME: Record<string, { ext: string; kind: string }> = {
   "image/webp": { ext: "webp", kind: "image" },
   "image/avif": { ext: "avif", kind: "image" },
   "application/pdf": { ext: "pdf", kind: "document" },
+  "video/mp4": { ext: "mp4", kind: "video" },
+  "video/webm": { ext: "webm", kind: "video" },
 };
 
 export type MediaVariants = {

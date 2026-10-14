@@ -7,12 +7,15 @@ import { CommerceForm } from "./commerce-form";
 import { addSceneAction } from "@/app/[locale]/commerce-actions";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import type { SceneView } from "@/modules/content/scenes/resolve";
+import { SceneLayerImage } from "./scene-layer";
 import { scenePointInFrame } from "@/modules/content/scenes/geometry";
 
 export function ShoppableScene({
   view,
   locale,
   preview = false,
+  poll = true,
+  headingLevel,
   first = false,
   frame = "responsive",
   body,
@@ -21,42 +24,62 @@ export function ShoppableScene({
   view: SceneView;
   locale: "fa" | "tr" | "en";
   preview?: boolean;
+  poll?: boolean;
+  headingLevel?: 1 | 2 | 3;
   first?: boolean;
   frame?: "mobile" | "desktop" | "responsive";
   body?: string;
   cta?: { label: string; href: string };
 }) {
   const t = useTranslations("scenes"),
-    shopping = useTranslations("shopping");
+    shopping = useTranslations("shopping"),
+    cutouts = useTranslations("cutouts");
   const root = useRef<HTMLElement>(null),
     router = useRouter();
+  const [selections, select] = useState<Record<string, string>>({});
+  const layers = view.pieces.map(
+    (piece) =>
+      piece.variants.find((variant) => variant.id === selections[piece.id])
+        ?.layer ?? piece.layer,
+  );
+  const layerKey = JSON.stringify(layers);
   const [failedImages, failImage] = useState<Record<string, string>>({});
   const imageKey = (kind: "desktop" | "mobile") =>
-    JSON.stringify([view[kind].media?.url, view[kind].media?.variants]);
+    JSON.stringify([
+      view[kind].media?.url,
+      view[kind].media?.variants,
+      layerKey,
+    ]);
   const imageFailed = (kind: "desktop" | "mobile") =>
     failedImages[kind] === imageKey(kind);
-  const imageRevision = JSON.stringify([view.desktop.media, view.mobile.media]);
+  const imageRevision = JSON.stringify([
+    view.desktop.media,
+    view.mobile.media,
+    layerKey,
+  ]);
   useEffect(() => {
     const listeners: (() => void)[] = [];
     for (const kind of ["desktop", "mobile"] as const) {
-      const image = root.current?.querySelector<HTMLImageElement>(
+      const images = root.current?.querySelectorAll<HTMLImageElement>(
         `[data-scene-frame="${kind}"] img`,
       );
-      if (!image) continue;
-      const key = JSON.stringify([
-        view[kind].media?.url,
-        view[kind].media?.variants,
-      ]);
-      const failed = () => failImage((old) => ({ ...old, [kind]: key }));
-      // SSR images can finish (or fail) before React hydrates. Observe their
-      // actual decoded state as well as future errors, not just React events.
-      if (image.complete && image.naturalWidth === 0) failed();
-      image.addEventListener("error", failed);
-      listeners.push(() => image.removeEventListener("error", failed));
+      if (!images) continue;
+      for (const image of images) {
+        const key = JSON.stringify([
+          view[kind].media?.url,
+          view[kind].media?.variants,
+          layerKey,
+        ]);
+        const failed = () => failImage((old) => ({ ...old, [kind]: key }));
+        // SSR images can finish (or fail) before React hydrates. Observe their
+        // actual decoded state as well as future errors, not just React events.
+        if (image.complete && image.naturalWidth === 0) failed();
+        image.addEventListener("error", failed);
+        listeners.push(() => image.removeEventListener("error", failed));
+      }
     }
     return () => listeners.forEach((remove) => remove());
-  }, [imageRevision, view.desktop.media, view.mobile.media]);
-  const [selections, select] = useState<Record<string, string>>({});
+  }, [imageRevision, view.desktop.media, view.mobile.media, layerKey]);
   const [refreshing, startRefresh] = useTransition();
   const pending = useRef(refreshing);
   useEffect(() => {
@@ -66,7 +89,7 @@ export function ShoppableScene({
     select({});
   }, [view.id]);
   useEffect(() => {
-    if (preview) return;
+    if (preview || !poll) return;
     let visible = false;
     const refresh = () => {
       if (visible && !document.hidden && !pending.current)
@@ -85,7 +108,7 @@ export function ShoppableScene({
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [router, preview]);
+  }, [router, preview, poll]);
   const chosen = view.pieces.map((piece) =>
     piece.variants.find((v) => v.id === selections[piece.id]),
   );
@@ -121,14 +144,28 @@ export function ShoppableScene({
       className="shoppable-scene"
       data-testid="shoppable-scene"
       data-scene-id={view.id}
+      data-scene-confirmation={
+        preview ? view.confirmationFingerprint : undefined
+      }
+      data-scene-confirmation-key={preview ? view.confirmationKey : undefined}
+      data-scene-related-video={preview ? view.relatedVideo?.url : undefined}
       dir={locale === "fa" ? "rtl" : "ltr"}
     >
-      {first ? <h1>{view.title}</h1> : <h2>{view.title}</h2>}
+      {(headingLevel ?? (first ? 1 : 2)) === 1 ? (
+        <h1 className="moda-scene-heading">{view.title}</h1>
+      ) : headingLevel === 3 ? (
+        <h3>{view.title}</h3>
+      ) : (
+        <h2 className="moda-scene-heading">{view.title}</h2>
+      )}
       {body && <p className="mb-5">{body}</p>}
       {cta && (
         <a className="button mb-5 inline-flex" href={cta.href}>
           {cta.label}
         </a>
+      )}
+      {view.mode === "COMPOSITE" && (
+        <p className="scene-image-note">{cutouts("stylingOnly")}</p>
       )}
       {view.reason && (
         <p role="status" className="scene-review">
@@ -170,6 +207,20 @@ export function ShoppableScene({
               ) : (
                 <p>{t("missingImage")}</p>
               )}
+              {view.mode === "COMPOSITE" &&
+                current.media &&
+                !imageFailed(kind) &&
+                layers.map((layer, index) =>
+                  layer ? (
+                    <SceneLayerImage
+                      key={view.pieces[index].id}
+                      layer={layer}
+                      model={current.media!}
+                      frame={current.frame}
+                      locale={locale}
+                    />
+                  ) : null,
+                )}
               {view.pieces.map((piece, n) => {
                 const point = current.media
                   ? scenePointInFrame(
@@ -221,6 +272,15 @@ export function ShoppableScene({
             data-testid={`scene-piece-${piece.id}`}
           >
             <div>
+              {preview && piece.referenceImage && (
+                <ResponsiveImage
+                  media={piece.referenceImage}
+                  locale={locale}
+                  sizes="120px"
+                  className="block w-24"
+                  imgClassName="w-full h-auto"
+                />
+              )}
               <a href={piece.href}>
                 {new Intl.NumberFormat(locale).format(n + 1)}. {piece.title}
               </a>
@@ -238,7 +298,7 @@ export function ShoppableScene({
                 onChange={(event) =>
                   select((old) => ({ ...old, [piece.id]: event.target.value }))
                 }
-                disabled={preview || Boolean(view.reason)}
+                disabled={Boolean(view.reason) && !preview}
               >
                 <option value="">{t("chooseSize")}</option>
                 {piece.variants.map((v) => (

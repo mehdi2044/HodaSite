@@ -6,7 +6,7 @@ import {
   CUTOUT_ANCHORS,
 } from "./contracts";
 import { imageFingerprint, storeCutoutModels } from "./models";
-import type { Media } from "@prisma/client";
+import type { Media, Prisma } from "@prisma/client";
 export function cutoutPublicImage(media: Media) {
   return {
     url: media.url,
@@ -21,8 +21,9 @@ export function cutoutPublicImage(media: Media) {
 export async function currentCatalogCutout(
   variantId: string,
   marketId: string,
+  client: Prisma.TransactionClient = db,
 ) {
-  const variant = await db.variant.findFirst({
+  const variant = await client.variant.findFirst({
     where: {
       id: variantId,
       isActive: true,
@@ -39,7 +40,7 @@ export async function currentCatalogCutout(
     include: { product: true },
   });
   if (!variant) return null;
-  const choices = await db.catalogCutout.findMany({
+  const choices = await client.catalogCutout.findMany({
     where: {
       productId: variant.productId,
       colorId: variant.colorId,
@@ -88,10 +89,11 @@ export async function resolveCutoutPlacement(
   variantId: string,
   marketId: string,
   modelId: string,
+  client: Prisma.TransactionClient = db,
 ) {
-  const current = await currentCatalogCutout(variantId, marketId);
+  const current = await currentCatalogCutout(variantId, marketId, client);
   if (!current) return null;
-  const model = (await storeCutoutModels()).find(
+  const model = (await storeCutoutModels(client)).find(
     (choice) => choice.id === modelId,
   );
   const placement = current.geometry.models.find(
@@ -109,6 +111,7 @@ export async function resolveCutoutPlacement(
   return {
     profileId: current.row.id,
     profileVersion: current.row.version,
+    mediaId: current.row.mediaId,
     productId: current.variant.productId,
     colorId: current.variant.colorId,
     variantId: current.variant.id,

@@ -1,3 +1,4 @@
+import { ServicePolicySummary } from "@/components/storefront/service-policy";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { relevantLookBlocks } from "@/modules/outfits";
@@ -405,14 +406,19 @@ export default async function ProductPage({
               {catalogText(product.careI18n, safe)}
             </p>
           </details>
-          <p className="mt-5 border-t pt-5 text-sm">
+          <div className="mt-5 border-t pt-5 text-sm">
             <Link
               className="underline"
               href={`/${safe}/pages/${safe === "fa" ? "بازگشت-کالا" : safe === "tr" ? "iade" : "returns"}`}
             >
               {t("shippingReturns")}
             </Link>
-          </p>
+            <ServicePolicySummary
+              marketId={market.id}
+              locale={safe}
+              keys={["shipping", "returns", "support"]}
+            />
+          </div>
           {product.attributes.length > 0 && (
             <dl className="mt-7 grid grid-cols-2 gap-3 border-t pt-5">
               {product.attributes.map((x) => (

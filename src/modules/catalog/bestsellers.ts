@@ -8,7 +8,7 @@ import { catalogCoinPacksEnabled, catalogVisibilityWhere } from "./visibility";
  */
 export async function listBestsellers(marketId: string, limit = 4) {
   const allowCoinPacks = await catalogCoinPacksEnabled();
-  const take = Math.min(12, Math.max(1, Math.trunc(limit)));
+  const take = Math.min(24, Math.max(1, Math.trunc(limit)));
   const ranked = await db.$queryRaw<Array<{ id: string }>>`
     SELECT p.id
     FROM "OrderItem" i

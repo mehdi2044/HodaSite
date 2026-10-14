@@ -1,9 +1,18 @@
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { moda4BlockSchemas } from "./moda4-contracts";
 import { shoppableSceneSchema } from "./scenes/contracts";
 import { localizedTextSchema, safeLinkSchema } from "./validation";
 
+const optionalMetadata = {
+  id: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,100}$/)
+    .optional(),
+  version: z.literal(1).optional(),
+  enabled: z.boolean().optional(),
+};
 const mediaId = z.string().trim().min(1).max(100);
 export const preparedLookSchema = z
   .object({
@@ -29,14 +38,21 @@ const sourceSchema = z.object({
   limit: z.number().int().min(1).max(12).default(4),
 });
 
-export const homepageBlockSchema = z.discriminatedUnion("type", [
+const legacyBlockSchemas = [
+  z
+    .object({
+      ...optionalMetadata,
+      type: z.literal("ShopLook"),
+      scene: shoppableSceneSchema.optional(),
+      title: localizedTextSchema,
+      body: localizedTextSchema,
+      looks: z.array(preparedLookSchema).max(8),
+    })
+    .refine((block) => Boolean(block.scene) || block.looks.length > 0, {
+      message: "ShopLook requires a shared scene or retained prepared looks",
+    }),
   z.object({
-    type: z.literal("ShopLook"),
-    title: localizedTextSchema,
-    body: localizedTextSchema,
-    looks: z.array(preparedLookSchema).min(1).max(8),
-  }),
-  z.object({
+    ...optionalMetadata,
     type: z.literal("Hero"),
     scene: shoppableSceneSchema.optional(),
     layout: z.enum(["editorial", "spatial"]).optional(),
@@ -47,16 +63,19 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
     ctaUrl: safeLinkSchema.optional(),
   }),
   z.object({
+    ...optionalMetadata,
     type: z.literal("CategoryCards"),
     title: localizedTextSchema,
     source: sourceSchema,
   }),
   z.object({
+    ...optionalMetadata,
     type: z.literal("ProductStrip"),
     title: localizedTextSchema,
     source: sourceSchema,
   }),
   z.object({
+    ...optionalMetadata,
     type: z.literal("Banner"),
     scene: shoppableSceneSchema.optional(),
     mediaId: mediaId.optional(),
@@ -66,19 +85,28 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
     ctaUrl: safeLinkSchema.optional(),
   }),
   z.object({
+    ...optionalMetadata,
     type: z.literal("TrustBar"),
     items: z.array(localizedTextSchema).min(1).max(6),
   }),
   z.object({
+    ...optionalMetadata,
     type: z.literal("RichText"),
     text: localizedTextSchema,
   }),
+] as const;
+export const homepageBlockSchema = z.discriminatedUnion("type", [
+  ...legacyBlockSchemas,
+  ...moda4BlockSchemas,
 ]);
 
 export const homepageBlocksSchema = z
   .array(homepageBlockSchema)
   .max(30)
   .superRefine((blocks, ctx) => {
+    const identities = blocks.flatMap((block) => (block.id ? [block.id] : []));
+    if (new Set(identities).size !== identities.length)
+      ctx.addIssue({ code: "custom", message: "Duplicate block identity" });
     const ids = blocks.flatMap((block) =>
       block.type === "ShopLook" ? block.looks.map((look) => look.id) : [],
     );

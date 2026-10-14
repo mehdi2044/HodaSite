@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
@@ -8,25 +8,55 @@ import {
   homepageBlocksSchema,
 } from "@/modules/content/homepage";
 import { blockMediaIds } from "@/modules/media/reference-lock";
-import { HomepageBuilder } from "@/components/admin/homepage-builder";
+import { ModaHomepageBuilder } from "@/components/admin/moda-homepage-builder";
+import { adminHomepageOptions } from "@/modules/content/admin-homepage-options";
+import { REVISION_FORMAT } from "@/modules/content/publication";
 import { saveHomepage } from "./actions";
 
-export default async function HomepageAdmin() {
+export default async function HomepageAdmin({
+  searchParams,
+}: {
+  searchParams?: Promise<{ scope?: string; revision?: string }>;
+} = {}) {
   const session = await auth();
+  if (!session?.user?.id) redirect("/admin/login");
+  const userId = session.user.id,
+    query = await (searchParams ??
+      Promise.resolve({} as { scope?: string; revision?: string }));
+  const globalRead = await can(userId, "content.homepage.read");
+  const allMarkets = await db.market.findMany({
+    where: { isActive: true },
+    orderBy: { code: "asc" },
+  });
+  const rights = await Promise.all(
+    allMarkets.map((market) =>
+      can(userId, "content.homepage.read", { marketId: market.id }),
+    ),
+  );
+  const allowedMarkets = allMarkets.filter((_, index) => rights[index]);
+  if (!globalRead && !allowedMarkets.length) redirect("/admin");
+  const selected =
+    query.scope ?? (globalRead ? "global" : allowedMarkets[0].id);
   if (
-    !session?.user?.id ||
-    !(await can(session.user.id, "content.homepage.read"))
+    (selected === "global" && !globalRead) ||
+    (selected !== "global" &&
+      !allowedMarkets.some((market) => market.id === selected))
   )
-    redirect("/admin");
+    notFound();
   const t = await getTranslations("homepageAdmin");
   const scenes = await getTranslations("scenes");
   const locale = (await getLocale()) as "fa" | "tr" | "en";
   const [rows, markets, categories, collections, products] = await Promise.all([
     db.homepage.findMany({
-      where: { deletedAt: null },
+      where: {
+        deletedAt: null,
+        ...(globalRead
+          ? {}
+          : { marketId: { in: allowedMarkets.map((market) => market.id) } }),
+      },
       orderBy: { createdAt: "asc" },
     }),
-    db.market.findMany({ orderBy: { code: "asc" } }),
+    Promise.resolve(allowedMarkets),
     db.category.findMany({
       where: { deletedAt: null },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
@@ -43,7 +73,17 @@ export default async function HomepageAdmin() {
       select: { id: true, titleI18n: true },
     }),
     db.product.findMany({
-      where: { deletedAt: null, status: "ACTIVE" },
+      where: {
+        deletedAt: null,
+        status: "ACTIVE",
+        coinPackCoins: null,
+        category: { deletedAt: null },
+        ...(globalRead
+          ? {}
+          : {
+              marketIds: { hasSome: allowedMarkets.map((market) => market.id) },
+            }),
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -66,6 +106,53 @@ export default async function HomepageAdmin() {
       );
       return [row.marketId ?? "global", parsed.success ? parsed.data : []];
     }),
+  );
+  const global = await db.homepage.findFirst({
+    where: { marketId: null, isPublished: true, deletedAt: null },
+    select: { blocks: true },
+  });
+  const fallback = homepageBlocksSchema.safeParse(global?.blocks ?? []);
+  let historical = false;
+  if (query.revision) {
+    const home = rows.find((row) => (row.marketId ?? "global") === selected);
+    if (!home || !/^[A-Za-z0-9_-]{1,100}$/.test(query.revision)) notFound();
+    const revision = await db.auditLog.findFirst({
+      where: {
+        id: query.revision,
+        entityType: "Homepage",
+        entityId: home.id,
+        action: "content.homepage.revision",
+      },
+    });
+    const snapshot = revision?.after as {
+      format?: string;
+      blocks?: unknown;
+    } | null;
+    if (snapshot?.format !== REVISION_FORMAT) notFound();
+    const blocks = homepageBlocksSchema.safeParse(snapshot.blocks);
+    if (!blocks.success) notFound();
+    compositions[selected] = blocks.data;
+    historical = true;
+  }
+  const options = await adminHomepageOptions(
+    locale,
+    allowedMarkets.map((market) => market.id),
+    globalRead,
+  );
+  const writable = Object.fromEntries(
+    await Promise.all(
+      [
+        ...(globalRead ? ["global"] : []),
+        ...allowedMarkets.map((market) => market.id),
+      ].map(async (scope) => [
+        scope,
+        await can(
+          userId,
+          "content.homepage.write",
+          scope === "global" ? undefined : { marketId: scope },
+        ),
+      ]),
+    ),
   );
   const ids = [
     ...new Set(
@@ -91,7 +178,13 @@ export default async function HomepageAdmin() {
       >
         {scenes("editorTitle")}
       </a>
-      <HomepageBuilder
+      <ModaHomepageBuilder
+        options={options}
+        writable={writable}
+        globalAllowed={globalRead}
+        initialScope={selected}
+        historical={historical}
+        fallbackBlocks={fallback.success ? fallback.data : []}
         action={saveHomepage}
         versions={Object.fromEntries(
           rows.map((row) => [row.marketId ?? "global", row.version]),
@@ -144,6 +237,7 @@ export default async function HomepageAdmin() {
         markets={markets.map((market) => ({
           id: market.id,
           code: market.code,
+          enabledLocales: market.enabledLocales,
         }))}
         labels={{
           shopLook: t("shopLook"),

@@ -34,6 +34,7 @@ export function ShopLookStudio({
   currency,
   labels,
   action,
+  preview = false,
 }: {
   title: string;
   body: string;
@@ -42,6 +43,7 @@ export function ShopLookStudio({
   currency: "USD" | "TRY" | "CAD" | "IRT";
   labels: StudioLabels;
   action: (form: FormData) => Promise<CommerceResult>;
+  preview?: boolean;
 }) {
   const uid = useId();
   const [activeLook, setActiveLook] = useState(looks[0]?.id);
@@ -86,6 +88,7 @@ export function ShopLookStudio({
         currency={currency}
         labels={labels}
         action={action}
+        preview={preview}
       />
     </section>
   );
@@ -98,6 +101,7 @@ function LookSelection({
   currency,
   labels,
   action,
+  preview = false,
 }: {
   look: PreparedLookView;
   uid: string;
@@ -105,6 +109,7 @@ function LookSelection({
   currency: "USD" | "TRY" | "CAD" | "IRT";
   labels: StudioLabels;
   action: (form: FormData) => Promise<CommerceResult>;
+  preview?: boolean;
 }) {
   const [focused, setFocused] = useState(look.items[0]?.productId);
   const [included, setIncluded] = useState(
@@ -196,6 +201,7 @@ function LookSelection({
         </div>
         <CommerceForm
           action={async (form) => {
+            if (preview) return {};
             const result = await action(form);
             if (result.ok) setAdded(true);
             return result;
@@ -311,7 +317,7 @@ function LookSelection({
           )}
           <button
             className="button look-add"
-            disabled={!ready || added}
+            disabled={preview || !ready || added}
             type="submit"
           >
             {added ? labels.inBag : labels.addLook}

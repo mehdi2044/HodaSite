@@ -1,3 +1,5 @@
+import { ServicePolicySummary } from "@/components/storefront/service-policy";
+import { currentServicePolicy } from "@/modules/content/service-policy";
 import { publicMetadata } from "@/modules/seo";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -36,9 +38,13 @@ export default async function CmsPage({ params }: Props) {
     (page.titleI18n as Localized)[locale] ||
     (page.titleI18n as Localized).fa ||
     "";
+  const policy = await currentServicePolicy(market.id);
   return (
     <main className="shell py-10" dir={locale === "fa" ? "rtl" : "ltr"}>
       <h1 className="mb-10 text-4xl font-semibold md:text-6xl">{title}</h1>
+      {policy?.policy?.faqPageId === page.id && (
+        <ServicePolicySummary marketId={market.id} locale={locale} />
+      )}
       <ContentBlocks blocks={page.blocks} locale={locale} />
     </main>
   );

@@ -31,8 +31,10 @@ export async function ProductCard({
   product,
   locale,
   market,
+  readOnly = false,
 }: {
   product: CardProduct;
+  readOnly?: boolean;
   locale: CatalogLocale;
   market: {
     id: string;
@@ -144,7 +146,7 @@ export async function ProductCard({
         <LinkPending />
       </Link>
       <div className="shop-card-wishlist">
-        <WishlistHeart productId={product.id} />
+        {!readOnly && <WishlistHeart productId={product.id} />}
       </div>
     </article>
   );

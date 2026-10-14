@@ -14,6 +14,7 @@ import {
   MAX_IMAGE_BYTES,
   MAX_IMAGE_DIMENSION,
   MAX_PDF_BYTES,
+  MAX_VIDEO_BYTES,
 } from "@/modules/media/constants";
 
 export async function POST(req: Request) {
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
     if (file.size === 0)
       return NextResponse.json({ error: "invalid_size" }, { status: 400 });
 
+    if (file.size > MAX_VIDEO_BYTES)
+      return NextResponse.json({ error: "invalid_size" }, { status: 400 });
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // Trust the bytes, not the client-supplied file.type (D40).
@@ -47,7 +50,12 @@ export async function POST(req: Request) {
         { status: 415 },
       );
 
-    const maxBytes = allowed.kind === "image" ? MAX_IMAGE_BYTES : MAX_PDF_BYTES;
+    const maxBytes =
+      allowed.kind === "image"
+        ? MAX_IMAGE_BYTES
+        : allowed.kind === "video"
+          ? MAX_VIDEO_BYTES
+          : MAX_PDF_BYTES;
     if (file.size > maxBytes)
       return NextResponse.json({ error: "invalid_size" }, { status: 400 });
 
@@ -80,7 +88,7 @@ export async function POST(req: Request) {
 
     const url = await storage.put(key, buffer, sniffed.mime);
     // Images go PROCESSING -> media-optimize job -> READY; documents (pdf)
-    // need no processing and are READY immediately (Phase 01b §2).
+    // and bounded original videos need no image processing and are READY immediately (Phase 01b §2).
     let media;
     try {
       media = await db.$transaction(async (tx) => {

@@ -9,8 +9,10 @@ export async function ShopLook({
   block,
   locale,
   market,
+  preview = false,
 }: {
   block: ShopLookBlock;
+  preview?: boolean;
   locale: "fa" | "tr" | "en";
   market: Parameters<typeof getDisplayPrice>[2];
 }) {
@@ -37,6 +39,7 @@ export async function ShopLook({
   ];
   return (
     <ShopLookStudio
+      preview={preview}
       title={localizedValue(block.title, locale)}
       body={localizedValue(block.body, locale)}
       looks={looks}

@@ -335,7 +335,20 @@ async function applicationMiddleware(req: NextAuthRequest) {
         url.searchParams.delete("market");
         return NextResponse.redirect(url, 301);
       }
-      const market = resolveMarket(markets, cookieCode || queryCode, urlLocale);
+      // CMS targets use the actual search/fitting routes. An explicitly selected
+      // live market must govern their first response even with an older cookie.
+      const linkedMarket =
+        explicit &&
+        ["GET", "HEAD"].includes(req.method) &&
+        /^\/(fa|tr|en)\/(search|fitting-room)\/?$/.test(pathname)
+          ? explicit
+          : undefined;
+      const market = resolveMarket(
+        markets,
+        linkedMarket?.code ?? cookieCode ?? queryCode,
+        urlLocale,
+      );
+      if (linkedMarket) req.headers.set("x-hoda-seo-market", linkedMarket.code);
       if (market) {
         const historical = await historicalRedirect(req, pathname, market.code);
         if (historical) return historical;

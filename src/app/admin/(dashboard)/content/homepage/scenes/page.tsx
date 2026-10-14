@@ -1,3 +1,4 @@
+import { storeCutoutModels } from "@/modules/catalog/cutouts/models";
 import { randomUUID } from "node:crypto";
 import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -92,7 +93,7 @@ export default async function ScenesAdmin({
   );
   if (viewedRevision && !parsed.success) notFound();
   const productMarket = marketId ? { has: marketId } : undefined;
-  const [products, history] = await Promise.all([
+  const [products, history, models] = await Promise.all([
     db.product.findMany({
       where: {
         status: "ACTIVE",
@@ -104,6 +105,17 @@ export default async function ScenesAdmin({
       select: {
         id: true,
         titleI18n: true,
+        cutouts: {
+          where: {
+            deletedAt: null,
+            media: { kind: "image", status: "READY", deletedAt: null },
+          },
+          select: {
+            colorId: true,
+            variantId: true,
+            media: { select: { id: true, url: true, originalName: true } },
+          },
+        },
         media: {
           where: { media: { kind: "image", status: "READY", deletedAt: null } },
           select: {
@@ -134,6 +146,7 @@ export default async function ScenesAdmin({
       orderBy: [{ createdAt: "desc" }, { id: "asc" }],
     }),
     row ? homepageRevisionHistory(userId, row.id, query.after) : [],
+    storeCutoutModels(),
   ]);
   const blocks = parsed.success ? parsed.data : [];
   const ids = blocks.flatMap((block) => [
@@ -174,6 +187,12 @@ export default async function ScenesAdmin({
             : colorIds.length === 1
               ? product.media.map((m) => m.media)
               : [],
+          cutouts: product.cutouts
+            .filter((profile) => profile.colorId === colorId)
+            .map((profile) => ({
+              ...profile.media,
+              variantId: profile.variantId,
+            })),
           variants: variants.map((v) => ({ id: v.id, size: v.size.value })),
         };
       }),
@@ -184,6 +203,13 @@ export default async function ScenesAdmin({
       <h1 className="text-2xl font-semibold">{t("editorTitle")}</h1>
       <p className="text-muted mt-2">{t("editorIntro")}</p>
       <SceneEditor
+        models={models.map((model) => ({
+          id: model.id,
+          kind: model.kind,
+          title: name(model.label),
+          mediaId: model.mediaId,
+          url: model.image.url,
+        }))}
         initialBlocks={blocks}
         viewedRevision={viewedRevision}
         version={row?.version ?? 0}

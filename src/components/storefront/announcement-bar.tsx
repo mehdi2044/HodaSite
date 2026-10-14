@@ -1,3 +1,5 @@
+import { currentServicePolicy } from "@/modules/content/service-policy";
+import { ServicePolicySummary } from "./service-policy";
 import type { Market } from "@/lib/request-context";
 import { isSafeLink } from "@/modules/content";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -18,13 +20,22 @@ export async function AnnouncementBar({
     text?: Record<string, string>;
     link?: string;
   };
+  const policy = await currentServicePolicy(market.id);
   const text = bar.text?.[locale];
   const t = await getTranslations();
 
   return (
     <div className="moda-announcement">
       <div>
-        {bar.enabled &&
+        {policy?.policy?.announcement ? (
+          <ServicePolicySummary
+            marketId={market.id}
+            locale={locale as "fa" | "tr" | "en"}
+            keys={["shipping"]}
+            compact
+          />
+        ) : (
+          bar.enabled &&
           text &&
           (bar.link && isSafeLink(bar.link) ? (
             <a
@@ -35,7 +46,8 @@ export async function AnnouncementBar({
             </a>
           ) : (
             text
-          ))}
+          ))
+        )}
       </div>
       <div className="moda-context-controls">
         <LocaleSwitcher

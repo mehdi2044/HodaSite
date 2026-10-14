@@ -19,7 +19,9 @@ export function MediaPicker({
   defaultUrl,
   onSelect,
   allowClear = false,
+  kind = "image",
 }: {
+  kind?: "image" | "video";
   name: string;
   label: string;
   defaultMediaId?: string | null;
@@ -72,7 +74,7 @@ export function MediaPicker({
     setItems([]);
     try {
       const res = await fetch(
-        `/api/admin/media?kind=image&q=${encodeURIComponent(query)}`,
+        `/api/admin/media?kind=${kind}&q=${encodeURIComponent(query)}`,
         { signal: controller.signal },
       );
       if (!res.ok) throw new Error("MEDIA_SEARCH_FAILED");
@@ -94,7 +96,7 @@ export function MediaPicker({
   }
 
   function select(item: PickerItem) {
-    if (item.status !== "READY") return;
+    if (item.status !== "READY" || (item.kind && item.kind !== kind)) return;
     setMediaId(item.id);
     setPreview(item.url);
     onSelect?.(item.id, item.url);
@@ -138,7 +140,7 @@ export function MediaPicker({
       if (!res.ok) throw new Error("UPLOAD_FAILED");
       const json = (await res.json()) as { id: string };
       // Keep the previous hidden value and the dialog until readiness is proven.
-      const ready = await waitForReadyMedia(json.id, controller.signal);
+      const ready = await waitForReadyMedia(json.id, controller.signal, kind);
       controller.signal.throwIfAborted();
       select(ready);
     } catch {
@@ -157,15 +159,21 @@ export function MediaPicker({
       <span>{label}</span>
       <input ref={inputRef} type="hidden" name={name} value={mediaId} />
       <div className="flex flex-wrap items-center gap-2">
-        {preview && (
-          // Admin-only preview thumbnail, not the storefront — plain <img>
-          // is fine (same precedent as media-upload-field.tsx).
-          <img
-            src={preview}
-            alt=""
-            className="max-h-16 max-w-40 rounded-[6px] border border-black/10 object-contain"
-          />
-        )}
+        {preview &&
+          (kind === "video" ? (
+            <video
+              src={preview}
+              controls
+              preload="metadata"
+              className="max-h-24 max-w-48"
+            />
+          ) : (
+            <img
+              src={preview}
+              alt=""
+              className="max-h-16 max-w-40 rounded-[6px] border border-black/10 object-contain"
+            />
+          ))}
         <Button
           type="button"
           variant="secondary"
@@ -214,7 +222,11 @@ export function MediaPicker({
             <input
               type="file"
               hidden
-              accept="image/png,image/jpeg,image/webp,image/avif"
+              accept={
+                kind === "image"
+                  ? "image/png,image/jpeg,image/webp,image/avif"
+                  : "video/mp4,video/webm"
+              }
               disabled={uploading}
               onChange={(e) => {
                 void uploadNew(e.target.files);
@@ -251,15 +263,29 @@ export function MediaPicker({
               onClick={() => select(item)}
               className="relative aspect-square disabled:opacity-60 overflow-hidden rounded-[6px] border border-black/10 hover:border-primary"
             >
-              <img
-                src={
-                  item.status === "READY"
-                    ? (item.variants?.webp?.["320"]?.url ?? item.url)
-                    : (item.blurDataUrl ?? item.url)
-                }
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              {kind === "video" ? (
+                <>
+                  <video
+                    src={item.url}
+                    muted
+                    preload="metadata"
+                    className="h-full w-full object-contain"
+                  />
+                  <span className="absolute inset-x-0 bottom-0 bg-surface text-xs">
+                    {item.originalName ?? t("chooseMedia")}
+                  </span>
+                </>
+              ) : (
+                <img
+                  src={
+                    item.status === "READY"
+                      ? (item.variants?.webp?.["320"]?.url ?? item.url)
+                      : (item.blurDataUrl ?? item.url)
+                  }
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              )}
               {item.status !== "READY" && (
                 <span className="absolute inset-x-0 bottom-0 bg-surface text-xs">
                   {t(item.status === "FAILED" ? "failed" : "processing")}

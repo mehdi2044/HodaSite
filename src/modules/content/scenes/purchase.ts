@@ -1,14 +1,17 @@
 import { z } from "zod";
 import { addSceneCartItems } from "@/modules/cart";
 import { CommerceError } from "@/modules/orders";
+import { blockScenes, bindBlockVideoScenes } from "../block-scenes";
 import { homepageBlocksSchema } from "../homepage";
 import {
   lockSceneCatalog,
   sceneReferenceFingerprint,
   assertPhotoMatch,
 } from "./references";
-import { lockMediaReferences } from "@/modules/media";
-import { sceneMediaIds } from "./contracts";
+import {
+  lockSceneMediaReferences,
+  compositeSceneReferences,
+} from "./composite";
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 export async function addShoppableScene(
   locale: "fa" | "tr" | "en",
@@ -37,13 +40,15 @@ export async function addShoppableScene(
     const current = await tx.homepage.findUniqueOrThrow({
       where: { id: row.id },
     });
-    const blocks = homepageBlocksSchema.parse(current.blocks);
-    const scene = blocks
-      .flatMap((b) => ("scene" in b && b.scene ? [b.scene] : []))
-      .find((s) => s.id === input.sceneId);
+    const blocks = bindBlockVideoScenes(
+      homepageBlocksSchema.parse(current.blocks),
+    );
+    const scene = blockScenes(
+      blocks.filter((block) => block.enabled !== false),
+    ).find((s) => s.id === input.sceneId);
     if (!scene) throw new CommerceError("VALIDATION");
     await lockSceneCatalog([scene], tx);
-    await lockMediaReferences(tx, sceneMediaIds(scene), { readyImages: true });
+    await lockSceneMediaReferences([scene], tx);
     assertPhotoMatch(
       scene,
       await sceneReferenceFingerprint(scene, [marketId], tx),
@@ -75,5 +80,16 @@ export async function addShoppableScene(
       )
     )
       throw new CommerceError("VALIDATION");
+    if (scene.mode === "COMPOSITE") {
+      const live = await compositeSceneReferences(scene, marketId, tx);
+      if (
+        !live.pieces.every((piece) =>
+          piece.variants.some((variant) =>
+            input.variantIds.includes(variant.variantId),
+          ),
+        )
+      )
+        throw new CommerceError("VALIDATION");
+    }
   });
 }

@@ -22,6 +22,12 @@ beforeEach(() => {
           ? {
               markets: [
                 {
+                  code: "CA",
+                  isActive: true,
+                  defaultLocale: "en",
+                  enabledLocales: ["fa", "tr", "en"],
+                },
+                {
                   code: "IR",
                   isActive: true,
                   defaultLocale: "fa",
@@ -104,6 +110,29 @@ describe("SEO routing transport boundaries", () => {
     expect(response.headers.get("location")).toBe(
       "http://127.0.0.1:3000/en/m/TR",
     );
+  });
+  it("binds actual search/fitting CMS links to their validated market on the first response despite an older cookie", async () => {
+    for (const route of ["search", "fitting-room"]) {
+      const response = await invoke(
+        new NextRequest(`http://127.0.0.1:3000/en/${route}?market=CA`, {
+          headers: { cookie: "market=TR", "x-hoda-seo-market": "IR" },
+        }),
+      );
+      expect(
+        response.headers.get("x-middleware-request-x-hoda-seo-market"),
+      ).toBe("CA");
+      expect(response.headers.get("set-cookie")).toContain("market=CA");
+    }
+    for (const market of ["missing", "IR"]) {
+      const response = await invoke(
+        new NextRequest(`http://127.0.0.1:3000/en/search?market=${market}`, {
+          headers: { cookie: "market=TR", "x-hoda-seo-market": "CA" },
+        }),
+      );
+      expect(
+        response.headers.has("x-middleware-request-x-hoda-seo-market"),
+      ).toBe(false);
+    }
   });
   it("does not forward a caller-supplied route market on legacy pages", async () => {
     const response = await invoke(
