@@ -167,11 +167,18 @@ export default async function ProductPage({
       formatStorefrontAmount(price.amount, currency, safe),
     ]),
   );
+  const variantComparePrices = new Map(
+    [...variantPrices].map(([id, price]) => [
+      id,
+      price.compareAtAmount
+        ? formatStorefrontAmount(price.compareAtAmount, currency, safe)
+        : undefined,
+    ]),
+  );
   const fittingHref = product.fittingSlot
     ? await resolveContentTarget({ kind: "fitting" }, market.id, safe)
     : null;
   const amount = basePrice.amount;
-  const compareAmount = basePrice.compareAtAmount;
   const [seoSettings, rating] = await Promise.all([
     getSeoSettings(),
     publicReviews({ marketId: market.id, locale: safe }, product.id),
@@ -303,10 +310,11 @@ export default async function ProductPage({
               formatStorefrontAmount(amount, currency, safe)
             }
             compare={
-              compareAmount
-                ? formatStorefrontAmount(compareAmount, currency, safe)
+              selectedVariant
+                ? variantComparePrices.get(selectedVariant.id)
                 : undefined
             }
+            saleLabel={t("saleBadge")}
           />
           <p className="mt-1 text-sm text-muted">
             {market.priceIncludesTax ? t("taxIncluded") : t("taxExcluded")}
@@ -315,11 +323,6 @@ export default async function ProductPage({
             {hasNewArrival(product.tags) && (
               <span className="rounded-full bg-text px-3 py-1 text-xs text-bg">
                 {t("newBadge")}
-              </span>
-            )}
-            {compareAmount && (
-              <span className="rounded-full bg-primary px-3 py-1 text-xs text-white">
-                {t("saleBadge")}
               </span>
             )}
           </div>
@@ -355,6 +358,7 @@ export default async function ProductPage({
                 price:
                   variantDisplayPrices.get(v.id) ??
                   formatStorefrontAmount(amount, currency, safe),
+                compare: variantComparePrices.get(v.id),
                 color: {
                   hex: v.color.hex,
                   name: catalogText(v.color.nameI18n, safe),

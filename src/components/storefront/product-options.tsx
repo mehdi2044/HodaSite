@@ -13,6 +13,7 @@ type Variant = {
   available: number;
   lowStockThreshold: number;
   price: string;
+  compare?: string;
   color: { hex: string; name: string };
   size: { value: string };
 };
@@ -65,16 +66,32 @@ export function ProductOptions({
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent("catalog-price", {
-        detail: selected?.price ?? basePrice,
+        detail: {
+          price: selected?.price ?? basePrice,
+          compare: selected?.compare,
+        },
       }),
     );
     window.dispatchEvent(
       new CustomEvent("catalog-variant", { detail: selected?.id ?? "" }),
     );
-  }, [variants, color, size, selected?.id, selected?.price, basePrice]);
+  }, [
+    variants,
+    color,
+    size,
+    selected?.id,
+    selected?.price,
+    selected?.compare,
+    basePrice,
+  ]);
   const announcePrice = (variant?: Variant) =>
     window.dispatchEvent(
-      new CustomEvent("catalog-price", { detail: variant?.price ?? basePrice }),
+      new CustomEvent("catalog-price", {
+        detail: {
+          price: variant?.price ?? basePrice,
+          compare: variant?.compare,
+        },
+      }),
     );
   return (
     <div className="grid gap-5">

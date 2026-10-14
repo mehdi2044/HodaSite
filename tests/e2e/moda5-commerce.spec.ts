@@ -121,6 +121,7 @@ test.beforeAll(async () => {
         marketId: market.id,
         variantId: variant.id,
         amount,
+        compareAtAmount: n === 0 ? "55.0000" : null,
         currency: "CAD",
         validFrom: new Date("2000-01-01T00:00:00Z"),
       },
@@ -228,6 +229,9 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(page.getByTestId("product-price")).toContainText(
       formatStorefrontAmount("100.25", "CAD", locale),
     );
+    await expect(page.getByTestId("product-price").locator("del")).toHaveCount(
+      0,
+    );
     await expect(purchase.locator(".moda-mobile-buy-price")).toContainText(
       formatStorefrontAmount("100.25", "CAD", locale),
     );
@@ -261,6 +265,9 @@ for (const locale of ["fa", "tr", "en"] as const) {
     );
     await expect(page.getByTestId("product-price")).toContainText(
       formatStorefrontAmount("40.5", "CAD", locale),
+    );
+    await expect(page.getByTestId("product-price").locator("del")).toHaveText(
+      formatStorefrontAmount("55", "CAD", locale),
     );
     await purchase.locator(".shop-add-button").click();
     await expect(
