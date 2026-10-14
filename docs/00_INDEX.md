@@ -1,5 +1,9 @@
 # فهرست اسناد پروژه
 
+## وضعیت جاری و طراحی مستقل — ۱۴ اکتبر ۲۰۲۶
+
+main شامل 09A/09B و ShopLook/Fitting/Coin #57 است؛ فاز۹ کلی کامل نشده. تحویل 05e/05f/امنیت در PR60 هنوز ادغام نشده؛ شواهد دقیق آن در #63 و PR60 خوانده شوند. DESIGN-01.1 از main در شاخهٔ مستقل تهیه شده و روی storefront واقعی اعمال نشده است. [شرح کامل #62](phases/phase-design-01.md)، [دستور ادامه](prompts/phase-design-01.md)، [blueprint و تصمیم بصری](reviews/DESIGN01_VISUAL_BLUEPRINT.md)، [ماتریس کامل تنظیمات](reviews/DESIGN01_SETTINGS_MATRIX.md) و [پیش‌نمایش قابل اجرا](../previews/design-01/README.md) مرجع‌اند. پیاده‌سازی، اعتبارسنجی، پذیرش مالک و انتشار مستقل‌اند؛ گزارش تاریخی اجازهٔ خودکار نمی‌دهد.
+
 **Architecture baseline: v1.2** (baseline اولیه: ۲ سپتامبر ۲۰۲۶؛ وضعیت اجرای فعلی در PROGRESS.md). سلسله‌مراتب اعتبار: `02_DECISIONS.md` → `phases/` → `spec/` → `AGENTS.md` → `prompts/`.
 
 ابتدا [وضعیت معتبر امروز](02_DECISIONS.md#current-policy) را بخوانید. D70 گردش فعال Work/Codex است: PR ابتدا Draft، ممنوعیت self-merge، بازبینی AI و CI روی همان head و اجازهٔ صریح مهدی برای مرج. بندهای متعارض مرج در D50/D63 جایگزین شده‌اند. گزارش‌های 09 تا 14 و `history/` تاریخی‌اند و دستور اجرایی نیستند.
