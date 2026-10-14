@@ -114,6 +114,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         },
       });
       expect(media).toHaveLength(2);
+      for (const image of media)
+        expect(image.variants).toHaveProperty(
+          "webp.320.url",
+          expect.stringMatching(/^\/media\//),
+        );
       const theme = await db.themeSettings.findUniqueOrThrow({
         where: { id: "default" },
       });

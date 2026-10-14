@@ -22,6 +22,20 @@ export async function seedModa4BrandMedia(
     const metadata = await sharp(bytes).metadata();
     const now = new Date();
     const key = `media/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${randomUUID()}.png`;
+    const webp: Record<string, { url: string; key: string; bytes: number }> =
+      {};
+    for (const width of [320, 640, 960]) {
+      const rendered = await sharp(bytes)
+        .resize({ width, withoutEnlargement: true })
+        .webp({ quality: 90 })
+        .toBuffer();
+      const variantKey = key.replace(/\.png$/, `-${width}.webp`);
+      webp[String(width)] = {
+        url: await put(variantKey, rendered),
+        key: variantKey,
+        bytes: rendered.length,
+      };
+    }
     await db.media.create({
       data: {
         id: ids[kind],
@@ -34,6 +48,7 @@ export async function seedModa4BrandMedia(
         width: metadata.width,
         height: metadata.height,
         status: "READY",
+        variants: { webp },
         altI18n: { fa: "نشان مودا۴", tr: "MODA4 logosu", en: "MODA4 wordmark" },
         tags: ["demo", "brand"],
       },

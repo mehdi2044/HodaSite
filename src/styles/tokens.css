@@ -138,7 +138,6 @@ html[lang="fa"] :is(h1, h2, h3, .moda-heading),
   unicode-bidi: isolate;
 }
 html[data-button-style="crayon"] :is(.button, .moda-button) {
-  position: relative;
   isolation: isolate;
   min-height: 54px;
   padding-inline: 30px;
@@ -148,6 +147,10 @@ html[data-button-style="crayon"] :is(.button, .moda-button) {
   transition: transform 160ms ease;
   background: transparent;
   color: var(--primaryInk, var(--text));
+}
+/* Low-priority positioning must yield to existing fixed/sticky commerce UI. */
+@layer base {
+  .button, .moda-button { position: relative; }
 }
 html[data-button-style="crayon"] .moda-button[data-variant="destructive"] { color: #ffffff; }
 html[data-button-style="crayon"] .moda-button:is([data-variant="ghost"],[data-variant="secondary"]) { color: var(--text); }
