@@ -14,7 +14,8 @@
     "forbidden": "You do not have permission to do this.",
     "unauthenticated": "Please sign in again.",
     "maintenance": "The site is temporarily in maintenance mode.",
-    "validation": "The submitted data is invalid."
+    "validation": "The submitted data is invalid.",
+    "conflict": "This item changed in another window. Reload and review before saving."
   },
   "maintenance": {
     "title": "We'll be right back",
@@ -43,7 +44,10 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "newsletterTitle": "Keep your perspective fresh",
+    "newsletterIntro": "Choose email updates for this market after signing in. Your choice stays under your control.",
+    "newsletterManage": "Manage email preferences"
   },
   "media": {
     "title": "Media library",
@@ -112,13 +116,17 @@
     "fitContain": "Show whole image",
     "focalX": "Horizontal focus",
     "focalY": "Vertical focus",
-    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original."
+    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original.",
+    "clearSelection": "Clear image",
+    "pickerFailed": "The image is not ready. The previous image was retained; check the library status or choose a ready image.",
+    "pickerProcessing": "Uploading and processing the image; it will be selected when ready. The previous image is retained."
   },
   "contentNavigation": {
     "main": "Main navigation",
     "mobile": "Mobile navigation",
     "footer": "Footer navigation",
-    "phase02Placeholder": "This link becomes available in Phase 02"
+    "phase02Placeholder": "This link becomes available in Phase 02",
+    "openMenu": "Open {label} menu"
   },
   "contentAdmin": {
     "menus": "Menus",
@@ -146,8 +154,8 @@
     "newTab": "New tab",
     "visibility": "Show in markets (empty = all)",
     "active": "Active",
-    "categoryPhase2": "Category (Phase 02)",
-    "collectionPhase2": "Collection (Phase 02)",
+    "categoryPhase2": "Category",
+    "collectionPhase2": "Collection",
     "headerLocation": "Header",
     "mobileLocation": "Mobile menu",
     "footerLocation": "Footer",
@@ -253,7 +261,23 @@
       "mobile": "Mobile 390",
       "desktop": "Desktop 1280",
       "previewFrameTitle": "Safe page preview"
-    }
+    },
+    "menuImage": "Menu image",
+    "imageFit": "Image framing",
+    "imageTone": "Image background",
+    "focalX": "Horizontal focus (0–1)",
+    "focalY": "Vertical focus (0–1)",
+    "cover": "Fill frame",
+    "contain": "Show whole image",
+    "mobilePreview": "Mobile preview",
+    "desktopPreview": "Desktop preview",
+    "noMenuImage": "No image selected",
+    "tone_sand": "Sand",
+    "tone_background": "Page background",
+    "tone_surface": "Surface",
+    "tone_kidsPink": "Kids pink",
+    "tone_kidsMint": "Kids mint",
+    "tone_kidsSky": "Kids sky"
   },
   "catalog": {
     "filters": "Product filters",
@@ -793,7 +817,9 @@
     "bulkResult": "Completed: {succeeded}; failed: {failed}.",
     "couponCodes": "Coupon codes",
     "couponHelp": "Separate codes with commas. Clear and save to remove. Only eligible discounts appear in the summary; final eligibility is checked when you place the order.",
-    "applyCoupons": "Save codes"
+    "applyCoupons": "Save codes",
+    "quoteUnavailable": "The current cart quote is unavailable. Open your bag to review the items.",
+    "moreCartItems": "{count} more items in the full bag"
   },
   "security": {
     "title": "Account security",
@@ -1969,7 +1995,8 @@
     "end": "End",
     "turkish": "Turkish",
     "english": "English",
-    "pricingSummary": "Markup: {markup}% · Rounding: {mode} / {increment} · Reservation: {hold} hours · Payment deadline: {deadline} hours"
+    "pricingSummary": "Markup: {markup}% · Rounding: {mode} / {increment} · Reservation: {hold} hours · Payment deadline: {deadline} hours",
+    "logoWidth": "Logo width (80–240 px)"
   },
   "crm": {
     "title": "Customers & relationships",

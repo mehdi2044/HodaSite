@@ -81,7 +81,10 @@ for (const locale of ["fa", "tr", "en"] as const) {
     expect(keys.join()).not.toMatch(/private-proof|do-not-cache/);
     await context.setOffline(false);
     await page.getByRole("link", { name: t.pwa.retry }).click();
-    await expect(page.locator('header input[name="q"]')).toBeVisible();
+    await page.locator('header button[aria-haspopup="dialog"]').click();
+    await expect(
+      page.locator('.moda-search-dialog input[name="q"]'),
+    ).toBeVisible();
   });
 }
 test("manifest preserves the selected market on a fresh launch without cookies", async ({

@@ -6,6 +6,9 @@ import {
   type MarketCode,
 } from "@/lib/social";
 import { getMenu, type PublicMenuItem } from "@/modules/content";
+import { db } from "@/lib/db";
+import { ResponsiveImage } from "./responsive-image";
+import { Newsletter } from "./newsletter";
 
 export type Contact = {
   email?: string;
@@ -24,12 +27,16 @@ export async function Footer({
   contact,
   social,
   legal,
+  siteName = "",
+  logoMediaId,
 }: {
   locale: string;
   market: Market;
   contact: Contact;
   social: SocialByMarket;
   legal: Legal;
+  siteName?: string;
+  logoMediaId?: string | null;
 }) {
   const [t, navT] = await Promise.all([
     getTranslations("footer"),
@@ -47,9 +54,23 @@ export async function Footer({
     market.code,
     locale as "fa" | "tr" | "en",
   );
+  const logo = logoMediaId
+    ? await db.media.findFirst({
+        where: {
+          id: logoMediaId,
+          kind: "image",
+          status: "READY",
+          deletedAt: null,
+        },
+      })
+    : null;
 
   return (
-    <footer className="mt-20 bg-text text-bg">
+    <footer className="moda-footer">
+      <div className="moda-lace" aria-hidden="true" />
+      <div className="moda-footer-top">
+        {await Newsletter({ locale, marketId: market.id })}
+      </div>
       <div className="shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div className="grid gap-1">
           <strong>{t("contactTitle")}</strong>
@@ -88,6 +109,25 @@ export async function Footer({
           <div className="grid gap-1 opacity-70">
             <p>{footerLine}</p>
           </div>
+        )}
+      </div>
+      <div className="moda-footer-wordmark">
+        {logo ? (
+          <ResponsiveImage
+            media={{
+              url: logo.url,
+              variants: logo.variants,
+              width: logo.width,
+              height: logo.height,
+              blurDataUrl: logo.blurDataUrl,
+              altI18n: { fa: siteName, tr: siteName, en: siteName },
+            }}
+            locale={locale as "fa" | "tr" | "en"}
+            sizes="(min-width:1024px) 600px,80vw"
+            imgClassName="w-full h-auto object-contain"
+          />
+        ) : (
+          <strong>{siteName}</strong>
         )}
       </div>
     </footer>

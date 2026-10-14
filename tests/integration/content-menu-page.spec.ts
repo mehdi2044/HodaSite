@@ -98,7 +98,7 @@ describe.skipIf(!hasDb)("cached menu and published page accessors", () => {
     expect(menu).toHaveLength(1);
     expect(menu[0]).toMatchObject({
       label: "Parent",
-      href: `/en/pages/en-${suffix}`,
+      href: `/en/m/${encodeURIComponent(market.code)}/pages/en-${suffix}`,
       placeholder: false,
     });
     expect(menu[0].children).toHaveLength(1);

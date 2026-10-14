@@ -14,8 +14,8 @@ for (const [locale, market, cartLabel] of [
     await page.evaluate(() => document.fonts.ready);
     const hero = page.getByTestId("storefront-hero");
     const image = hero.locator("img").first();
-    const brand = page.locator(".storefront-brand");
-    const brandName = brand.locator(".storefront-brand-name");
+    const brand = page.locator(".moda-brand");
+    const brandName = brand.locator(":scope > span");
     const cart = page.locator("header .storefront-cart-toggle");
 
     for (const width of [300, 320, 390]) {
@@ -36,7 +36,7 @@ for (const [locale, market, cartLabel] of [
         hero.locator(".spatial-cta, .shop-hero-content .button"),
       ).toHaveAttribute("href", `/${locale}/search`);
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
-      await expect(cart.locator(".storefront-cart-content")).toBeVisible();
+      await expect(cart.locator("bdi")).toBeVisible();
       await expect(brand).toBeVisible();
       // admin-media.spec configures an image logo before this spec in CI.
       // Both branding modes are valid; do not mutate shared settings just to
@@ -85,9 +85,16 @@ for (const [locale, market, cartLabel] of [
       ).toBe(true);
       await cart.focus();
       await page.keyboard.press("Enter");
-      await expect(cart.locator("..")).toHaveAttribute("open", "");
-      await page.keyboard.press("Enter");
-      await expect(cart.locator("..")).not.toHaveAttribute("open", "");
+      await expect(page.locator(".moda-cart-drawer")).toHaveAttribute(
+        "open",
+        "",
+      );
+      await page.keyboard.press("Escape");
+      await expect(page.locator(".moda-cart-drawer")).not.toHaveAttribute(
+        "open",
+        "",
+      );
+      await expect(cart).toBeFocused();
       if (width === 300 || width === 390)
         await page.screenshot({
           path: info.outputPath(`header-${locale}-${width}.png`),
@@ -95,8 +102,8 @@ for (const [locale, market, cartLabel] of [
     }
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await expect(cart.locator(".storefront-cart-content")).toBeVisible();
-    await expect(page.locator(".storefront-header-grid > nav")).toBeVisible();
+    await expect(cart.locator("bdi")).toBeVisible();
+    await expect(page.locator(".moda-desktop-navigation > nav")).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

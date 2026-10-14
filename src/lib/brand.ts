@@ -3,6 +3,18 @@ export type BrandI18n = {
   tagline: Record<string, string>;
 };
 
+/** Only numeric presentation settings are accepted from persisted brand JSON. */
+export function brandLogoWidth(raw: unknown) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return 160;
+  const width = (raw as { logoWidth?: unknown }).logoWidth;
+  return typeof width === "number" &&
+    Number.isFinite(width) &&
+    width >= 80 &&
+    width <= 240
+    ? width
+    : 160;
+}
+
 /**
  * Normalizes SiteSettings.brand — accepts either the current shape
  * ({name,tagline}) or Phase 00's legacy flat {fa,tr,en} shape, so a row that

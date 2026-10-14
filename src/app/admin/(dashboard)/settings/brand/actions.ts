@@ -7,6 +7,7 @@ import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
+import { brandLogoWidth } from "@/lib/brand";
 
 const schema = z.object({
   nameFa: z.string().min(1),
@@ -15,6 +16,7 @@ const schema = z.object({
   taglineFa: z.string().optional().default(""),
   taglineTr: z.string().optional().default(""),
   taglineEn: z.string().optional().default(""),
+  logoWidth: z.coerce.number().int().min(80).max(240).default(160),
   logoMediaId: z.string().optional().default(""),
   logoDarkMediaId: z.string().optional().default(""),
   faviconMediaId: z.string().optional().default(""),
@@ -43,6 +45,7 @@ export async function saveBrand(
         where: {
           id: { in: requestedMediaIds },
           kind: "image",
+          status: "READY",
           deletedAt: null,
         },
       });
@@ -56,6 +59,7 @@ export async function saveBrand(
         tr: parsed.taglineTr,
         en: parsed.taglineEn,
       },
+      logoWidth: parsed.logoWidth,
     };
 
     await withMutation(async () => {
@@ -64,16 +68,39 @@ export async function saveBrand(
         db.themeSettings.findUniqueOrThrow({ where: { id: "default" } }),
       ]);
       const media = {
-        logoMediaId: parsed.logoMediaId || currentTheme.logoMediaId,
-        logoDarkMediaId: parsed.logoDarkMediaId || currentTheme.logoDarkMediaId,
-        faviconMediaId: parsed.faviconMediaId || currentTheme.faviconMediaId,
-        emailLogoMediaId:
-          parsed.emailLogoMediaId || currentTheme.emailLogoMediaId,
+        logoMediaId: data.has("logoMediaId")
+          ? parsed.logoMediaId || null
+          : currentTheme.logoMediaId,
+        logoDarkMediaId: data.has("logoDarkMediaId")
+          ? parsed.logoDarkMediaId || null
+          : currentTheme.logoDarkMediaId,
+        faviconMediaId: data.has("faviconMediaId")
+          ? parsed.faviconMediaId || null
+          : currentTheme.faviconMediaId,
+        emailLogoMediaId: data.has("emailLogoMediaId")
+          ? parsed.emailLogoMediaId || null
+          : currentTheme.emailLogoMediaId,
+      };
+      const persistedBrand = {
+        ...(currentSite?.brand &&
+        typeof currentSite.brand === "object" &&
+        !Array.isArray(currentSite.brand)
+          ? currentSite.brand
+          : {}),
+        ...brand,
+        logoWidth: data.has("logoWidth")
+          ? parsed.logoWidth
+          : brandLogoWidth(currentSite?.brand),
       };
       await db.$transaction(async (tx) => {
-        await lockMediaReferences(tx, Object.values(media));
+        await lockMediaReferences(tx, Object.values(media), {
+          readyImages: true,
+        });
         await Promise.all([
-          tx.siteSettings.update({ where: { id: "default" }, data: { brand } }),
+          tx.siteSettings.update({
+            where: { id: "default" },
+            data: { brand: persistedBrand },
+          }),
           tx.themeSettings.update({ where: { id: "default" }, data: media }),
           tx.auditLog.create({
             data: {
@@ -88,7 +115,7 @@ export async function saveBrand(
                 faviconMediaId: currentTheme.faviconMediaId,
                 emailLogoMediaId: currentTheme.emailLogoMediaId,
               } as object,
-              after: { brand, ...media },
+              after: { brand: persistedBrand, ...media },
             },
           }),
         ]);

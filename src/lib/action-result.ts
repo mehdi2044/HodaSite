@@ -2,6 +2,7 @@ import { ZodError } from "zod";
 import { ForbiddenError, UnauthorizedError } from "@/modules/access";
 import { MaintenanceError } from "@/lib/mutation-gate";
 import { CustomCssError } from "@/lib/custom-css";
+import { RevisionConflictError } from "@/lib/revision-conflict";
 import { getTranslations } from "next-intl/server";
 import faMessages from "../../messages/fa.json";
 
@@ -12,7 +13,8 @@ export type ActionResult =
 // active admin locale and database translation overrides; tests fall back to fa.
 const ERRORS = faMessages.errors;
 async function message(
-  key: "forbidden" | "unauthenticated" | "maintenance" | "validation",
+  key:
+    "forbidden" | "unauthenticated" | "maintenance" | "validation" | "conflict",
 ) {
   try {
     return (await getTranslations("errors"))(key);
@@ -34,6 +36,12 @@ export async function runAction(
     await fn();
     return { ok: true };
   } catch (err) {
+    if (err instanceof RevisionConflictError)
+      return {
+        ok: false,
+        code: "CONFLICT",
+        message: await message("conflict"),
+      };
     if (err instanceof ForbiddenError)
       return { ok: false, code: err.code, message: await message("forbidden") };
     if (err instanceof UnauthorizedError)

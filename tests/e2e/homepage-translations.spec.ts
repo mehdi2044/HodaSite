@@ -43,19 +43,26 @@ test("UI override changes runtime text and reset restores file default", async (
   const replacement = `جایگزین ${Date.now()}`;
   await card.getByLabel("مقدار جایگزین").fill(replacement);
   await card.getByRole("button", { name: "ذخیره", exact: true }).click();
-  await expect
-    .poll(async () => (await page.request.get("/fa/search")).text(), {
-      timeout: 15_000,
-    })
-    .toContain(replacement);
-  await page.goto("/fa/search");
-  await expect(page.getByText(replacement).first()).toBeVisible();
-  await page.goto("/admin/content/translations");
-  await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
-  await page
-    .getByTestId("translation-catalog.search")
-    .getByRole("button", { name: "بازگشت به پیش‌فرض" })
-    .click();
+  try {
+    await expect
+      .poll(async () => (await page.request.get("/fa/search")).text(), {
+        timeout: 15_000,
+      })
+      .toContain(replacement);
+    await page.goto("/fa/search");
+    await expect(
+      page
+        .locator("main")
+        .getByRole("heading", { name: replacement, exact: true }),
+    ).toBeVisible();
+  } finally {
+    await page.goto("/admin/content/translations");
+    await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
+    await page
+      .getByTestId("translation-catalog.search")
+      .getByRole("button", { name: "بازگشت به پیش‌فرض" })
+      .click();
+  }
 });
 
 test("homepage source selections and every trust translation survive save and reload", async ({

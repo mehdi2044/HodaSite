@@ -1,0 +1,29 @@
+{
+  "applicationSourceHead": "0be8b18a4fee6841979f73965d79cc57937c70da",
+  "buildEnvironment": "isolated cloud PostgreSQL16 / system Chromium151 / production standalone",
+  "ownerVisibleURL": null,
+  "onlinePreview": "BLOCKED_ENV",
+  "windowsExecution": "NOT_VERIFIED",
+  "browserResults": "11 passed: real admin menu/save/reload, three-language shell/search/cart/OTP newsletter, 300/320 header, CMS and R0 open-page propagation",
+  "screenshots": [
+    "menu-desktop-1440.png",
+    "shell-en-1440.png",
+    "shell-en-1920.png",
+    "shell-en-390.png",
+    "shell-en-768.png",
+    "shell-fa-1440.png",
+    "shell-fa-1920.png",
+    "shell-fa-390.png",
+    "shell-fa-768.png",
+    "shell-tr-1440.png",
+    "shell-tr-1920.png",
+    "shell-tr-390.png",
+    "shell-tr-768.png"
+  ],
+  "limitations": [
+    "Synthetic fixture DB only; no owner data used.",
+    "Homepage body is the legacy actual store; R3 MODA4 homepage acceptance is pending.",
+    "Emulated viewports, not physical phones.",
+    "Self-check, not independent review or owner visual acceptance."
+  ]
+}

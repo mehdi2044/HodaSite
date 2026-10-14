@@ -44,7 +44,7 @@ test("published seeded menu opens a sanitized mixed-direction CMS page", async (
     .click();
   await expect
     .poll(() => decodeURIComponent(new URL(page.url()).pathname))
-    .toBe("/fa/pages/درباره-ما");
+    .toBe("/fa/m/IR/pages/درباره-ما");
   const isolatedCode = page.getByText("SH-MW-1023", { exact: true });
   await expect(isolatedCode).toHaveText("SH-MW-1023");
   await expect(isolatedCode).toHaveAttribute("dir", "ltr");

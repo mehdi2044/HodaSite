@@ -76,7 +76,7 @@ test("canonical cart link refreshes the header and engagement market context", a
     await expect(page.locator(".shop-product-title")).toBeVisible();
     await expect(switcher).toHaveValue("TR");
     await expect(
-      page.locator(".storefront-departments a").first(),
+      page.locator('.moda-mega-mobile a[href*="/c/"]').first(),
     ).toHaveAttribute("href", /^\/en\/m\/TR\/c\//);
     await expect
       .poll(() =>

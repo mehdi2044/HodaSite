@@ -184,7 +184,7 @@ for (const [locale, market, labels] of [
     await expect(page).toHaveURL(new RegExp(`/${locale}/m/${market}/c/`));
     await page.goBack();
     await expect(page.locator(".shop-full-image")).toBeVisible();
-    await page.locator(".storefront-brand").click();
+    await page.locator(".moda-brand").click();
     await expect(departments).toBeVisible();
   });
 }

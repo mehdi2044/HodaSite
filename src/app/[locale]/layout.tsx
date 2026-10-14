@@ -12,7 +12,7 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
-import { normalizeBrand } from "@/lib/brand";
+import { normalizeBrand, brandLogoWidth } from "@/lib/brand";
 import { normalizeSocial } from "@/lib/social";
 import { getRequestContext } from "@/lib/request-context";
 import { Header } from "@/components/storefront/header";
@@ -143,7 +143,7 @@ export default async function LocaleLayout({
               }}
             />
           )}
-          <AnnouncementBar market={market} locale={locale} />
+          <AnnouncementBar market={market} markets={markets} locale={locale} />
           <Header
             locale={locale}
             market={market}
@@ -151,6 +151,7 @@ export default async function LocaleLayout({
             siteName={siteName}
             logoMediaId={theme?.logoMediaId}
             headerStyle={theme?.headerStyle ?? "minimal"}
+            logoWidth={brandLogoWidth(site?.brand)}
           />
           <GeoSuggestionBanner
             currentMarketCode={market.code}
@@ -170,6 +171,8 @@ export default async function LocaleLayout({
             contact={(site?.contact ?? {}) as Contact}
             social={normalizeSocial(site?.social)}
             legal={(site?.legal ?? {}) as Legal}
+            siteName={siteName}
+            logoMediaId={theme?.logoMediaId}
           />
         </div>
       </EngagementProvider>

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getSiteSettings, getThemeSettings } from "@/modules/settings";
-import { normalizeBrand } from "@/lib/brand";
+import { normalizeBrand, brandLogoWidth } from "@/lib/brand";
 import { saveBrand } from "./actions";
 import { Card, CardTitle, CardDescription, Input } from "@/components/ui";
 import { SettingsForm } from "@/components/admin/settings-form";
@@ -60,29 +60,44 @@ export default async function Brand() {
           ))}
 
           <CardTitle className="mt-4">{legacy("logo")}</CardTitle>
+          <label>
+            {legacy("logoWidth")}
+            <Input
+              name="logoWidth"
+              type="number"
+              min="80"
+              max="240"
+              step="1"
+              defaultValue={brandLogoWidth(site?.brand)}
+            />
+          </label>
           <MediaPicker
             name="logoMediaId"
             label={t("brandLogoLight")}
             defaultMediaId={theme?.logoMediaId}
             defaultUrl={urlOf(theme?.logoMediaId)}
+            allowClear
           />
           <MediaPicker
             name="logoDarkMediaId"
             label={t("brandLogoDark")}
             defaultMediaId={theme?.logoDarkMediaId}
             defaultUrl={urlOf(theme?.logoDarkMediaId)}
+            allowClear
           />
           <MediaPicker
             name="faviconMediaId"
             label={t("favicon")}
             defaultMediaId={theme?.faviconMediaId}
             defaultUrl={urlOf(theme?.faviconMediaId)}
+            allowClear
           />
           <MediaPicker
             name="emailLogoMediaId"
             label={t("emailLogo")}
             defaultMediaId={theme?.emailLogoMediaId}
             defaultUrl={urlOf(theme?.emailLogoMediaId)}
+            allowClear
           />
         </SettingsForm>
       </Card>

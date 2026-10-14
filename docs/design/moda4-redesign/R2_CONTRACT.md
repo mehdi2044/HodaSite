@@ -1,0 +1,18 @@
+# R2 — storefront shell implementation contract
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D21, D31, D40, D70, D77.
+
+Recorded before R2 implementation. Base: corrected PR68 `7d8dfd94061bdf50aeeb85597264ba4ae4ae69de` (R2 rebase before first push); stack PR65 → PR66 → PR67 → PR68 → R2. No merge authorization.
+
+- Reuse existing Header, Market/LocaleSwitcher, SearchBox/catalog suggestions, CartDrawer/readCart/quoteSavedCart, public menus, MediaPicker and verified CRM preferences. PR60 has no distinct changes to these header/cart/menu entry points; its other fixes remain separate.
+- Add **nullable** `MenuItem.presentation` JSON only: mediaId, bounded framing/tone and schema version. Empty legacy presentation retains the old item. Existing category/collection references resolve to actual live entities and market-aware URLs; no placeholder links after a valid reference exists. Collection links use the existing catalog collection filter, preserving it across search/pagination.
+- Admin edits use content.menu.write with actual market context; global menus require unscoped access. Validate live Menu/parent/page/category/collection and READY image inside the write transaction, lock catalog before Media, use optimistic updatedAt for an existing item, and audit only successful commits. Invalid/conflicting input leaves the prior item intact. Existing category count/depth is not limited by the four visual worlds; root discovery includes all roots.
+- Reuse generated Media keys and framing. Public render rechecks live Media, category/collection/page state; processing/deleted/private kinds are excluded. Purge/reference scanning includes presentation, including draft/trash menus, so saved media cannot be physically purged.
+- Header layout: nav/start, approved configurable logo/centre, actual tools/end; mobile search/menu and visible keyboard controls. Home transparency only while near page top, with legible gradient; solid after scroll and elsewhere. Mega-menu opens on keyboard/touch, Escape/outside closes and focus returns. No autoplay needed for shell; reduced motion avoids transitions.
+- Drawer reflects actual cart, selected color/size, current quote/stock errors and market mismatch; no float totals, fabricated discounts or guest private cart leak. It remains an entry to the full cart/checkout, not their replacement acceptance.
+- Footer reuses admin menus/contact/social/legal/brand media and existing consent/preferences flow. Newsletter is opt-in through verified CRM controls, never a fake saved-email toast or silent marketing subscription. No new mail sender/provider or arbitrary callback route.
+- Additive migration; no retained data backfill/reset/seed or changes to money/auth/history. Forward migrate under ops backup process. Code rollback retains columns/JSON/media and uses compatible app+ops; do not remove data. Local+S3 restore must preserve the added field.
+
+Verification: real admin media/reference save→reload→public menu; fifth root/category child discoverable; category/collection/search destinations and pagination; exact cart quotes and mismatch; RBAC/scope/conflict/concurrent Media deletion; purge protection; keyboard/mobile/RTL/three languages, no overflow. Online and owner Windows preview remain separately unverified until local Codex executes the protected handoff.
+
+Media picker readiness/pending/exact-ID files and tests are reused from PR60 head3242540; no importer/finance/catalog implementation is copied here. A generic fixed shipping charge does not justify a free-over2000 banner: fresh defaults now state destination-based calculation; retained merchant copy is not overwritten. R3/R5 must complete the AC-08 policy/CMS/PDP/cart mapping.

@@ -14,7 +14,8 @@
     "forbidden": "Bunu yapmaya yetkiniz yok.",
     "unauthenticated": "Lütfen tekrar giriş yapın.",
     "maintenance": "Site geçici olarak bakım modunda.",
-    "validation": "Gönderilen veriler geçersiz."
+    "validation": "Gönderilen veriler geçersiz.",
+    "conflict": "Bu öğe başka bir pencerede değişti. Kaydetmeden önce yenileyip inceleyin."
   },
   "maintenance": {
     "title": "Yakında döneceğiz",
@@ -43,7 +44,10 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "newsletterTitle": "Stile yeni bir bakış",
+    "newsletterIntro": "Giriş yaptıktan sonra bu pazar için e-posta haberlerini siz seçin. Tercihiniz her zaman sizin kontrolünüzde.",
+    "newsletterManage": "E-posta tercihlerini yönet"
   },
   "media": {
     "title": "Medya kütüphanesi",
@@ -112,13 +116,17 @@
     "fitContain": "Görselin tamamı",
     "focalX": "Yatay odak",
     "focalY": "Dikey odak",
-    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir."
+    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir.",
+    "clearSelection": "Görseli kaldır",
+    "pickerFailed": "Görsel hazır değil. Önceki görsel korundu; kitaplıktaki durumu kontrol edin veya hazır bir görsel seçin.",
+    "pickerProcessing": "Görsel yükleniyor ve işleniyor; hazır olduğunda seçilecek. Önceki görsel korunur."
   },
   "contentNavigation": {
     "main": "Ana navigasyon",
     "mobile": "Mobil navigasyon",
     "footer": "Alt bilgi navigasyonu",
-    "phase02Placeholder": "Bu bağlantı Aşama 02'de etkinleşecek"
+    "phase02Placeholder": "Bu bağlantı Aşama 02'de etkinleşecek",
+    "openMenu": "{label} menüsünü aç"
   },
   "contentAdmin": {
     "menus": "Menüler",
@@ -146,8 +154,8 @@
     "newTab": "Yeni sekme",
     "visibility": "Pazarlarda göster (boş = tümü)",
     "active": "Etkin",
-    "categoryPhase2": "Kategori (Aşama 02)",
-    "collectionPhase2": "Koleksiyon (Aşama 02)",
+    "categoryPhase2": "Kategori",
+    "collectionPhase2": "Koleksiyon",
     "headerLocation": "Üst menü",
     "mobileLocation": "Mobil menü",
     "footerLocation": "Alt menü",
@@ -253,7 +261,23 @@
       "mobile": "Mobil 390",
       "desktop": "Masaüstü 1280",
       "previewFrameTitle": "Güvenli sayfa önizlemesi"
-    }
+    },
+    "menuImage": "Menü görseli",
+    "imageFit": "Görsel çerçevesi",
+    "imageTone": "Görsel zemini",
+    "focalX": "Yatay odak (0–1)",
+    "focalY": "Dikey odak (0–1)",
+    "cover": "Çerçeveyi doldur",
+    "contain": "Görselin tamamı",
+    "mobilePreview": "Mobil önizleme",
+    "desktopPreview": "Masaüstü önizleme",
+    "noMenuImage": "Görsel seçilmedi",
+    "tone_sand": "Kum",
+    "tone_background": "Sayfa zemini",
+    "tone_surface": "Yüzey",
+    "tone_kidsPink": "Çocuk pembe",
+    "tone_kidsMint": "Çocuk nane",
+    "tone_kidsSky": "Çocuk gökyüzü"
   },
   "catalog": {
     "filters": "Ürün filtreleri",
@@ -793,7 +817,9 @@
     "bulkResult": "Tamamlanan: {succeeded}; başarısız: {failed}.",
     "couponCodes": "İndirim kodları",
     "couponHelp": "Kodları virgülle ayırın. Kaldırmak için alanı boşaltıp kaydedin. Yalnızca geçerli indirimler özette görünür; son kontrol sipariş verilirken yapılır.",
-    "applyCoupons": "Kodları kaydet"
+    "applyCoupons": "Kodları kaydet",
+    "quoteUnavailable": "Güncel sepet tutarı hazır değil. Ürünleri incelemek için tam sepeti açın.",
+    "moreCartItems": "Tam sepette {count} ürün daha"
   },
   "security": {
     "title": "Hesap güvenliği",
@@ -1969,7 +1995,8 @@
     "end": "Bitiş",
     "turkish": "Türkçe",
     "english": "İngilizce",
-    "pricingSummary": "Kâr payı: %{markup} · Yuvarlama: {mode} / {increment} · Rezervasyon: {hold} saat · Ödeme süresi: {deadline} saat"
+    "pricingSummary": "Kâr payı: %{markup} · Yuvarlama: {mode} / {increment} · Rezervasyon: {hold} saat · Ödeme süresi: {deadline} saat",
+    "logoWidth": "Logo genişliği (80–240 px)"
   },
   "crm": {
     "title": "Müşteriler ve ilişkiler",

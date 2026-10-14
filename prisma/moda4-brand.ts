@@ -29,7 +29,7 @@ export async function seedModa4BrandMedia(
         .resize({ width, withoutEnlargement: true })
         .webp({ quality: 90 })
         .toBuffer();
-      const variantKey = key.replace(/\.png$/, `-${width}.webp`);
+      const variantKey = `media/variants/${ids[kind]}/${width}.webp`;
       webp[String(width)] = {
         url: await put(variantKey, rendered),
         key: variantKey,

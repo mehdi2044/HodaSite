@@ -13,6 +13,8 @@ export async function getPreviewStatus() {
     db.siteSettings.aggregate({ _max: { updatedAt: true }, _count: true }),
     db.themeSettings.aggregate({ _max: { updatedAt: true }, _count: true }),
     db.homepage.aggregate({ _max: { updatedAt: true }, _count: true }),
+    db.menu.aggregate({ _max: { updatedAt: true }, _count: true }),
+    db.menuItem.aggregate({ _max: { updatedAt: true }, _count: true }),
   ]);
   return {
     buildSha: process.env.HODASITE_BUILD_SHA ?? "unknown",
