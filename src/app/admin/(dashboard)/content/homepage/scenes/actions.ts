@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
-import { UnauthorizedError } from "@/modules/access";
+import { assertCan, UnauthorizedError } from "@/modules/access";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import {
   saveHomepageDraft,
@@ -9,10 +9,26 @@ import {
   scheduleHomepageRevision,
 } from "@/modules/content/publication";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { db } from "@/lib/db";
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
-async function actor() {
+async function actor(form: FormData, publication = false) {
   const session = await auth();
   if (!session?.user?.id) throw new UnauthorizedError();
+  let marketId: string | null;
+  if (publication) {
+    const row = await db.homepage.findFirst({
+      where: { id: id.parse(form.get("homepageId")), deletedAt: null },
+    });
+    if (!row) throw new z.ZodError([]);
+    marketId = row.marketId;
+  } else
+    marketId = id.nullable().parse(String(form.get("marketId") ?? "") || null);
+  await assertCan(
+    session.user.id,
+    "content.homepage.write",
+    marketId ? { marketId } : undefined,
+  );
+  // Domain writers repeat authorization after their real reference locks.
   return session.user.id;
 }
 function json(value: FormDataEntryValue | null) {
@@ -29,7 +45,7 @@ function invalidate() {
 }
 export async function saveSceneDraft(_: ActionResult | null, form: FormData) {
   return runAction(async () => {
-    const userId = await actor();
+    const userId = await actor(form);
     await saveHomepageDraft(userId, {
       marketId: String(form.get("marketId") ?? "") || null,
       expectedVersion: z
@@ -48,7 +64,7 @@ export async function publishSceneRevision(
   form: FormData,
 ) {
   return runAction(async () => {
-    const userId = await actor();
+    const userId = await actor(form, true);
     await publishHomepageRevision(userId, {
       homepageId: id.parse(form.get("homepageId")),
       revisionId: id.parse(form.get("revisionId")),
@@ -66,7 +82,7 @@ export async function scheduleSceneRevision(
   form: FormData,
 ) {
   return runAction(async () => {
-    const userId = await actor();
+    const userId = await actor(form, true);
     const at = z.string().datetime().parse(form.get("at"));
     await scheduleHomepageRevision(userId, {
       homepageId: id.parse(form.get("homepageId")),

@@ -2552,6 +2552,7 @@
     "publishChanges": "Save and publish",
     "labelSide": "Price label side",
     "sideStart": "Start",
-    "sideEnd": "End"
+    "sideEnd": "End",
+    "shortLabel": "Short label (optional)"
   }
 }

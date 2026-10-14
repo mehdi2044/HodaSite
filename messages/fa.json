@@ -2552,6 +2552,7 @@
     "publishChanges": "ذخیره و انتشار",
     "labelSide": "سمت برچسب قیمت",
     "sideStart": "آغاز",
-    "sideEnd": "پایان"
+    "sideEnd": "پایان",
+    "shortLabel": "نام کوتاه برچسب (اختیاری)"
   }
 }

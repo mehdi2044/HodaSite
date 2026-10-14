@@ -527,6 +527,24 @@ export function SceneEditor(props: Props) {
                       ))}
                     </select>
                   </label>
+                  {languages.map((locale) => (
+                    <label key={locale}>
+                      {t("shortLabel")} — {languageNames[locale]}
+                      <input
+                        className="input"
+                        maxLength={200}
+                        value={piece.label?.[locale] ?? ""}
+                        onChange={(event) =>
+                          modifyPiece(index, {
+                            label: {
+                              ...(piece.label ?? blank()),
+                              [locale]: event.target.value,
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
                   <label>
                     {t("labelSide")}
                     <select
@@ -671,14 +689,25 @@ export function SceneEditor(props: Props) {
             </label>
           </div>
           {enabled && selectedMarket && (
-            <iframe
-              ref={iframe}
-              src={source}
-              title={t("previewTitle")}
-              data-testid="scene-preview"
-              className="max-w-full border rounded-token"
-              style={{ width: frame === "mobile" ? 390 : 1280, height: 900 }}
-            />
+            <div
+              className="min-w-0 max-w-full overflow-x-auto"
+              role="region"
+              aria-label={t("previewTitle")}
+              tabIndex={0}
+            >
+              <iframe
+                ref={iframe}
+                src={source}
+                title={t("previewTitle")}
+                data-testid="scene-preview"
+                className="block border rounded-token"
+                style={{
+                  width: frame === "mobile" ? 390 : 1280,
+                  maxWidth: "none",
+                  height: 900,
+                }}
+              />
+            </div>
           )}
           <div className="card grid gap-3">
             <h2>{t("publication")}</h2>
@@ -779,6 +808,19 @@ function SceneAnchorCanvas({
     image = useRef<HTMLImageElement>(null),
     root = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const element = image.current;
+    if (!element) return;
+    const loaded = () =>
+      setDimensions({
+        width: element.naturalWidth,
+        height: element.naturalHeight,
+      });
+    if (element.complete) loaded();
+    else setDimensions({ width: 0, height: 0 });
+    element.addEventListener("load", loaded);
+    return () => element.removeEventListener("load", loaded);
+  }, [url]);
   const selected = useRef<number | null>(null);
   const coordinate = (value: number) =>
     Math.max(0, Math.min(1, Number(value.toFixed(4))));
@@ -892,11 +934,11 @@ function SceneAnchorCanvas({
             >
               {index + 1}
             </button>
-          ) : (
+          ) : dimensions.width > 0 && dimensions.height > 0 ? (
             <p key={piece.id} role="status">
               {t("anchorOutside", { number: index + 1 })}
             </p>
-          );
+          ) : null;
         })}
       </div>
     </div>

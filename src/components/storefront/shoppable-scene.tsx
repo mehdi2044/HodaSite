@@ -35,6 +35,27 @@ export function ShoppableScene({
     JSON.stringify([view[kind].media?.url, view[kind].media?.variants]);
   const imageFailed = (kind: "desktop" | "mobile") =>
     failedImages[kind] === imageKey(kind);
+  const imageRevision = JSON.stringify([view.desktop.media, view.mobile.media]);
+  useEffect(() => {
+    const listeners: (() => void)[] = [];
+    for (const kind of ["desktop", "mobile"] as const) {
+      const image = root.current?.querySelector<HTMLImageElement>(
+        `[data-scene-frame="${kind}"] img`,
+      );
+      if (!image) continue;
+      const key = JSON.stringify([
+        view[kind].media?.url,
+        view[kind].media?.variants,
+      ]);
+      const failed = () => failImage((old) => ({ ...old, [kind]: key }));
+      // SSR images can finish (or fail) before React hydrates. Observe their
+      // actual decoded state as well as future errors, not just React events.
+      if (image.complete && image.naturalWidth === 0) failed();
+      image.addEventListener("error", failed);
+      listeners.push(() => image.removeEventListener("error", failed));
+    }
+    return () => listeners.forEach((remove) => remove());
+  }, [imageRevision, view.desktop.media, view.mobile.media]);
   const [selections, select] = useState<Record<string, string>>({});
   const [refreshing, startRefresh] = useTransition();
   const pending = useRef(refreshing);
@@ -121,6 +142,7 @@ export function ShoppableScene({
           return (
             <div
               key={kind}
+              data-scene-frame={kind}
               onErrorCapture={(event) => {
                 if (event.target instanceof HTMLImageElement)
                   failImage((old) => ({ ...old, [kind]: imageKey(kind) }));

@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, describe, it, expect } from "vitest";
+import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -16,6 +16,12 @@ import {
 import { runJobs } from "@/modules/jobs";
 import { RevisionConflictError } from "@/lib/revision-conflict";
 import { setMaintenanceFlag } from "@/modules/settings";
+
+const session = vi.hoisted(() => ({ actor: null as string | null }));
+vi.mock("@/modules/auth", () => ({
+  auth: async () => (session.actor ? { user: { id: session.actor } } : null),
+}));
+import { POST as previewPOST } from "@/app/api/admin/scenes/preview/route";
 
 const text = { fa: "صحنهٔ آزمون", tr: "Sahne testi", en: "Scene proof" };
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
@@ -268,6 +274,39 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       }
     });
+    it("keeps authorized draft preview private, read-only and inside actual market scope", async () => {
+      const request = (payload: unknown) =>
+        new Request("http://localhost/api/admin/scenes/preview", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      session.actor = null;
+      const denied = await previewPOST(request({}));
+      expect(denied.status).toBe(401);
+      expect(denied.headers.get("cache-control")).toContain(
+        "private, no-store",
+      );
+      expect(denied.headers.get("x-robots-tag")).toContain("noindex");
+      const current = await row();
+      const scene = (current.draftBlocks as unknown as HomepageBlock[]).flatMap(
+        (b) => ("scene" in b && b.scene ? [b.scene] : []),
+      )[0];
+      const input = { scopeMarketId: marketId, marketId, locale: "en", scene };
+      session.actor = scoped;
+      expect((await previewPOST(request(input))).status).toBe(403);
+      session.actor = owner;
+      const auditCount = await db.auditLog.count();
+      const response = await previewPOST(request(input));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("vary")).toBe("Cookie");
+      const result = await response.json();
+      expect(result.view.pieces).toHaveLength(1);
+      expect(JSON.stringify(result)).not.toContain("confirmedAt");
+      expect(JSON.stringify(result)).not.toContain("fingerprint");
+      expect((await row()).version).toBe(current.version);
+      expect(await db.auditLog.count()).toBe(auditCount);
+      session.actor = null;
+    });
     it("publishes a valid schedule once and replays its successful job without duplicating publication", async () => {
       const before = await row();
       const scheduled = await scheduleHomepageRevision(owner, {
@@ -290,12 +329,20 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       });
       expect(job.status).toBe("DONE");
       const committed = await row();
-      await executeHomepagePublication({
-        id: job.id,
-        type: job.type,
-        payload: job.payload,
-        attempts: job.attempts,
-      });
+      await db.user.update({ where: { id: owner }, data: { isActive: false } });
+      try {
+        await executeHomepagePublication({
+          id: job.id,
+          type: job.type,
+          payload: job.payload,
+          attempts: job.attempts,
+        });
+      } finally {
+        await db.user.update({
+          where: { id: owner },
+          data: { isActive: true },
+        });
+      }
       expect((await row()).version).toBe(committed.version);
       expect(
         await db.auditLog.count({

@@ -2552,6 +2552,7 @@
     "publishChanges": "Kaydet ve yayınla",
     "labelSide": "Fiyat etiketi tarafı",
     "sideStart": "Başlangıç",
-    "sideEnd": "Bitiş"
+    "sideEnd": "Bitiş",
+    "shortLabel": "Kısa etiket (isteğe bağlı)"
   }
 }
