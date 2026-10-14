@@ -18,7 +18,7 @@ export async function Newsletter({
     actor = await currentCustomer();
   const verified = Boolean(actor && !actor.isGuest);
   const email = verified
-    ? (await preferences(marketId)).find((row) => row.channel === "EMAIL")
+    ? (await preferences(marketId)).find((row) => row.channel === "email")
     : null;
   return (
     <section className="moda-newsletter">
@@ -29,7 +29,7 @@ export async function Newsletter({
           <p>{crm(`states.${email?.status ?? "UNKNOWN"}`)}</p>
           <EngagementForm action={preferenceAction} refresh="document">
             <input type="hidden" name="marketId" value={marketId} />
-            <input type="hidden" name="channel" value="EMAIL" />
+            <input type="hidden" name="channel" value="email" />
             <label>
               {crm("choice")}
               <select

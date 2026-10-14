@@ -172,7 +172,7 @@ export default async function LocaleLayout({
             social={normalizeSocial(site?.social)}
             legal={(site?.legal ?? {}) as Legal}
             siteName={siteName}
-            logoMediaId={theme?.logoDarkMediaId ?? theme?.logoMediaId}
+            logoMediaId={theme?.logoMediaId}
           />
         </div>
       </EngagementProvider>
