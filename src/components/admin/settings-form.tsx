@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { Button } from "@/components/ui";
 import type { ActionResult } from "@/lib/action-result";
+import { useUnsavedForm } from "./unsaved-form";
 
 export function SettingsForm({
   action,
@@ -26,10 +27,13 @@ export function SettingsForm({
   const legacy = useTranslations("foundationAdmin");
 
   const [state, formAction, pending] = useActionState(action, null);
+  const navigation = useTranslations("adminShell");
+  const formRef = useUnsavedForm(state, navigation("unsavedChanges"));
   const { uploadsPending, reportPending } = useMediaPickerPending();
   return (
     <MediaPickerPendingContext.Provider value={reportPending}>
       <form
+        ref={formRef}
         action={formAction}
         className={className ?? "grid gap-4"}
         onSubmit={(event) => {

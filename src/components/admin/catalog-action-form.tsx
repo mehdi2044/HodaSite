@@ -8,6 +8,7 @@ import { useActionState, type ReactNode } from "react";
 import type { ActionResult } from "@/lib/action-result";
 import { Button } from "@/components/ui";
 import { useTranslations } from "next-intl";
+import { useUnsavedForm } from "./unsaved-form";
 
 export function CatalogActionForm({
   action,
@@ -25,10 +26,13 @@ export function CatalogActionForm({
 }) {
   const t = useTranslations("catalogAdmin");
   const [state, formAction, pending] = useActionState(action, null);
+  const navigation = useTranslations("adminShell");
+  const formRef = useUnsavedForm(state, navigation("unsavedChanges"));
   const { uploadsPending, reportPending } = useMediaPickerPending();
   return (
     <MediaPickerPendingContext.Provider value={reportPending}>
       <form
+        ref={formRef}
         action={formAction}
         className={className}
         onSubmit={(event) => {

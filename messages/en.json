@@ -1156,7 +1156,8 @@
     "taskHomepageHelp": "Set the section order, product counts and copy on your homepage.",
     "taskMedia": "Image library",
     "taskMediaHelp": "Upload photography and adjust its mobile and desktop presentation.",
-    "openSection": "Open section"
+    "openSection": "Open section",
+    "unsavedChanges": "You have unsaved changes. Leave this page?"
   },
   "mobileStorefront": {
     "navigation": "Shop shortcuts",

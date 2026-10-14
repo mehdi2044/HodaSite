@@ -57,6 +57,10 @@ The cloud PostgreSQL fixture is not the owner's Windows preview. No runtime SHA,
 
 ## Five-minute owner functional acceptance
 
+Local new proof: production build and all 4,228 unit tests pass; 63 focused unit cases pass. A fresh dedicated import-proof database passed all five cases, including real imported-lot finance-enabled sale/restock, retained merchant state and concurrent/replayed import. Six spatial navigation/gallery cases passed in FA/TR/EN. Seven catalog/unsaved browser cases passed, including the real upload/readiness/save/reload flow and three-language navigation cancellation/revert recovery in both shared form types. Existing commerce, department and admin continuation cases also produced individual passes; an interrupted full local run has no complete-suite pass claim. Current-head CI remains the full regression source.
+
+F defect fixed: shared `CatalogActionForm`/`SettingsForm` compare current form data to initial or successfully saved values. Dirty link navigation uses the localized confirmation; refresh/close uses the browser's native warning. Cancelling preserves data; reverting restores clean navigation. This is not automatic save, full version history or a new IA. The exact new browser proof is `tests/e2e/admin-unsaved-form.spec.ts`.
+
 Only after C succeeds: open each locale in the owner's real preview. Browse all four departments, open the fifth sample, select a valid size/color and add one unit. In the bag check item/variant/quantity, adjust quantity/remove, inspect summary and start a synthetic checkout. In admin edit a category, clear its cover, save/reload; upload a replacement and confirm Save waits for READY. Edit a homepage row's title/count/order and verify the corresponding preview. Choose Turkish admin UI in an English browser, search `içerik`/`iletişim`, open mobile menu and Escape. Never use a real payment for QA.
 
 ## Independent acceptance gates

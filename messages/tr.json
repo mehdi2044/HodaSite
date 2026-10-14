@@ -1156,7 +1156,8 @@
     "taskHomepageHelp": "Ana sayfa bölümlerini, ürün sayılarını ve metinlerini ayarlayın.",
     "taskMedia": "Görsel kütüphanesi",
     "taskMediaHelp": "Görsel yükleyin, mobil ve masaüstü sunumunu ayarlayın.",
-    "openSection": "Bölümü aç"
+    "openSection": "Bölümü aç",
+    "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var. Bu sayfadan ayrılmak istiyor musunuz?"
   },
   "mobileStorefront": {
     "navigation": "Mağaza kısayolları",
