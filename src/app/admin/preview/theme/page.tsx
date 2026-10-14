@@ -7,8 +7,14 @@ import { ThemePreviewClient } from "./preview-client";
 // mutation ever happens on this route (Phase 01a §3).
 export const dynamic = "force-dynamic";
 
-export default async function ThemePreviewPage() {
+export default async function ThemePreviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ channel?: string }>;
+}) {
+  const channel = (await searchParams).channel?.slice(0, 100) ?? "";
   const legacy = await getTranslations("foundationAdmin");
+  const t = await getTranslations("themeEditor");
 
   const site = await getSiteSettings();
   const locale = await getLocale();
@@ -17,7 +23,7 @@ export default async function ThemePreviewPage() {
   const tagline = brand.tagline[locale as "fa" | "tr" | "en"];
 
   return (
-    <ThemePreviewClient>
+    <ThemePreviewClient channel={channel}>
       <main
         className="hero"
         dir={locale === "fa" ? "rtl" : "ltr"}
@@ -25,7 +31,7 @@ export default async function ThemePreviewPage() {
       >
         <section className="shell">
           {tagline && (
-            <p style={{ letterSpacing: ".16em", color: "var(--primary)" }}>
+            <p style={{ letterSpacing: ".16em", color: "var(--primaryText)" }}>
               {tagline}
             </p>
           )}
@@ -38,7 +44,15 @@ export default async function ThemePreviewPage() {
             {legacy("sampleButton")}{" "}
           </button>
           <div className="card mt-4" style={{ maxWidth: 320, marginTop: 16 }}>
+            <div className="moda-lace" aria-hidden="true" />
             <p style={{ margin: 0 }}>{legacy("sampleCard")}</p>
+            <p lang="tr" className="moda-heading">
+              {t("sampleTurkish")}
+            </p>
+            <p lang="fa" dir="rtl">
+              {t("samplePersian")}{" "}
+              <bdi className="moda-price">{t("samplePrice")}</bdi>
+            </p>
           </div>
         </section>
       </main>

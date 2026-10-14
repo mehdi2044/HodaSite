@@ -20,7 +20,45 @@ export const hexColor = z.string().regex(HEX_COLOR_RE, "Invalid hex color");
 // options the UI actually offers now rather than leave that landmine.
 export const HERO_STYLES = ["editorial", "minimal"] as const;
 export const FONT_FA_FAMILIES = ["Vazirmatn"] as const;
-export const FONT_LATIN_FAMILIES = ["Inter"] as const;
+export const FONT_LATIN_FAMILIES = ["Inter", "Manrope"] as const;
+export const FONT_PRICE_FAMILIES = ["Inter"] as const;
+export const BUTTON_STYLES = ["pill", "soft", "sharp", "crayon"] as const;
+export const lineOpacity = z.coerce.number().min(0).max(1);
+
+export function normalizeThemeFonts(raw: unknown) {
+  const fonts =
+    raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const latin = z.enum(FONT_LATIN_FAMILIES).safeParse(fonts.latin);
+  return {
+    fa: "Vazirmatn" as const,
+    latin: latin.success ? latin.data : ("Inter" as const),
+    headingLatin:
+      z.enum(FONT_LATIN_FAMILIES).safeParse(fonts.headingLatin).data ??
+      "Manrope",
+    priceLatin:
+      z.enum(FONT_PRICE_FAMILIES).safeParse(fonts.priceLatin).data ?? "Inter",
+  };
+}
+
+export function themeFontVars(raw: unknown) {
+  const fonts = normalizeThemeFonts(raw);
+  return {
+    "font-body-latin": `${fonts.latin}, Vazirmatn, sans-serif`,
+    "font-heading-latin": `${fonts.headingLatin}, Inter, Vazirmatn, sans-serif`,
+    "font-price-latin": `${fonts.priceLatin}, Vazirmatn, sans-serif`,
+    "font-fa": `${fonts.fa}, Inter, sans-serif`,
+  };
+}
+
+export function safeLineOpacity(raw: unknown) {
+  const colors =
+    raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const opacity =
+    colors.opacity && typeof colors.opacity === "object"
+      ? (colors.opacity as Record<string, unknown>)
+      : {};
+  return z.number().min(0).max(1).safeParse(opacity.line).data ?? 0.12;
+}
 
 /**
  * Defense in depth for the RENDER path (RootLayout): re-validate even an

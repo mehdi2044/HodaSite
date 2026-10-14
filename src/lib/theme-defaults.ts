@@ -1,3 +1,4 @@
+import { MODA4_LIGHT, MODA4_DARK } from "../../scripts/moda4-theme";
 export const COLOR_KEYS = [
   "primary",
   "background",
@@ -7,32 +8,56 @@ export const COLOR_KEYS = [
   "success",
   "error",
   "warning",
+  "sand",
+  "sandDeep",
+  "primaryText",
+  "line",
+  "kidsPink",
+  "kidsMint",
+  "kidsSky",
+  "kidsButter",
+  "kidsLilac",
+  "kidsPeach",
+  "kidsInk",
+  "kidsAccent",
+  "kidsButton",
+  "kidsButtonInk",
+  "roseBackground",
+  "roseSoft",
+  "roseAccent",
+  "roseDeep",
+  "slateBackground",
+  "slateSoft",
+  "slateAccent",
+  "slateDeep",
+  "sandBackground",
+  "sandSoft",
+  "sandAccent",
+  "sandText",
+  "primaryInk",
 ] as const;
 
 export const DEFAULT_LIGHT_COLORS: Record<string, string> = {
+  ...MODA4_LIGHT,
   primary: "#E8792A",
   background: "#FBF8F3",
-  surface: "#FFFFFF",
   text: "#1A1A1A",
   muted: "#6B6B6B",
-  success: "#2E7D4F",
-  error: "#C0392B",
-  warning: "#B7791F",
 };
-
-export const DEFAULT_DARK_COLORS: Record<string, string> = {
-  primary: "#F0955A",
-  background: "#171310",
-  surface: "#221C17",
-  text: "#F5F1EA",
-  muted: "#B5AA9C",
-  success: "#4FAF77",
-  error: "#E06655",
-  warning: "#D9A441",
-};
+export const DEFAULT_DARK_COLORS: Record<string, string> = MODA4_DARK;
 
 export const BUTTON_RADIUS: Record<string, string> = {
   pill: "999px",
   soft: "10px",
   sharp: "4px",
+  crayon: "999px",
+};
+
+/** Only defaults for a NEW theme row; never overwrite a merchant's palette. */
+export const MODA4_LIGHT_COLORS = {
+  ...DEFAULT_LIGHT_COLORS,
+  primary: "#FF6A1A",
+  background: "#F7F4EF",
+  text: "#141210",
+  muted: "#6B645C",
 };

@@ -1,10 +1,12 @@
 "use client";
 import { useTranslations } from "next-intl";
 import { themeContrastFailures } from "@/lib/contrast";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useId } from "react";
 import { Button, Card, CardTitle, Select } from "@/components/ui";
 import { saveTheme } from "./actions";
 import { COLOR_KEYS, BUTTON_RADIUS } from "@/lib/theme-defaults";
+import { themeFontVars, FONT_LATIN_FAMILIES } from "@/lib/theme-validation";
+import { useUnsavedForm } from "@/components/admin/unsaved-form";
 
 export type ThemeDraft = {
   light: Record<string, string>;
@@ -12,35 +14,55 @@ export type ThemeDraft = {
   radius: string;
   darkMode: "off" | "on" | "system";
   headerStyle: "minimal" | "centered" | "editorial";
-  buttonStyle: "pill" | "soft" | "sharp";
+  buttonStyle: "pill" | "soft" | "sharp" | "crayon";
   heroStyle: string;
   fontFa: string;
   fontLatin: string;
+  fontHeadingLatin: string;
+  fontPriceLatin: string;
+  lineOpacity: number;
   customCss: string;
 };
 
-function payloadFor(draft: ThemeDraft) {
+function payloadFor(draft: ThemeDraft, channel: string) {
   return {
     type: "theme-preview" as const,
+    channel,
     vars: {
       ...draft.light,
       radius: draft.radius,
       "radius-button": BUTTON_RADIUS[draft.buttonStyle] ?? BUTTON_RADIUS.pill,
+      ...themeFontVars({
+        fa: draft.fontFa,
+        latin: draft.fontLatin,
+        headingLatin: draft.fontHeadingLatin,
+        priceLatin: draft.fontPriceLatin,
+      }),
     },
+    fonts: {
+      fa: draft.fontFa,
+      latin: draft.fontLatin,
+      headingLatin: draft.fontHeadingLatin,
+      priceLatin: draft.fontPriceLatin,
+    },
+    lineOpacity: draft.lineOpacity,
     buttonStyle: draft.buttonStyle,
   };
 }
 
 export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
   const t = useTranslations("themeEditor");
+  const channel = useId();
   const [state, formAction, pending] = useActionState(saveTheme, null);
+  const navigation = useTranslations("adminShell");
+  const formRef = useUnsavedForm(state, navigation("unsavedChanges"));
   const [draft, setDraft] = useState<ThemeDraft>(initial);
   const iframe390 = useRef<HTMLIFrameElement>(null);
   const iframe1280 = useRef<HTMLIFrameElement>(null);
   const [frameGen, setFrameGen] = useState(0);
 
   function broadcast() {
-    const payload = payloadFor(draft);
+    const payload = payloadFor(draft, channel);
     iframe390.current?.contentWindow?.postMessage(
       payload,
       window.location.origin,
@@ -57,14 +79,20 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
     function onMessage(e: MessageEvent) {
       if (e.origin !== window.location.origin) return;
       if (e.data?.type !== "theme-preview-ready") return;
+      if (e.data?.channel !== channel) return;
+      if (
+        e.source !== iframe390.current?.contentWindow &&
+        e.source !== iframe1280.current?.contentWindow
+      )
+        return;
       (e.source as Window | null)?.postMessage(
-        payloadFor(draft),
+        payloadFor(draft, channel),
         window.location.origin,
       );
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [draft]);
+  }, [draft, channel]);
 
   useEffect(() => {
     if (state?.ok) setFrameGen((v) => v + 1); // reload preview iframes after a successful save
@@ -76,7 +104,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-      <form action={formAction} className="grid gap-6">
+      <form ref={formRef} action={formAction} className="grid gap-6">
         {(["light", "dark"] as const).map((mode) => {
           const failures = themeContrastFailures(draft[mode]);
           return failures.length ? (
@@ -181,6 +209,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
               <option value="pill">{t("pill")}</option>
               <option value="soft">{t("soft")}</option>
               <option value="sharp">{t("sharp")}</option>
+              <option value="crayon">{t("crayon")}</option>
             </Select>
           </label>
           <label className="grid gap-1">
@@ -232,8 +261,55 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
                 setDraft((d) => ({ ...d, fontLatin: e.target.value }))
               }
             >
+              {FONT_LATIN_FAMILIES.map((font) => (
+                <option key={font} value={font}>
+                  {font}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="grid gap-1">
+            {t("fontHeadingLatin")}
+            <Select
+              name="fontHeadingLatin"
+              value={draft.fontHeadingLatin}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, fontHeadingLatin: e.target.value }))
+              }
+            >
+              {FONT_LATIN_FAMILIES.map((font) => (
+                <option key={font} value={font}>
+                  {font}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="grid gap-1">
+            {t("fontPriceLatin")}
+            <Select
+              name="fontPriceLatin"
+              value={draft.fontPriceLatin}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, fontPriceLatin: e.target.value }))
+              }
+            >
               <option value="Inter">Inter</option>
             </Select>
+          </label>
+          <label className="grid gap-1">
+            {t("lineOpacity")}
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.01"
+              name="lineOpacity"
+              value={draft.lineOpacity}
+              className="input"
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, lineOpacity: Number(e.target.value) }))
+              }
+            />
           </label>
         </Card>
 
@@ -274,7 +350,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
           <iframe
             key={`390-${frameGen}`}
             ref={iframe390}
-            src="/admin/preview/theme"
+            src={`/admin/preview/theme?channel=${encodeURIComponent(channel)}`}
             onLoad={broadcast}
             title={t("mobilePreview")}
             style={{
@@ -291,7 +367,7 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
           <iframe
             key={`1280-${frameGen}`}
             ref={iframe1280}
-            src="/admin/preview/theme"
+            src={`/admin/preview/theme?channel=${encodeURIComponent(channel)}`}
             onLoad={broadcast}
             title={t("desktopPreview")}
             style={{

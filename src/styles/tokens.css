@@ -21,12 +21,30 @@
   --color-error: var(--error);
   --color-warning: var(--warning);
   --radius-token: var(--radius);
-  --font-sans: Inter, Vazirmatn, sans-serif;
+  --font-sans: var(--font-body-latin, Inter), Vazirmatn, sans-serif;
 }
 
 /* Self-hosted variable fonts (no Google Fonts — D26). Files vendored from
    @fontsource-variable/* into public/fonts/ by scripts/vendor-fonts.mjs.
    Both families are SIL OFL 1.1 (see the LICENSE next to each set). */
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope/manrope-latin-ext-wght-normal.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+1E00-1E9F, U+2020, U+20A0-20C0, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope/manrope-latin-wght-normal.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+FEFF,
+    U+FFFD;
+}
 @font-face {
   font-family: "Vazirmatn";
   src: url("/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2")
@@ -97,11 +115,110 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--text);
-  font-family: Inter, Vazirmatn, sans-serif;
+  font-family: var(--font-body-latin, Inter), Vazirmatn, sans-serif;
 }
 html[lang="fa"] body,
 [dir="rtl"] {
-  font-family: Vazirmatn, Inter, sans-serif;
+  font-family: var(--font-fa, Vazirmatn), Inter, sans-serif;
+}
+h1,
+h2,
+h3,
+.moda-heading {
+  font-family: var(--font-heading-latin, Manrope), Inter, Vazirmatn, sans-serif;
+  overflow-wrap: anywhere;
+}
+html[lang="fa"] :is(h1, h2, h3, .moda-heading),
+[dir="rtl"] :is(h1, h2, h3, .moda-heading) {
+  font-family: var(--font-fa, Vazirmatn), Inter, sans-serif;
+}
+.moda-price {
+  font-family: var(--font-price-latin, Inter), Vazirmatn, sans-serif;
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+html[data-button-style="crayon"] :is(.button, .moda-button) {
+  isolation: isolate;
+  min-height: 54px;
+  padding-inline: 30px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: transform 160ms ease;
+  background: transparent;
+  color: var(--primaryInk, var(--text));
+}
+/* Low-priority positioning must yield to existing fixed/sticky commerce UI. */
+@layer base {
+  .button, .moda-button { position: relative; }
+}
+html[data-button-style="crayon"] .moda-button[data-variant="destructive"] { color: #ffffff; }
+html[data-button-style="crayon"] .moda-button:is([data-variant="ghost"],[data-variant="secondary"]) { color: var(--text); }
+.moda-button[data-variant="primary"] { color: var(--primaryInk, var(--text)); }
+html[data-button-style="crayon"] :is(.button, .moda-button)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: var(--button-fill, var(--primary));
+  background-image: repeating-linear-gradient(
+    13deg,
+    transparent 0 2px,
+    #1412100a 2px 3px
+  );
+  filter: url(#moda4-crayon);
+}
+html[data-button-style="crayon"] .moda-button[data-variant="secondary"] {
+  --button-fill: var(--surface);
+}
+html[data-button-style="crayon"] .moda-button[data-variant="destructive"] {
+  --button-fill: var(--error);
+}
+html[data-button-style="crayon"] .moda-button[data-variant="ghost"] {
+  --button-fill: transparent;
+  border: 2.2px solid var(--text);
+}
+html[data-button-style="crayon"] .moda-button[data-variant="ghost"]::after { display: none; }
+html[data-button-style="crayon"] .moda-button[data-size="sm"] { min-height: 44px; padding-inline: 20px; }
+html[data-button-style="crayon"] :is(.button, .moda-button)::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed currentColor;
+  border-radius: inherit;
+  opacity: 0.35;
+}
+@media (hover: hover) {
+  html[data-button-style="crayon"] :is(.button, .moda-button):enabled:hover {
+    transform: translateY(-2px) rotate(-0.6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-button-style="crayon"] :is(.button, .moda-button) {
+    transition: none;
+    transform: none;
+  }
+}
+.moda-lace {
+  border-block-start: 1px dashed color-mix(in srgb, var(--line, #141210) calc(var(--line-opacity, .12) * 100%), transparent);
+  border-image: none;
+  background-image: radial-gradient(
+    circle at 13px 0,
+    transparent 7px,
+    var(--surface) 7.5px
+  );
+  background-size: 26px 12px;
+  height: 12px;
+}
+.shop-card-price,
+.look-piece-price,
+[data-testid="product-price"] {
+  font-family: var(--font-price-latin, Inter), Vazirmatn, sans-serif;
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
 }
 .shell {
   max-width: 1180px;
@@ -1750,7 +1867,8 @@ html[lang="fa"] body,
   display: block;
 }
 .spatial-copy em {
-  font-family: "Bodoni Moda Variable", Georgia, serif;
+  font-family: var(--font-heading-latin, Manrope), Inter, sans-serif;
+  font-style: normal;
   font-weight: 400;
   letter-spacing: -0.04em;
   text-transform: none;
@@ -1789,7 +1907,7 @@ html[lang="fa"] body,
 }
 .spatial-storefront[dir="rtl"] .spatial-copy h1,
 .spatial-storefront[dir="rtl"] .spatial-copy h2 {
-  font-family: Vazirmatn, sans-serif;
+  font-family: var(--font-fa, Vazirmatn), sans-serif;
   line-height: 1.2;
   letter-spacing: 0;
 }
@@ -2060,7 +2178,7 @@ html[lang="fa"] body,
 }
 
 .storefront-app[dir="ltr"] {
-  font-family: Inter, Vazirmatn, sans-serif;
+  font-family: var(--font-body-latin, Inter), Vazirmatn, sans-serif;
 }
 
 .storefront-utility .group > div {

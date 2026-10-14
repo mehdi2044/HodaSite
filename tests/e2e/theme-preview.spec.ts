@@ -4,10 +4,9 @@ import { ensureMaintenanceOff } from "./helpers/maintenance";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
-// The seeded value is literally "#E8792A" (prisma/seed.ts) — CSS custom
-// property text preserves that casing verbatim (unlike input[type=color]'s
-// DOM value, which the browser always lowercases).
-const ORIGINAL_PRIMARY = "#E8792A";
+// A save serializes native color inputs in lower case; compare equivalent
+// CSS colors consistently before and after another real theme-form save.
+const ORIGINAL_PRIMARY = "#ff6a1a";
 const NEW_PRIMARY = "#00aaff";
 
 test.describe.configure({ mode: "serial" });
@@ -24,7 +23,7 @@ async function login(page: Page) {
 
 async function primaryVar(locator: Locator) {
   return locator.evaluate((el) =>
-    getComputedStyle(el).getPropertyValue("--primary").trim(),
+    getComputedStyle(el).getPropertyValue("--primary").trim().toLowerCase(),
   );
 }
 

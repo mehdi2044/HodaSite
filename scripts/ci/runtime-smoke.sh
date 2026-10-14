@@ -105,6 +105,7 @@ if [[ "$STORAGE_MODE" == "s3" ]]; then
      where m.\"originalName\" like 'seed-%' and m.status='READY'
        and not exists (select 1 from \"ProductMedia\" pm where pm.\"mediaId\"=m.id)
        and not exists (select 1 from \"VariantMedia\" vm where vm.\"mediaId\"=m.id)
+       and not exists (select 1 from \"ThemeSettings\" t where m.id in (t.\"logoMediaId\",t.\"logoDarkMediaId\",t.\"faviconMediaId\",t.\"emailLogoMediaId\"))
      limit 1")
   MEDIA_ID=${MEDIA_ID//[[:space:]]/}
   [[ -n "$MEDIA_ID" ]] || fail "missing unreferenced S3 smoke media"

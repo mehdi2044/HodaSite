@@ -3,6 +3,8 @@ import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
 import { seedFittingRoom } from "./fitting-seed";
 import { seedStyleStorefront } from "./style-seed";
+import { seedModa4BrandMedia, MODA4_BRAND_MEDIA } from "./moda4-brand";
+import { MODA4_LIGHT, MODA4_DARK, MODA4_FONTS } from "../scripts/moda4-theme";
 import { seedFashionStorefront } from "./fashion-seed";
 import { seedShipping } from "./shipping-seed";
 import { PrismaClient, FxMode } from "@prisma/client";
@@ -220,7 +222,7 @@ async function main() {
     update: {},
     create: {
       brand: {
-        name: { fa: "استایل هاب", tr: "STYLE HUB", en: "STYLE HUB" },
+        name: { fa: "مودا۴", tr: "MODA4", en: "MODA4" },
         tagline: {
           fa: "مد، آرام و ماندگار",
           tr: "Sakin ve kalıcı moda",
@@ -271,38 +273,22 @@ async function main() {
       },
     },
   });
+  const brandMedia = MODA4_BRAND_MEDIA;
   await db.themeSettings.upsert({
     where: { id: "default" },
     update: {},
     create: {
-      colors: {
-        light: {
-          primary: "#E8792A",
-          background: "#FBF8F3",
-          surface: "#FFFFFF",
-          text: "#1A1A1A",
-          muted: "#6B6B6B",
-          success: "#2E7D4F",
-          error: "#C0392B",
-          warning: "#B7791F",
-        },
-        dark: {
-          primary: "#F0955A",
-          background: "#171310",
-          surface: "#221C17",
-          text: "#F5F1EA",
-          muted: "#B5AA9C",
-          success: "#4FAF77",
-          error: "#E06655",
-          warning: "#D9A441",
-        },
-      },
-      fonts: { fa: "Vazirmatn", latin: "Inter" },
+      logoMediaId: brandMedia.logo,
+      faviconMediaId: brandMedia.icon,
+      colors: { light: MODA4_LIGHT, dark: MODA4_DARK, opacity: { line: 0.12 } },
+      fonts: MODA4_FONTS,
       darkMode: "off",
       headerStyle: "minimal",
-      buttonStyle: "pill",
+      buttonStyle: "crayon",
+      radius: "6px",
     },
   });
+
   for (const m of [
     {
       code: "IR",
@@ -361,6 +347,8 @@ async function main() {
   await seedContent();
 
   await seedDemoMedia();
+  // Brand seed names must not suppress the legacy demo-media bootstrap guard.
+  await seedModa4BrandMedia(db, putMediaFile);
   await seedCatalog();
   await seedFashionStorefront(db, putMediaFile);
   await seedFittingRoom(db);

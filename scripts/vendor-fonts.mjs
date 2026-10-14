@@ -5,7 +5,7 @@
 //
 //   node scripts/vendor-fonts.mjs
 //
-// Both families are licensed under the SIL Open Font License 1.1; the LICENSE
+// All shipped families are licensed under the SIL Open Font License 1.1; the LICENSE
 // file from each package is copied alongside the woff2 files.
 
 import { mkdirSync, copyFileSync, rmSync } from "node:fs";
@@ -16,6 +16,14 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** @type {{ pkg: string, out: string, files: string[] }[]} */
 const families = [
+  {
+    pkg: "@fontsource-variable/manrope",
+    out: "manrope",
+    files: [
+      "manrope-latin-wght-normal.woff2",
+      "manrope-latin-ext-wght-normal.woff2",
+    ],
+  },
   {
     pkg: "@fontsource-variable/vazirmatn",
     out: "vazirmatn",
@@ -42,5 +50,7 @@ for (const { pkg, out, files } of families) {
   mkdirSync(dest, { recursive: true });
   copyFileSync(join(src, "LICENSE"), join(dest, "LICENSE"));
   for (const f of files) copyFileSync(join(src, "files", f), join(dest, f));
-  console.log(`vendored ${files.length} file(s) + LICENSE → public/fonts/${out}`);
+  console.log(
+    `vendored ${files.length} file(s) + LICENSE → public/fonts/${out}`,
+  );
 }
