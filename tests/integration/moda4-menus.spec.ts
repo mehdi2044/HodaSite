@@ -113,6 +113,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     afterAll(async () => {
       actor.id = owner;
+      if (market)
+        await db.market.update({
+          where: { id: market },
+          data: { isActive: false },
+        });
+      if (category)
+        await db.category.update({
+          where: { id: category },
+          data: { deletedAt: new Date() },
+        });
       if (scoped)
         await db.user.update({
           where: { id: scoped },

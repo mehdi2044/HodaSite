@@ -141,7 +141,7 @@ test("media grid, trash and brand picker produce a responsive picture", async ({
   await expect(page.getByText("ذخیره شد.")).toBeVisible();
 
   await page.goto("/fa");
-  const picture = page.locator("header picture");
+  const picture = page.locator(".moda-brand picture");
   await expect(picture).toBeVisible();
   await expect(picture.locator('source[type="image/avif"]')).toHaveAttribute(
     "srcset",
