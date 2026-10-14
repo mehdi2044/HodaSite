@@ -3018,6 +3018,10 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
 .kids-turntable-media { transform: rotateY(var(--kids-angle,0deg)); transition: transform .18s ease; transform-origin: center; }
 .kids-card-image picture { background-image: none !important; }
 .kids-card-image img { object-fit: contain; }
-.kids-turntable-controls .button { background: var(--kidsButton); color: var(--kidsButtonInk); }
+.kids-turntable-controls .button,
+html[data-button-style="crayon"] .kids-turntable-controls .button {
+  --button-fill: var(--kidsButton); background: var(--kidsButton); color: var(--kidsButtonInk);
+  min-height: 44px; padding-inline: 12px; font-size: .8rem;
+}
 .shop-cutout-note { color: var(--muted); font-size: .8rem; line-height: 1.5; margin-block-start: .5rem; }
 @media (prefers-reduced-motion:reduce) { .kids-turntable-media { transition: none; } }

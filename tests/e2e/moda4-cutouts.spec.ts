@@ -70,6 +70,7 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
     },
   });
   let profileId: string | undefined;
+  const catalog = await context.newPage();
   try {
     const guest = await page.request.post("/api/admin/cutouts/preview", {
       data: {},
@@ -93,6 +94,9 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
         url: info.project.use.baseURL!,
       },
     ]);
+    await catalog.goto(
+      `/en/m/CA/c/${encodeURIComponent((root.slugI18n as Record<string, string>).en)}`,
+    );
     await page.goto(
       `/admin/catalog/cutouts?product=${product.id}&color=${colorId}`,
     );
@@ -192,6 +196,15 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
     await expect(categoryForm.locator('[name="presentationKind"]')).toHaveValue(
       "kids",
     );
+    if (process.env.HODASITE_PREVIEW === "1") {
+      await catalog.bringToFront();
+      await expect(catalog.locator("main.kids-category")).toHaveAttribute(
+        "data-kids-tone",
+        "kidsSky",
+        { timeout: 5000 },
+      );
+    }
+
     await context.addCookies([
       { name: "market", value: "CA", url: info.project.use.baseURL! },
     ]);
@@ -229,7 +242,33 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
       path: info.outputPath("r4-kids-en-390.png"),
       scale: "css",
     });
+    for (const [locale, marketCode] of [
+      ["fa", "IR"],
+      ["tr", "TR"],
+    ] as const) {
+      await context.addCookies([
+        { name: "market", value: marketCode, url: info.project.use.baseURL! },
+      ]);
+      const localizedSlug = (root.slugI18n as Record<string, string>)[locale];
+      await page.goto(
+        `/${locale}/m/${marketCode}/c/${encodeURIComponent(localizedSlug)}`,
+      );
+      await expect(page.locator("main.kids-category")).toHaveAttribute(
+        "data-kids-tone",
+        "kidsSky",
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: info.outputPath(`r4-kids-${locale}-390.png`),
+        scale: "css",
+      });
+    }
   } finally {
+    await catalog.close();
     await db.category.update({
       where: { id: root.id },
       data: {

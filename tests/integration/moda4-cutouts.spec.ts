@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { purgeOne } from "@/modules/media/purge";
 import { storage } from "@/modules/integrations/storage";
 import {
   saveCatalogCutout,
@@ -16,6 +17,7 @@ import {
   publicCatalogCutout,
   resolveCutoutPlacement,
 } from "@/modules/catalog/cutouts/resolve";
+import { transactionBarrier } from "../helpers/transaction-barrier";
 import { RevisionConflictError } from "@/lib/revision-conflict";
 import { setMaintenanceFlag } from "@/modules/settings";
 import {
@@ -203,6 +205,61 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await db.auditLog.count({ where: { entityType: "CatalogCutout" } }),
       ).toBe(before);
     });
+    it("rechecks actual media/model edits after a transaction wait without accepting stale visual confirmation", async () => {
+      for (const changed of ["cutout", "model"] as const) {
+        const payload = await input();
+        const barrier = transactionBarrier(
+          db,
+          "product",
+          "findFirst",
+          (raw) => (raw as { where?: { id?: string } }).where?.id === productId,
+        );
+        const before = await db.auditLog.count({
+          where: { entityType: "CatalogCutout" },
+        });
+        const modelImage = models[0].image;
+        let write: ReturnType<typeof saveCatalogCutout> | undefined;
+        try {
+          write = saveCatalogCutout(owner, payload);
+          await Promise.race([
+            barrier.entered,
+            write.then(() => {
+              throw Error("writer missed its actual product lock barrier");
+            }),
+          ]);
+          if (changed === "cutout")
+            await db.media.update({
+              where: { id: transparentId },
+              data: { status: "PROCESSING" },
+            });
+          else
+            await db.media.update({
+              where: { id: modelImage.id },
+              data: { width: modelImage.width! + 1 },
+            });
+          barrier.release();
+          await expect(write).rejects.toThrow();
+          expect(
+            await db.catalogCutout.count({ where: { mediaId: transparentId } }),
+          ).toBe(0);
+          expect(
+            await db.auditLog.count({ where: { entityType: "CatalogCutout" } }),
+          ).toBe(before);
+        } finally {
+          barrier.release();
+          await Promise.allSettled(write ? [write] : []);
+          barrier.restore();
+          await db.media.update({
+            where: { id: transparentId },
+            data: { status: "READY" },
+          });
+          await db.media.update({
+            where: { id: modelImage.id },
+            data: { width: modelImage.width },
+          });
+        }
+      }
+    });
     it("shares one actual color cutout across sizes and projects distinct geometry for all four real models", async () => {
       expect(new Set(models.map((m) => m.kind))).toEqual(
         new Set(["WOMAN", "MAN", "GIRL", "BOY"]),
@@ -310,6 +367,44 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await db.media.update({
           where: { id: modelMedia.id },
           data: { width: modelMedia.width },
+        });
+      }
+    });
+    it("retains current, archived and historical cutout/model media through physical purge eligibility", async () => {
+      const row = await db.catalogCutout.findFirstOrThrow({
+        where: { mediaId: transparentId, variantId: null },
+      });
+      await db.media.update({
+        where: { id: transparentId },
+        data: { deletedAt: new Date(Date.now() - 365 * 86400000) },
+      });
+      try {
+        const media = await db.media.findUniqueOrThrow({
+          where: { id: transparentId },
+        });
+        await purgeOne(media, storage);
+        expect(
+          await db.media.findUnique({ where: { id: transparentId } }),
+        ).not.toBe(null);
+        await archiveCatalogCutout(owner, row.id, row.version);
+        await purgeOne(media, storage);
+        expect(
+          await db.media.findUnique({ where: { id: transparentId } }),
+        ).not.toBe(null);
+        // A snapshot remains authoritative even if its live presentation row is
+        // removed by scratch-fixture cleanup; never physically lose its media.
+        await db.catalogCutout.delete({ where: { id: row.id } });
+        await purgeOne(media, storage);
+        expect(
+          await db.media.findUnique({ where: { id: transparentId } }),
+        ).not.toBe(null);
+        expect(
+          (await storage.getBytes(media.storageKey))?.length,
+        ).toBeGreaterThan(0);
+      } finally {
+        await db.media.update({
+          where: { id: transparentId },
+          data: { deletedAt: null },
         });
       }
     });
