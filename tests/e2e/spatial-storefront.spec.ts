@@ -161,7 +161,10 @@ for (const [locale, market, labels] of [
     // the gallery through a real illustrated category card, without changing
     // catalog ordering or mutating the shared database just for this test.
     await departments
-      .getByRole("link", { name: labels[3], exact: true })
+      .getByRole("link", {
+        name: `${labels[3]} — ${demoLabel}`,
+        exact: true,
+      })
       .click();
     await page
       .locator(".shop-product-card")
