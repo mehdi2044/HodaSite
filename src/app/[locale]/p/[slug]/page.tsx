@@ -37,7 +37,7 @@ export async function generateMetadata({
   searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ preview?: string }>;
+  searchParams: Promise<{ preview?: string; color?: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
   const safe = locale as CatalogLocale;
@@ -81,10 +81,11 @@ export default async function ProductPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
-  searchParams: Promise<{ preview?: string }>;
+  searchParams: Promise<{ preview?: string; color?: string }>;
 }) {
   const { locale, slug } = await params;
-  const previewRequested = (await searchParams).preview === "1";
+  const query = await searchParams;
+  const previewRequested = query.preview === "1";
   const session = previewRequested ? await auth() : null;
   const previewAllowed = Boolean(
     session?.user?.id && (await can(session.user.id, "catalog.product.view")),
@@ -266,6 +267,14 @@ export default async function ProductPage({
             })),
           }))}
           locale={safe}
+          initialColorId={
+            product.variants.some(
+              (v) =>
+                v.isActive && !v.color.deletedAt && v.colorId === query.color,
+            )
+              ? query.color
+              : undefined
+          }
         />
         <section className="shop-product-information">
           <p className="shop-eyebrow text-sm text-muted">
@@ -306,6 +315,16 @@ export default async function ProductPage({
           </p>
           <div className="storefront-purchase sticky bottom-3 z-10 rounded-token bg-bg/95 p-3 shadow-xl">
             <ProductOptions
+              initialColorId={
+                product.variants.some(
+                  (v) =>
+                    v.isActive &&
+                    !v.color.deletedAt &&
+                    v.colorId === query.color,
+                )
+                  ? query.color
+                  : undefined
+              }
               variants={product.variants.map((v) => ({
                 id: v.id,
                 colorId: v.colorId,

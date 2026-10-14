@@ -85,7 +85,19 @@ import { publicCards, mergeWishlist, wishlist } from "@/modules/engagement";
 import { transition } from "@/modules/orders/service";
 import { validateCategoryParent } from "@/modules/catalog/tree";
 import { returnAmount } from "@/modules/returns/validation";
-import { saveHomepage } from "@/app/admin/(dashboard)/content/homepage/actions";
+import { saveHomepage as saveHomepageEndpoint } from "@/app/admin/(dashboard)/content/homepage/actions";
+async function saveHomepage(previous: null, form: FormData) {
+  if (!form.has("expectedVersion")) {
+    const marketId = String(form.get("marketId") ?? "") || null;
+    const current = await db.homepage.findFirst({
+      where: { marketId, deletedAt: null },
+    });
+    form.set("expectedVersion", String(current?.version ?? 0));
+  }
+  if (!form.has("intent")) form.set("intent", "PUBLISH");
+  return saveHomepageEndpoint(previous, form);
+}
+
 import {
   duplicateProduct,
   saveProduct,
@@ -382,6 +394,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         const form = new FormData();
         form.set("marketId", "");
         form.set("blocks", JSON.stringify(blocks));
+        form.set("expectedVersion", String(before?.version ?? 0));
         expect(await saveHomepage(null, form)).toMatchObject({
           ok: false,
           code: "VALIDATION",
@@ -432,7 +445,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         const override = await db.homepage.upsert({
           where: { marketId: overrideMarket.id },
           create: { marketId: overrideMarket.id, blocks: [] },
-          update: { blocks: [], deletedAt: null },
+          update: { blocks: [], deletedAt: null, isPublished: true },
         });
         await validateLookReferences(blocks, null);
         await expect(
@@ -460,6 +473,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               blocks:
                 previous.blocks as import("@prisma/client").Prisma.InputJsonValue,
               deletedAt: previous.deletedAt,
+              isPublished: previous.isPublished,
             },
           });
         else
@@ -486,6 +500,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const form = new FormData();
       form.set("marketId", marketId);
       form.set("blocks", JSON.stringify(blocks));
+      form.set("expectedVersion", String(before?.version ?? 0));
       expect(await saveHomepage(null, form)).toMatchObject({
         ok: false,
         code: "VALIDATION",
@@ -605,15 +620,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         const homeForm = new FormData();
         homeForm.set("marketId", marketId);
         homeForm.set("blocks", JSON.stringify(blocks));
+        homeForm.set("expectedVersion", String(previous?.version ?? 0));
+        homeForm.set("intent", "PUBLISH");
         const barrier = transactionBarrier(
           db,
           first === "editor" ? "product" : "homepage",
-          first === "editor" ? "update" : "findFirst",
+          "update",
           (raw) => {
             const input = raw as { where?: { id?: string; marketId?: string } };
-            return first === "editor"
-              ? input.where?.id === product.id
-              : input.where?.marketId === marketId;
+            return first === "editor" ? input.where?.id === product.id : true;
           },
         );
         let edit: ReturnType<typeof saveProduct> | undefined,

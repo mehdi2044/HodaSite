@@ -1,0 +1,32 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "previewEnabled": true,
+  "application": {
+    "buildSha": "31d265956aa8ec84b4744dc94bae3f7601213983",
+    "builtAt": "2026-10-14T17:58:12.356Z",
+    "contentRevision": "6360f7dbc248060c"
+  },
+  "publishToOpenStoreMs": 1665,
+  "priceToOpenStoreMs": 3984,
+  "source": "Production standalone Chromium, synthetic isolated PostgreSQL, CSS viewport; not a physical phone or owner Windows",
+  "scope": "R3a shared PHOTO/publication foundation; R3b full MODA4/campaigns and R4 COMPOSITE remain open",
+  "tested": [
+    "Real password+MFA in test fixture",
+    "Authenticated scoped readonly private preview and wrong-channel denial",
+    "Draft save/reload without public leak",
+    "Publication into the already-open operator preview",
+    "Live catalog price update, real size selection, atomic two-piece cart",
+    "FA/TR/EN at390px and EN at1440px",
+    "Historical readonly preview and content rollback without losing cart items",
+    "Visible broken-image fallback with purchase disabled"
+  ],
+  "limitations": [
+    "Synthetic artwork is disclosed and does not establish exact merchant garment/photo matching",
+    "Native element captures include the fixed navigation overlay",
+    "Independent current-head review, physical phones and owner visual acceptance not verified",
+    "Cloud cannot reach owner Windows; online R0 BLOCKED_ENV"
+  ]
+}

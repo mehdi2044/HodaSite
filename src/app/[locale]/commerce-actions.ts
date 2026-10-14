@@ -305,3 +305,17 @@ export async function saveCouponsAction(locale: string, form: FormData) {
     return { ok: true };
   });
 }
+
+export async function addSceneAction(locale: string, form: FormData) {
+  return safe(async () => {
+    const l = localeSchema.parse(locale);
+    const { addShoppableScene } =
+      await import("@/modules/content/scenes/purchase");
+    await addShoppableScene(l, {
+      sceneId: String(form.get("sceneId") ?? ""),
+      variantIds: form.getAll("variantId").map(String),
+    });
+    revalidatePath(`/${l}/cart`);
+    return { ok: true };
+  });
+}

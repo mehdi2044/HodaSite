@@ -33,6 +33,7 @@ type Labels = Record<
   | "market"
   | "add"
   | "save"
+  | "publish"
   | "preview"
   | "mobile"
   | "desktop"
@@ -94,6 +95,7 @@ export function HomepageBuilder({
   mediaUrls,
   markets,
   labels,
+  versions,
 }: {
   action: (prev: ActionResult | null, data: FormData) => Promise<ActionResult>;
   categories: SourceOption[];
@@ -103,6 +105,7 @@ export function HomepageBuilder({
   mediaUrls: Record<string, string>;
   markets: { id: string; code: string }[];
   labels: Labels;
+  versions: Record<string, number>;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [scope, setScope] = useState("global");
@@ -168,6 +171,11 @@ export function HomepageBuilder({
               type="hidden"
               name="marketId"
               value={scope === "global" ? "" : scope}
+            />
+            <input
+              type="hidden"
+              name="expectedVersion"
+              value={versions[scope] ?? 0}
             />
             <input type="hidden" name="blocks" value={JSON.stringify(blocks)} />
           </Card>
@@ -287,8 +295,16 @@ export function HomepageBuilder({
               {labels.save}
             </p>
           )}
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" name="intent" value="DRAFT" disabled={pending}>
             {labels.save}
+          </Button>
+          <Button
+            type="submit"
+            name="intent"
+            value="PUBLISH"
+            disabled={pending}
+          >
+            {labels.publish}
           </Button>
         </form>
         <section className="min-w-0">

@@ -20,6 +20,7 @@ export function ProductOptions({
   variants,
   labels,
   basePrice,
+  initialColorId,
 }: {
   variants: Variant[];
   labels: {
@@ -32,6 +33,7 @@ export function ProductOptions({
     outOfStock: string;
   };
   basePrice: string;
+  initialColorId?: string;
 }) {
   const locale = useLocale();
   const colors = useMemo(
@@ -39,7 +41,11 @@ export function ProductOptions({
     [variants],
   );
   const [color, setColor] = useState(
-    variants.find((item) => item.isActive && item.available > 0)?.colorId ??
+    (initialColorId &&
+    variants.some((v) => v.isActive && v.colorId === initialColorId)
+      ? initialColorId
+      : undefined) ??
+      variants.find((item) => item.isActive && item.available > 0)?.colorId ??
       colors[0]?.[0] ??
       "",
   );

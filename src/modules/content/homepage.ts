@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { shoppableSceneSchema } from "./scenes/contracts";
 import { localizedTextSchema, safeLinkSchema } from "./validation";
 
 const mediaId = z.string().trim().min(1).max(100);
@@ -37,6 +38,7 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("Hero"),
+    scene: shoppableSceneSchema.optional(),
     layout: z.enum(["editorial", "spatial"]).optional(),
     mediaId: mediaId.optional(),
     title: localizedTextSchema,
@@ -56,6 +58,7 @@ export const homepageBlockSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("Banner"),
+    scene: shoppableSceneSchema.optional(),
     mediaId: mediaId.optional(),
     title: localizedTextSchema,
     body: localizedTextSchema,
@@ -85,7 +88,11 @@ export const homepageBlocksSchema = z
 export type HomepageBlock = z.infer<typeof homepageBlockSchema>;
 
 async function getHomepageRows(marketId: string) {
-  const where = { deletedAt: null, OR: [{ marketId }, { marketId: null }] };
+  const where = {
+    deletedAt: null,
+    isPublished: true,
+    OR: [{ marketId }, { marketId: null }],
+  };
   // Read only the revisions outside Next's persistent cache. Prisma maintains
   // updatedAt for admin saves, seed and CLI upgrades alike, including updateMany.
   // Row identities also invalidate a cached fallback when an override is created,

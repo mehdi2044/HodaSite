@@ -32,7 +32,8 @@ export function blockMediaIds(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(blockMediaIds);
   if (!value || typeof value !== "object") return [];
   return Object.entries(value).flatMap(([key, item]) =>
-    key === "mediaId" && typeof item === "string"
+    (key === "mediaId" || key === "referenceMediaId") &&
+    typeof item === "string"
       ? [item]
       : blockMediaIds(item),
   );

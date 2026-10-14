@@ -135,6 +135,14 @@ export async function purgeOne(
           config, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
+          blocks, '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
+          OR jsonb_path_exists("draftBlocks", '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
+          OR jsonb_path_exists("draftBlocks", '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "AuditLog" WHERE "entityType"='Homepage'
+          AND after->>'format'='homepage-revision-v1'
+          AND (jsonb_path_exists(after, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
+          OR jsonb_path_exists(after, '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))))
         OR EXISTS (SELECT 1 FROM "MenuItem" WHERE jsonb_path_exists(
           presentation, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
       ) AS used

@@ -59,6 +59,13 @@ export function LocaleSwitcher({
       ])
         for (const value of query.getAll(key)) kept.append(key, value);
       setSearch(kept.size ? `?${kept}` : "");
+    } else if (/\/(?:p)\/[^/]+\/?$/.test(pathname)) {
+      const color = new URLSearchParams(queryString).get("color");
+      setSearch(
+        color && /^[A-Za-z0-9_-]{1,100}$/.test(color)
+          ? `?${new URLSearchParams({ color })}`
+          : "",
+      );
     } else setSearch("");
     if (!entityPath) return;
     const controller = new AbortController();
@@ -87,8 +94,9 @@ export function LocaleSwitcher({
     if (locale === current) return pathname + search;
     if (entityPath)
       return (
-        (resolved.path === pathname && resolved.links[locale]) ||
-        (canonical ? seoPath(locale, canonical.market) : `/${locale}`)
+        ((resolved.path === pathname && resolved.links[locale]) ||
+          (canonical ? seoPath(locale, canonical.market) : `/${locale}`)) +
+        search
       );
     return `/${locale}/${rest}` + search;
   };

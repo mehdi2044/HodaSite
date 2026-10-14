@@ -56,10 +56,31 @@ export async function addCartItems(
   );
 }
 
+/** Promotional PHOTO scenes have their own bound; fitting/prepared looks stay4. */
+export async function addSceneCartItems(
+  locale: "fa" | "tr" | "en",
+  variantIds: string[],
+  validate: (tx: Prisma.TransactionClient, marketId: string) => Promise<void>,
+) {
+  if (
+    !variantIds.length ||
+    variantIds.length > 12 ||
+    new Set(variantIds).size !== variantIds.length
+  )
+    throw new CommerceError("INVALID_QUANTITY");
+  return changeCartBatch(
+    locale,
+    variantIds.map((variantId) => ({ variantId, quantity: 1 })),
+    true,
+    validate,
+  );
+}
+
 async function changeCartBatch(
   locale: "fa" | "tr" | "en",
   changes: { variantId: string; quantity: number }[],
   add: boolean,
+  validate?: (tx: Prisma.TransactionClient, marketId: string) => Promise<void>,
 ) {
   for (const { quantity } of changes)
     if (!Number.isSafeInteger(quantity) || quantity < 0 || quantity > 100)
@@ -115,6 +136,7 @@ async function changeCartBatch(
         throw new CommerceError("MARKET_CHANGED");
       if (latest.customerId && latest.customerId !== customer?.id)
         throw new CommerceError("FORBIDDEN");
+      if (validate) await validate(tx, market.id);
       const proposed = latest.items
         .filter(
           (item) =>

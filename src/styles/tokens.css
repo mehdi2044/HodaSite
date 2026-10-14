@@ -2993,3 +2993,21 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
 .moda-footer a{min-height:44px;display:inline-flex;align-items:center;}
 .moda-mega-links{max-height:65dvh;overflow-y:auto;overscroll-behavior:contain;}
 .moda-menu-root a,.moda-menu-root span{overflow-wrap:anywhere;}
+
+/* R3a: a price list stays readable even if a PHOTO anchor is cropped out. */
+.shoppable-scene{max-width:1440px;margin-inline:auto;padding:clamp(1rem,3vw,3rem);color:var(--text);background:var(--background);}
+.shoppable-scene>h1,.shoppable-scene>h2{font-size:clamp(2rem,5vw,4rem);line-height:1.15;margin-block-end:1rem;}
+.scene-photo{position:relative;width:100%;overflow:hidden;border-radius:var(--radius);}
+.scene-photo>picture,.scene-photo img{display:block;width:100%;height:100%;}
+.scene-photo-desktop{display:none;}.scene-photo-forced{display:block;}
+.scene-pin{position:absolute;transform:translate(-50%,-50%);min-width:44px;min-height:44px;display:flex;gap:.4rem;align-items:center;justify-content:center;border:1px solid var(--text);border-radius:999px;padding:.3rem .65rem;background:var(--background);color:var(--text);box-shadow:0 3px 12px #0002;white-space:nowrap;}
+.scene-pin:focus-visible,.scene-price-list a:focus-visible{outline:3px solid var(--primary);outline-offset:3px;}
+.scene-pin-price{display:none;}.scene-price-list{display:grid;gap:.75rem;margin-block-start:1rem;}
+.scene-price-list article{display:grid;gap:.5rem;grid-template-columns:minmax(0,1fr) auto;padding:1rem;border:1px solid color-mix(in srgb,var(--line) calc(var(--line-opacity)*100%),transparent);background:var(--surface);scroll-margin-top:100px;}
+.scene-price-list label{grid-column:1/-1;display:grid;gap:.35rem;}.scene-price-list article a{display:inline-flex;min-height:44px;align-items:center;}
+.scene-price-list strong{align-self:center;}.scene-price-list select{min-height:44px;max-width:100%;}
+.scene-review{padding:1rem;background:var(--sand);border:1px solid var(--line);margin-block-end:1rem;}
+.scene-image-note{font-size:.8rem;margin-block-start:.5rem;}
+@media(min-width:1024px){.scene-photo-desktop{display:block;}.scene-photo-mobile{display:none;}.scene-photo-forced{display:block;}.scene-pin-price{display:inline;}.scene-price-list{grid-template-columns:repeat(3,minmax(0,1fr));}.scene-price-list>p,.scene-price-list>button{grid-column:1/-1;}}
+
+.scene-pin[data-side=start] .scene-pin-price{order:-1;}

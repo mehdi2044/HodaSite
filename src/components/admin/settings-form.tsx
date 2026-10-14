@@ -15,6 +15,8 @@ export function SettingsForm({
   children,
   submitLabel,
   className,
+  disabled = false,
+  hasUnsavedChanges,
 }: {
   action: (
     prevState: ActionResult | null,
@@ -23,13 +25,21 @@ export function SettingsForm({
   children: React.ReactNode;
   submitLabel: string;
   className?: string;
+  disabled?: boolean;
+  hasUnsavedChanges?: boolean;
 }) {
   const legacy = useTranslations("foundationAdmin");
 
   const [state, formAction, pending] = useActionState(action, null);
   const navigation = useTranslations("adminShell");
-  const formRef = useUnsavedForm(state, navigation("unsavedChanges"));
   const { uploadsPending, reportPending } = useMediaPickerPending();
+  const formRef = useUnsavedForm(
+    state,
+    navigation("unsavedChanges"),
+    hasUnsavedChanges === undefined
+      ? undefined
+      : hasUnsavedChanges || uploadsPending,
+  );
   return (
     <MediaPickerPendingContext.Provider value={reportPending}>
       <form
@@ -37,10 +47,12 @@ export function SettingsForm({
         action={formAction}
         className={className ?? "grid gap-4"}
         onSubmit={(event) => {
-          if (uploadsPending) event.preventDefault();
+          if (uploadsPending || disabled) event.preventDefault();
         }}
       >
-        {children}
+        <fieldset disabled={pending || disabled} className="contents">
+          {children}
+        </fieldset>
         {state && !state.ok && (
           <p
             role="alert"
@@ -56,7 +68,7 @@ export function SettingsForm({
             {legacy("saved")}{" "}
           </p>
         )}
-        <Button type="submit" disabled={pending || uploadsPending}>
+        <Button type="submit" disabled={pending || uploadsPending || disabled}>
           {pending ? legacy("saving") : submitLabel}
         </Button>
       </form>

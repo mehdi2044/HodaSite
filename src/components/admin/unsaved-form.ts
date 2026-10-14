@@ -15,7 +15,11 @@ function values(form: HTMLFormElement) {
 }
 
 /** Warn before leaving edited shared admin forms; never writes or auto-saves. */
-export function useUnsavedForm(state: ActionResult | null, message: string) {
+export function useUnsavedForm(
+  state: ActionResult | null,
+  message: string,
+  dirtyOverride?: boolean,
+) {
   const formRef = useRef<HTMLFormElement>(null);
   const baseline = useRef<string | null>(null);
   useEffect(() => {
@@ -26,6 +30,7 @@ export function useUnsavedForm(state: ActionResult | null, message: string) {
   useEffect(() => {
     let confirmedNavigation = false;
     const dirty = () =>
+      dirtyOverride ??
       Boolean(
         formRef.current &&
         baseline.current !== null &&
@@ -72,6 +77,6 @@ export function useUnsavedForm(state: ActionResult | null, message: string) {
       window.removeEventListener("beforeunload", unload);
       document.removeEventListener("click", navigate, true);
     };
-  }, [message]);
+  }, [message, dirtyOverride]);
   return formRef;
 }
