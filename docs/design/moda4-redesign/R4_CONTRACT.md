@@ -1,0 +1,25 @@
+# R4 — layered media and Kids presentation, before consumption
+
+Recorded before schema/code. Implemented against docs v1.2 / D-numbers touched: D09, D10, D21, D23, D24, D31, D40, D70, D74, D77, D78. Base PR70 b99c7815fcd4c4c775c71a4448cd8aa24c671d8e. No merge or paid-operation authorization.
+
+R3a delivers the shared PHOTO/publication foundation. R4 now supplies cutout/geometry before the dependent Kids/COMPOSITE parts of R3b and R7a. R3b still owns the complete selected homepage/campaign/popup/video/shared policy requirements; nothing is dropped or called complete. No new provider, background-removal request, paid test, money/wallet/session or customer persistence is introduced by R4.
+
+## Data contract
+
+- Add an ordinary additive `CatalogCutout` presentation model, linked to actual Product/color/READY public image Media, with optional actual Variant override. A shared product/color row supplies all real sizes; a variant override is used only when explicitly configured and valid. Partial unique SQL constraints cover the shared-null variant scope and explicit overrides; scoped locks/version conflicts and immutable AuditLog snapshots preserve history. Old rows need no backfill and products without profiles keep their catalog image plus an honest unavailable-composition explanation.
+- Geometry JSON version1 binds each entry to an actual enabled store model ID, kind and model media/revision. Support WOMAN/MAN/GIRL/BOY, six existing fitting slots including SHOES, and HAND/NECK/HEAD accessory anchors. Normalized content coordinates, bounded scale/size/rotation/zIndex, per-cutout/per-model revisions and keyboard/drag preview are validated. Missing child geometry never falls back to scaled adult geometry. Optional variant override does not invent a size or change exact cart identity.
+- Cutout media must be a live READY public raster and actually contain transparency; validate decoded alpha from the existing StorageProvider/pipeline, without a new service. Repeat live media/reference checks under locks after inspection; changed media cannot silently reuse stale validation. Explicit merchant visual confirmation establishes the selected product/color match, not an inferred match from a filename. Uploaded SVG is never made executable/inline.
+- Existing fitting config remains the source of approved store model choices; reading those images does not enable its paid integration. Free/paid flags and wardrobe persistence remain R7a. No guest/private/personal-photo output is promoted to public media.
+- Add nullable versioned Category presentation: nearest valid ancestor applies; an explicit ordinary presentation stops Kids inheritance. Themes use existing validated Theme tokens/pastels, not gender inference, a new font family, or a fixed business category limit. Explicit metadata, not category title heuristics, controls the Kids appearance.
+
+## Write/read and rendering boundaries
+
+Catalog editing/presentation uses the existing global `catalog.product.edit`/view permission contract; scoped-only actors do not acquire global writes through new forms. Product/variant/color/model/media relations, optimistic versions, late permission changes and audit are checked server-side in the transaction. Public DTOs additionally require live market/catalog visibility and expose only public image/geometry/reference data, never actor/confirmation/session secrets. Product/catalog locks precede Media locks; reference replacement/deletion and new-profile publication races must be tested with real PostgreSQL barriers.
+
+Purge retains current/archived cutout media, model references and immutable audit snapshots. Local+S3 restore must preserve new rows/geometry/revisions; compatible code rollback keeps the additive schema/history and disables unsupported presentation without reverting orders.
+
+Kids cards/section use validated real cutouts on configurable pastel presentation, keyboard/touch rotation and reduced-motion/visibility pause. Missing cutout uses the actual catalog photo with a clear fallback and a usable product link. COMPOSITE replaces the selected cutout and live price/reference together; PHOTO still requires its own visual confirmation. The styling preview makes no body-measurement/fit guarantee. Every offered piece keeps a readable real price or unavailable state; exact selected Variant/stock/quote still governs purchase.
+
+## Required evidence
+
+Meaningful unit/PG: all four models/six slots/accessory anchors, numeric bounds/transparency/reference mismatches, actual model/media revision changes, shared-color vs exact-variant override, market/global permission denial, optimistic conflicts, reference/purge races, Decimal/live stock and retention. Real browser: admin image/geometry drag+keyboard→private preview→save/reload→Kids/catalog/COMPOSITE where enabled; explicit missing/invalid cutout fallback, FA/TR/EN390px, keyboard/44px/reduced-motion. Fresh migrations/seed, lint/typecheck/full tests/build and Local+S3 restore. Screenshots record exact build/source. Owner Windows/physical devices/online preview/independent review remain separate gates.
