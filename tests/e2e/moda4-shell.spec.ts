@@ -17,6 +17,7 @@ const label = {
   en: "New menu proof",
 };
 let imageId: string;
+let imageName: string;
 
 test.beforeAll(async () => {
   if (
@@ -34,6 +35,7 @@ test.beforeAll(async () => {
     },
   });
   imageId = image.id;
+  imageName = image.originalName;
   await db.category.create({
     data: {
       id: fixtureId,
@@ -107,7 +109,7 @@ test("menu READY image: real admin draft framing, save/reload and live storefron
     .filter({ has: page.locator(`input[name=id][value="${fixtureId}"]`) });
   await form.getByRole("button", { name: en.media.chooseMedia }).click();
   const picker = form.locator("dialog");
-  await picker.locator("input[type=search]").fill(imageId);
+  await picker.locator("input[type=search]").fill(imageName);
   await picker.getByTestId(`media-picker-item-${imageId}`).click();
   await expect(form.locator("[name=mediaId]")).toHaveValue(imageId);
   await form.locator("[name=imageFit]").selectOption("cover");

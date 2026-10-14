@@ -39,9 +39,12 @@ export function MediaPicker({
   const reportPending = useContext(MediaPickerPendingContext);
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadController = useRef<AbortController | null>(null);
+  const searchController = useRef<AbortController | null>(null);
+  const searchSequence = useRef(0);
   useEffect(
     () => () => {
       uploadController.current?.abort();
+      searchController.current?.abort();
       reportPending(registrationId, false);
     },
     [reportPending, registrationId],
@@ -61,15 +64,27 @@ export function MediaPicker({
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   async function search(query: string) {
+    const sequence = ++searchSequence.current;
+    searchController.current?.abort();
+    const controller = new AbortController();
+    searchController.current = controller;
     setLoading(true);
+    setItems([]);
     try {
       const res = await fetch(
         `/api/admin/media?kind=image&q=${encodeURIComponent(query)}`,
+        { signal: controller.signal },
       );
+      if (!res.ok) throw new Error("MEDIA_SEARCH_FAILED");
       const json = (await res.json()) as { items?: PickerItem[] };
-      setItems(json.items ?? []);
+      if (!controller.signal.aborted && sequence === searchSequence.current)
+        setItems(json.items ?? []);
+    } catch {
+      if (!controller.signal.aborted && sequence === searchSequence.current)
+        setItems([]);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted && sequence === searchSequence.current)
+        setLoading(false);
     }
   }
 
@@ -93,6 +108,9 @@ export function MediaPicker({
   }
 
   function close() {
+    searchController.current?.abort();
+    searchSequence.current++;
+    setLoading(false);
     uploadController.current?.abort();
     uploadController.current = null;
     setUploading(false);
@@ -172,13 +190,14 @@ export function MediaPicker({
 
       <dialog
         ref={dialogRef}
+        aria-label={t("chooseMedia")}
         className="m-auto w-[min(48rem,92vw)] rounded-token bg-surface p-6 text-text backdrop:bg-black/40"
         onCancel={close}
         onClick={(e) => {
           if (e.target === dialogRef.current) close();
         }}
       >
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <input
             type="search"
             value={q}
@@ -187,9 +206,10 @@ export function MediaPicker({
               void search(e.target.value);
             }}
             placeholder={t("searchPlaceholder")}
-            className="min-h-11 flex-1 rounded-[8px] border border-black/10 px-3 text-sm"
+            aria-label={t("searchPlaceholder")}
+            className="min-h-11 min-w-0 flex-1 rounded-[8px] border border-black/10 px-3 text-sm"
           />
-          <label className="cursor-pointer text-sm text-primary underline">
+          <label className="inline-flex min-h-11 items-center cursor-pointer text-sm text-primary underline">
             {t("uploadNew")}
             <input
               type="file"
