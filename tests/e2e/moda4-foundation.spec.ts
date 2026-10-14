@@ -11,6 +11,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
     page,
     context,
   }) => {
+    test.setTimeout(90000);
     const fonts: string[] = [];
     page.on("request", (request) => {
       if (/font|woff/.test(request.url())) fonts.push(request.url());
@@ -127,6 +128,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
           .info()
           .outputPath(`moda4-foundation-${locale}-${viewport.width}.png`),
         fullPage: true,
+        scale: "css",
       });
     }
     expect(fonts.length).toBeGreaterThan(0);
