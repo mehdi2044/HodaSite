@@ -10,6 +10,7 @@ test.use({ actionTimeout: 15000, viewport: { width: 390, height: 844 } });
 test("real PHOTO editor: private draft, publication, live price, exact sizes and atomic cart", async ({
   page,
   context,
+  browser,
 }, info) => {
   test.setTimeout(180000);
   const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
@@ -368,19 +369,36 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       body: Buffer.from(JSON.stringify(observations)),
       contentType: "application/json",
     });
-    await shop.setViewportSize({ width: 390, height: 844 });
-    // A failed physical image has an explicit fallback and readable catalog list.
-    await shop.route("**/media/**", (route) => route.abort());
-    await shop.reload();
-    await expect(
-      scene
+    // A fresh public context cannot serve a previously cached image from the PWA.
+    // Scroll the actual lower-page scene into view so its lazy image really loads.
+    const failureContext = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      serviceWorkers: "block",
+    });
+    try {
+      const failureShop = await failureContext.newPage();
+      await failureShop.route("**/media/**", (route) => route.abort());
+      await failureShop.goto(shop.url());
+      const failedScene = failureShop.locator(
+        `[data-scene-id="${unsaved.id}"]`,
+      );
+      await failedScene
         .locator('[data-scene-frame="mobile"]')
-        .getByText(en.scenes.missingImage),
-    ).toBeVisible();
-    await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
-    await expect(
-      scene.getByRole("button", { name: en.scenes.addScene }),
-    ).toBeDisabled();
+        .scrollIntoViewIfNeeded();
+      await expect(
+        failedScene
+          .locator('[data-scene-frame="mobile"]')
+          .getByText(en.scenes.missingImage),
+      ).toBeVisible();
+      await expect(
+        failedScene.locator(".scene-price-list article"),
+      ).toHaveCount(2);
+      await expect(
+        failedScene.getByRole("button", { name: en.scenes.addScene }),
+      ).toBeDisabled();
+    } finally {
+      await failureContext.close();
+    }
   } finally {
     await shop.close();
     for (const product of products)
