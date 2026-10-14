@@ -155,7 +155,7 @@ try {
           scopeMarketId: id,
           marketId: id,
           locale: "en",
-          seq: 3,
+          sequence: 3,
           blocks,
           expiresAt: new Date("2099-01-01T00:00:00Z"),
         },
@@ -214,7 +214,7 @@ try {
       /append-only/,
     );
     console.log(
-      "Homepage draft/version/schedule, cutout geometry/category presentation MODA4 blocks/common service policy/private preview and immutable revision survived restore",
+      "Content fixture digest and append-only guard match: homepage revision/schedule, cutout/category, MODA4 blocks, service policy and private preview",
     );
   }
 } finally {

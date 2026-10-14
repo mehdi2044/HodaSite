@@ -404,10 +404,14 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
     expect((await shop.request.get(missingUrl)).status()).toBe(404);
     await shop.reload();
     const missingPlayer = shop.locator(".moda-video-banner video");
-    await missingPlayer.scrollIntoViewIfNeeded();
-    await missingPlayer.evaluate((video: HTMLVideoElement) => {
-      video.preload = "auto";
-      video.load();
+    await shop.evaluate(() => {
+      const video = document.querySelector<HTMLVideoElement>(
+        ".moda-video-banner video",
+      );
+      if (video) {
+        video.preload = "auto";
+        video.load();
+      }
     });
     await expect(missingPlayer).toHaveCount(0);
     await expect(shop.locator(".moda-video-poster")).toContainText(
