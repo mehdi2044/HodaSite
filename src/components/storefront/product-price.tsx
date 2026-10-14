@@ -11,7 +11,10 @@ export function ProductPrice({
   compare?: string;
   saleLabel?: string;
 }) {
-  const [display, setDisplay] = useState({ price: initial, compare });
+  const [display, setDisplay] = useState<{ price: string; compare?: string }>({
+    price: initial,
+    compare,
+  });
   useEffect(() => {
     const update = (event: Event) => {
       const detail = (
