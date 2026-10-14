@@ -5,7 +5,7 @@
 //
 //   node scripts/vendor-fonts.mjs
 //
-// Both families are licensed under the SIL Open Font License 1.1; the LICENSE
+// All shipped families are licensed under the SIL Open Font License 1.1; the LICENSE
 // file from each package is copied alongside the woff2 files.
 
 import { mkdirSync, copyFileSync, rmSync } from "node:fs";

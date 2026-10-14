@@ -1,0 +1,55 @@
+{
+  "sourceHead": "dba31fd463591a10c623c22bfdf8d8913a1cf8aa",
+  "branch": "phase/design-01-r1-theme-foundation",
+  "data": "isolated PostgreSQL synthetic catalog; preserved settings restored through real forms",
+  "local": {
+    "node": "24.19.0",
+    "pnpm": "10.15.1",
+    "browser": "system Chromium 151",
+    "unit": 4122,
+    "fullPostgreSqlTests": 9034,
+    "browserTests": 6,
+    "browserSeconds": 51.0,
+    "build": "successful; SHA embedded at build"
+  },
+  "captures": {
+    "locales": [
+      "fa",
+      "tr",
+      "en"
+    ],
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        900
+      ],
+      [
+        1920,
+        800
+      ]
+    ],
+    "horizontalOverflow": false,
+    "reducedMotion": true
+  },
+  "flows": [
+    "theme heading role: unsaved iframe preview → save → reload → storefront",
+    "bounded line opacity persisted",
+    "wrong-channel preview message ignored",
+    "local font requests only; Manrope Latin-ext Turkish sample loaded",
+    "Inter exact amount/BiDi sample",
+    "unsaved navigation cancelled without losing changes",
+    "real MFA login and saved brand revision refresh without storefront reload",
+    "style-breakout denied by server"
+  ],
+  "notVerified": [
+    "owner Windows deployment and login",
+    "online URL and HTTPS",
+    "physical phones",
+    "final MODA4 home/menu/scenes (later R stages)",
+    "LCP budget measurement"
+  ]
+}
