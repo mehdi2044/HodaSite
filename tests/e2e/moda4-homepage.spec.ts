@@ -175,7 +175,24 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
           ),
         ).toBe(true);
         if (await shop.locator(".moda-carousel-hero").count()) {
-          await shop.locator(".moda-carousel-hero").screenshot({
+          await expect
+            .poll(() =>
+              shop
+                .locator(".moda-carousel-hero .moda-scene-heading:visible")
+                .first()
+                .evaluate((heading) =>
+                  [
+                    heading,
+                    ...heading.querySelectorAll(".moda-title-fragment"),
+                  ].every(
+                    (element) =>
+                      Number(getComputedStyle(element).opacity) >= 0.99,
+                  ),
+                ),
+            )
+            .toBe(true);
+          await shop.evaluate(() => scrollTo(0, 0));
+          await shop.screenshot({
             path: info.outputPath(`r3b-hero-${locale}-${viewport.width}.png`),
           });
           if (viewport.width === 1440 && locale === "fa")
