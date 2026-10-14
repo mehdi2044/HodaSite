@@ -1,3 +1,7 @@
+import { db } from "@/lib/db";
+import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
+import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
+import { KidsMotionCard } from "./kids-motion-card";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { WishlistHeart } from "@/components/engagement/wishlist";
 import { seoPath } from "@/lib/seo-urls";
@@ -11,6 +15,7 @@ import { getDisplayPrice } from "@/modules/pricing";
 type CardProduct = {
   displayPrice?: Awaited<ReturnType<typeof getDisplayPrice>>;
   id: string;
+  categoryId?: string;
   slugI18n: unknown;
   titleI18n: unknown;
   basePriceAmount: { toString(): string };
@@ -49,7 +54,27 @@ export async function ProductCard({
       ? market.currency
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
-  const image = product.media[0]?.media;
+  const categoryId =
+    product.categoryId ??
+    (
+      await db.product.findFirst({
+        where: {
+          id: product.id,
+          deletedAt: null,
+          status: "ACTIVE",
+          marketIds: { has: market.id },
+        },
+        select: { categoryId: true },
+      })
+    )?.categoryId;
+  const presentation = categoryId
+    ? await inheritedCategoryPresentation(categoryId)
+    : null;
+  const kids = presentation?.kind === "kids";
+  const cutout =
+    kids && variant ? await publicCatalogCutout(variant.id, market.id) : null;
+  const image = cutout?.media ?? product.media[0]?.media;
+  const cutoutText = kids ? await getTranslations("cutouts") : null;
   const colors = [
     ...new Map(
       product.variants.flatMap((v) =>
@@ -57,40 +82,60 @@ export async function ProductCard({
       ),
     ).values(),
   ];
-  return (
+  const card = (
     <article className="shop-product-card group">
       <Link
         href={seoPath(locale, market.code, "p", slug)}
         className="shop-product-link block"
       >
-        <div className="shop-card-image aspect-[4/5] overflow-hidden bg-black/5">
-          {image ? (
-            <ResponsiveImage
-              media={image}
-              role="catalog"
-              locale={locale}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="h-full w-full"
-              imgClassName="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-sm text-muted">
-              {t("noImage")}
-            </div>
-          )}
-          {product.media[1]?.media &&
-            product.media[1].media.url !== image?.url && (
-              <div className="shop-card-alternate" aria-hidden="true">
-                <ResponsiveImage
-                  media={product.media[1].media}
-                  role="catalog"
-                  locale={locale}
-                  sizes="(max-width:640px) 50vw, 25vw"
-                  className="h-full w-full"
-                  imgClassName="h-full w-full object-cover"
-                />
+        <div
+          className={`shop-card-image aspect-[4/5] overflow-hidden bg-black/5 ${kids ? "kids-card-image" : ""}`}
+        >
+          <div
+            className={
+              kids ? "kids-turntable-media h-full w-full" : "h-full w-full"
+            }
+          >
+            {image ? (
+              <ResponsiveImage
+                media={
+                  kids
+                    ? {
+                        ...image,
+                        presentation: {
+                          fit: "contain",
+                          focalX: 0.5,
+                          focalY: 0.5,
+                        },
+                      }
+                    : image
+                }
+                role="catalog"
+                locale={locale}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="h-full w-full"
+                imgClassName={`h-full w-full ${kids ? "object-contain" : "object-cover"}`}
+              />
+            ) : (
+              <div className="grid h-full place-items-center text-sm text-muted">
+                {t("noImage")}
               </div>
             )}
+            {!kids &&
+              product.media[1]?.media &&
+              product.media[1].media.url !== image?.url && (
+                <div className="shop-card-alternate" aria-hidden="true">
+                  <ResponsiveImage
+                    media={product.media[1].media}
+                    role="catalog"
+                    locale={locale}
+                    sizes="(max-width:640px) 50vw, 25vw"
+                    className="h-full w-full"
+                    imgClassName="h-full w-full object-cover"
+                  />
+                </div>
+              )}
+          </div>
           {isDemoFashionMedia(image) && (
             <span className="shop-demo-badge">{t("demoImage")}</span>
           )}
@@ -102,6 +147,9 @@ export async function ProductCard({
             ))}
           </div>
           <h3 className="font-medium">{title}</h3>
+          {kids && !cutout && (
+            <p className="shop-cutout-note">{cutoutText!("cardFallback")}</p>
+          )}
           <p className="shop-card-price mt-2 text-sm font-semibold" dir="ltr">
             {formatStorefrontAmount(price.amount, currency, locale)}
           </p>
@@ -112,5 +160,10 @@ export async function ProductCard({
         <WishlistHeart productId={product.id} />
       </div>
     </article>
+  );
+  return kids ? (
+    <KidsMotionCard tone={presentation!.tone}>{card}</KidsMotionCard>
+  ) : (
+    card
   );
 }

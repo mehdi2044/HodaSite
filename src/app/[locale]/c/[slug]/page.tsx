@@ -1,3 +1,4 @@
+import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { categoryRootId } from "@/modules/catalog/tree";
 import { relevantLookBlocks } from "@/modules/outfits";
@@ -78,6 +79,7 @@ export default async function CategoryPage({
     getTranslations("catalog"),
   ]);
   if (!category) notFound();
+  const presentation = await inheritedCategoryPresentation(category.id);
   const result = await listCatalogProducts(market.id, safe, {
     categoryId: category.id,
     brandId: one(query.brand),
@@ -103,7 +105,17 @@ export default async function CategoryPage({
   );
   return (
     <main
-      className="shell shop-page py-10 md:py-16"
+      className={`shell shop-page py-10 md:py-16 ${presentation?.kind === "kids" ? "kids-category" : ""}`}
+      data-kids-tone={
+        presentation?.kind === "kids" ? presentation.tone : undefined
+      }
+      style={
+        presentation?.kind === "kids"
+          ? {
+              background: `linear-gradient(135deg,var(--${presentation.tone}),var(--kidsButter))`,
+            }
+          : undefined
+      }
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
       <header className="shop-category-intro mb-8">
