@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
 import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
 import { KidsMotionCard } from "./kids-motion-card";
@@ -54,19 +53,7 @@ export async function ProductCard({
       ? market.currency
       : "USD"
   ) as "IRT" | "TRY" | "CAD" | "USD";
-  const categoryId =
-    product.categoryId ??
-    (
-      await db.product.findFirst({
-        where: {
-          id: product.id,
-          deletedAt: null,
-          status: "ACTIVE",
-          marketIds: { has: market.id },
-        },
-        select: { categoryId: true },
-      })
-    )?.categoryId;
+  const categoryId = product.categoryId;
   const presentation = categoryId
     ? await inheritedCategoryPresentation(categoryId)
     : null;
