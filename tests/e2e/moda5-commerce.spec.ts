@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
+import AxeBuilder from "@axe-core/playwright";
 import { tokenHash } from "../../src/lib/secure-tokens";
 import { formatStorefrontAmount } from "../../src/modules/catalog/format";
 import { fillAdminMfa } from "./helpers/admin-mfa";
@@ -209,6 +210,14 @@ for (const locale of ["fa", "tr", "en"] as const) {
       `${id}-collection`,
     );
     await expect(page.locator("main .shop-product-card")).toHaveCount(1);
+    if (locale === "en")
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
     const card = page.locator("main .shop-product-card");
     await card
       .getByRole("button", { name: colorNames[charcoal][locale], exact: true })
@@ -233,6 +242,27 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(page.getByTestId("product-price").locator("del")).toHaveCount(
       0,
     );
+    await page.screenshot({
+      path: info.outputPath(`r5-pdp-${locale}-390.png`),
+      fullPage: true,
+      scale: "css",
+    });
+    if (locale === "en") {
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.screenshot({
+        path: info.outputPath("r5-pdp-en-1440.png"),
+        fullPage: true,
+        scale: "css",
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+    }
     await expect(purchase.locator(".moda-mobile-buy-price")).toContainText(
       formatStorefrontAmount("100.25", "CAD", locale),
     );
