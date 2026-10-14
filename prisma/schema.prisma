@@ -634,6 +634,7 @@ model Media {
   replacements    MediaReplacement[]
   categoryCovers  Category[]         @relation("CategoryCover")
   colorSwatches   Color[]            @relation("ColorSwatch")
+  catalogCutouts  CatalogCutout[]
   productMedia    ProductMedia[]
   variantMedia    VariantMedia[]
 
@@ -660,26 +661,26 @@ model Menu {
 }
 
 model MenuItem {
-  id          String     @id @default(cuid())
-  menuId      String
-  menu        Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  parentId    String?
-  parent      MenuItem?  @relation("MenuItemTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children    MenuItem[] @relation("MenuItemTree")
-  labelI18n   Json
-  linkType    String     @default("url")
-  url         String?
-  pageId      String?
-  page        Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
-  referenceId String?
+  id           String     @id @default(cuid())
+  menuId       String
+  menu         Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parentId     String?
+  parent       MenuItem?  @relation("MenuItemTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     MenuItem[] @relation("MenuItemTree")
+  labelI18n    Json
+  linkType     String     @default("url")
+  url          String?
+  pageId       String?
+  page         Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  referenceId  String?
   presentation Json?
-  target      String     @default("_self")
-  enabled     Boolean    @default(true)
-  visibleIn   String[]   @default([])
-  sortOrder   Int        @default(0)
-  deletedAt   DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  target       String     @default("_self")
+  enabled      Boolean    @default(true)
+  visibleIn    String[]   @default([])
+  sortOrder    Int        @default(0)
+  deletedAt    DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([menuId, parentId, sortOrder])
   @@index([pageId])
@@ -809,6 +810,7 @@ model Category {
   slugI18n        Json
   titleI18n       Json
   descriptionI18n Json          @default("{}")
+  presentation    Json?
   seoI18n         Json          @default("{}")
   gender          ProductGender
   sortOrder       Int           @default(0)
@@ -837,6 +839,8 @@ model Collection {
 }
 
 model Color {
+  cutouts CatalogCutout[]
+
   id            String    @id @default(cuid())
   code          String    @unique
   nameI18n      Json
@@ -868,6 +872,8 @@ model Size {
 }
 
 model Product {
+  cutouts CatalogCutout[]
+
   wishlists Wishlist[]
   reviews   Review[]
 
@@ -929,6 +935,8 @@ model ProductAttribute {
 }
 
 model Variant {
+  cutoutOverride CatalogCutout?
+
   stockAlerts StockAlert[]
 
   cartItems  CartItem[]
@@ -2415,4 +2423,28 @@ model FittingSession {
   @@index([customerId, createdAt])
   @@index([status, createdAt])
   @@index([createdAt])
+}
+
+/// Public catalog presentation only; never a paid session, wallet or price store.
+model CatalogCutout {
+  id         String    @id @default(cuid())
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  colorId    String
+  color      Color     @relation(fields: [colorId], references: [id], onDelete: Restrict)
+  variantId  String?   @unique
+  variant    Variant?  @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  mediaId    String
+  media      Media     @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  slot       String
+  anchor     String?
+  geometry   Json
+  validation Json
+  version    Int       @default(0)
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([productId, colorId])
+  @@index([mediaId])
 }

@@ -64,6 +64,10 @@ export async function AdminShell({
         <Link href="/admin/media">{nav("media")}</Link>
         <Link href="/admin/catalog/products">{nav("products")}</Link>
         <Link href="/admin/catalog/taxonomy">{nav("taxonomy")}</Link>
+        <Link href="/admin/catalog/presentation">
+          {nav("categoryPresentation")}
+        </Link>
+        <Link href="/admin/catalog/cutouts">{nav("cutouts")}</Link>
         <Link href="/admin/pricing/fx">{t("pricingFx")}</Link>
         <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
         <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>

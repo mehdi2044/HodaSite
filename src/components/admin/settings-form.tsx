@@ -17,6 +17,7 @@ export function SettingsForm({
   className,
   disabled = false,
   hasUnsavedChanges,
+  submitDisabled = false,
 }: {
   action: (
     prevState: ActionResult | null,
@@ -27,6 +28,7 @@ export function SettingsForm({
   className?: string;
   disabled?: boolean;
   hasUnsavedChanges?: boolean;
+  submitDisabled?: boolean;
 }) {
   const legacy = useTranslations("foundationAdmin");
 
@@ -47,7 +49,8 @@ export function SettingsForm({
         action={formAction}
         className={className ?? "grid gap-4"}
         onSubmit={(event) => {
-          if (uploadsPending || disabled) event.preventDefault();
+          if (uploadsPending || disabled || submitDisabled)
+            event.preventDefault();
         }}
       >
         <fieldset disabled={pending || disabled} className="contents">
@@ -68,7 +71,10 @@ export function SettingsForm({
             {legacy("saved")}{" "}
           </p>
         )}
-        <Button type="submit" disabled={pending || uploadsPending || disabled}>
+        <Button
+          type="submit"
+          disabled={pending || uploadsPending || disabled || submitDisabled}
+        >
           {pending ? legacy("saving") : submitLabel}
         </Button>
       </form>

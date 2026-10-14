@@ -3011,3 +3011,17 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
 @media(min-width:1024px){.scene-photo-desktop{display:block;}.scene-photo-mobile{display:none;}.scene-photo-forced{display:block;}.scene-pin-price{display:inline;}.scene-price-list{grid-template-columns:repeat(3,minmax(0,1fr));}.scene-price-list>p,.scene-price-list>button{grid-column:1/-1;}}
 
 .scene-pin[data-side=start] .scene-pin-price{order:-1;}
+
+.kids-category { border-radius: var(--radius); }
+.kids-category .shop-category-intro { color: var(--kidsInk); }
+.kids-card-image { background: linear-gradient(145deg,var(--kids-card-tone),var(--kidsButter)); perspective: 800px; touch-action: pan-y; }
+.kids-turntable-media { transform: rotateY(var(--kids-angle,0deg)); transition: transform .18s ease; transform-origin: center; }
+.kids-card-image picture { background-image: none !important; }
+.kids-card-image img { object-fit: contain; }
+.kids-turntable-controls .button,
+html[data-button-style="crayon"] .kids-turntable-controls .button {
+  --button-fill: var(--kidsButton); background: var(--kidsButton); color: var(--kidsButtonInk);
+  min-height: 44px; padding-inline: 12px; font-size: .8rem;
+}
+.shop-cutout-note { color: var(--muted); font-size: .8rem; line-height: 1.5; margin-block-start: .5rem; }
+@media (prefers-reduced-motion:reduce) { .kids-turntable-media { transition: none; } }

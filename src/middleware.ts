@@ -219,7 +219,9 @@ async function applicationMiddleware(req: NextAuthRequest) {
     const response = NextResponse.next({ request: { headers: req.headers } });
     if (
       pathname.startsWith("/admin/preview/") ||
-      pathname === "/admin/content/homepage/scenes"
+      pathname === "/admin/content/homepage/scenes" ||
+      pathname === "/admin/catalog/cutouts" ||
+      pathname === "/admin/catalog/presentation"
     ) {
       response.headers.set("Cache-Control", "private, no-store");
       response.headers.set("X-Robots-Tag", "noindex, nofollow");

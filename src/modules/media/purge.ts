@@ -105,6 +105,7 @@ export async function purgeOne(
     const counts = await Promise.all([
       tx.productMedia.count({ where: { mediaId: current.id } }),
       tx.variantMedia.count({ where: { mediaId: current.id } }),
+      tx.catalogCutout.count({ where: { mediaId: current.id } }),
       tx.category.count({ where: { mediaId: current.id } }),
       tx.color.count({ where: { swatchMediaId: current.id } }),
       tx.receipt.count({ where: { mediaId: current.id } }),
@@ -143,6 +144,11 @@ export async function purgeOne(
           AND after->>'format'='homepage-revision-v1'
           AND (jsonb_path_exists(after, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
           OR jsonb_path_exists(after, '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))))
+        OR EXISTS (SELECT 1 FROM "CatalogCutout" WHERE jsonb_path_exists(validation,
+          '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "AuditLog" WHERE "entityType"='CatalogCutout'
+          AND (jsonb_path_exists(after, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
+          OR jsonb_path_exists(before, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))))
         OR EXISTS (SELECT 1 FROM "MenuItem" WHERE jsonb_path_exists(
           presentation, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
       ) AS used

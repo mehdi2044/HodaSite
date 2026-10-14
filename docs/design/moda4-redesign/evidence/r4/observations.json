@@ -1,0 +1,25 @@
+{
+  "applicationSha": "0466dcead14384893247aacdf69f0e38eefdf8c1",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "environment": "Production standalone Chromium and owned synthetic PostgreSQL; not a physical phone or owner Windows",
+  "verified": [
+    "Actual password+MFA",
+    "Private no-store preview/anonymous denial",
+    "Actual transparent PNG inspection",
+    "Model geometry drag and keyboard",
+    "Four independent model save/reload",
+    "Explicit parent Kids presentation and already-open operator catalog update",
+    "FA/TR/EN market catalog and honest missing-cutout fallback"
+  ],
+  "notVerified": [
+    "Exact merchant artwork matching",
+    "Owner Windows login/rollout",
+    "Physical phones",
+    "Current-head CI/real Local+S3 new cutout restore",
+    "R3b full homepage/Kids ring/COMPOSITE",
+    "Independent review/owner visual acceptance"
+  ]
+}
