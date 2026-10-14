@@ -16,13 +16,12 @@ import { saveHomepage } from "./actions";
 export default async function HomepageAdmin({
   searchParams,
 }: {
-  searchParams?: Promise<{ scope?: string; revision?: string }>;
-} = {}) {
+  searchParams: Promise<{ scope?: string; revision?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/admin/login");
   const userId = session.user.id,
-    query = await (searchParams ??
-      Promise.resolve({} as { scope?: string; revision?: string }));
+    query = await searchParams;
   const globalRead = await can(userId, "content.homepage.read");
   const allMarkets = await db.market.findMany({
     where: { isActive: true },
