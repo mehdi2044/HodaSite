@@ -153,11 +153,16 @@ for (const locale of ["fa", "tr", "en"] as const) {
           .first()
           .evaluate((el) => getComputedStyle(el).fontFamily),
       ).resolves.toContain("Manrope");
-      expect(
-        await frame
-          .locator("body")
-          .evaluate(() => document.fonts.check("500 24px Manrope", "ÇĞİıÖŞÜ")),
-      ).toBe(true);
+      await expect
+        .poll(
+          async () =>
+            await frame
+              .locator("body")
+              .evaluate(() =>
+                document.fonts.check("500 24px Manrope", "ÇĞİıÖŞÜ"),
+              ),
+        )
+        .toBe(true);
     }
     // Unsaved-warning hook is reused from the verified PR60 implementation.
     await page.locator('select[name="fontHeadingLatin"]').selectOption("Inter");

@@ -46,7 +46,9 @@ export default async function ThemePreviewPage({
           <div className="card mt-4" style={{ maxWidth: 320, marginTop: 16 }}>
             <div className="moda-lace" aria-hidden="true" />
             <p style={{ margin: 0 }}>{legacy("sampleCard")}</p>
-            <p lang="tr">{t("sampleTurkish")}</p>
+            <p lang="tr" className="moda-heading">
+              {t("sampleTurkish")}
+            </p>
             <p lang="fa" dir="rtl">
               {t("samplePersian")}{" "}
               <bdi className="moda-price">{t("samplePrice")}</bdi>
