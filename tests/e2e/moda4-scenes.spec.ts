@@ -117,6 +117,14 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       await piece
         .getByRole("combobox", { name: en.scenes.referenceImage, exact: true })
         .selectOption(reference);
+      for (const kind of ["desktop", "mobile"] as const) {
+        await piece
+          .getByLabel(`${en.scenes[kind]} X`, { exact: true })
+          .fill(index === 0 ? "0.62" : "0.47");
+        await piece
+          .getByLabel(`${en.scenes[kind]} Y`, { exact: true })
+          .fill(index === 0 ? "0.51" : "0.24");
+      }
     }
     const preview = page.getByTestId("scene-preview").contentFrame();
     await page
@@ -238,6 +246,11 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       ).toBe(true);
       await shop.screenshot({
         path: info.outputPath(`r3-scene-${locale}-390.png`),
+        scale: "css",
+      });
+      await shop.getByTestId("shoppable-scene").screenshot({
+        path: info.outputPath(`r3-scene-${locale}-390-full.png`),
+        scale: "css",
       });
     }
     await shop.setViewportSize({ width: 1440, height: 1000 });
@@ -268,12 +281,18 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await page
       .getByRole("combobox", { name: en.scenes.history, exact: true })
       .selectOption(saved.draftRevisionId!);
+    await expect(
+      page.getByRole("link", { name: en.scenes.previewRevision, exact: true }),
+    ).toHaveAttribute("href", new RegExp(saved.draftRevisionId!));
     await page
       .getByRole("link", { name: en.scenes.previewRevision, exact: true })
       .click();
     await expect(
       page.getByLabel(`${en.scenes.title} — English`, { exact: true }),
     ).toHaveValue(titles.en);
+    await expect(
+      page.getByLabel(`${en.scenes.title} — English`, { exact: true }),
+    ).toBeDisabled();
     await page
       .getByRole("button", { name: en.scenes.publishRevision, exact: true })
       .click();

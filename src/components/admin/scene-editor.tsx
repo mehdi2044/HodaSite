@@ -184,12 +184,22 @@ export function SceneEditor(props: Props) {
         ? props.draftRevisionId!
         : (props.history[0]?.id ?? "")),
   );
+  const previousDraftRevision = useRef(props.draftRevisionId);
   useEffect(() => {
+    const draftChanged =
+      previousDraftRevision.current !== props.draftRevisionId;
+    previousDraftRevision.current = props.draftRevisionId;
+    const defaultRevision = props.history.some(
+      (r) => r.id === props.draftRevisionId,
+    )
+      ? props.draftRevisionId!
+      : (props.history[0]?.id ?? "");
     setRevision(
-      props.viewedRevision?.id ??
-        (props.history.some((revision) => revision.id === props.draftRevisionId)
-          ? props.draftRevisionId!
-          : (props.history[0]?.id ?? "")),
+      (current) =>
+        props.viewedRevision?.id ??
+        (!draftChanged && props.history.some((r) => r.id === current)
+          ? current
+          : defaultRevision),
     );
   }, [props.draftRevisionId, props.history, props.viewedRevision]);
   const historyOptions =
@@ -275,9 +285,12 @@ export function SceneEditor(props: Props) {
           action={props.action}
           hasUnsavedChanges={dirty}
           submitLabel={t("saveDraft")}
-          disabled={!props.writable}
+          disabled={!props.writable || Boolean(props.viewedRevision)}
         >
-          <fieldset disabled={!props.writable} className="grid gap-4">
+          <fieldset
+            disabled={!props.writable || Boolean(props.viewedRevision)}
+            className="grid gap-4"
+          >
             <input
               type="hidden"
               name="marketId"
@@ -726,6 +739,17 @@ export function SceneEditor(props: Props) {
                   version: props.viewedRevision.version,
                 })}
               </p>
+            )}
+            {props.viewedRevision && (
+              <>
+                <p>{t("historyReadonly")}</p>
+                <a
+                  className="button"
+                  href={`/admin/content/homepage/scenes?${new URLSearchParams({ scope: props.scope })}`}
+                >
+                  {t("returnDraft")}
+                </a>
+              </>
             )}
             {dirty && <p role="status">{t("saveBeforePublish")}</p>}
             <label>

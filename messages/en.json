@@ -2555,6 +2555,8 @@
     "sideEnd": "End",
     "shortLabel": "Short label (optional)",
     "previewRevision": "Preview selected revision",
-    "viewingRevision": "Viewing revision {version}; it is not saved or published by opening this preview."
+    "viewingRevision": "Viewing revision {version}; it is not saved or published by opening this preview.",
+    "historyReadonly": "Historical preview is read-only. Return to the current draft to edit.",
+    "returnDraft": "Return to current draft"
   }
 }

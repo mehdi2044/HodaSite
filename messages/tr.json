@@ -2555,6 +2555,8 @@
     "sideEnd": "Bitiş",
     "shortLabel": "Kısa etiket (isteğe bağlı)",
     "previewRevision": "Seçili sürümü önizle",
-    "viewingRevision": "{version} sürümü görüntüleniyor; bu önizlemeyi açmak kaydetmez veya yayımlamaz."
+    "viewingRevision": "{version} sürümü görüntüleniyor; bu önizlemeyi açmak kaydetmez veya yayımlamaz.",
+    "historyReadonly": "Geçmiş önizlemesi salt okunurdur. Düzenlemek için geçerli taslağa dönün.",
+    "returnDraft": "Geçerli taslağa dön"
   }
 }
