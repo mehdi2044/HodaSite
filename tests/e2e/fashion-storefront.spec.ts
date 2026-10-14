@@ -72,7 +72,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
         const file = info.outputPath(
           `shopping-fashion-home-full-${locale}-${width}.png`,
         );
-        await page.screenshot({ path: file, fullPage: true });
+        await page.screenshot({ path: file, fullPage: true, scale: "css" });
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
