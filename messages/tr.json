@@ -2547,6 +2547,11 @@
     "anchorCanvas": "Fotoğraftaki etiket konumlarını düzenle",
     "moveAnchor": "{frame} görünümünde {number}. etiketi taşı",
     "anchorOutside": "{number}. etiket çerçevenin dışında; etiketi veya çerçeveyi düzeltin.",
-    "discardChanges": "Kaydedilmemiş değişiklikler var. Vazgeçilsin mi?"
+    "discardChanges": "Kaydedilmemiş değişiklikler var. Vazgeçilsin mi?",
+    "suggested": "Önerilen",
+    "publishChanges": "Kaydet ve yayınla",
+    "labelSide": "Fiyat etiketi tarafı",
+    "sideStart": "Başlangıç",
+    "sideEnd": "Bitiş"
   }
 }

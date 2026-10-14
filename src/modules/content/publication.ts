@@ -102,6 +102,24 @@ async function validatedBlocks(
     await tx.$queryRaw(
       Prisma.sql`SELECT id FROM "Product" WHERE id IN (${Prisma.join(products)}) ORDER BY id FOR UPDATE`,
     );
+  for (const block of blocks) {
+    if (
+      block.type !== "ProductStrip" ||
+      (block.source.mode !== "category" && block.source.mode !== "collection")
+    )
+      continue;
+    const referenceId = block.source.referenceId;
+    if (!referenceId) throw new z.ZodError([]);
+    const refs =
+      block.source.mode === "category"
+        ? await tx.$queryRaw<
+            { id: string }[]
+          >`SELECT id FROM "Category" WHERE id=${referenceId} AND "deletedAt" IS NULL FOR SHARE`
+        : await tx.$queryRaw<
+            { id: string }[]
+          >`SELECT id FROM "Collection" WHERE id=${referenceId} AND "deletedAt" IS NULL FOR SHARE`;
+    if (!refs.length) throw new z.ZodError([]);
+  }
   await validateLookReferences(blocks, marketId, tx);
   await lockSceneCatalog(allScenes, tx);
   await lockMediaReferences(tx, blockMediaIds(blocks), { readyImages: true });
@@ -245,6 +263,7 @@ export async function publishHomepageRevision(actorId: string, raw: unknown) {
         input.jobId &&
         (row.scheduledRevisionId !== input.revisionId ||
           row.scheduledVersion !== input.expectedVersion ||
+          row.scheduledById !== actorId ||
           !row.scheduledAt ||
           row.scheduledAt > new Date())
       )

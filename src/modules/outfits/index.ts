@@ -225,6 +225,7 @@ export async function validateLookReferences(
     : (
         await client.market.findMany({
           where: {
+            isActive: true,
             homepages: { none: { deletedAt: null, isPublished: true } },
           },
           select: { id: true },

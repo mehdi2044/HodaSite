@@ -55,6 +55,18 @@ test("UI override changes runtime text and reset restores file default", async (
         .locator("main")
         .getByRole("heading", { name: replacement, exact: true }),
     ).toBeVisible();
+    // A long real translation grows the mobile navigation. The purchase CTA
+    // must track its observed height, including safe area, without overlap.
+    await page.goto("/fa/p/محصول-1");
+    await expect
+      .poll(async () => {
+        const button = await page.locator(".shop-add-button").boundingBox();
+        const nav = await page
+          .getByTestId("mobile-bottom-navigation")
+          .boundingBox();
+        return Boolean(button && nav && button.y + button.height <= nav.y);
+      })
+      .toBe(true);
   } finally {
     await page.goto("/admin/content/translations");
     await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
@@ -134,7 +146,7 @@ test("homepage source selections and every trust translation survive save and re
       .scrollIntoViewIfNeeded();
     await shoppingProof(page, info, "homepage-source-editor");
     const save = page.getByRole("button", {
-      name: "ذخیرهٔ چیدمان",
+      name: "ذخیره و انتشار",
       exact: true,
     });
     await save.click();

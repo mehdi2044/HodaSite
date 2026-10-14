@@ -2547,6 +2547,11 @@
     "anchorCanvas": "تنظیم جای برچسب روی عکس",
     "moveAnchor": "جابه‌جایی برچسب {number} در {frame}",
     "anchorOutside": "برچسب {number} بیرون قاب است؛ جای آن یا قاب را اصلاح کنید.",
-    "discardChanges": "تغییرات ذخیره نشده‌اند. از آن‌ها صرف‌نظر شود؟"
+    "discardChanges": "تغییرات ذخیره نشده‌اند. از آن‌ها صرف‌نظر شود؟",
+    "suggested": "پیشنهادی",
+    "publishChanges": "ذخیره و انتشار",
+    "labelSide": "سمت برچسب قیمت",
+    "sideStart": "آغاز",
+    "sideEnd": "پایان"
   }
 }

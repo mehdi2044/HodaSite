@@ -2547,6 +2547,11 @@
     "anchorCanvas": "Adjust labels on the photo",
     "moveAnchor": "Move label {number} in {frame}",
     "anchorOutside": "Label {number} is outside the frame; adjust it or the framing.",
-    "discardChanges": "There are unsaved changes. Discard them?"
+    "discardChanges": "There are unsaved changes. Discard them?",
+    "suggested": "Suggested",
+    "publishChanges": "Save and publish",
+    "labelSide": "Price label side",
+    "sideStart": "Start",
+    "sideEnd": "End"
   }
 }

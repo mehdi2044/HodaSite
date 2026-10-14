@@ -57,6 +57,7 @@ export default async function ScenesAdmin({
       where: {
         status: "ACTIVE",
         deletedAt: null,
+        category: { deletedAt: null },
         coinPackCoins: null,
         ...(productMarket ? { marketIds: productMarket } : {}),
       },
@@ -95,11 +96,14 @@ export default async function ScenesAdmin({
     row ? homepageRevisionHistory(userId, row.id, query.after) : [],
   ]);
   const blocks = parsed.success ? parsed.data : [];
-  const ids = blocks.flatMap((block) =>
-    "scene" in block && block.scene
+  const ids = blocks.flatMap((block) => [
+    ...("scene" in block && block.scene
       ? [block.scene.desktop.mediaId, block.scene.mobile.mediaId]
-      : [],
-  );
+      : []),
+    ...((block.type === "Hero" || block.type === "Banner") && block.mediaId
+      ? [block.mediaId]
+      : []),
+  ]);
   const images = await db.media.findMany({
     where: { id: { in: ids }, kind: "image", status: "READY", deletedAt: null },
     select: { id: true, url: true },

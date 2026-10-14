@@ -11,13 +11,15 @@ export function ProductGallery({
   base,
   variants,
   locale,
+  initialColorId,
 }: {
   base: Entry[];
   variants: Array<{ colorId: string; media: Entry[] }>;
   locale: "fa" | "tr" | "en";
+  initialColorId?: string;
 }) {
   const t = useTranslations("shopping"),
-    [color, setColor] = useState(""),
+    [color, setColor] = useState(initialColorId ?? ""),
     [active, setActive] = useState(0);
   const track = useRef<HTMLDivElement>(null),
     zoom = useRef<HTMLDialogElement>(null);

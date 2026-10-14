@@ -27,23 +27,20 @@ export function ScenePreviewClient({
   }, [locale]);
   useEffect(() => {
     let controller: AbortController | undefined,
-      timer: ReturnType<typeof setTimeout> | undefined;
-    const receive = (event: MessageEvent) => {
-      if (
-        event.origin !== location.origin ||
-        event.source !== window.parent ||
-        event.data?.channel !== channel ||
-        event.data?.type !== "scene-preview"
-      )
-        return;
+      timer: ReturnType<typeof setTimeout> | undefined,
+      latest: unknown,
+      busy = false;
+    const enqueue = (raw: unknown) => {
+      latest = raw;
       const turn = ++sequence.current;
       controller?.abort();
       clearTimeout(timer);
-      const parsed = shoppableSceneSchema.safeParse(event.data.scene);
+      const parsed = shoppableSceneSchema.safeParse(raw);
       if (!parsed.success) {
         setUnavailable(true);
         return;
       }
+      busy = true;
       timer = setTimeout(async () => {
         controller = new AbortController();
         const request = controller;
@@ -69,9 +66,27 @@ export function ScenePreviewClient({
         } catch {
           if (!request.signal.aborted && sequence.current === turn)
             setUnavailable(true);
+        } finally {
+          if (sequence.current === turn) busy = false;
         }
       }, 200);
     };
+    const receive = (event: MessageEvent) => {
+      if (
+        event.origin !== location.origin ||
+        event.source !== window.parent ||
+        event.data?.channel !== channel ||
+        event.data?.type !== "scene-preview"
+      )
+        return;
+      enqueue(event.data.scene);
+    };
+    const refresh = () => {
+      if (latest && !document.hidden && !busy) enqueue(latest);
+    };
+    const interval = setInterval(refresh, 4000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
     window.addEventListener("message", receive);
     window.parent.postMessage(
       { type: "scene-preview-ready", channel },
@@ -81,6 +96,9 @@ export function ScenePreviewClient({
       sequence.current++;
       controller?.abort();
       clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
       window.removeEventListener("message", receive);
     };
   }, [channel, scopeMarketId, marketId, locale]);

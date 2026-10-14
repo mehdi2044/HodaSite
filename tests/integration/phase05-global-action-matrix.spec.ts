@@ -136,7 +136,23 @@ const rows: Row[] = [
   },
   {
     permission: "content.homepage.write",
-    run: (f) => call(saveHomepage, { marketId, blocks: "[]" }, f),
+    run: async (f) =>
+      call(
+        saveHomepage,
+        {
+          marketId,
+          expectedVersion: String(
+            (
+              await db.homepage.findFirst({
+                where: { marketId, deletedAt: null },
+              })
+            )?.version ?? 0,
+          ),
+          intent: "DRAFT",
+          blocks: "[]",
+        },
+        f,
+      ),
   },
   ...["content.page.write", "content.page.publish"].map((permission) => ({
     permission,

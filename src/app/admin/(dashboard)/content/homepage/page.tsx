@@ -19,6 +19,7 @@ export default async function HomepageAdmin() {
   )
     redirect("/admin");
   const t = await getTranslations("homepageAdmin");
+  const scenes = await getTranslations("scenes");
   const locale = (await getLocale()) as "fa" | "tr" | "en";
   const [rows, markets, categories, collections, products] = await Promise.all([
     db.homepage.findMany({
@@ -60,14 +61,18 @@ export default async function HomepageAdmin() {
   ]);
   const compositions = Object.fromEntries(
     rows.map((row) => {
-      const parsed = homepageBlocksSchema.safeParse(row.blocks);
+      const parsed = homepageBlocksSchema.safeParse(
+        row.draftBlocks ?? row.blocks,
+      );
       return [row.marketId ?? "global", parsed.success ? parsed.data : []];
     }),
   );
   const ids = [
     ...new Set(
       rows.flatMap((row) => {
-        const parsed = homepageBlocksSchema.safeParse(row.blocks);
+        const parsed = homepageBlocksSchema.safeParse(
+          row.draftBlocks ?? row.blocks,
+        );
         return parsed.success ? blockMediaIds(parsed.data) : [];
       }),
     ),
@@ -79,98 +84,113 @@ export default async function HomepageAdmin() {
       })
     : [];
   return (
-    <HomepageBuilder
-      action={saveHomepage}
-      categories={categories.map((item) => ({
-        id: item.id,
-        root: item.parentId === null,
-        titleI18n: item.titleI18n as Record<"fa" | "tr" | "en", string>,
-        mediaUrl:
-          item.media?.status === "READY" && !item.media.deletedAt
-            ? item.media.url
-            : undefined,
-        title: localizedValue(
-          item.titleI18n as Record<typeof locale, string>,
-          locale,
-        ),
-      }))}
-      collections={collections.map((item) => ({
-        id: item.id,
-        title: localizedValue(
-          item.titleI18n as Record<typeof locale, string>,
-          locale,
-        ),
-      }))}
-      products={products.map((product) => ({
-        id: product.id,
-        title: localizedValue(
-          product.titleI18n as Record<typeof locale, string>,
-          locale,
-        ),
-        colors: [
-          ...new Map(
-            product.variants.map((variant) => [
-              variant.color.id,
-              {
-                id: variant.color.id,
-                title: localizedValue(
-                  variant.color.nameI18n as Record<typeof locale, string>,
-                  locale,
-                ),
-              },
-            ]),
-          ).values(),
-        ],
-      }))}
-      compositions={compositions}
-      mediaUrls={Object.fromEntries(
-        media.map((item) => [item.id, `/media/${item.storageKey}`]),
-      )}
-      markets={markets.map((market) => ({ id: market.id, code: market.code }))}
-      labels={{
-        shopLook: t("shopLook"),
-        lookName: t("lookName"),
-        addLook: t("addLook"),
-        lookProducts: t("lookProducts"),
-        lookColor: t("lookColor"),
-        lookDepartment: t("lookDepartment"),
-        lookHelp: t("lookHelp"),
-        heroLayout: t("heroLayout"),
-        editorialLayout: t("editorialLayout"),
-        spatialLayout: t("spatialLayout"),
-        title: t("title"),
-        description: t("description"),
-        global: t("global"),
-        market: t("market"),
-        add: t("add"),
-        save: t("save"),
-        preview: t("preview"),
-        mobile: t("mobile"),
-        desktop: t("desktop"),
-        moveUp: t("moveUp"),
-        moveDown: t("moveDown"),
-        remove: t("remove"),
-        empty: t("empty"),
-        latest: t("latest"),
-        bestseller: t("bestseller"),
-        category: t("category"),
-        collection: t("collection"),
-        limit: t("limit"),
-        chooseSource: t("chooseSource"),
-        missingSource: t("missingSource"),
-        rootCategories: t("rootCategories"),
-        catalogPreview: t("catalogPreview"),
-        scopeHelp: t("scopeHelp"),
-        heroHelp: t("heroHelp"),
-        trustItem: t("trustItem"),
-        addTrustItem: t("addTrustItem"),
-        selectImage: t("selectImage"),
-        fieldTitle: t("fieldTitle"),
-        body: t("body"),
-        ctaLabel: t("ctaLabel"),
-        ctaUrl: t("ctaUrl"),
-        source: t("source"),
-      }}
-    />
+    <>
+      <a
+        className="button mb-5 inline-flex"
+        href="/admin/content/homepage/scenes"
+      >
+        {scenes("editorTitle")}
+      </a>
+      <HomepageBuilder
+        action={saveHomepage}
+        versions={Object.fromEntries(
+          rows.map((row) => [row.marketId ?? "global", row.version]),
+        )}
+        categories={categories.map((item) => ({
+          id: item.id,
+          root: item.parentId === null,
+          titleI18n: item.titleI18n as Record<"fa" | "tr" | "en", string>,
+          mediaUrl:
+            item.media?.status === "READY" && !item.media.deletedAt
+              ? item.media.url
+              : undefined,
+          title: localizedValue(
+            item.titleI18n as Record<typeof locale, string>,
+            locale,
+          ),
+        }))}
+        collections={collections.map((item) => ({
+          id: item.id,
+          title: localizedValue(
+            item.titleI18n as Record<typeof locale, string>,
+            locale,
+          ),
+        }))}
+        products={products.map((product) => ({
+          id: product.id,
+          title: localizedValue(
+            product.titleI18n as Record<typeof locale, string>,
+            locale,
+          ),
+          colors: [
+            ...new Map(
+              product.variants.map((variant) => [
+                variant.color.id,
+                {
+                  id: variant.color.id,
+                  title: localizedValue(
+                    variant.color.nameI18n as Record<typeof locale, string>,
+                    locale,
+                  ),
+                },
+              ]),
+            ).values(),
+          ],
+        }))}
+        compositions={compositions}
+        mediaUrls={Object.fromEntries(
+          media.map((item) => [item.id, `/media/${item.storageKey}`]),
+        )}
+        markets={markets.map((market) => ({
+          id: market.id,
+          code: market.code,
+        }))}
+        labels={{
+          shopLook: t("shopLook"),
+          lookName: t("lookName"),
+          addLook: t("addLook"),
+          lookProducts: t("lookProducts"),
+          lookColor: t("lookColor"),
+          lookDepartment: t("lookDepartment"),
+          lookHelp: t("lookHelp"),
+          heroLayout: t("heroLayout"),
+          editorialLayout: t("editorialLayout"),
+          spatialLayout: t("spatialLayout"),
+          title: t("title"),
+          description: t("description"),
+          global: t("global"),
+          market: t("market"),
+          add: t("add"),
+          save: t("save"),
+          publish: scenes("publishChanges"),
+          preview: t("preview"),
+          mobile: t("mobile"),
+          desktop: t("desktop"),
+          moveUp: t("moveUp"),
+          moveDown: t("moveDown"),
+          remove: t("remove"),
+          empty: t("empty"),
+          latest: t("latest"),
+          bestseller: t("bestseller"),
+          category: t("category"),
+          collection: t("collection"),
+          limit: t("limit"),
+          chooseSource: t("chooseSource"),
+          missingSource: t("missingSource"),
+          rootCategories: t("rootCategories"),
+          catalogPreview: t("catalogPreview"),
+          scopeHelp: t("scopeHelp"),
+          heroHelp: t("heroHelp"),
+          trustItem: t("trustItem"),
+          addTrustItem: t("addTrustItem"),
+          selectImage: t("selectImage"),
+          fieldTitle: t("fieldTitle"),
+          body: t("body"),
+          ctaLabel: t("ctaLabel"),
+          ctaUrl: t("ctaUrl"),
+          source: t("source"),
+        }}
+      />
+    </>
   );
 }

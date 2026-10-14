@@ -25,6 +25,25 @@ export async function executeHomepagePublication(job: JobContext) {
   const parsed = payload.safeParse(job.payload);
   if (!parsed.success) throw new JobPermanentError("INVALID_PAYLOAD");
   const input = parsed.data;
+  // After a successful commit only cache invalidation may need retrying. An
+  // immutable audit binds the retry to this job, actor, homepage and revision;
+  // a later permission change must not turn that completed write into failure.
+  const committed = await db.auditLog.findFirst({
+    where: {
+      entityType: "Homepage",
+      entityId: input.homepageId,
+      userId: input.actorId,
+      action: "content.homepage.published",
+      AND: [
+        { after: { path: ["jobId"], equals: job.id } },
+        { after: { path: ["revisionId"], equals: input.revisionId } },
+      ],
+    },
+  });
+  if (committed) {
+    revalidateTag("homepage");
+    return;
+  }
   try {
     await publishHomepageRevision(input.actorId, {
       homepageId: input.homepageId,

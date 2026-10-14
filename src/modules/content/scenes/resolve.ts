@@ -67,6 +67,7 @@ export type SceneView = {
     desktop: ShoppableScene["pieces"][number]["desktop"];
     mobile: ShoppableScene["pieces"][number]["mobile"];
     side: "start" | "end";
+    preferredVariantId?: string;
     variants: {
       id: string;
       size: string;
@@ -175,15 +176,17 @@ export async function resolveShoppableScene(
             .nameI18n,
           locale,
         ),
-        href: seoPath(
-          locale,
-          market.code,
-          "p",
-          catalogText(product.slugI18n, locale),
-        ),
+        href:
+          seoPath(
+            locale,
+            market.code,
+            "p",
+            catalogText(product.slugI18n, locale),
+          ) + `?color=${encodeURIComponent(piece.colorId)}`,
         desktop: piece.desktop,
         mobile: piece.mobile,
         side: piece.side,
+        preferredVariantId: piece.preferredVariantId,
         variants,
         range: scenePriceRange(
           variants.flatMap((v) =>

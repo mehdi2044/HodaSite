@@ -30,6 +30,11 @@ export function ShoppableScene({
     shopping = useTranslations("shopping");
   const root = useRef<HTMLElement>(null),
     router = useRouter();
+  const [failedImages, failImage] = useState<Record<string, string>>({});
+  const imageKey = (kind: "desktop" | "mobile") =>
+    JSON.stringify([view[kind].media?.url, view[kind].media?.variants]);
+  const imageFailed = (kind: "desktop" | "mobile") =>
+    failedImages[kind] === imageKey(kind);
   const [selections, select] = useState<Record<string, string>>({});
   const [refreshing, startRefresh] = useTransition();
   const pending = useRef(refreshing);
@@ -66,6 +71,8 @@ export function ShoppableScene({
   const ready =
     !preview &&
     !view.reason &&
+    !imageFailed("desktop") &&
+    !imageFailed("mobile") &&
     view.pieces.length > 0 &&
     chosen.every((v) => v && v.available > 0 && v.amount !== null);
   const price = (piece: SceneView["pieces"][number]) => {
@@ -114,10 +121,14 @@ export function ShoppableScene({
           return (
             <div
               key={kind}
+              onErrorCapture={(event) => {
+                if (event.target instanceof HTMLImageElement)
+                  failImage((old) => ({ ...old, [kind]: imageKey(kind) }));
+              }}
               className={`scene-photo scene-photo-${kind} ${frame !== "responsive" ? "scene-photo-forced" : ""}`}
               style={{ aspectRatio: current.frame.aspect.replace(":", " / ") }}
             >
-              {current.media ? (
+              {current.media && !imageFailed(kind) ? (
                 <ResponsiveImage
                   media={{
                     ...current.media,
@@ -148,10 +159,11 @@ export function ShoppableScene({
                       current.frame,
                     )
                   : { x: 0, y: 0, visible: false };
-                return point.visible ? (
+                return point.visible && !imageFailed(kind) ? (
                   <a
                     key={piece.id}
                     className="scene-pin"
+                    data-side={piece.side}
                     href={`#scene-piece-${view.id}-${piece.id}`}
                     style={{
                       left: `${point.x * 100}%`,
@@ -214,6 +226,9 @@ export function ShoppableScene({
                     disabled={v.available <= 0 || v.amount === null}
                   >
                     {v.size}
+                    {v.id === piece.preferredVariantId
+                      ? ` · ${t("suggested")}`
+                      : ""}
                     {v.available <= 0 ? ` · ${t("outOfStock")}` : ""}
                   </option>
                 ))}

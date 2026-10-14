@@ -1,20 +1,13 @@
 "use server";
-
 import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
-import { validateLookReferences } from "@/modules/outfits";
-import {
-  blockMediaIds,
-  lockMediaReferences,
-} from "@/modules/media/reference-lock";
-import { db } from "@/lib/db";
-import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
-import { homepageSourceExists } from "@/modules/content/homepage-products";
-import { homepageBlocksSchema } from "@/modules/content/homepage";
-
+import {
+  saveHomepageDraft,
+  publishHomepageRevision,
+} from "@/modules/content/publication";
 export async function saveHomepage(
   _previous: ActionResult | null,
   data: FormData,
@@ -22,67 +15,41 @@ export async function saveHomepage(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
+    // This legacy all-market builder remains global-only; the new scene editor
+    // exposes actual per-market scopes without broadening its old read contract.
     await assertCan(session.user.id, "content.homepage.write");
     const marketId =
       z
         .string()
         .max(100)
         .parse(data.get("marketId") ?? "") || null;
-    const blocks = homepageBlocksSchema.parse(
-      parseJson(String(data.get("blocks") ?? "[]")),
-    );
-    if (marketId && !(await db.market.findUnique({ where: { id: marketId } })))
+    const expectedVersion = z
+      .string()
+      .regex(/^\d+$/)
+      .transform(Number)
+      .parse(data.get("expectedVersion"));
+    const intent = z
+      .enum(["DRAFT", "PUBLISH"])
+      .parse(data.get("intent") ?? "DRAFT");
+    let blocks: unknown;
+    try {
+      blocks = JSON.parse(String(data.get("blocks") ?? "[]"));
+    } catch {
       throw new z.ZodError([]);
-
-    for (const block of blocks) {
-      if (
-        block.type === "ProductStrip" &&
-        !(await homepageSourceExists(block.source))
-      )
-        throw new z.ZodError([]);
     }
-
-    const mediaIds = [...new Set(blockMediaIds(blocks))];
-    await withMutation(() =>
-      db.$transaction(async (tx) => {
-        // Match product writers: acquire catalog locks before media locks.
-        await validateLookReferences(blocks, marketId, tx);
-        await lockMediaReferences(tx, mediaIds, { readyImages: true });
-        const before = await tx.homepage.findFirst({
-          where: { marketId, deletedAt: null },
-        });
-        const saved = before
-          ? await tx.homepage.update({
-              where: { id: before.id },
-              data: { blocks },
-            })
-          : await tx.homepage.create({ data: { marketId, blocks } });
-        await tx.auditLog.create({
-          data: {
-            userId: session.user.id,
-            action: before
-              ? "content.homepage.update"
-              : "content.homepage.create",
-            entityType: "Homepage",
-            entityId: saved.id,
-            before: before as object | undefined,
-            after: saved as object,
-          },
-        });
-      }),
-    );
+    const saved = await saveHomepageDraft(session.user.id, {
+      marketId,
+      expectedVersion,
+      blocks,
+    });
+    if (intent === "PUBLISH")
+      await publishHomepageRevision(session.user.id, {
+        homepageId: saved.id,
+        revisionId: saved.revisionId,
+        expectedVersion: saved.version,
+      });
     revalidateTag("homepage");
     revalidatePath("/admin/content/homepage");
-    revalidatePath("/fa");
-    revalidatePath("/tr");
-    revalidatePath("/en");
+    revalidatePath("/admin/content/homepage/scenes");
   });
-}
-
-function parseJson(raw: string): unknown {
-  try {
-    return JSON.parse(raw) as unknown;
-  } catch {
-    return undefined;
-  }
 }

@@ -527,6 +527,21 @@ export function SceneEditor(props: Props) {
                       ))}
                     </select>
                   </label>
+                  <label>
+                    {t("labelSide")}
+                    <select
+                      className="input"
+                      value={piece.side}
+                      onChange={(event) =>
+                        modifyPiece(index, {
+                          side: event.target.value as "start" | "end",
+                        })
+                      }
+                    >
+                      <option value="start">{t("sideStart")}</option>
+                      <option value="end">{t("sideEnd")}</option>
+                    </select>
+                  </label>
                   {(["desktop", "mobile"] as const).map((kind) => (
                     <div key={kind} className="grid gap-2 sm:grid-cols-2">
                       {(["x", "y"] as const).map((axis) => (
