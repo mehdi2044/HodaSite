@@ -1,3 +1,7 @@
+## 2026-10-14 — تصحیح ابزارهای پذیرش مرورگر، بدون تغییر برنامه
+
+CI360 روی `9540207`: هر ۹٬۱۴۳ تست واحد/PostgreSQL در ۱۶۱ فایل، build، Windows و Local/S3 backup/restore موفق شدند؛ مرورگر ۱۷۹/۱۸۳ بود. سه locator ناوبری قدیمی هنوز نام دستهٔ بدون disclosure را می‌خواستند؛ اکنون نام دقیق شامل disclosure محلی است و URL/market/locale/history assertions حفظ شده‌اند. تست upload به disabled رسید، اما Playwright هنگام locator.evaluate روی فرمِ دارای input نام id، در تولید selector با text.replace شکست خورد؛ page.evaluate با querySelector و native requestSubmit همان ارسال برنامه‌ای را آزمایش می‌کند. ثبت صفر POST پیش از READY، enabled پس از READY و save/reload حفظ شدند. کد برنامه، schema و داده در این تصحیح تغییر نکرده‌اند؛ head تازه CI مستقل نیاز دارد. ادغام یا resolve گفتگو انجام نشده است.
+
 ## 2026-10-14 — حفظ cover آماده و disclosure قابل دسترس
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.

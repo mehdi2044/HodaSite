@@ -98,6 +98,7 @@ for (const [locale, market, labels] of [
     test.setTimeout(120000);
     await page.goto(`/${locale}/m/${market}`);
     const departments = page.getByTestId("home-categories");
+    const demoLabel = { fa, tr, en }[locale].shopping.demoImage;
     await expect(departments.getByRole("link")).toHaveCount(4);
     for (const width of [360, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 900 });
@@ -137,7 +138,10 @@ for (const [locale, market, labels] of [
       locale === "fa" ? "rtl" : "ltr",
     );
     for (const label of labels) {
-      const link = departments.getByRole("link", { name: label, exact: true });
+      const link = departments.getByRole("link", {
+        name: `${label} — ${demoLabel}`,
+        exact: true,
+      });
       const href = await link.getAttribute("href");
       expect(href).toContain(`/${locale}/m/${market}/c/`);
       await link.click();

@@ -230,7 +230,17 @@ test("category upload retains the old cover until processing completes, then sav
     await expect(
       form.getByRole("button", { name: "ذخیره", exact: true }),
     ).toBeDisabled();
-    await form.evaluate((node: HTMLFormElement) => node.requestSubmit());
+    await page.evaluate(() => {
+      // A named "id" field shadows HTMLFormElement.id; Playwright's locator
+      // selector generation cannot serialize that form. Evaluate via document
+      // and call the native prototype without weakening the submit assertion.
+      const category = document.querySelector(
+        'input[name="kind"][value="category"]',
+      );
+      const form = category?.closest("form");
+      if (!form) throw new Error("Category form missing");
+      HTMLFormElement.prototype.requestSubmit.call(form);
+    });
     await expect
       .poll(
         async () => {
