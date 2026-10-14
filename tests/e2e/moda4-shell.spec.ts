@@ -30,7 +30,7 @@ test.beforeAll(async () => {
       kind: "image",
       status: "READY",
       deletedAt: null,
-      id: { startsWith: "seed-style-" },
+      id: { startsWith: "seed-fashion-v2-" },
     },
   });
   imageId = image.id;

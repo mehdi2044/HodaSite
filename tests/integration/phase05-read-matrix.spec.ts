@@ -33,12 +33,28 @@ import Notifications from "@/app/admin/(dashboard)/settings/notifications/page";
 import Health from "@/app/admin/(dashboard)/system/health/page";
 import Users from "@/app/admin/(dashboard)/users/page";
 import { adminInventoryCosts } from "@/modules/inventory/admin-costs";
+import { db } from "@/lib/db";
 function textNodes(node: React.ReactNode): string[] {
   if (typeof node === "string") return [node];
   if (Array.isArray(node)) return node.flatMap(textNodes);
   if (React.isValidElement<{ children?: React.ReactNode }>(node))
     return textNodes(node.props.children);
   return [];
+}
+function marketOptions(node: React.ReactNode): string[] {
+  if (Array.isArray(node)) return node.flatMap(marketOptions);
+  if (
+    !React.isValidElement<{ name?: string; children?: React.ReactNode }>(node)
+  )
+    return [];
+  if (node.type === "select" && node.props.name === "marketId") {
+    return React.Children.toArray(node.props.children).flatMap((child) =>
+      React.isValidElement<{ value?: string }>(child) && child.props.value
+        ? [child.props.value]
+        : [],
+    );
+  }
+  return marketOptions(node.props.children);
 }
 const query = (forged: boolean) => ({
   searchParams: Promise.resolve(
@@ -89,7 +105,21 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               acting.userId = subjects.find(
                 (s) => s.name === name && s.scope === scope,
               )!.id;
-              if (scope === "in" && granted(name, row.permission))
+              if (
+                row.permission === "content.menu.read" &&
+                scope === "market-out" &&
+                granted(name, row.permission)
+              ) {
+                // R2 renders only the actor's actual market. This is no longer
+                // a global-only page; forged parameters cannot widen its list.
+                const rendered = await row.run(forged);
+                expect(React.isValidElement(rendered)).toBe(true);
+                expect(textNodes(rendered)).not.toContain("global");
+                const tr = await db.market.findUniqueOrThrow({
+                  where: { code: "TR" },
+                });
+                expect(marketOptions(rendered)).toEqual([tr.id]);
+              } else if (scope === "in" && granted(name, row.permission))
                 expect(React.isValidElement(await row.run(forged))).toBe(true);
               else
                 await expect(row.run(forged)).rejects.toThrow(
