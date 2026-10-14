@@ -379,17 +379,21 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     const customer = await db.customer.findUniqueOrThrow({ where: { email } });
     const f = await returnFixture(db, { customerId: customer.id, code: "CA" });
     productId = f.variants[0].productId;
-    await db.product.update({
-      where: { id: productId },
-      data: { fittingSlot: "TOP", marketIds: [f.market.id] },
-    });
-    await db.productMedia.create({
-      data: { productId, mediaId: "seed-fashion-v2-women-tee" },
-    });
     const fittedProduct = await db.product.findUniqueOrThrow({
       where: { id: productId },
     });
     const fittedTitle = (fittedProduct.titleI18n as Record<string, string>).en;
+    await db.product.update({
+      where: { id: productId },
+      data: {
+        fittingSlot: "TOP",
+        marketIds: [f.market.id],
+        searchText: fittedTitle,
+      },
+    });
+    await db.productMedia.create({
+      data: { productId, mediaId: "seed-fashion-v2-women-tee" },
+    });
     await page.goto(`/en/fitting-room?q=${encodeURIComponent(fittedTitle)}`);
     const room = page.getByTestId("fitting-room");
     const card = room
