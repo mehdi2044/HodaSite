@@ -84,7 +84,8 @@ for (const locale of ["fa", "tr", "en"] as const)
           JSON.stringify(metrics, null, 2),
         );
       }
-      const search = page.locator('header input[name="q"]');
+      await page.locator('header button[aria-haspopup="dialog"]').click();
+      const search = page.locator('.moda-search-dialog input[name="q"]');
       await search.fill("linen");
       await search.press("Enter");
       await expect(page).toHaveURL(new RegExp(`/${locale}/search\\?q=linen`));

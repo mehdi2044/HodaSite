@@ -341,7 +341,7 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
     env(safe-area-inset-right, 0px)
   );
   padding-block-end: calc(
-    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
+    var(--storefront-nav-offset, var(--storefront-nav-height)) + env(safe-area-inset-bottom, 0px)
   );
 }
 .storefront-header-grid {
@@ -500,7 +500,7 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
 }
 .storefront-app .storefront-purchase {
   bottom: calc(
-    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px) + 0.75rem
+    var(--storefront-nav-offset, var(--storefront-nav-height)) + env(safe-area-inset-bottom, 0px) + 0.75rem
   );
 }
 .storefront-skip-link {
@@ -1068,7 +1068,7 @@ html[data-button-style="crayon"] :is(.button, .moda-button)::after {
     z-index: 39;
     inset-inline: 1.25rem;
     bottom: calc(
-      var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem
+      var(--storefront-nav-offset, var(--storefront-nav-height)) + env(safe-area-inset-bottom, 0px) + 0.5rem
     );
     width: calc(100% - 2.5rem);
     min-height: 3.25rem;

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { StorefrontIcon } from "./storefront-icon";
 export function MobileNavigation({
@@ -16,6 +17,30 @@ export function MobileNavigation({
   };
 }) {
   const pathname = usePathname();
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const element = nav.current;
+    if (!element) return;
+    const observe = () => {
+      const height = element.getBoundingClientRect().height;
+      if (height > 0)
+        document.documentElement.style.setProperty(
+          "--storefront-nav-offset",
+          `calc(${height}px - env(safe-area-inset-bottom, 0px))`,
+        );
+      else
+        document.documentElement.style.removeProperty(
+          "--storefront-nav-offset",
+        );
+    };
+    const observer = new ResizeObserver(observe);
+    observer.observe(element);
+    observe();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--storefront-nav-offset");
+    };
+  }, []);
   const segments = pathname.split("/");
   const segment =
     segments[2] === "m" ? (segments[4] ?? "") : (segments[2] ?? "");
@@ -36,6 +61,7 @@ export function MobileNavigation({
   ] as const;
   return (
     <nav
+      ref={nav}
       className="mobile-bottom-nav"
       aria-label={labels.navigation}
       data-testid="mobile-bottom-navigation"
