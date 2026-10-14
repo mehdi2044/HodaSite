@@ -84,6 +84,8 @@
     "replaceFailed": "Replacement could not be started.",
     "retryReplace": "Retry replacement",
     "chooseMedia": "Choose media",
+    "pickerProcessing": "Uploading and processing the image; it will be selected when ready. The previous image is retained.",
+    "pickerFailed": "The image is not ready. The previous image was retained; check the library status or choose a ready image.",
     "uploadNew": "Upload new",
     "close": "Close",
     "loading": "Loading…",

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 
 export type MediaListFilters = {
+  id?: string;
   q?: string;
   folderId?: string | null;
   kind?: string;
@@ -33,6 +34,7 @@ export async function listMedia(filters: MediaListFilters = {}) {
     AND: [{ kind: { notIn: ["receipt", "backup", "invoice", "expense"] } }],
     deletedAt: filters.trash ? { not: null } : null,
   };
+  if (filters.id) where.id = filters.id;
   if (filters.q) {
     where.OR = [
       { originalName: { contains: filters.q, mode: "insensitive" } },

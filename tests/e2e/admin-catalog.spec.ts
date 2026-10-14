@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
@@ -171,6 +172,80 @@ test("category edit preserves its cover and exposes the shared image picker", as
     await db.category.update({
       where: { id: category.id },
       data: { mediaId: before, updatedAt: category.updatedAt },
+    });
+  }
+});
+
+test("category upload retains the old cover until processing completes, then saves the ready image", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await login(page);
+  const category = await db.category.findUniqueOrThrow({
+    where: { id: "seed-category-women" },
+  });
+  await page.goto(
+    "/admin/catalog/taxonomy?editKind=category&editId=seed-category-women",
+  );
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('input[name="kind"][value="category"]') });
+  const cover = form.locator('input[name="mediaId"]');
+  const before = await cover.inputValue();
+  const image = await sharp({
+    create: { width: 640, height: 800, channels: 3, background: "#e8792a" },
+  })
+    .jpeg()
+    .toBuffer();
+  try {
+    await form
+      .getByRole("button", { name: "انتخاب رسانه", exact: true })
+      .click();
+    const uploaded = page.waitForResponse(
+      (res) =>
+        res.url().endsWith("/api/uploads") && res.request().method() === "POST",
+    );
+    await form
+      .locator('dialog input[type="file"]')
+      .setInputFiles({
+        name: "category-ready-proof.jpg",
+        mimeType: "image/jpeg",
+        buffer: image,
+      });
+    const response = await uploaded;
+    expect(response.status()).toBe(202);
+    const media = (await response.json()) as { id: string; status: string };
+    expect(media.status).toBe("PROCESSING");
+    await expect(
+      form.locator("dialog[open]").getByRole("status"),
+    ).toContainText("پردازش");
+    await expect(cover).toHaveValue(before);
+    await expect
+      .poll(
+        async () => {
+          const tick = await page.request.post("/api/cron/tick", {
+            headers: {
+              authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron"}`,
+            },
+          });
+          expect(tick.ok()).toBe(true);
+          return cover.inputValue();
+        },
+        { timeout: 30000, intervals: [250, 500, 1000] },
+      )
+      .toBe(media.id);
+    await expect(form.locator("dialog")).not.toBeVisible();
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue(media.id);
+    expect(
+      (await db.media.findUniqueOrThrow({ where: { id: media.id } })).status,
+    ).toBe("READY");
+  } finally {
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: category.mediaId, updatedAt: category.updatedAt },
     });
   }
 });

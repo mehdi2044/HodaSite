@@ -84,6 +84,8 @@
     "replaceFailed": "Dosya değiştirme başlatılamadı.",
     "retryReplace": "Değiştirmeyi tekrar dene",
     "chooseMedia": "Medya seç",
+    "pickerProcessing": "Görsel yükleniyor ve işleniyor; hazır olduğunda seçilecek. Önceki görsel korunur.",
+    "pickerFailed": "Görsel hazır değil. Önceki görsel korundu; kitaplıktaki durumu kontrol edin veya hazır bir görsel seçin.",
     "uploadNew": "Yeni yükle",
     "close": "Kapat",
     "loading": "Yükleniyor…",

@@ -1,3 +1,12 @@
+## 2026-10-14 — اصلاح آمادگی تصویر آپلودشده در MediaPicker
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D24, D31, D70.
+
+- بازبین خودکار head `cc61f80` گزارش داد MediaPicker تصویر PROCESSING را زود انتخاب می‌کرد و ذخیرهٔ دسته در requireImage رد می‌شد. انتخاب اکنون فقط READY است؛ پس از upload، hidden value قبلی حفظ می‌شود و dialog تا آماده‌شدن باز می‌ماند. وضعیت و خطا در FA/TR/EN نمایش داده می‌شوند؛ close/Escape/unmount پیگیری را abort می‌کند. بودجهٔ پیگیری ۳۰ درخواست با فاصلهٔ دو ثانیه است؛ شکست/عدم دسترسی/عدم یافتن/timeout تصویر قبلی را تغییر نمی‌دهد.
+- GET موجود کتابخانه یک فیلتر ID معتبر می‌پذیرد تا پیگیری به آخرین ۶۰ تصویر یا متن جست‌وجو وابسته نباشد. همان auth و media.upload پیش از query برقرارند؛ query ماژول همچنان رسانهٔ خصوصی و حذف‌شده را خارج می‌کند. schema/permission/storage/queue تغییر نکردند.
+- ۹ تست واحد جدید: PROCESSING→READY، failed/missing/403، لغو و پاک‌شدن timer، پایان بودجه، 401/403/شناسه نامعتبر و حفظ exclusion رسانه‌های خصوصی. تست مرورگر جدید: upload واقعی، حفظ cover قبلی حین پردازش، اجرای صف واقعی، انتخاب READY، ذخیره و reload؛ category fixture در finally برمی‌گردد.
+- بررسی محلی: lint، TypeScript، production build و ۴٬۲۲۷ تست واحد در ۱۱۰ فایل موفق‌اند. CI357 مرحلهٔ lint/typecheck/coverage/build و تست‌های PostgreSQL نسخهٔ `366867c` را گذراند و وارد مرحلهٔ مرورگر شد؛ fixture مالی اصلاح‌شده موفق است. نتیجهٔ CI357 مربوط به نسخهٔ قبل از این اصلاح است و پذیرش این UI را ثابت نمی‌کند. CI نسخه جدید و D70 review/gateها لازم‌اند. هیچ merge یا resolve گفتگو انجام نشده است.
+
 ## 2026-10-14 — بازیابی تحویل و رفع FIN-001 / MEDIA-001
 
 Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D24, D31, D70, D74.

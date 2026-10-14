@@ -1,16 +1,8 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { useTranslations } from "next-intl";
-import type { MediaVariants } from "@/modules/media/constants";
-
-type PickerItem = {
-  id: string;
-  url: string;
-  status: "PROCESSING" | "READY" | "FAILED";
-  blurDataUrl: string | null;
-  variants: MediaVariants | null;
-};
+import { waitForReadyMedia, type PickerItem } from "./media-picker-readiness";
 
 /**
  * Shared media picker (Phase 01b §4): a modal with the same
@@ -40,6 +32,10 @@ export function MediaPicker({
   const [items, setItems] = useState<PickerItem[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(false);
+  const uploadController = useRef<AbortController | null>(null);
+  useEffect(() => () => uploadController.current?.abort(), []);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   async function search(query: string) {
@@ -61,6 +57,7 @@ export function MediaPicker({
   }
 
   function select(item: PickerItem) {
+    if (item.status !== "READY") return;
     setMediaId(item.id);
     setPreview(item.url);
     onSelect?.(item.id, item.url);
@@ -73,18 +70,43 @@ export function MediaPicker({
     onSelect?.("", "");
   }
 
+  function close() {
+    uploadController.current?.abort();
+    uploadController.current = null;
+    setUploading(false);
+    dialogRef.current?.close();
+  }
+
   async function uploadNew(files: FileList | null) {
     const file = files?.[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.set("file", file);
-    const res = await fetch("/api/uploads", { method: "POST", body: fd });
-    if (!res.ok) return;
-    const json = (await res.json()) as { id: string; url: string };
-    setMediaId(json.id);
-    setPreview(json.url);
-    onSelect?.(json.id, json.url);
-    dialogRef.current?.close();
+    if (!file || uploading) return;
+    const controller = new AbortController();
+    uploadController.current?.abort();
+    uploadController.current = controller;
+    setUploading(true);
+    setUploadError(false);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: fd,
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("UPLOAD_FAILED");
+      const json = (await res.json()) as { id: string };
+      // Keep the previous hidden value and the dialog until readiness is proven.
+      const ready = await waitForReadyMedia(json.id, controller.signal);
+      controller.signal.throwIfAborted();
+      select(ready);
+    } catch {
+      if (!controller.signal.aborted) setUploadError(true);
+    } finally {
+      if (uploadController.current === controller) {
+        uploadController.current = null;
+        setUploading(false);
+      }
+    }
   }
 
   return (
@@ -101,11 +123,23 @@ export function MediaPicker({
             className="max-h-16 max-w-40 rounded-[6px] border border-black/10 object-contain"
           />
         )}
-        <Button type="button" variant="secondary" size="sm" onClick={open}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={open}
+          disabled={uploading}
+        >
           {t("chooseMedia")}
         </Button>
         {allowClear && mediaId && (
-          <Button type="button" variant="ghost" size="sm" onClick={clear}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={clear}
+            disabled={uploading}
+          >
             {t("clearSelection")}
           </Button>
         )}
@@ -114,8 +148,9 @@ export function MediaPicker({
       <dialog
         ref={dialogRef}
         className="m-auto w-[min(48rem,92vw)] rounded-token bg-surface p-6 text-text backdrop:bg-black/40"
+        onCancel={close}
         onClick={(e) => {
-          if (e.target === dialogRef.current) dialogRef.current?.close();
+          if (e.target === dialogRef.current) close();
         }}
       >
         <div className="flex items-center justify-between gap-2">
@@ -135,19 +170,28 @@ export function MediaPicker({
               type="file"
               hidden
               accept="image/png,image/jpeg,image/webp,image/avif"
-              onChange={(e) => void uploadNew(e.target.files)}
+              disabled={uploading}
+              onChange={(e) => {
+                void uploadNew(e.target.files);
+                e.target.value = "";
+              }}
             />
           </label>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => dialogRef.current?.close()}
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={close}>
             {t("close")}
           </Button>
         </div>
 
+        {uploading && (
+          <p role="status" className="mt-3 text-sm">
+            {t("pickerProcessing")}
+          </p>
+        )}
+        {uploadError && (
+          <p role="alert" className="mt-3 text-sm text-error">
+            {t("pickerFailed")}
+          </p>
+        )}
         <div className="mt-4 grid max-h-[60vh] grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4 md:grid-cols-6">
           {loading && <p className="text-sm text-muted">{t("loading")}</p>}
           {!loading && items.length === 0 && (
@@ -158,8 +202,9 @@ export function MediaPicker({
               type="button"
               key={item.id}
               data-testid={`media-picker-item-${item.id}`}
+              disabled={uploading || item.status !== "READY"}
               onClick={() => select(item)}
-              className="aspect-square overflow-hidden rounded-[6px] border border-black/10 hover:border-primary"
+              className="relative aspect-square disabled:opacity-60 overflow-hidden rounded-[6px] border border-black/10 hover:border-primary"
             >
               <img
                 src={
@@ -170,6 +215,11 @@ export function MediaPicker({
                 alt=""
                 className="h-full w-full object-cover"
               />
+              {item.status !== "READY" && (
+                <span className="absolute inset-x-0 bottom-0 bg-surface text-xs">
+                  {t(item.status === "FAILED" ? "failed" : "processing")}
+                </span>
+              )}
             </button>
           ))}
         </div>
