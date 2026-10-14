@@ -1,5 +1,6 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { StorefrontIcon } from "./storefront-icon";
 import { SearchBox } from "./search-box";
 import { useTranslations } from "next-intl";
@@ -17,6 +18,10 @@ export function HeaderSearch({
     navigation = useTranslations("shopping");
   const dialog = useRef<HTMLDialogElement>(null),
     trigger = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    dialog.current?.close();
+  }, [pathname]);
   return (
     <>
       <button
@@ -24,6 +29,7 @@ export function HeaderSearch({
         type="button"
         className="moda-tool"
         aria-label={t("search")}
+        aria-haspopup="dialog"
         onClick={() => {
           dialog.current?.showModal();
           dialog.current
@@ -38,6 +44,13 @@ export function HeaderSearch({
         className="moda-search-dialog"
         aria-label={t("search")}
         onClose={() => trigger.current?.focus()}
+        onKeyDownCapture={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            dialog.current?.close();
+          }
+        }}
         onClick={(event) => {
           if (event.target === dialog.current) dialog.current?.close();
         }}

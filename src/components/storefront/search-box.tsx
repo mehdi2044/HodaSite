@@ -58,7 +58,11 @@ export function SearchBox({
   }, [q, marketId, collectionId]);
   return (
     <div className="relative max-w-2xl">
-      <form className="my-7 flex gap-2">
+      <form
+        action={`/${locale}/search`}
+        method="get"
+        className="my-7 flex gap-2"
+      >
         {collectionId && (
           <input type="hidden" name="collectionId" value={collectionId} />
         )}
@@ -68,7 +72,7 @@ export function SearchBox({
           name="q"
           value={q}
           onChange={(event) => setQ(event.target.value)}
-          className="h-12 flex-1 rounded-[10px] border border-black/15 px-4"
+          className="h-12 min-w-0 flex-1 rounded-[10px] border border-black/15 px-4"
           placeholder={placeholder}
         />
         <button className="button">{label}</button>

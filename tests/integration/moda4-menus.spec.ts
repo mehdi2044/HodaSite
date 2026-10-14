@@ -6,7 +6,11 @@ vi.mock("@/modules/auth", () => ({
 }));
 import { db } from "@/lib/db";
 import { menuItemInputSchema, getMenu, writeMenuItem } from "@/modules/content";
-import { saveMenuItem } from "@/app/admin/(dashboard)/content/menus/actions";
+import {
+  saveMenuItem,
+  deleteMenuItem,
+  reorderMenuItems,
+} from "@/app/admin/(dashboard)/content/menus/actions";
 import { RevisionConflictError } from "@/lib/revision-conflict";
 import { purgeOne } from "@/modules/media/purge";
 import { setMaintenanceFlag } from "@/modules/settings";
@@ -236,6 +240,79 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(before + 1);
     });
+    for (const operation of ["delete", "reorder"] as const) {
+      it(`rechecks ${operation} after a concurrent move leaves the actor's market`, async () => {
+        const item = await db.menuItem.create({
+          data: {
+            menuId: menu,
+            labelI18n: labels,
+            linkType: "category",
+            referenceId: category,
+          },
+        });
+        let ready!: () => void, release!: () => void;
+        const admitted = new Promise<void>((resolve) => (ready = resolve));
+        const hold = new Promise<void>((resolve) => (release = resolve));
+        let pid = 0;
+        const move = db.$transaction(async (tx) => {
+          pid = (
+            await tx.$queryRaw<
+              { pid: number }[]
+            >`SELECT pg_backend_pid() AS pid`
+          )[0].pid;
+          await tx.menuItem.update({
+            where: { id: item.id },
+            data: { menuId: other },
+          });
+          ready();
+          await hold;
+        });
+        await admitted;
+        actor.id = scoped;
+        const f = new FormData();
+        f.set("id", item.id);
+        f.set("menuId", menu);
+        f.set("orderedIds", JSON.stringify([item.id]));
+        const auditBefore = await db.auditLog.count({
+          where: { entityId: { in: [item.id, menu] } },
+        });
+        const mutation =
+          operation === "delete"
+            ? deleteMenuItem(null, f)
+            : reorderMenuItems(null, f);
+        try {
+          let blocked = false;
+          for (let n = 0; n < 100 && !blocked; n++) {
+            blocked = (
+              await db.$queryRaw<
+                { blocked: boolean }[]
+              >`SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${pid}=ANY(pg_blocking_pids(pid))) AS blocked`
+            )[0].blocked;
+            if (!blocked)
+              await new Promise((resolve) => setTimeout(resolve, 20));
+          }
+          expect(blocked).toBe(true);
+        } finally {
+          release();
+        }
+        try {
+          await move;
+          expect((await mutation).ok).toBe(false);
+          const fresh = await db.menuItem.findUniqueOrThrow({
+            where: { id: item.id },
+          });
+          expect(fresh.deletedAt).toBeNull();
+          expect(fresh.sortOrder).toBe(item.sortOrder);
+          expect(
+            await db.auditLog.count({
+              where: { entityId: { in: [item.id, menu] } },
+            }),
+          ).toBe(auditBefore);
+        } finally {
+          actor.id = owner;
+        }
+      });
+    }
     it("waits on the real Media lock and rejects deletion that commits first", async () => {
       let release!: () => void, ready!: () => void;
       const hold = new Promise<void>((resolve) => (release = resolve)),

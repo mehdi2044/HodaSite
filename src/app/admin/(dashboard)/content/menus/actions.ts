@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { writeMenuItem, menuItemInputSchema } from "@/modules/content";
@@ -110,24 +111,25 @@ export async function deleteMenuItem(
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
     const id = z.string().min(1).parse(data.get("id"));
-    const before = await db.menuItem.findFirstOrThrow({
-      where: { id, deletedAt: null },
-    });
-    const menu = await db.menu.findUniqueOrThrow({
-      where: { id: before.menuId },
-    });
-    await assertCan(
-      session.user.id,
-      "content.menu.write",
-      menu.marketId ? { marketId: menu.marketId } : undefined,
-    );
     await withMutation(() =>
-      db.$transaction([
-        db.menuItem.updateMany({
+      db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "MenuItem" WHERE id=${id} OR "parentId"=${id} ORDER BY id FOR UPDATE`;
+        const before = await tx.menuItem.findFirstOrThrow({
+          where: { id, deletedAt: null },
+        });
+        const menu = await tx.menu.findFirstOrThrow({
+          where: { id: before.menuId, deletedAt: null },
+        });
+        await assertCan(
+          session.user.id,
+          "content.menu.write",
+          menu.marketId ? { marketId: menu.marketId } : undefined,
+        );
+        await tx.menuItem.updateMany({
           where: { OR: [{ id }, { parentId: id }], deletedAt: null },
           data: { deletedAt: new Date() },
-        }),
-        db.auditLog.create({
+        });
+        await tx.auditLog.create({
           data: {
             userId: session.user.id,
             action: "content.menu_item.delete",
@@ -135,8 +137,8 @@ export async function deleteMenuItem(
             entityId: id,
             before: before as object,
           },
-        }),
-      ]),
+        });
+      }),
     );
     revalidateTag("menus");
     revalidatePath("/admin/content/menus");
@@ -161,44 +163,51 @@ export async function reorderMenuItems(
         parentId: String(data.get("parentId") || "") || undefined,
         orderedIds: parseJson(String(data.get("orderedIds") || "[]")),
       });
-    const menu = await db.menu.findUniqueOrThrow({
-      where: { id: parsed.menuId },
-    });
-    await assertCan(
-      session.user.id,
-      "content.menu.write",
-      menu.marketId ? { marketId: menu.marketId } : undefined,
-    );
     if (new Set(parsed.orderedIds).size !== parsed.orderedIds.length)
       throw new z.ZodError([]);
-    const [count, parentCount] = await Promise.all([
-      db.menuItem.count({
-        where: {
-          id: { in: parsed.orderedIds },
-          menuId: parsed.menuId,
-          parentId: parsed.parentId ?? null,
-          deletedAt: null,
-        },
-      }),
-      parsed.parentId
-        ? db.menuItem.count({
-            where: {
-              id: parsed.parentId,
-              menuId: parsed.menuId,
-              parentId: null,
-              deletedAt: null,
-            },
-          })
-        : Promise.resolve(1),
-    ]);
-    if (count !== parsed.orderedIds.length || parentCount !== 1)
-      throw new z.ZodError([]);
     await withMutation(() =>
-      db.$transaction([
-        ...parsed.orderedIds.map((id, sortOrder) =>
-          db.menuItem.update({ where: { id }, data: { sortOrder } }),
-        ),
-        db.auditLog.create({
+      db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "Menu" WHERE id=${parsed.menuId} FOR SHARE`;
+        const menu = await tx.menu.findFirstOrThrow({
+          where: { id: parsed.menuId, deletedAt: null },
+        });
+        await assertCan(
+          session.user.id,
+          "content.menu.write",
+          menu.marketId ? { marketId: menu.marketId } : undefined,
+        );
+        const lockedIds = [
+          ...new Set([
+            ...parsed.orderedIds,
+            ...(parsed.parentId ? [parsed.parentId] : []),
+          ]),
+        ].sort();
+        await tx.$queryRaw(
+          Prisma.sql`SELECT id FROM "MenuItem" WHERE id IN (${Prisma.join(lockedIds)}) ORDER BY id FOR UPDATE`,
+        );
+        const count = await tx.menuItem.count({
+          where: {
+            id: { in: parsed.orderedIds },
+            menuId: parsed.menuId,
+            parentId: parsed.parentId ?? null,
+            deletedAt: null,
+          },
+        });
+        const parentCount = parsed.parentId
+          ? await tx.menuItem.count({
+              where: {
+                id: parsed.parentId,
+                menuId: parsed.menuId,
+                parentId: null,
+                deletedAt: null,
+              },
+            })
+          : 1;
+        if (count !== parsed.orderedIds.length || parentCount !== 1)
+          throw new z.ZodError([]);
+        for (const [sortOrder, id] of parsed.orderedIds.entries())
+          await tx.menuItem.update({ where: { id }, data: { sortOrder } });
+        await tx.auditLog.create({
           data: {
             userId: session.user.id,
             action: "content.menu.reorder",
@@ -209,8 +218,8 @@ export async function reorderMenuItems(
               orderedIds: parsed.orderedIds,
             },
           },
-        }),
-      ]),
+        });
+      }),
     );
     revalidateTag("menus");
     revalidatePath("/admin/content/menus");

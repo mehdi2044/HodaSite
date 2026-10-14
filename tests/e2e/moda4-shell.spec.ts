@@ -217,7 +217,36 @@ for (const [locale, marketCode] of [
       .fill((product.titleI18n as Record<string, string>)[locale]);
     await expect(dialog.getByRole("link").first()).toBeVisible();
     await page.keyboard.press("Escape");
+    await expect(dialog).not.toHaveAttribute("open", "");
     await expect(search).toBeFocused();
+    await search.click();
+    await dialog.getByRole("link").first().click();
+    await expect(page.locator(".shop-product-title")).toBeVisible();
+    await expect(dialog).not.toHaveAttribute("open", "");
+    const target = locale === "en" ? "tr" : "en";
+    const translated = page
+      .locator(".moda-announcement .storefront-languages a")
+      .filter({ hasText: target.toUpperCase() });
+    const slug = (product.slugI18n as Record<string, string>)[target];
+    await expect(translated).toHaveAttribute(
+      "href",
+      `/${target}/m/${marketCode}/p/${encodeURIComponent(slug)}`,
+    );
+    await translated.click();
+    await expect(page.locator(".shop-product-title")).toContainText(
+      (product.titleI18n as Record<string, string>)[target],
+    );
+    await page.goto(`/${locale}/m/${marketCode}`);
+    await search.click();
+    await dialog
+      .locator("input[type=search]")
+      .fill((product.titleI18n as Record<string, string>)[locale]);
+    await dialog
+      .getByRole("button", { name: t.catalog.search, exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/search\\?q=`));
+    await expect(page.locator(".shop-product-card").first()).toBeVisible();
+    await page.goto(`/${locale}/m/${marketCode}`);
     const studio = page.getByTestId("shop-look-studio").first();
     await studio.locator(".look-item input[type=checkbox]").nth(3).uncheck();
     for (let i = 0; i < 3; i++)
@@ -240,6 +269,13 @@ for (const [locale, marketCode] of [
     ).toHaveCount(0);
     await cart.getByRole("link", { name: t.commerce.viewCart }).click();
     await expect(page.locator(".shop-cart-item")).toHaveCount(3);
+    const otherMarket = marketCode === "CA" ? "TR" : "CA";
+    await page.goto(`/${locale}/m/${otherMarket}`);
+    await page.locator(".storefront-cart-toggle").click();
+    await expect(
+      cart.getByText(t.commerce.marketWarning, { exact: true }),
+    ).toBeVisible();
+    await page.goto(`/${locale}/m/${marketCode}`);
     const email = `r2-newsletter-${randomUUID()}@example.com`;
     await customerLogin(page, email, locale);
     await page.goto(`/${locale}/m/${marketCode}`);
