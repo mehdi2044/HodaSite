@@ -16,6 +16,7 @@ export function SettingsForm({
   submitLabel,
   className,
   disabled = false,
+  hasUnsavedChanges,
 }: {
   action: (
     prevState: ActionResult | null,
@@ -25,13 +26,20 @@ export function SettingsForm({
   submitLabel: string;
   className?: string;
   disabled?: boolean;
+  hasUnsavedChanges?: boolean;
 }) {
   const legacy = useTranslations("foundationAdmin");
 
   const [state, formAction, pending] = useActionState(action, null);
   const navigation = useTranslations("adminShell");
-  const formRef = useUnsavedForm(state, navigation("unsavedChanges"));
   const { uploadsPending, reportPending } = useMediaPickerPending();
+  const formRef = useUnsavedForm(
+    state,
+    navigation("unsavedChanges"),
+    hasUnsavedChanges === undefined
+      ? undefined
+      : hasUnsavedChanges || uploadsPending,
+  );
   return (
     <MediaPickerPendingContext.Provider value={reportPending}>
       <form

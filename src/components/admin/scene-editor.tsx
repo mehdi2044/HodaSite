@@ -273,6 +273,7 @@ export function SceneEditor(props: Props) {
       <div className="grid gap-6 xl:grid-cols-2">
         <SettingsForm
           action={props.action}
+          hasUnsavedChanges={dirty}
           submitLabel={t("saveDraft")}
           disabled={!props.writable}
         >
@@ -761,6 +762,7 @@ export function SceneEditor(props: Props) {
             )}
             <SettingsForm
               action={props.publish}
+              hasUnsavedChanges={false}
               submitLabel={t("publishRevision")}
               disabled={
                 dirty || !props.writable || !props.homepageId || !revisionId
@@ -778,6 +780,9 @@ export function SceneEditor(props: Props) {
             </SettingsForm>
             <SettingsForm
               action={props.scheduleAction}
+              hasUnsavedChanges={Boolean(
+                at && props.schedule?.at.slice(0, 16) !== at,
+              )}
               submitLabel={t("scheduleRevision")}
               disabled={
                 dirty || !props.writable || !props.homepageId || !revisionId
