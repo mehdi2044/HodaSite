@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
+export { getPreviewStatus, previewEnabled } from "./preview";
 
 /**
  * Cached accessors (Phase 01a §2): the storefront reads settings through
