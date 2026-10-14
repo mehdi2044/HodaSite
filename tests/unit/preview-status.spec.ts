@@ -14,6 +14,10 @@ vi.mock("@/lib/db", () => ({
     homepage: { aggregate: mock.aggregate },
     menu: { aggregate: mock.aggregate },
     menuItem: { aggregate: mock.aggregate },
+    category: { aggregate: mock.aggregate },
+    catalogCutout: { aggregate: mock.aggregate },
+    media: { aggregate: mock.aggregate },
+    integration: { aggregate: mock.aggregate },
   },
 }));
 import { GET } from "@/app/api/admin/preview-status/route";

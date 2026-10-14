@@ -115,6 +115,23 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
     await expect(
       page.getByLabel(en.cutouts.fields.x, { exact: true }),
     ).toHaveValue("0.51");
+    const handleBox = await handle.boundingBox();
+    expect(handleBox).toBeTruthy();
+    await page.mouse.move(
+      handleBox!.x + handleBox!.width / 2,
+      handleBox!.y + handleBox!.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      handleBox!.x + handleBox!.width / 2 + 16,
+      handleBox!.y + handleBox!.height / 2,
+      { steps: 3 },
+    );
+    await page.mouse.up();
+    await expect(
+      page.getByLabel(en.cutouts.fields.x, { exact: true }),
+    ).not.toHaveValue("0.51");
+
     for (const [modelId, y] of [
       ["woman", "0.41"],
       ["man", "0.43"],
