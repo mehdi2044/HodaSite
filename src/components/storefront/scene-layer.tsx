@@ -7,7 +7,9 @@ export function SceneLayerImage({
   model,
   frame,
   locale,
+  pieceId,
 }: {
+  pieceId?: string;
   layer: SceneLayer;
   model: { width: number | null; height: number | null };
   frame: ShoppableScene["desktop"];
@@ -22,6 +24,8 @@ export function SceneLayerImage({
   return (
     <div
       data-scene-layer="true"
+      data-fitting-piece-target={pieceId}
+      data-fitting-rotation={layer.geometry.rotation}
       aria-hidden="true"
       style={{
         position: "absolute",

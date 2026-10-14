@@ -2691,7 +2691,8 @@
     "ruleConditional": "Product, destination or selected-method conditions apply",
     "serviceDetails": "Service details and conditions",
     "cutoutFallback": "No cutout: actual product photo",
-    "stylingDemonstration": "Styling demonstration using selected store images"
+    "stylingDemonstration": "Styling demonstration using selected store images",
+    "replay": "Replay"
   },
   "modaAdmin": {
     "help": "Manage blocks, imagery and live catalog prices. The private preview shows unsaved changes.",

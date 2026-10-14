@@ -293,7 +293,9 @@ export function ModaHomepageBuilder(props: {
               />
             ))}
             {props.versions[scope] !== undefined &&
-              props.versions[scope] !== version && (
+              props.versions[scope] !== version &&
+              props.versions[scope] !== savedVersion &&
+              !pending && (
                 <p role="status">
                   {a("staleDraft")}
                   <button

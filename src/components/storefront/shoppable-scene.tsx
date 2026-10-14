@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
@@ -217,7 +223,14 @@ export function ShoppableScene({
                   failImage((old) => ({ ...old, [kind]: imageKey(kind) }));
               }}
               className={`scene-photo scene-photo-${kind} ${frame !== "responsive" ? "scene-photo-forced" : ""}`}
-              style={{ aspectRatio: current.frame.aspect.replace(":", " / ") }}
+              style={
+                {
+                  aspectRatio: current.frame.aspect.replace(":", " / "),
+                  "--scene-aspect":
+                    Number(current.frame.aspect.split(":")[0]) /
+                    Number(current.frame.aspect.split(":")[1]),
+                } as CSSProperties
+              }
             >
               {current.media && !imageFailed(kind) ? (
                 <ResponsiveImage

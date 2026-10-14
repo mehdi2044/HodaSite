@@ -125,7 +125,7 @@ export async function ModaHomepageBlock({
               view={view}
               locale={locale}
               first={first && index === 0}
-              headingLevel={first ? 1 : 2}
+              headingLevel={first && index === 0 ? 1 : 2}
               revealTitle
               preview={preview}
               body={text(slide.body)}

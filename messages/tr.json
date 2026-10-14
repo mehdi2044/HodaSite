@@ -2691,7 +2691,8 @@
     "ruleConditional": "Ürün, adres veya seçilen yöntem koşulları geçerlidir",
     "serviceDetails": "Hizmet ayrıntıları ve koşulları",
     "cutoutFallback": "Şeffaf görsel yok: gerçek ürün fotoğrafı",
-    "stylingDemonstration": "Seçilen mağaza görselleriyle stil gösterimi"
+    "stylingDemonstration": "Seçilen mağaza görselleriyle stil gösterimi",
+    "replay": "Yeniden oynat"
   },
   "modaAdmin": {
     "help": "Blokları, görselleri ve gerçek fiyatları yönetin. Özel önizleme kaydedilmemiş değişiklikleri gösterir.",

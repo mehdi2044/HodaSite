@@ -122,7 +122,9 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
     await form
       .getByRole("button", { name: en.homepageAdmin.save, exact: true })
       .click();
-    await expect(form.getByRole("status")).toContainText(en.modaAdmin.saved);
+    await expect(
+      form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
+    ).toBeVisible();
     await page.reload();
     const saved = await db.homepage.findFirstOrThrow({
       where: { marketId: market.id },
@@ -158,6 +160,46 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       ).toBe(true);
+    }
+    for (const viewport of [
+      { width: 1440, height: 900 },
+      { width: 1920, height: 800 },
+    ]) {
+      await shop.setViewportSize(viewport);
+      for (const locale of ["fa", "tr", "en"]) {
+        await shop.goto(`/${locale}/m/CA`);
+        await shop.evaluate(() => document.fonts.ready);
+        expect(
+          await shop.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth + 1,
+          ),
+        ).toBe(true);
+        if (await shop.locator(".moda-carousel-hero").count()) {
+          await shop.locator(".moda-carousel-hero").screenshot({
+            path: info.outputPath(`r3b-hero-${locale}-${viewport.width}.png`),
+          });
+          if (viewport.width === 1440 && locale === "fa")
+            await shop
+              .locator(".moda-carousel-prism")
+              .screenshot({ path: info.outputPath("r3b-worlds-fa-1440.png") });
+        }
+      }
+    }
+    const motion = shop.locator(".moda-fitting-motion:visible").first();
+    if (await motion.count()) {
+      await shop.bringToFront();
+      await motion.scrollIntoViewIfNeeded();
+      await shop.mouse.move(0, 0);
+      await expect(motion).toHaveAttribute("data-running", "true");
+      await expect
+        .poll(() => motion.locator(".moda-fitting-flight").count())
+        .toBeGreaterThan(0);
+      await shop.emulateMedia({ reducedMotion: "reduce" });
+      await expect(motion).toHaveAttribute("data-running", "false");
+      await expect(motion.locator(".moda-fitting-flight")).toHaveCount(0);
+      await motion.screenshot({
+        path: info.outputPath("r3b-fitting-static-fa-1920.png"),
+      });
     }
   } finally {
     if (previous) {
@@ -301,7 +343,7 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
     });
     for (const kind of ["desktop", "mobile"] as const) {
       const picker = block.locator("fieldset").filter({
-        has: block.locator(`input[name="modaMedia-${en.modaAdmin[kind]}"]`),
+        has: page.locator(`input[name="modaMedia-${en.modaAdmin[kind]}"]`),
       });
       await picker.getByRole("button", { name: en.media.chooseMedia }).click();
       await picker
@@ -338,7 +380,9 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
     await form
       .getByRole("button", { name: en.homepageAdmin.save, exact: true })
       .click();
-    await expect(form.getByRole("status")).toContainText(en.modaAdmin.saved);
+    await expect(
+      form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
+    ).toBeVisible();
     await page.reload();
     await page
       .getByTestId("homepage-form")
@@ -352,9 +396,20 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
     expect(
       await publicPlayer.evaluate((video: HTMLVideoElement) => video.paused),
     ).toBe(true);
-    await shop.route(`**${media.url}`, (route) => route.abort());
+    const missingUrl = `/media/media/2026/10/missing-technical-video-${media.id}.webm`;
+    await db.media.update({
+      where: { id: media.id },
+      data: { url: missingUrl },
+    });
+    expect((await shop.request.get(missingUrl)).status()).toBe(404);
     await shop.reload();
-    await expect(shop.locator(".moda-video-banner video")).toHaveCount(0);
+    const missingPlayer = shop.locator(".moda-video-banner video");
+    await missingPlayer.scrollIntoViewIfNeeded();
+    await missingPlayer.evaluate((video: HTMLVideoElement) => {
+      video.preload = "auto";
+      video.load();
+    });
+    await expect(missingPlayer).toHaveCount(0);
     await expect(shop.locator(".moda-video-poster")).toContainText(
       "R3b technical video proof",
     );
