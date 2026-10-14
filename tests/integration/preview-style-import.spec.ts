@@ -1,3 +1,11 @@
+import { costSnapshot } from "@/modules/finance/cost-snapshot";
+import { recognizePaidOrder, recognizeReturn } from "@/modules/finance/events";
+import {
+  reserveOrderInventory,
+  consumeOrderInventory,
+} from "@/modules/inventory";
+import { seedLedgerAccounts } from "../../prisma/ledger-seed";
+import { returnFixture } from "../helpers/returns";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient, Prisma } from "@prisma/client";
 import {
@@ -257,6 +265,18 @@ describe.skipIf(!url)(
       ).toBe(50);
       expect(await db.stockMovement.count()).toBe(50);
       expect(await db.lot.count()).toBe(50);
+      for (const lot of await db.lot.findMany()) {
+        expect(
+          costSnapshot(
+            lot.unitCostCurrency,
+            lot.fxRateSnapshot,
+            lot.receivedAt,
+          ),
+        ).toMatchObject({ currency: "USD", rateTry: "1", rateUsd: "1" });
+        expect(lot.unitCostAmount.toFixed(4)).toBe("0.0000");
+        expect(lot.unitCostAmountTry.toFixed(4)).toBe("0.0000");
+        expect(lot.unitCostAmountUsd.toFixed(4)).toBe("0.0000");
+      }
       expect(await retainedState()).toEqual(before);
       const home = await db.homepage.findUniqueOrThrow({
         where: { id: "seed-homepage-global" },
@@ -317,6 +337,148 @@ describe.skipIf(!url)(
         where: { id: "merchant-cover" },
         data: { deletedAt: null },
       });
+    });
+    it("sells an actually imported zero-cost lot and commits its finance-enabled restock", async () => {
+      const variantId = "seed-style-v2-women-tee-m";
+      const stock = await db.stockItem.findFirstOrThrow({
+        where: { variantId },
+      });
+      const lot = await db.lot.findFirstOrThrow({ where: { variantId } });
+      const f = await returnFixture(db, {
+        pending: true,
+        quantity: 1,
+        price: "40",
+        fxSnapshot: {
+          marketPerUsd: "40",
+          tryPerUsd: "40",
+          quotedAt: new Date().toISOString(),
+        },
+      });
+      await db.orderItem.update({
+        where: { id: f.order.items[0].id },
+        data: { variantId },
+      });
+      await seedLedgerAccounts(db);
+      await db.financeConfig.create({
+        data: {
+          id: f.market.id,
+          enabled: true,
+          enabledAt: new Date(Date.now() - 60000),
+        },
+      });
+      await db.$transaction(async (tx) => {
+        await reserveOrderInventory(
+          tx,
+          f.order.id,
+          [{ variantId, quantity: 1 }],
+          "HOLD",
+          new Date(Date.now() + 60000),
+        );
+        await consumeOrderInventory(tx, f.order.id, actorId);
+        await tx.order.update({
+          where: { id: f.order.id },
+          data: {
+            status: "DELIVERED",
+            paidAt: new Date(),
+            deliveredAt: new Date(),
+          },
+        });
+        await tx.payment.create({
+          data: {
+            orderId: f.order.id,
+            amount: "40",
+            currency: "TRY",
+            status: "APPROVED",
+          },
+        });
+        await recognizePaidOrder(tx, f.order.id, actorId);
+      });
+      expect(
+        await db.journalEntry.count({
+          where: { requestKey: `sale:${f.order.id}` },
+        }),
+      ).toBe(1);
+      expect(
+        (await db.stockItem.findUniqueOrThrow({ where: { id: stock.id } }))
+          .onHand,
+      ).toBe(stock.onHand - 1);
+      const returned = await db.$transaction(async (tx) => {
+        const request = await tx.returnRequest.create({
+          data: {
+            orderId: f.order.id,
+            customerId: f.customer.id,
+            type: "RETURN",
+            reasonCode: "SIZE",
+            status: "RECEIVED",
+            receivedAt: new Date(),
+            items: {
+              create: {
+                orderItemId: f.order.items[0].id,
+                quantity: 1,
+                condition: "RESTOCK",
+              },
+            },
+          },
+          include: { items: true },
+        });
+        await tx.lot.update({
+          where: { id: lot.id },
+          data: { qtyRemaining: { increment: 1 } },
+        });
+        await tx.stockItem.update({
+          where: { id: stock.id },
+          data: { onHand: { increment: 1 } },
+        });
+        const move = await tx.stockMovement.create({
+          data: {
+            stockItemId: stock.id,
+            warehouseId: stock.warehouseId,
+            variantId,
+            lotId: lot.id,
+            type: "RETURN_RESTOCK",
+            quantity: 1,
+            referenceId: request.items[0].id,
+            createdBy: actorId,
+          },
+        });
+        await recognizeReturn(tx, request.id, actorId);
+        return { requestId: request.id, movementId: move.id };
+      });
+      expect(
+        await db.returnRequest.count({
+          where: { id: returned.requestId, status: "RECEIVED" },
+        }),
+      ).toBe(1);
+      expect(
+        await db.stockMovement.count({
+          where: { id: returned.movementId, type: "RETURN_RESTOCK" },
+        }),
+      ).toBe(1);
+      expect(
+        (await db.stockItem.findUniqueOrThrow({ where: { id: stock.id } }))
+          .onHand,
+      ).toBe(stock.onHand);
+      expect(
+        (await db.lot.findUniqueOrThrow({ where: { id: lot.id } }))
+          .qtyRemaining,
+      ).toBe(lot.qtyRemaining);
+      expect(
+        await db.journalEntry.count({
+          where: { requestKey: `restock:${returned.movementId}` },
+        }),
+      ).toBe(0);
+      expect(
+        await db.journalEntry.count({
+          where: { memo: f.order.number, requestKey: { startsWith: "cogs:" } },
+        }),
+      ).toBe(0);
+      // Repeat accounting recognition without repeating the inventory mutation.
+      await db.$transaction((tx) =>
+        recognizeReturn(tx, returned.requestId, actorId),
+      );
+      expect(
+        await db.journalEntry.count({ where: { memo: f.order.number } }),
+      ).toBe(2);
     });
   },
 );

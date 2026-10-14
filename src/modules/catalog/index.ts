@@ -21,6 +21,7 @@ export {
   catalogProductInclude,
   findCategoryBySlug,
   findCategoryCover,
+  findCategoryCovers,
   findProductBySlug,
   listCatalogProducts,
   type CatalogFilters,

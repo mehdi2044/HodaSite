@@ -421,6 +421,7 @@ export async function applyPreviewStyleCatalog(
                 lowStockThreshold: 2,
               },
             });
+            const receivedAt = new Date();
             const lot = await tx.lot.create({
               data: {
                 warehouseId: current.warehouseId,
@@ -431,8 +432,16 @@ export async function applyPreviewStyleCatalog(
                 unitCostCurrency: "USD",
                 unitCostAmountTry: "0",
                 unitCostAmountUsd: "0",
-                fxRateSnapshot: { demo: true },
-                receivedAt: new Date(),
+                // Synthetic identity rates apply only to these zero-cost demo
+                // lots. They are not market FX evidence or commercial costing.
+                fxRateSnapshot: {
+                  currency: "USD",
+                  rateTry: "1",
+                  rateUsd: "1",
+                  fxAsOf: receivedAt.toISOString(),
+                  effectiveAt: receivedAt.toISOString(),
+                },
+                receivedAt,
               },
             });
             await tx.stockMovement.create({

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { storefrontHref } from "@/modules/content/storefront-links";
 import { db } from "@/lib/db";
+import { findCategoryCovers } from "@/modules/catalog";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import { localizedValue, type HomepageBlock } from "@/modules/content/homepage";
 import { homepageProducts } from "@/modules/content/homepage-products";
@@ -47,17 +48,7 @@ export async function HomepageBlocks({
       ? [block.source.referenceId]
       : [],
   );
-  const [media, productRows, categories, shelfCategories] = await Promise.all([
-    mediaIds.length
-      ? await db.media.findMany({
-          where: {
-            id: { in: mediaIds },
-            kind: "image",
-            status: "READY",
-            deletedAt: null,
-          },
-        })
-      : [],
+  const [productRows, categories, shelfCategories] = await Promise.all([
     Promise.all(
       blocks.map((block) =>
         block.type === "ProductStrip"
@@ -69,16 +60,23 @@ export async function HomepageBlocks({
       where: { deletedAt: null, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
       take: 12,
-      include: { media: true },
     }),
     departmentIds.length
       ? db.category.findMany({
           where: { id: { in: [...new Set(departmentIds)] }, deletedAt: null },
-          include: { media: true },
         })
       : [],
   ]);
+  const media = await findCategoryCovers([
+    ...mediaIds,
+    ...categories.map((category) => category.mediaId),
+    ...shelfCategories.map((category) => category.mediaId),
+  ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
+  const coveredCategories = categories.map((category) => ({
+    ...category,
+    media: category.mediaId ? (mediaById.get(category.mediaId) ?? null) : null,
+  }));
   const shelfCategoryById = new Map(
     shelfCategories.map((item) => [item.id, item]),
   );
@@ -104,7 +102,7 @@ export async function HomepageBlocks({
             <SpatialHero
               key={index}
               block={block}
-              departments={categories.slice(0, 4)}
+              departments={coveredCategories.slice(0, 4)}
               campaignImage={
                 block.mediaId ? mediaById.get(block.mediaId) : undefined
               }
@@ -195,11 +193,9 @@ export async function HomepageBlocks({
                 category
                   ? {
                       id: category.id,
-                      media:
-                        category.media?.status === "READY" &&
-                        !category.media.deletedAt
-                          ? category.media
-                          : undefined,
+                      media: category.mediaId
+                        ? mediaById.get(category.mediaId)
+                        : undefined,
                     }
                   : undefined
               }
@@ -253,12 +249,9 @@ export async function HomepageBlocks({
                       locale,
                     ),
                   ),
-                  media:
-                    category.media?.kind === "image" &&
-                    category.media.status === "READY" &&
-                    !category.media.deletedAt
-                      ? category.media
-                      : undefined,
+                  media: category.mediaId
+                    ? mediaById.get(category.mediaId)
+                    : undefined,
                 }))}
             />
           );
