@@ -44,6 +44,24 @@ describe("media picker readiness", () => {
       waitForReadyMedia("cover", new AbortController().signal),
     ).rejects.toThrow("MEDIA_UNAVAILABLE");
   });
+  it("accepts readiness after a full 60-second cron delay plus processing time", async () => {
+    const started = Date.now();
+    const fetcher = vi
+      .fn()
+      .mockImplementation(async () =>
+        response([
+          {
+            ...item,
+            status: Date.now() - started >= 64000 ? "READY" : "PROCESSING",
+          },
+        ]),
+      );
+    vi.stubGlobal("fetch", fetcher);
+    const result = waitForReadyMedia("cover", new AbortController().signal);
+    await vi.advanceTimersByTimeAsync(64000);
+    expect(await result).toEqual(item);
+    expect(fetcher).toHaveBeenCalledTimes(33);
+  });
   it("cancels polling and clears its timer when the dialog closes", async () => {
     const fetcher = vi
       .fn()
@@ -70,8 +88,8 @@ describe("media picker readiness", () => {
     vi.stubGlobal("fetch", fetcher);
     const result = waitForReadyMedia("cover", new AbortController().signal);
     const rejected = expect(result).rejects.toThrow("MEDIA_NOT_READY");
-    await vi.advanceTimersByTimeAsync(60000);
+    await vi.advanceTimersByTimeAsync(180000);
     await rejected;
-    expect(fetcher).toHaveBeenCalledTimes(30);
+    expect(fetcher).toHaveBeenCalledTimes(90);
   });
 });

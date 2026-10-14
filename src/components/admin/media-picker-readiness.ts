@@ -26,7 +26,9 @@ function pause(signal: AbortSignal) {
 
 /** Never select a PROCESSING/FAILED upload or keep polling after cancellation. */
 export async function waitForReadyMedia(id: string, signal: AbortSignal) {
-  for (let attempt = 0; attempt < 30; attempt++) {
+  // Development cron ticks every 60s. Allow multiple ticks plus processing
+  // time instead of timing out just before the first eligible tick.
+  for (let attempt = 0; attempt < 90; attempt++) {
     signal.throwIfAborted();
     const response = await fetch(
       `/api/admin/media?kind=image&id=${encodeURIComponent(id)}`,
