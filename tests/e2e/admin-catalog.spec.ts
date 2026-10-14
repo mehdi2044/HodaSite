@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { randomUUID } from "node:crypto";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
@@ -6,6 +7,90 @@ import { shoppingProof } from "./helpers/shopping-proof";
 
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
+
+test("creates a product without optional care or SEO copy and edits it without replacing its variant", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await login(page);
+  const slug = `issue63-product-${randomUUID()}`;
+  let productId: string | undefined;
+  try {
+    await page.goto("/admin/catalog/products/new");
+    for (const language of ["Fa", "Tr", "En"]) {
+      await page.locator(`[name="title${language}"]`).fill(`QA ${slug}`);
+      await page
+        .locator(`[name="description${language}"]`)
+        .fill("Synthetic product acceptance");
+    }
+    await page
+      .locator('[name="categoryId"]')
+      .selectOption("seed-category-women");
+    await page.getByRole("tab", { name: "تنوع‌ها", exact: true }).click();
+    await page
+      .locator('[name="skuPrefixPreview"]')
+      .fill(`QA-${randomUUID().slice(0, 8).toUpperCase()}`);
+    const matrix = page
+      .locator("section:not([hidden])")
+      .filter({ has: page.locator('[name="skuPrefixPreview"]') });
+    await matrix
+      .locator("fieldset")
+      .nth(0)
+      .locator('input[type="checkbox"]')
+      .first()
+      .check();
+    await matrix
+      .locator("fieldset")
+      .nth(1)
+      .locator('input[type="checkbox"]')
+      .first()
+      .check();
+    await matrix
+      .getByRole("button", { name: "ساخت ترکیب‌ها", exact: true })
+      .click();
+    await page.getByRole("tab", { name: "قیمت", exact: true }).click();
+    await page.locator('[name="basePriceAmount"]').fill("24.0001");
+    await page.getByRole("tab", { name: "SEO", exact: true }).click();
+    for (const language of ["Fa", "Tr", "En"])
+      await page.locator(`[name="slug${language}"]`).fill(slug);
+    await page.getByRole("tab", { name: "بازارها", exact: true }).click();
+    await page.locator('[name="marketIds"]').first().check();
+    // care/seoDescription stay empty: they are optional in the server contract.
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator('form > p[role="status"]')).toHaveText(
+      "با موفقیت ذخیره شد.",
+    );
+    const created = await db.product.findFirstOrThrow({
+      where: { slugI18n: { path: ["en"], equals: slug } },
+      include: { variants: true },
+    });
+    productId = created.id;
+    expect(created.basePriceAmount.toFixed(4)).toBe("24.0001");
+    expect(created.variants).toHaveLength(1);
+    await page.goto(`/admin/catalog/products/${created.id}`);
+    await page.locator('[name="titleEn"]').fill(`Edited ${slug}`);
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator('form > p[role="status"]')).toHaveText(
+      "با موفقیت ذخیره شد.",
+    );
+    await page.reload();
+    await expect(page.locator('[name="titleEn"]')).toHaveValue(
+      `Edited ${slug}`,
+    );
+    const edited = await db.product.findUniqueOrThrow({
+      where: { id: created.id },
+      include: { variants: true },
+    });
+    expect(edited.variants[0].id).toBe(created.variants[0].id);
+    expect(edited.basePriceAmount.toFixed(4)).toBe("24.0001");
+  } finally {
+    if (productId)
+      await db.product.update({
+        where: { id: productId },
+        data: { deletedAt: new Date() },
+      });
+  }
+});
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";

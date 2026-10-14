@@ -254,6 +254,7 @@ export function ProductEditor({
             prefix="description"
             label={t("description")}
             value={initial.descriptionI18n}
+            required
           />
           <div className="grid gap-3 md:grid-cols-3">
             <label>
@@ -746,10 +747,12 @@ function LocalizedAreas({
   prefix,
   label,
   value,
+  required = false,
 }: {
   prefix: string;
   label: string;
   value: Localized;
+  required?: boolean;
 }) {
   return (
     <fieldset className="grid gap-3 rounded-[10px] border border-black/10 p-3 md:grid-cols-3">
@@ -760,7 +763,7 @@ function LocalizedAreas({
           <textarea
             name={`${prefix}${cap(locale)}`}
             defaultValue={value[locale]}
-            required
+            required={required}
             className="mt-1 min-h-28 w-full rounded-[10px] border border-black/15 p-3"
           />
         </label>
