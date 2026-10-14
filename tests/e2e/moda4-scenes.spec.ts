@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { writeFile } from "node:fs/promises";
 import en from "../../messages/en.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { tokenHash } from "../../src/lib/secure-tokens";
@@ -137,9 +138,44 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect(
       preview.getByRole("button", { name: en.scenes.addScene }),
     ).toBeDisabled();
+    const previewStatus = await page.request.get("/api/admin/preview-status");
+    if (previewStatus.ok())
+      observations.application = await previewStatus.json();
     const draftForm = page
       .locator("form")
       .filter({ has: page.locator('input[name="blocks"]') });
+    const unsaved = JSON.parse(
+      await draftForm.locator('input[name="blocks"]').inputValue(),
+    ).find((block: { scene?: unknown }) => block.scene).scene;
+    await page.evaluate((scene) => {
+      const iframe = document.querySelector<HTMLIFrameElement>(
+        '[data-testid="scene-preview"]',
+      );
+      iframe?.contentWindow?.postMessage(
+        {
+          type: "scene-preview",
+          channel: "invalid-channel",
+          scene: {
+            ...scene,
+            title: { ...scene.title, en: "Rejected preview channel" },
+          },
+        },
+        location.origin,
+      );
+    }, unsaved);
+    const readonly = await page.request.post("/api/admin/scenes/preview", {
+      data: {
+        scopeMarketId: market.id,
+        marketId: market.id,
+        locale: "en",
+        scene: unsaved,
+      },
+    });
+    expect(readonly.status()).toBe(200);
+    expect(readonly.headers()["cache-control"]).toContain("private, no-store");
+    await expect(
+      preview.getByRole("heading", { name: "Rejected preview channel" }),
+    ).toHaveCount(0);
     await page.getByLabel(en.scenes.confirmMatch, { exact: true }).check();
     await draftForm
       .getByRole("button", { name: en.scenes.saveDraft, exact: true })
@@ -311,6 +347,22 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
         })
       ).items,
     ).toHaveLength(2);
+    await page
+      .getByRole("combobox", { name: en.scenes.previewLanguage, exact: true })
+      .selectOption("en");
+    await expect(
+      preview.getByRole("heading", { name: titles.en }),
+    ).toBeVisible();
+    await preview
+      .locator("main")
+      .screenshot({
+        path: info.outputPath("r3-private-history-en-390.png"),
+        scale: "css",
+      });
+    await writeFile(
+      info.outputPath("observations.json"),
+      JSON.stringify(observations, null, 2) + "\n",
+    );
     await info.attach("r3-observations", {
       body: Buffer.from(JSON.stringify(observations)),
       contentType: "application/json",
