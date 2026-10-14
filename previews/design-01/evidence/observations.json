@@ -1,0 +1,52 @@
+{
+  "fixture": "main synthetic style catalog",
+  "backend": "none",
+  "physicalDevice": false,
+  "observations": [
+    {
+      "locale": "fa",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "locale": "fa",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "locale": "fa",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "locale": "tr",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "locale": "tr",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "locale": "tr",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "locale": "en",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "overflow": false
+    }
+  ]
+}
