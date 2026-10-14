@@ -61,12 +61,14 @@ export async function saveHomepage(
       expectedSceneFingerprints,
     });
     try {
-      if (intent === "PUBLISH")
-        await publishHomepageRevision(session.user.id, {
+      if (intent === "PUBLISH") {
+        const published = await publishHomepageRevision(session.user.id, {
           homepageId: saved.id,
           revisionId: saved.revisionId,
           expectedVersion: saved.version,
         });
+        saved = { ...saved, version: published.version };
+      }
     } finally {
       revalidateTag("homepage");
       revalidatePath("/admin/content/homepage");

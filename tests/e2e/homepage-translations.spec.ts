@@ -169,7 +169,12 @@ test("homepage source selections and every trust translation survive save and re
       exact: true,
     });
     await save.click();
-    await expect(page.getByRole("status")).toBeVisible();
+    await expect(
+      page.getByRole("status").filter({ hasText: faMessages.modaAdmin.saved }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(faMessages.modaAdmin.staleDraft, { exact: true }),
+    ).not.toBeVisible();
     const saved = (
       await db.homepage.findUniqueOrThrow({ where: { id: homepage.id } })
     ).blocks as unknown as Array<{
