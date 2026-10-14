@@ -47,7 +47,7 @@ for (const [locale, code] of [
       locale === "fa" ? "rtl" : "ltr",
     );
     const channelForm = page
-      .locator("form:visible")
+      .locator("main form:visible")
       .filter({ has: page.locator('input[name="channel"][value="email"]') });
     await channelForm.locator('select[name="status"]').selectOption("OPTED_IN");
     await Promise.all([
