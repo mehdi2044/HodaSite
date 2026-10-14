@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
-export { lockMediaReferences } from "./reference-lock";
+export { lockMediaReferences, blockMediaIds } from "./reference-lock";
 
 export type MediaListFilters = {
   id?: string;

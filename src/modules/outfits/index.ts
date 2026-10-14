@@ -224,7 +224,9 @@ export async function validateLookReferences(
     ? [marketId]
     : (
         await client.market.findMany({
-          where: { homepages: { none: { deletedAt: null } } },
+          where: {
+            homepages: { none: { deletedAt: null, isPublished: true } },
+          },
           select: { id: true },
         })
       ).map((m) => m.id);

@@ -9,6 +9,9 @@ import { Prisma } from "@prisma/client";
  */
 export class JobDeferredError extends Error {}
 
+/** A validated non-transient failure requires a fresh authorized request. */
+export class JobPermanentError extends Error {}
+
 export type JobContext = {
   id: string;
   type: string;
@@ -105,6 +108,14 @@ export async function runJobs(types?: readonly string[]): Promise<number> {
         continue;
       }
       const attempts = job.attempts + 1;
+      if (err instanceof JobPermanentError) {
+        await db.job.update({
+          where: { id },
+          data: { status: "FAILED", attempts, lastError: err.message },
+        });
+        processed += 1;
+        continue;
+      }
       const lastError = err instanceof Error ? err.message : "unknown";
       if (attempts < MAX_JOB_ATTEMPTS) {
         await db.job.update({

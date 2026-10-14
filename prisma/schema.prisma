@@ -706,13 +706,24 @@ model Page {
 
 /// Ordered homepage composition. `marketId = null` is the global fallback.
 model Homepage {
-  id        String    @id @default(cuid())
-  marketId  String?   @unique
-  market    Market?   @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  blocks    Json      @default("[]")
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  marketId            String?   @unique
+  market              Market?   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  blocks              Json      @default("[]")
+  /// New drafts never shadow a published global fallback.
+  isPublished         Boolean   @default(true)
+  version             Int       @default(0)
+  draftBlocks         Json?
+  draftRevisionId     String?
+  publishedRevisionId String?
+  scheduledRevisionId String?
+  scheduledAt         DateTime?
+  scheduledById       String?
+  scheduledVersion    Int?
+  scheduleError       String?
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([deletedAt])
 }
