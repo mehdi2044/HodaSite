@@ -4,6 +4,10 @@
 
 ابتدا [وضعیت معتبر امروز](02_DECISIONS.md#current-policy) را بخوانید. D70 گردش فعال Work/Codex است: PR ابتدا Draft، ممنوعیت self-merge، بازبینی AI و CI روی همان head و اجازهٔ صریح مهدی برای مرج. بندهای متعارض مرج در D50/D63 جایگزین شده‌اند. گزارش‌های 09 تا 14 و `history/` تاریخی‌اند و دستور اجرایی نیستند.
 
+## مأموریت جاری طراحی — DESIGN-01 / MODA4 (ثبت ۲۰۲۶-۱۰-۱۴)
+
+D77/D78 تصمیم‌های ثبت‌شدهٔ پیش از اجرا هستند. [شرح فاز](phases/phase-design-01.md)، [دستور Codex](design/moda4-redesign/CODEX_PROMPT.md) و [قرارداد تصاویر قابل خرید و preview واقعی](design/moda4-redesign/SHOPPABLE_SCENES_AND_PREVIEW.md) مرجع اجرای جدیدند. [Issue62](https://github.com/mehdi2044/HodaSite/issues/62) پیگیری واحد؛ طرح PR65 منتخب است. ثبت دستور، اجرای خودکار یا اجازهٔ merge نیست. R0 اولین تحویل قابل مشاهده؛ R7c تا تصمیم و بودجه مسدود.
+
 ترتیب پیشنهادی خواندن:
 
 | # | فایل | برای چه کسی | خلاصه |

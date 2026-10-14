@@ -1,53 +1,57 @@
-# اتاق پرو MODA4 — عیب‌یابی و نقشهٔ درست‌کار کردن
+# اتاق پرو MODA4 — برنامهٔ اصلاح‌شدهٔ اجرا
 
-## ۱. وضعیت فعلی (از روی کد، شاخهٔ main در 8e0b953)
+مرجع: D75/D76/D78، [فاز DESIGN-01](../../phases/phase-design-01.md) و [قرارداد تصاویر/preview](SHOPPABLE_SCENES_AND_PREVIEW.md). ظاهر اتاق پرو منتخب مالک است؛ علت مشکل سرویس فعلی هنوز با شواهد سرور تأیید نشده است. هیچ تغییر provider یا تست پولی مجاز نشده.
 
-- ساخت تصویر در `src/modules/integrations/fitting/index.ts` با **یک مدل تصویری همه‌منظوره** (OpenAI Images edits) انجام می‌شود: عکس مدل فروشگاه + عکس همهٔ لباس‌ها (تا ۴ قطعه) در **یک درخواست** با یک prompt متنی فرستاده می‌شود.
-- اجرا در صف پس‌زمینه (`src/modules/fitting/worker.ts` + جدول Job + cron) است و تا ۱۸۰ ثانیه منتظر پاسخ می‌ماند.
-- کیف پول سکه، برگشت سکه هنگام خطای قطعی و حالت REVIEW برای درخواست‌های نامطمئن به‌درستی پیاده شده‌اند (D75/D76).
+## ۱. واقعیت کد مبنا و عیب‌یابی R7b
 
-## ۲. چرا «درست کار نمی‌کند» (علت‌های محتمل — باید با شواهد سرور تأیید شود)
+مبنای بررسی main در `8e0b953`؛ هنگام اجرا مجدداً تطبیق شود:
+- `src/modules/integrations/fitting/index.ts`: یک فراخوانی OpenAI Images edits با عکس مدل فروشگاه و حداکثر چهار لباس؛ timeout adapter فعلی ۱۸۰ ثانیه.
+- صف `fitting-render` در `JobQueue`، worker و cron؛ بازیابی RUNNING کهنه پس از حدود ۵ دقیقه نیازمند بررسی قرارداد worker است. افزودن چند step بدون اصلاح این قرارداد مجاز نیست.
+- وضعیت‌های FittingSession: **QUEUED / RUNNING / DONE / FAILED / REVIEW**. برگشت سکه اثر ledger است؛ status با نام REFUNDED وجود ندارد.
+- خروجی خصوصی، envelope رمزگذاری‌شده وابسته به sessionId و AUTH_SECRET؛ image endpoint فقط برای مالک.
+- `saveLook` فعلی فقط همان جلسهٔ DONE مشتری را با savedName/savedAt ذخیره می‌کند؛ جدول کمد مستقلِ ترکیب فوری موجود نیست.
+- coin cost از config و Decimal (پیش‌فرض فعلی ۱۲٫۵)، confirm/expectedCostCoins و قفل کیف/دفتر؛ عدد ۱ یا کاهش سکهٔ JS نمونه منبع نیست.
 
-| علامت | علت محتمل | چطور بررسی شود |
-|---|---|---|
-| درخواست همیشه «در صف» می‌ماند | worker/cron پس‌زمینه روی سرور اجرا نمی‌شود یا cron tick صدا زده نمی‌شود | جدول Job: رکوردهای `fitting-render` با وضعیت QUEUED قدیمی؛ لاگ `/api/cron/tick` |
-| همیشه خطا و برگشت سکه | کلید سرویس در env نیست (`FITTING_OPENAI_API_KEY`/`OPENAI_API_KEY`)، یا مدل انتخاب‌شده در ادمین برای حساب فعال نیست | وضعیت REFUNDED با errorCode؛ صفحهٔ تنظیمات اتاق پرو |
-| تصویر ساخته می‌شود ولی لباس‌ها اشتباه‌اند | مدل همه‌منظوره چند لباس را در یک مرحله خوب نمی‌پوشاند؛ رنگ/طرح و گاهی صورت مدل تغییر می‌کند | مقایسهٔ خروجی‌ها با ورودی‌ها |
-| خیلی کند است | یک فراخوانی سنگین تا ۳ دقیقه + فاصلهٔ اجرای cron | زمان QUEUED→DONE |
+| علامت | بررسی لازم؛ علت را پیشاپیش قطعی نگو |
+|---|---|
+| QUEUED طولانی | worker/cron heartbeat، job schedule/lock/status/attempt، آخرین اجرای واقعی و زمان‌ها |
+| FAILED و برگشت | errorCode، وجود credential بدون افشای مقدار، HTTP outcome، مرحلهٔ خواندن مرجع/تبدیل/upload و ledger یک‌باره |
+| REVIEW | قطع/timeout نامطمئن، شناسهٔ درخواست و checkpoint موجود؛ بدون redispatch خودکار |
+| DONE با خروجی نامناسب | مقایسهٔ ورودی و خروجی مجاز: رنگ/طرح/تعداد/هندسه؛ مسئلهٔ کیفیت را از شکست زیرساخت جدا کن |
+| کندی | فاصلهٔ صف، مدت worker/provider/storage و زمان تحویل را جدا اندازه بگیر |
 
-> از مهدی پرسیده شده کدام علامت را دیده است؛ پاسخ او اولویت R7b/R7c را تعیین می‌کند.
+گزارش پاک‌سازی‌شده شامل محیط/commit، زمان UTC و شواهد مرتبط باشد؛ کلید/PII/عکس خصوصی/URL حامل token در GitHub عمومی ممنوع. دسترسی سرور نیست: UNVERIFIED، نه «provider خراب است». health UI فقط وضعیت credential/heartbeat/آمار و هشدار تأخیر نمایش دهد. «آزمایش اتصال» اگر هزینه دارد تا بودجه/تأیید غیرفعال؛ health check رایگان را هم بدون اطمینان از رایگان‌بودن درخواست به endpoint تولید نفرست.
 
-## ۳. نقشهٔ سه‌لایه
+## ۲. R4: قرارداد مشترک cutout و هندسه، قبل از Kids/R7a
 
-### لایهٔ ۱ — پروی فوری (رایگان، بدون هوش مصنوعی، برای هر ترکیب) — PR R7a
-همان چیزی که در نمونه (`#pg-fitting`) کار می‌کند:
+- مدل Prisma واقعی `Variant` است، نه ProductVariant. cutout شفاف READY برای رنگ محصول قابل اشتراک میان سایزها؛ override variant فقط در صورت نیاز. variant خرید با رنگ/سایز واقعی حل شود.
+- مدل‌های فروشگاه WOMAN/MAN/GIRL/BOY؛ geometry باید به مدل واقعی و در صورت نیاز cutout خاص وابسته باشد. مقیاس ثابت بزرگسال برای همهٔ مدل‌های کودک کافی نیست.
+- از fittingSlot موجود TOP/BOTTOM/ONE_PIECE/LAYER/ACCESSORY/**SHOES** استفاده کن؛ accessory anchor مشخص HAND/NECK/HEAD.
+- مختصات/scale/offset/zIndex محدود، schema version و revision، permission/audit، پیش‌نمایش drag/keyboard در پنل؛ مقدارهای GEO نمونه فقط seed قابل ویرایش‌اند.
+- برای تصویر فاقد cutout، تصویر کالا/راهنمای نبود پرو نشان بده؛ ساختن ترکیب معتبر برای همهٔ عکس‌ها را وعده نده. حذف پس‌زمینهٔ خودکار provider تازه و هزینهٔ ضمنی نیست.
 
-1. **عکس بُریده (cut-out) برای هر رنگ کالا:** ادمین در ویرایش محصول، برای هر variant یک PNG/WebP با پس‌زمینهٔ شفاف آپلود می‌کند (فیلد جدید، مثلاً `ProductVariant.fittingCutoutMediaId`). نمونهٔ آماده: `assets/cutouts/`. حذف خودکار پس‌زمینه بعداً می‌تواند به‌صورت job + provider اضافه شود (نه سرویس جدا).
-2. **جایگاه لباس:** از فیلد موجود `fittingSlot` استفاده می‌شود: `TOP` / `BOTTOM` / `ONE_PIECE` / `LAYER` / `ACCESSORY` (+ برای اکسسوری لنگر `HAND` / `NECK` / `HEAD`).
-3. **هندسهٔ هر جایگاه برای هر مانکن** (WOMAN / MAN / GIRL / BOY) به‌صورت تنظیمات قابل‌ویرایش در ادمین با پیش‌نمایش زنده: `top`، `width`، `offsetX`، `zIndex` در واحد مانکن (viewBox ‏220×560). پیش‌فرض‌ها از جدول `GEO` در `prototype/source/template.html` (مثلاً بافت: TOP، top 98، width 190؛ شلوار: BOTTOM، top 290، width 112؛ کیف: ACCESSORY/HAND، top 208، width 86، offsetX 74). مانکن کودک = همان مانکن با scale ‏0.74 از پایین.
-4. **قوانین لایه:** یک قطعه در هر جایگاه؛ ONE_PIECE جای TOP و BOTTOM را می‌گیرد؛ ترتیب z: BOTTOM < TOP/ONE_PIECE < LAYER < NECK < HAND/HEAD؛ حداکثر ۴ قطعه.
-5. **نمایش:** ترکیب‌کردن در مرورگر با CSS 3D (بدون سرور، بدون سکه): مانکن روی سکوی چرخان، هر لایه با `translateZ` جدا تا با کشیدن عمق دیده شود؛ ورود هر لباس با انیمیشن.
-6. **خروجی:** «افزودن همه به سبد» با سایز هر قطعه، «ذخیره در کمد» (جدول کمد موجود)، و دکمهٔ «نمای واقعی» که به لایهٔ ۲ می‌رود.
+## ۳. R7a: پروی فوری و کمد واقعی
 
-### لایهٔ ۲ — نمای واقعی با هوش مصنوعی (با سکه) — PR R7c، بعد از ADR
-- **مدل مخصوص پرو مجازی** به‌جای مدل همه‌منظوره، پشت همان `FittingProvider` (adapter جدید در `src/modules/integrations/fitting/`). نمونهٔ گزینه‌ها برای ارزیابی وی‌بانو: سرویس‌های try-on مثل FASHN، Kolors Virtual Try-On یا IDM-VTON (از طریق ارائه‌دهندهٔ API). انتخاب نهایی و بودجه با مهدی.
-- **پوشاندن مرحله‌ای:** هر لباس جدا با category درست (upper / lower / full-body)، به ترتیب BOTTOM → TOP/ONE_PIECE → LAYER؛ اکسسوری‌ها از همان لایهٔ فوری روی نتیجه قرار می‌گیرند.
-- **کش نتیجه:** کلید = (مدل، variantها، provider، نسخهٔ مدل). ترکیب تکراری فوری و بدون سکه. ست‌های ShopLook از قبل ساخته می‌شوند.
-- قواعد D75 حفظ می‌شود: رزرو سکه قبل از ارسال، برگشت در خطای قطعی، REVIEW برای نامطمئن، بدون ارسال دوبارهٔ خودکار، خروجی خصوصی و رمزگذاری‌شده، بدون آپلود عکس شخصی.
-- در زمان انتظار، کاربر نتیجهٔ لایهٔ ۱ را می‌بیند (نه صفحهٔ خالی) و نوار پیشرفت با زمان تقریبی دارد.
+ترکیب کلاینت از مدل و cutout عمومی، بدون سکه/فراخوانی AI؛ guest مجاز اگر قابلیت فوری فعال است. flag پروی فوری از فعال‌سازی AI پولی جدا باشد. این پیش‌نمایش استایل است، نه تشخیص دقیق اندازهٔ بدن.
 
-### لایهٔ ۳ — سلامت زیرساخت — PR R7b (بدون تغییر provider)
-- هشدار سیستمی (`SystemAlert`) وقتی session بیش از N دقیقه QUEUED بماند یا cron tick دیر شود.
-- صفحهٔ وضعیت در ادمین: کلید تنظیم است/نیست (بدون نمایش مقدار)، آخرین اجرای worker، آمار DONE/REFUNDED/REVIEW.
-- دکمهٔ «آزمایش اتصال» فقط برای مدیر با یک درخواست کوچک و هزینهٔ اعلام‌شده.
+قواعد: حداکثر چهار قطعه؛ ONE_PIECE جای TOP و BOTTOM را می‌گیرد؛ LAYER روی آن؛ کفش جایگاه خود؛ فقط یک accessory در هر anchor، نه یک accessory برای کل بدن. ترتیب لایه با هندسهٔ محدود و قابل تنظیم؛ لمس/drag و دکمه‌های چرخش keyboard، reduced-motion و pause در tab مخفی/offscreen.
 
-## ۴. تبلیغ سه‌بعدی (بلوک FittingAd)
-در صفحهٔ اول: رگال با لباس‌های تاب‌خوران، پرواز هر لباس با چرخش ۳۶۰ درجه تا جایگاهش روی مانکن، اسکن، سپس نمایش عکس واقعی همان ست. ادمین دو ست انتخاب می‌کند (فهرست variantها + عکس نهایی). فقط وقتی بخش دیده می‌شود اجرا می‌شود و با reduced-motion حالت نهایی را ثابت نشان می‌دهد.
+برای هر لباس قیمت همان بازار و سایز واقعی، راه حذف/تعویض، وضعیت موجودی و «افزودن همه» با cart atomic موجود. market از locale مستقل. تغییر سایز/رنگ باید تصویر/قیمت/variant خرید را همسو کند. برچسب‌ها با قرارداد صحنهٔ مشترک پیاده شوند.
 
----
+**ذخیره در کمد:** مدل مستقل owner-scoped مطابق D78، نه toast و نه جعل DONE session. ترکیب/model/media/geometry revision و انتخاب‌ها ذخیره، بعد از reload بازسازی، قیمت جاری resolve شود. مشتری دیگر نتواند بخواند/ویرایش/حذف کند؛ export و anonymization، archive و conflict مدیریت شوند. ورودی‌های قدیمی AI در همان UI با نوع خروجی متمایز باقی بمانند. save/login از callback امن موجود؛ تغییر allowlist D66 نیاز ثبت مشخص دارد.
 
-### English technical notes
-- Instant try-on is pure client compositing: no new server endpoint beyond reading variant cut-outs and the geometry config (cacheable). Validate geometry with zod (bounded numbers), audit-log config changes.
-- Cut-out media are public catalog media (unlike private provider outputs).
-- A9 ADR must cover provider data handling (garment + store-model images only, no customer photos — D75), cost caps, timeouts, idempotency and the cache key/invalidation when a variant image changes.
-- Tests: unit tests for slot exclusivity/z-order/max-4 rules; Playwright for selecting items per model kind, rotating the stage (keyboard buttons), add-all-to-bag sizes, reduced motion.
+## ۴. تبلیغ FittingAd
+
+رگال/پرواز لباس/اسکن/سکوی اتاق پرو مطابق طرح منتخب حفظ؛ مدیر ست و مدل، cutout و عکس نهاییِ **منطبق با همان قطعات** را انتخاب کند. همهٔ لباس‌های قابل خرید قیمت خوانا و reference واقعی داشته باشند. در نبود عکس نهایی معتبر، نتیجهٔ فوری باقی بماند؛ timer و عکس ازپیش‌ساخته را «AI همین درخواست» معرفی نکن. output خصوصی مشتری را public Media نکن. reduced-motion نمای ثابت کامل و خرید قابل استفاده نشان دهد.
+
+## ۵. R7c: تصمیم مستقل پیش از اجرا
+
+هیچ provider از پیش برنده یا fallback خودکار تعیین نشده. بعد از R7b و با بودجهٔ صریح، پیشنهاد reviewable شامل معیار کیفیت، latency، هزینهٔ هر request/هر ست و data handling ارائه شود؛ ADR جدید پیش از adapter.
+
+اگر چند فراخوانی لازم شد، طراحی و آزمون per-step checkpoint/idempotency، max steps/cost cap، timeout هماهنگ queue/worker/provider، نتیجهٔ نامطمئن REVIEW، عدم retry/fallback خودکارِ هزینه‌زا و settlement/refund/debt یک‌باره لازم است. نتیجهٔ عکس جدید ممکن است pose را عوض کند؛ هندسهٔ اکسسوریِ mannequin قبلی بدون تطبیق برای آن معتبر نیست.
+
+cache پیش‌فرض customer-scoped و خصوصی با کنترل entitlement؛ کلید شامل customer، مدل/نسخه، media hash/revision لباس و مدل، geometry/pipeline/settings، رنگ/انتخاب و provider. ciphertext وابسته به sessionId بین جلسات کپی نشود. سیاست free repeat/cache coins و pre-generation عمومی هنوز تصویب نشده. خروجی تبلیغاتی تأییدشده مسیر انتشار جدا و اجازهٔ هزینه/انتشار می‌خواهد.
+
+## ۶. شواهد لازم
+
+unit/PG: slot/anchor/max4، references/READY/color، guest vs private auth، owner persistence/conflict/export/anonymization، atomic cart و قیمت Decimal، flag separation و حفظ ledger. Playwright: هر چهار نوع مدل، رنگ/سایز، rotate keyboard/reduced-motion، save → reload → wardrobe → cart با پنل واقعی. migration/backup/Local+S3 restore برای دادهٔ افزوده، حفظ AUTH_SECRET و جلسات قبلی. نتیجهٔ paid/provider/server که واقعاً آزموده نشده صریحاً باز بماند.
