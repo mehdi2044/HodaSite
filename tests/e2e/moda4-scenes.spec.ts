@@ -232,7 +232,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect
       .poll(
         () => scene.locator(".scene-price-list strong").first().textContent(),
-        { timeout: 15000 },
+        { timeout: 15000, intervals: [100] },
       )
       .not.toBe(beforePrice);
     observations.priceToOpenStoreMs = Date.now() - priceStarted;
