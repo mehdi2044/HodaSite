@@ -1,4 +1,5 @@
 "use client";
+import { subscribeSceneRefresh } from "./scene-refresh";
 import {
   useContext,
   useEffect,
@@ -101,23 +102,21 @@ export function ShoppableScene({
   }, [view.id]);
   useEffect(() => {
     if (preview || !poll) return;
-    let visible = false;
-    const refresh = () => {
-      if (visible && !document.hidden && !pending.current)
+    const subscription = subscribeSceneRefresh({
+      visible: false,
+      pending: () => pending.current,
+      refresh: () => {
+        pending.current = true;
         startRefresh(() => router.refresh());
-    };
+      },
+    });
     const observer = new IntersectionObserver((entries) => {
-      visible = entries.some((entry) => entry.isIntersecting);
+      subscription.visible(entries.some((entry) => entry.isIntersecting));
     });
     if (root.current) observer.observe(root.current);
-    const timer = setInterval(refresh, 4000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
     return () => {
       observer.disconnect();
-      clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      subscription.dispose();
     };
   }, [router, preview, poll]);
   const chosen = view.pieces.map((piece) =>
