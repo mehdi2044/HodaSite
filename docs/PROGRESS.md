@@ -1,6 +1,6 @@
 # وضعیت پیشرفت پروژه
 
-R7b — STARTED (2026-10-14): بررسی غیرپولی و فقط‌خواندنی سلامت پرو، شاخهٔ مستقل `phase/design-01-r7b-fitting-health` از PR72/903d6a9. [قرارداد پیش از کد](design/moda4-redesign/R7B_CONTRACT.md). هنوز تحویل/آزمون کامل نیست؛ علت خرابی محیط مالک UNVERIFIED و R7c مسدود به بودجه/ADR است.
+R7b — IN_PROGRESS (2026-10-14): بخش واقعی و فقط‌خواندنی سلامت پرو با permission موجود، شمار صف/جلسه، هشدار تأخیر، خطای whitelist، وجود credential و شمار مستقل برگشت دفتر؛ بدون فراخوانی یا تغییر داده. [قرارداد پیش از کد](design/moda4-redesign/R7B_CONTRACT.md)، [راهنمای فارسی](design/moda4-redesign/R7B_HEALTH_GUIDE_FA.md)، [شواهد واقعی سه زبان](design/moda4-redesign/evidence/r7b/README.md). lint/typecheck/build، دو آزمون PostgreSQL و دو مرورگر موفق؛ CI همان head و پذیرش مالک/محیط واقعی هنوز باز. شاخهٔ مستقل از PR72؛ علت خرابی محیط مالک UNVERIFIED و R7c مسدود به بودجه/ADR است.
 
 > Codex: بعد از هر فاز این فایل را به‌روز کن. برای هر فاز بنویس: وضعیت، چه چیزی ساخته شد، **تست دستی به زبان ساده فارسی**، محدودیت‌های شناخته‌شده و سؤال‌های باز برای وی‌بانو/مهدی.
 
