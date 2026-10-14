@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SCENE_ASPECTS } from "./geometry";
 import { localizedTextSchema } from "../validation";
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
@@ -9,6 +10,7 @@ export const pointSchema = z
 export const sceneImageSchema = z
   .object({
     mediaId: id,
+    aspect: z.enum(SCENE_ASPECTS).default("4:5"),
     fit: z.enum(["cover", "contain"]).default("contain"),
     focal: pointSchema.default({ x: 0.5, y: 0.5 }),
   })
