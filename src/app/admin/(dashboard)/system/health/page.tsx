@@ -4,12 +4,13 @@ import { requireAdminPage } from "@/modules/auth/page";
 import { db } from "@/lib/db";
 import { getTranslations, getLocale } from "next-intl/server";
 import { offsiteHealthy, recentBackup } from "@/modules/health";
+import { FittingHealth } from "@/components/admin/fitting-health";
 export const dynamic = "force-dynamic";
 function bytes(value: bigint | number) {
   return `${(Number(value) / 1048576).toFixed(1)} MiB`;
 }
 export default async function Health() {
-  await requireAdminPage("system.health.view");
+  const actorId = await requireAdminPage("system.health.view");
   const t = await getTranslations("healthAdmin");
   const locale = await getLocale();
   const now = new Date();
@@ -76,6 +77,7 @@ export default async function Health() {
   return (
     <div className="grid gap-5">
       <h1>{t("title")}</h1>
+      <FittingHealth actorId={actorId} />
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[
           [t("database"), bytes(size[0]?.bytes ?? 0n)],
