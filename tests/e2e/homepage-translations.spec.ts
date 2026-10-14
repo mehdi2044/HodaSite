@@ -1,3 +1,4 @@
+import faMessages from "../../messages/fa.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -14,7 +15,7 @@ async function login(page: Page) {
 }
 
 test.describe.configure({ mode: "serial" });
-test("homepage preview is sandboxed, responsive and writes only on save", async ({
+test("homepage preview uses the real private renderer and keeps unsaved content private", async ({
   page,
 }) => {
   await login(page);
@@ -24,11 +25,29 @@ test("homepage preview is sandboxed, responsive and writes only on save", async 
   await page.getByRole("button", { name: "افزودن بلوک", exact: true }).click();
   const input = page.getByLabel("متن (fa)").last();
   await input.fill("پیش‌نمایش زنده بدون ذخیره");
-  const frame = page.getByTitle("پیش‌نمایش ذخیره‌نشده");
-  await expect(frame).toHaveAttribute("sandbox", "");
+  await page
+    .getByRole("combobox", {
+      name: faMessages.modaAdmin.previewMarket,
+      exact: true,
+    })
+    .selectOption({ label: "IR" });
+  await page
+    .getByRole("combobox", {
+      name: faMessages.modaAdmin.previewLanguage,
+      exact: true,
+    })
+    .selectOption("fa");
+  const frame = page.getByTestId("homepage-unsaved-preview");
+  await expect(frame).toHaveAttribute("src", /\/admin\/preview\/homepage/);
+  const response = await page.request.get(
+    (await frame.getAttribute("src")) ?? "",
+  );
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(response.headers()["x-robots-tag"]).toContain("noindex");
   await expect(
     frame.contentFrame().getByText("پیش‌نمایش زنده بدون ذخیره"),
   ).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
   await page.reload();
   await expect(page.locator('input[name="blocks"]')).toHaveValue(before);
 });

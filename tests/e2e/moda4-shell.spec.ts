@@ -1,3 +1,4 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -365,3 +366,5 @@ for (const [locale, marketCode] of [
     );
   });
 }
+
+useLegacyHomepage();

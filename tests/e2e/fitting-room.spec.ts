@@ -184,7 +184,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
     });
     try {
       await customerLogin(page, email, locale);
-      await page.goto(`/${locale}/fitting-room`);
+      await page.goto(`/${locale}/fitting-room?q=Saba`);
       const room = page.getByTestId("fitting-room");
       await expect(room).toBeVisible();
       await expect(room.locator(".fitting-models button")).toHaveCount(4);
@@ -386,7 +386,11 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     await db.productMedia.create({
       data: { productId, mediaId: "seed-fashion-v2-women-tee" },
     });
-    await page.goto("/en/fitting-room");
+    const fittedProduct = await db.product.findUniqueOrThrow({
+      where: { id: productId },
+    });
+    const fittedTitle = (fittedProduct.titleI18n as Record<string, string>).en;
+    await page.goto(`/en/fitting-room?q=${encodeURIComponent(fittedTitle)}`);
     const room = page.getByTestId("fitting-room");
     const card = room
       .locator(".fitting-product")

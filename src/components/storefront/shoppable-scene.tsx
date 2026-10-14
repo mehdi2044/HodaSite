@@ -1,5 +1,6 @@
 "use client";
 import {
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -14,6 +15,7 @@ import { addSceneAction } from "@/app/[locale]/commerce-actions";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import type { SceneView } from "@/modules/content/scenes/resolve";
 import { SceneLayerImage } from "./scene-layer";
+import { ActiveCarouselSlide } from "./carousel-context";
 import { scenePointInFrame } from "@/modules/content/scenes/geometry";
 
 export function ShoppableScene({
@@ -39,6 +41,7 @@ export function ShoppableScene({
   cta?: { label: string; href: string };
   revealTitle?: boolean;
 }) {
+  const activeSlide = useContext(ActiveCarouselSlide);
   const t = useTranslations("scenes"),
     shopping = useTranslations("shopping"),
     cutouts = useTranslations("cutouts");
@@ -179,7 +182,7 @@ export function ShoppableScene({
       data-scene-related-video={preview ? view.relatedVideo?.url : undefined}
       dir={locale === "fa" ? "rtl" : "ltr"}
     >
-      {(headingLevel ?? (first ? 1 : 2)) === 1 ? (
+      {(headingLevel ?? (first ? 1 : 2)) === 1 && activeSlide ? (
         <h1
           className="moda-scene-heading"
           aria-label={revealTitle ? view.title : undefined}

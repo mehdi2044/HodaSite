@@ -1,3 +1,4 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { shoppingProof } from "./helpers/shopping-proof";
@@ -128,3 +129,5 @@ for (const locale of ["fa", "tr", "en"] as const) {
     ).toBe(true);
   });
 }
+
+useLegacyHomepage();

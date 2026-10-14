@@ -1,3 +1,4 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
 import { shoppingProof } from "./helpers/shopping-proof";
 
@@ -188,3 +189,5 @@ for (const [locale, market, labels] of [
     await expect(departments).toBeVisible();
   });
 }
+
+useLegacyHomepage();

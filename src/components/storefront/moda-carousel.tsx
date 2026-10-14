@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ActiveCarouselSlide } from "./carousel-context";
 import { useTranslations } from "next-intl";
 /** Common visibility/focus/hover/reduced-motion policy for the editable presentations. */
 export function ModaCarousel({
@@ -137,7 +138,9 @@ export function ModaCarousel({
               hidden={n !== current}
               data-active={n === current}
             >
-              {item}
+              <ActiveCarouselSlide.Provider value={n === current}>
+                {item}
+              </ActiveCarouselSlide.Provider>
             </div>
           ))}
       </div>
