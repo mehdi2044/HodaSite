@@ -27,7 +27,7 @@ test("R7b real private health dashboard in three languages makes no provider req
     .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
   await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
-  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page).toHaveURL(/\/admin\/system\/health$/);
   try {
     for (const [locale, copy] of [
       ["fa", fa],
