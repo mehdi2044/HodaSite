@@ -260,9 +260,10 @@ for (const locale of ["fa", "tr", "en"] as const) {
         new RegExp(`^/${locale}/m/${cart.market.code}/p/`),
       );
       await page.locator(".storefront-cart-toggle").click();
-      await expect(
-        page.locator(".storefront-mini-cart-item img"),
-      ).toHaveAttribute("src", cardImage);
+      await expect(page.locator(".moda-drawer-item img")).toHaveAttribute(
+        "src",
+        cardImage,
+      );
       await page.goto(`/${locale}/checkout`);
       await expect(page.locator(".shop-checkout-piece img")).toHaveAttribute(
         "src",

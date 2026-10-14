@@ -215,7 +215,21 @@ for (const [locale, marketCode] of [
       menu.getByRole("link", { name: label[locale], exact: true }).first(),
     ).toBeVisible();
     // The extra category remains discoverable alongside all seeded departments.
-    expect(await menu.locator(".moda-menu-root").count()).toBeGreaterThan(4);
+    const roots = await db.category.findMany({
+      where: { parentId: null, deletedAt: null },
+    });
+    expect(roots.length).toBeGreaterThan(4);
+    for (const root of roots) {
+      const rootSlug = (root.slugI18n as Record<string, string>)[locale];
+      if (rootSlug)
+        await expect(
+          menu
+            .locator(
+              `a[href="/${locale}/m/${marketCode}/c/${encodeURIComponent(rootSlug)}"]`,
+            )
+            .first(),
+        ).toBeVisible();
+    }
     await page.keyboard.press("Escape");
     await expect(menu).not.toHaveAttribute("open", "");
     const search = page
@@ -243,14 +257,25 @@ for (const [locale, marketCode] of [
       .locator(".moda-announcement .storefront-languages a")
       .filter({ hasText: target.toUpperCase() });
     const slug = (product.slugI18n as Record<string, string>)[target];
-    await expect(translated).toHaveAttribute(
-      "href",
-      `/${target}/m/${marketCode}/p/${encodeURIComponent(slug)}`,
-    );
-    await translated.click();
-    await expect(page.locator(".shop-product-title")).toContainText(
-      (product.titleI18n as Record<string, string>)[target],
-    );
+    const marketLocales = (
+      await db.market.findUniqueOrThrow({ where: { code: marketCode } })
+    ).enabledLocales;
+    if (marketLocales.includes(target)) {
+      await expect(translated).toHaveAttribute(
+        "href",
+        `/${target}/m/${marketCode}/p/${encodeURIComponent(slug)}`,
+      );
+      await translated.click();
+      await expect(page.locator(".shop-product-title")).toContainText(
+        (product.titleI18n as Record<string, string>)[target],
+      );
+    } else {
+      await expect(translated).toHaveCount(0);
+      const unavailable = await page.request.get(
+        `/api/catalog/localized-path?${new URLSearchParams({ pathname: new URL(page.url()).pathname, target })}`,
+      );
+      expect(await unavailable.json()).toEqual({ href: null });
+    }
     await page.goto(`/${locale}/m/${marketCode}`);
     await search.click();
     await dialog
