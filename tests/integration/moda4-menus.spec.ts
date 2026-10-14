@@ -44,6 +44,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           currency: "CAD",
           defaultLocale: "en",
           enabledLocales: ["fa", "tr", "en"],
+          roundingRule: { mode: "HALF_UP", increment: "0.01" },
+          holdHours: 6,
+          paymentDeadlineHours: 48,
+          fxMode: "REQUIRE_APPROVAL",
         },
       });
       market = m.id;
@@ -51,10 +55,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       menu = (
         await db.menu.create({ data: { key: "header", marketId: market } })
       ).id;
-      other = (await db.menu.create({ data: { key: prefix } })).id;
+      other = (
+        await db.menu.findFirstOrThrow({
+          where: { key: "header", marketId: null, deletedAt: null },
+        })
+      ).id;
       category = (
         await db.category.create({
           data: {
+            gender: "UNISEX",
             titleI18n: labels,
             slugI18n: { fa: prefix, tr: prefix, en: prefix },
           },
@@ -78,6 +87,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           data: {
             email: `${prefix}@example.com`,
             passwordHash: "invalid-test-only",
+            name: prefix,
           },
         })
       ).id;

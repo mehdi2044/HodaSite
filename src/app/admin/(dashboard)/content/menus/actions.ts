@@ -89,7 +89,7 @@ export async function saveMenuItem(
       presentation: {
         version: 1,
         mediaId: String(data.get("mediaId") || "") || undefined,
-        fit: String(data.get("imageFit") || "cover"),
+        fit: String(data.get("imageFit") || "contain"),
         tone: String(data.get("imageTone") || "sand"),
         focalX: Number(data.get("focalX") ?? 0.5),
         focalY: Number(data.get("focalY") ?? 0.5),

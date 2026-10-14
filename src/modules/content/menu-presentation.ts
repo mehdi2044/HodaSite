@@ -14,7 +14,7 @@ export const menuPresentationSchema = z.object({
     .string()
     .regex(/^[A-Za-z0-9_-]{1,100}$/)
     .optional(),
-  fit: z.enum(["cover", "contain"]).default("cover"),
+  fit: z.enum(["cover", "contain"]).default("contain"),
   focalX: z.number().min(0).max(1).default(0.5),
   focalY: z.number().min(0).max(1).default(0.5),
   tone: z.enum(MENU_TONES).default("sand"),
