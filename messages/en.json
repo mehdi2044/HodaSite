@@ -795,7 +795,8 @@
       "RETURN_VARIANT": "Replacement option is invalid.",
       "RETURN_STALE": "Request changed; refresh the page.",
       "RETURN_STOCK_HISTORY": "Original inventory history is insufficient.",
-      "RETURN_PAYMENT_HISTORY": "Payment history is insufficient for this refund."
+      "RETURN_PAYMENT_HISTORY": "Payment history is insufficient for this refund.",
+      "PROFILE_CONFLICT": "Your profile changed elsewhere. Reload before saving your changes."
     },
     "dashboard": "Dashboard",
     "todaySales": "Today's sales (UTC)",
@@ -1886,7 +1887,8 @@
     "sampleTurkish": "ÇĞİıÖŞÜ — İstanbul, özgür çizgiler",
     "samplePersian": "فارسی و مبلغ دقیق:",
     "samplePrice": "24.0001 CAD",
-    "primaryInk": "Primary button text"
+    "primaryInk": "Primary button text",
+    "accountMedia": "Login and account image"
   },
   "foundationAdmin": {
     "preview": "Live theme preview",
@@ -2808,5 +2810,45 @@
     "tone_kidsButter": "Butter",
     "tone_kidsLilac": "Lilac",
     "tone_kidsPeach": "Peach"
+  },
+  "accountDesign": {
+    "appearance": "Your profile style",
+    "directTheme": "Choose your theme directly. This choice does not set your gender.",
+    "conflict": "Your profile changed elsewhere. Reload before saving your changes.",
+    "theme": "Profile theme",
+    "sizes": "My usual sizes",
+    "noSizes": "No catalog sizes are available yet.",
+    "interests": "Shopping interests",
+    "save": "Save preferences",
+    "clear": "Clear presentation preferences",
+    "clearHelp": "This clears your theme, usual sizes and shopping interests. Your account, orders and marketing choices stay in place.",
+    "confirmClear": "I want to clear these preferences",
+    "welcome": "Welcome",
+    "yourSpace": "Your own space for orders, saved looks and preferences.",
+    "navigation": "Account navigation",
+    "overview": "Overview",
+    "wardrobe": "My wardrobe",
+    "marketScope": "Orders and wishlist: {market}. Fitting coins and saved AI looks belong to your whole account.",
+    "inTransit": "Orders in progress",
+    "coins": "Fitting coins",
+    "savedAiLooks": "Saved AI looks",
+    "latestOrder": "Latest order",
+    "aiWardrobeHelp": "These are your saved AI results. Instant styling compositions will appear here when instant styling is available.",
+    "newLook": "Create a look",
+    "noLooks": "You have no saved looks yet.",
+    "progress": "Sign-in progress",
+    "changeEmail": "Change email",
+    "resendIn": "Resend in {seconds}s",
+    "themes": {
+      "NEUTRAL": "Neutral",
+      "ROSE": "Rosé",
+      "SLATE": "Slate",
+      "SAND": "Sand"
+    },
+    "steps": {
+      "email": "Email",
+      "code": "Verification code",
+      "profile": "Profile"
+    }
   }
 }

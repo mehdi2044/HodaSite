@@ -453,6 +453,9 @@ export async function exportPersonalData(requestId: string, page = 0) {
           locale: actor.locale,
           birthDate: actor.birthDate,
           gender: actor.gender,
+          profileTheme: actor.profileTheme,
+          stylePreferences: actor.stylePreferences,
+          presentationVersion: actor.presentationVersion,
         },
         consents,
         orders: orders

@@ -795,7 +795,8 @@
       "RETURN_VARIANT": "Yeni seçenek geçerli değil.",
       "RETURN_STALE": "Talep değişti; sayfayı yenileyin.",
       "RETURN_STOCK_HISTORY": "Stok çıkış kaydı yeterli değil.",
-      "RETURN_PAYMENT_HISTORY": "Geri ödeme için ödeme kaydı yeterli değil."
+      "RETURN_PAYMENT_HISTORY": "Geri ödeme için ödeme kaydı yeterli değil.",
+      "PROFILE_CONFLICT": "Profiliniz başka yerde değişti. Kaydetmeden önce sayfayı yenileyin."
     },
     "dashboard": "Kontrol paneli",
     "todaySales": "Bugünkü satışlar (UTC)",
@@ -1886,7 +1887,8 @@
     "sampleTurkish": "ÇĞİıÖŞÜ — İstanbul, özgür çizgiler",
     "samplePersian": "فارسی و مبلغ دقیق:",
     "samplePrice": "24.0001 CAD",
-    "primaryInk": "Ana düğme metni"
+    "primaryInk": "Ana düğme metni",
+    "accountMedia": "Giriş ve hesap görseli"
   },
   "foundationAdmin": {
     "preview": "Canlı tema önizlemesi",
@@ -2808,5 +2810,45 @@
     "tone_kidsButter": "Krem",
     "tone_kidsLilac": "Lila",
     "tone_kidsPeach": "Şeftali"
+  },
+  "accountDesign": {
+    "appearance": "Profil görünümünüz",
+    "directTheme": "Temanızı doğrudan seçin. Bu seçim cinsiyetinizi belirlemez.",
+    "conflict": "Profiliniz başka yerde değişti. Kaydetmeden önce sayfayı yenileyin.",
+    "theme": "Profil teması",
+    "sizes": "Genelde kullandığım bedenler",
+    "noSizes": "Henüz katalog bedeni yok.",
+    "interests": "Alışveriş ilgi alanları",
+    "save": "Tercihleri kaydet",
+    "clear": "Görünüm tercihlerini temizle",
+    "clearHelp": "Tema, bedenler ve alışveriş ilgi alanları temizlenir. Hesabınız, siparişleriniz ve pazarlama tercihleriniz korunur.",
+    "confirmClear": "Bu tercihleri temizlemek istiyorum",
+    "welcome": "Hoş geldiniz",
+    "yourSpace": "Siparişleriniz, kayıtlı stilleriniz ve tercihleriniz için alanınız.",
+    "navigation": "Hesap gezinmesi",
+    "overview": "Genel bakış",
+    "wardrobe": "Gardırobum",
+    "marketScope": "Siparişler ve favoriler: {market}. Prova jetonları ve kayıtlı AI stilleri tüm hesabınıza aittir.",
+    "inTransit": "Devam eden siparişler",
+    "coins": "Prova jetonları",
+    "savedAiLooks": "Kayıtlı AI stilleri",
+    "latestOrder": "Son sipariş",
+    "aiWardrobeHelp": "Bunlar kaydettiğiniz AI sonuçlarıdır. Anlık stil bileşimleri özellik kullanılabilir olduğunda burada görünür.",
+    "newLook": "Stil oluştur",
+    "noLooks": "Henüz kayıtlı stiliniz yok.",
+    "progress": "Giriş adımları",
+    "changeEmail": "E-postayı değiştir",
+    "resendIn": "{seconds} sn sonra yeniden gönder",
+    "themes": {
+      "NEUTRAL": "Sade",
+      "ROSE": "Gül",
+      "SLATE": "Arduvaz",
+      "SAND": "Kum"
+    },
+    "steps": {
+      "email": "E-posta",
+      "code": "Doğrulama kodu",
+      "profile": "Profil"
+    }
   }
 }

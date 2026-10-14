@@ -332,6 +332,7 @@ model ThemeSettings {
   logoDarkMediaId  String?
   faviconMediaId   String?
   emailLogoMediaId String?
+  accountMediaId   String?
   heroStyle        String   @default("editorial")
   darkMode         String   @default("off")
   headerStyle      String   @default("minimal")
@@ -1086,6 +1087,9 @@ model Customer {
   phone               String          @default("")
   locale              String          @default("en")
   preferredMarketId   String?
+  profileTheme        String?
+  stylePreferences    Json?
+  presentationVersion Int             @default(0)
   isGuest             Boolean         @default(true)
   isActive            Boolean         @default(true)
   birthDate           DateTime?       @db.Timestamptz(3)

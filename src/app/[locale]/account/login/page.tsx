@@ -1,5 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { CustomerLogin } from "@/components/storefront/customer-login";
+import { db } from "@/lib/db";
+import { getThemeSettings } from "@/modules/settings";
+import { ResponsiveImage } from "@/components/storefront/responsive-image";
 export default async function LoginPage({
   params,
 }: {
@@ -7,9 +10,33 @@ export default async function LoginPage({
 }) {
   const { locale } = await params,
     t = await getTranslations("commerce");
+  const theme = await getThemeSettings();
+  const media = theme?.accountMediaId
+    ? await db.media.findFirst({
+        where: {
+          id: theme.accountMediaId,
+          status: "READY",
+          deletedAt: null,
+          kind: "image",
+        },
+      })
+    : null;
   return (
-    <main className="shell shop-page py-12">
-      <section className="mx-auto max-w-md rounded-token border border-black/10 bg-surface p-6 shadow-sm">
+    <main className="shell shop-page py-12 moda-login">
+      <div className="moda-login-art" aria-hidden="true">
+        {media ? (
+          <ResponsiveImage
+            media={media}
+            locale={locale as "fa" | "tr" | "en"}
+            role="hero"
+            sizes="(max-width:767px) 100vw,50vw"
+            priority
+          />
+        ) : (
+          <span className="moda-login-decoration" />
+        )}
+      </div>
+      <section className="moda-login-form rounded-token border border-black/10 bg-surface p-6 shadow-sm">
         <h1 className="mb-5 text-2xl font-semibold">{t("login")}</h1>
         <CustomerLogin locale={locale} />
       </section>

@@ -1,4 +1,5 @@
 import { AccountEngagement } from "@/components/engagement/account";
+import { SavedProducts } from "@/components/engagement/wishlist";
 import { Iso } from "@/components/storefront/iso";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,6 +7,14 @@ import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { currentCustomer } from "@/modules/customers";
 import { CommerceForm } from "@/components/storefront/commerce-form";
+import { AccountOverview } from "@/components/storefront/account-overview";
+import { AccountPresentation } from "@/components/storefront/account-presentation";
+import {
+  readStylePreferences,
+  profileTheme,
+} from "@/modules/customers/presentation-contract";
+import { catalogText } from "@/modules/catalog";
+import { AccountProgress } from "@/components/storefront/account-progress";
 import {
   profileAction,
   logoutCustomerAction,
@@ -20,8 +29,9 @@ export default async function AccountPage({
   const { locale } = await params,
     t = await getTranslations("commerce"),
     customer = await currentCustomer();
-  if (!customer) redirect(`/${locale}/account/login`);
-  const [orders, addresses, markets] = await Promise.all([
+  if (!customer || customer.isGuest) redirect(`/${locale}/account/login`);
+  const preferences = readStylePreferences(customer.stylePreferences);
+  const [orders, addresses, markets, sizes, categories] = await Promise.all([
     db.order.findMany({
       where: { customerId: customer.id },
       orderBy: { placedAt: "desc" },
@@ -29,16 +39,66 @@ export default async function AccountPage({
     }),
     db.address.findMany({ where: { customerId: customer.id } }),
     db.market.findMany({ where: { isActive: true } }),
+    db.size.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          { id: { in: preferences.sizeIds } },
+          {
+            variants: {
+              some: {
+                isActive: true,
+                product: {
+                  deletedAt: null,
+                  status: "ACTIVE",
+                  coinPackCoins: null,
+                },
+              },
+            },
+          },
+        ],
+      },
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    }),
+    db.category.findMany({
+      where: {
+        deletedAt: null,
+        OR: [{ parentId: null }, { id: { in: preferences.categoryIds } }],
+      },
+      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    }),
   ]);
   return (
-    <main className="shell shop-page shop-account grid gap-8 py-10">
+    <main
+      className="shell shop-page shop-account moda-profile grid gap-8 py-10"
+      data-profile-theme={profileTheme(customer.profileTheme) ?? "NEUTRAL"}
+    >
       <div className="flex flex-wrap gap-3 items-center justify-between">
         <h1 className="text-3xl font-semibold">{t("account")}</h1>
         <form action={logoutCustomerAction.bind(null, locale)}>
           <button className="shop-text-button underline">{t("logout")}</button>
         </form>
       </div>
-      <section className="grid gap-4">
+      {!customer.firstName && <AccountProgress step={3} />}
+      <AccountOverview locale={locale as "fa" | "tr" | "en"} />
+      <AccountPresentation
+        locale={locale}
+        revision={customer.presentationVersion}
+        initial={{
+          theme: profileTheme(customer.profileTheme) ?? "",
+          sizeIds: preferences.sizeIds,
+          categoryIds: preferences.categoryIds,
+        }}
+        sizes={sizes.map((size) => ({
+          id: size.id,
+          label: `${size.value} · ${size.scale}${sizes.some((other) => other.id !== size.id && other.value === size.value && other.scale === size.scale) ? ` (${size.groupKey})` : ""}`,
+        }))}
+        categories={categories.map((category) => ({
+          id: category.id,
+          label: catalogText(category.titleI18n, locale as "fa" | "tr" | "en"),
+        }))}
+      />
+      <section className="grid gap-4" id="orders">
         <h2 className="text-xl font-semibold">{t("orders")}</h2>
         {orders.length ? (
           orders.map((order) => (
@@ -178,8 +238,7 @@ export default async function AccountPage({
               <button className="button">{t("save")}</button>
             </CommerceForm>
           </details>
-          <h2 className="text-xl font-semibold">{t("wishlist")}</h2>
-          <p className="text-muted">{t("wishlistSoon")}</p>
+          <SavedProducts />
           <h2 className="text-xl font-semibold">{t("privacy")}</h2>
           {customer.deletionRequestedAt ? (
             <p>{t("deletionPending")}</p>

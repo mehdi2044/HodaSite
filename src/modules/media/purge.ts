@@ -127,7 +127,7 @@ export async function purgeOne(
     const [references] = await tx.$queryRaw<{ used: boolean }[]>`
       SELECT (
         EXISTS (SELECT 1 FROM "ThemeSettings" WHERE ${current.id} IN
-          ("logoMediaId", "logoDarkMediaId", "faviconMediaId", "emailLogoMediaId"))
+          ("logoMediaId", "logoDarkMediaId", "faviconMediaId", "emailLogoMediaId", "accountMediaId"))
         OR EXISTS (SELECT 1 FROM "Invoice"
           WHERE snapshot->>'logoMediaId' = ${current.id})
         OR EXISTS (SELECT 1 FROM "Page" WHERE jsonb_path_exists(

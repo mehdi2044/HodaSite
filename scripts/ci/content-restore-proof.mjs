@@ -91,6 +91,12 @@ try {
           presentation: { version: 1, kind: "kids", tone: "kidsMint" },
         },
       });
+      await tx.customer.create({ data: {
+        id: `${id}-customer`, email: "ci-profile-restore@example.com", isGuest: false,
+        profileTheme: "SLATE", presentationVersion: 3,
+        stylePreferences: { version: 1, sizeIds: [product.variants[0].sizeId], categoryIds: [`${id}-category`] },
+      } });
+      await tx.themeSettings.update({ where: { id: "default" }, data: { accountMediaId: modelMedia.id } });
       await tx.catalogCutout.create({
         data: {
           id: `${id}-cutout`,
@@ -187,6 +193,8 @@ try {
   const preview = await db.homepagePreview.findUniqueOrThrow({
     where: { channelHash: createHash("sha256").update(id).digest("hex") },
   });
+  const customerPresentation = await db.customer.findUniqueOrThrow({ where: { id: `${id}-customer` }, select: { profileTheme: true, stylePreferences: true, presentationVersion: true } });
+  const accountTheme = await db.themeSettings.findUniqueOrThrow({ where: { id: "default" }, select: { accountMediaId: true } });
   const digest = createHash("sha256")
     .update(
       JSON.stringify({
@@ -196,6 +204,8 @@ try {
         category,
         policy: market.servicePolicy,
         preview,
+        customerPresentation,
+        accountTheme,
       }),
     )
     .digest("hex");
@@ -213,8 +223,9 @@ try {
       }),
       /append-only/,
     );
+    await assert.rejects(db.customer.update({ where: { id: `${id}-customer` }, data: { profileTheme: "not-a-theme" } }), /Customer_profile_theme_allowed/);
     console.log(
-      "Content fixture digest and append-only guard match: homepage revision/schedule, cutout/category, MODA4 blocks, service policy and private preview",
+      "Content fixture digest and guards match: homepage revision/schedule, cutout/category, MODA4 blocks, service policy, private preview, profile preferences/revision and account media",
     );
   }
 } finally {
