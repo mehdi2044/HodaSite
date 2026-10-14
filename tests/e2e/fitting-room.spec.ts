@@ -450,6 +450,15 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     await restore(f.variants[0].id);
     await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
     await expect(room.locator(".fitting-add")).toHaveCount(0);
+    const trousers = await db.variant.findUniqueOrThrow({
+      where: { id: trousersId },
+      include: { product: true },
+    });
+    await page
+      .locator('.fitting-search input[name="q"]')
+      .fill((trousers.product.titleI18n as Record<string, string>).en);
+    await page.locator(".fitting-search button").click();
+    await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
     await room
       .locator(".fitting-product")
       .filter({ has: page.locator(`option[value="${trousersId}"]`) })
