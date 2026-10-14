@@ -20,6 +20,7 @@ export function ShoppableScene({
   frame = "responsive",
   body,
   cta,
+  revealTitle = false,
 }: {
   view: SceneView;
   locale: "fa" | "tr" | "en";
@@ -30,6 +31,7 @@ export function ShoppableScene({
   frame?: "mobile" | "desktop" | "responsive";
   body?: string;
   cta?: { label: string; href: string };
+  revealTitle?: boolean;
 }) {
   const t = useTranslations("scenes"),
     shopping = useTranslations("shopping"),
@@ -138,6 +140,26 @@ export function ShoppableScene({
       ? min
       : t("from", { price: min });
   };
+  // Keep Persian joining intact; Latin headings reveal graphemes independently.
+  const title = revealTitle ? (
+    <span aria-hidden="true">
+      {[
+        ...new Intl.Segmenter(locale, {
+          granularity: locale === "fa" ? "word" : "grapheme",
+        }).segment(view.title),
+      ].map((part, index) => (
+        <span
+          key={index}
+          className="moda-title-fragment"
+          style={{ animationDelay: `${Math.min(index, 24) * 0.025}s` }}
+        >
+          {part.segment}
+        </span>
+      ))}
+    </span>
+  ) : (
+    view.title
+  );
   return (
     <section
       ref={root}
@@ -152,11 +174,21 @@ export function ShoppableScene({
       dir={locale === "fa" ? "rtl" : "ltr"}
     >
       {(headingLevel ?? (first ? 1 : 2)) === 1 ? (
-        <h1 className="moda-scene-heading">{view.title}</h1>
+        <h1
+          className="moda-scene-heading"
+          aria-label={revealTitle ? view.title : undefined}
+        >
+          {title}
+        </h1>
       ) : headingLevel === 3 ? (
         <h3>{view.title}</h3>
       ) : (
-        <h2 className="moda-scene-heading">{view.title}</h2>
+        <h2
+          className="moda-scene-heading"
+          aria-label={revealTitle ? view.title : undefined}
+        >
+          {title}
+        </h2>
       )}
       {body && <p className="mb-5">{body}</p>}
       {cta && (

@@ -24,38 +24,60 @@ export function ModaKidsRing({
       engaged = false,
       frame = 0,
       previous = 0;
+    const element = root.current;
+    const running = () =>
+      visible &&
+      !engaged &&
+      !document.hidden &&
+      !media.matches &&
+      !drag.current;
+    const sync = () => {
+      if (!running()) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        previous = 0;
+      } else if (!frame) frame = requestAnimationFrame(tick);
+    };
+    const tick = (time: number) => {
+      frame = 0;
+      if (!running()) {
+        previous = 0;
+        return;
+      }
+      const delta = previous ? Math.min(100, time - previous) : 0;
+      previous = time;
+      paint(turn.current + delta * 0.007);
+      frame = requestAnimationFrame(tick);
+    };
     const observer = new IntersectionObserver((entries) => {
       visible = entries.some((entry) => entry.isIntersecting);
+      sync();
     });
-    if (root.current) observer.observe(root.current);
+    if (element) observer.observe(element);
     const enter = () => {
         engaged = true;
+        sync();
       },
       leave = () => {
-        engaged = Boolean(root.current?.contains(document.activeElement));
+        engaged = Boolean(element?.contains(document.activeElement));
+        sync();
       };
-    const element = root.current;
     element?.addEventListener("mouseenter", enter);
     element?.addEventListener("mouseleave", leave);
     element?.addEventListener("focusin", enter);
     element?.addEventListener("focusout", leave);
-    const tick = (time: number) => {
-      const delta = previous ? Math.min(100, time - previous) : 0;
-      previous = time;
-      if (
-        visible &&
-        !engaged &&
-        !document.hidden &&
-        !media.matches &&
-        !drag.current
-      )
-        paint(turn.current + delta * 0.007);
-      frame = requestAnimationFrame(tick);
-    };
-    frame = requestAnimationFrame(tick);
+    const resume = () => queueMicrotask(sync);
+    element?.addEventListener("pointerup", resume);
+    element?.addEventListener("pointercancel", resume);
+    document.addEventListener("visibilitychange", sync);
+    media.addEventListener("change", sync);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      element?.removeEventListener("pointerup", resume);
+      element?.removeEventListener("pointercancel", resume);
+      document.removeEventListener("visibilitychange", sync);
+      media.removeEventListener("change", sync);
       element?.removeEventListener("mouseenter", enter);
       element?.removeEventListener("mouseleave", leave);
       element?.removeEventListener("focusin", enter);

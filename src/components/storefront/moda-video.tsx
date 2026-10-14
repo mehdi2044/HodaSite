@@ -5,9 +5,11 @@ export function ModaVideo({
   fallback,
   autoplay,
   sceneId,
+  poster,
 }: {
   url: string;
   sceneId?: string;
+  poster?: string;
   fallback: ReactNode;
   autoplay: boolean;
 }) {
@@ -76,6 +78,7 @@ export function ModaVideo({
           ref={video}
           data-scene-video-proof={sceneId}
           src={url}
+          poster={poster}
           preload="metadata"
           controls
           playsInline

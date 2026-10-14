@@ -131,7 +131,7 @@ export default async function Policies() {
                 </fieldset>
               ))}
               <div className="flex flex-wrap gap-2">
-                <a className="button button-outline" href="/admin/fees">
+                <a className="button button-outline" href="/admin/pricing/fees">
                   {t("editFeeRules")}
                 </a>
                 <a

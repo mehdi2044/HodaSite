@@ -62,6 +62,8 @@ export function ModaCarousel({
       ref={root}
       className={`moda-carousel moda-carousel-${kind}`}
       data-reduced={reduced}
+      data-running={!paused && !engaged && !reduced && !hidden && visible}
+      style={{ "--slide-seconds": `${seconds}s` } as React.CSSProperties}
       aria-roledescription={t("carousel")}
       aria-label={title || labels[current]}
       onMouseEnter={() => setEngaged(true)}
@@ -168,6 +170,13 @@ export function ModaCarousel({
                 onClick={() => setIndex(n)}
               >
                 <span aria-hidden="true">{n + 1}</span>
+                {n === current && (
+                  <span
+                    key={current}
+                    className="moda-slide-progress"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
             ))}
           </div>

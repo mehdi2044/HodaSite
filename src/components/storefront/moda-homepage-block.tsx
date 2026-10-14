@@ -126,6 +126,7 @@ export async function ModaHomepageBlock({
               locale={locale}
               first={first && index === 0}
               headingLevel={first ? 1 : 2}
+              revealTitle
               preview={preview}
               body={text(slide.body)}
               cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
@@ -148,18 +149,23 @@ export async function ModaHomepageBlock({
     );
   }
   if (block.type === "WorldsPrism") {
+    const views = await Promise.all(
+      block.faces.map((face) =>
+        face.scene
+          ? resolveShoppableScene(face.scene, market, locale, {
+              adminPreview: preview,
+            })
+          : null,
+      ),
+    );
     const items = await Promise.all(
-      block.faces.map(async (face) => {
+      block.faces.map(async (face, index) => {
         const href = await resolveContentTarget(
           { kind: "category", id: face.categoryId },
           market.id,
           locale,
         );
-        const view = face.scene
-          ? await resolveShoppableScene(face.scene, market, locale, {
-              adminPreview: preview,
-            })
-          : null;
+        const view = views[index];
         return (
           <article className="moda-world-face">
             {view ? (
@@ -184,23 +190,29 @@ export async function ModaHomepageBlock({
       }),
     );
     const art = await Promise.all(
-      block.faces.map((face) =>
-        photo(
-          face.scene?.desktop ?? face.desktop,
-          face.scene?.mobile ?? face.mobile,
-          text(face.title),
+      block.faces.map((face, index) =>
+        views[index] ? (
+          <SceneArt view={views[index]!} locale={locale} />
+        ) : (
+          photo(face.desktop, face.mobile, text(face.title))
         ),
       ),
     );
     return (
-      <ModaCarousel
-        art={art}
-        kind="prism"
-        title={text(block.title)}
-        items={items}
-        labels={block.faces.map((face) => text(face.title))}
-        seconds={block.autoplaySeconds}
-      />
+      <>
+        <ModaCarousel
+          art={art}
+          kind="prism"
+          title={text(block.title)}
+          items={items}
+          labels={block.faces.map((face) => text(face.title))}
+          seconds={block.autoplaySeconds}
+        />
+        <ScenePriceSummary
+          views={views.flatMap((view) => (view ? [view] : []))}
+          locale={locale}
+        />
+      </>
     );
   }
   if (block.type === "Lookbook" || block.type === "FittingAd") {
@@ -445,6 +457,20 @@ export async function ModaHomepageBlock({
     <ModaVideo
       sceneId={block.scene?.id}
       url={view?.relatedVideo?.url ?? video.url}
+      poster={
+        view?.mobile.media?.url ??
+        (
+          await db.media.findFirst({
+            where: {
+              id: block.mobile.mediaId,
+              kind: "image",
+              status: "READY",
+              deletedAt: null,
+            },
+            select: { url: true },
+          })
+        )?.url
+      }
       fallback={content}
       autoplay={block.mutedAutoplay}
     />

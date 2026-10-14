@@ -1,4 +1,5 @@
 import React from "react";
+import { Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
 const acting = vi.hoisted(() => ({ userId: null as string | null }));
@@ -57,6 +58,7 @@ import type { ActionResult } from "@/lib/action-result";
 
 type Row = {
   permission: string;
+  homepageScope?: "global" | "market" | "foreign-market";
   required?: string[];
   tables?: string[];
   prepare?: () => Promise<void>;
@@ -78,8 +80,9 @@ let subjects: MatrixSubject[] = [],
   targetUserId = "",
   templateId = "",
   resourceId = "";
-let homepage: Awaited<ReturnType<typeof db.homepage.findFirst>>,
-  translation: Awaited<ReturnType<typeof db.translation.findFirst>>,
+let homeSnapshots: Awaited<ReturnType<typeof db.homepage.findMany>> = [];
+let homeTargets: (string | null)[] = [];
+let translation: Awaited<ReturnType<typeof db.translation.findFirst>>,
   template: Awaited<ReturnType<typeof db.notificationTemplate.findFirst>>;
 let settings: Awaited<ReturnType<typeof db.siteSettings.findUniqueOrThrow>>,
   theme: Awaited<ReturnType<typeof db.themeSettings.findUniqueOrThrow>>,
@@ -134,17 +137,24 @@ const rows: Row[] = [
         f,
       ),
   },
-  {
+  ...(["global", "market", "foreign-market"] as const).map((homepageScope) => ({
     permission: "content.homepage.write",
-    run: async (f) =>
-      call(
+    homepageScope,
+    run: async (f: boolean) => {
+      const target =
+        homepageScope === "global"
+          ? null
+          : homepageScope === "market"
+            ? marketId
+            : (await db.market.findUniqueOrThrow({ where: { code: "CA" } })).id;
+      return call(
         saveHomepage,
         {
-          marketId,
+          marketId: target ?? "",
           expectedVersion: String(
             (
               await db.homepage.findFirst({
-                where: { marketId, deletedAt: null },
+                where: { marketId: target, deletedAt: null },
               })
             )?.version ?? 0,
           ),
@@ -152,8 +162,9 @@ const rows: Row[] = [
           blocks: "[]",
         },
         f,
-      ),
-  },
+      );
+    },
+  })),
   ...["content.page.write", "content.page.publish"].map((permission) => ({
     permission,
     run: (f: boolean) =>
@@ -462,7 +473,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         where: { key: "order.placed" },
       });
       templateId = template.id;
-      homepage = await db.homepage.findFirst({ where: { marketId } });
+      homeTargets = [
+        null,
+        marketId,
+        (await db.market.findUniqueOrThrow({ where: { code: "CA" } })).id,
+      ];
+      homeSnapshots = await db.homepage.findMany({
+        where: { OR: homeTargets.map((marketId) => ({ marketId })) },
+      });
       translation = await db.translation.findFirst({
         where: {
           entityType: "ui",
@@ -518,12 +536,25 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: integration.id },
           data: { config: integration.config!, isActive: integration.isActive },
         });
-      if (homepage)
-        await db.homepage.update({
-          where: { id: homepage.id },
-          data: { blocks: homepage.blocks! },
+      for (const marketId of homeTargets) {
+        const original = homeSnapshots.filter(
+          (home) => home.marketId === marketId,
+        );
+        await db.homepage.deleteMany({
+          where: { marketId, id: { notIn: original.map((home) => home.id) } },
         });
-      else await db.homepage.deleteMany({ where: { marketId } });
+        for (const home of original) {
+          const { id, ...data } = home;
+          await db.homepage.update({
+            where: { id },
+            data: {
+              ...data,
+              blocks: data.blocks!,
+              draftBlocks: data.draftBlocks ?? Prisma.DbNull,
+            },
+          });
+        }
+      }
       if (translation)
         await db.translation.update({
           where: { id: translation.id },
@@ -552,13 +583,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       for (const name of SUBJECTS)
         for (const scope of GLOBAL_SCOPES)
           for (const forged of [false, true]) {
-            it(`${row.permission} / ${name} / ${scope} / ${forged ? "direct forged" : "UI action payload"}`, async () => {
+            it(`${row.permission}${row.homepageScope ? ` (${row.homepageScope})` : ""} / ${name} / ${scope} / ${forged ? "direct forged" : "UI action payload"}`, async () => {
               const subject = subjects.find(
                 (s) => s.name === name && s.scope === scope,
               )!;
               acting.userId = subject.id;
               const allowed =
-                scope === "in" &&
+                (scope === "in" ||
+                  (row.homepageScope === "market" && scope === "market-out")) &&
                 [row.permission, ...(row.required ?? [])].every((p) =>
                   granted(name, p),
                 );

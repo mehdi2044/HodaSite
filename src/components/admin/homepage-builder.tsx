@@ -426,7 +426,7 @@ export function BlockFields({
       });
     return (
       <>
-        {localized("title")}
+        {!block.scene && localized("title")}
         {localized("body")}
         <p className="text-sm text-muted">{labels.lookHelp}</p>
         {block.looks.map((look, lookIndex) => (
@@ -619,7 +619,7 @@ export function BlockFields({
   if (block.type === "Hero" || block.type === "Banner")
     return (
       <>
-        {block.type === "Hero" && (
+        {block.type === "Hero" && !block.scene && (
           <label>
             {labels.heroLayout}
             <select
@@ -653,17 +653,21 @@ export function BlockFields({
             }
           />
         </label>
-        <p className="text-sm text-muted">{labels.heroHelp}</p>
-        <MediaPicker
-          name={`unused-${index}`}
-          label={labels.selectImage}
-          defaultMediaId={block.mediaId}
-          defaultUrl={block.mediaId ? urls[block.mediaId] : undefined}
-          onSelect={(id, url) => {
-            setUrls((all) => ({ ...all, [id]: url }));
-            update(index, { ...block, mediaId: id });
-          }}
-        />
+        {!block.scene && (
+          <>
+            <p className="text-sm text-muted">{labels.heroHelp}</p>
+            <MediaPicker
+              name={`unused-${index}`}
+              label={labels.selectImage}
+              defaultMediaId={block.mediaId}
+              defaultUrl={block.mediaId ? urls[block.mediaId] : undefined}
+              onSelect={(id, url) => {
+                setUrls((all) => ({ ...all, [id]: url }));
+                update(index, { ...block, mediaId: id });
+              }}
+            />
+          </>
+        )}
       </>
     );
   if (block.type === "CategoryCards" || block.type === "ProductStrip") {

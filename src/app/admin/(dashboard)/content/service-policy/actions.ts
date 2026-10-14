@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
-import { UnauthorizedError } from "@/modules/access";
+import { assertCan, UnauthorizedError } from "@/modules/access";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import {
   saveServicePolicy,
@@ -12,6 +12,11 @@ export async function savePolicy(_: ActionResult | null, form: FormData) {
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
+    const marketId = z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{1,100}$/)
+      .parse(form.get("marketId"));
+    await assertCan(session.user.id, "markets.edit", { marketId });
     const copy = Object.fromEntries(
       SERVICE_KEYS.map((key) => [
         key,
@@ -32,7 +37,7 @@ export async function savePolicy(_: ActionResult | null, form: FormData) {
       ]),
     );
     await saveServicePolicy(session.user.id, {
-      marketId: form.get("marketId"),
+      marketId,
       expectedRevision: z.coerce.number().int().parse(form.get("revision")),
       policy: {
         version: 1,

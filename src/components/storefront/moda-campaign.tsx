@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { PublicCampaign } from "@/modules/content/campaigns";
 export function ModaCampaign({
   campaign,
@@ -17,6 +17,7 @@ export function ModaCampaign({
   countdown: boolean;
   preview?: boolean;
 }) {
+  const locale = useLocale();
   const t = useTranslations("modaHomepage"),
     dialog = useRef<HTMLDialogElement>(null);
   const [remaining, setRemaining] = useState<number | null>(null),
@@ -104,7 +105,9 @@ export function ModaCampaign({
       {countdown && remaining !== null && (
         <p className="moda-countdown" role="timer" aria-label={t("remaining")}>
           <bdi>
-            {new Intl.NumberFormat().format(Math.floor(remaining / 86400))}{" "}
+            {new Intl.NumberFormat(locale).format(
+              Math.floor(remaining / 86400),
+            )}{" "}
             {t("days")} ·{" "}
             {String(Math.floor(remaining / 3600) % 24).padStart(2, "0")}:
             {String(Math.floor(remaining / 60) % 60).padStart(2, "0")}:
