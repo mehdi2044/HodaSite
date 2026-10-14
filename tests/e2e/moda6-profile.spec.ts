@@ -143,6 +143,8 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         ),
       ).toBe(true);
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.evaluate(() => document.fonts.ready);
       await page.screenshot({ path: image, fullPage: true, scale: "css" });
       await info.attach(`profile-${locale}`, {
         path: image,
@@ -157,6 +159,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
           ).violations,
         ).toEqual([]);
         await page.setViewportSize({ width: 1440, height: 900 });
+        await page.evaluate(() => scrollTo(0, 0));
         await page.screenshot({
           path: info.outputPath("r6-profile-en-1440.png"),
           fullPage: true,
@@ -224,15 +227,13 @@ test("R6 actual admin account image selection persists and magic login still nee
   await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-  await page
-    .context()
-    .addCookies([
-      {
-        name: "hoda.admin.locale",
-        value: "en",
-        url: info.project.use.baseURL!,
-      },
-    ]);
+  await page.context().addCookies([
+    {
+      name: "hoda.admin.locale",
+      value: "en",
+      url: info.project.use.baseURL!,
+    },
+  ]);
   const customer = await browser.newContext({
     baseURL: info.project.use.baseURL,
     viewport: { width: 390, height: 844 },

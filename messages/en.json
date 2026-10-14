@@ -2813,7 +2813,7 @@
   },
   "accountDesign": {
     "appearance": "Your profile style",
-    "directTheme": "Choose your theme directly. This choice does not set your gender.",
+    "directTheme": "Choose a theme for your personal space.",
     "conflict": "Your profile changed elsewhere. Reload before saving your changes.",
     "theme": "Profile theme",
     "sizes": "My usual sizes",
@@ -2833,7 +2833,7 @@
     "coins": "Fitting coins",
     "savedAiLooks": "Saved AI looks",
     "latestOrder": "Latest order",
-    "aiWardrobeHelp": "These are your saved AI results. Instant styling compositions will appear here when instant styling is available.",
+    "aiWardrobeHelp": "Your saved generated looks.",
     "newLook": "Create a look",
     "noLooks": "You have no saved looks yet.",
     "progress": "Sign-in progress",

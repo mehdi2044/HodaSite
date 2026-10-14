@@ -2813,7 +2813,7 @@
   },
   "accountDesign": {
     "appearance": "Profil görünümünüz",
-    "directTheme": "Temanızı doğrudan seçin. Bu seçim cinsiyetinizi belirlemez.",
+    "directTheme": "Kişisel alanınız için bir tema seçin.",
     "conflict": "Profiliniz başka yerde değişti. Kaydetmeden önce sayfayı yenileyin.",
     "theme": "Profil teması",
     "sizes": "Genelde kullandığım bedenler",
@@ -2833,7 +2833,7 @@
     "coins": "Prova jetonları",
     "savedAiLooks": "Kayıtlı AI stilleri",
     "latestOrder": "Son sipariş",
-    "aiWardrobeHelp": "Bunlar kaydettiğiniz AI sonuçlarıdır. Anlık stil bileşimleri özellik kullanılabilir olduğunda burada görünür.",
+    "aiWardrobeHelp": "Kaydettiğiniz oluşturulmuş stiller.",
     "newLook": "Stil oluştur",
     "noLooks": "Henüz kayıtlı stiliniz yok.",
     "progress": "Giriş adımları",

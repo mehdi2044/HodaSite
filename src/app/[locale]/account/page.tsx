@@ -80,156 +80,119 @@ export default async function AccountPage({
         </form>
       </div>
       {!customer.firstName && <AccountProgress step={3} />}
-      <AccountOverview locale={locale as "fa" | "tr" | "en"} />
-      <AccountPresentation
-        locale={locale}
-        revision={customer.presentationVersion}
-        initial={{
-          theme: profileTheme(customer.profileTheme) ?? "",
-          sizeIds: preferences.sizeIds,
-          categoryIds: preferences.categoryIds,
-        }}
-        sizes={sizes.map((size) => ({
-          id: size.id,
-          label: `${size.value} · ${size.scale}${sizes.some((other) => other.id !== size.id && other.value === size.value && other.scale === size.scale) ? ` (${size.groupKey})` : ""}`,
-        }))}
-        categories={categories.map((category) => ({
-          id: category.id,
-          label: catalogText(category.titleI18n, locale as "fa" | "tr" | "en"),
-        }))}
-      />
-      <section className="grid gap-4" id="orders">
-        <h2 className="text-xl font-semibold">{t("orders")}</h2>
-        {orders.length ? (
-          orders.map((order) => (
-            <Link
-              className="flex flex-wrap justify-between gap-3 rounded-token border border-black/10 bg-surface p-5"
-              prefetch={false}
-              key={order.id}
-              href={`/${locale}/orders/${order.number}/pay`}
-            >
-              <Iso>{order.number}</Iso>
-              <span>{t(`statuses.${order.status}`)}</span>
-              <Iso>
-                {order.totalAmount.toString()} {order.currency}
-              </Iso>
-            </Link>
-          ))
-        ) : (
-          <p className="text-muted">{t("noOrders")}</p>
-        )}
-      </section>
-      <section className="grid gap-3">
-        <h2 className="text-xl font-semibold">
-          {(await getTranslations("returns"))("creditBalance")}
-        </h2>
-        {(
-          await db.storeCredit.groupBy({
-            by: ["currency"],
-            where: {
-              customerId: customer.id,
-              balance: { gt: 0 },
-              OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-            },
-            _sum: { balance: true },
-          })
-        ).map((c) => (
-          <p key={c.currency}>
-            <bdi dir="ltr">
-              {c._sum.balance?.toString()} {c.currency}
-            </bdi>
-          </p>
-        ))}
-      </section>
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="rounded-token bg-surface p-6">
-          <h2 className="mb-5 text-xl font-semibold">{t("profile")}</h2>
-          <CommerceForm action={profileAction.bind(null, locale)}>
-            {["firstName", "lastName", "phone", "gender"].map((key) => (
-              <label key={key}>
-                {t(key)}
-                <input
-                  className="input mt-2 w-full"
-                  name={key}
-                  defaultValue={
-                    (customer as unknown as Record<string, string>)[key] ?? ""
-                  }
-                />
-              </label>
-            ))}
-            <label>
-              {t("birthDate")}
-              <input
-                className="input mt-2 w-full"
-                type="date"
-                name="birthDate"
-                defaultValue={customer.birthDate?.toISOString().slice(0, 10)}
-              />
-            </label>
-            <label>
-              {t("language")}
-              <select
-                className="input ms-3"
-                name="locale"
-                defaultValue={customer.locale}
+      <AccountOverview locale={locale as "fa" | "tr" | "en"}>
+        <AccountPresentation
+          locale={locale}
+          revision={customer.presentationVersion}
+          initial={{
+            theme: profileTheme(customer.profileTheme) ?? "",
+            sizeIds: preferences.sizeIds,
+            categoryIds: preferences.categoryIds,
+          }}
+          sizes={sizes.map((size) => ({
+            id: size.id,
+            label: `${size.value} · ${size.scale}${sizes.some((other) => other.id !== size.id && other.value === size.value && other.scale === size.scale) ? ` (${size.groupKey})` : ""}`,
+          }))}
+          categories={categories.map((category) => ({
+            id: category.id,
+            label: catalogText(
+              category.titleI18n,
+              locale as "fa" | "tr" | "en",
+            ),
+          }))}
+        />
+        <section className="grid gap-4" id="orders">
+          <h2 className="text-xl font-semibold">{t("orders")}</h2>
+          {orders.length ? (
+            orders.map((order) => (
+              <Link
+                className="flex flex-wrap justify-between gap-3 rounded-token border border-black/10 bg-surface p-5"
+                prefetch={false}
+                key={order.id}
+                href={`/${locale}/orders/${order.number}/pay`}
               >
-                <option value="fa">فارسی</option>
-                <option value="tr">Türkçe</option>
-                <option value="en">English</option>
-              </select>
-            </label>
-            <label>
-              {t("market")}
-              <select
-                className="input ms-3"
-                name="preferredMarketId"
-                defaultValue={customer.preferredMarketId ?? markets[0]?.id}
-              >
-                {markets.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.code}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button">{t("save")}</button>
-          </CommerceForm>
+                <Iso>{order.number}</Iso>
+                <span>{t(`statuses.${order.status}`)}</span>
+                <Iso>
+                  {order.totalAmount.toString()} {order.currency}
+                </Iso>
+              </Link>
+            ))
+          ) : (
+            <p className="text-muted">{t("noOrders")}</p>
+          )}
         </section>
-        <section className="grid content-start gap-5 rounded-token bg-surface p-6">
-          <h2 className="text-xl font-semibold">{t("addresses")}</h2>
-          {addresses.map((a) => (
-            <p key={a.id}>
-              {a.label}: {a.line1}، {a.city}، {a.province} ({a.country})
+        <section className="grid gap-3">
+          <h2 className="text-xl font-semibold">
+            {(await getTranslations("returns"))("creditBalance")}
+          </h2>
+          {(
+            await db.storeCredit.groupBy({
+              by: ["currency"],
+              where: {
+                customerId: customer.id,
+                balance: { gt: 0 },
+                OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+              },
+              _sum: { balance: true },
+            })
+          ).map((c) => (
+            <p key={c.currency}>
+              <bdi dir="ltr">
+                {c._sum.balance?.toString()} {c.currency}
+              </bdi>
             </p>
           ))}
-          <details>
-            <summary className="cursor-pointer py-3 font-semibold">
-              {t("addAddress")}
-            </summary>
-            <CommerceForm action={saveCustomerAddressAction.bind(null, locale)}>
-              {[
-                "label",
-                "province",
-                "city",
-                "line1",
-                "line2",
-                "postalCode",
-                "phone",
-              ].map((key) => (
+        </section>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <section
+            className="rounded-token bg-surface p-6"
+            id="personal-details"
+          >
+            <h2 className="mb-5 text-xl font-semibold">{t("profile")}</h2>
+            <CommerceForm action={profileAction.bind(null, locale)}>
+              {["firstName", "lastName", "phone", "gender"].map((key) => (
                 <label key={key}>
                   {t(key)}
                   <input
                     className="input mt-2 w-full"
                     name={key}
-                    required={!["line2", "postalCode"].includes(key)}
+                    defaultValue={
+                      (customer as unknown as Record<string, string>)[key] ?? ""
+                    }
                   />
                 </label>
               ))}
               <label>
-                {t("country")}
-                <select className="input ms-3" name="country">
+                {t("birthDate")}
+                <input
+                  className="input mt-2 w-full"
+                  type="date"
+                  name="birthDate"
+                  defaultValue={customer.birthDate?.toISOString().slice(0, 10)}
+                />
+              </label>
+              <label>
+                {t("language")}
+                <select
+                  className="input ms-3"
+                  name="locale"
+                  defaultValue={customer.locale}
+                >
+                  <option value="fa">فارسی</option>
+                  <option value="tr">Türkçe</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label>
+                {t("market")}
+                <select
+                  className="input ms-3"
+                  name="preferredMarketId"
+                  defaultValue={customer.preferredMarketId ?? markets[0]?.id}
+                >
                   {markets.map((m) => (
-                    <option key={m.id} value={m.code}>
+                    <option key={m.id} value={m.id}>
                       {m.code}
                     </option>
                   ))}
@@ -237,31 +200,77 @@ export default async function AccountPage({
               </label>
               <button className="button">{t("save")}</button>
             </CommerceForm>
-          </details>
-          <SavedProducts />
-          <h2 className="text-xl font-semibold">{t("privacy")}</h2>
-          {customer.deletionRequestedAt ? (
-            <p>{t("deletionPending")}</p>
-          ) : (
-            <div>
-              <p className="text-sm text-muted">{t("deletionExplanation")}</p>
-              <Link
-                href={`/${locale}/account/preferences`}
-                className="inline-block rounded-token border border-error px-4 py-3 text-error"
+          </section>
+          <section className="grid content-start gap-5 rounded-token bg-surface p-6">
+            <h2 className="text-xl font-semibold">{t("addresses")}</h2>
+            {addresses.map((a) => (
+              <p key={a.id}>
+                {a.label}: {a.line1}، {a.city}، {a.province} ({a.country})
+              </p>
+            ))}
+            <details>
+              <summary className="cursor-pointer py-3 font-semibold">
+                {t("addAddress")}
+              </summary>
+              <CommerceForm
+                action={saveCustomerAddressAction.bind(null, locale)}
               >
-                {t("requestDeletion")}
-              </Link>
-            </div>
-          )}
-        </section>
-      </div>
-      <Link className="button w-fit" href={`/${locale}/fitting-room`}>
-        {(await getTranslations("fitting"))("title")}
-      </Link>
-      <AccountEngagement />
-      <Link className="button w-fit" href={`/${locale}/account/preferences`}>
-        {(await getTranslations("crm"))("preferences")}
-      </Link>
+                {[
+                  "label",
+                  "province",
+                  "city",
+                  "line1",
+                  "line2",
+                  "postalCode",
+                  "phone",
+                ].map((key) => (
+                  <label key={key}>
+                    {t(key)}
+                    <input
+                      className="input mt-2 w-full"
+                      name={key}
+                      required={!["line2", "postalCode"].includes(key)}
+                    />
+                  </label>
+                ))}
+                <label>
+                  {t("country")}
+                  <select className="input ms-3" name="country">
+                    {markets.map((m) => (
+                      <option key={m.id} value={m.code}>
+                        {m.code}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="button">{t("save")}</button>
+              </CommerceForm>
+            </details>
+            <SavedProducts />
+            <h2 className="text-xl font-semibold">{t("privacy")}</h2>
+            {customer.deletionRequestedAt ? (
+              <p>{t("deletionPending")}</p>
+            ) : (
+              <div>
+                <p className="text-sm text-muted">{t("deletionExplanation")}</p>
+                <Link
+                  href={`/${locale}/account/preferences`}
+                  className="inline-block rounded-token border border-error px-4 py-3 text-error"
+                >
+                  {t("requestDeletion")}
+                </Link>
+              </div>
+            )}
+          </section>
+        </div>
+        <Link className="button w-fit" href={`/${locale}/fitting-room`}>
+          {(await getTranslations("fitting"))("title")}
+        </Link>
+        <AccountEngagement />
+        <Link className="button w-fit" href={`/${locale}/account/preferences`}>
+          {(await getTranslations("crm"))("preferences")}
+        </Link>
+      </AccountOverview>
     </main>
   );
 }

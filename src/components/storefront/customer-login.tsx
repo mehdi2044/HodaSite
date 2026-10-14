@@ -36,12 +36,17 @@ export function CustomerLogin({ locale }: { locale: string }) {
     };
   }, [resendAt]);
   useEffect(() => {
-    const p = new URLSearchParams(location.hash.slice(1));
-    if (p.get("challenge") && p.get("token")) {
-      setChallenge(p.get("challenge")!);
-      setToken(p.get("token")!);
-      history.replaceState(null, "", location.pathname + location.search);
-    }
+    const readLink = () => {
+      const p = new URLSearchParams(location.hash.slice(1));
+      if (p.get("challenge") && p.get("token")) {
+        setChallenge(p.get("challenge")!);
+        setToken(p.get("token")!);
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+    };
+    readLink();
+    window.addEventListener("hashchange", readLink);
+    return () => window.removeEventListener("hashchange", readLink);
   }, []);
   const request = async (form: FormData) => {
     const result = await requestOtpAction(locale, form);
@@ -50,6 +55,7 @@ export function CustomerLogin({ locale }: { locale: string }) {
       setChallenge(result.challengeId);
       setCode("");
       setResendAt(Date.now() + 60_000);
+      setRemaining(60);
     }
     return result;
   };
@@ -58,9 +64,6 @@ export function CustomerLogin({ locale }: { locale: string }) {
       <AccountProgress step={challenge ? 2 : 1} />
       {challenge ? (
         <>
-          // Authentication changes the cart's ownership and session cookies.
-          Start a // fresh document so the shared header cannot retain the
-          pre-login cart.
           <CommerceForm
             navigation="document"
             action={verifyOtpAction.bind(null, locale)}
