@@ -149,6 +149,7 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
       shop.getByRole("heading", { name: "R3b duplicate proof", exact: true }),
     ).toHaveCount(0);
     await shop.screenshot({
+      scale: "css",
       path: test.info().outputPath("r3b-cms-public-390.png"),
       fullPage: true,
     });
@@ -193,6 +194,7 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
             .toBe(true);
           await shop.evaluate(() => scrollTo(0, 0));
           await shop.screenshot({
+            scale: "css",
             path: info.outputPath(`r3b-hero-${locale}-${viewport.width}.png`),
           });
           if (viewport.width === 1440 && locale === "fa")
@@ -215,6 +217,7 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
       await expect(motion).toHaveAttribute("data-running", "false");
       await expect(motion.locator(".moda-fitting-flight")).toHaveCount(0);
       await motion.screenshot({
+        scale: "css",
         path: info.outputPath("r3b-fitting-static-fa-1920.png"),
       });
     }
@@ -435,6 +438,7 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
       "R3b technical video proof",
     );
     await shop.screenshot({
+      scale: "css",
       path: info.outputPath("r3b-video-fallback-390.png"),
       fullPage: true,
     });
