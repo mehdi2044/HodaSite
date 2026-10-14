@@ -146,7 +146,10 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       .filter({ has: page.locator('input[name="blocks"]') });
     const unsaved = JSON.parse(
       await draftForm.locator('input[name="blocks"]').inputValue(),
-    ).find((block: { scene?: unknown }) => block.scene).scene;
+    ).find(
+      (block: { scene?: { title?: { en?: string } } }) =>
+        block.scene?.title?.en === titles.en,
+    ).scene;
     await page.evaluate((scene) => {
       const iframe = document.querySelector<HTMLIFrameElement>(
         '[data-testid="scene-preview"]',
@@ -211,7 +214,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       expect(observations.publishToOpenStoreMs as number).toBeLessThanOrEqual(
         5000,
       );
-    const scene = shop.getByTestId("shoppable-scene");
+    const scene = shop.locator(`[data-scene-id="${unsaved.id}"]`);
     await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
     await expect(
       scene.getByRole("button", { name: en.scenes.addScene }),
@@ -284,7 +287,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
         path: info.outputPath(`r3-scene-${locale}-390.png`),
         scale: "css",
       });
-      await shop.getByTestId("shoppable-scene").screenshot({
+      await scene.screenshot({
         path: info.outputPath(`r3-scene-${locale}-390-full.png`),
         scale: "css",
       });
@@ -353,12 +356,10 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect(
       preview.getByRole("heading", { name: titles.en }),
     ).toBeVisible();
-    await preview
-      .locator("main")
-      .screenshot({
-        path: info.outputPath("r3-private-history-en-390.png"),
-        scale: "css",
-      });
+    await preview.locator("main").screenshot({
+      path: info.outputPath("r3-private-history-en-390.png"),
+      scale: "css",
+    });
     await writeFile(
       info.outputPath("observations.json"),
       JSON.stringify(observations, null, 2) + "\n",
@@ -372,18 +373,13 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await shop.route("**/media/**", (route) => route.abort());
     await shop.reload();
     await expect(
-      shop
-        .getByTestId("shoppable-scene")
+      scene
         .locator('[data-scene-frame="mobile"]')
         .getByText(en.scenes.missingImage),
     ).toBeVisible();
+    await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
     await expect(
-      shop.getByTestId("shoppable-scene").locator(".scene-price-list article"),
-    ).toHaveCount(2);
-    await expect(
-      shop
-        .getByTestId("shoppable-scene")
-        .getByRole("button", { name: en.scenes.addScene }),
+      scene.getByRole("button", { name: en.scenes.addScene }),
     ).toBeDisabled();
   } finally {
     await shop.close();
