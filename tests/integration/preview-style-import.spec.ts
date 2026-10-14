@@ -5,7 +5,7 @@ import {
   consumeOrderInventory,
 } from "@/modules/inventory";
 import { seedLedgerAccounts } from "../../prisma/ledger-seed";
-import { returnFixture } from "../helpers/returns";
+import { createHash, randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient, Prisma } from "@prisma/client";
 import {
@@ -344,20 +344,76 @@ describe.skipIf(!url)(
         where: { variantId },
       });
       const lot = await db.lot.findFirstOrThrow({ where: { variantId } });
-      const f = await returnFixture(db, {
-        pending: true,
-        quantity: 1,
-        price: "40",
-        fxSnapshot: {
-          marketPerUsd: "40",
-          tryPerUsd: "40",
-          quotedAt: new Date().toISOString(),
+      const market = await db.market.findUniqueOrThrow({
+        where: { id: "preview-market" },
+      });
+      const customer = await db.customer.create({
+        data: { email: `demo-sale-${randomUUID()}@example.com` },
+      });
+      const cart = await db.cart.create({
+        data: {
+          customerId: customer.id,
+          marketId: market.id,
+          currency: market.currency,
+          locale: "en",
+          tokenHash: createHash("sha256").update(randomUUID()).digest("hex"),
+          expiresAt: new Date(Date.now() + 86400000),
         },
       });
-      await db.orderItem.update({
-        where: { id: f.order.items[0].id },
-        data: { variantId },
+      const variant = await db.variant.findUniqueOrThrow({
+        where: { id: variantId },
+        include: { product: true },
       });
+      const sequence = await db.orderSequence.upsert({
+        where: { id: market.id },
+        create: { id: market.id, value: 100001 },
+        update: { value: { increment: 1 } },
+      });
+      // OrderItem is append-only: create the immutable snapshot with the actual
+      // imported variant; never retarget a previously created fixture item.
+      const order = await db.order.create({
+        data: {
+          number: `${market.code}-${sequence.value}`,
+          marketId: market.id,
+          customerId: customer.id,
+          cartId: cart.id,
+          guestTokenHash: cart.tokenHash,
+          locale: "en",
+          currency: market.currency,
+          kind: "SALE",
+          status: "PENDING_PAYMENT",
+          subtotalAmount: "40",
+          discountAmount: "0",
+          feeTotalAmount: "0",
+          totalAmount: "40",
+          totalAmountTry: "40",
+          totalAmountUsd: "1",
+          fxSnapshot: {
+            marketPerUsd: "40",
+            tryPerUsd: "40",
+            quotedAt: new Date().toISOString(),
+          },
+          bankSnapshot: [],
+          contactSnapshot: { email: customer.email, firstName: "Demo test" },
+          shippingAddress: { line1: "Test address" },
+          billingAddress: {},
+          holdExpiresAt: new Date(Date.now() + 86400000),
+          paymentDeadlineAt: new Date(Date.now() + 86400000),
+          items: {
+            create: {
+              variantId,
+              quantity: 1,
+              unitPriceAmount: "40",
+              lineTotalAmount: "40",
+              currency: market.currency,
+              weightGrams: 100,
+              productSnapshot: { title: variant.product.titleI18n },
+            },
+          },
+        },
+        include: { items: true },
+      });
+      const f = { order, customer, market };
       await seedLedgerAccounts(db);
       await db.financeConfig.create({
         data: {
