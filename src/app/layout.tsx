@@ -10,6 +10,10 @@ import {
   normalizeThemeColors,
 } from "@/lib/theme-validation";
 import { safeCustomCss } from "@/lib/custom-css";
+import { getPreviewStatus, previewEnabled } from "@/modules/settings";
+import { auth } from "@/modules/auth";
+import { can } from "@/modules/access";
+import { PreviewStatus } from "@/components/admin/preview-status";
 
 // Depends on the request (locale, and — via the theme accessor — the DB), so
 // a brand/theme change is visible on the next load without a rebuild.
@@ -31,6 +35,12 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const theme = await getThemeSettings();
+  let preview = null;
+  if (previewEnabled()) {
+    const session = await auth();
+    if (session?.user?.id && (await can(session.user.id, "system.health.view")))
+      preview = await getPreviewStatus();
+  }
 
   // normalizeThemeColors accepts Phase 00's legacy flat shape too (a
   // backward-compat safety net alongside the data migration). Defense in
@@ -79,6 +89,7 @@ export default async function RootLayout({
       </head>
       <body>
         <NextIntlClientProvider messages={messages}>
+          {preview && <PreviewStatus initial={preview} />}
           {children}
         </NextIntlClientProvider>
       </body>

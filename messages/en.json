@@ -2407,5 +2407,12 @@
       "ACCESSORY": "Accessory",
       "SHOES": "Shoes"
     }
+  },
+  "previewRuntime": {
+    "label": "Test preview",
+    "build": "Build",
+    "builtAt": "Built at (UTC)",
+    "revision": "Content revision",
+    "unavailable": "Connection unavailable; last observed version"
   }
 }

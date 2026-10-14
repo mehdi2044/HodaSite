@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+.preview-runtime {
+  padding: 8px 16px;
+  background: #fff3cb;
+  color: #29210d;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  border-block-end: 1px solid #725b20;
+}
+
 /* Design tokens (ThemeSettings → CSS vars, D26) surfaced to Tailwind v4 so
    utilities like bg-primary / text-muted / rounded-token resolve. */
 @theme inline {

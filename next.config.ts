@@ -5,6 +5,16 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const config: NextConfig = {
+  // Explicit build input: container builds may not contain .git. A missing
+  // SHA stays unknown, never masquerades as a newer deployed version.
+  env: {
+    HODASITE_BUILD_SHA: /^[a-f0-9]{40}$/.test(
+      process.env.HODASITE_BUILD_SHA ?? "",
+    )
+      ? process.env.HODASITE_BUILD_SHA!
+      : "unknown",
+    HODASITE_BUILD_AT: new Date().toISOString(),
+  },
   output: "standalone",
   // Preserve our canonical redirect origin. Next otherwise rewrites loopback
   // hosts (127.0.0.1 -> localhost), dropping host-bound admin cookies.

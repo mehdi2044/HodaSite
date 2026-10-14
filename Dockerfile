@@ -12,6 +12,8 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+ARG HODASITE_BUILD_SHA=unknown
+ENV HODASITE_BUILD_SHA=$HODASITE_BUILD_SHA
 RUN pnpm prisma generate && pnpm build
 
 FROM node:20-bookworm-slim AS runner

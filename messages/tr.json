@@ -2407,5 +2407,12 @@
       "ACCESSORY": "Aksesuar",
       "SHOES": "Ayakkabı"
     }
+  },
+  "previewRuntime": {
+    "label": "Test önizlemesi",
+    "build": "Derleme",
+    "builtAt": "Derleme zamanı (UTC)",
+    "revision": "İçerik sürümü",
+    "unavailable": "Bağlantı yok; son gözlenen sürüm"
   }
 }

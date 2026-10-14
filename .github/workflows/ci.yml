@@ -59,6 +59,8 @@ jobs:
           path: test-results/invoice-proof/
           if-no-files-found: ignore
       - run: pnpm e2e
+      - name: Real authenticated preview propagation (isolated test DB)
+        run: HODASITE_PREVIEW=1 pnpm e2e tests/e2e/preview-runtime.spec.ts
       - name: Preserve mobile storefront proof
         if: always()
         uses: actions/upload-artifact@v4
