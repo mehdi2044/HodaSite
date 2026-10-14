@@ -1,0 +1,56 @@
+{
+  "runtimeSourceSha": "b5c5f59b916acf8b7f2a4f05b6cf1a0092922a31",
+  "builtAtUTC": "2026-10-14T23:13:40.940Z",
+  "files": [
+    {
+      "file": "r3b-cms-public-390.png",
+      "bytes": 2607837,
+      "sha256": "02c5d3e28938930392f64b206e1af202842595fb66b876a04154ea38249c600c"
+    },
+    {
+      "file": "r3b-hero-fa-1440.png",
+      "bytes": 390999,
+      "sha256": "8175d06e032121aae34a99855dfa3edd199b45636c7b789f3e09533215e61bd6"
+    },
+    {
+      "file": "r3b-hero-tr-1440.png",
+      "bytes": 386507,
+      "sha256": "438b05ae5206c075713fa54cf09dcb28040e436b04a8636cd5dd7ad9b654cea9"
+    },
+    {
+      "file": "r3b-hero-en-1440.png",
+      "bytes": 391226,
+      "sha256": "a3d74f26cd7c8776e3743d3f5a16ec3029338e8cd76e1066939dabc800fddd4c"
+    },
+    {
+      "file": "r3b-hero-en-1920.png",
+      "bytes": 312426,
+      "sha256": "bdc9becb8de86dab98bb1921cf94b9fcc96d28ce776e6116c5a4e297b15d5293"
+    },
+    {
+      "file": "r3b-video-fallback-390.png",
+      "bytes": 2794016,
+      "sha256": "8e3a6c28eb8618ad8d2dc04d873ac73c9b529a817fddffb8e9d7674f13c96b60"
+    },
+    {
+      "file": "moda4-foundation-fa-390.png",
+      "bytes": 2134788,
+      "sha256": "a4dab9371d9a0fe12f0e7af65311b4587eea1d39fa532173a737a37ade4e9fa2"
+    },
+    {
+      "file": "moda4-foundation-tr-390.png",
+      "bytes": 2168583,
+      "sha256": "611b7e28bf7d4a83f46cc78a3caa98a6231e60dbc934282dfbf3576a19aefc00"
+    },
+    {
+      "file": "moda4-foundation-en-390.png",
+      "bytes": 2150646,
+      "sha256": "a582606d761414cbc0c0820da81165819301581762d58eec2c12f76906890202"
+    },
+    {
+      "file": "observations.json",
+      "bytes": 317,
+      "sha256": "16bd11af70eab46b18fc6c5a0b87c671c5bb49596bb982e74cd16702841e28d7"
+    }
+  ]
+}
