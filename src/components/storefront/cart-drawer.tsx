@@ -1,83 +1,144 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
 import { useTranslations } from "next-intl";
 import { StorefrontIcon } from "./storefront-icon";
+import { Iso } from "./iso";
 export function CartDrawer({
   locale,
   items,
   currency,
+  subtotal,
+  total,
+  marketMismatch = false,
+  quoteUnavailable = false,
 }: {
   locale: string;
-  items: { title: string; quantity: number; image?: ResponsiveImageMedia }[];
+  items: {
+    id?: string;
+    title: string;
+    quantity: number;
+    image?: ResponsiveImageMedia;
+    color?: string;
+    size?: string;
+    price?: string;
+  }[];
   currency: string;
+  subtotal?: string;
+  total?: string;
+  marketMismatch?: boolean;
+  quoteUnavailable?: boolean;
 }) {
-  const t = useTranslations("commerce");
-  const shopping = useTranslations("shopping");
-  const disclosure = useRef<HTMLDetailsElement>(null);
+  const t = useTranslations("commerce"),
+    shopping = useTranslations("shopping");
+  const dialog = useRef<HTMLDialogElement>(null),
+    trigger = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+  const router = useRouter(),
+    [refreshing, startRefresh] = useTransition();
   useEffect(() => {
-    if (disclosure.current) disclosure.current.open = false;
+    const focus = () => {
+      if (dialog.current?.open) startRefresh(() => router.refresh());
+    };
+    window.addEventListener("focus", focus);
+    return () => window.removeEventListener("focus", focus);
+  }, [router]);
+  useEffect(() => {
+    dialog.current?.close();
   }, [pathname]);
   const count = items.reduce((n, item) => n + item.quantity, 0);
-  const label = `${t("cart")} (${count})`;
   return (
-    <details ref={disclosure}>
-      <summary
-        className="storefront-cart-toggle cursor-pointer py-3"
-        aria-label={label}
+    <>
+      <button
+        ref={trigger}
+        type="button"
+        className="moda-tool storefront-cart-toggle"
+        aria-label={`${t("cart")} (${count})`}
+        onClick={() => {
+          dialog.current?.showModal();
+          startRefresh(() => router.refresh());
+        }}
       >
-        <span className="storefront-cart-content" aria-hidden="true">
-          <StorefrontIcon name="cart" />
-          <bdi>{count}</bdi>
-        </span>
-      </summary>
-      <section className="storefront-mini-cart-panel absolute inset-x-4 top-full z-50 mx-auto grid max-w-sm gap-4 rounded-token border border-black/10 bg-surface p-5 shadow-xl">
+        <StorefrontIcon name="cart" />
+        <bdi aria-hidden="true">{count}</bdi>
+      </button>
+      <dialog
+        ref={dialog}
+        className="moda-cart-drawer"
+        aria-label={t("cart")}
+        onClose={() => trigger.current?.focus()}
+        onClick={(event) => {
+          if (event.target === dialog.current) dialog.current?.close();
+        }}
+      >
         <button
           type="button"
-          className="justify-self-end min-h-11 px-2 text-sm underline"
-          onClick={() => {
-            if (disclosure.current) disclosure.current.open = false;
-          }}
+          className="moda-tool justify-self-end"
+          onClick={() => dialog.current?.close()}
         >
           {shopping("close")}
         </button>
-        <h2 className="font-semibold">
-          {t("cart")} · {currency}
+        <h2>
+          {t("cart")} · <Iso>{currency}</Iso>
         </h2>
+        {refreshing && <p role="status">{t("working")}</p>}
+        {marketMismatch && <p role="status">{t("marketWarning")}</p>}
+        {quoteUnavailable && <p role="status">{t("quoteUnavailable")}</p>}
         {items.length ? (
-          items.slice(0, 5).map((i, n) => (
-            <div key={n} className="storefront-mini-cart-item">
-              {i.image ? (
+          items.slice(0, 5).map((item, n) => (
+            <article key={item.id ?? n} className="moda-drawer-item">
+              {item.image ? (
                 <ResponsiveImage
-                  media={i.image}
+                  media={item.image}
                   locale={locale as "fa" | "tr" | "en"}
                   role="thumbnail"
-                  sizes="60px"
+                  sizes="80px"
                 />
               ) : (
                 <span />
               )}
-              <p>
-                {i.title} × {new Intl.NumberFormat(locale).format(i.quantity)}
-              </p>
-            </div>
+              <div>
+                <h3>{item.title}</h3>
+                <p>
+                  {item.color} · <Iso>{item.size}</Iso> ×{" "}
+                  {new Intl.NumberFormat(locale).format(item.quantity)}
+                </p>
+                {item.price && (
+                  <p className="moda-price">
+                    <Iso>{item.price}</Iso>
+                  </p>
+                )}
+              </div>
+            </article>
           ))
         ) : (
-          <p className="text-muted">{t("empty")}</p>
+          <p>{t("empty")}</p>
+        )}
+        {items.length > 5 && (
+          <p>{t("moreCartItems", { count: items.length - 5 })}</p>
+        )}
+        {subtotal && (
+          <p className="moda-drawer-total">
+            {t("subtotal")}
+            <Iso>{subtotal}</Iso>
+          </p>
+        )}
+        {total && (
+          <p className="moda-drawer-total">
+            {t("estimate")}
+            <Iso>{total}</Iso>
+          </p>
         )}
         <Link
-          onClick={() => {
-            if (disclosure.current) disclosure.current.open = false;
-          }}
-          className="button text-center"
+          className="button"
           href={`/${locale}/cart`}
+          onClick={() => dialog.current?.close()}
         >
           {t("viewCart")}
         </Link>
-      </section>
-    </details>
+      </dialog>
+    </>
   );
 }

@@ -5,6 +5,8 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { SearchBox } from "@/components/storefront/search-box";
 import { getRequestContext } from "@/lib/request-context";
 import { listCatalogProducts, type CatalogLocale } from "@/modules/catalog";
+import { db } from "@/lib/db";
+import { notFound } from "next/navigation";
 
 export default async function SearchPage({
   params,
@@ -17,6 +19,14 @@ export default async function SearchPage({
   const one = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value[0] : value;
   const q = (one(query.q) ?? "").slice(0, 200);
+  const collectionId = one(query.collectionId)?.slice(0, 100);
+  const collection = collectionId
+    ? await db.collection.findFirst({
+        where: { id: collectionId, deletedAt: null },
+        select: { id: true, titleI18n: true },
+      })
+    : null;
+  if (collectionId && !collection) notFound();
   const safe = locale as CatalogLocale;
   const [{ market }, t] = await Promise.all([
     getRequestContext(locale),
@@ -24,6 +34,7 @@ export default async function SearchPage({
   ]);
   const result = await listCatalogProducts(market.id, safe, {
     q,
+    collectionId: collection?.id,
     limit: 24,
     after: one(query.after),
     page: Number(one(query.page) ?? 1),
@@ -34,7 +45,12 @@ export default async function SearchPage({
       className="shell shop-page py-10 md:py-16"
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <h1 className="text-4xl font-semibold">{t("search")}</h1>
+      <h1 className="text-4xl font-semibold">
+        {collection
+          ? (collection.titleI18n as Record<string, string>)[locale] ||
+            (collection.titleI18n as Record<string, string>).en
+          : t("search")}
+      </h1>
       <SearchBox
         locale={safe}
         marketId={market.id}
@@ -42,6 +58,7 @@ export default async function SearchPage({
         label={t("search")}
         placeholder={t("searchPlaceholder")}
         initial={q}
+        collectionId={collection?.id}
       />
       <p className="mb-5 text-sm text-muted">
         {t("results", { count: result.total })}
@@ -64,7 +81,7 @@ export default async function SearchPage({
       {result.nextCursor && (
         <Link
           className="button mt-8 inline-block"
-          href={`?${new URLSearchParams({ q, after: result.nextCursor, page: String(result.page + 1) })}`}
+          href={`?${new URLSearchParams({ q, after: result.nextCursor, page: String(result.page + 1), ...(collection ? { collectionId: collection.id } : {}) })}`}
         >
           {t("loadMore")}
         </Link>

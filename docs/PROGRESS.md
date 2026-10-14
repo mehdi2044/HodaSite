@@ -11,7 +11,8 @@ Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 |---|---|---|
 | R0 | BLOCKED_ENV برای URL/ورود مالک؛ پایهٔ کد پیاده شد | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش. |
 | R1 | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند. |
-| R2…R7a | NOT_STARTED | طبق وابستگی‌های فاز؛ پنل هم‌زمان با قابلیت مشتری. |
+| R2 | IN_PROGRESS | شاخهٔ جدا `phase/design-01-r2-storefront-shell`، مبنا PR68؛ پوسته/منو و رسانهٔ nullable، permission بازار، conflict، لینک واقعی دسته/کالکشن، جست‌وجو/drawer و ترجیحات واقعی ایمیل. آزمون کامل/CI/پذیرش باقی است. |
+| R3…R7a | NOT_STARTED | طبق وابستگی‌های فاز؛ پنل هم‌زمان با قابلیت مشتری. |
 | R7b | تشخیص واقعی محیط مشکل‌دار UNVERIFIED | دسترسی سرور/صف واقعی مالک موجود نیست؛ بررسی غیرپولی مستقل مجاز. |
 | R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
 
@@ -1237,3 +1238,9 @@ Stabilization CI follow-up: Windows tooling passed. Required CI exposed upstream
 mc registry unavailability and high Nodemailer advisories. D68 records identical
 mc release acquisition from pinned official source; Nodemailer patch 10.0.9
 removes all known production audit findings. Fresh complete CI is required before merging.
+
+### R1 CI correction and R2 scope — 2026-10-14
+
+R1 code head `7d8dfd94061bdf50aeeb85597264ba4ae4ae69de` fixes Crayon positioning overriding fixed/sticky purchase buttons and seeds real320/640/960WebP brand renditions. S3 smoke now excludes ThemeSettings-owned logos when selecting unreferenced replacement media. Local lint/typecheck/4,122 unit, three fresh seed/brand PG cases and six Chromium foundation/prepared-look→PDP→cart→checkout pass. Current-head Docker/Windows/Local+S3 CI pass; full checks/WebKit pending. Previous7eaff CI had6 real browser failures and S3 selection failure, not a successful delivery. No assertions/deadlines were weakened.
+
+R2 reuses PR60 `3242540` MediaPicker/readiness/pending/SettingsForm/exact-ID status route and their10 unit cases as a documented dependency, not a blanket cherry-pick. Its nullable JSON migration touches only MenuItem. Owner settings/volumes are untouched; seed's unsupported free-shipping claim is replaced only for newly created market defaults, with truthful destination-based quote wording. Existing commercial copy remains owner-managed and needs policy review. R0 revision includes committed menu updates; catalog/scene propagation belongs to R3. Footer uses the existing verified customer consent/preferences service; no newsletter sender, production email or paid call is added.

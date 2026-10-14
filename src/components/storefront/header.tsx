@@ -1,4 +1,5 @@
 import { variantImages } from "@/modules/catalog/variant-images";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { seoPath } from "@/lib/seo-urls";
 import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
@@ -6,6 +7,8 @@ import { MobileNavigation } from "./mobile-navigation";
 import { StorefrontIcon } from "./storefront-icon";
 import Link from "next/link";
 import { readCart } from "@/modules/cart";
+import { quoteSavedCart } from "@/modules/fees";
+import { currentCustomer } from "@/modules/customers";
 import { CartDrawer } from "./cart-drawer";
 import { db } from "@/lib/db";
 import type { Market } from "@/lib/request-context";
@@ -14,6 +17,9 @@ import { MarketSwitcher } from "./market-switcher";
 import { ResponsiveImage } from "./responsive-image";
 import { getMenu, type PublicMenuItem } from "@/modules/content";
 import { getTranslations } from "next-intl/server";
+import { HeaderFrame } from "./header-frame";
+import { HeaderSearch } from "./header-search";
+import { MegaNavigation } from "./mega-navigation";
 
 export async function Header({
   locale,
@@ -22,6 +28,7 @@ export async function Header({
   siteName,
   logoMediaId,
   headerStyle,
+  logoWidth = 160,
 }: {
   locale: string;
   market: Market;
@@ -29,56 +36,130 @@ export async function Header({
   siteName: string;
   logoMediaId?: string | null;
   headerStyle: string;
+  logoWidth?: number;
 }) {
-  const normalizedLocale = locale as "fa" | "tr" | "en";
-  const [logo, desktopMenu, mobileMenu, t, departments] = await Promise.all([
-    logoMediaId
-      ? db.media.findFirst({
-          where: {
-            id: logoMediaId,
-            kind: "image",
-            status: "READY",
-            deletedAt: null,
+  const safe = locale as "fa" | "tr" | "en";
+  const [logo, desktopMenu, mobileMenu, t, departments, cart] =
+    await Promise.all([
+      logoMediaId
+        ? db.media.findFirst({
+            where: {
+              id: logoMediaId,
+              kind: "image",
+              status: "READY",
+              deletedAt: null,
+            },
+          })
+        : null,
+      getMenu("header", market.id, market.code, safe),
+      getMenu("mobile", market.id, market.code, safe),
+      getTranslations(),
+      db.category.findMany({
+        where: { deletedAt: null, parentId: null },
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        select: { id: true, titleI18n: true, slugI18n: true },
+      }),
+      readCart(),
+    ]);
+  const departmentItems: PublicMenuItem[] = departments.flatMap((category) => {
+    const slug = localizedValue(
+      category.slugI18n as Record<"fa" | "tr" | "en", string>,
+      safe,
+    );
+    return slug
+      ? [
+          {
+            id: `department-${category.id}`,
+            label: localizedValue(
+              category.titleI18n as Record<"fa" | "tr" | "en", string>,
+              safe,
+            ),
+            href: seoPath(safe, market.code, "c", slug),
+            target: "_self",
+            placeholder: false,
+            children: [],
           },
-        })
-      : null,
-    getMenu("header", market.id, market.code, normalizedLocale),
-    getMenu("mobile", market.id, market.code, normalizedLocale),
-    getTranslations(),
-    db.category.findMany({
-      where: { deletedAt: null, parentId: null },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-      take: 12,
-      select: { id: true, titleI18n: true, slugI18n: true },
-    }),
-  ]);
-
-  const cart = await readCart();
-  const cartMedia = await variantImages(
+        ]
+      : [];
+  });
+  const complete = (items: PublicMenuItem[]): PublicMenuItem[] => {
+    const missing = departmentItems.filter(
+      (category) => !items.some((item) => item.href === category.href),
+    );
+    // A disclosure bounds presentation size, never business category count.
+    return [
+      ...items,
+      ...(missing.length > 6
+        ? [
+            {
+              id: "all-categories",
+              label: t("shopping.browseCategories"),
+              target: "_self" as const,
+              placeholder: true,
+              children: missing,
+            },
+          ]
+        : missing),
+    ];
+  };
+  const images = await variantImages(
     cart?.items.slice(0, 5).map((item) => item.variant) ?? [],
   );
+  const quote = cart?.items.length
+    ? await quoteSavedCart(
+        {
+          marketId: cart.marketId,
+          locale: safe,
+          items: cart.items,
+          promotions: {
+            customerId: (await currentCustomer())?.id ?? null,
+            couponCodes:
+              (cart.checkout as Record<string, unknown>).couponCodes ?? [],
+          },
+        },
+        cart.checkout,
+      ).catch(() => null)
+    : null;
   return (
     <>
-      <header
-        data-header-style={headerStyle}
-        className="sticky top-0 z-40 border-b border-black/5 bg-bg/95 backdrop-blur-md"
-      >
-        <div className="storefront-utility">
-          <span>{siteName}</span>
-          <nav aria-label={t("contentNavigation.main")}>
-            {desktopMenu.map((item) => (
-              <MenuLink
-                key={item.id}
-                item={item}
-                placeholderLabel={t("contentNavigation.phase02Placeholder")}
+      <HeaderFrame style={headerStyle}>
+        <div className="moda-header-grid">
+          <div
+            className="moda-desktop-navigation"
+            data-testid="department-navigation"
+          >
+            <MegaNavigation items={complete(desktopMenu)} locale={safe} />
+          </div>
+          <div className="moda-mobile-navigation">
+            <MobileMenu label={t("contentNavigation.mobile")}>
+              <MegaNavigation
+                items={complete(mobileMenu.length ? mobileMenu : desktopMenu)}
+                locale={safe}
+                mobile
               />
-            ))}
-          </nav>
-        </div>
-        <div className="shell storefront-header-grid">
+              <div className="grid gap-3 border-t border-black/10 pt-4 mt-2">
+                <span>{t("mobileStorefront.language")}</span>
+                <LocaleSwitcher
+                  current={locale}
+                  enabledLocales={market.enabledLocales}
+                  ariaLabel={t("mobileStorefront.language")}
+                  mobile
+                />
+                <label>
+                  {t("mobileStorefront.market")}
+                  <MarketSwitcher
+                    current={market.code}
+                    markets={markets}
+                    ariaLabel={t("mobileStorefront.market")}
+                  />
+                </label>
+              </div>
+            </MobileMenu>
+          </div>
           <Link
-            href={seoPath(normalizedLocale, market.code, "home")}
-            className="storefront-brand flex min-h-11 min-w-0 items-center gap-2 text-lg font-semibold tracking-tight text-text"
+            href={seoPath(safe, market.code, "home")}
+            className="moda-brand"
+            style={{ width: logoWidth }}
           >
             {logo ? (
               <ResponsiveImage
@@ -90,147 +171,85 @@ export async function Header({
                   blurDataUrl: logo.blurDataUrl,
                   altI18n: { fa: siteName, tr: siteName, en: siteName },
                 }}
-                locale={locale as "fa" | "tr" | "en"}
-                sizes="120px"
+                locale={safe}
+                sizes={`${logoWidth}px`}
                 priority
-                className="h-8"
-                imgClassName="h-8 w-auto object-contain"
+                imgClassName="w-full h-auto max-h-12 object-contain"
               />
             ) : (
-              <span className="storefront-brand-name">{siteName}</span>
+              <span>{siteName}</span>
             )}
           </Link>
-          {departments.length > 0 && (
-            <nav
-              className="storefront-departments"
-              aria-label={t("shopping.browseCategories")}
-              data-testid="department-navigation"
-            >
-              {departments.map((department) => (
-                <Link
-                  key={department.id}
-                  href={seoPath(
-                    normalizedLocale,
-                    market.code,
-                    "c",
-                    localizedValue(
-                      department.slugI18n as Record<"fa" | "tr" | "en", string>,
-                      normalizedLocale,
-                    ),
-                  )}
-                >
-                  {localizedValue(
-                    department.titleI18n as Record<"fa" | "tr" | "en", string>,
-                    normalizedLocale,
-                  )}
-                </Link>
-              ))}
-            </nav>
-          )}
-          <div className="storefront-tools min-w-0">
-            <Link
-              href={`/${locale}/search`}
-              aria-label={t("catalog.search")}
-              className="hidden min-h-11 min-w-11 items-center justify-center lg:inline-flex"
-            >
-              <StorefrontIcon name="search" />
-            </Link>
+          <div className="moda-header-tools">
+            <HeaderSearch
+              locale={safe}
+              marketId={market.id}
+              marketCode={market.code}
+            />
             <Link
               href={`/${locale}/account/wishlist`}
+              className="moda-tool"
               aria-label={t("engagement.wishlist")}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
             >
               <span aria-hidden="true">♡</span>
             </Link>
+            <Link
+              href={`/${locale}/account`}
+              className="moda-tool moda-account-tool"
+              aria-label={t("commerce.account")}
+            >
+              <StorefrontIcon name="account" />
+            </Link>
             <CartDrawer
               locale={locale}
-              currency={cart?.currency ?? market.currency}
+              currency={quote?.currency ?? cart?.currency ?? market.currency}
+              marketMismatch={Boolean(
+                cart &&
+                (cart.marketId !== market.id ||
+                  (quote && quote.currency !== cart.currency)),
+              )}
+              subtotal={
+                quote
+                  ? formatStorefrontAmount(quote.subtotal, quote.currency, safe)
+                  : undefined
+              }
+              total={
+                quote
+                  ? formatStorefrontAmount(quote.total, quote.currency, safe)
+                  : undefined
+              }
+              quoteUnavailable={Boolean(cart?.items.length && !quote)}
               items={
-                cart?.items.map((i) => ({
+                cart?.items.map((item) => ({
+                  id: item.id,
                   title:
-                    (i.variant.product.titleI18n as Record<string, string>)[
+                    (item.variant.product.titleI18n as Record<string, string>)[
                       locale
                     ] ?? "",
-                  quantity: i.quantity,
-                  image: cartMedia.get(i.variantId),
+                  quantity: item.quantity,
+                  image: images.get(item.variantId),
+                  color:
+                    (item.variant.color.nameI18n as Record<string, string>)[
+                      locale
+                    ] ?? "",
+                  size: item.variant.size.value,
+                  price: quote?.items.find(
+                    (line) => line.variantId === item.variantId,
+                  )
+                    ? formatStorefrontAmount(
+                        quote.items.find(
+                          (line) => line.variantId === item.variantId,
+                        )!.unitPrice,
+                        quote.currency,
+                        safe,
+                      )
+                    : undefined,
                 })) ?? []
               }
             />
-            <div className="hidden items-center gap-2 lg:flex">
-              <Link
-                className="inline-flex min-h-11 min-w-11 items-center justify-center"
-                aria-label={t("commerce.account")}
-                href={`/${locale}/account`}
-              >
-                <StorefrontIcon name="account" />
-              </Link>
-              <LocaleSwitcher
-                current={locale}
-                enabledLocales={market.enabledLocales}
-                ariaLabel={t("locale.switchTo")}
-                compact
-              />
-              <MarketSwitcher
-                current={market.code}
-                markets={markets}
-                ariaLabel={t("market.chooseMarket")}
-              />
-            </div>
-            <MobileMenu label={t("contentNavigation.mobile")}>
-              {(mobileMenu.length ? mobileMenu : desktopMenu).map((item) => (
-                <MenuLink
-                  key={item.id}
-                  item={item}
-                  mobile
-                  placeholderLabel={t("contentNavigation.phase02Placeholder")}
-                />
-              ))}
-              <div className="grid gap-3 border-t border-black/10 pt-4 mt-2">
-                <span className="text-sm text-muted">
-                  {t("mobileStorefront.language")}
-                </span>
-                <LocaleSwitcher
-                  current={locale}
-                  enabledLocales={market.enabledLocales}
-                  ariaLabel={t("mobileStorefront.language")}
-                  mobile
-                />
-                <label className="grid gap-2 text-sm text-muted">
-                  {t("mobileStorefront.market")}
-                  <MarketSwitcher
-                    current={market.code}
-                    markets={markets}
-                    ariaLabel={t("mobileStorefront.market")}
-                  />
-                </label>
-              </div>
-            </MobileMenu>
           </div>
-          <form
-            className="storefront-search"
-            role="search"
-            action={`/${locale}/search`}
-            method="get"
-            aria-label={t("mobileStorefront.search")}
-          >
-            <label className="sr-only" htmlFor="storefront-search">
-              {t("mobileStorefront.search")}
-            </label>
-            <input
-              id="storefront-search"
-              name="q"
-              type="search"
-              dir="auto"
-              enterKeyHint="search"
-              placeholder={t("mobileStorefront.searchPlaceholder")}
-              autoComplete="off"
-            />
-            <button type="submit" aria-label={t("catalog.search")}>
-              <StorefrontIcon name="search" />
-            </button>
-          </form>
         </div>
-      </header>
+      </HeaderFrame>
       <MobileNavigation
         locale={locale}
         labels={{
@@ -242,56 +261,5 @@ export async function Header({
         }}
       />
     </>
-  );
-}
-
-function MenuLink({
-  item,
-  mobile = false,
-  placeholderLabel,
-}: {
-  item: PublicMenuItem;
-  mobile?: boolean;
-  placeholderLabel: string;
-}) {
-  if (item.placeholder)
-    return (
-      <span
-        className="min-h-11 px-3 py-3 text-muted"
-        aria-disabled="true"
-        title={placeholderLabel}
-      >
-        {item.label}
-      </span>
-    );
-  return (
-    <div className={mobile ? "grid" : "group relative"}>
-      <Link
-        className="flex min-h-11 items-center px-2"
-        href={item.href ?? "#"}
-        target={item.target}
-        rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-      >
-        {item.label}
-      </Link>
-      {item.children.length > 0 && (
-        <div
-          className={
-            mobile
-              ? "ms-4 grid"
-              : "invisible absolute start-0 top-full z-20 grid min-w-48 rounded-token bg-surface p-2 opacity-0 shadow-xl group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-          }
-        >
-          {item.children.map((child) => (
-            <MenuLink
-              key={child.id}
-              item={child}
-              mobile
-              placeholderLabel={placeholderLabel}
-            />
-          ))}
-        </div>
-      )}
-    </div>
   );
 }

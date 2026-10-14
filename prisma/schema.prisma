@@ -672,6 +672,7 @@ model MenuItem {
   pageId      String?
   page        Page?      @relation(fields: [pageId], references: [id], onDelete: SetNull)
   referenceId String?
+  presentation Json?
   target      String     @default("_self")
   enabled     Boolean    @default(true)
   visibleIn   String[]   @default([])

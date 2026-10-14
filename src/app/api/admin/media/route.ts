@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { NextResponse } from "next/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
@@ -15,11 +16,25 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const url = new URL(req.url);
+  const id = url.searchParams.get("id");
+  const parsedId = z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,100}$/)
+    .safeParse(id);
+  if (id !== null && !parsedId.success)
+    return NextResponse.json({ error: "invalid_id" }, { status: 400 });
+  const mediaId = parsedId.success ? parsedId.data : undefined;
   const q = url.searchParams.get("q") ?? undefined;
   const kind = url.searchParams.get("kind") ?? undefined;
   const folderId = url.searchParams.get("folderId") ?? undefined;
 
-  const { items, total } = await listMedia({ q, kind, folderId, take: 60 });
+  const { items, total } = await listMedia({
+    id: mediaId,
+    q,
+    kind,
+    folderId,
+    take: mediaId ? 1 : 60,
+  });
   return NextResponse.json({
     total,
     items: items.map((m) => ({

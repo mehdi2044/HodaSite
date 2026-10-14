@@ -7,7 +7,7 @@ import { assertCan, UnauthorizedError } from "@/modules/access";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
-import { isValidMenuParent, menuItemInputSchema } from "@/modules/content";
+import { writeMenuItem, menuItemInputSchema } from "@/modules/content";
 
 const bool = (value: FormDataEntryValue | null) => value === "on";
 const values = (data: FormData, key: string) => data.getAll(key).map(String);
@@ -19,13 +19,15 @@ export async function createMenuOverride(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
-    await assertCan(session.user.id, "content.menu.write");
     const parsed = z
       .object({
         key: z.enum(["header", "mobile", "footer"]),
         marketId: z.string().min(1),
       })
       .parse({ key: data.get("key"), marketId: data.get("marketId") });
+    await assertCan(session.user.id, "content.menu.write", {
+      marketId: parsed.marketId,
+    });
     const [market, existing] = await Promise.all([
       db.market.findUnique({ where: { id: parsed.marketId } }),
       db.menu.findFirst({ where: { ...parsed, deletedAt: null } }),
@@ -57,7 +59,14 @@ export async function saveMenuItem(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
-    await assertCan(session.user.id, "content.menu.write");
+    const selectedMenu = await db.menu.findFirst({
+      where: { id: String(data.get("menuId") ?? ""), deletedAt: null },
+    });
+    await assertCan(
+      session.user.id,
+      "content.menu.write",
+      selectedMenu?.marketId ? { marketId: selectedMenu.marketId } : undefined,
+    );
     const input = menuItemInputSchema.parse({
       id: String(data.get("id") || "") || undefined,
       menuId: String(data.get("menuId") || ""),
@@ -75,61 +84,19 @@ export async function saveMenuItem(
       enabled: bool(data.get("enabled")),
       visibleIn: values(data, "visibleIn"),
       sortOrder: Number(data.get("sortOrder") || 0),
+      expectedUpdatedAt:
+        String(data.get("expectedUpdatedAt") || "") || undefined,
+      presentation: {
+        version: 1,
+        mediaId: String(data.get("mediaId") || "") || undefined,
+        fit: String(data.get("imageFit") || "cover"),
+        tone: String(data.get("imageTone") || "sand"),
+        focalX: Number(data.get("focalX") ?? 0.5),
+        focalY: Number(data.get("focalY") ?? 0.5),
+      },
     });
 
-    const [menu, parent, current] = await Promise.all([
-      db.menu.findFirst({ where: { id: input.menuId, deletedAt: null } }),
-      input.parentId
-        ? db.menuItem.findFirst({
-            where: { id: input.parentId, deletedAt: null },
-            include: { parent: true },
-          })
-        : null,
-      input.id
-        ? db.menuItem.findFirst({
-            where: { id: input.id, deletedAt: null },
-            include: { children: { where: { deletedAt: null } } },
-          })
-        : null,
-    ]);
-    if (!menu || (input.id && !current)) throw new z.ZodError([]);
-    if (
-      !isValidMenuParent({
-        itemId: input.id,
-        menuId: menu.id,
-        parentId: input.parentId,
-        parentMenuId: parent?.menuId,
-        parentParentId: parent?.parentId,
-        currentHasChildren: Boolean(current?.children.length),
-      })
-    )
-      throw new z.ZodError([]);
-
-    const before = current ? { ...current, children: undefined } : undefined;
-    const saved = await withMutation(() =>
-      db.$transaction(async (tx) => {
-        const item = input.id
-          ? await tx.menuItem.update({
-              where: { id: input.id },
-              data: menuItemData(input),
-            })
-          : await tx.menuItem.create({ data: menuItemData(input) });
-        await tx.auditLog.create({
-          data: {
-            userId: session.user.id,
-            action: input.id
-              ? "content.menu_item.update"
-              : "content.menu_item.create",
-            entityType: "MenuItem",
-            entityId: item.id,
-            before: before as object | undefined,
-            after: item as object,
-          },
-        });
-        return item;
-      }),
-    );
-    void saved;
+    await writeMenuItem(session.user.id, input);
     revalidateTag("menus");
     revalidatePath("/admin/content/menus");
   });
@@ -142,11 +109,18 @@ export async function deleteMenuItem(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
-    await assertCan(session.user.id, "content.menu.write");
     const id = z.string().min(1).parse(data.get("id"));
     const before = await db.menuItem.findFirstOrThrow({
       where: { id, deletedAt: null },
     });
+    const menu = await db.menu.findUniqueOrThrow({
+      where: { id: before.menuId },
+    });
+    await assertCan(
+      session.user.id,
+      "content.menu.write",
+      menu.marketId ? { marketId: menu.marketId } : undefined,
+    );
     await withMutation(() =>
       db.$transaction([
         db.menuItem.updateMany({
@@ -176,7 +150,6 @@ export async function reorderMenuItems(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
-    await assertCan(session.user.id, "content.menu.write");
     const parsed = z
       .object({
         menuId: z.string().min(1),
@@ -188,6 +161,14 @@ export async function reorderMenuItems(
         parentId: String(data.get("parentId") || "") || undefined,
         orderedIds: parseJson(String(data.get("orderedIds") || "[]")),
       });
+    const menu = await db.menu.findUniqueOrThrow({
+      where: { id: parsed.menuId },
+    });
+    await assertCan(
+      session.user.id,
+      "content.menu.write",
+      menu.marketId ? { marketId: menu.marketId } : undefined,
+    );
     if (new Set(parsed.orderedIds).size !== parsed.orderedIds.length)
       throw new z.ZodError([]);
     const [count, parentCount] = await Promise.all([
@@ -234,24 +215,6 @@ export async function reorderMenuItems(
     revalidateTag("menus");
     revalidatePath("/admin/content/menus");
   });
-}
-
-function menuItemData(input: z.infer<typeof menuItemInputSchema>) {
-  return {
-    menuId: input.menuId,
-    parentId: input.parentId ?? null,
-    labelI18n: input.labelI18n,
-    linkType: input.linkType,
-    url: input.linkType === "url" ? input.url : null,
-    pageId: input.linkType === "page" ? input.pageId : null,
-    referenceId: ["category", "collection"].includes(input.linkType)
-      ? input.referenceId
-      : null,
-    target: input.target,
-    enabled: input.enabled,
-    visibleIn: input.visibleIn,
-    sortOrder: input.sortOrder,
-  };
 }
 
 function parseJson(value: string): unknown {

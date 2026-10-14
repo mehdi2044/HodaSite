@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { menuPresentationSchema } from "./menu-presentation";
 
 export const LOCALES = ["fa", "tr", "en"] as const;
 export const MARKET_CODES = ["IR", "TR", "CA"] as const;
@@ -189,6 +190,8 @@ export const menuItemInputSchema = z
     url: safeLinkSchema.optional(),
     pageId: z.string().optional(),
     referenceId: z.string().optional(),
+    presentation: menuPresentationSchema.optional(),
+    expectedUpdatedAt: z.string().datetime().optional(),
     target: z.enum(["_self", "_blank"]),
     enabled: z.boolean(),
     visibleIn: z.array(z.enum(MARKET_CODES)).max(3),

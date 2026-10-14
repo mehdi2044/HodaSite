@@ -312,9 +312,9 @@ async function main() {
       announcementBar: {
         enabled: true,
         text: {
-          fa: "ارسال رایگان برای سفارش‌های بالای ۲۰۰۰ لیر",
-          tr: "2000 TL üzeri siparişlerde ücretsiz kargo",
-          en: "Free shipping over 2000 TRY",
+          fa: "هزینه ارسال پس از انتخاب مقصد در پرداخت محاسبه می‌شود",
+          tr: "Kargo bedeli, ödeme sırasında teslimat adresine göre hesaplanır",
+          en: "Shipping is calculated for your destination at checkout",
         },
       },
     },

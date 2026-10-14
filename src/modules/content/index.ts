@@ -6,10 +6,15 @@ import {
   sanitizeRichText,
   type ContentBlock,
 } from "./validation";
+import { menuPresentation } from "./menu-presentation";
+import { seoPath } from "@/lib/seo-urls";
+import type { Media } from "@prisma/client";
 
 export * from "./validation";
 export * from "./homepage";
 export * from "./translations";
+export * from "./menu-presentation";
+export { writeMenuItem } from "./menu-writes";
 
 export type Localized = Partial<Record<"fa" | "tr" | "en", string>>;
 export type PublicMenuItem = {
@@ -19,6 +24,18 @@ export type PublicMenuItem = {
   target: "_self" | "_blank";
   placeholder: boolean;
   children: PublicMenuItem[];
+  image?: Pick<
+    Media,
+    | "id"
+    | "url"
+    | "variants"
+    | "width"
+    | "height"
+    | "blurDataUrl"
+    | "altI18n"
+    | "originalName"
+  >;
+  presentation?: ReturnType<typeof menuPresentation>;
 };
 
 const getMenuRows = unstable_cache(
@@ -32,7 +49,6 @@ const getMenuRows = unstable_cache(
       include: {
         items: {
           where: { deletedAt: null, enabled: true },
-          include: { page: true },
           orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
         },
       },
@@ -57,6 +73,64 @@ export async function getMenu(
     (item) =>
       item.visibleIn.length === 0 || item.visibleIn.includes(marketCode),
   );
+  const categoryIds = allowed
+    .filter((item) => item.linkType === "category")
+    .flatMap((item) => (item.referenceId ? [item.referenceId] : []));
+  const collectionIds = allowed
+    .filter((item) => item.linkType === "collection")
+    .flatMap((item) => (item.referenceId ? [item.referenceId] : []));
+  const pageIds = allowed.flatMap((item) => (item.pageId ? [item.pageId] : []));
+  const mediaIds = allowed.flatMap((item) =>
+    menuPresentation(item.presentation).mediaId
+      ? [menuPresentation(item.presentation).mediaId!]
+      : [],
+  );
+  const [categories, collections, images, pages] = await Promise.all([
+    categoryIds.length
+      ? db.category.findMany({
+          where: { id: { in: categoryIds }, deletedAt: null },
+          select: { id: true, slugI18n: true },
+        })
+      : [],
+    collectionIds.length
+      ? db.collection.findMany({
+          where: { id: { in: collectionIds }, deletedAt: null },
+          select: { id: true },
+        })
+      : [],
+    mediaIds.length
+      ? db.media.findMany({
+          where: {
+            id: { in: mediaIds },
+            kind: "image",
+            status: "READY",
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            url: true,
+            variants: true,
+            width: true,
+            height: true,
+            blurDataUrl: true,
+            altI18n: true,
+            originalName: true,
+          },
+        })
+      : [],
+    pageIds.length
+      ? db.page.findMany({
+          where: { id: { in: pageIds }, deletedAt: null },
+          select: {
+            id: true,
+            slugI18n: true,
+            status: true,
+            deletedAt: true,
+            marketIds: true,
+          },
+        })
+      : [],
+  ]);
   const byParent = new Map<string | null, typeof allowed>();
   for (const item of allowed) {
     const parent =
@@ -74,29 +148,41 @@ export async function getMenu(
       (item.labelI18n as Localized)[locale] ||
       (item.labelI18n as Localized).fa ||
       "";
-    const pageSlugs = item.page?.slugI18n as Localized | undefined;
+    const page = pages.find((row) => row.id === item.pageId);
+    const pageSlugs = page?.slugI18n as Localized | undefined;
     const localizedSlug = pageSlugs?.[locale] ?? pageSlugs?.fa;
     const pageVisible =
-      item.page?.status === "published" &&
-      !item.page.deletedAt &&
+      page?.status === "published" &&
+      !page.deletedAt &&
       Boolean(localizedSlug) &&
-      (item.page.marketIds.length === 0 ||
-        item.page.marketIds.includes(marketId));
+      (page.marketIds.length === 0 || page.marketIds.includes(marketId));
+    const category = categories.find((row) => row.id === item.referenceId);
+    const categorySlug = category
+      ? (category.slugI18n as Localized)[locale] ||
+        (category.slugI18n as Localized).en
+      : undefined;
+    const collection = collections.find((row) => row.id === item.referenceId);
+    const presentation = menuPresentation(item.presentation);
     const href =
       item.linkType === "url"
         ? item.url && isSafeLink(item.url)
           ? item.url
           : undefined
         : item.linkType === "page" && pageVisible
-          ? `/${locale}/pages/${localizedSlug}`
-          : undefined;
+          ? seoPath(locale, marketCode, "pages", localizedSlug)
+          : item.linkType === "category" && categorySlug
+            ? seoPath(locale, marketCode, "c", categorySlug)
+            : item.linkType === "collection" && collection
+              ? `/${locale}/search?${new URLSearchParams({ collectionId: collection.id })}`
+              : undefined;
     return {
       id: item.id,
       label,
       href,
       target: item.target === "_blank" ? "_blank" : "_self",
-      placeholder:
-        item.linkType === "category" || item.linkType === "collection" || !href,
+      placeholder: !href,
+      presentation,
+      image: images.find((image) => image.id === presentation.mediaId),
       children:
         depth < 1
           ? (byParent.get(item.id) ?? []).map((child) =>

@@ -124,7 +124,7 @@ export async function listCatalogProducts(
       ? { categoryId: { in: await categoryFamily(filters.categoryId) } }
       : {}),
     ...(filters.collectionId
-      ? { collections: { some: { id: filters.collectionId } } }
+      ? { collections: { some: { id: filters.collectionId, deletedAt: null } } }
       : {}),
     ...(filters.brandId ? { brandId: filters.brandId } : {}),
     ...(filters.material ? { material: filters.material } : {}),

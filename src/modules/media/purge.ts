@@ -135,6 +135,8 @@ export async function purgeOne(
           config, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "Homepage" WHERE jsonb_path_exists(
           blocks, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "MenuItem" WHERE jsonb_path_exists(
+          presentation, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
       ) AS used
     `;
     // Include draft and soft-deleted content: restoration must remain possible.

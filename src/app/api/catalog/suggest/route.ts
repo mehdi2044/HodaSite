@@ -10,6 +10,15 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = normalizeSearchText(url.searchParams.get("q") ?? "").slice(0, 80);
   const market = url.searchParams.get("market") ?? "";
+  const collectionId = url.searchParams.get("collectionId");
+  if (
+    collectionId &&
+    !(await db.collection.findFirst({
+      where: { id: collectionId.slice(0, 100), deletedAt: null },
+      select: { id: true },
+    }))
+  )
+    return NextResponse.json({ items: [] });
   if (q.length < 2 || !market) return NextResponse.json({ items: [] });
   const items = await db.product.findMany({
     where: {
@@ -17,6 +26,7 @@ export async function GET(request: Request) {
       deletedAt: null,
       status: "ACTIVE",
       marketIds: { has: market },
+      ...(collectionId ? { collections: { some: { id: collectionId } } } : {}),
       searchText: { contains: q, mode: "insensitive" },
     },
     select: { id: true, titleI18n: true, slugI18n: true },
