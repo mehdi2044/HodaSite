@@ -5,7 +5,13 @@ import {
   DEFAULT_LIGHT_COLORS,
   DEFAULT_DARK_COLORS,
 } from "@/lib/theme-defaults";
-import { normalizeThemeColors } from "@/lib/theme-validation";
+import {
+  normalizeThemeColors,
+  normalizeThemeFonts,
+  safeLineOpacity,
+  safeColorMap,
+  BUTTON_STYLES,
+} from "@/lib/theme-validation";
 
 export default async function Theme() {
   const legacy = await getTranslations("foundationAdmin");
@@ -14,18 +20,22 @@ export default async function Theme() {
   // Accepts Phase 00's legacy flat shape too (backward-compat safety net
   // alongside the data migration — PR #4 review, P1).
   const colors = normalizeThemeColors(theme?.colors);
-  const fonts = (theme?.fonts ?? {}) as { fa?: string; latin?: string };
+  const fonts = normalizeThemeFonts(theme?.fonts);
 
   const initial: ThemeDraft = {
-    light: { ...DEFAULT_LIGHT_COLORS, ...colors.light },
-    dark: { ...DEFAULT_DARK_COLORS, ...colors.dark },
+    light: safeColorMap(colors.light, DEFAULT_LIGHT_COLORS),
+    dark: safeColorMap(colors.dark, DEFAULT_DARK_COLORS),
     radius: theme?.radius ?? "12px",
     darkMode: (theme?.darkMode as ThemeDraft["darkMode"]) ?? "off",
     headerStyle: (theme?.headerStyle as ThemeDraft["headerStyle"]) ?? "minimal",
-    buttonStyle: (theme?.buttonStyle as ThemeDraft["buttonStyle"]) ?? "pill",
+    buttonStyle:
+      BUTTON_STYLES.find((style) => style === theme?.buttonStyle) ?? "pill",
     heroStyle: theme?.heroStyle ?? "editorial",
     fontFa: fonts.fa ?? "Vazirmatn",
     fontLatin: fonts.latin ?? "Inter",
+    fontHeadingLatin: fonts.headingLatin,
+    fontPriceLatin: fonts.priceLatin,
+    lineOpacity: safeLineOpacity(theme?.colors),
     customCss: theme?.customCss ?? "",
   };
 

@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
-const ORIGINAL = { fa: "استایل هاب", tr: "STYLE HUB", en: "STYLE HUB" };
+const ORIGINAL = { fa: "مودا۴", tr: "MODA4", en: "MODA4" };
 const NEW_NAME = `فروشگاه تست ${Date.now()}`;
 
 test.describe.configure({ mode: "serial" });

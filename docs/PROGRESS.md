@@ -10,7 +10,7 @@ Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 | مرحله | وضعیت واقعی | مبنا/وابستگی و خروج |
 |---|---|---|
 | R0 | BLOCKED_ENV برای URL/ورود مالک؛ پایهٔ کد پیاده شد | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش. |
-| R1 | مرحلهٔ مستقل بعدی | Manrope/Inter/Vazirmatn، role/token/button امن در پنل؛ PR جدا. |
+| R1 | IN_PROGRESS؛ پیاده‌سازی پایه، verification مرورگر/CI باقی | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند. |
 | R2…R7a | NOT_STARTED | طبق وابستگی‌های فاز؛ پنل هم‌زمان با قابلیت مشتری. |
 | R7b | تشخیص واقعی محیط مشکل‌دار UNVERIFIED | دسترسی سرور/صف واقعی مالک موجود نیست؛ بررسی غیرپولی مستقل مجاز. |
 | R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
@@ -18,6 +18,7 @@ Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 - وضعیت زندهٔ شروع: main `8e0b953`؛ PR60 باز در `3242540`، PR64 تاریخی، PR65 منتخب در `46e9877` و PR66 اسناد در `5a6ed9c`؛ هیچ‌کدام merged نیستند. unsaved/product-save/FIN/MEDIA اصلاحات PR60 دوباره پیاده نشده و در main فرض نمی‌شوند. reviewهای PR60 و backlog #63 مستقل باز می‌مانند.
 - [راهنمای R0 و مانع محیط](design/moda4-redesign/R0_PREVIEW_RUNBOOK_FA.md): محیط cloud شبکه محدود و بدون مقصد استقرار/هویت/ingress دارد. localhost لینک مالک نیست؛ R0 و پذیرش ظاهری DONE نیستند. مالک Windows/Docker موجود را کافی دانست؛ اتصال cloud به آن موجود نیست. [دستور Codex محلی](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) آماده است.
 - Local: frozen pnpm10.15.1 install و Prisma generate، lint/typecheck و ۴٬۱۱۹ unit در ۱۰۱ فایل موفق. production build، ۹٬۰۲۹ unit/PostgreSQL در ۱۵۱ فایل روی DB تازه، backup guard suite و آزمون backend/password+MFA/save→صفحهٔ ازقبل‌باز→reload پنل/منع ناشناس موفق. local Node24 و system Chromium؛ اینها شواهد owner Windows نیستند. هیچ شاهد ناقص pass معرفی نمی‌شود.
+- R1 local: lint/typecheck، ۴٬۱۲۲ unit و دو PostgreSQL ذخیره/audit/رد ورودی مخرب و حفظ seed media/theme/brand موفق. full PostgreSQL اولیه یک شکست واقعی seed پیدا کرد: ایجاد لوگوی برند پیش از رسانهٔ نمایشی، guard قدیمی را فعال می‌کرد. ترتیب bootstrap اصلاح و آزمون روی DB تازه دوباره اجرا می‌شود. guard تغییر ذخیره‌نشدهٔ Theme از فایل PR60 در `3242540` بازاستفاده شد؛ بقیهٔ PR60 کپی نشده است. Kids/Profile/geometry در R4/R6/R7a باقی‌اند.
 - CI: Draft [PR67](https://github.com/mehdi2044/HodaSite/pull/67)، نتیجهٔ head جدید در جریان؛ شواهد PR60/64 جای CI این تغییر نیستند. Not verified: URL ثابت/ورود مالک، HTTPS/گوشی واقعی و provider تولیدی. draft/schedule/history و قیمت صحنه در R3؛ این پایه آنها را DONE نمی‌نامد.
 - راه آزمون دستی: با محیط جدا و ورود/MFA واقعی، فروشگاه و پنل برند را در دو برگه باز کنید؛ نام آزمایشی را ذخیره کنید، نوار revision و عنوان برگهٔ فروشگاه بدون reload دستی تازه شوند؛ reload پنل نام ذخیره‌شده را حفظ کند. فرمِ ویرایش ذخیره‌نشده خودکار refresh نمی‌شود.
 - انتخاب طرح MODA4 مجوز merge نیست. هیچ merge/main push/پرداخت/ایمیل یا AI تولیدی/seed روی دادهٔ مالک انجام نشده است؛ D70 و پذیرش مالک جدا باقی‌اند.

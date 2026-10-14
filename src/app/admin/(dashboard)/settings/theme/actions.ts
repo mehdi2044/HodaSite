@@ -7,28 +7,54 @@ import { assertCan, UnauthorizedError } from "@/modules/access";
 import { withMutation } from "@/lib/mutation-gate";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { sanitizeCustomCss } from "@/lib/custom-css";
-import { COLOR_KEYS } from "@/lib/theme-defaults";
+import {
+  COLOR_KEYS,
+  DEFAULT_LIGHT_COLORS,
+  DEFAULT_DARK_COLORS,
+} from "@/lib/theme-defaults";
 import {
   cssLength,
   hexColor,
   HERO_STYLES,
   FONT_FA_FAMILIES,
   FONT_LATIN_FAMILIES,
+  FONT_PRICE_FAMILIES,
+  BUTTON_STYLES,
+  lineOpacity,
 } from "@/lib/theme-validation";
 
 const shape: Record<string, z.ZodTypeAny> = {
   radius: cssLength,
   darkMode: z.enum(["off", "on", "system"]),
   headerStyle: z.enum(["minimal", "centered", "editorial"]),
-  buttonStyle: z.enum(["pill", "soft", "sharp"]),
+  buttonStyle: z.enum(BUTTON_STYLES),
   heroStyle: z.enum(HERO_STYLES),
   fontFa: z.enum(FONT_FA_FAMILIES),
   fontLatin: z.enum(FONT_LATIN_FAMILIES),
+  fontHeadingLatin: z.enum(FONT_LATIN_FAMILIES).default("Manrope"),
+  fontPriceLatin: z.enum(FONT_PRICE_FAMILIES).default("Inter"),
+  lineOpacity: lineOpacity.default(0.12),
   customCss: z.string().optional().default(""),
 };
 for (const key of COLOR_KEYS) {
-  shape[`light_${key}`] = hexColor;
-  shape[`dark_${key}`] = hexColor;
+  // Old clients still submit the original palette: newly added tokens have
+  // safe defaults rather than making their existing saves invalid.
+  const legacy = [
+    "primary",
+    "background",
+    "surface",
+    "text",
+    "muted",
+    "success",
+    "error",
+    "warning",
+  ].includes(key);
+  shape[`light_${key}`] = legacy
+    ? hexColor
+    : hexColor.default(DEFAULT_LIGHT_COLORS[key]);
+  shape[`dark_${key}`] = legacy
+    ? hexColor
+    : hexColor.default(DEFAULT_DARK_COLORS[key]);
 }
 const schema = z.object(shape);
 
@@ -52,8 +78,17 @@ export async function saveTheme(
     const dark = Object.fromEntries(
       COLOR_KEYS.map((k) => [k, parsed[`dark_${k}`]]),
     );
-    const colors = { light, dark };
-    const fonts = { fa: parsed.fontFa, latin: parsed.fontLatin };
+    const colors = {
+      light,
+      dark,
+      opacity: { line: Number(parsed.lineOpacity) },
+    };
+    const fonts = {
+      fa: parsed.fontFa,
+      latin: parsed.fontLatin,
+      headingLatin: parsed.fontHeadingLatin,
+      priceLatin: parsed.fontPriceLatin,
+    };
     const customCss = sanitizeCustomCss(parsed.customCss ?? "");
 
     await withMutation(async () => {

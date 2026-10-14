@@ -4,10 +4,10 @@ import { ensureMaintenanceOff } from "./helpers/maintenance";
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
-// The seeded value is literally "#E8792A" (prisma/seed.ts) — CSS custom
+// The seeded value is literally "#FF6A1A" (prisma/seed.ts) — CSS custom
 // property text preserves that casing verbatim (unlike input[type=color]'s
 // DOM value, which the browser always lowercases).
-const ORIGINAL_PRIMARY = "#E8792A";
+const ORIGINAL_PRIMARY = "#FF6A1A";
 const NEW_PRIMARY = "#00aaff";
 
 test.describe.configure({ mode: "serial" });

@@ -1,4 +1,3 @@
-import "@fontsource-variable/bodoni-moda/wght-italic.css";
 import "@/styles/tokens.css";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
@@ -8,12 +7,16 @@ import {
   safeCssLength,
   safeColorMap,
   normalizeThemeColors,
+  themeFontVars,
+  safeLineOpacity,
+  BUTTON_STYLES,
 } from "@/lib/theme-validation";
 import { safeCustomCss } from "@/lib/custom-css";
 import { getPreviewStatus, previewEnabled } from "@/modules/settings";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { PreviewStatus } from "@/components/admin/preview-status";
+import { CrayonFilter } from "@/components/ui/crayon-filter";
 
 // Depends on the request (locale, and — via the theme accessor — the DB), so
 // a brand/theme change is visible on the next load without a rebuild.
@@ -50,12 +53,18 @@ export default async function RootLayout({
   const light = safeColorMap(colors.light, DEFAULT_LIGHT_COLORS);
   const dark = safeColorMap(colors.dark, {});
   const darkMode = theme?.darkMode ?? "off";
-  const buttonStyle = theme?.buttonStyle ?? "pill";
+  const buttonStyle =
+    BUTTON_STYLES.find((style) => style === theme?.buttonStyle) ?? "pill";
   const buttonRadius = BUTTON_RADIUS[buttonStyle] ?? BUTTON_RADIUS.pill;
   const radius = safeCssLength(theme?.radius, "12px");
   const customCss = safeCustomCss(theme?.customCss);
 
-  const rootVars = `${toVars(light)}--radius:${radius};--radius-button:${buttonRadius};`;
+  const fonts = themeFontVars(theme?.fonts);
+  const rootVars = `${toVars(light)}${Object.entries(fonts)
+    .map(([k, v]) => `--${k}:${v};`)
+    .join(
+      "",
+    )}--line-opacity:${safeLineOpacity(theme?.colors)};--radius:${radius};--radius-button:${buttonRadius};`;
   const darkVars = Object.keys(dark).length
     ? toVars({ ...light, ...dark })
     : "";
@@ -88,6 +97,7 @@ export default async function RootLayout({
         )}
       </head>
       <body>
+        <CrayonFilter />
         <NextIntlClientProvider messages={messages}>
           {preview && <PreviewStatus initial={preview} />}
           {children}
