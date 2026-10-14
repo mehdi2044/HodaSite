@@ -60,6 +60,7 @@ test.beforeAll(async () => {
       status: "ACTIVE",
       basePriceAmount: "25",
       basePriceCurrency: "USD",
+      weightGrams: 200,
       marketIds: [market.id],
       tags: ["r5-fixture"],
       searchText: id,
@@ -359,6 +360,15 @@ test("R5 actual product editor flag saves, reloads and changes the public badge"
   const form = page
     .locator("form")
     .filter({ has: page.locator(`input[name="id"][value="${id}"]`) });
+  expect(
+    await form.evaluate((element) =>
+      [
+        ...element.querySelectorAll<HTMLInputElement>(
+          "input:invalid,select:invalid,textarea:invalid",
+        ),
+      ].map((input) => input.name),
+    ),
+  ).toEqual([]);
   await form.locator('button[type="submit"]').click();
   await expect
     .poll(async () =>
