@@ -183,6 +183,13 @@ for (const [locale, marketCode] of [
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.evaluate(() => document.fonts.ready);
+      await expect
+        .poll(() =>
+          page
+            .locator(".moda-brand img")
+            .evaluate((el) => (el as HTMLImageElement).naturalWidth),
+        )
+        .toBeGreaterThan(0);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -196,6 +203,14 @@ for (const [locale, marketCode] of [
     await page.setViewportSize({ width: 390, height: 844 });
     const menu = page.locator(".storefront-mobile-menu");
     await menu.locator("summary").click();
+    const allCategories = menu.getByRole("button", {
+      name: t.contentNavigation.openMenu.replace(
+        "{label}",
+        t.shopping.browseCategories,
+      ),
+      exact: true,
+    });
+    if (await allCategories.isVisible()) await allCategories.click();
     await expect(
       menu.getByRole("link", { name: label[locale], exact: true }).first(),
     ).toBeVisible();

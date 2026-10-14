@@ -47,6 +47,34 @@ beforeEach(() => {
 });
 
 describe("private media download authorization", () => {
+  it("streams only a registered early MODA4 sibling variant with its image MIME", async () => {
+    const key = "media/2026/10/12345678-1234-1234-1234-123456789abc-320.webp";
+    mocks.findMedia.mockResolvedValue({
+      ...media("image"),
+      mime: "image/png",
+      variants: { webp: { "320": { key, bytes: 8 } } },
+    });
+    mocks.auth.mockResolvedValue(null);
+    const response = await request(key);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    expect(mocks.findMedia).toHaveBeenCalledWith({
+      where: { storageKey: key.replace("-320.webp", ".png") },
+    });
+    mocks.getBytes.mockClear();
+    expect((await request(key.replace("-320", "-640"))).status).toBe(404);
+    expect(mocks.getBytes).not.toHaveBeenCalled();
+  });
+
+  it("keeps private sibling variants behind the existing backup permission", async () => {
+    const key = "media/2026/10/12345678-1234-1234-1234-123456789abc-320.webp";
+    mocks.findMedia.mockResolvedValue({
+      ...media(),
+      variants: { webp: { "320": { key, bytes: 8 } } },
+    });
+    expect((await request(key)).status).toBe(404);
+    expect(mocks.getBytes).not.toHaveBeenCalled();
+  });
   it("rejects an uploader without backup.view before reading storage", async () => {
     mocks.can.mockImplementation(
       async (_id: string, permission: string) => permission === "media.upload",

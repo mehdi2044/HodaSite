@@ -23,6 +23,11 @@ export async function GET(
   const replacementVariantMatch = storageKey.match(
     /^media\/replacements\/([^/]+)\/\d+\.(webp|avif)$/,
   );
+  // Read the early MODA4 seed's persisted sibling keys without rewriting
+  // retained Media. New seeds use the existing media/variants convention.
+  const siblingVariantMatch = storageKey.match(
+    /^(media\/\d{4}\/\d{2}\/[a-f0-9-]{36})-(320|640|960)\.(webp)$/,
+  );
   const replacement = replacementVariantMatch
     ? await db.mediaReplacement.findUnique({
         where: { id: replacementVariantMatch[1] },
@@ -33,11 +38,18 @@ export async function GET(
     ? await db.media.findUnique({ where: { id: legacyVariantMatch[1] } })
     : replacementVariantMatch
       ? replacement?.media
-      : await db.media.findUnique({ where: { storageKey } });
+      : await db.media.findUnique({
+          where: {
+            storageKey: siblingVariantMatch
+              ? `${siblingVariantMatch[1]}.png`
+              : storageKey,
+          },
+        });
   if (!media || media.deletedAt) return new NextResponse(null, { status: 404 });
 
   const variantMatch = legacyVariantMatch ?? replacementVariantMatch;
-  const isVariant = Boolean(variantMatch);
+  const variantFormat = variantMatch?.[2] ?? siblingVariantMatch?.[3];
+  const isVariant = Boolean(variantFormat);
   if (isVariant) {
     const variants = (media.variants as MediaVariants | null) ?? {};
     const knownKeys = Object.values(variants).flatMap((byWidth) =>
@@ -71,7 +83,7 @@ export async function GET(
 
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
-      "content-type": variantMatch ? `image/${variantMatch[2]}` : media.mime,
+      "content-type": variantFormat ? `image/${variantFormat}` : media.mime,
       "content-length": String(bytes.length),
       ...(isPrivate
         ? {
