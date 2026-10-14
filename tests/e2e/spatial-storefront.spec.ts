@@ -1,3 +1,6 @@
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
 import { test, expect } from "@playwright/test";
 import { shoppingProof } from "./helpers/shopping-proof";
 
@@ -14,6 +17,10 @@ for (const [locale, market, labels] of [
     const categories = page.getByTestId("home-categories");
     const cards = categories.locator(".shop-discovery-card");
     await expect(cards).toHaveCount(4);
+    const demoLabel = { fa, tr, en }[locale].shopping.demoImage;
+    await expect(cards.first()).toHaveAccessibleName(
+      `${labels[0]} — ${demoLabel}`,
+    );
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await categories.scrollIntoViewIfNeeded();

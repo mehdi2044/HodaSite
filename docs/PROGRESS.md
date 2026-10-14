@@ -1,3 +1,11 @@
+## 2026-10-14 — حفظ cover آماده و disclosure قابل دسترس
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
+
+- بازبینی خودکار `c7b885f` دو مورد گزارش کرد. MediaPicker اکنون upload pending را با registration مستقل هر picker به CatalogActionForm و SettingsForm منتقل می‌کند؛ دکمهٔ ذخیره تا پایان همهٔ uploadها disabled است. guard رویداد submit برای فرم‌های سفارشی نیز Enter/requestSubmit را مسدود می‌کند. Ready/خطا/close/Escape/unmount registration را آزاد می‌کنند؛ تصویر قبلی تا Ready حفظ می‌شود. permission و server validation تغییر نکردند.
+- تست مرورگر آپلود دسته اکنون disabled→requestSubmit بدون POST→Ready→enabled→save/reload را بررسی می‌کند. نام قابل دسترس لینک دستهٔ artwork نمونه شامل disclosure محلی است؛ عکس فروشنده همان نام عادی را دارد. unit سه زبان و مرورگر سه زبان AccessibleName را بررسی می‌کنند.
+- بررسی محلی: lint، TypeScript و ۴٬۲۲۸ تست واحد در ۱۱۰ فایل موفق‌اند. بدون schema، migration، provider یا تغییر دادهٔ موجود؛ شواهد head تازه و D70 لازم‌اند. گفتگوها resolve و PR merge نشده‌اند.
+
 ## 2026-10-14 — تطبیق انتظار تصویر با scheduler واقعی
 
 بازبینی خودکار `643c91b` تأیید کرد پنجرهٔ قبلیِ ۳۰ درخواست، آخرین status را حدود ثانیهٔ ۵۸ می‌خواند؛ cron توسعه هر ۶۰ ثانیه tick می‌زند. انتظار به ۹۰ درخواست با فاصلهٔ دو ثانیه افزایش یافت تا چند چرخهٔ cron و زمان پردازش را پوشش دهد. تست READY در ثانیهٔ ۶۴، لغو، خطاها و پایان بودجه حفظ/افزوده شده‌اند. پایان بودجه همچنان فقط «آماده نشد» می‌گوید؛ media را FAILED نمی‌کند و تصویر قبلی حفظ می‌شود. CI358 آزمون‌های PostgreSQL/coverage/build نسخهٔ قبلی را گذراند؛ head جدید شواهد مستقل نیاز دارد. بررسی محلی همین اصلاح: lint، TypeScript و ۴٬۲۲۸ تست واحد در ۱۱۰ فایل موفق شدند. بدون تغییر queue/cron/schema یا دادهٔ موجود؛ merge انجام نشد.

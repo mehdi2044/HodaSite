@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { useTranslations } from "next-intl";
+import { MediaPickerPendingContext } from "./media-picker-pending";
 import { waitForReadyMedia, type PickerItem } from "./media-picker-readiness";
 
 /**
@@ -34,8 +35,29 @@ export function MediaPicker({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
+  const registrationId = useId();
+  const reportPending = useContext(MediaPickerPendingContext);
+  const inputRef = useRef<HTMLInputElement>(null);
   const uploadController = useRef<AbortController | null>(null);
-  useEffect(() => () => uploadController.current?.abort(), []);
+  useEffect(
+    () => () => {
+      uploadController.current?.abort();
+      reportPending(registrationId, false);
+    },
+    [reportPending, registrationId],
+  );
+  useEffect(() => {
+    const form = inputRef.current?.form;
+    if (!form || !uploading) return;
+    // Also protect custom admin forms without a pending-context provider,
+    // including implicit Enter and programmatic requestSubmit().
+    const block = (event: Event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    form.addEventListener("submit", block, true);
+    return () => form.removeEventListener("submit", block, true);
+  }, [uploading]);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   async function search(query: string) {
@@ -74,6 +96,7 @@ export function MediaPicker({
     uploadController.current?.abort();
     uploadController.current = null;
     setUploading(false);
+    reportPending(registrationId, false);
     dialogRef.current?.close();
   }
 
@@ -84,6 +107,7 @@ export function MediaPicker({
     uploadController.current?.abort();
     uploadController.current = controller;
     setUploading(true);
+    reportPending(registrationId, true);
     setUploadError(false);
     try {
       const fd = new FormData();
@@ -105,6 +129,7 @@ export function MediaPicker({
       if (uploadController.current === controller) {
         uploadController.current = null;
         setUploading(false);
+        reportPending(registrationId, false);
       }
     }
   }
@@ -112,7 +137,7 @@ export function MediaPicker({
   return (
     <div className="grid gap-1">
       <span>{label}</span>
-      <input type="hidden" name={name} value={mediaId} />
+      <input ref={inputRef} type="hidden" name={name} value={mediaId} />
       <div className="flex flex-wrap items-center gap-2">
         {preview && (
           // Admin-only preview thumbnail, not the storefront — plain <img>

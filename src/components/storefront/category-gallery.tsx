@@ -54,7 +54,11 @@ export function CategoryGallery({
             className="shop-discovery-card"
             key={category.id}
             href={category.href}
-            aria-label={category.title}
+            aria-label={
+              isDemoFashionMedia(category.media)
+                ? `${category.title} — ${demoLabel}`
+                : category.title
+            }
             data-has-image={Boolean(category.media)}
           >
             {category.media && (

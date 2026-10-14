@@ -192,6 +192,15 @@ test("category upload retains the old cover until processing completes, then sav
     .filter({ has: page.locator('input[name="kind"][value="category"]') });
   const cover = form.locator('input[name="mediaId"]');
   const before = await cover.inputValue();
+  let saveRequests = 0;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      request.url().includes("/admin/catalog/taxonomy") &&
+      request.headers()["next-action"]
+    )
+      saveRequests++;
+  });
   const image = await sharp({
     create: { width: 640, height: 800, channels: 3, background: "#e8792a" },
   })
@@ -205,13 +214,11 @@ test("category upload retains the old cover until processing completes, then sav
       (res) =>
         res.url().endsWith("/api/uploads") && res.request().method() === "POST",
     );
-    await form
-      .locator('dialog input[type="file"]')
-      .setInputFiles({
-        name: "category-ready-proof.jpg",
-        mimeType: "image/jpeg",
-        buffer: image,
-      });
+    await form.locator('dialog input[type="file"]').setInputFiles({
+      name: "category-ready-proof.jpg",
+      mimeType: "image/jpeg",
+      buffer: image,
+    });
     const response = await uploaded;
     expect(response.status()).toBe(202);
     const media = (await response.json()) as { id: string; status: string };
@@ -220,6 +227,10 @@ test("category upload retains the old cover until processing completes, then sav
       form.locator("dialog[open]").getByRole("status"),
     ).toContainText("پردازش");
     await expect(cover).toHaveValue(before);
+    await expect(
+      form.getByRole("button", { name: "ذخیره", exact: true }),
+    ).toBeDisabled();
+    await form.evaluate((node: HTMLFormElement) => node.requestSubmit());
     await expect
       .poll(
         async () => {
@@ -235,6 +246,10 @@ test("category upload retains the old cover until processing completes, then sav
       )
       .toBe(media.id);
     await expect(form.locator("dialog")).not.toBeVisible();
+    expect(saveRequests).toBe(0);
+    await expect(
+      form.getByRole("button", { name: "ذخیره", exact: true }),
+    ).toBeEnabled();
     await form.getByRole("button", { name: "ذخیره", exact: true }).click();
     await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
     await page.reload();

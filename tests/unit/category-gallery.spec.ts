@@ -50,7 +50,14 @@ for (const [locale, messages] of [
       expect(html).toContain(`href="/${locale}/m/CA/c/category-5"`);
       expect(html).toContain("Category 5");
       expect(html).not.toContain('src="undefined"');
-      expect(html.split(messages.shopping.demoImage)).toHaveLength(2);
+      expect(html.match(/class="shop-discovery-demo"/g)).toHaveLength(1);
+      expect(html).toContain(
+        `aria-label="Category 0 — ${messages.shopping.demoImage}"`,
+      );
+      expect(html).toContain('aria-label="Category 1"');
+      expect(html).not.toContain(
+        `aria-label="Category 1 — ${messages.shopping.demoImage}"`,
+      );
     });
     it("keeps single-category and empty states usable", () => {
       const single = renderToStaticMarkup(
