@@ -6,6 +6,14 @@ R7b/1260c29 CI found188 browser pass/1 failure/1 skip in the inherited broken-vi
 
 ModaVideo now keys a child by source URL, with independent initial state, and reconciles already-existing native error/readiness on mount. It does not reset an earlier failure during hydration, retry the network or change playback/reduced-motion/visibility controls. The same actual-media test awaits the exact source, gates JS, verifies native error4, releases the gate in finally, and retains the original removal/poster assertions and5000ms limit. Local after-fix and fresh head-matched CI remain pending until recorded in the PR/Issue. No schema/auth/provider/money/owner data changes; no merge/main push. Artifact11943430969 is retained, but shell download is proxy403-blocked; diagnosis is based on CI logs plus the real controlled local reproduction, not an uninspected trace.
 
+### Historical provisional investigation (superseded above)
+
+## 2026-10-15 — R7b CI video-fixture synchronization follow-up
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
+
+Head1260c29 checks failed with188 browser passes/1 failure (the propagation job was skipped);9258 unit/PG in171files and the other three jobs passed. The inherited R3b broken-video test queried the DOM optionally and called load only if the video already existed, then expected removal. It did not prove that an actual browser media error had occurred. The test now waits for the exact missing src, gates hydration chunks, forces real loading, proves native MEDIA_ERR_SRC_NOT_SUPPORTED after a real404, releases hydration in finally and retains the original player-removal/poster assertions and5000ms timeout. The stricter scenario passes on the unchanged production application86f4711 (1case28.4s). No application/schema/auth/media/financial code changed; no retry, skip or weakened assertion. Artifact11943430969 is retained; its download is blocked from the shell by the environment proxy403, so no trace inspection is claimed. Code investigation did not establish an application defect and no speculative player change was retained. A fresh four-job CI for this test-only head is required; independent health remains separate from PR76. Owner Windows/root cause UNVERIFIED; online R0 BLOCKED_ENV. No merge/main push.
+
 ## 2026-10-15 — Shared admin history follow-up (#63)
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
@@ -13,6 +21,8 @@ Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
 Backported the targeted PR60 dirty-form Back/Forward correction, preserving MODA4 root theme/filter/preview and the campaign form dirtyOverride extension. No PR60 dependency/schema changes copied. Root initialization precedes Router listeners; cancellation preserves live fields and indexed history, accepted navigation proceeds, and detached default capture does not reset the live form. Three-language Chromium/WebKit coverage plus real Navigation-API-unavailable traversal are added. PR60 production local evidence: 7 Chromium + 4,228 unit passes; this MODA4 head needs its own CI. Unknown pre-tracker entries without Navigation API use an append fallback which may prune forward history; no values are persisted. D70 review and owner Windows execution remain pending; online R0 BLOCKED_ENV. No PR merge or main write.
 
 # وضعیت پیشرفت پروژه
+
+R7b — IN_PROGRESS (2026-10-14): بخش واقعی و فقط‌خواندنی سلامت پرو با permission موجود، شمار صف/جلسه، هشدار تأخیر، خطای whitelist، وجود credential و شمار مستقل برگشت دفتر؛ بدون فراخوانی یا تغییر داده. [قرارداد پیش از کد](design/moda4-redesign/R7B_CONTRACT.md)، [راهنمای فارسی](design/moda4-redesign/R7B_HEALTH_GUIDE_FA.md)، [شواهد واقعی سه زبان](design/moda4-redesign/evidence/r7b/README.md). lint/typecheck/build، دو آزمون PostgreSQL و دو مرورگر موفق؛ CI همان head و پذیرش مالک/محیط واقعی هنوز باز. شاخهٔ مستقل از PR72؛ علت خرابی محیط مالک UNVERIFIED و R7c مسدود به بودجه/ADR است.
 
 > Codex: بعد از هر فاز این فایل را به‌روز کن. برای هر فاز بنویس: وضعیت، چه چیزی ساخته شد، **تست دستی به زبان ساده فارسی**، محدودیت‌های شناخته‌شده و سؤال‌های باز برای وی‌بانو/مهدی.
 

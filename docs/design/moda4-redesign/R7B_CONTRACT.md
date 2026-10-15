@@ -1,0 +1,11 @@
+# R7b — non-billable fitting diagnostics
+
+STARTED 2026-10-14, stacked independently from PR72/source903d6a9. R0 online is BLOCKED_ENV; production/owner Windows evidence is NOT_VERIFIED. R7b does not depend on instant-wardrobe schema in R7a or authorize R7c. Implemented against docs v1.2 / D-numbers touched: D21, D25, D31, D44, D51, D66, D70, D75, D76, D77, D78.
+
+Existing health reports generic queues but cannot distinguish fitting queue delay, uncertain REVIEW, definitive FAILED and actual service-unit refunds. Add a read-only section using existing DB rows and environment-presence booleans. Require existing global `system.health.view` before any query; expose no customers, session IDs, prompts, snapshots, storage keys, arbitrary error strings, URLs or credentials. Known internal error codes only; aggregate all others as OTHER.
+
+Report fitting job/session counts and oldest times, five-minute queue/worker delay warnings matching the current queue recovery interval, last completed fitting-job activity, configuration/key/cron-secret presence, reference READY counts, and FAILED_REFUND ledger count separately from session statuses. No REFUNDED session state exists. Completed jobs prove worker activity, not scheduler heartbeat: direct cron heartbeat remains UNVERIFIED because the current schema does not record it. No invented green status.
+
+No provider or storage endpoint request, job dispatch, retry, debit/refund, mutation, schema, auth, money, queue timeout or provider change. Storage configuration is configuration only; owner storage access and provider quality remain UNVERIFIED. Current adapter maps rejection/read/decode failures into PROVIDER_FAILED and ambiguous transport to PROVIDER_UNKNOWN/REVIEW; without owner logs the exact historical cause cannot be reconstructed. Missing local credentials do not establish the owner's cause.
+
+Verify read authorization, zero mutations/network/dispatch, aggregate redaction and boundary delays with isolated PostgreSQL fixtures; browser authenticated admin in three languages and denied access. Retain existing provider-fake and refund/uncertain-retry regressions. Separate Draft PR and Windows handoff with exact SHA and local/CI/not-verified evidence; never merge. R7c remains BLOCKED_BUDGET_ADR.
