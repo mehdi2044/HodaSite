@@ -124,6 +124,13 @@ export async function saveFittingSettings(raw: unknown) {
       const old = await tx.integration.findUnique({
         where: { key: "fitting-room" },
       });
+      // Older clients must not erase the independent free-preview switch.
+      if (v.config.instantEnabled === undefined) {
+        const priorConfig = configSchema.safeParse(old?.config ?? {});
+        v.config.instantEnabled = priorConfig.success
+          ? (priorConfig.data.instantEnabled ?? false)
+          : false;
+      }
       if ((old?.updatedAt.toISOString() ?? null) !== v.version)
         throw new FittingError("STALE");
       const previous = z

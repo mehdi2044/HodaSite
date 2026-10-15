@@ -2483,7 +2483,8 @@
       "LAYER": "Dış katman",
       "ACCESSORY": "Aksesuar",
       "SHOES": "Ayakkabı"
-    }
+    },
+    "instantEnabled": "Ücretsiz anında stili etkinleştir (ücretli AI’dan bağımsız)"
   },
   "previewRuntime": {
     "label": "Test önizlemesi",
@@ -2851,5 +2852,48 @@
       "profile": "Profil"
     },
     "activeOrder": "Güncel sipariş"
+  },
+  "instantFitting": {
+    "eyebrow": "Anında stil",
+    "title": "Anında prova odanız",
+    "help": "Mağaza modelinde en fazla dört gerçek giysiyi birleştirin. Bu bir stil önizlemesidir; beden uyumu tahmini veya yapay zekâ fotoğrafı değildir.",
+    "free": "Ücretsiz · jeton yok · AI isteği yok",
+    "models": "Model seçin",
+    "noModels": "Onaylı mağaza modeli bulunamadı.",
+    "rotateHelp": "Sürükleyin veya sol/sağ okları kullanın; Home görünümü sıfırlar.",
+    "unavailable": "Mevcut değil",
+    "remove": "Kaldır",
+    "review": "Referanslar değişti veya çözümlenemiyor. Güncel giysileri inceleyip yeni kaydı onaylayın. Güncellenmiş kombin kaydedilene kadar satın alma kapalıdır.",
+    "error": "İstek tamamlanamadı. Sayfayı yenileyip tekrar deneyin.",
+    "error_STALE": "Kombin değişti. Kaydetmeden veya satın almadan önce güncel sürümü açın.",
+    "error_DISABLED": "Anında stil şu an kapalı.",
+    "error_INVALID_COMBINATION": "Seçili model için geçerli kesitler ve en fazla dört uyumlu giysi yuvası gerekir.",
+    "error_INVALID_SELECTION": "Eşleşen kesit veya seçili varyant mevcut değil; ürün fotoğrafı ayrı gösterilir.",
+    "error_LOGIN_REQUIRED": "Özel gardırobunuzu kaydetmek için giriş yapın.",
+    "error_REQUEST_CONFLICT": "İstek ilk kayıtlı sürümle eşleşmiyor.",
+    "error_MAINTENANCE": "Mağaza bakımda. Lütfen sonra deneyin.",
+    "added": "Güncel fiyatlarla çantaya eklendi.",
+    "addAll": "Seçili tüm giysileri ekle",
+    "name": "Kombin adı",
+    "save": "Özel olarak kaydet",
+    "update": "Kombini güncelle",
+    "saved": "Kaydedildi",
+    "loginSave": "Bu kombini kaydetmek için giriş yapın",
+    "search": "Giysi ara",
+    "empty": "Eşleşen giysi yok.",
+    "moreProducts": "Daha fazla ürün",
+    "moreVariants": "Daha fazla renk ve beden",
+    "wardrobe": "Anında gardırop",
+    "wardrobeHelp": "Kombinleriniz özeldir ve ücretli AI sonuçlarından ayrıdır. Açılırken güncel görseller, fiyatlar ve stok kontrol edilir.",
+    "confirm": "Seçili kombinin incelemesini, arşivlenmesini, geri yüklenmesini veya kalıcı silinmesini onaylıyorum.",
+    "emptyWardrobe": "Henüz anında kombin kaydedilmedi.",
+    "archive": "Arşivle",
+    "delete": "Kalıcı sil",
+    "archived": "Arşivlenmiş kombinler",
+    "restore": "Geri yükle",
+    "variant": "Renk ve beden",
+    "chooseVariant": "Gerçek renk ve beden seçin",
+    "try": "Modelde dene",
+    "moreLooks": "Daha fazla kombin"
   }
 }

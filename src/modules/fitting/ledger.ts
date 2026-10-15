@@ -13,7 +13,11 @@ export async function readConfig(tx: Prisma.TransactionClient) {
   const r = await tx.integration.findUnique({ where: { key: "fitting-room" } });
   const parsed = configSchema.safeParse(r?.config ?? {});
   const config = parsed.success ? parsed.data : configSchema.parse({});
-  return { ...config, enabled: config.enabled && !!r?.isActive };
+  return {
+    ...config,
+    instantEnabled: config.instantEnabled ?? false,
+    enabled: config.enabled && !!r?.isActive,
+  };
 }
 export async function lockWallet(
   tx: Prisma.TransactionClient,

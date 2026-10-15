@@ -87,6 +87,14 @@ export function FittingSettings({
         <p className="muted mt-2">{t("adminHelp")}</p>
       </header>
       <Card className="grid gap-4">
+        <label>
+          <input
+            type="checkbox"
+            checked={config.instantEnabled ?? false}
+            onChange={(e) => set({ instantEnabled: e.target.checked })}
+          />{" "}
+          {t("instantEnabled")}
+        </label>
         <p>{keyReady ? t("keyReady") : t("keyMissing")}</p>
         <label>
           <input

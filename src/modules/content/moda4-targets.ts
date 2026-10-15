@@ -26,7 +26,7 @@ export async function resolveContentTarget(
   if (target.kind === "catalog" || target.kind === "search")
     return `/${locale}/search?${new URLSearchParams({ market: market.code })}`;
   if (target.kind === "fitting")
-    return (await fittingConfig()).enabled
+    return ((c) => c.enabled || c.instantEnabled)(await fittingConfig())
       ? `/${locale}/fitting-room?${new URLSearchParams({ market: market.code })}`
       : null;
   if (!target.id) return null;

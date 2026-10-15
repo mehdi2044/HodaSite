@@ -456,4 +456,16 @@ export async function seedFreshModa4Homepage(
     where: { id: home.id },
     data: { blocks: blocks as unknown as Prisma.InputJsonValue },
   });
+  const fitting = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  await db.integration.update({
+    where: { id: fitting.id },
+    data: {
+      config: {
+        ...(fitting.config as Prisma.JsonObject),
+        instantEnabled: true,
+      },
+    },
+  });
 }

@@ -1,4 +1,5 @@
 import "@/styles/tokens.css";
+import "@/styles/instant-fitting.css";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { getThemeSettings } from "@/modules/settings";
