@@ -58,7 +58,7 @@ export function SearchBox({
     };
   }, [q, marketId, collectionId]);
   return (
-    <div className="relative max-w-2xl">
+    <div className="relative z-30 max-w-2xl">
       <form
         action={`/${locale}/search`}
         method="get"

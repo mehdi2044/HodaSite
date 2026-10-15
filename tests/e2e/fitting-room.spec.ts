@@ -41,7 +41,11 @@ for (const locale of ["fa", "tr", "en"] as const) {
         where: { id: old.id },
         data: {
           isActive: true,
-          config: { ...(old.config as Record<string, unknown>), enabled: true },
+          config: {
+            ...(old.config as Record<string, unknown>),
+            enabled: true,
+            instantEnabled: false,
+          },
         },
       });
       await db.size.createMany({
@@ -179,7 +183,12 @@ for (const locale of ["fa", "tr", "en"] as const) {
       where: { id: old.id },
       data: {
         isActive: true,
-        config: { ...config, enabled: true, coinSalesEnabled: true },
+        config: {
+          ...config,
+          enabled: true,
+          coinSalesEnabled: true,
+          instantEnabled: false,
+        },
       },
     });
     try {
@@ -369,7 +378,11 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     where: { id: old.id },
     data: {
       isActive: true,
-      config: { ...(old.config as Record<string, unknown>), enabled: true },
+      config: {
+        ...(old.config as Record<string, unknown>),
+        enabled: true,
+        instantEnabled: false,
+      },
     },
   });
   let productId: string | undefined;
@@ -548,7 +561,10 @@ test("pending fitting requests survive market changes without leaking selection 
   const email = `fit-persistence-${randomUUID()}@example.com`;
   await db.integration.update({
     where: { id: old.id },
-    data: { isActive: true, config: { ...config, enabled: true } },
+    data: {
+      isActive: true,
+      config: { ...config, enabled: true, instantEnabled: false },
+    },
   });
   try {
     await customerLogin(page, email, "en");
@@ -708,7 +724,10 @@ test("pending fitting requests survive market changes without leaking selection 
     });
     await db.integration.update({
       where: { id: old.id },
-      data: { isActive: false, config: { ...config, enabled: false } },
+      data: {
+        isActive: false,
+        config: { ...config, enabled: false, instantEnabled: false },
+      },
     });
     await page.reload();
     await expect(room).toBeVisible();
@@ -947,6 +966,7 @@ test("public coin-pack links disappear immediately when either sale toggle is di
           ...(original.config as Record<string, unknown>),
           enabled,
           coinSalesEnabled,
+          instantEnabled: false,
         },
       },
     });
@@ -1009,6 +1029,7 @@ test("coin listing survives an active pack with no active variants", async ({
           ...(original.config as Record<string, unknown>),
           enabled: true,
           coinSalesEnabled: true,
+          instantEnabled: false,
         },
       },
     });
