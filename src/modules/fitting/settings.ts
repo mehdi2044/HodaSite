@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import Decimal from "decimal.js";
 import { auth } from "@/modules/auth";
 import { segmentQuery } from "@/modules/crm/segment-query";
@@ -101,6 +102,61 @@ export async function fittingRecipients(marketId: string, search = "") {
     take: 200,
   });
 }
+/** Free styling can be switched without editing or re-enabling paid AI. */
+export async function saveInstantFittingSettings(raw: unknown) {
+  const input = z
+      .object({
+        enabled: z.boolean(),
+        expectedEnabled: z.boolean(),
+        version: z.string().nullable(),
+        confirm: z.literal(true),
+      })
+      .strict()
+      .parse(raw),
+    userId = await actor();
+  return withMutation(() =>
+    db.$transaction(async (tx) => {
+      await txCan(tx, userId, "ai.settings.manage");
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(75105)`;
+      await tx.$queryRaw`SELECT id FROM "Integration" WHERE key='fitting-room' FOR UPDATE`;
+      const old = await tx.integration.findUnique({
+        where: { key: "fitting-room" },
+      });
+      const parsed = configSchema.safeParse(old?.config ?? {});
+      if (!parsed.success) throw new FittingError("INVALID_SELECTION");
+      const previous = parsed.data.instantEnabled ?? false;
+      if (
+        (old?.updatedAt.toISOString() ?? null) !== input.version ||
+        previous !== input.expectedEnabled
+      )
+        throw new FittingError("STALE");
+      const config = {
+        ...((old?.config ?? parsed.data) as Prisma.JsonObject),
+        instantEnabled: input.enabled,
+      };
+      const row = await tx.integration.upsert({
+        where: { key: "fitting-room" },
+        create: {
+          key: "fitting-room",
+          provider: "openai",
+          isActive: false,
+          config,
+        },
+        update: { config },
+      });
+      await tx.auditLog.create({
+        data: {
+          userId,
+          action: "fitting.instant.settings.save",
+          entityType: "Integration",
+          entityId: row.id,
+          before: { instantEnabled: previous },
+          after: { instantEnabled: input.enabled },
+        },
+      });
+    }),
+  );
+}
 export async function saveFittingSettings(raw: unknown) {
   const v = z
       .object({
@@ -124,6 +180,13 @@ export async function saveFittingSettings(raw: unknown) {
       const old = await tx.integration.findUnique({
         where: { key: "fitting-room" },
       });
+      // Older clients must not erase the independent free-preview switch.
+      if (v.config.instantEnabled === undefined) {
+        const priorConfig = configSchema.safeParse(old?.config ?? {});
+        v.config.instantEnabled = priorConfig.success
+          ? (priorConfig.data.instantEnabled ?? false)
+          : false;
+      }
       if ((old?.updatedAt.toISOString() ?? null) !== v.version)
         throw new FittingError("STALE");
       const previous = z

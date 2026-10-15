@@ -1,3 +1,5 @@
+import { InstantLookTile } from "./instant-look-tile";
+import { instantLooks } from "@/modules/fitting/instant";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -30,6 +32,7 @@ export async function AccountOverview({
   const t = await getTranslations("accountDesign"),
     commerce = await getTranslations("commerce");
   const { market } = await getRequestContext(locale);
+  const instant = await instantLooks(locale);
   const [orders, wishlist, looks, balance, fitting, looksCount] =
     await Promise.all([
       db.order.findMany({
@@ -172,6 +175,14 @@ export async function AccountOverview({
             <h2>{t("wardrobe")}</h2>
             <p>{t("aiWardrobeHelp")}</p>
             <div className="moda-wardrobe-grid">
+              {instant.slice(0, 8).map((look) => (
+                <InstantLookTile
+                  key={look.id}
+                  look={look}
+                  marketId={market.id}
+                  locale={locale}
+                />
+              ))}
               {looks.map((look) => (
                 <Link key={look.id} href={`/${locale}/fitting-room`}>
                   <ResponsiveImage
@@ -199,7 +210,7 @@ export async function AccountOverview({
                 </Link>
               )}
             </div>
-            {!looks.length && <p>{t("noLooks")}</p>}
+            {!looks.length && !instant.length && <p>{t("noLooks")}</p>}
           </section>
           {children}
         </div>

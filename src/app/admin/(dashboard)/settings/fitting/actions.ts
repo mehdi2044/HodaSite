@@ -7,6 +7,7 @@ import { MaintenanceError } from "@/lib/mutation-gate";
 import { revalidatePath } from "next/cache";
 import {
   saveFittingSettings,
+  saveInstantFittingSettings,
   grantFittingCoins,
   resolveFittingSession,
 } from "@/modules/fitting/settings";
@@ -38,6 +39,9 @@ async function action(fn: () => Promise<unknown>) {
 }
 export async function saveSettings(input: unknown) {
   return action(() => saveFittingSettings(input));
+}
+export async function saveInstantSettings(input: unknown) {
+  return action(() => saveInstantFittingSettings(input));
 }
 export async function grantCoinsAction(input: unknown) {
   return action(() => grantFittingCoins(input));

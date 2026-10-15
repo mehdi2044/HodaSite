@@ -2483,7 +2483,12 @@
       "LAYER": "Outer layer",
       "ACCESSORY": "Accessory",
       "SHOES": "Shoes"
-    }
+    },
+    "instantEnabled": "Enable free instant styling (independent of paid AI)",
+    "instantHelp": "Save this switch separately. Paid AI and coin settings stay as saved; no API key is required.",
+    "confirmInstant": "I confirm saving the instant styling switch.",
+    "saveInstant": "Save instant styling",
+    "instantDirty": "Save or reset the other form changes before saving this switch."
   },
   "previewRuntime": {
     "label": "Test preview",
@@ -2851,5 +2856,49 @@
       "profile": "Profile"
     },
     "activeOrder": "Current order"
+  },
+  "instantFitting": {
+    "eyebrow": "Instant styling",
+    "title": "Your instant fitting room",
+    "help": "Combine up to four real garments on a store model. This is a styling preview, not a body-fit prediction or an AI-generated photograph.",
+    "free": "Free · no coins · no AI request",
+    "models": "Choose a model",
+    "noModels": "No approved store model is available.",
+    "rotateHelp": "Drag or use left/right arrows to turn the preview; Home resets it.",
+    "unavailable": "Unavailable",
+    "remove": "Remove",
+    "review": "References changed or cannot be resolved. Review the current clothes and confirm before saving an updated look. Purchase is blocked until an updated look is saved.",
+    "error": "The request could not be completed. Please reload and try again.",
+    "error_STALE": "This look changed. Reload the current version before saving or buying.",
+    "error_DISABLED": "Instant styling is currently disabled.",
+    "error_INVALID_COMBINATION": "This combination needs valid cutouts for the selected model and up to four compatible clothing slots.",
+    "error_INVALID_SELECTION": "A matching cutout or selected variant is unavailable. The product photograph is shown separately.",
+    "error_LOGIN_REQUIRED": "Sign in to save your private wardrobe.",
+    "error_REQUEST_CONFLICT": "This request no longer matches its original saved version.",
+    "error_MAINTENANCE": "The shop is under maintenance. Please try later.",
+    "added": "Added to your bag at current prices.",
+    "addAll": "Add all selected garments",
+    "name": "Look name",
+    "save": "Save privately",
+    "update": "Update saved look",
+    "saved": "Saved",
+    "loginSave": "Sign in to save this look",
+    "search": "Search garments",
+    "empty": "No matching garments.",
+    "moreProducts": "More products",
+    "moreVariants": "More colours and sizes",
+    "wardrobe": "Instant wardrobe",
+    "wardrobeHelp": "Your saved compositions are private and separate from paid AI results. Loading always checks current images, prices and availability.",
+    "confirm": "I confirm this review, archive, restore or permanent deletion of the selected look.",
+    "emptyWardrobe": "No instant looks saved yet.",
+    "archive": "Archive",
+    "delete": "Delete permanently",
+    "archived": "Archived looks",
+    "restore": "Restore",
+    "variant": "Colour and size",
+    "chooseVariant": "Choose an actual colour and size",
+    "try": "Try on model",
+    "moreLooks": "More saved looks",
+    "reviewCurrent": "Review and use current clothes"
   }
 }

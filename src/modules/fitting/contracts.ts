@@ -20,6 +20,7 @@ export const modelSchema = z.object({
 export const configSchema = z
   .object({
     enabled: z.boolean().default(false),
+    instantEnabled: z.boolean().optional(),
     coinSalesEnabled: z.boolean().default(false),
     provider: z.literal("openai").default("openai"),
     model: z.enum(["gpt-image-1.5", "gpt-image-2"]).default("gpt-image-1.5"),

@@ -343,6 +343,7 @@ model ThemeSettings {
 }
 
 model Market {
+  instantLooks          CustomerInstantLook[]
   homepagePreviewViews  HomepagePreview[]  @relation("HomepagePreviewView")
   homepagePreviewScopes HomepagePreview[]  @relation("HomepagePreviewScope")
   servicePolicy         Json?
@@ -1070,6 +1071,7 @@ model Customer {
   fittingGrants       FittingCoinGrant[]
   fittingEntries      FittingCoinEntry[]
   fittingSessions     FittingSession[]
+  instantLooks        CustomerInstantLook[]
   crmProfiles         CrmProfile[]
   crmNotes            CrmNote[]
   consents            MarketingConsent[]
@@ -1189,6 +1191,25 @@ model Cart {
   updatedAt   DateTime   @updatedAt @db.Timestamptz(3)
 
   @@index([customerId, marketId])
+}
+
+model CustomerInstantLook {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  marketId    String
+  market      Market   @relation(fields: [marketId], references: [id], onDelete: Restrict)
+  requestKey  String
+  fingerprint String
+  name        String
+  snapshot    Json
+  version     Int      @default(1)
+  archivedAt  DateTime? @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([customerId, requestKey])
+  @@index([customerId, marketId, archivedAt, createdAt])
 }
 
 model CartItem {

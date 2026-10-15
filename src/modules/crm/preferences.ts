@@ -441,7 +441,23 @@ export async function exportPersonalData(requestId: string, page = 0) {
           take: 101,
         }),
       ]);
+      const instantCompositions = await tx.customerInstantLook.findMany({
+        where: { customerId: actor.id, marketId },
+        orderBy: { id: "asc" },
+        skip: page * 100,
+        take: 101,
+        select: {
+          id: true,
+          name: true,
+          snapshot: true,
+          version: true,
+          archivedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
       return {
+        instantLooks: instantCompositions.slice(0, 100),
         schemaVersion: 1,
         marketId,
         generatedAt: new Date().toISOString(),
@@ -476,6 +492,7 @@ export async function exportPersonalData(requestId: string, page = 0) {
           page,
           pageSize: 100,
           nextPage: [
+            instantCompositions,
             orders,
             reviews,
             requests,

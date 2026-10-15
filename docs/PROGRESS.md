@@ -1,3 +1,9 @@
+## 2026-10-15 — Current video correction verification / protected handoff
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78, D79, D80.
+
+Productionaedf0dd/build02:19:38.454Z:9 current native history/CMS/instant cases passed; the tenth failed at test-route cleanup. Corrected cleanup plus verified chunk gate: full actual video upload/CMS/playback/publish/404-before-hydration/fallback passes separately25.7s on the same binary. Exact old/new React SSR + native404 A/B independently fails on the old component and passes on the new one339ms. This confirms the real media-error correction; no assertion/5000ms limit or dedicated PWA spec weakened.13 instant PNGs/manifest refreshed, price73ms/reference2322ms. [Video proof](design/moda4-redesign/evidence/video-hydration/README.md). Prior f764655 had all four CI jobs,9276unit/PG,197browser+3propagation and actual Local+S3 restore; current video-fix final heads need fresh CI, recorded in Issue62. Native source is a checkpoint: later commits change only test cleanup/docs/Windows pin. R0 online BLOCKED_ENV, owner Windows/login/visual/phones and D70 review remain pending; R7c BLOCKED_BUDGET_ADR. No merge/main write or owner data/env/MFA/AUTH_SECRET/volume change.
+
 ## 2026-10-15 — Real pre-hydration video failure (#62 / R3b)
 
 Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
@@ -6,6 +12,12 @@ R7b/1260c29 CI found188 browser pass/1 failure/1 skip in the inherited broken-vi
 
 ModaVideo now keys a child by source URL, with independent initial state, and reconciles already-existing native error/readiness on mount. It does not reset an earlier failure during hydration, retry the network or change playback/reduced-motion/visibility controls. The same actual-media test awaits the exact source, gates JS, verifies native error4, releases the gate in finally, and retains the original removal/poster assertions and5000ms limit. Local after-fix and fresh head-matched CI remain pending until recorded in the PR/Issue. No schema/auth/provider/money/owner data changes; no merge/main push. Artifact11943430969 is retained, but shell download is proxy403-blocked; diagnosis is based on CI logs plus the real controlled local reproduction, not an uninspected trace.
 
+## 2026-10-15 — R7a cumulative production acceptance checkpoint
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D24, D31, D70, D78, D79, D80.
+
+All28 native Chromium cases pass in1.8m on production86f4711/build01:37:42.284Z: FA/TR/EN and legacy Back/Forward, real catalog/search/mobile shell/cart, guest→OTP→private wardrobe/export-linked operations and independent free-mode settings while paid AI has no key. Existing fractional settings and original-key lost-response grant replay remain successful. Price75ms/reference2316ms;13 native PNGs/manifest refreshed. First attempt's incompatible PR60 nav locator timed out and was stopped; actual MODA4 sidebar locator now preserves all assertions. WebKit remains CI-only. Prior c8d5b84 has four successful CI jobs,9276 unit/PG,190browser+3propagation and actual Local+S3 restore; new shared-history final head still requires new CI. Current exact head and protected Windows handoff are recorded in Issue62. R0 online BLOCKED_ENV, owner Windows/login/visual and independent D70 review pending. R7c BLOCKED_BUDGET_ADR. No merge/main push or owner-data/environment changes.
+
 ## 2026-10-15 — Shared admin history follow-up (#63)
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
@@ -13,6 +25,8 @@ Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
 Backported the targeted PR60 dirty-form Back/Forward correction, preserving MODA4 root theme/filter/preview and the campaign form dirtyOverride extension. No PR60 dependency/schema changes copied. Root initialization precedes Router listeners; cancellation preserves live fields and indexed history, accepted navigation proceeds, and detached default capture does not reset the live form. Three-language Chromium/WebKit coverage plus real Navigation-API-unavailable traversal are added. PR60 production local evidence: 7 Chromium + 4,228 unit passes; this MODA4 head needs its own CI. Unknown pre-tracker entries without Navigation API use an append fallback which may prune forward history; no values are persisted. D70 review and owner Windows execution remain pending; online R0 BLOCKED_ENV. No PR merge or main write.
 
 # وضعیت پیشرفت پروژه
+
+R7a / PR76 — IN_PROGRESS، Draft: ترکیب رایگان مهمان/کمد مستقل owner-scoped، هندسهٔ چهار مدل و گونهٔ واقعی، قیمت زنده، ذخیره/بازخوانی/تعارض/بایگانی/حذف/export و سبد atomic؛ بدون coin/provider/fake AI session. [راهنما](design/moda4-redesign/R7A_GUIDE_FA.md)؛ [شواهد بومی/manifest](design/moda4-redesign/evidence/r7a/README.md). ۱۴ PG مرتبط،۵٬۰۹۵ مجوز و اجرای۲۲ browser با رگرسیون‌های خرید/جست‌وجو موفق؛ full CI/restore head نهایی و پذیرش مالک باز.
 
 R6 / PR75 — IN_PROGRESS، Draft: OTP موجود، تم مستقیم/ترجیحات واقعی با revision و پاک‌کردن/export، تصویر ورود از پنل و آمار/مسیر سفارش واقعی. [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md)؛ [شواهد بومی](design/moda4-redesign/evidence/r6/README.md). ۱۰ آزمون PG/media و پنج browser واقعی با خرید سه زبان موفق؛ full اولیه۹۲۶۶ موفق/یک شکست guard داشت که جدا اصلاح و موفق شد. full CI/restore نهایی لازم است؛ حذف کامل حساب reviewed/manual، اجرای Windows و پذیرش مالک باز.
 
@@ -31,10 +45,11 @@ Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 | R2 | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI. |
 | R3a | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی. |
 | R4 | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق. |
-| R3b | IN_PROGRESS، Draft؛ CI نهایی باز، انتقال Windows فعلاً PR71 | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، از PR71؛ پنل واقعی همهٔ بلوک‌ها/preview خصوصی/کمپین/سیاست خدمات/ویدیوی محدود؛ [شواهد و PNG بومی](design/moda4-redesign/evidence/r3b/README.md). ۱۶ مورد مرورگر و ۳ مورد fitting اصلاح‌شده در دو اجرا موفق؛ propagation انتشار۲۸۸۷ms و قیمت۲۰۴۵ms؛ restore واقعی Local+S3 روی checkpoint قبلی موفق، CI چهارگانهٔ head نهایی مستقل لازم است. |
+| R3b | چهار CI همان head موفق؛ پذیرش مالک باز | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، `b1f806a`؛ ۹٬۲۵۶ unit/PG، ۱۸۰ browser و۳ propagation واقعی، Local+S3 restore. راهنمای Windows همان نسخه در Issue62/comment6181257061؛ آنلاین BLOCKED_ENV. |
 | R5 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR73](https://github.com/mehdi2044/HodaSite/pull/73)، از PR72؛ فیلتر/variant/قیمت/گالری/سبد واقعی و checkbox پنل؛ [شواهد مرورگر و WCAG](design/moda4-redesign/evidence/r5/README.md). بدون migration یا تغییر موتور مالی؛ پذیرش مالک باز. |
-| R6 / R7a | NOT_STARTED؛ PR جدا طبق وابستگی | تم مستقیم پروفایل/ترکیب مستقل و کمد؛ هیچ قابلیت با toast یا mock آماده شمرده نمی‌شود. |
-| R7b | تشخیص واقعی محیط مشکل‌دار UNVERIFIED | دسترسی سرور/صف واقعی مالک موجود نیست؛ بررسی غیرپولی مستقل مجاز. |
+| R6 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR75](https://github.com/mehdi2044/HodaSite/pull/75)، از PR73؛ OTP/تم مستقیم/ترجیحات واقعی/پاک‌کردن و export/تصویر ورود پنل و آمار واقعی؛ [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md) و [شواهد](design/moda4-redesign/evidence/r6/README.md). پنج browser و۱۰ PG/media موفق، migration افزایشی و restore fixture؛ full-account deletion همچنان reviewed/manual. |
+| R7a | IN_PROGRESS، Draft؛ CI نهایی باز | [PR76](https://github.com/mehdi2044/HodaSite/pull/76)، از PR75؛ [راهنما و مشاهدهٔ محلی](design/moda4-redesign/R7A_GUIDE_FA.md)؛ کمد مستقل/پروی رایگان و قیمت/مرجع زنده. [شواهد](design/moda4-redesign/evidence/r7a/README.md). |
+| R7b | چهار CI همان head موفق؛ علت محیط مالک UNVERIFIED | [PR74](https://github.com/mehdi2044/HodaSite/pull/74)، شاخهٔ مستقل از PR72، `79bca4d`؛ health واقعی فقط‌خواندنی و مجوز سراسری؛ ۹٬۲۵۸ unit/PG،۱۸۲ browser،۳ propagation و Local+S3 restore. دسترسی queue/cron/logs مالک موجود نیست؛ no paid probe. |
 | R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
 
 - ادامهٔ دستور مالک: cloud به Windows او دسترسی ندارد؛ VPN/TCP grant مقصدی تنظیم نشده است. [فرمان آمادهٔ Codex محلی با حفظ داده](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) و [ثبت نسخهٔ دقیق و چهار CI در Issue62](https://github.com/mehdi2044/HodaSite/issues/62#issuecomment-6177274472). ورود/اجرای Windows، گوشی واقعی، پذیرش بصری و review مستقل هنوز تأیید نشده‌اند. هیچ merge/main push/force-push/paid call انجام نشده است.

@@ -18,6 +18,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         "Market",
         "ThemeSettings",
         "Order",
+        "Integration",
       ];
       const before = await fingerprint(tables);
       const put = vi.fn();

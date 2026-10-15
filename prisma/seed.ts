@@ -186,6 +186,9 @@ async function main() {
     (await db.homepage.count()) === 0 &&
     (await db.product.count()) === 0 &&
     (await db.order.count()) === 0;
+  const freshInstantDemo =
+    freshModa4Demo &&
+    (await db.integration.count({ where: { key: "fitting-room" } })) === 0;
   for (const key of roles)
     await db.role.upsert({
       where: { key },
@@ -359,7 +362,12 @@ async function main() {
   await seedFashionStorefront(db, putMediaFile);
   await seedFittingRoom(db);
   await seedStyleStorefront(db, putMediaFile);
-  await seedFreshModa4Homepage(db, putMediaFile, freshModa4Demo);
+  await seedFreshModa4Homepage(
+    db,
+    putMediaFile,
+    freshModa4Demo,
+    freshInstantDemo,
+  );
   await seedPhase03(user.id);
   await seedPhase04();
   await seedLedgerAccounts(db);
