@@ -37,7 +37,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await resolveContentTarget({ kind: "fitting" }, marketId, "en"),
       ).toBe(
-        (await fittingConfig()).enabled ? "/en/fitting-room?market=CA" : null,
+        ((c) => c.enabled || c.instantEnabled)(await fittingConfig())
+          ? "/en/fitting-room?market=CA"
+          : null,
       );
       const collection = await db.collection.findFirst({
         where: { deletedAt: null },

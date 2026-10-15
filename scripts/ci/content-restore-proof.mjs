@@ -91,20 +91,53 @@ try {
           presentation: { version: 1, kind: "kids", tone: "kidsMint" },
         },
       });
-      await tx.customer.create({ data: {
-        id: `${id}-customer`, email: "ci-profile-restore@example.com", isGuest: false,
-        profileTheme: "SLATE", presentationVersion: 3,
-        stylePreferences: { version: 1, sizeIds: [product.variants[0].sizeId], categoryIds: [`${id}-category`] },
-      } });
-      await tx.themeSettings.update({ where: { id: "default" }, data: { accountMediaId: modelMedia.id } });
-      await tx.customerInstantLook.create({data:{
-        id:`${id}-instant`, customerId:`${id}-customer`, marketId:id,
-        requestKey:"00000000-0000-4000-8000-000000000080", fingerprint:"restore-idempotency",
-        name:"Synthetic restored instant composition", version:4,
-        archivedAt:new Date("2003-01-01T00:00:00Z"),
-        snapshot:{version:1,modelId:"woman",variantIds:[product.variants[0].id],modelMediaId:modelMedia.id,
-          fingerprint:"0".repeat(64),revisions:[{variantId:product.variants[0].id,profileId:`${id}-cutout`,profileVersion:3,mediaId:modelMedia.id,modelFingerprint:"0".repeat(64),imageFingerprint:"0".repeat(64)}]},
-      }});
+      await tx.customer.create({
+        data: {
+          id: `${id}-customer`,
+          email: "ci-profile-restore@example.com",
+          isGuest: false,
+          profileTheme: "SLATE",
+          presentationVersion: 3,
+          stylePreferences: {
+            version: 1,
+            sizeIds: [product.variants[0].sizeId],
+            categoryIds: [`${id}-category`],
+          },
+        },
+      });
+      await tx.themeSettings.update({
+        where: { id: "default" },
+        data: { accountMediaId: modelMedia.id },
+      });
+      await tx.customerInstantLook.create({
+        data: {
+          id: `${id}-instant`,
+          customerId: `${id}-customer`,
+          marketId: id,
+          requestKey: "00000000-0000-4000-8000-000000000080",
+          fingerprint: "restore-idempotency",
+          name: "Synthetic restored instant composition",
+          version: 4,
+          archivedAt: new Date("2003-01-01T00:00:00Z"),
+          snapshot: {
+            version: 1,
+            modelId: "woman",
+            variantIds: [product.variants[0].id],
+            modelMediaId: modelMedia.id,
+            fingerprint: "0".repeat(64),
+            revisions: [
+              {
+                variantId: product.variants[0].id,
+                profileId: `${id}-cutout`,
+                profileVersion: 3,
+                mediaId: modelMedia.id,
+                modelFingerprint: "0".repeat(64),
+                imageFingerprint: "0".repeat(64),
+              },
+            ],
+          },
+        },
+      });
       await tx.catalogCutout.create({
         data: {
           id: `${id}-cutout`,
@@ -201,9 +234,21 @@ try {
   const preview = await db.homepagePreview.findUniqueOrThrow({
     where: { channelHash: createHash("sha256").update(id).digest("hex") },
   });
-  const customerPresentation = await db.customer.findUniqueOrThrow({ where: { id: `${id}-customer` }, select: { profileTheme: true, stylePreferences: true, presentationVersion: true } });
-  const accountTheme = await db.themeSettings.findUniqueOrThrow({ where: { id: "default" }, select: { accountMediaId: true } });
-  const instantLook = await db.customerInstantLook.findUniqueOrThrow({where:{id:`${id}-instant`}});
+  const customerPresentation = await db.customer.findUniqueOrThrow({
+    where: { id: `${id}-customer` },
+    select: {
+      profileTheme: true,
+      stylePreferences: true,
+      presentationVersion: true,
+    },
+  });
+  const accountTheme = await db.themeSettings.findUniqueOrThrow({
+    where: { id: "default" },
+    select: { accountMediaId: true },
+  });
+  const instantLook = await db.customerInstantLook.findUniqueOrThrow({
+    where: { id: `${id}-instant` },
+  });
   const digest = createHash("sha256")
     .update(
       JSON.stringify({
@@ -233,9 +278,22 @@ try {
       }),
       /append-only/,
     );
-    await assert.rejects(db.customer.update({ where: { id: `${id}-customer` }, data: { profileTheme: "not-a-theme" } }), /Customer_profile_theme_allowed/);
+    await assert.rejects(
+      db.customer.update({
+        where: { id: `${id}-customer` },
+        data: { profileTheme: "not-a-theme" },
+      }),
+      /Customer_profile_theme_allowed/,
+    );
+    await assert.rejects(
+      db.customerInstantLook.update({
+        where: { id: `${id}-instant` },
+        data: { version: 0 },
+      }),
+      /CustomerInstantLook_version_check/,
+    );
     console.log(
-      "Content fixture digest and guards match: homepage revision/schedule, cutout/category, MODA4 blocks, service policy, private preview, profile preferences/revision and account media",
+      "Content fixture digest and guards match: homepage revision/schedule, cutout/category, MODA4 blocks, service policy, private preview, profile preferences/revision, account media and independent instant wardrobe",
     );
   }
 } finally {

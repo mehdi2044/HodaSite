@@ -1,12 +1,17 @@
+import { saveFittingSettings } from "@/modules/fitting/settings";
+import { configSchema } from "@/modules/fitting/contracts";
 import { randomUUID } from "node:crypto";
 import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 const state = vi.hoisted(() => ({
   customer: "",
+  admin: "",
   token: "",
   market: {} as { id: string; currency: string },
 }));
-vi.mock("@/modules/auth", () => ({ auth: async () => null }));
+vi.mock("@/modules/auth", () => ({
+  auth: async () => (state.admin ? { user: { id: state.admin } } : null),
+}));
 vi.mock("@/modules/customers", async () => {
   const { db } = await import("@/lib/db");
   return {
@@ -95,6 +100,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         else guest = c.id;
       }
       state.customer = first;
+      state.admin = (
+        await db.user.findUniqueOrThrow({
+          where: { email: process.env.ADMIN_EMAIL ?? "owner@example.com" },
+        })
+      ).id;
       for (const key of ["women-tee", "women-trousers"]) {
         const cutout = await db.catalogCutout.findFirstOrThrow({
           where: { productId: `seed-moda4-style-${key}`, deletedAt: null },
@@ -158,8 +168,18 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         ["girl", "kids-dress"],
         ["boy", "kids-knit"],
       ]) {
+        const approved = await db.catalogCutout.findFirstOrThrow({
+          where: { productId: `seed-moda4-style-${key}`, deletedAt: null },
+        });
         const v = await db.variant.findFirstOrThrow({
-          where: { productId: `seed-moda4-style-${key}`, isActive: true },
+          where: {
+            productId: approved.productId,
+            colorId: approved.colorId,
+            isActive: true,
+            color: { deletedAt: null },
+            size: { deletedAt: null },
+          },
+          orderBy: { id: "asc" },
         });
         const r = await resolveInstantSelection(state.market.id, {
           modelId,
@@ -398,6 +418,44 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       });
       expect(await db.order.count()).toBe(orders);
       expect(await db.fittingCoinEntry.count()).toBe(entries);
+    });
+    it("preserves the independent free switch for legacy settings payloads and enforces it without a paid key", async () => {
+      const old = await db.integration.findUniqueOrThrow({
+        where: { key: "fitting-room" },
+      });
+      const config = configSchema.parse(old.config);
+      delete config.instantEnabled;
+      await saveFittingSettings({
+        config,
+        version: old.updatedAt.toISOString(),
+        confirm: true,
+      });
+      const preserved = await db.integration.findUniqueOrThrow({
+        where: { id: old.id },
+      });
+      expect(
+        (preserved.config as { instantEnabled: boolean }).instantEnabled,
+      ).toBe(true);
+      expect(preserved.isActive).toBe(false);
+      await saveFittingSettings({
+        config: { ...config, instantEnabled: false },
+        version: preserved.updatedAt.toISOString(),
+        confirm: true,
+      });
+      await expect(
+        resolveInstantSelection(state.market.id, input()),
+      ).rejects.toMatchObject({ code: "DISABLED" });
+      const disabled = await db.integration.findUniqueOrThrow({
+        where: { id: old.id },
+      });
+      await saveFittingSettings({
+        config: { ...config, instantEnabled: true },
+        version: disabled.updatedAt.toISOString(),
+        confirm: true,
+      });
+      expect(
+        (await resolveInstantSelection(state.market.id, input())).layers,
+      ).toHaveLength(2);
     });
   },
 );

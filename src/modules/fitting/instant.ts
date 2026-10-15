@@ -192,6 +192,17 @@ export async function saveInstantLook(locale: Locale, raw: unknown) {
             version: { increment: 1 },
           },
         });
+        await tx.auditLog.create({
+          data: {
+            action: "customer.instant.updated",
+            entityType: "CustomerInstantLook",
+            entityId: saved.id,
+            after: {
+              version: saved.version,
+              piecesCount: input.variantIds.length,
+            },
+          },
+        });
         return { id: saved.id, version: saved.version };
       }
       const saved = await tx.customerInstantLook.create({
@@ -202,6 +213,14 @@ export async function saveInstantLook(locale: Locale, raw: unknown) {
           fingerprint: replay,
           name: input.name,
           snapshot: pinned.snapshot,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          action: "customer.instant.created",
+          entityType: "CustomerInstantLook",
+          entityId: saved.id,
+          after: { piecesCount: input.variantIds.length },
         },
       });
       return { id: saved.id, version: saved.version };
@@ -233,6 +252,14 @@ export async function mutateInstantLook(locale: Locale, raw: unknown) {
             version: { increment: 1 },
           },
         });
+      await tx.auditLog.create({
+        data: {
+          action: `customer.instant.${input.operation}`,
+          entityType: "CustomerInstantLook",
+          entityId: row.id,
+          after: { version: row.version + 1 },
+        },
+      });
       return {};
     }),
   );

@@ -19,7 +19,7 @@
   min-height: 44px;
 }
 .moda-instant button:not(.button) {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   border-radius: 1rem;
   padding: 0.5rem 0.8rem;
 }
@@ -56,8 +56,8 @@
   margin-inline: auto;
   overflow: hidden;
   border-radius: 45% 45% 1.5rem 1.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--surface);
+  border: 1px solid var(--border);
   touch-action: pan-y;
 }
 .moda-instant-turn {
@@ -74,7 +74,7 @@
   grid-template-columns: 6rem minmax(0, 1fr);
   gap: 0.75rem;
   padding-block: 1rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: 1px solid var(--border);
 }
 .moda-instant-product h3 {
   font-size: 1rem;
@@ -111,7 +111,7 @@
   align-items: center;
   justify-content: space-between;
   padding-block: 0.65rem;
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: 1px solid var(--border);
 }
 .moda-instant-pieces span {
   flex: 1 1 10rem;
@@ -124,7 +124,7 @@
 .moda-instant-wardrobe {
   margin-block-start: 2rem;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   border-radius: 1.5rem;
 }
 .moda-instant-wardrobe h2 {

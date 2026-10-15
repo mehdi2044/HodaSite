@@ -751,6 +751,7 @@ function InstantProduct({
           {t("variant")}
           <select
             className="input"
+            aria-label={t("variant")}
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
           >
