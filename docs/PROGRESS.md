@@ -1,6 +1,6 @@
 # وضعیت پیشرفت پروژه
 
-R7a / PR76 — IN_PROGRESS، Draft: ترکیب رایگان مهمان/کمد مستقل owner-scoped، هندسهٔ چهار مدل و گونهٔ واقعی، قیمت زنده، ذخیره/بازخوانی/تعارض/بایگانی/حذف/export و سبد atomic؛ بدون coin/provider/fake AI session. [راهنما](design/moda4-redesign/R7A_GUIDE_FA.md)؛ [شواهد بومی/manifest](design/moda4-redesign/evidence/r7a/README.md). ۱۳ PG مرتبط و اجرای۲۲ browser با رگرسیون‌های خرید/جست‌وجو موفق؛ full CI/restore head نهایی و پذیرش مالک باز.
+R7a / PR76 — IN_PROGRESS، Draft: ترکیب رایگان مهمان/کمد مستقل owner-scoped، هندسهٔ چهار مدل و گونهٔ واقعی، قیمت زنده، ذخیره/بازخوانی/تعارض/بایگانی/حذف/export و سبد atomic؛ بدون coin/provider/fake AI session. [راهنما](design/moda4-redesign/R7A_GUIDE_FA.md)؛ [شواهد بومی/manifest](design/moda4-redesign/evidence/r7a/README.md). ۱۴ PG مرتبط،۵٬۰۹۵ مجوز و اجرای۲۲ browser با رگرسیون‌های خرید/جست‌وجو موفق؛ full CI/restore head نهایی و پذیرش مالک باز.
 
 R6 / PR75 — IN_PROGRESS، Draft: OTP موجود، تم مستقیم/ترجیحات واقعی با revision و پاک‌کردن/export، تصویر ورود از پنل و آمار/مسیر سفارش واقعی. [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md)؛ [شواهد بومی](design/moda4-redesign/evidence/r6/README.md). ۱۰ آزمون PG/media و پنج browser واقعی با خرید سه زبان موفق؛ full اولیه۹۲۶۶ موفق/یک شکست guard داشت که جدا اصلاح و موفق شد. full CI/restore نهایی لازم است؛ حذف کامل حساب reviewed/manual، اجرای Windows و پذیرش مالک باز.
 

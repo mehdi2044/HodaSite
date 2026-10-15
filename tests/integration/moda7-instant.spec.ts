@@ -1,3 +1,4 @@
+import { saveInstantSettings as saveInstantSettingsAction } from "@/app/admin/(dashboard)/settings/fitting/actions";
 import {
   saveFittingSettings,
   saveInstantFittingSettings,
@@ -540,7 +541,46 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             confirm: true,
           }),
         ).rejects.toThrow();
-        state.admin = admin;
+        const payload = {
+          enabled: true,
+          expectedEnabled: false,
+          version: broken.updatedAt.toISOString(),
+          confirm: true,
+        };
+        expect(await saveInstantSettingsAction(payload)).toMatchObject({
+          ok: false,
+          error: "LOGIN_REQUIRED",
+        });
+        const role = await db.role.findUniqueOrThrow({
+          where: { key: "owner" },
+        });
+        const scoped = await db.user.create({
+          data: {
+            email: `${prefix}-scoped@example.com`,
+            name: "Synthetic scoped free settings",
+            passwordHash: "fixture",
+            roles: {
+              create: { roleId: role.id, scope: { marketId: state.market.id } },
+            },
+          },
+        });
+        state.admin = scoped.id;
+        try {
+          expect(await saveInstantSettingsAction(payload)).toMatchObject({
+            ok: false,
+            error: "FORBIDDEN",
+          });
+          expect(
+            (await db.integration.findUniqueOrThrow({ where: { id: old.id } }))
+              .config,
+          ).toEqual(paid);
+        } finally {
+          await db.user.update({
+            where: { id: scoped.id },
+            data: { isActive: false },
+          });
+          state.admin = admin;
+        }
         const auditBefore = await db.auditLog.count({
           where: { action: "fitting.instant.settings.save" },
         });
