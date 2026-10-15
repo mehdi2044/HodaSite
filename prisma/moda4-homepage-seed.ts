@@ -53,6 +53,7 @@ export async function seedFreshModa4Homepage(
   db: PrismaClient,
   put: (key: string, bytes: Buffer) => Promise<string>,
   fresh: boolean,
+  enableInstant = false,
 ) {
   if (!fresh) return;
   const home = await db.homepage.findUniqueOrThrow({
@@ -458,6 +459,7 @@ export async function seedFreshModa4Homepage(
     where: { id: home.id },
     data: { blocks: blocks as unknown as Prisma.InputJsonValue },
   });
+  if (!enableInstant) return;
   const fitting = await db.integration.findUniqueOrThrow({
     where: { key: "fitting-room" },
   });
