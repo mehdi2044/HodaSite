@@ -422,17 +422,36 @@ test("R3b actual bounded video upload, CMS selection, manual playback and broken
       data: { url: missingUrl },
     });
     expect((await shop.request.get(missingUrl)).status()).toBe(404);
-    await shop.reload();
+    // Make the real 404 finish before hydration. Media errors are not replayed
+    // by React: a component must also inspect the element's existing error.
+    const chunks = /\/_next\/static\/chunks\/.*\.js(?:\?.*)?$/;
+    let releaseScripts!: () => void;
+    const hydrationGate = new Promise<void>((resolve) => {
+      releaseScripts = resolve;
+    });
+    await shop.route(chunks, async (route) => {
+      await hydrationGate;
+      await route.continue();
+    });
     const missingPlayer = shop.locator(".moda-video-banner video");
-    await shop.evaluate(() => {
-      const video = document.querySelector<HTMLVideoElement>(
-        ".moda-video-banner video",
-      );
-      if (video) {
+    try {
+      await shop.reload({ waitUntil: "commit" });
+      await expect(missingPlayer).toHaveAttribute("src", missingUrl);
+      await missingPlayer.evaluate((video: HTMLVideoElement) => {
         video.preload = "auto";
         video.load();
-      }
-    });
+      });
+      await expect
+        .poll(() =>
+          missingPlayer.evaluate(
+            (video: HTMLVideoElement) => video.error?.code,
+          ),
+        )
+        .toBe(4);
+    } finally {
+      releaseScripts();
+      await shop.unroute(chunks);
+    }
     await expect(missingPlayer).toHaveCount(0);
     await expect(shop.locator(".moda-video-poster")).toContainText(
       "R3b technical video proof",

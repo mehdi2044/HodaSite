@@ -1,3 +1,9 @@
+## 2026-10-15 — R7b CI video-fixture synchronization follow-up
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
+
+Head1260c29 checks failed with188 browser passes/1 failure (the propagation job was skipped);9258 unit/PG in171files and the other three jobs passed. The inherited R3b broken-video test queried the DOM optionally and called load only if the video already existed, then expected removal. It did not prove that an actual browser media error had occurred. The test now waits for the exact missing src, gates hydration chunks, forces real loading, proves native MEDIA_ERR_SRC_NOT_SUPPORTED after a real404, releases hydration in finally and retains the original player-removal/poster assertions and5000ms timeout. The stricter scenario passes on the unchanged production application86f4711 (1case28.4s). No application/schema/auth/media/financial code changed; no retry, skip or weakened assertion. Artifact11943430969 is retained; its download is blocked from the shell by the environment proxy403, so no trace inspection is claimed. Code investigation did not establish an application defect and no speculative player change was retained. A fresh four-job CI for this test-only head is required; independent health remains separate from PR76. Owner Windows/root cause UNVERIFIED; online R0 BLOCKED_ENV. No merge/main push.
+
 ## 2026-10-15 — Shared admin history follow-up (#63)
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
