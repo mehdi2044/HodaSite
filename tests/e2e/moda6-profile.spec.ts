@@ -94,6 +94,12 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         { name: "market", value: market, url: info.project.use.baseURL! },
       ]);
       await page.goto(`/${locale}/account`);
+      const selectedMarket = await db.market.findUniqueOrThrow({
+        where: { code: market },
+      });
+      await expect(
+        page.locator('select[name="preferredMarketId"]'),
+      ).toHaveValue(selectedMarket.id);
       const appearance = page.locator("#appearance"),
         form = appearance.locator("form");
       await appearance

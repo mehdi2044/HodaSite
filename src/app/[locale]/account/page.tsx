@@ -14,6 +14,7 @@ import {
   profileTheme,
 } from "@/modules/customers/presentation-contract";
 import { catalogText } from "@/modules/catalog";
+import { getRequestContext } from "@/lib/request-context";
 import { AccountProgress } from "@/components/storefront/account-progress";
 import {
   profileAction,
@@ -31,6 +32,7 @@ export default async function AccountPage({
     customer = await currentCustomer();
   if (!customer || customer.isGuest) redirect(`/${locale}/account/login`);
   const preferences = readStylePreferences(customer.stylePreferences);
+  const { market: requestMarket } = await getRequestContext(locale);
   const [orders, addresses, markets, sizes, categories] = await Promise.all([
     db.order.findMany({
       where: { customerId: customer.id },
@@ -189,7 +191,7 @@ export default async function AccountPage({
                 <select
                   className="input ms-3"
                   name="preferredMarketId"
-                  defaultValue={customer.preferredMarketId ?? markets[0]?.id}
+                  defaultValue={customer.preferredMarketId ?? requestMarket.id}
                 >
                   {markets.map((m) => (
                     <option key={m.id} value={m.id}>
