@@ -457,5 +457,52 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await resolveInstantSelection(state.market.id, input())).layers,
       ).toHaveLength(2);
     });
+    it("paginates more than one hundred private looks and includes every page in approved owner export", async () => {
+      const resolved = await resolveInstantSelection(state.market.id, input());
+      const fixtureIds = Array.from(
+        { length: 103 },
+        (_, i) => `${prefix}-page-${String(i).padStart(3, "0")}`,
+      );
+      await db.customerInstantLook.createMany({
+        data: fixtureIds.map((id) => ({
+          id,
+          customerId: second,
+          marketId: state.market.id,
+          requestKey: randomUUID(),
+          fingerprint: "synthetic-pagination",
+          name: "Synthetic pagination",
+          snapshot: resolved.snapshot,
+        })),
+      });
+      state.customer = second;
+      try {
+        const firstPage = await instantLooks("en"),
+          secondPage = await instantLooks("en", false, firstPage.at(-1)!.id);
+        expect(firstPage).toHaveLength(100);
+        expect(secondPage).toHaveLength(3);
+        expect(
+          new Set([...firstPage, ...secondPage].map((v) => v.id)).size,
+        ).toBe(103);
+        const request = await db.privacyRequest.create({
+          data: {
+            customerId: second,
+            marketId: state.market.id,
+            kind: "EXPORT",
+            status: "APPROVED",
+          },
+        });
+        const exported = await exportPersonalData(request.id);
+        expect(exported.instantLooks).toHaveLength(100);
+        expect(exported.pagination.nextPage).toBe(1);
+        expect(
+          (await exportPersonalData(request.id, 1)).instantLooks,
+        ).toHaveLength(3);
+      } finally {
+        await db.customerInstantLook.deleteMany({
+          where: { id: { in: fixtureIds } },
+        });
+        state.customer = first;
+      }
+    });
   },
 );
