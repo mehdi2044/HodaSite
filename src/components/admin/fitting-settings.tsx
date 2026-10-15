@@ -93,7 +93,7 @@ export function FittingSettings({
         <p className="muted mt-2">{t("adminHelp")}</p>
       </header>
       <Card className="grid gap-4">
-        <label>
+        <label className="flex min-h-11 items-center gap-3">
           <input
             type="checkbox"
             checked={config.instantEnabled ?? false}
@@ -102,7 +102,7 @@ export function FittingSettings({
           {t("instantEnabled")}
         </label>
         <p className="muted text-sm">{t("instantHelp")}</p>
-        <label>
+        <label className="flex min-h-11 items-center gap-3">
           <input
             type="checkbox"
             checked={instantConfirmed}
@@ -112,6 +112,7 @@ export function FittingSettings({
         </label>
         <Button
           disabled={busy || !instantConfirmed || paidDirty}
+          aria-describedby={paidDirty ? "instant-settings-dirty" : undefined}
           onClick={() =>
             run(async () => {
               const r = await saveInstantSettings({
@@ -127,7 +128,7 @@ export function FittingSettings({
         >
           {t("saveInstant")}
         </Button>
-        {paidDirty && <p role="status">{t("instantDirty")}</p>}
+        {paidDirty && <p id="instant-settings-dirty">{t("instantDirty")}</p>}
         <p>{keyReady ? t("keyReady") : t("keyMissing")}</p>
         <label>
           <input
