@@ -1,5 +1,96 @@
+import sharp from "sharp";
+import { randomUUID } from "node:crypto";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { expect, test, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
+import { shoppingProof } from "./helpers/shopping-proof";
+
+const db = new PrismaClient();
+test.afterAll(() => db.$disconnect());
+
+test("creates a product without optional care or SEO copy and edits it without replacing its variant", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await login(page);
+  const slug = `issue63-product-${randomUUID()}`;
+  let productId: string | undefined;
+  try {
+    await page.goto("/admin/catalog/products/new");
+    for (const language of ["Fa", "Tr", "En"]) {
+      await page.locator(`[name="title${language}"]`).fill(`QA ${slug}`);
+      await page
+        .locator(`[name="description${language}"]`)
+        .fill("Synthetic product acceptance");
+    }
+    await page
+      .locator('[name="categoryId"]')
+      .selectOption("seed-category-women");
+    await page.getByRole("tab", { name: "تنوع‌ها", exact: true }).click();
+    await page
+      .locator('[name="skuPrefixPreview"]')
+      .fill(`QA-${randomUUID().slice(0, 8).toUpperCase()}`);
+    const matrix = page
+      .locator("section:not([hidden])")
+      .filter({ has: page.locator('[name="skuPrefixPreview"]') });
+    await matrix
+      .locator("fieldset")
+      .nth(0)
+      .locator('input[type="checkbox"]')
+      .first()
+      .check();
+    await matrix
+      .locator("fieldset")
+      .nth(1)
+      .locator('input[type="checkbox"]')
+      .first()
+      .check();
+    await matrix
+      .getByRole("button", { name: "ساخت ترکیب‌ها", exact: true })
+      .click();
+    await page.getByRole("tab", { name: "قیمت", exact: true }).click();
+    await page.locator('[name="basePriceAmount"]').fill("24.0001");
+    await page.getByRole("tab", { name: "SEO", exact: true }).click();
+    for (const language of ["Fa", "Tr", "En"])
+      await page.locator(`[name="slug${language}"]`).fill(slug);
+    await page.getByRole("tab", { name: "بازارها", exact: true }).click();
+    await page.locator('[name="marketIds"]').first().check();
+    // care/seoDescription stay empty: they are optional in the server contract.
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator('form > p[role="status"]')).toHaveText(
+      "با موفقیت ذخیره شد.",
+    );
+    const created = await db.product.findFirstOrThrow({
+      where: { slugI18n: { path: ["en"], equals: slug } },
+      include: { variants: true },
+    });
+    productId = created.id;
+    expect(created.basePriceAmount.toFixed(4)).toBe("24.0001");
+    expect(created.variants).toHaveLength(1);
+    await page.goto(`/admin/catalog/products/${created.id}`);
+    await page.locator('[name="titleEn"]').fill(`Edited ${slug}`);
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator('form > p[role="status"]')).toHaveText(
+      "با موفقیت ذخیره شد.",
+    );
+    await page.reload();
+    await expect(page.locator('[name="titleEn"]')).toHaveValue(
+      `Edited ${slug}`,
+    );
+    const edited = await db.product.findUniqueOrThrow({
+      where: { id: created.id },
+      include: { variants: true },
+    });
+    expect(edited.variants[0].id).toBe(created.variants[0].id);
+    expect(edited.basePriceAmount.toFixed(4)).toBe("24.0001");
+  } finally {
+    if (productId)
+      await db.product.update({
+        where: { id: productId },
+        data: { deletedAt: new Date() },
+      });
+  }
+});
 
 const EMAIL = process.env.ADMIN_EMAIL ?? "owner@example.com";
 const PASSWORD = process.env.ADMIN_PASSWORD ?? "ChangeMe123!";
@@ -60,4 +151,211 @@ test("admin taxonomy exposes all six catalog entities", async ({ page }) => {
     .filter({ has: page.locator('input[name="slug"]') })
     .first();
   await expect(editForm.locator('input[name="id"]')).toHaveValue(/seed-brand/);
+});
+
+test("category edit preserves its cover and exposes the shared image picker", async ({
+  page,
+}, info) => {
+  test.setTimeout(60_000);
+  await login(page);
+  const url =
+    "/admin/catalog/taxonomy?editKind=category&editId=seed-category-women";
+  await page.goto(url);
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('input[name="kind"][value="category"]') });
+  const cover = form.locator('input[name="mediaId"]');
+  const before = await cover.inputValue();
+  expect(before).not.toBe("");
+  await expect(
+    form.getByText("تصویر دسته‌بندی", { exact: true }),
+  ).toBeVisible();
+  await form.getByRole("button", { name: "انتخاب رسانه", exact: true }).click();
+  await expect(form.locator("dialog[open]")).toBeVisible();
+  await form
+    .locator("dialog")
+    .getByRole("button", { name: "بستن", exact: true })
+    .click();
+  await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+  await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+  await page.reload();
+  await expect(cover).toHaveValue(before);
+  const category = await db.category.findUniqueOrThrow({
+    where: { id: "seed-category-women" },
+  });
+  const media = await db.media.findUniqueOrThrow({ where: { id: before } });
+  try {
+    await form
+      .getByRole("button", { name: "پاک‌کردن تصویر", exact: true })
+      .click();
+    await expect(cover).toHaveValue("");
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue("");
+    expect(
+      (await db.category.findUniqueOrThrow({ where: { id: category.id } }))
+        .mediaId,
+    ).toBeNull();
+    const storefront = await page.context().newPage();
+    try {
+      await storefront.setViewportSize({ width: 1280, height: 900 });
+      for (const [locale, market] of [
+        ["fa", "IR"],
+        ["tr", "TR"],
+        ["en", "CA"],
+      ]) {
+        const slug = (category.slugI18n as Record<string, string>)[locale];
+        await storefront.goto(
+          `/${locale}/m/${market}/c/${encodeURIComponent(slug)}`,
+        );
+        const intro = storefront.locator(".shop-category-intro");
+        await expect(intro).toBeVisible();
+        await expect(intro).not.toHaveClass(/shop-category-with-image/);
+        const headerBox = await intro.boundingBox();
+        const copyBox = await intro
+          .locator(".shop-category-copy")
+          .boundingBox();
+        expect(headerBox).not.toBeNull();
+        expect(copyBox).not.toBeNull();
+        expect(Math.abs(headerBox!.width - copyBox!.width)).toBeLessThan(2);
+        await shoppingProof(
+          storefront,
+          info,
+          `design-category-no-cover-${locale}-1280`,
+        );
+      }
+    } finally {
+      await storefront.close();
+    }
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: before },
+    });
+    await db.media.update({
+      where: { id: before },
+      data: { deletedAt: new Date() },
+    });
+    await page.reload();
+    await expect(cover).toHaveValue(before);
+    await form
+      .getByRole("button", { name: "پاک‌کردن تصویر", exact: true })
+      .click();
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue("");
+    expect(
+      (await db.category.findUniqueOrThrow({ where: { id: category.id } }))
+        .mediaId,
+    ).toBeNull();
+  } finally {
+    await db.media.update({
+      where: { id: before },
+      data: { deletedAt: media.deletedAt, updatedAt: media.updatedAt },
+    });
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: before, updatedAt: category.updatedAt },
+    });
+  }
+});
+
+test("category upload retains the old cover until processing completes, then saves the ready image", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await login(page);
+  const category = await db.category.findUniqueOrThrow({
+    where: { id: "seed-category-women" },
+  });
+  await page.goto(
+    "/admin/catalog/taxonomy?editKind=category&editId=seed-category-women",
+  );
+  const form = page
+    .locator("form")
+    .filter({ has: page.locator('input[name="kind"][value="category"]') });
+  const cover = form.locator('input[name="mediaId"]');
+  const before = await cover.inputValue();
+  let saveRequests = 0;
+  page.on("request", (request) => {
+    if (
+      request.method() === "POST" &&
+      request.url().includes("/admin/catalog/taxonomy") &&
+      request.headers()["next-action"]
+    )
+      saveRequests++;
+  });
+  const image = await sharp({
+    create: { width: 640, height: 800, channels: 3, background: "#e8792a" },
+  })
+    .jpeg()
+    .toBuffer();
+  try {
+    await form
+      .getByRole("button", { name: "انتخاب رسانه", exact: true })
+      .click();
+    const uploaded = page.waitForResponse(
+      (res) =>
+        res.url().endsWith("/api/uploads") && res.request().method() === "POST",
+    );
+    await form.locator('dialog input[type="file"]').setInputFiles({
+      name: "category-ready-proof.jpg",
+      mimeType: "image/jpeg",
+      buffer: image,
+    });
+    const response = await uploaded;
+    expect(response.status()).toBe(202);
+    const media = (await response.json()) as { id: string; status: string };
+    expect(media.status).toBe("PROCESSING");
+    await expect(
+      form.locator("dialog[open]").getByRole("status"),
+    ).toContainText("پردازش");
+    await expect(cover).toHaveValue(before);
+    await expect(
+      form.getByRole("button", { name: "ذخیره", exact: true }),
+    ).toBeDisabled();
+    await page.evaluate(() => {
+      // A named "id" field shadows HTMLFormElement.id; Playwright's locator
+      // selector generation cannot serialize that form. Evaluate via document
+      // and call the native prototype without weakening the submit assertion.
+      const category = document.querySelector(
+        'input[name="kind"][value="category"]',
+      );
+      const form = category?.closest("form");
+      if (!form) throw new Error("Category form missing");
+      HTMLFormElement.prototype.requestSubmit.call(form);
+    });
+    await expect
+      .poll(
+        async () => {
+          const tick = await page.request.post("/api/cron/tick", {
+            headers: {
+              authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron"}`,
+            },
+          });
+          expect(tick.ok()).toBe(true);
+          return cover.inputValue();
+        },
+        { timeout: 30000, intervals: [250, 500, 1000] },
+      )
+      .toBe(media.id);
+    await expect(form.locator("dialog")).not.toBeVisible();
+    expect(saveRequests).toBe(0);
+    await expect(
+      form.getByRole("button", { name: "ذخیره", exact: true }),
+    ).toBeEnabled();
+    await form.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(form.getByRole("status")).toHaveText("با موفقیت ذخیره شد.");
+    await page.reload();
+    await expect(cover).toHaveValue(media.id);
+    expect(
+      (await db.media.findUniqueOrThrow({ where: { id: media.id } })).status,
+    ).toBe("READY");
+  } finally {
+    await db.category.update({
+      where: { id: category.id },
+      data: { mediaId: category.mediaId, updatedAt: category.updatedAt },
+    });
+  }
 });

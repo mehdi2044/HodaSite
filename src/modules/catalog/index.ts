@@ -20,6 +20,8 @@ export {
   catalogFacets,
   catalogProductInclude,
   findCategoryBySlug,
+  findCategoryCover,
+  findCategoryCovers,
   findProductBySlug,
   listCatalogProducts,
   type CatalogFilters,

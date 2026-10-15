@@ -43,7 +43,8 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "linksTitle": "Store guide"
   },
   "media": {
     "title": "Media library",
@@ -83,6 +84,8 @@
     "replaceFailed": "Replacement could not be started.",
     "retryReplace": "Retry replacement",
     "chooseMedia": "Choose media",
+    "pickerProcessing": "Uploading and processing the image; it will be selected when ready. The previous image is retained.",
+    "pickerFailed": "The image is not ready. The previous image was retained; check the library status or choose a ready image.",
     "uploadNew": "Upload new",
     "close": "Close",
     "loading": "Loading…",
@@ -112,7 +115,8 @@
     "fitContain": "Show whole image",
     "focalX": "Horizontal focus",
     "focalY": "Vertical focus",
-    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original."
+    "framingHelp": "Choose the focal point with the sliders. Full-image view always shows the uncropped original.",
+    "clearSelection": "Clear image"
   },
   "contentNavigation": {
     "main": "Main navigation",
@@ -267,7 +271,7 @@
     "sort": "Sort",
     "apply": "Apply",
     "all": "All",
-    "results": "{count} products",
+    "results": "{count, number} products",
     "loadMore": "Show more",
     "empty": "No products match these filters.",
     "search": "Search",
@@ -289,7 +293,8 @@
     "taxExcluded": "Tax and fees are calculated at checkout",
     "inStock": "In stock",
     "lowStock": "Low stock",
-    "outOfStock": "Out of stock"
+    "outOfStock": "Out of stock",
+    "description": "Product details"
   },
   "homepage": {
     "empty": "Homepage content has not been published yet.",
@@ -469,7 +474,13 @@
     "addRow": "Add row",
     "variantStock": "On hand: {onHand} · Sellable: {available}",
     "manageStock": "Receive and manage stock",
-    "seoKeywords": "SEO keywords"
+    "seoKeywords": "SEO keywords",
+    "emptyList": "No products match these filters.",
+    "categoryImage": "Category image",
+    "clearFilters": "Clear filters",
+    "taxonomySections": "Catalog sections",
+    "categoryPlacementHelp": "Root categories appear in the storefront category bar. To show more on the homepage, increase the card limit in the category block settings.",
+    "configureHomepage": "Configure homepage layout"
   },
   "phase03Admin": {
     "amount": "Amount",
@@ -1122,7 +1133,31 @@
     "fa": "فارسی",
     "tr": "Türkçe",
     "en": "English",
-    "languageError": "Could not change language. Please try again."
+    "languageError": "Could not change language. Please try again.",
+    "navigation": "Admin navigation",
+    "searchNavigation": "Find an admin section",
+    "navigationEmpty": "No section matches this name.",
+    "menu": "Admin menu",
+    "groupOverview": "Overview",
+    "groupCommerce": "Orders and customers",
+    "groupCatalog": "Products and inventory",
+    "groupContent": "Content and design",
+    "groupFinance": "Pricing and finance",
+    "groupSettings": "Store settings",
+    "groupSystem": "System and access",
+    "skipContent": "Skip to admin content",
+    "everydayTasks": "Where will you start today?",
+    "everydayTasksHelp": "Everyday store tasks, with direct access to the settings you need.",
+    "taskProduct": "Add a product",
+    "taskProductHelp": "Add photography, colors and sizes, then prepare your product for publishing.",
+    "taskCategories": "Manage categories",
+    "taskCategoriesHelp": "Create categories and subcategories, and choose a cover for each collection.",
+    "taskHomepage": "Arrange the storefront",
+    "taskHomepageHelp": "Set the section order, product counts and copy on your homepage.",
+    "taskMedia": "Image library",
+    "taskMediaHelp": "Upload photography and adjust its mobile and desktop presentation.",
+    "openSection": "Open section",
+    "unsavedChanges": "You have unsaved changes. Leave this page?"
   },
   "mobileStorefront": {
     "navigation": "Shop shortcuts",
@@ -1183,7 +1218,11 @@
     "collectionPreview": "A look at everyday style",
     "carousel": "Carousel",
     "backCollection": "Back to collection",
-    "fullImage": "View full image"
+    "fullImage": "View full image",
+    "imageDisclosure": "About this image",
+    "itemsCount": "{count, plural, one {# item} other {# items}}",
+    "categoryExplore": "Find your own style",
+    "browseCategory": "Explore collection"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",

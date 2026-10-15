@@ -1,0 +1,67 @@
+## 2026-10-15 — Browser Back/Forward protection (#63 follow-up)
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
+
+The new PR60 review finding [4268194701](https://github.com/mehdi2044/HodaSite/pull/60#discussion_r4268194701) was reproduced on the previous production build: Back discarded a dirty brand form without confirmation. Shared history tracking now starts in the root layout before router listeners; cancelling Back/Forward restores the same live form and URL, accepting proceeds, and reverted/clean forms navigate normally. Next history state is retained. No autosave, schema, identity, provider or money changes. Default-value capture resets only a detached form clone; no live field is reset.
+
+Local production verification: lint, TypeScript, build, **4,228 unit tests**, and **7 Chromium browser cases** passed (FA/TR/EN Back/Forward + existing link protection + actual traversal with Navigation API unavailable). Indexed cancellation preserves history length and unsaved values; the database remains unchanged. WebKit has three real-browser cases in CI and was not run locally. For an unknown entry created before tracking in browsers without Navigation API, cancellation retains the form by appending its URL; this legacy fallback can prune the old forward stack. No form contents are persisted.
+
+PR60 is Draft pending fresh final-head CI/review; earlier `3242540` four-green evidence is historical. All 17 blocking conversations still require reviewer adjudication; none was self-resolved. Owner Windows execution remains NOT_VERIFIED; online R0 BLOCKED_ENV. The owner's later MODA4 instruction in #62 v2/PR66 supersedes the earlier design-choice pause; independent design-stage PRs continue, without merging PR60 or writing main.
+
+## شواهد ادامهٔ #63 — ۱۴ اکتبر ۲۰۲۶
+
+رگرسیون ساخت محصول نیز اضافه شد: care/SEO description اختیاری دیگر HTML-required نیستند؛ description و schema سرور حفظ شدند. آزمون واقعی ساخت محصول با اختیاری‌های خالی → ذخیرهٔ قیمت چهاراعشاری → ویرایش/بازخوانی با همان variant موفق است. مجموعهٔ محلی catalog/unsaved اکنون ۸ آزمون موفق دارد. چهار check سبز `d382a4e` و ۱۸۶ مرورگر آن متعلق به نسخهٔ قبل از این پیگیری‌اند؛ CI تازهٔ head نهایی لازم است.
+
+PR60 مبناست؛ [ماتریس ۱۶ گفتگو و runbook تحویل](ISSUE63_EXECUTION.md) و [ماتریس کنترل پنل](DESIGN01_SETTINGS_MATRIX.md) به پذیرش افزوده شدند. CI361 روی `43b97f4`، ۹٬۱۴۳ واحد/PostgreSQL و ۱۸۰/۱۸۳ مرورگر را موفق کرد؛ سه شکست به locator دوم لینک اکسسوری مربوط بودند. پس از اصلاح دقیق نام disclosure-aware، هر ۶ spatial محلی موفق شدند. تغییر رفتاری جدید: هشدار خروج از فرم ذخیره‌نشدهٔ کاتالوگ/تنظیمات، با تست لغو/حفظ/بازگرداندن مقادیر در هر سه زبان. هر ۷ catalog/unsaved مرورگر و هر ۵ importer PostgreSQL، شامل فروش/RETURN_RESTOCK lot واقعاً واردشده، موفق‌اند. اجرای محلی system Chromium با production build است؛ WebKit/Windows واقعی را از آن استنتاج نکنید. نتیجهٔ CI و review برای head نهایی از PR خوانده شود؛ این سند marker بازبینی یا اجازهٔ merge نیست.
+
+## به‌روزرسانی تحویل — ۱۳ اکتبر ۲۰۲۶
+
+PR60 اکنون مستقیماً main را هدف می‌گیرد و commitهای PR59 و PR61 را در تاریخچهٔ خود دارد؛ ترتیب مرج زنجیره‌ایِ ذکرشده در گزارش قدیمیِ پایین دیگر مسیر فعال تحویل نیست. تا بازبینی کامل head نهایی، مجوز merge صادر نمی‌شود. نسخهٔ تازه شامل پاک‌کردن تصویر دسته، کارهای روزمرهٔ مدیریت، فیلترهای کاتالوگ، واردکنندهٔ افزایشی نمونه‌ها و updater ویندوز است. نتیجهٔ هم‌نسخهٔ CI و بازبینی در PR60 مرجع نهایی است؛ جدول‌های پایین مربوط به نسخه‌های قبلی‌اند.
+
+تست دستی افزوده: در هر سه زبان از داشبورد به دسته‌ها بروید، تصویر دسته را انتخاب/پاک و ذخیره کنید، با لینک بخش‌ها حرکت کنید؛ در محصولات جست‌وجوی بی‌نتیجه را با «پاک‌کردن فیلترها» بازیابی کنید. پس از updater موفق، محصول‌های جدید هر چهار گروه، انتخاب سایز و سبد را در دادهٔ همان preview ببینید. اجرای PowerShell روی دستگاه مالک و پسندیدن ظاهر، هنوز از آزمایش CI قابل نتیجه‌گیری نیست.
+
+# مسیر پذیرش نسخهٔ یکپارچهٔ فروشگاه
+
+نسخهٔ شاخهٔ `design/product-category-cart-admin` تغییرات امنیت، صفحهٔ اصلی و طراحی محصول/دسته/سبد/مدیریت را کنار هم دارد. این سند، شواهد آزمون و ترتیب بررسی عملی را ثبت می‌کند؛ تأیید نهایی طراحی یا انتشار نیست.
+
+## آخرین اجرای کامل پیش از اصلاح نشان تصویر دسته
+
+| بخش                 | نسخهٔ آزموده‌شده                                                                                                     | نتیجه                                                |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| امنیت، PR61         | `1d703a0e265d98e7569d6aae4723072e781be8fa` — [CI336](https://github.com/mehdi2044/HodaSite/actions/runs/38302763953) | هر چهار job موفق؛ ۹٬۰۲۶ واحد/PostgreSQL و ۱۶۹ مرورگر |
+| صفحهٔ اصلی، PR59    | `0eb74808e110a8f90239d33ea5ee4f37ca379b36` — [CI341](https://github.com/mehdi2044/HodaSite/actions/runs/38305020114) | هر چهار job موفق؛ ۹٬۰۶۱ واحد/PostgreSQL و ۱۷۲ مرورگر |
+| نسخهٔ یکپارچه، PR60 | `b667140362192f6bed65d229a3d51582b61e0a9b` — [CI343](https://github.com/mehdi2044/HodaSite/actions/runs/38305889371) | هر چهار job موفق؛ ۹٬۰۶۹ واحد/PostgreSQL و ۱۷۸ مرورگر |
+
+ساخت production و بازیابی واقعی Local/S3 در هر سه اجرا موفق‌اند. CI مرورگر، دیتابیس PostgreSQL مجزای نمونه دارد. سناریوی خرید سه‌زبانه از ورود و سبد تا نشانی، بازبینی سفارش، رسید خصوصی و تأیید پرداخت آزمایشی می‌رود. آزمون WebKit با نمای iPhone، افزودن واقعی به سبد، ورود به checkout، حالت افقی و بزرگ‌نمایی متن را بررسی می‌کند؛ این آزمون روی گوشی فیزیکی اجرا نشده است.
+
+اصلاح بعدیِ PR60، نشان محلی‌سازی‌شدهٔ تصویر نمونه را به portrait دسته می‌افزاید؛ تصویر واقعی فروشنده نشان نمی‌گیرد. شش تست render در FA/TR/EN، هر دو نسل تصویر نمونه و عکس فروشنده را بررسی می‌کنند. E2E سه‌زبانه نیز نمایش نشان و screenshot دسته را اضافه می‌کند. نتیجهٔ CI343 تأیید این تغییر تازه نیست؛ شواهد head جدید در [PR60](https://github.com/mehdi2044/HodaSite/pull/60) ثبت می‌شود.
+
+## شواهد تصویری بررسی‌شده
+
+[بستهٔ تصاویر CI343](https://github.com/mehdi2044/HodaSite/actions/runs/38305889371/artifacts/11773296277) با نام `storefront-mobile-proof` از همان نسخهٔ یکپارچه است. SHA-256 فایل ZIP: `8fc1b581a64093cc9d0db631084eae719ed22ab63f44f72870dcb8558ac98007`.
+
+تصاویر زیر مستقیماً بازبینی شدند:
+
+- `shopping-department-shelf-tr-390.png`: ویترین زنان، دو کارت قابل خواندن و ادامهٔ ردیف؛ لینک مشاهدهٔ همه و ناوبری پایین در تصویر هستند.
+- `shopping-tr-product.png`: عنوان و قیمت بالای تصویر؛ دکمهٔ افزودن به سبد بالای ناوبری ثابت پایین قرار دارد. کنترل‌های پایین‌تر در این قاب دیده نمی‌شوند؛ رفتار آن‌ها از E2E اثبات می‌شود.
+- `shopping-design-bag-fa-390.png`: خلاصهٔ قیمت راست‌به‌چپ، کد تخفیف و تکمیل خرید. این قاب پس از رفتن به خلاصه ثبت شده و بالای سبد را نشان نمی‌دهد.
+- `shopping-en-webkit-checkout.png`: شروع checkout و مراحل آن در WebKit؛ تصویر به‌تنهایی پایان خرید را اثبات نمی‌کند.
+- `shopping-design-admin-tr-390.png` و `shopping-design-admin-en-1280.png`: منوی مدیریت موبایل و sidebar دسکتاپ، فرم فیلتر و جدول محصولات. اطلاعات، دادهٔ ساختگی آزمون است.
+- `shopping-design-bag-en-1280.png`: انتهای سبد پس از پیمایش و پیام انتخاب حریم خصوصی؛ برای قضاوت بالای صفحه مناسب نیست.
+- `shopping-prepared-home-full-fa-390.png`: ترتیب کلی کمپین، دسته‌ها، چهار ویترین و سپس ست آماده؛ تصویر تمام‌صفحه برای ترتیب بخش‌هاست، نه ارزیابی اندازهٔ متن در مقیاس کوچک.
+
+در قاب‌های خوانا، هم‌پوشانی مخرب یا تصویر شکستهٔ آشکاری مشاهده نشد. مربع سبز لوگوی fixture آزمون است؛ هویت نهایی برند محسوب نمی‌شود. نتیجهٔ آزمون containment موفق است، اما زیبایی‌شناسی، کیفیت عکس واقعی و تأیید مالک از این نتیجه استنتاج نمی‌شود.
+
+## ادامهٔ عملی روی محیط آزمایشی
+
+برای پیش‌نمایش کامل باید همین برنامهٔ Next.js با PostgreSQL و storage مستقل اجرا شود. میزبانی Sites روی Worker با D1، جایگزین بدون‌تغییر این معماری نیست؛ در این کار ارائه‌دهنده، DB یا معماری تغییر نکرده است. نشانیِ قابل دسترس از محیط آزمایشی کامل هنوز تأیید نشده؛ تصاویر بالا لینک یک فروشگاه تعاملی نیستند. راه‌اندازی محیط موجود طبق `docs/07_SETUP_GUIDE_FA.md` است؛ روی فروشگاه موجود seed عمومی یا reset اجرا نشود.
+
+ترتیب پذیرش در محیط نمونهٔ جدا، روی Safari گوشی و Chrome Android:
+
+1. خانهٔ FA/TR/EN: چهار ویترین و محصول پنجم را باز کنید؛ بازار و زبان باید حفظ شوند؛ ست آماده بعد از خرید عادی باشد.
+2. دسته: نشان فقط روی تصویر نمونه دیده شود؛ یک عکس واقعیِ آزمایشی از پنل قرار دهید و نبود نشان را بررسی کنید. فیلتر، شمارنده و بازنشانی را امتحان کنید.
+3. محصول: رنگ و سایز، قیمت، موجودی، توضیح تصویر و بزرگ‌نمایی را بررسی کنید؛ یک واحد به سبد اضافه کنید و همان variant را در سبد ببینید.
+4. سبد و checkout: تعداد و حذف، خلاصه، نشانی، بازبینی و رسید ساختگی را فقط در محیط آزمایش طی کنید. متن و کنترل‌ها با صفحه‌کلید گوشی و چرخاندن دستگاه قابل دسترس بمانند.
+5. مدیریت: زبان ترکی را در مرورگر انگلیسی انتخاب و «içerik» و «iletişim» را جست‌وجو کنید؛ منو و بازگشت تمرکز را بررسی کنید. نقش محدود فقط مقصدهای مجاز خودش را ببیند.
+
+پذیرش طراحی فروشگاه (#48)، مدیریت (#49)، گوشی واقعی و انتشار باز هستند. برای merge نیز D70 برقرار است: CI و گزارش الزامی هم‌نسخه، گفتگوهای مسدودکنندهٔ بسته و اجازهٔ صریح مهدی. PR60 مستقیماً main را هدف می‌گیرد و تاریخچهٔ #59/#61 را دارد؛ ترتیب retarget قدیمی دیگر معتبر نیست. این سند گزارش `[HODASITE-AI-REVIEW]` یا اجازهٔ merge نیست.

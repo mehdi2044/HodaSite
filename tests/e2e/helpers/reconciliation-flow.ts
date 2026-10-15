@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { test, expect } from "@playwright/test";
 import { reconciliationFixture } from "../../helpers/reconciliation";
 import { shoppingProof } from "./shopping-proof";
+import { followAdminLink } from "./admin-navigation";
 import fa from "../../../messages/fa.json";
 import tr from "../../../messages/tr.json";
 import en from "../../../messages/en.json";
@@ -57,9 +58,7 @@ export function reconciliationBrowserFlows() {
         await page.getByRole("button", { name: "ورود امن" }).click();
         await expect(page).toHaveURL(/\/admin$/);
         await page.locator('[name="adminLocale"]').selectOption(locale);
-        const financeLink = page.locator('aside a[href="/admin/finance"]');
-        await expect(financeLink).toHaveText(ft.title);
-        await financeLink.click();
+        await followAdminLink(page, "/admin/finance", ft.title);
         await page
           .getByTestId("finance-report")
           .getByRole("link", { name: t.title })

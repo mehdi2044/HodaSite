@@ -1,3 +1,4 @@
+import { MediaPicker } from "@/components/admin/media-picker";
 import { categoryPathLabel } from "@/modules/catalog";
 import { getLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -31,6 +32,7 @@ export default async function CatalogTaxonomyPage({
         orderBy: { slug: "asc" },
       }),
       db.category.findMany({
+        include: { media: true },
         where: { deletedAt: null },
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       }),
@@ -73,11 +75,28 @@ export default async function CatalogTaxonomyPage({
   const guideEdit =
     editKind === "sizeGuide" ? guides.find((x) => x.id === editId) : undefined;
   return (
-    <div className="grid gap-6">
+    <div className="admin-taxonomy grid gap-6">
       <div>
         <h1 className="text-2xl font-semibold">{t("taxonomyTitle")}</h1>
         <p className="muted mt-1">{t("taxonomySubtitle")}</p>
       </div>
+      <nav className="admin-section-jumps" aria-label={t("taxonomySections")}>
+        {(
+          [
+            ["category", "categories", categories.length],
+            ["brand", "brands", brands.length],
+            ["collection", "collections", collections.length],
+            ["color", "colors", colors.length],
+            ["size", "sizes", sizes.length],
+            ["sizeGuide", "sizeGuides", guides.length],
+          ] as const
+        ).map(([key, label, count]) => (
+          <a href={`#taxonomy-${key}`} key={key}>
+            {t(label)}{" "}
+            <span>{new Intl.NumberFormat(locale).format(count)}</span>
+          </a>
+        ))}
+      </nav>
       <TaxonomySection
         title={t("brands")}
         kind="brand"
@@ -195,9 +214,13 @@ export default async function CatalogTaxonomyPage({
         }
         editId={sizeEdit?.id}
       />
-      <Card>
+      <Card id="taxonomy-category">
         <h2 className="text-xl font-semibold">{t("categories")}</h2>
         <p className="muted mt-2">{ft("categoryTreeHelp")}</p>
+        <p className="admin-context-help">{t("categoryPlacementHelp")}</p>
+        <a className="admin-context-link" href="/admin/content/homepage">
+          {t("configureHomepage")}
+        </a>
         <CatalogActionForm
           action={saveTaxonomy}
           className="mt-4 grid gap-3 md:grid-cols-2"
@@ -220,6 +243,14 @@ export default async function CatalogTaxonomyPage({
             prefix="description"
             label={t("description")}
             value={categoryEdit?.descriptionI18n}
+          />
+          <MediaPicker
+            key={categoryEdit?.id ?? "new-category"}
+            name="mediaId"
+            label={t("categoryImage")}
+            defaultMediaId={categoryEdit?.mediaId}
+            defaultUrl={categoryEdit?.media?.url}
+            allowClear
           />
           <label>
             {t("gender")}
@@ -257,7 +288,7 @@ export default async function CatalogTaxonomyPage({
           }))}
         />
       </Card>
-      <Card>
+      <Card id="taxonomy-sizeGuide">
         <h2 className="text-xl font-semibold">{t("sizeGuides")}</h2>
         <CatalogActionForm
           action={saveTaxonomy}
@@ -315,7 +346,7 @@ function TaxonomySection({
   editId?: string;
 }) {
   return (
-    <Card>
+    <Card id={`taxonomy-${kind}`}>
       <h2 className="text-xl font-semibold">{heading}</h2>
       <CatalogActionForm
         action={saveTaxonomy}
@@ -357,7 +388,7 @@ async function Rows({
               <div className="flex flex-wrap gap-2">
                 <a
                   className="button inline-flex items-center justify-center whitespace-nowrap"
-                  href={`/admin/catalog/taxonomy?editKind=${kind}&editId=${row.id}`}
+                  href={`/admin/catalog/taxonomy?editKind=${kind}&editId=${row.id}#taxonomy-${kind}`}
                 >
                   {t("edit")}
                 </a>

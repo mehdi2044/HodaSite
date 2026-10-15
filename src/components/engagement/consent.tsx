@@ -171,10 +171,10 @@ export function Consent({
     }
   }
   return (
-    <>
+    <div className="shop-consent">
       <button
         type="button"
-        className="m-4 min-h-11 underline"
+        className="shop-consent-settings"
         onClick={() => setOpen(true)}
       >
         {t("settings")}
@@ -182,7 +182,7 @@ export function Consent({
       {(choice === null || open) && (
         <section
           aria-label={t("title")}
-          className="mx-auto my-4 grid max-w-2xl gap-3 rounded-token border bg-bg p-5 shadow-xl"
+          className="shop-consent-panel grid gap-3 rounded-token border bg-bg p-5 text-text shadow-xl"
         >
           <h2 className="text-lg font-semibold">{t("title")}</h2>
           <p>{t("description")}</p>
@@ -196,6 +196,6 @@ export function Consent({
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }

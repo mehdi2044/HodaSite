@@ -239,6 +239,20 @@ export async function findCategoryBySlug(
   });
 }
 
+/** Batch public covers so every category surface uses the same lifecycle boundary. */
+export async function findCategoryCovers(mediaIds: readonly (string | null)[]) {
+  const ids = [...new Set(mediaIds.filter((id): id is string => Boolean(id)))];
+  if (!ids.length) return [];
+  return db.media.findMany({
+    where: { id: { in: ids }, kind: "image", status: "READY", deletedAt: null },
+  });
+}
+
+/** Public category portraits share catalog media lifecycle rules. */
+export async function findCategoryCover(mediaId: string | null) {
+  return (await findCategoryCovers([mediaId]))[0] ?? null;
+}
+
 export async function findProductBySlug(
   marketId: string,
   locale: CatalogLocale,

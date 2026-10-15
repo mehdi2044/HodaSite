@@ -43,7 +43,8 @@
     "x": "X",
     "tiktok": "TikTok",
     "youtube": "YouTube",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "linksTitle": "Mağaza rehberi"
   },
   "media": {
     "title": "Medya kütüphanesi",
@@ -83,6 +84,8 @@
     "replaceFailed": "Dosya değiştirme başlatılamadı.",
     "retryReplace": "Değiştirmeyi tekrar dene",
     "chooseMedia": "Medya seç",
+    "pickerProcessing": "Görsel yükleniyor ve işleniyor; hazır olduğunda seçilecek. Önceki görsel korunur.",
+    "pickerFailed": "Görsel hazır değil. Önceki görsel korundu; kitaplıktaki durumu kontrol edin veya hazır bir görsel seçin.",
     "uploadNew": "Yeni yükle",
     "close": "Kapat",
     "loading": "Yükleniyor…",
@@ -112,7 +115,8 @@
     "fitContain": "Görselin tamamı",
     "focalX": "Yatay odak",
     "focalY": "Dikey odak",
-    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir."
+    "framingHelp": "Kaydırıcılarla odak noktasını ayarlayın. Tam görsel görünümü her zaman kırpılmamış görseli gösterir.",
+    "clearSelection": "Görseli kaldır"
   },
   "contentNavigation": {
     "main": "Ana navigasyon",
@@ -267,7 +271,7 @@
     "sort": "Sıralama",
     "apply": "Uygula",
     "all": "Tümü",
-    "results": "{count} ürün",
+    "results": "{count, number} ürün",
     "loadMore": "Daha fazla göster",
     "empty": "Bu filtrelerle ürün bulunamadı.",
     "search": "Ara",
@@ -289,7 +293,8 @@
     "taxExcluded": "Vergi ve ücretler ödeme sırasında hesaplanır",
     "inStock": "Stokta",
     "lowStock": "Son ürünler",
-    "outOfStock": "Stokta yok"
+    "outOfStock": "Stokta yok",
+    "description": "Ürün detayları"
   },
   "homepage": {
     "empty": "Ana sayfa içeriği henüz yayımlanmadı.",
@@ -469,7 +474,13 @@
     "addRow": "Satır ekle",
     "variantStock": "Stok: {onHand} · Satılabilir: {available}",
     "manageStock": "Stok al ve yönet",
-    "seoKeywords": "SEO anahtar kelimeleri"
+    "seoKeywords": "SEO anahtar kelimeleri",
+    "emptyList": "Bu filtrelerle ürün bulunamadı.",
+    "categoryImage": "Kategori görseli",
+    "clearFilters": "Filtreleri temizle",
+    "taxonomySections": "Katalog bölümleri",
+    "categoryPlacementHelp": "Ana kategoriler mağazanın kategori çubuğunda görünür. Ana sayfada daha fazla kategori göstermek için kategori bloğunun kart sayısını artırın.",
+    "configureHomepage": "Ana sayfa düzenini ayarla"
   },
   "phase03Admin": {
     "amount": "Tutar",
@@ -1122,7 +1133,31 @@
     "fa": "فارسی",
     "tr": "Türkçe",
     "en": "English",
-    "languageError": "Dil değiştirilemedi. Tekrar deneyin."
+    "languageError": "Dil değiştirilemedi. Tekrar deneyin.",
+    "navigation": "Yönetim gezinmesi",
+    "searchNavigation": "Yönetim bölümlerinde ara",
+    "navigationEmpty": "Bu adla bir bölüm bulunamadı.",
+    "menu": "Yönetim menüsü",
+    "groupOverview": "Genel bakış",
+    "groupCommerce": "Siparişler ve müşteriler",
+    "groupCatalog": "Ürünler ve stok",
+    "groupContent": "İçerik ve tasarım",
+    "groupFinance": "Fiyatlandırma ve finans",
+    "groupSettings": "Mağaza ayarları",
+    "groupSystem": "Sistem ve erişim",
+    "skipContent": "Yönetim içeriğine geç",
+    "everydayTasks": "Bugün nereden başlayalım?",
+    "everydayTasksHelp": "Mağazanın günlük işleri ve ilgili ayarlara doğrudan erişim.",
+    "taskProduct": "Ürün ekle",
+    "taskProductHelp": "Görselleri, renkleri ve bedenleri ekleyerek ürünü yayına hazırlayın.",
+    "taskCategories": "Kategorileri yönet",
+    "taskCategoriesHelp": "Kategori ve alt kategoriler oluşturun, koleksiyon görsellerini seçin.",
+    "taskHomepage": "Vitrini düzenle",
+    "taskHomepageHelp": "Ana sayfa bölümlerini, ürün sayılarını ve metinlerini ayarlayın.",
+    "taskMedia": "Görsel kütüphanesi",
+    "taskMediaHelp": "Görsel yükleyin, mobil ve masaüstü sunumunu ayarlayın.",
+    "openSection": "Bölümü aç",
+    "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var. Bu sayfadan ayrılmak istiyor musunuz?"
   },
   "mobileStorefront": {
     "navigation": "Mağaza kısayolları",
@@ -1183,7 +1218,11 @@
     "collectionPreview": "Günlük stile bir bakış",
     "carousel": "Kayan galeri",
     "backCollection": "Kategoriye dön",
-    "fullImage": "Tam görseli aç"
+    "fullImage": "Tam görseli aç",
+    "imageDisclosure": "Bu görsel hakkında",
+    "itemsCount": "{count, number} ürün",
+    "categoryExplore": "Kendi stilini keşfet",
+    "browseCategory": "Koleksiyonu keşfet"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",

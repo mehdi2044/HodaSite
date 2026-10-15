@@ -1,3 +1,4 @@
+import { CategoryGallery } from "./category-gallery";
 import { ShopLook } from "./shop-look";
 import { SpatialHero } from "./spatial-hero";
 import { seoPath } from "@/lib/seo-urls";
@@ -6,10 +7,12 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { storefrontHref } from "@/modules/content/storefront-links";
 import { db } from "@/lib/db";
+import { findCategoryCovers } from "@/modules/catalog";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
 import { localizedValue, type HomepageBlock } from "@/modules/content/homepage";
 import { homepageProducts } from "@/modules/content/homepage-products";
 import { ProductCard } from "./product-card";
+import { ProductShelf } from "./product-shelf";
 
 type Locale = "fa" | "tr" | "en";
 
@@ -38,17 +41,14 @@ export async function HomepageBlocks({
       ),
     ),
   ];
-  const [media, productRows, categories] = await Promise.all([
-    mediaIds.length
-      ? await db.media.findMany({
-          where: {
-            id: { in: mediaIds },
-            kind: "image",
-            status: "READY",
-            deletedAt: null,
-          },
-        })
+  const departmentIds = blocks.flatMap((block) =>
+    block.type === "ProductStrip" &&
+    block.source.mode === "category" &&
+    block.source.referenceId
+      ? [block.source.referenceId]
       : [],
+  );
+  const [productRows, categories, shelfCategories] = await Promise.all([
     Promise.all(
       blocks.map((block) =>
         block.type === "ProductStrip"
@@ -60,10 +60,26 @@ export async function HomepageBlocks({
       where: { deletedAt: null, parentId: null },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
       take: 12,
-      include: { media: true },
     }),
+    departmentIds.length
+      ? db.category.findMany({
+          where: { id: { in: [...new Set(departmentIds)] }, deletedAt: null },
+        })
+      : [],
+  ]);
+  const media = await findCategoryCovers([
+    ...mediaIds,
+    ...categories.map((category) => category.mediaId),
+    ...shelfCategories.map((category) => category.mediaId),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
+  const coveredCategories = categories.map((category) => ({
+    ...category,
+    media: category.mediaId ? (mediaById.get(category.mediaId) ?? null) : null,
+  }));
+  const shelfCategoryById = new Map(
+    shelfCategories.map((item) => [item.id, item]),
+  );
   const prices = await getDisplayPrices(
     productRows.flatMap((rows) => rows?.items ?? []),
     market,
@@ -86,7 +102,7 @@ export async function HomepageBlocks({
             <SpatialHero
               key={index}
               block={block}
-              departments={categories.slice(0, 4)}
+              departments={coveredCategories.slice(0, 4)}
               campaignImage={
                 block.mediaId ? mediaById.get(block.mediaId) : undefined
               }
@@ -148,121 +164,96 @@ export async function HomepageBlocks({
             </section>
           );
         }
-        if (block.type === "ProductStrip")
+        if (block.type === "ProductStrip") {
+          const category =
+            block.source.referenceId && block.source.mode === "category"
+              ? shelfCategoryById.get(block.source.referenceId)
+              : undefined;
+          const browseHref = category
+            ? seoPath(
+                locale,
+                market.code,
+                "c",
+                localizedValue(
+                  category.slugI18n as Record<Locale, string>,
+                  locale,
+                ),
+              )
+            : block.source.mode === "latest"
+              ? `/${locale}/search`
+              : undefined;
           return (
-            <section
+            <ProductShelf
               key={index}
-              className="shell shop-home-section"
-              data-testid="home-product-strip"
+              title={localizedValue(block.title, locale)}
+              ordinal={index + 1}
+              latest={block.source.mode === "latest"}
+              locale={locale}
+              department={
+                category
+                  ? {
+                      id: category.id,
+                      media: category.mediaId
+                        ? mediaById.get(category.mediaId)
+                        : undefined,
+                    }
+                  : undefined
+              }
+              browseHref={browseHref}
+              browseLabel={t("viewAll")}
+              emptyLabel={t("emptyCollection")}
+              demoLabel={t("demoImage")}
+              empty={!productRows[index]?.items.length}
             >
-              <div className="shop-section-heading">
-                <span className="shop-section-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {localizedValue(block.title, locale)}
-                </h2>
-                {block.source.mode === "latest" && (
-                  <Link
-                    className="shop-section-link"
-                    href={`/${locale}/search`}
-                  >
-                    {t("viewAll")}
-                    <span aria-hidden="true">↗</span>
-                  </Link>
-                )}
-              </div>
-              {!productRows[index]?.items.length && (
-                <p className="shop-inline-empty">{t("emptyCollection")}</p>
-              )}
-              <div className="shop-product-rail">
-                {productRows[index]?.items
-                  .slice(0, block.source.limit)
-                  .map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={{
-                        ...product,
-                        displayPrice: prices.get(product.id),
-                      }}
-                      locale={locale}
-                      market={market}
-                    />
-                  ))}
-              </div>
-            </section>
+              {productRows[index]?.items
+                .slice(0, block.source.limit)
+                .map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={{
+                      ...product,
+                      displayPrice: prices.get(product.id),
+                    }}
+                    locale={locale}
+                    market={market}
+                  />
+                ))}
+            </ProductShelf>
           );
+        }
         if (block.type === "CategoryCards")
           return (
-            <section
+            <CategoryGallery
               key={index}
-              className="shell shop-home-section shop-category-section"
-              data-testid="home-categories"
-            >
-              <div className="shop-section-heading">
-                <span className="shop-section-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {localizedValue(block.title, locale)}
-                </h2>
-              </div>
-              {!categories.length && (
-                <p className="shop-inline-empty">{t("emptyCategories")}</p>
-              )}
-              <div className="shop-category-grid">
-                {categories
-                  .slice(0, block.source.limit)
-                  .map((category, categoryIndex) => (
-                    <Link
-                      key={category.id}
-                      href={seoPath(
-                        locale,
-                        market.code,
-                        "c",
-                        localizedValue(
-                          category.slugI18n as Record<Locale, string>,
-                          locale,
-                        ),
-                      )}
-                      className="shop-category-card group"
-                      aria-label={localizedValue(
-                        category.titleI18n as Record<Locale, string>,
-                        locale,
-                      )}
-                    >
-                      <div className="shop-category-plane">
-                        {category.media &&
-                          category.media.status === "READY" &&
-                          !category.media.deletedAt && (
-                            <ResponsiveImage
-                              media={category.media}
-                              locale={locale}
-                              sizes="(max-width:640px) 50vw,25vw"
-                              role="editorial"
-                              className="shop-category-image"
-                              imgClassName="h-full w-full object-cover"
-                            />
-                          )}
-                      </div>
-                      <h3 className="shop-category-name">
-                        <span
-                          className="shop-category-number"
-                          aria-hidden="true"
-                        >
-                          {String(categoryIndex + 1).padStart(2, "0")}
-                        </span>
-                        <span>
-                          {localizedValue(
-                            category.titleI18n as Record<Locale, string>,
-                            locale,
-                          )}
-                        </span>
-                      </h3>
-                    </Link>
-                  ))}
-              </div>
-            </section>
+              title={localizedValue(block.title, locale)}
+              ordinal={index + 1}
+              locale={locale}
+              intro={t("categoryExplore")}
+              browseLabel={t("browseCategory")}
+              demoLabel={t("demoImage")}
+              emptyLabel={t("emptyCategories")}
+              categories={categories
+                .slice(0, block.source.limit)
+                .map((category) => ({
+                  id: category.id,
+                  title: localizedValue(
+                    category.titleI18n as Record<Locale, string>,
+                    locale,
+                  ),
+                  href: seoPath(
+                    locale,
+                    market.code,
+                    "c",
+                    localizedValue(
+                      category.slugI18n as Record<Locale, string>,
+                      locale,
+                    ),
+                  ),
+                  media: category.mediaId
+                    ? mediaById.get(category.mediaId)
+                    : undefined,
+                }))}
+            />
           );
         if (block.type === "TrustBar")
           return (

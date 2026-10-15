@@ -3,9 +3,11 @@ import { useId, useRef, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 export function ShopSheet({
   title,
+  badge,
   children,
 }: {
   title: string;
+  badge?: string;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null),
@@ -18,9 +20,10 @@ export function ShopSheet({
         className="shop-filter-toggle"
         onClick={() => ref.current?.showModal()}
         aria-haspopup="dialog"
+        aria-label={badge ? `${title} (${badge})` : title}
       >
         {title}
-        <span aria-hidden="true">＋</span>
+        <span aria-hidden="true">{badge ?? "＋"}</span>
       </button>
       <dialog
         ref={ref}

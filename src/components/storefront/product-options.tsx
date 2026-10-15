@@ -60,8 +60,8 @@ export function ProductOptions({
       }),
     );
   return (
-    <div className="grid gap-5">
-      <fieldset>
+    <div className="shop-product-options grid gap-5">
+      <fieldset className="shop-option-group">
         <legend className="mb-2 font-medium">
           {labels.color}
           <span className="ms-2 font-normal text-muted">
@@ -96,8 +96,15 @@ export function ProductOptions({
           ))}
         </div>
       </fieldset>
-      <fieldset>
-        <legend className="mb-2 font-medium">{labels.size}</legend>
+      <fieldset className="shop-option-group">
+        <legend className="mb-2 font-medium">
+          {labels.size}
+          {selected && (
+            <bdi className="ms-2 font-normal text-muted">
+              {selected.size.value}
+            </bdi>
+          )}
+        </legend>
         <div className="flex flex-wrap gap-2">
           {available.map((v) => (
             <button

@@ -160,11 +160,15 @@ export default async function LocaleLayout({
             {children}
           </div>
           <PwaControls />
-          <Consent
-            marketId={market.id}
-            ids={normalizeSeo(site?.seo).analytics}
-          />
           <Footer
+            siteName={siteName}
+            tagline={brand.tagline[locale]}
+            privacyControls={
+              <Consent
+                marketId={market.id}
+                ids={normalizeSeo(site?.seo).analytics}
+              />
+            }
             locale={locale}
             market={market}
             contact={(site?.contact ?? {}) as Contact}

@@ -64,7 +64,7 @@ test("owner manages a scoped role while a limited user cannot access security or
   await expect(
     page.getByRole("heading", { name: "سوابق تغییرات" }),
   ).toBeVisible();
-  await expect(page.locator("summary").first()).toContainText(
+  await expect(page.locator("main summary").first()).toContainText(
     "security.role.updated",
   );
   await page.goto("/admin/system/health");

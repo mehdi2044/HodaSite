@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AdminNavigation } from "./navigation";
+import type { AdminNavGroup } from "@/lib/admin-navigation";
 import { visibleCrmMarkets } from "@/modules/crm";
 import { visibleFinanceMarkets } from "@/modules/finance";
 import { signOut } from "@/modules/auth";
@@ -50,106 +52,169 @@ export async function AdminShell({
   const alertCount = showHealth
     ? await db.systemAlert.count({ where: { resolvedAt: null } })
     : 0;
+  const [
+    canModerate,
+    canAiSettings,
+    canGenerate,
+    canUsage,
+    canAnalyze,
+    canSeo,
+  ] = await Promise.all(
+    [
+      "content.page.publish",
+      "ai.settings.manage",
+      "ai.product.generate",
+      "ai.usage.view",
+      "ai.finance.analyze",
+      "settings.brand.edit",
+    ].map((permission) => can(user.id, permission)),
+  );
+  const fitting = await getTranslations("fitting");
+  const link = (href: string, label: string) => ({ href, label });
+  const groups: AdminNavGroup[] = [
+    { title: nav("groupOverview"), links: [link("/admin", nav("dashboard"))] },
+    {
+      title: nav("groupCommerce"),
+      links: [
+        link("/admin/orders", commerce("orders")),
+        link("/admin/returns", returns("title")),
+        link("/admin/payments/banks", commerce("bankAccounts")),
+        ...(promotionMarkets.length
+          ? [link("/admin/promotions", promotions("title"))]
+          : []),
+        ...(crmVisible ? [link("/admin/crm", crm("title"))] : []),
+      ],
+    },
+    {
+      title: nav("groupCatalog"),
+      links: [
+        link("/admin/catalog/products", nav("products")),
+        link("/admin/catalog/taxonomy", nav("taxonomy")),
+        link("/admin/inventory", t("inventoryLots")),
+        link("/admin/media", nav("media")),
+      ],
+    },
+    {
+      title: nav("groupContent"),
+      links: [
+        link("/admin/content/homepage", t("homepage")),
+        link("/admin/content/menus", t("menus")),
+        link("/admin/content/pages", t("pages")),
+        link("/admin/content/translations", t("translations")),
+        ...(canModerate
+          ? [link("/admin/content/reviews", engagement("moderation"))]
+          : []),
+        link("/admin/design", nav("design")),
+      ],
+    },
+    {
+      title: nav("groupFinance"),
+      links: [
+        link("/admin/pricing/fx", t("pricingFx")),
+        link("/admin/pricing/fees", t("feeRules")),
+        link("/admin/pricing/fees/simulator", t("feeSimulator")),
+        ...(financeMarkets.length
+          ? [
+              link("/admin/finance", finance("title")),
+              link("/admin/finance/journal", journal("title")),
+            ]
+          : []),
+        ...(canAnalyze ? [link("/admin/finance/analyst", ai("analyst"))] : []),
+      ],
+    },
+    {
+      title: nav("groupSettings"),
+      links: [
+        link("/admin/markets", nav("markets")),
+        link("/admin/settings/brand", nav("brand")),
+        link("/admin/settings/theme", nav("theme")),
+        link("/admin/settings/contact", nav("contact")),
+        link("/admin/settings/social", nav("social")),
+        link("/admin/settings/legal", nav("legal")),
+        link("/admin/settings/shipping", shipping("settings")),
+        link("/admin/settings/checkout", nav("checkout")),
+        link("/admin/settings/maintenance", nav("maintenance")),
+        link("/admin/settings/notifications", t("notifications")),
+        ...(canAiSettings
+          ? [
+              link("/admin/settings/ai", ai("settings")),
+              link("/admin/settings/fitting", fitting("adminTitle")),
+            ]
+          : []),
+        ...(canSeo ? [link("/admin/settings/seo", seo("title"))] : []),
+      ],
+    },
+    {
+      title: nav("groupSystem"),
+      links: [
+        link("/admin/users", nav("users")),
+        link("/admin/security", security("title")),
+        link("/admin/security/roles", security("roles")),
+        link("/admin/security/audit", security("audit")),
+        link("/admin/system/backups", backups("title")),
+        link("/admin/system/health", nav("health")),
+        ...(showHealth ? [link("/admin/system/launch", launch("title"))] : []),
+        ...(canGenerate ? [link("/admin/ai/review", ai("queue"))] : []),
+        ...(canUsage ? [link("/admin/ai/usage", ai("usage"))] : []),
+      ],
+    },
+  ];
   return (
     <div className="admin" dir={locale === "fa" ? "rtl" : "ltr"}>
+      <a className="admin-skip" href="#admin-content">
+        {nav("skipContent")}
+      </a>
       <aside className="sidebar">
-        <strong>{brand.name[locale] ?? brand.name.fa}</strong>
-        <AdminLocaleSwitcher />
-        <Link href="/admin">{nav("dashboard")}</Link>
-        <Link href="/admin/users">{nav("users")}</Link>
-        <Link href="/admin/security">{security("title")}</Link>
-        <Link href="/admin/security/roles">{security("roles")}</Link>
-        <Link href="/admin/security/audit">{security("audit")}</Link>
-        <Link href="/admin/markets">{nav("markets")}</Link>
-        <Link href="/admin/media">{nav("media")}</Link>
-        <Link href="/admin/catalog/products">{nav("products")}</Link>
-        <Link href="/admin/catalog/taxonomy">{nav("taxonomy")}</Link>
-        <Link href="/admin/pricing/fx">{t("pricingFx")}</Link>
-        <Link href="/admin/pricing/fees">{t("feeRules")}</Link>
-        <Link href="/admin/pricing/fees/simulator">{t("feeSimulator")}</Link>
-        <Link href="/admin/orders">{commerce("orders")}</Link>
-        {promotionMarkets.length > 0 && (
-          <Link href="/admin/promotions">{promotions("title")}</Link>
-        )}
-        {crmVisible && <Link href="/admin/crm">{crm("title")}</Link>}
-        {financeMarkets.length > 0 && (
-          <>
-            <Link href="/admin/finance">{finance("title")}</Link>
-            <Link href="/admin/finance/journal">{journal("title")}</Link>
-          </>
-        )}
-        <Link href="/admin/returns">{returns("title")}</Link>
-        <Link href="/admin/payments/banks">{commerce("bankAccounts")}</Link>
-        <Link href="/admin/inventory">{t("inventoryLots")}</Link>
-        <Link href="/admin/content/menus">{t("menus")}</Link>
-        {(await can(user.id, "content.page.publish")) && (
-          <Link href="/admin/content/reviews">{engagement("moderation")}</Link>
-        )}
-        <Link href="/admin/content/pages">{t("pages")}</Link>
-        <Link href="/admin/content/homepage">{t("homepage")}</Link>
-        <Link href="/admin/content/translations">{t("translations")}</Link>
-        {(await can(user.id, "ai.settings.manage")) && (
-          <>
-            <Link href="/admin/settings/ai">{ai("settings")}</Link>
-            <Link href="/admin/settings/fitting">
-              {(await getTranslations("fitting"))("adminTitle")}
-            </Link>
-          </>
-        )}
-        {(await can(user.id, "ai.product.generate")) && (
-          <Link href="/admin/ai/review">{ai("queue")}</Link>
-        )}
-        {(await can(user.id, "ai.usage.view")) && (
-          <Link href="/admin/ai/usage">{ai("usage")}</Link>
-        )}
-        {(await can(user.id, "ai.finance.analyze")) && (
-          <Link href="/admin/finance/analyst">{ai("analyst")}</Link>
-        )}
-        {(await can(user.id, "settings.brand.edit")) && (
-          <Link href="/admin/settings/seo">{seo("title")}</Link>
-        )}
-        <Link href="/admin/settings/brand">{nav("brand")}</Link>
-        <Link href="/admin/settings/theme">{nav("theme")}</Link>
-        <Link href="/admin/settings/contact">{nav("contact")}</Link>
-        <Link href="/admin/settings/social">{nav("social")}</Link>
-        <Link href="/admin/settings/legal">{nav("legal")}</Link>
-        <Link href="/admin/settings/shipping">{shipping("settings")}</Link>
-        <Link href="/admin/settings/checkout">{nav("checkout")}</Link>
-        <Link href="/admin/settings/maintenance">{nav("maintenance")}</Link>
-        <Link href="/admin/settings/notifications">{t("notifications")}</Link>
-        <Link href="/admin/design">{nav("design")}</Link>
-        <Link href="/admin/system/backups">{backups("title")}</Link>
-        <Link href="/admin/system/health">{nav("health")}</Link>
-        {showHealth && (
-          <Link href="/admin/system/launch">{launch("title")}</Link>
-        )}
-        <div className="sidebar-user">
-          <span className="muted">{user.name}</span>
-          <bdi dir="ltr">{user.email}</bdi>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/admin/login" });
-            }}
-          >
-            <button className="button" type="submit">
-              {nav("signOut")}
-            </button>
-          </form>
+        <div className="admin-brand">
+          <strong>{brand.name[locale] ?? brand.name.fa}</strong>
+          <span>{nav("dashboard")}</span>
         </div>
+        <AdminLocaleSwitcher />
+        <AdminNavigation
+          groups={groups}
+          labels={{
+            navigation: nav("navigation"),
+            search: nav("searchNavigation"),
+            empty: nav("navigationEmpty"),
+            menu: nav("menu"),
+          }}
+        />
       </aside>
-      <main className="shell min-w-0">
-        {showHealth && (
-          <div className="mb-5 flex justify-end">
-            <Link
-              className="button inline-flex items-center gap-2 min-h-11"
-              href="/admin/system/health"
-              aria-label={health("alertCount", { count: alertCount })}
-            >
-              {health("alerts")} <span aria-hidden="true">{alertCount}</span>
-            </Link>
+      <main
+        id="admin-content"
+        className="shell admin-workspace min-w-0"
+        tabIndex={-1}
+      >
+        <header className="admin-topbar">
+          <div className="admin-user">
+            <span>{user.name}</span>
+            <bdi dir="ltr">{user.email}</bdi>
           </div>
-        )}
+          <div className="admin-topbar-actions">
+            {showHealth && (
+              <Link
+                className="button"
+                href="/admin/system/health"
+                aria-label={health("alertCount", { count: alertCount })}
+              >
+                {health("alerts")}{" "}
+                <span aria-hidden="true">
+                  {new Intl.NumberFormat(locale).format(alertCount)}
+                </span>
+              </Link>
+            )}
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/admin/login" });
+              }}
+            >
+              <button className="button" type="submit">
+                {nav("signOut")}
+              </button>
+            </form>
+          </div>
+        </header>
         {children}
       </main>
     </div>

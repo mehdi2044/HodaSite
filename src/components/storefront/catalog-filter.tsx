@@ -1,7 +1,7 @@
 "use client";
 
 import { ShopSheet } from "./sheet";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function CatalogFilter({
@@ -31,6 +31,20 @@ export function CatalogFilter({
   const t = useTranslations("shopping");
   const router = useRouter();
   const current = useSearchParams();
+  const locale = useLocale();
+  const activeCount = [
+    "brand",
+    "color",
+    "size",
+    "material",
+    "min",
+    "max",
+    "available",
+    "sort",
+  ].filter(
+    (key) =>
+      current.get(key) && !(key === "sort" && current.get(key) === "newest"),
+  ).length;
   function submit(data: FormData) {
     const params = new URLSearchParams(current.toString());
     for (const key of [
@@ -51,7 +65,14 @@ export function CatalogFilter({
     router.push(`?${params.toString()}`, { scroll: false });
   }
   return (
-    <ShopSheet title={labels.filters}>
+    <ShopSheet
+      title={labels.filters}
+      badge={
+        activeCount
+          ? new Intl.NumberFormat(locale).format(activeCount)
+          : undefined
+      }
+    >
       <form
         key={current.toString()}
         action={submit}

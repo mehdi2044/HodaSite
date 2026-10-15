@@ -16,6 +16,7 @@ jobs:
       {
         DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
         TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
+        PREVIEW_IMPORT_TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_preview_import_test",
         MEDIA_DIR: "/tmp/hoda-media",
         ADMIN_EMAIL: "owner@example.com",
         ADMIN_PASSWORD: "ChangeMe123!",
@@ -39,6 +40,12 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level=high
       - run: mkdir -p "$MEDIA_DIR" && pnpm prisma migrate deploy && pnpm prisma db seed
+      - name: Prepare empty database for existing-preview import proof
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_preview_import_test"
+        run: |
+          docker exec "${{ job.services.postgres.id }}" createdb -U hoda hoda_preview_import_test
+          pnpm prisma migrate deploy
       - run: pnpm lint && pnpm typecheck && pnpm test:coverage && ANALYZE=true pnpm build
       - name: Preserve bundle report
         uses: actions/upload-artifact@v4
@@ -58,7 +65,21 @@ jobs:
           name: invoice-visual-proof
           path: test-results/invoice-proof/
           if-no-files-found: ignore
-      - run: pnpm e2e
+      # Integration tests deliberately leave adversarial fixtures and hundreds
+      # of queued jobs. Browser acceptance needs the seeded shop, not that
+      # unrelated backlog. Keep both databases for diagnostics; never reset one.
+      - name: Prepare isolated browser database
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_e2e_test"
+        run: |
+          docker exec "${{ job.services.postgres.id }}" createdb -U hoda hoda_e2e_test
+          pnpm prisma migrate deploy
+          pnpm prisma db seed
+      - name: Browser acceptance on the isolated seeded shop
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_e2e_test"
+          TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_e2e_test"
+        run: pnpm e2e
       - name: Preserve mobile storefront proof
         if: always()
         uses: actions/upload-artifact@v4
@@ -113,6 +134,16 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test:unit
+      - name: Validate the local preview updater syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/update-preview.ps1'), [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
+      - name: Exercise updater failure recovery and untracked-file guards
+        shell: pwsh
+        run: ./tests/windows/update-preview.spec.ps1
 
   # Real runtime: brings the production stack up and exercises migrate,
   # health, and a full backup/verify/restore cycle inside `ops`. Slower than

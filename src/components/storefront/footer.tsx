@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { FooterView } from "./footer-view";
 import { getTranslations } from "next-intl/server";
 import type { Market } from "@/lib/request-context";
 import {
@@ -5,7 +7,7 @@ import {
   type SocialByMarket,
   type MarketCode,
 } from "@/lib/social";
-import { getMenu, type PublicMenuItem } from "@/modules/content";
+import { getMenu } from "@/modules/content";
 
 export type Contact = {
   email?: string;
@@ -24,12 +26,18 @@ export async function Footer({
   contact,
   social,
   legal,
+  siteName = "",
+  tagline,
+  privacyControls,
 }: {
   locale: string;
   market: Market;
   contact: Contact;
   social: SocialByMarket;
   legal: Legal;
+  siteName?: string;
+  tagline?: string;
+  privacyControls?: ReactNode;
 }) {
   const [t, navT] = await Promise.all([
     getTranslations("footer"),
@@ -49,69 +57,30 @@ export async function Footer({
   );
 
   return (
-    <footer className="mt-20 bg-text text-bg">
-      <div className="shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <div className="grid gap-1">
-          <strong>{t("contactTitle")}</strong>
-          {contact.email && (
-            <bdi dir="ltr">
-              <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            </bdi>
-          )}
-          {phone && (
-            <bdi dir="ltr">
-              <a href={`tel:${phone}`}>{phone}</a>
-            </bdi>
-          )}
-          {contact.address?.[locale] && (
-            <p className="opacity-70">{contact.address[locale]}</p>
-          )}
-        </div>
-        {socialLinks.length > 0 && (
-          <div className="grid gap-1">
-            <strong>{t("socialTitle")}</strong>
-            {socialLinks.map(([key, url]) => (
-              <a key={key} href={url} target="_blank" rel="noreferrer">
-                {t(key)}
-              </a>
-            ))}
-          </div>
-        )}
-        {menu.length > 0 && (
-          <nav className="grid content-start gap-1" aria-label={navT("footer")}>
-            {menu.map((item) => (
-              <FooterMenuItem key={item.id} item={item} />
-            ))}
-          </nav>
-        )}
-        {footerLine && (
-          <div className="grid gap-1 opacity-70">
-            <p>{footerLine}</p>
-          </div>
-        )}
-      </div>
-    </footer>
-  );
-}
-
-function FooterMenuItem({ item }: { item: PublicMenuItem }) {
-  return (
-    <div className="grid gap-1">
-      {item.href ? (
-        <a
-          className="min-h-11 py-3"
-          href={item.href}
-          target={item.target}
-          rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-        >
-          {item.label}
-        </a>
-      ) : (
-        <span className="py-2 font-semibold opacity-70">{item.label}</span>
-      )}
-      {item.children.map((child) => (
-        <FooterMenuItem key={child.id} item={child} />
-      ))}
-    </div>
+    <FooterView
+      homeHref={`/${locale}/m/${market.code}`}
+      siteName={siteName}
+      tagline={tagline}
+      contact={{
+        email: contact.email,
+        phone,
+        address: contact.address?.[locale],
+        hours: contact.hours?.[locale],
+      }}
+      socialLinks={socialLinks.map(([key, href]) => ({
+        key,
+        href,
+        label: t(key),
+      }))}
+      menu={menu}
+      labels={{
+        contact: t("contactTitle"),
+        social: t("socialTitle"),
+        navigation: navT("footer"),
+        links: t("linksTitle"),
+      }}
+      footerLine={footerLine}
+      privacyControls={privacyControls}
+    />
   );
 }

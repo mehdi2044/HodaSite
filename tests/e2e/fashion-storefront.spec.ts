@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
+import type { HomepageBlock } from "../../src/modules/content/homepage";
+import { PrismaClient, Prisma } from "@prisma/client";
 import { shoppingProof } from "./helpers/shopping-proof";
 
 const db = new PrismaClient();
+let originalHome: { blocks: Prisma.JsonValue; updatedAt: Date } | null = null;
 let originalDates: Array<{ id: string; createdAt: Date; updatedAt: Date }> = [];
 test.beforeAll(async () => {
   // Other database suites leave newer, imageless TR products. Give the four
@@ -14,6 +16,24 @@ test.beforeAll(async () => {
     orderBy: { id: "asc" },
   });
   expect(originalDates).toHaveLength(4);
+  // Exercise the existing-preview composition (one latest-products shelf),
+  // independently of the four-department fresh-seed acceptance suite.
+  originalHome = await db.homepage.findUniqueOrThrow({
+    where: { id: "seed-homepage-global" },
+    select: { blocks: true, updatedAt: true },
+  });
+  const blocks: HomepageBlock[] = (originalHome.blocks as HomepageBlock[]).filter(
+    (block) => block.type !== "ProductStrip" && block.type !== "ShopLook",
+  );
+  blocks.splice(2, 0, {
+    type: "ProductStrip",
+    title: { fa: "تازه‌ها", tr: "Yeni gelenler", en: "New arrivals" },
+    source: { mode: "latest", limit: 4 },
+  });
+  await db.homepage.update({
+    where: { id: "seed-homepage-global" },
+    data: { blocks: blocks as Prisma.InputJsonArray },
+  });
   const start = Date.now() + 86400000;
   await db.$transaction(
     originalDates.map((product, index) =>
@@ -32,7 +52,18 @@ test.afterAll(async () => {
       ),
     );
   } finally {
-    await db.$disconnect();
+    try {
+      if (originalHome)
+        await db.homepage.update({
+          where: { id: "seed-homepage-global" },
+          data: {
+            blocks: originalHome.blocks as Prisma.InputJsonArray,
+            updatedAt: originalHome.updatedAt,
+          },
+        });
+    } finally {
+      await db.$disconnect();
+    }
   }
 });
 
@@ -56,6 +87,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(
       hero.locator(".spatial-cta, .shop-hero-content .button"),
     ).toHaveAttribute("href", `/${locale}/search`);
+    await expect(page.locator(".shop-latest-shelf")).toHaveCount(1);
     const categories = page.getByTestId("home-categories");
     await expect(categories.locator("img")).toHaveCount(4);
     for (const width of [360, 390, 430, 768, 1280]) {
@@ -114,7 +146,11 @@ for (const locale of ["fa", "tr", "en"] as const) {
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();
     await page.locator(".shop-zoom-close").click();
     await expect(page.locator(".shop-gallery-zoom")).not.toBeVisible();
-    await expect(page.locator(".shop-demo-note")).toBeVisible();
+    await expect(
+      page.locator(".shop-gallery-demo-badge").first(),
+    ).toBeVisible();
+    await page.locator(".shop-demo-disclosure summary").click();
+    await expect(page.locator(".shop-demo-disclosure p")).toBeVisible();
     await expect(page.locator(".shop-add-button")).toBeEnabled();
     await page.evaluate(() => scrollTo(0, 0));
     await shoppingProof(page, info, `fashion-product-${locale}`);

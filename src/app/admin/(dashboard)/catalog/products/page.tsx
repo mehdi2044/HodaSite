@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { catalogText, type CatalogLocale } from "@/modules/catalog";
+import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { db } from "@/lib/db";
@@ -30,6 +31,8 @@ export default async function ProductsPage({
     redirect("/admin");
   const params = await searchParams;
   const t = await getTranslations("catalogAdmin");
+  const locale = (await getLocale()) as CatalogLocale;
+  const title = (value: unknown) => catalogText(value, locale);
   const q = one(params.q)?.trim() ?? "";
   const status = one(params.status);
   const categoryId = one(params.category);
@@ -59,7 +62,7 @@ export default async function ProductsPage({
     db.market.findMany({ orderBy: { code: "asc" } }),
   ]);
   return (
-    <div className="grid gap-5">
+    <div className="admin-catalog grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t("title")}</h1>
@@ -70,21 +73,30 @@ export default async function ProductsPage({
         </Link>
       </div>
       <Card>
-        <form method="get" className="flex flex-wrap gap-2">
+        <form method="get" className="admin-catalog-filters">
           <input
             className="h-10 rounded-[8px] border border-black/15 px-3"
             name="q"
             type="search"
+            aria-label={t("searchPlaceholder")}
             defaultValue={q}
             placeholder={t("searchPlaceholder")}
           />
-          <Select name="status" defaultValue={status ?? ""}>
+          <Select
+            name="status"
+            aria-label={t("status")}
+            defaultValue={status ?? ""}
+          >
             <option value="">{t("allStatuses")}</option>
             <option value="DRAFT">{t("draft")}</option>
             <option value="ACTIVE">{t("active")}</option>
             <option value="ARCHIVED">{t("archived")}</option>
           </Select>
-          <Select name="category" defaultValue={categoryId ?? ""}>
+          <Select
+            name="category"
+            aria-label={t("category")}
+            defaultValue={categoryId ?? ""}
+          >
             <option value="">{t("allCategories")}</option>
             {categories.map((x) => (
               <option key={x.id} value={x.id}>
@@ -92,7 +104,11 @@ export default async function ProductsPage({
               </option>
             ))}
           </Select>
-          <Select name="brand" defaultValue={brandId ?? ""}>
+          <Select
+            name="brand"
+            aria-label={t("brand")}
+            defaultValue={brandId ?? ""}
+          >
             <option value="">{t("allBrands")}</option>
             {brands.map((x) => (
               <option key={x.id} value={x.id}>
@@ -100,7 +116,11 @@ export default async function ProductsPage({
               </option>
             ))}
           </Select>
-          <Select name="market" defaultValue={marketId ?? ""}>
+          <Select
+            name="market"
+            aria-label={t("allMarkets")}
+            defaultValue={marketId ?? ""}
+          >
             <option value="">{t("allMarkets")}</option>
             {markets.map((x) => (
               <option key={x.id} value={x.id}>
@@ -111,6 +131,11 @@ export default async function ProductsPage({
           <button className="button" type="submit">
             {t("apply")}
           </button>
+          {(q || status || categoryId || brandId || marketId) && (
+            <Link className="admin-filter-reset" href="/admin/catalog/products">
+              {t("clearFilters")}
+            </Link>
+          )}
         </form>
       </Card>
       <Card>
@@ -120,7 +145,7 @@ export default async function ProductsPage({
             "use server";
             await setProductStatus(null, data);
           }}
-          className="mb-3 flex flex-wrap gap-2"
+          className="admin-bulk-actions"
         >
           <Select name="status" defaultValue="ACTIVE">
             <option value="ACTIVE">{t("activate")}</option>
@@ -143,6 +168,13 @@ export default async function ProductsPage({
             </tr>
           </thead>
           <tbody>
+            {!products.length && (
+              <tr>
+                <td colSpan={6} className="admin-table-empty">
+                  {t("emptyList")}
+                </td>
+              </tr>
+            )}
             {products.map((item) => (
               <tr key={item.id}>
                 <TD>
@@ -183,9 +215,9 @@ export default async function ProductsPage({
                       aria-label={t("usdPrice")}
                     />
                     <Select name="status" defaultValue={item.status}>
-                      <option>DRAFT</option>
-                      <option>ACTIVE</option>
-                      <option>ARCHIVED</option>
+                      <option value="DRAFT">{t("draft")}</option>
+                      <option value="ACTIVE">{t("active")}</option>
+                      <option value="ARCHIVED">{t("archived")}</option>
                     </Select>
                     <button className="button" type="submit">
                       {t("save")}
@@ -215,9 +247,4 @@ export default async function ProductsPage({
       </Card>
     </div>
   );
-}
-
-function title(value: unknown) {
-  const item = value as Record<string, string>;
-  return item.fa || item.tr || item.en || "—";
 }
