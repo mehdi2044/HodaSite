@@ -437,13 +437,16 @@ test.describe("controlled video transport", () => {
       const hydrationGate = new Promise<void>((resolve) => {
         releaseScripts = resolve;
       });
+      let heldChunks = 0;
       await shop.route(chunks, async (route) => {
+        heldChunks++;
         await hydrationGate;
         await route.continue();
       });
       const missingPlayer = shop.locator(".moda-video-banner video");
       try {
         await shop.reload({ waitUntil: "commit" });
+        await expect.poll(() => heldChunks).toBeGreaterThan(0);
         await expect(missingPlayer).toHaveAttribute("src", missingUrl);
         await missingPlayer.evaluate((video: HTMLVideoElement) => {
           video.preload = "auto";
@@ -458,7 +461,7 @@ test.describe("controlled video transport", () => {
           .toBe(4);
       } finally {
         releaseScripts();
-        await shop.unroute(chunks);
+        await shop.unrouteAll({ behavior: "wait" });
       }
       await expect(missingPlayer).toHaveCount(0);
       await expect(shop.locator(".moda-video-poster")).toContainText(
