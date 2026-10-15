@@ -5,6 +5,7 @@ import { revalidateTag } from "next/cache";
 import { auth } from "@/modules/auth";
 import { assertCan, UnauthorizedError } from "@/modules/access";
 import { withMutation } from "@/lib/mutation-gate";
+import { lockMediaReferences } from "@/modules/media/reference-lock";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import { sanitizeCustomCss } from "@/lib/custom-css";
 import {
@@ -90,13 +91,21 @@ export async function saveTheme(
       priceLatin: parsed.fontPriceLatin,
     };
     const customCss = sanitizeCustomCss(parsed.customCss ?? "");
+    const accountMediaId = data.has("accountMediaId")
+      ? z
+          .string()
+          .regex(/^[A-Za-z0-9_-]{0,100}$/)
+          .parse(data.get("accountMediaId")) || null
+      : undefined;
 
     await withMutation(async () => {
-      const current = await db.themeSettings.findUniqueOrThrow({
-        where: { id: "default" },
-      });
-      await db.$transaction([
-        db.themeSettings.update({
+      await db.$transaction(async (tx) => {
+        await lockMediaReferences(tx, [accountMediaId], { readyImages: true });
+        await assertCan(userId, "settings.theme.edit");
+        const current = await tx.themeSettings.findUniqueOrThrow({
+          where: { id: "default" },
+        });
+        await tx.themeSettings.update({
           where: { id: "default" },
           data: {
             colors,
@@ -107,9 +116,10 @@ export async function saveTheme(
             buttonStyle: parsed.buttonStyle,
             heroStyle: parsed.heroStyle,
             customCss: customCss || null,
+            ...(accountMediaId !== undefined ? { accountMediaId } : {}),
           },
-        }),
-        db.auditLog.create({
+        });
+        await tx.auditLog.create({
           data: {
             userId,
             action: "settings.theme.update",
@@ -124,6 +134,7 @@ export async function saveTheme(
               buttonStyle: current.buttonStyle,
               heroStyle: current.heroStyle,
               customCss: current.customCss,
+              accountMediaId: current.accountMediaId,
             } as object,
             after: {
               colors,
@@ -134,10 +145,14 @@ export async function saveTheme(
               buttonStyle: parsed.buttonStyle,
               heroStyle: parsed.heroStyle,
               customCss,
+              accountMediaId:
+                accountMediaId === undefined
+                  ? current.accountMediaId
+                  : accountMediaId,
             },
           },
-        }),
-      ]);
+        });
+      });
     });
 
     revalidateTag("theme");

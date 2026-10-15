@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getThemeSettings } from "@/modules/settings";
+import { db } from "@/lib/db";
 import { ThemeEditor, type ThemeDraft } from "./theme-editor";
 import {
   DEFAULT_LIGHT_COLORS,
@@ -37,13 +38,25 @@ export default async function Theme() {
     fontPriceLatin: fonts.priceLatin,
     lineOpacity: safeLineOpacity(theme?.colors),
     customCss: theme?.customCss ?? "",
+    accountMediaId: theme?.accountMediaId ?? "",
   };
+  const accountMedia = theme?.accountMediaId
+    ? await db.media.findFirst({
+        where: {
+          id: theme.accountMediaId,
+          status: "READY",
+          deletedAt: null,
+          kind: "image",
+        },
+        select: { url: true },
+      })
+    : null;
 
   return (
     <>
       <h1 className="text-2xl font-semibold">{legacy("theme")}</h1>
       <div className="mt-4">
-        <ThemeEditor initial={initial} />
+        <ThemeEditor initial={initial} accountMediaUrl={accountMedia?.url} />
       </div>
     </>
   );

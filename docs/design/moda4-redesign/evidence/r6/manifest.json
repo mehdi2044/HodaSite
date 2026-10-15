@@ -1,0 +1,31 @@
+{
+  "runtimeSourceSha": "f3bcb896033b1ce580884891697727c23de060cf",
+  "builtAtUTC": "2026-10-15T00:11:43.767Z",
+  "files": [
+    {
+      "file": "r6-login-en-390.png",
+      "bytes": 218110,
+      "sha256": "eb87e7e037cce0748b9ad780370da668f3a8eb23e74aab5c06ed6703e0d07e6d"
+    },
+    {
+      "file": "r6-profile-en-1440.png",
+      "bytes": 424815,
+      "sha256": "89742e59d7c2997598853f87da099cabb3ff8f3d96ab37a8e96361265e105577"
+    },
+    {
+      "file": "r6-profile-en-390.png",
+      "bytes": 355910,
+      "sha256": "b4cf1bf18216cb376b3dcc91122d785939898b3057d902fb484d19a4970bdacc"
+    },
+    {
+      "file": "r6-profile-fa-390.png",
+      "bytes": 340528,
+      "sha256": "0460dbd7074656f51703169d9cba34372e564f61e7544ba5bc42163b09f68238"
+    },
+    {
+      "file": "r6-profile-tr-390.png",
+      "bytes": 342394,
+      "sha256": "81ca7451d98795dc5eea5768f4c5a4bb09010d59b034c0bfc324db9fb4031701"
+    }
+  ]
+}

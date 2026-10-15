@@ -1,5 +1,15 @@
 # تصمیم‌های قطعی پروژه (Architecture Decision Records) — v1.2.1
 
+### Profile presentation persistence and account media — D79 (2026-10-14)
+
+Concurrency detail recorded before its new field: use Customer.presentationVersion integer default0, monotonically incremented under the customer row lock for every presentation save/clear. Timestamps cannot reliably distinguish simultaneous updates; do not use them as revision tokens. Keep the counter on clear to prevent an old request becoming valid again. It is additive revision metadata, not a preference backfill or an auth-session version. Export it with the profile fields and include it in restore proof.
+
+Recorded before R6 schema/implementation, under the selected DESIGN-01 / D78 scope. Add nullable Customer.profileTheme restricted to ROSE/SLATE/SAND (NULL is neutral), nullable Customer.stylePreferences version1 JSON with bounded existing live Size/Category IDs, and nullable ThemeSettings.accountMediaId. These are presentation/preferences, not gender inference, marketing consent, CRM operator tags, auth credentials or financial data. No backfill/owner seed. Customer writes derive identity from an active verified session; the owner can explicitly clear these presentation fields. Export them through existing privacy export; presentation clearing does not fulfill full account deletion or erase order history. Existing reviewed/manual privacy policy remains unchanged.
+
+Account media is a READY public image selected through the existing authorized theme form, locked/validated/audited in the same transaction and protected by media lifecycle reference checks. Default NULL uses a decorative layout fallback. Additive migration and Local+S3 restore include these fields; retain columns/data for code rollback, never regenerate AUTH_SECRET/MFA or copy private fitting ciphertext.
+
+Keep existing OTP/NextAuth, rate/expiry/single-use limits and D66 return allowlist. A60s UI resend cooldown is presentation only and does not assert server eligibility or replace the existing throttle. Checkout/payment callbacks remain usable without forced onboarding. No new auth/provider/paid pipeline, global consent writer or automatic privacy fulfillment. Evidence: session/owner/forged-input/media negative tests, actual OTP/profile/admin flows in three languages, export/clear, and current-head CI/restore; owner Windows/visual/phones and D70 stay open.
+
 ### MODA4, purchasable imagery and live preview — D77 (2026-10-14)
 
 **Authority/status:** owner selected the MODA4 prototype in PR65, delegated typography/detail corrections, and explicitly requested editable images, a visible price for every offered garment in model/hero imagery, catalog/admin synchronization and an up-to-date review URL. Recorded before implementation; this docs change does not claim delivery or authorize merge. Continue DESIGN-01 / Issue62 rather than creating Phase12. The selected visual direction supersedes only the older visual reference in D67/Issue62/PR64; their functional, market, media-framing and acceptance requirements remain.
@@ -70,6 +80,7 @@ Owner-approved storefront scope: prepared store models and exact product/color l
 | دامنهٔ محصول | سه بازار IR/TR/CA و سه زبان fa/tr/en حفظ می‌شوند. پیشنهاد فروش آزمایشی در یک بازار، تصمیم اجرایی برای حذف زبان یا بازار نیست. | D09، D10، D63 |
 | طراحی و تصاویر قابل خرید | مرجع منتخب MODA4؛ فونت‌های تازه، قیمت زندهٔ لباس‌ها، مدیریت تصاویر/برچسب‌ها و preview واقعی در DESIGN-01 ثبت شده‌اند؛ هنوز پیاده‌سازی نشده و اجازهٔ مرج نیست. | D26 با اصلاح D77، D31، D67، D74 |
 | پروی فوری و پروفایل | مهمان می‌تواند پروی فوری رایگان ببیند؛ ذخیرهٔ مستقل ترکیب پس از ورود، تم مستقیم بدون پرسش جنسیت؛ AI پولی/provider جدید تا تصمیم و بودجه باز می‌ماند. | D75، D76، D78 |
+| ماندگاری ظاهر حساب | تم مستقیم و سایز/دستهٔ منتخب واقعی، پاک‌کردن توسط صاحب حساب و export؛ تصویر ورود از پنل با guard رسانه. حذف کامل هویت/تاریخچه به‌صورت خودکار انجام نمی‌شود. | D78، D79 |
 | بازگشت پس از ورود مشتری | فقط wishlist، محصول عمومی با مسیر canonical و anchor اعلان، و مقصدهای پرداخت قبلی؛ آدرس خارجی/مسیرهای مدیریتی/پیمایش مسیر رد می‌شوند. | D66 |
 | سئو و داده‌های فاز ۸ | آدرس‌های زبان/بازار D64؛ مهاجرت افزایشی، نظر پیش‌فرض تأییدنشده، اعلان با ایمیل تأییدشده، رضایت مستقل هر بازار و شواهد تاریخ‌دار و غیرقابل‌ویرایش. | D64، D65 |
 | مجوزهای داخل محصول | تأیید پرداخت، انتشار پیشنهاد AI، بازپرداخت، دسترسی مدیر و حفاظت از داده همچنان طبق قواعد خود محصول اجرا می‌شوند. | D12، D14، D24، D25، D60 |

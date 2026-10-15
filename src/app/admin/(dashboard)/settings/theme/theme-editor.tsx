@@ -7,6 +7,7 @@ import { saveTheme } from "./actions";
 import { COLOR_KEYS, BUTTON_RADIUS } from "@/lib/theme-defaults";
 import { themeFontVars, FONT_LATIN_FAMILIES } from "@/lib/theme-validation";
 import { useUnsavedForm } from "@/components/admin/unsaved-form";
+import { MediaPicker } from "@/components/admin/media-picker";
 
 export type ThemeDraft = {
   light: Record<string, string>;
@@ -22,6 +23,7 @@ export type ThemeDraft = {
   fontPriceLatin: string;
   lineOpacity: number;
   customCss: string;
+  accountMediaId?: string;
 };
 
 function payloadFor(draft: ThemeDraft, channel: string) {
@@ -50,7 +52,13 @@ function payloadFor(draft: ThemeDraft, channel: string) {
   };
 }
 
-export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
+export function ThemeEditor({
+  initial,
+  accountMediaUrl,
+}: {
+  initial: ThemeDraft;
+  accountMediaUrl?: string;
+}) {
   const t = useTranslations("themeEditor");
   const channel = useId();
   const [state, formAction, pending] = useActionState(saveTheme, null);
@@ -105,6 +113,17 @@ export function ThemeEditor({ initial }: { initial: ThemeDraft }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
       <form ref={formRef} action={formAction} className="grid gap-6">
+        <Card>
+          <MediaPicker
+            name="accountMediaId"
+            label={t("accountMedia")}
+            defaultMediaId={initial.accountMediaId}
+            defaultUrl={accountMediaUrl}
+            onSelect={(id) =>
+              setDraft((value) => ({ ...value, accountMediaId: id }))
+            }
+          />
+        </Card>
         {(["light", "dark"] as const).map((mode) => {
           const failures = themeContrastFailures(draft[mode]);
           return failures.length ? (

@@ -199,7 +199,28 @@ for (const [locale, slug, province, city, postal] of [
       ),
     ).toBe(true);
     await admin.close();
+    const shopper = await db.customer.findUniqueOrThrow({ where: { email } });
+    const coinBefore = JSON.stringify(
+      await db.fittingCoinGrant.aggregate({
+        where: { customerId: shopper.id },
+        _count: { _all: true },
+        _sum: { balance: true },
+      }),
+    );
     await page.goto(`/${locale}/account`);
+    await expect(page.locator(".moda-order-timeline li")).toHaveCount(5);
+    await expect(
+      page.locator('.moda-order-timeline [aria-current="step"]'),
+    ).toHaveText(t.statuses.PAID);
+    expect(
+      JSON.stringify(
+        await db.fittingCoinGrant.aggregate({
+          where: { customerId: shopper.id },
+          _count: { _all: true },
+          _sum: { balance: true },
+        }),
+      ),
+    ).toBe(coinBefore);
     await shoppingProof(page, info, `${locale}-account`);
     await page.getByRole("button", { name: t.logout, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}$`));
