@@ -36,7 +36,9 @@ const geometry: Record<string, [number, number, number, number]> = {
   "kids-knit": [0.18, 0.455, 0.5, 2],
   "kids-hoodie": [0.14, 0.464, 0.5, 2],
   "kids-trousers": [0.45, 0.318, 0.5, 1],
-  "kids-dress": [0.17, 0.527, 0.5, 2],
+  // The approved girl reference has a lower neckline than the boy reference.
+  // Fresh demo geometry must keep the flat dress clear of the model's face.
+  "kids-dress": [0.26, 0.527, 0.5, 2],
   "kids-set": [0.16, 0.527, 0.5, 2],
   "accessories-bag": [0.37, 0.195, 0.68, 5],
   "accessories-scarf": [0.17, 0.255, 0.5, 4],
