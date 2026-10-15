@@ -79,10 +79,83 @@ export function InstantFitting({
   const sequence = useRef(0),
     ready = useRef(false),
     requestKey = useRef(""),
+    root = useRef<HTMLElement>(null),
     stage = useRef<HTMLDivElement>(null),
     drag = useRef<number | null>(null);
   const draftKey = `hoda.instant:${marketId}:${customerId ?? "guest"}`;
   const model = models.find((m) => m.id === modelId);
+  useEffect(() => {
+    if (!view || !ids.length || pending) return;
+    let active = true,
+      visible = false,
+      busy = false,
+      timer: ReturnType<typeof setTimeout> | undefined;
+    const fingerprint = view.fingerprint;
+    const stop = () => {
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+    };
+    const tick = async () => {
+      stop();
+      if (!active || !visible || document.hidden || busy) return;
+      busy = true;
+      const seq = sequence.current;
+      try {
+        const [next, current] = await Promise.all([
+          previewInstant(locale, { modelId, variantIds: ids }),
+          loadInstantCatalog(locale, { variantIds: ids }),
+        ]);
+        if (!active || seq !== sequence.current) return;
+        if (current.ok)
+          setCatalog((old) =>
+            old.map((item) =>
+              ids.includes(item.variantId)
+                ? (current.value.find(
+                    (v) => v.variantId === item.variantId,
+                  ) ?? { ...item, amount: null, available: false })
+                : item,
+            ),
+          );
+        if (!next.ok) {
+          setView(null);
+          setReview(true);
+          setConfirmed(false);
+          error(next.error);
+        } else if (next.value.fingerprint !== fingerprint) {
+          setView(next.value);
+          setReview(true);
+          setConfirmed(false);
+          setMessage(t("review"));
+        }
+      } catch {
+        if (active) {
+          setView(null);
+          setReview(true);
+          setConfirmed(false);
+          setMessage(t("error"));
+        }
+      } finally {
+        busy = false;
+        if (active && visible && !document.hidden)
+          timer = setTimeout(tick, 2000);
+      }
+    };
+    const observer = new IntersectionObserver((entries) => {
+      visible = entries[0]?.isIntersecting ?? false;
+      visible ? void tick() : stop();
+    });
+    if (root.current) observer.observe(root.current);
+    const wake = () => {
+      document.hidden ? stop() : void tick();
+    };
+    document.addEventListener("visibilitychange", wake);
+    return () => {
+      active = false;
+      stop();
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", wake);
+    };
+  }, [view?.fingerprint, modelId, ids, locale, pending]);
   function error(code: string) {
     setMessage(t.has(`error_${code}`) ? t(`error_${code}`) : t("error"));
   }
@@ -299,6 +372,7 @@ export function InstantFitting({
   }
   return (
     <section
+      ref={root}
       className="moda-instant"
       data-testid="instant-fitting"
       aria-busy={pending}
@@ -448,7 +522,30 @@ export function InstantFitting({
               );
             })}
           </ul>
-          {review && <p role="alert">{t("review")}</p>}
+          {review && (
+            <div role="alert">
+              <p>{t("review")}</p>
+              {!editing && view && (
+                <>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={confirmed}
+                      onChange={(e) => setConfirmed(e.target.checked)}
+                    />
+                    {t("confirm")}
+                  </label>
+                  <button
+                    type="button"
+                    disabled={pending || !confirmed}
+                    onClick={() => start(() => resolve(modelId, ids))}
+                  >
+                    {t("reviewCurrent")}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
           <p role="status">{message}</p>
           <button
             className="button"

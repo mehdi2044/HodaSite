@@ -6,6 +6,7 @@ import { fillAdminMfa } from "./helpers/admin-mfa";
 import fa from "../../messages/fa.json";
 import tr from "../../messages/tr.json";
 import en from "../../messages/en.json";
+import { formatStorefrontAmount } from "../../src/modules/catalog/format";
 const db = new PrismaClient();
 const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 async function login(page: Page, email: string) {
@@ -251,6 +252,74 @@ test("R7a guest composition survives verified login, private save/reload/profile
         data: { isActive: false },
       });
     }
+  }
+});
+test("R7a open guest preview refreshes exact price and blocks changed references until explicit review", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/en/fitting-room");
+  const room = page.getByTestId("instant-fitting"),
+    v = await choose(page, "en", "women-tee");
+  const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+  const profile = await db.catalogCutout.findFirstOrThrow({
+    where: {
+      productId: v.productId,
+      colorId: v.colorId,
+      variantId: null,
+      deletedAt: null,
+    },
+  });
+  let priceId = "";
+  try {
+    priceId = (
+      await db.marketPrice.create({
+        data: {
+          marketId: market.id,
+          productId: v.productId,
+          variantId: v.id,
+          amount: "100.1251",
+          currency: "CAD",
+          validFrom: new Date("2000-01-01T00:00:00Z"),
+          isActive: true,
+        },
+      })
+    ).id;
+    await room.locator(".moda-instant-pieces").scrollIntoViewIfNeeded();
+    await expect(room.locator(".moda-instant-pieces")).toContainText(
+      formatStorefrontAmount("100.1251", "CAD", "en"),
+      { timeout: 5000 },
+    );
+    await db.catalogCutout.update({
+      where: { id: profile.id },
+      data: { version: { increment: 1 } },
+    });
+    await expect(
+      room.getByRole("button", { name: en.instantFitting.addAll, exact: true }),
+    ).toBeDisabled({ timeout: 5000 });
+    await expect(room.getByRole("alert")).toContainText(
+      en.instantFitting.review,
+    );
+    await room
+      .getByRole("alert")
+      .getByLabel(en.instantFitting.confirm, { exact: true })
+      .check();
+    await room
+      .getByRole("button", {
+        name: en.instantFitting.reviewCurrent,
+        exact: true,
+      })
+      .click();
+    await expect(
+      room.getByRole("button", { name: en.instantFitting.addAll, exact: true }),
+    ).toBeEnabled();
+  } finally {
+    if (priceId) await db.marketPrice.delete({ where: { id: priceId } });
+    await db.catalogCutout.update({
+      where: { id: profile.id },
+      data: { version: profile.version },
+    });
   }
 });
 test("R7a real MFA admin can switch free mode without enabling paid AI", async ({
