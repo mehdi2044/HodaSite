@@ -342,12 +342,17 @@ test("R7a open guest preview refreshes exact price and blocks changed references
     });
   }
 });
-test("R7a real MFA admin can switch free mode without enabling paid AI", async ({
+test("R7a real MFA admin switches free mode while existing paid AI has no key", async ({
   page,
 }, info) => {
   test.setTimeout(120000);
   const before = await db.integration.findUniqueOrThrow({
     where: { key: "fitting-room" },
+  });
+  const brokenPaid = { ...(before.config as Prisma.JsonObject), enabled: true };
+  await db.integration.update({
+    where: { id: before.id },
+    data: { isActive: true, config: brokenPaid },
   });
   try {
     await page.goto("/admin/login");
@@ -371,9 +376,9 @@ test("R7a real MFA admin can switch free mode without enabling paid AI", async (
     const flag = page.getByLabel(en.fitting.instantEnabled, { exact: true });
     await expect(flag).toBeChecked();
     await flag.uncheck();
-    await page.getByLabel(en.fitting.confirmAdmin, { exact: true }).check();
+    await page.getByLabel(en.fitting.confirmInstant, { exact: true }).check();
     await page
-      .getByRole("button", { name: en.fitting.saveSettings, exact: true })
+      .getByRole("button", { name: en.fitting.saveInstant, exact: true })
       .click();
     await expect
       .poll(() =>
@@ -386,9 +391,9 @@ test("R7a real MFA admin can switch free mode without enabling paid AI", async (
       .toBe(false);
     await page.reload();
     await flag.check();
-    await page.getByLabel(en.fitting.confirmAdmin, { exact: true }).check();
+    await page.getByLabel(en.fitting.confirmInstant, { exact: true }).check();
     await page
-      .getByRole("button", { name: en.fitting.saveSettings, exact: true })
+      .getByRole("button", { name: en.fitting.saveInstant, exact: true })
       .click();
     await expect
       .poll(() =>
@@ -402,8 +407,8 @@ test("R7a real MFA admin can switch free mode without enabling paid AI", async (
     const row = await db.integration.findUniqueOrThrow({
       where: { key: "fitting-room" },
     });
-    expect(row.isActive).toBe(false);
-    expect((row.config as { enabled: boolean }).enabled).toBe(false);
+    expect(row.isActive).toBe(true);
+    expect(row.config).toEqual({ ...brokenPaid, instantEnabled: true });
   } finally {
     await db.integration.update({
       where: { id: before.id },

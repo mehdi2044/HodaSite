@@ -2484,7 +2484,11 @@
       "ACCESSORY": "Aksesuar",
       "SHOES": "Ayakkabı"
     },
-    "instantEnabled": "Ücretsiz anında stili etkinleştir (ücretli AI’dan bağımsız)"
+    "instantEnabled": "Ücretsiz anında stili etkinleştir (ücretli AI’dan bağımsız)",
+    "instantHelp": "Bu anahtarı ayrı kaydedin. Ücretli AI ve jeton ayarları korunur; API anahtarı gerekmez.",
+    "confirmInstant": "Anında stil anahtarının kaydını onaylıyorum.",
+    "saveInstant": "Anında stili kaydet",
+    "instantDirty": "Bu anahtarı kaydetmeden önce diğer form değişikliklerini kaydedin veya sıfırlayın."
   },
   "previewRuntime": {
     "label": "Test önizlemesi",

@@ -6,6 +6,7 @@ import { MediaPicker } from "./media-picker";
 import { Card, Input, Select, Button } from "@/components/ui";
 import {
   saveSettings,
+  saveInstantSettings,
   grantCoinsAction,
   refundSessionAction,
 } from "@/app/admin/(dashboard)/settings/fitting/actions";
@@ -39,6 +40,7 @@ export function FittingSettings({
     [busy, setBusy] = useState(false),
     [result, setResult] = useState(""),
     [confirmed, setConfirmed] = useState(false),
+    [instantConfirmed, setInstantConfirmed] = useState(false),
     [grantKey, setGrantKey] = useState(() => crypto.randomUUID()),
     [recipientIds, setRecipients] = useState<string[]>([]),
     [segmentId, setSegment] = useState(""),
@@ -52,9 +54,13 @@ export function FittingSettings({
     setConfigVersion(version);
     setConfig(initial);
     setConfirmed(false);
+    setInstantConfirmed(false);
   }
   const set = (patch: Partial<FittingConfig>) =>
     setConfig((c) => ({ ...c, ...patch }));
+  const paidDirty =
+    JSON.stringify({ ...config, instantEnabled: undefined }) !==
+    JSON.stringify({ ...initial, instantEnabled: undefined });
   async function run(
     fn: () => Promise<{ ok: boolean; error?: string }>,
     isGrant = false,
@@ -95,6 +101,33 @@ export function FittingSettings({
           />{" "}
           {t("instantEnabled")}
         </label>
+        <p className="muted text-sm">{t("instantHelp")}</p>
+        <label>
+          <input
+            type="checkbox"
+            checked={instantConfirmed}
+            onChange={(e) => setInstantConfirmed(e.target.checked)}
+          />
+          {t("confirmInstant")}
+        </label>
+        <Button
+          disabled={busy || !instantConfirmed || paidDirty}
+          onClick={() =>
+            run(async () => {
+              const r = await saveInstantSettings({
+                enabled: config.instantEnabled ?? false,
+                expectedEnabled: initial.instantEnabled ?? false,
+                version,
+                confirm: true,
+              });
+              if (r.ok) setInstantConfirmed(false);
+              return r;
+            })
+          }
+        >
+          {t("saveInstant")}
+        </Button>
+        {paidDirty && <p role="status">{t("instantDirty")}</p>}
         <p>{keyReady ? t("keyReady") : t("keyMissing")}</p>
         <label>
           <input

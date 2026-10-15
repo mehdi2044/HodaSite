@@ -1,4 +1,7 @@
-import { saveFittingSettings } from "@/modules/fitting/settings";
+import {
+  saveFittingSettings,
+  saveInstantFittingSettings,
+} from "@/modules/fitting/settings";
 import { configSchema } from "@/modules/fitting/contracts";
 import { randomUUID } from "node:crypto";
 import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
@@ -502,6 +505,83 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: { in: fixtureIds } },
         });
         state.customer = first;
+      }
+    });
+    it("switches free styling with a missing paid key while preserving all paid settings and enforcing permission/version", async () => {
+      const old = await db.integration.findUniqueOrThrow({
+          where: { key: "fitting-room" },
+        }),
+        admin = state.admin;
+      const paid = {
+        ...(old.config as Prisma.JsonObject),
+        enabled: true,
+        instantEnabled: false,
+      };
+      vi.stubEnv("FITTING_OPENAI_API_KEY", "");
+      vi.stubEnv("OPENAI_API_KEY", "");
+      try {
+        const broken = await db.integration.update({
+          where: { id: old.id },
+          data: { isActive: true, config: paid },
+        });
+        await expect(
+          saveFittingSettings({
+            config: configSchema.parse(paid),
+            version: broken.updatedAt.toISOString(),
+            confirm: true,
+          }),
+        ).rejects.toMatchObject({ code: "PROVIDER_UNAVAILABLE" });
+        state.admin = "";
+        await expect(
+          saveInstantFittingSettings({
+            enabled: true,
+            expectedEnabled: false,
+            version: broken.updatedAt.toISOString(),
+            confirm: true,
+          }),
+        ).rejects.toThrow();
+        state.admin = admin;
+        const auditBefore = await db.auditLog.count({
+          where: { action: "fitting.instant.settings.save" },
+        });
+        await saveInstantFittingSettings({
+          enabled: true,
+          expectedEnabled: false,
+          version: broken.updatedAt.toISOString(),
+          confirm: true,
+        });
+        const saved = await db.integration.findUniqueOrThrow({
+          where: { id: old.id },
+        });
+        expect(saved.config).toEqual({ ...paid, instantEnabled: true });
+        expect(saved.isActive).toBe(true);
+        expect(saved.provider).toBe(old.provider);
+        expect(
+          await db.auditLog.count({
+            where: { action: "fitting.instant.settings.save" },
+          }),
+        ).toBe(auditBefore + 1);
+        await expect(
+          saveInstantFittingSettings({
+            enabled: false,
+            expectedEnabled: false,
+            version: broken.updatedAt.toISOString(),
+            confirm: true,
+          }),
+        ).rejects.toMatchObject({ code: "STALE" });
+        expect(
+          (await resolveInstantSelection(state.market.id, input())).layers,
+        ).toHaveLength(2);
+      } finally {
+        state.admin = admin;
+        vi.unstubAllEnvs();
+        await db.integration.update({
+          where: { id: old.id },
+          data: {
+            config: old.config as Prisma.InputJsonValue,
+            isActive: old.isActive,
+          },
+        });
       }
     });
   },
