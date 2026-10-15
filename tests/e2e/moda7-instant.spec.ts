@@ -1,3 +1,4 @@
+import { Money, type RoundingRule } from "../../src/lib/money";
 import { test, expect, type Page } from "@playwright/test";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -88,6 +89,9 @@ test("R7a guest four real models, RTL/TR/EN, keyboard/reduced motion and no paid
   const entries = await db.fittingCoinEntry.count(),
     sessions = await db.fittingSession.count();
   for (const locale of ["fa", "tr", "en"] as const) {
+    // Independent supported market on first visit; an IR cookie correctly
+    // redirects unsupported Turkish back to its configured Persian locale.
+    await page.context().clearCookies();
     const t = { fa, tr, en }[locale].instantFitting;
     await page.goto(`/${locale}/fitting-room`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/fitting-room$`));
@@ -111,7 +115,7 @@ test("R7a guest four real models, RTL/TR/EN, keyboard/reduced motion and no paid
         /rotateY\(5deg\)/,
       );
       await page.keyboard.press("Home");
-      await stage.scrollIntoViewIfNeeded();
+      await stage.evaluate((el) => el.scrollIntoView({ block: "start" }));
       await expect
         .poll(() =>
           stage
@@ -272,12 +276,12 @@ test("R7a open guest preview refreshes exact price and blocks changed references
     },
   });
   let priceId = "";
+  const started = Date.now();
   try {
     priceId = (
       await db.marketPrice.create({
         data: {
           marketId: market.id,
-          productId: v.productId,
           variantId: v.id,
           amount: "100.1251",
           currency: "CAD",
@@ -288,9 +292,17 @@ test("R7a open guest preview refreshes exact price and blocks changed references
     ).id;
     await room.locator(".moda-instant-pieces").scrollIntoViewIfNeeded();
     await expect(room.locator(".moda-instant-pieces")).toContainText(
-      formatStorefrontAmount("100.1251", "CAD", "en"),
+      formatStorefrontAmount(
+        new Money("100.1251", "CAD")
+          .round(market.roundingRule as RoundingRule)
+          .toString(),
+        "CAD",
+        "en",
+      ),
       { timeout: 5000 },
     );
+    const priceMs = Date.now() - started,
+      referenceStarted = Date.now();
     await db.catalogCutout.update({
       where: { id: profile.id },
       data: { version: { increment: 1 } },
@@ -300,6 +312,14 @@ test("R7a open guest preview refreshes exact price and blocks changed references
     ).toBeDisabled({ timeout: 5000 });
     await expect(room.getByRole("alert")).toContainText(
       en.instantFitting.review,
+    );
+    console.log(
+      JSON.stringify({
+        instantPropagation: {
+          priceMs,
+          referenceMs: Date.now() - referenceStarted,
+        },
+      }),
     );
     await room
       .getByRole("alert")

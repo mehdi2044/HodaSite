@@ -141,3 +141,22 @@
     transform: none !important;
   }
 }
+
+.moda-instant-actions {
+  display: grid;
+  gap: 1rem;
+}
+.moda-instant-actions :is(.button, .button-outline) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
+  white-space: normal;
+  text-align: center;
+}
+.moda-instant-stage {
+  scroll-margin-block-start: calc(
+    var(--storefront-header-height, 112px) + 1rem
+  );
+}

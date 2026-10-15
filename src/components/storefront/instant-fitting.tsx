@@ -547,59 +547,61 @@ export function InstantFitting({
             </div>
           )}
           <p role="status">{message}</p>
-          <button
-            className="button"
-            type="button"
-            disabled={
-              pending ||
-              !view ||
-              review ||
-              ids.some(
-                (id) => !catalog.find((v) => v.variantId === id)?.available,
-              )
-            }
-            onClick={() =>
-              start(async () => {
-                if (!view) return;
-                const r = await buyInstant(locale, {
-                  modelId,
-                  variantIds: ids,
-                  fingerprint: view.fingerprint,
-                });
-                r.ok ? setMessage(t("added")) : error(r.error);
-              })
-            }
-          >
-            {t("addAll")}
-          </button>
-          {customerId ? (
-            <div className="moda-instant-save">
-              <label>
-                {t("name")}
-                <input
-                  className="input"
-                  value={name}
-                  maxLength={120}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
-              <button
-                className="button"
-                type="button"
-                disabled={pending || !view || !name.trim()}
-                onClick={() => start(save)}
-              >
-                {editing ? t("update") : t("save")}
-              </button>
-            </div>
-          ) : (
-            <Link
-              className="button-outline"
-              href={`/${locale}/account/login?next=/${locale}/fitting-room`}
+          <div className="moda-instant-actions">
+            <button
+              className="button"
+              type="button"
+              disabled={
+                pending ||
+                !view ||
+                review ||
+                ids.some(
+                  (id) => !catalog.find((v) => v.variantId === id)?.available,
+                )
+              }
+              onClick={() =>
+                start(async () => {
+                  if (!view) return;
+                  const r = await buyInstant(locale, {
+                    modelId,
+                    variantIds: ids,
+                    fingerprint: view.fingerprint,
+                  });
+                  r.ok ? setMessage(t("added")) : error(r.error);
+                })
+              }
             >
-              {t("loginSave")}
-            </Link>
-          )}
+              {t("addAll")}
+            </button>
+            {customerId ? (
+              <div className="moda-instant-save">
+                <label>
+                  {t("name")}
+                  <input
+                    className="input"
+                    value={name}
+                    maxLength={120}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </label>
+                <button
+                  className="button"
+                  type="button"
+                  disabled={pending || !view || !name.trim()}
+                  onClick={() => start(save)}
+                >
+                  {editing ? t("update") : t("save")}
+                </button>
+              </div>
+            ) : (
+              <Link
+                className="button-outline"
+                href={`/${locale}/account/login?next=/${locale}/fitting-room`}
+              >
+                {t("loginSave")}
+              </Link>
+            )}
+          </div>
         </div>
         <div className="moda-instant-catalog">
           <form
