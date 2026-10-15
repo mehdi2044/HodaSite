@@ -4,6 +4,16 @@ Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D21, D24, D31,
 
 This is implementation-agent self-review. It is neither the required `[HODASITE-AI-REVIEW]` nor independent human review. [Execution order](https://github.com/mehdi2044/HodaSite/issues/63), [delivery PR60](https://github.com/mehdi2044/HodaSite/pull/60), [design specification](https://github.com/mehdi2044/HodaSite/issues/62).
 
+## 2026-10-15 — Browser Back/Forward protection (#63 follow-up)
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
+
+The new PR60 review finding [4268194701](https://github.com/mehdi2044/HodaSite/pull/60#discussion_r4268194701) was reproduced on the previous production build: Back discarded a dirty brand form without confirmation. Shared history tracking now starts in the root layout before router listeners; cancelling Back/Forward restores the same live form and URL, accepting proceeds, and reverted/clean forms navigate normally. Next history state is retained. No autosave, schema, identity, provider or money changes. Default-value capture resets only a detached form clone; no live field is reset.
+
+Local production verification: lint, TypeScript, build, **4,228 unit tests**, and **7 Chromium browser cases** passed (FA/TR/EN Back/Forward + existing link protection + actual traversal with Navigation API unavailable). Indexed cancellation preserves history length and unsaved values; the database remains unchanged. WebKit has three real-browser cases in CI and was not run locally. For an unknown entry created before tracking in browsers without Navigation API, cancellation retains the form by appending its URL; this legacy fallback can prune the old forward stack. No form contents are persisted.
+
+PR60 is Draft pending fresh final-head CI/review; earlier `3242540` four-green evidence is historical. All 17 blocking conversations still require reviewer adjudication; none was self-resolved. Owner Windows execution remains NOT_VERIFIED; online R0 BLOCKED_ENV. The owner's later MODA4 instruction in #62 v2/PR66 supersedes the earlier design-choice pause; independent design-stage PRs continue, without merging PR60 or writing main.
+
 ## Baseline and active scope
 
 - Main: `8e0b953a6c9872119dd27840b6e99b6b50dd576c`; PR60 base is main, source baseline `43b97f485208836cd5087b8253b9f5b344795334`.

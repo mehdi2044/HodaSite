@@ -1,8 +1,8 @@
 # فهرست اسناد پروژه
 
-## وضعیت فعال — ۱۴ اکتبر ۲۰۲۶
+## وضعیت فعال — ۱۵ اکتبر ۲۰۲۶
 
-main شامل هستهٔ فروش، 06/07/بخش داخلی08، CRM 09A، Promotion 09B و ShopLook/Fitting/Coin #57 است؛ Phase09 کلی و پذیرش واقعی هنوز بازند. تحویل طراحی 05e/05f/امنیت در [PR60](https://github.com/mehdi2044/HodaSite/pull/60) ادغام نشده است. [#63](https://github.com/mehdi2044/HodaSite/issues/63) ترتیب A–G را اجرا می‌کند؛ [گزارش اجرایی](reviews/ISSUE63_EXECUTION.md)، [ماتریس تنظیمات](reviews/DESIGN01_SETTINGS_MATRIX.md) و جدول ابتدای PROGRESS مرجع وضعیت‌اند. DESIGN-01.1 طبق [#62](https://github.com/mehdi2044/HodaSite/issues/62) در شاخهٔ مستقل تهیه می‌شود؛ طراحی بعدی نیازمند انتخاب مالک است. هیچ درصد پیشرفت/پذیرش نهایی یا انتشار از گزارش تاریخی استنتاج نشود.
+main شامل هستهٔ فروش، 06/07/بخش داخلی08، CRM 09A، Promotion 09B و ShopLook/Fitting/Coin #57 است؛ Phase09 کلی و پذیرش واقعی هنوز بازند. تحویل طراحی 05e/05f/امنیت در [PR60](https://github.com/mehdi2044/HodaSite/pull/60) ادغام نشده است. [#63](https://github.com/mehdi2044/HodaSite/issues/63) ترتیب A–G را اجرا می‌کند؛ [گزارش اجرایی](reviews/ISSUE63_EXECUTION.md)، [ماتریس تنظیمات](reviews/DESIGN01_SETTINGS_MATRIX.md) و جدول ابتدای PROGRESS مرجع وضعیت‌اند. DESIGN-01.1 طبق [#62](https://github.com/mehdi2044/HodaSite/issues/62) در شاخهٔ مستقل تهیه می‌شود؛ انتخاب MODA4 با دستور جدید مالک در #62 v2/PR66 انجام شده و مراحل در PRهای مستقل ادامه دارند. پیگیری جدید #63 برای هشدار Back/Forward در PROGRESS ثبت است؛ PR60 تا CI و review تازه Draft است. هیچ درصد پیشرفت/پذیرش نهایی یا انتشار از گزارش تاریخی استنتاج نشود.
 
 **Architecture baseline: v1.2** (baseline اولیه: ۲ سپتامبر ۲۰۲۶؛ وضعیت اجرای فعلی در PROGRESS.md). سلسله‌مراتب اعتبار: `02_DECISIONS.md` → `phases/` → `spec/` → `AGENTS.md` → `prompts/`.
 
