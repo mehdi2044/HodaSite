@@ -1,5 +1,7 @@
 # وضعیت پیشرفت پروژه
 
+R7a — STARTED از PR75، [قرارداد پیش از کد](design/moda4-redesign/R7A_CONTRACT.md) و D80 ثبت شد؛ ترکیب رایگان مهمان/کمد مستقل owner-scoped در حال اجرا، هنوز آماده یا آزموده اعلام نمی‌شود.
+
 R6 / PR75 — IN_PROGRESS، Draft: OTP موجود، تم مستقیم/ترجیحات واقعی با revision و پاک‌کردن/export، تصویر ورود از پنل و آمار/مسیر سفارش واقعی. [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md)؛ [شواهد بومی](design/moda4-redesign/evidence/r6/README.md). ۱۰ آزمون PG/media و پنج browser واقعی با خرید سه زبان موفق؛ full اولیه۹۲۶۶ موفق/یک شکست guard داشت که جدا اصلاح و موفق شد. full CI/restore نهایی لازم است؛ حذف کامل حساب reviewed/manual، اجرای Windows و پذیرش مالک باز.
 
 R5 / PR73 — IN_PROGRESS، Draft: مسیر واقعی دسته/جست‌وجو/کالکشن، فیلترهای URL، کارت quick-add، گالری/PDP و قیمت/compare-at همسو با variant، نوار خرید موبایل، تعداد/حذف drawer و checkbox تازه‌رسیدهٔ پنل؛ بدون migration یا تغییر موتور مالی/موجودی. [راهنما](design/moda4-redesign/R5_ADMIN_GUIDE_FA.md) و [شواهد/PNG](design/moda4-redesign/evidence/r5/README.md). ۴ مرورگر جدید و ۳ مسیر خرید کامل موجود در سه زبان و WCAG موفق؛ full run اولیه ۹۲۵۸ assertion موفق ولی یک خطای import داشت که چهار موردش جدا اصلاح و موفق شدند؛ CI کامل همان head هنوز لازم است. اجرای Windows/پذیرش مالک باز، R0 آنلاین BLOCKED_ENV، بدون merge.
