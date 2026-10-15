@@ -863,7 +863,7 @@ body.kidsmode .shop-hd{display:none}
 </svg>
 
 <!-- announcement -->
-<div class="ann">
+<div class="ann" data-moda4="announcement">
   <div class="wrap">
     <div class="mk" role="group" aria-label="بازار خرید"><button type="button" data-mkt="IR" aria-pressed="true">IR</button><button type="button" data-mkt="TR" aria-pressed="false">TR</button><button type="button" data-mkt="CA" aria-pressed="false">CA</button></div>
     <div class="rot" id="annRot"><span class="on">کالکشن پاییز و زمستان ۱۴۰۵ رسید — <a href="#shop-w" style="text-decoration:underline;text-underline-offset:4px">ببینید</a></span><span>ارسال به ایران، ترکیه و کانادا با رهگیری مرحله‌به‌مرحله</span><span>اتاق پروی هوشمند: قبل از خرید، ست را روی مدل ببینید</span></div>
@@ -872,11 +872,11 @@ body.kidsmode .shop-hd{display:none}
 </div>
 
 <!-- header -->
-<header class="hdr lace-b" id="hdr">
+<header class="hdr lace-b" id="hdr" data-moda4="header">
   <div class="wrap">
-    <nav class="navs" aria-label="منوی اصلی" id="navs"></nav>
+    <nav class="navs" aria-label="منوی اصلی" id="navs" data-moda4="nav"></nav>
     <button type="button" class="ib burger" aria-label="منو" data-open="menu"><svg class="i"><use href="#i-menu"/></svg></button>
-    <a href="#home" class="logo" aria-label="MODA4، صفحهٔ اصلی">{{LOGO}}</a>
+    <a href="#home" class="logo" aria-label="MODA4، صفحهٔ اصلی" data-moda4="logo">{{LOGO}}</a>
     <div class="tools">
       <button type="button" class="ib" aria-label="جستجو" data-open="search"><svg class="i"><use href="#i-search"/></svg></button>
       <a href="#account" class="ib hide-s" aria-label="حساب کاربری"><svg class="i"><use href="#i-user"/></svg></a>
@@ -888,62 +888,62 @@ body.kidsmode .shop-hd{display:none}
 
 <!-- ================= HOME ================= -->
 <main id="pg-home" class="page">
-  <section class="hero" id="hero" aria-roledescription="carousel" aria-label="کمپین‌های فصل">
-    <div class="slide on" style="--x:30%">
+  <section class="hero" id="hero" data-moda4="hero" aria-roledescription="carousel" aria-label="کمپین‌های فصل">
+    <div class="slide on" style="--x:30%" data-moda4="hero-slide">
       <picture><source media="(max-width:760px)" srcset="{{IMG:look-women-coat}}"><img src="{{IMG:ban/look-women-coat-wide}}" alt="مدل با بارانی رها و کیف دستی هانا در فضای سنگی روشن"></picture>
       <div class="float" style="inset-inline-start:52%;top:46%;width:130px" data-depth="22"><img src="{{IMG:cut/women-knit}}" alt=""><span class="note" style="bottom:-44px;left:0">Narvan knit · $64<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
       <div class="copy r">
         <div class="eyb">Autumn / Winter 26 <span>—</span> Look 01</div>
-        <h1>City <em>Layers</em></h1>
+        <h1 data-moda4="hero-title" data-moda4-display>City <em>Layers</em></h1>
         <div class="fa"><b>لایه‌های شهری</b> — بارانی، بافت و رنگ‌های خاکی</div>
         <p>ست کامل را ببین، هر قطعه را با سایز خودش انتخاب کن یا اول روی مدل امتحانش کن.</p>
-        <div class="acts"><a href="#shop-w" class="cbtn">خرید کالکشن زنانه</a><a href="#fitting" class="cbtn ghost"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>امتحان روی مدل</a></div>
+        <div class="acts"><a href="#shop-w" class="cbtn" data-moda4-cta>خرید کالکشن زنانه</a><a href="#fitting" class="cbtn ghost" data-moda4-cta><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>امتحان روی مدل</a></div>
       </div>
     </div>
-    <div class="slide" style="--x:70%">
+    <div class="slide" style="--x:70%" data-moda4="hero-slide">
       <picture><source media="(max-width:760px)" srcset="{{IMG:look-men}}"><img src="{{IMG:ban/look-men-wide}}" alt="مدل مرد با اورشرت سرمه‌ای و چینوی شنی"></picture>
       <div class="float" style="inset-inline-end:53%;top:40%;width:150px" data-depth="26"><img src="{{IMG:cut/men-knit}}" alt=""><span class="note" style="bottom:-46px;left:0">Arad sweater · $72<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
       <div class="copy l">
         <div class="eyb">Menswear <span>—</span> Look 02</div>
-        <h2>Easy <em>Days</em></h2>
+        <h2 data-moda4-display>Easy <em>Days</em></h2>
         <div class="fa"><b>روزهای بی‌تکلف</b> — اورشرت، تی‌شرت نخی، چینو</div>
         <p>سه قطعه که با هم یا جدا کار می‌کنند؛ برای هر روز هفته.</p>
-        <div class="acts"><a href="#look" class="cbtn">خرید کل ست</a><a href="#shop-m" class="cbtn ghost">همهٔ مردانه</a></div>
+        <div class="acts"><a href="#look" class="cbtn" data-moda4-cta>خرید کل ست</a><a href="#shop-m" class="cbtn ghost" data-moda4-cta>همهٔ مردانه</a></div>
       </div>
     </div>
-    <div class="slide" style="--x:27%">
+    <div class="slide" style="--x:27%" data-moda4="hero-slide">
       <picture><source media="(max-width:760px)" srcset="{{IMG:look-kids}}"><img src="{{IMG:ban/look-kids-wide}}" alt="پسربچه با ژاکت بافت سبز و شلوار کرم"></picture>
       <div class="float" style="inset-inline-start:52%;top:44%;width:140px" data-depth="30"><img src="{{IMG:cut/kids-hoodie}}" alt=""><span class="note" style="bottom:-44px;left:0">Rayan hoodie · $32<svg viewBox="0 0 100 40" preserveAspectRatio="none"><ellipse cx="50" cy="20" rx="47" ry="17" fill="none" stroke="#FF6A1A" stroke-width="2.4" filter="url(#crayon-line)"/></svg></span></div>
       <div class="copy r">
         <div class="eyb">Kids <span>—</span> Look 03</div>
-        <h2>Ready to <em>Play</em></h2>
+        <h2 data-moda4-display>Ready to <em>Play</em></h2>
         <div class="fa"><b>برای روزهای بازی</b> — نرم، رنگی، بادوام</div>
         <p>بافت‌های نرم و پارچه‌های نخی برای بدوبدوهای پاییزی.</p>
-        <div class="acts"><a href="#shop-k" class="cbtn">خرید بچگانه</a></div>
+        <div class="acts"><a href="#shop-k" class="cbtn" data-moda4-cta>خرید بچگانه</a></div>
       </div>
     </div>
-    <div class="slide" style="--x:72%">
+    <div class="slide" style="--x:72%" data-moda4="hero-slide">
       <picture><source media="(max-width:760px)" srcset="{{IMG:look-women-knit}}"><img src="{{IMG:ban/look-women-knit-wide}}" alt="مدل با بافت کرم، شلوار پیلی‌دار و کیف کنیاکی"></picture>
       <div class="copy l">
         <div class="eyb">AI Fitting Room <span>—</span> New</div>
-        <h2>Try before <em>you buy</em></h2>
+        <h2 data-moda4-display>Try before <em>you buy</em></h2>
         <div class="fa"><b>اتاق پروی هوشمند</b> — ترکیبت را روی مدل ببین</div>
         <p>تا چهار قطعه انتخاب کن؛ هوش مصنوعی آن را روی مدل فروشگاه می‌پوشاند. خریدهای قبلی‌ات هم در «کمد من» هستند.</p>
-        <div class="acts"><a href="#fitting" class="cbtn accent"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>ورود به اتاق پرو</a></div>
+        <div class="acts"><a href="#fitting" class="cbtn accent" data-moda4-cta><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>ورود به اتاق پرو</a></div>
       </div>
     </div>
     <div class="hero-ui">
       <div class="wrap">
-        <div class="bars" id="bars"><button type="button" class="on"><i></i><span>City Layers</span></button><button type="button"><i></i><span>Easy Days</span></button><button type="button"><i></i><span>Ready to Play</span></button><button type="button"><i></i><span>Try before you buy</span></button></div>
+        <div class="bars" id="bars" data-moda4="hero-progress"><button type="button" class="on"><i></i><span>City Layers</span></button><button type="button"><i></i><span>Easy Days</span></button><button type="button"><i></i><span>Ready to Play</span></button><button type="button"><i></i><span>Try before you buy</span></button></div>
         <div class="arrows"><button type="button" class="ib" aria-label="کمپین قبلی" id="hPrev"><svg class="i"><use href="#i-right"/></svg></button><button type="button" class="ib" aria-label="کمپین بعدی" id="hNext"><svg class="i"><use href="#i-left"/></svg></button></div>
       </div>
     </div>
   </section>
 
 
-  <div class="bands" aria-hidden="true">
-    <div class="band b"><div class="tk" id="tkB"></div></div>
-    <div class="band a"><div class="tk" id="tkA"></div></div>
+  <div class="bands" aria-hidden="true" data-moda4="bands">
+    <div class="band b" data-moda4="band"><div class="tk" id="tkB"></div></div>
+    <div class="band a" data-moda4="band"><div class="tk" id="tkA"></div></div>
   </div>
 
   <section class="wrap sec" data-rv>
@@ -953,14 +953,14 @@ body.kidsmode .shop-hd{display:none}
         <h2>چهار جهان، یک کمد <span class="lat">Moda<b>4</b></span></h2>
         <p>«۴» در MODA4 یعنی چهار جهان: زنانه، مردانه، بچگانه و اکسسوری — همه با یک سلیقه و یک کیفیت. منشور را بچرخان یا یکی از جهان‌ها را انتخاب کن.</p>
         <div class="tabs4" id="tabs4"><button type="button" class="chip on" data-f="0">زنانه</button><button type="button" class="chip" data-f="1">مردانه</button><button type="button" class="chip" data-f="2">بچگانه</button><button type="button" class="chip" data-f="3">اکسسوری</button></div>
-        <div><a href="#shop-w" class="cbtn" id="w4go">ورود به دنیای زنانه</a></div>
+        <div><a href="#shop-w" class="cbtn" data-moda4-cta id="w4go">ورود به دنیای زنانه</a></div>
       </div>
       <div class="prism-stage" id="prismStage">
-        <div class="prism" id="prism">
-          <a class="face" href="#shop-w" draggable="false" style="transform:rotateY(0deg) translateZ(165px)"><img src="{{IMG:look-women-coat}}" alt="زنانه" draggable="false"><span class="no">01</span><span class="fl"><span>زنانه</span><b>Women</b></span></a>
-          <a class="face" href="#shop-m" draggable="false" style="transform:rotateY(90deg) translateZ(165px)"><img src="{{IMG:look-men}}" alt="مردانه" draggable="false"><span class="no">02</span><span class="fl"><span>مردانه</span><b>Men</b></span></a>
-          <a class="face kid" href="#shop-k" draggable="false" style="transform:rotateY(180deg) translateZ(165px)"><img src="{{IMG:cut/kids-dress}}" alt="" draggable="false" style="top:12%;left:6%;transform:rotate(-8deg)"><img src="{{IMG:cut/kids-hoodie}}" alt="" draggable="false" style="top:34%;right:2%;width:56%;transform:rotate(7deg)"><span class="no" style="color:#5B4A6B">03</span><span class="fl" style="background:linear-gradient(transparent,rgba(91,74,107,.55))"><span>بچگانه</span><b>Kids</b></span></a>
-          <a class="face acc" href="#shop-a" draggable="false" style="transform:rotateY(270deg) translateZ(165px)"><img src="{{IMG:accessories-bag}}" alt="اکسسوری" draggable="false"><span class="no">04</span><span class="fl"><span>اکسسوری</span><b>Accessories</b></span></a>
+        <div class="prism" id="prism" data-moda4="worlds-prism">
+          <a class="face" data-moda4="worlds-face" href="#shop-w" draggable="false" style="transform:rotateY(0deg) translateZ(165px)"><img src="{{IMG:look-women-coat}}" alt="زنانه" draggable="false"><span class="no">01</span><span class="fl"><span>زنانه</span><b>Women</b></span></a>
+          <a class="face" data-moda4="worlds-face" href="#shop-m" draggable="false" style="transform:rotateY(90deg) translateZ(165px)"><img src="{{IMG:look-men}}" alt="مردانه" draggable="false"><span class="no">02</span><span class="fl"><span>مردانه</span><b>Men</b></span></a>
+          <a class="face kid" data-moda4="worlds-face" href="#shop-k" draggable="false" style="transform:rotateY(180deg) translateZ(165px)"><img src="{{IMG:cut/kids-dress}}" alt="" draggable="false" style="top:12%;left:6%;transform:rotate(-8deg)"><img src="{{IMG:cut/kids-hoodie}}" alt="" draggable="false" style="top:34%;right:2%;width:56%;transform:rotate(7deg)"><span class="no" style="color:#5B4A6B">03</span><span class="fl" style="background:linear-gradient(transparent,rgba(91,74,107,.55))"><span>بچگانه</span><b>Kids</b></span></a>
+          <a class="face acc" data-moda4="worlds-face" href="#shop-a" draggable="false" style="transform:rotateY(270deg) translateZ(165px)"><img src="{{IMG:accessories-bag}}" alt="اکسسوری" draggable="false"><span class="no">04</span><span class="fl"><span>اکسسوری</span><b>Accessories</b></span></a>
           <div class="cap-t" style="transform:rotateX(90deg) translateZ(55px)">{{LOGO}}</div>
         </div>
         <div class="prism-shadow"></div>
@@ -969,27 +969,27 @@ body.kidsmode .shop-hd{display:none}
   </section>
   <section class="wrap sec" data-rv>
     <div class="sh"><div><span class="k">NEW IN — THIS WEEK</span><h2>تازه‌ها <span class="lat">New in</span></h2></div><a href="#shop-all" class="more">مشاهده همه <svg class="i"><use href="#i-left"/></svg></a></div>
-    <div class="rail" id="newRail"></div>
+    <div class="rail" id="newRail" data-moda4="new-in"></div>
   </section>
 
-  <section class="fit3d" id="fit3d" style="margin-top:100px">
+  <section class="fit3d" id="fit3d" data-moda4="fitting-ad" style="margin-top:100px">
     <div class="wrap">
       <div class="txt">
         <span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;text-align:right">AI FITTING ROOM</span>
-        <h2>From the rail <em>to you.</em></h2>
+        <h2 data-moda4-display>From the rail <em>to you.</em></h2>
         <div class="fa">از رگال، مستقیم تن مانکن</div>
         <p>لباس‌ها را از رگال بردار، روی مانکن بچین و در یک لحظه ست کامل را روی مدل واقعی ببین. بعد در «کمد من» ذخیره کن یا یکجا به سبد ببر.</p>
         <div class="sets" role="group" aria-label="انتخاب ست نمایش"><button type="button" class="chip" aria-pressed="true" data-set="0">ست زنانه</button><button type="button" class="chip" aria-pressed="false" data-set="1">ست مردانه</button><button type="button" class="chip" id="replay" aria-label="پخش دوباره"><svg class="i" style="width:16px;height:16px"><use href="#i-return"/></svg>دوباره</button></div>
-        <div><a href="#fitting" class="cbtn accent"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>خودت امتحان کن</a></div>
+        <div><a href="#fitting" class="cbtn accent" data-moda4-cta><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>خودت امتحان کن</a></div>
       </div>
       <div class="scene-box" id="sceneBox">
         <div class="scene" id="scene">
           <div class="step-lab" id="stepLab">01 — PICK</div>
           <div class="floor"></div>
-          <div class="rack" id="rack">
+          <div class="rack" id="rack" data-moda4="fitting-ad-rack">
             <span class="leg a"></span><span class="leg b"></span><span class="base a"></span><span class="base b"></span><span class="rail"></span>
           </div>
-          <div class="manq" aria-hidden="true">
+          <div class="manq" aria-hidden="true" data-moda4="fitting-ad-mannequin">
             <svg viewBox="0 0 220 560" filter="url(#crayon-line)">
               <g fill="#F4EEE6" stroke="#4A4038" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
                 <ellipse cx="110" cy="48" rx="30" ry="36"/>
@@ -1008,27 +1008,27 @@ body.kidsmode .shop-hd{display:none}
     </div>
   </section>
 
-  <section class="stl" id="look" style="margin-top:0">
+  <section class="stl" id="look" data-moda4="shop-the-look" style="margin-top:0">
     <img src="{{IMG:ban/look-men-wide}}" alt="ست روزهای بی‌تکلف روی مدل">
     <div class="hot" style="top:40%;left:65%" data-i="0"><button type="button" aria-label="اورشرت سپهر">1</button></div>
     <div class="hot" style="top:29%;left:69.5%" data-i="1"><button type="button" aria-label="تی‌شرت نخی سام">2</button></div>
     <div class="hot" style="top:66%;left:70.5%" data-i="2"><button type="button" aria-label="شلوار چینو بردیا">3</button></div>
     <div class="panel">
       <span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--stone);direction:ltr;text-align:right">SHOP THE LOOK — 02</span>
-      <h3>Easy <em>Days</em></h3>
+      <h3 data-moda4-display>Easy <em>Days</em></h3>
       <div id="lookItems"></div>
-      <div class="tot"><div><small>جمع ست</small><b>$148</b></div><button type="button" class="cbtn" id="addLook">افزودن ست به سبد</button></div>
+      <div class="tot"><div><small>جمع ست</small><b>$148</b></div><button type="button" class="cbtn" data-moda4-cta id="addLook">افزودن ست به سبد</button></div>
     </div>
   </section>
 
   <section class="wrap sec" data-rv>
     <div class="sh" style="justify-content:center;text-align:center"><div><span class="k" style="text-align:center">LOOKBOOK — AW26</span><h2>لوک‌بوک فصل <span class="lat">Lookbook</span></h2></div></div>
-    <div class="ring-wrap" id="ringWrap"><div class="ring" id="ring"></div></div>
+    <div class="ring-wrap" id="ringWrap" data-moda4="lookbook"><div class="ring" id="ring" data-moda4="lookbook-ring"></div></div>
     <div class="ring-ctrl"><button type="button" class="ib" aria-label="لوک قبلی" id="rPrev"><svg class="i"><use href="#i-right"/></svg></button><span class="lbl" id="rLbl">City Layers</span><button type="button" class="ib" aria-label="لوک بعدی" id="rNext"><svg class="i"><use href="#i-left"/></svg></button></div>
   </section>
 
 
-  <section class="kids-world" id="kids">
+  <section class="kids-world" id="kids" data-moda4="kids-world">
     <span class="bub" style="width:90px;height:90px;background:#F8D7E3;top:12%;right:6%"></span>
     <span class="bub" style="width:46px;height:46px;background:#CFE4F8;top:70%;right:42%;animation-delay:-2s"></span>
     <span class="bub" style="width:130px;height:130px;background:#FFF0B3;bottom:-30px;left:8%;animation-delay:-4s"></span>
@@ -1040,16 +1040,16 @@ body.kidsmode .shop-hd{display:none}
     <div class="wrap">
       <div class="txt" data-rv>
         <span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:#8C7A97;direction:ltr;text-align:right">MODA4 KIDS — PASTEL WORLD</span>
-        <h2>Little <span>Wanderers</span></h2>
+        <h2 data-moda4-kids-display>Little <span>Wanderers</span></h2>
         <div class="fa">دنیای پاستیلی کوچولوها</div>
         <p>بافت‌های نرم، نخ‌های لطیف و رنگ‌های آرام پاستیلی؛ برای بدوبدوهای پاییزی و قصه‌های شب.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap"><a href="#shop-k" class="cbtn pastel">دیدن بچگانه</a><a href="#fitting-kid" class="cbtn mint">پرو روی مانکن کودک</a></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><a href="#shop-k" class="cbtn pastel" data-moda4-cta>دیدن بچگانه</a><a href="#fitting-kid" class="cbtn mint" data-moda4-cta>پرو روی مانکن کودک</a></div>
       </div>
-      <div class="tt" id="tt"><div class="tt-ring" id="ttRing"></div><span class="tt-hint">روی هر لباس بزن · ✦ · Tap a piece</span></div>
+      <div class="tt" id="tt" data-moda4="kids-turntable"><div class="tt-ring" id="ttRing"></div><span class="tt-hint">روی هر لباس بزن · ✦ · Tap a piece</span></div>
     </div>
   </section>
   <section class="wrap" style="margin-top:110px">
-    <div class="svc" data-rv>
+    <div class="svc" data-rv data-moda4="services">
       <div><svg class="i"><use href="#i-truck"/></svg><b>ارسال به سه کشور</b><span>ایران، ترکیه و کانادا؛ با رهگیری مرحله‌به‌مرحله.</span></div>
       <div><svg class="i"><use href="#i-return"/></svg><b>بازگشت آسان</b><span>درخواست بازگشت یا تعویض از صفحهٔ سفارش.</span></div>
       <div><svg class="i"><use href="#i-shield"/></svg><b>قیمت شفاف</b><span>بدون تخفیف ساختگی و تایمر جعلی.</span></div>
@@ -1062,8 +1062,8 @@ body.kidsmode .shop-hd{display:none}
 <main id="pg-shop" class="page">
   <div class="wrap">
 
-    <div class="kid-hd" data-rv>
-      <h1>Little <span>Wanderers</span></h1>
+    <div class="kid-hd" data-rv data-moda4="kids-header">
+      <h1 data-moda4-kids-display>Little <span>Wanderers</span></h1>
       <p id="kidSub">دنیای پاستیلی کوچولوها — نرم، رنگی، بادوام</p>
       <img src="{{IMG:cut/kids-dress}}" alt="" style="left:30%;transform:rotate(-8deg)">
       <img src="{{IMG:cut/kids-hoodie}}" alt="" style="left:14%;transform:rotate(7deg);height:130px">
@@ -1081,7 +1081,7 @@ body.kidsmode .shop-hd{display:none}
         <select id="sort"><option value="new">جدیدترین</option><option value="asc">قیمت: کم به زیاد</option><option value="desc">قیمت: زیاد به کم</option></select>
       </div>
     </div>
-    <div class="grid" id="shopGrid"></div>
+    <div class="grid" id="shopGrid" data-moda4="plp-grid"></div>
   </div>
 </main>
 
@@ -1089,15 +1089,15 @@ body.kidsmode .shop-hd{display:none}
 <main id="pg-product" class="page">
   <div class="wrap">
     <div class="pdp">
-      <div class="gal"><div class="thumbs" id="thumbs"></div><div class="shots" id="shots"></div></div>
-      <aside class="buy">
+      <div class="gal" data-moda4="pdp-gallery"><div class="thumbs" id="thumbs"></div><div class="shots" id="shots"></div></div>
+      <aside class="buy" data-moda4="pdp-buybox">
         <div class="crumb" id="pCrumb"></div>
         <div><h1 id="pName"></h1><div class="lat-n" id="pLat"></div></div>
         <div class="bp"><b id="pPrice"></b><small>[شامل / بدون مالیات — طبق تنظیم بازار]</small></div>
         <div style="display:flex;flex-direction:column;gap:12px"><div class="lbl"><b>رنگ: <span id="pColor"></span></b></div><div class="bigsw" id="pSw"></div></div>
-        <div style="display:flex;flex-direction:column;gap:12px"><div class="lbl"><b>سایز: <span id="pSize">—</span></b><button type="button" id="openGuide">راهنمای سایز</button></div><div class="bigsz" id="pSizes"></div><div class="stock"><i></i><span id="pStock">موجود؛ آمادهٔ ارسال</span></div></div>
-        <div class="addrow"><button type="button" class="cbtn" id="pAdd">سایز را انتخاب کن</button><button type="button" class="round" aria-pressed="false" aria-label="افزودن به علاقه‌مندی‌ها" data-like><svg class="i"><use href="#i-heart"/></svg></button></div>
-        <a href="#fitting" class="cbtn ghost"><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>روی مدل امتحانش کن</a>
+        <div style="display:flex;flex-direction:column;gap:12px"><div class="lbl"><b>سایز: <span id="pSize">—</span></b><button type="button" id="openGuide">راهنمای سایز</button></div><div class="bigsz" id="pSizes" data-moda4="pdp-sizes"></div><div class="stock"><i></i><span id="pStock">موجود؛ آمادهٔ ارسال</span></div></div>
+        <div class="addrow"><button type="button" class="cbtn" data-moda4-cta id="pAdd" data-moda4="pdp-add">سایز را انتخاب کن</button><button type="button" class="round" aria-pressed="false" aria-label="افزودن به علاقه‌مندی‌ها" data-like><svg class="i"><use href="#i-heart"/></svg></button></div>
+        <a href="#fitting" class="cbtn ghost" data-moda4-cta><svg class="i" style="width:18px;height:18px"><use href="#i-spark"/></svg>روی مدل امتحانش کن</a>
         <div class="perks"><div><svg class="i"><use href="#i-truck"/></svg>ارسال به ۳ کشور</div><div><svg class="i"><use href="#i-return"/></svg>بازگشت آسان</div><div><svg class="i"><use href="#i-shield"/></svg>پرداخت امن</div></div>
         <div class="acc">
           <details open id="dDesc"><summary>توضیحات</summary><p id="pDesc"></p></details>
@@ -1112,7 +1112,7 @@ body.kidsmode .shop-hd{display:none}
       <div class="grid" id="related"></div>
     </section>
   </div>
-  <div class="sticky-buy"><div style="display:flex;flex-direction:column"><b id="sbName" style="font-size:14px;font-weight:500"></b><span class="price" id="sbPrice"></span></div><button type="button" class="cbtn sm" id="sbAdd">افزودن به سبد</button></div>
+  <div class="sticky-buy"><div style="display:flex;flex-direction:column"><b id="sbName" style="font-size:14px;font-weight:500"></b><span class="price" id="sbPrice"></span></div><button type="button" class="cbtn sm" data-moda4-cta id="sbAdd">افزودن به سبد</button></div>
 </main>
 
 <!-- ================= FITTING ================= -->
@@ -1120,7 +1120,7 @@ body.kidsmode .shop-hd{display:none}
 <main id="pg-fitting" class="page">
   <div class="wrap frp">
     <div class="frp-hd">
-      <div><span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;display:block;text-align:right;margin-bottom:10px">MODA4 FITTING ROOM</span><h1>Your <em>fitting room</em></h1><div style="font-size:20px;font-weight:300;margin-top:8px">اتاق پرو و کمد من — لباس را انتخاب کن، همان لحظه تن مانکن می‌رود</div></div>
+      <div><span class="mono" style="font-size:11.5px;letter-spacing:.2em;color:var(--stone);direction:ltr;display:block;text-align:right;margin-bottom:10px">MODA4 FITTING ROOM</span><h1 data-moda4-display>Your <em>fitting room</em></h1><div style="font-size:20px;font-weight:300;margin-top:8px">اتاق پرو و کمد من — لباس را انتخاب کن، همان لحظه تن مانکن می‌رود</div></div>
       <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
         <div class="mode" role="group" aria-label="حالت پرو"><button type="button" aria-pressed="true" data-mode="instant"><svg class="i" style="width:16px;height:16px"><use href="#i-hanger"/></svg>پروی فوری · رایگان</button><button type="button" aria-pressed="false" data-mode="ai"><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>نمای واقعی با هوش مصنوعی</button></div>
         <div class="coin">موجودی سکه <b id="coinN">۸</b><a href="#fitting" class="lnk">خرید بسته</a></div>
@@ -1134,11 +1134,11 @@ body.kidsmode .shop-hd{display:none}
     <div class="frg3">
       <div class="tleft">
         <div class="avs" id="avs" role="group" aria-label="انتخاب مانکن"><button type="button" class="chip" aria-pressed="true" data-av="w">مانکن زن</button><button type="button" class="chip" aria-pressed="false" data-av="m">مانکن مرد</button><button type="button" class="chip" aria-pressed="false" data-av="k">مانکن کودک</button></div>
-        <div class="tstage" id="tstage">
+        <div class="tstage" id="tstage" data-moda4="tryon-stage">
           <span class="drag-hint"><svg class="i" style="width:14px;height:14px"><use href="#i-return"/></svg>بکش تا بچرخد</span>
           <div class="podium"></div>
-          <div class="turn" id="turn">
-            <div class="body" id="mBody">
+          <div class="turn" id="turn" data-moda4="tryon-turntable">
+            <div class="body" id="mBody" data-moda4="tryon-mannequin">
               <svg viewBox="0 0 220 560" aria-hidden="true">
                 <g filter="url(#crayon-line)" fill="#FBF7F1" stroke="#4A4038" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">
                   <ellipse cx="110" cy="48" rx="30" ry="36"/>
@@ -1152,7 +1152,7 @@ body.kidsmode .shop-hd{display:none}
           </div>
           <span class="empty-hint" id="emptyHint">یک لباس انتخاب کن ←</span>
           <div class="scan2"></div>
-          <div class="ai-out" id="aiOut"><img id="aiImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="نمای واقعی ترکیب"><span class="tag">نمای واقعی — نمونهٔ نمایشی</span><button type="button" class="cbtn light sm x" id="aiClose">بازگشت به مانکن</button></div>
+          <div class="ai-out" id="aiOut"><img id="aiImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="نمای واقعی ترکیب"><span class="tag">نمای واقعی — نمونهٔ نمایشی</span><button type="button" class="cbtn light sm x" data-moda4-cta id="aiClose">بازگشت به مانکن</button></div>
         </div>
         <div class="tools2"><button type="button" class="chip" id="rotL" aria-label="چرخش به چپ"><svg class="i" style="width:16px;height:16px"><use href="#i-right"/></svg></button><button type="button" class="chip" id="rot0">نمای روبه‌رو</button><button type="button" class="chip" id="rotR" aria-label="چرخش به راست"><svg class="i" style="width:16px;height:16px"><use href="#i-left"/></svg></button><button type="button" class="chip" id="clearAll">پاک کردن همه</button></div>
       </div>
@@ -1162,12 +1162,12 @@ body.kidsmode .shop-hd{display:none}
           <span class="mono" style="font-size:12px;color:var(--stone)" id="pickN">0 / 4</span>
         </div>
         <div class="slotf" id="slotf"></div>
-        <div class="tgrid" id="tgrid"></div>
+        <div class="tgrid" id="tgrid" data-moda4="tryon-grid"></div>
         <div class="sel3">
           <h3>ترکیب تو <span class="mono" style="font-size:12px;color:var(--stone);font-weight:400" id="selN"></span></h3>
           <div id="selList"></div>
           <div class="stot"><span>جمع</span><b id="selSum">$0</b></div>
-          <div class="acts3"><button type="button" class="cbtn" id="addAll" disabled>افزودن همه به سبد</button><button type="button" class="cbtn accent" id="aiGo" disabled><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>نمای واقعی (۱ سکه)</button><button type="button" class="cbtn ghost sm" id="saveLook" disabled>ذخیره در کمد</button></div>
+          <div class="acts3"><button type="button" class="cbtn" data-moda4-cta id="addAll" disabled>افزودن همه به سبد</button><button type="button" class="cbtn accent" data-moda4-cta id="aiGo" disabled><svg class="i" style="width:16px;height:16px"><use href="#i-spark"/></svg>نمای واقعی (۱ سکه)</button><button type="button" class="cbtn ghost sm" data-moda4-cta id="saveLook" disabled>ذخیره در کمد</button></div>
         </div>
         <p class="disc">پروی فوری برای دیدن ترکیب رنگ و استایل است و اندازهٔ دقیق را نشان نمی‌دهد؛ سایز را با راهنمای سایز هر کالا مقایسه کن. در نمای واقعی، خطای قطعی ساخت سکه را برمی‌گرداند.</p>
       </div>
@@ -1177,25 +1177,25 @@ body.kidsmode .shop-hd{display:none}
 
 <!-- ================= ACCOUNT ================= -->
 <main id="pg-account" class="page">
-  <div class="acct" id="acct" data-theme="neutral">
+  <div class="acct" id="acct" data-theme="neutral" data-moda4="auth">
     <div class="art">
       <img id="acctImg" src="{{IMG:look-women-knit}}" alt="">
       <div class="cap"><h2>Join the <em>club.</em></h2><div style="font-size:16px;margin-top:10px">کمد شخصی، سایزهای ذخیره‌شده و اتاق پرو مخصوص تو</div></div>
     </div>
     <div class="form">
-      <div class="steps" aria-hidden="true"><i class="on" id="s1"></i><i id="s2"></i><i id="s3"></i></div>
+      <div class="steps" aria-hidden="true" data-moda4="auth-steps"><i class="on" id="s1"></i><i id="s2"></i><i id="s3"></i></div>
       <form class="view on" id="v1" onsubmit="return false">
         <h1>ورود یا ثبت‌نام <span class="lat">Welcome</span></h1>
         <p class="lead">بدون رمز عبور. ایمیلت را بنویس تا یک کد یک‌بار مصرف برایت بفرستیم.</p>
         <div class="fld"><label for="em">ایمیل</label><input id="em" type="email" dir="ltr" placeholder="name@example.com" autocomplete="email"></div>
-        <button type="submit" class="cbtn block" id="toOtp">ارسال کد</button>
+        <button type="submit" class="cbtn block" data-moda4-cta id="toOtp">ارسال کد</button>
         <span class="hint">با ادامه، شرایط استفاده و حریم خصوصی را می‌پذیری. ایمیل فقط برای ورود و اطلاع‌رسانی‌هایی که خودت فعال کنی استفاده می‌شود.</span>
       </form>
       <form class="view" id="v2" onsubmit="return false">
         <h1>کد را وارد کن</h1>
         <p class="lead">کد ۶ رقمی به <bdi dir="ltr" id="emShow">name@example.com</bdi> فرستاده شد.</p>
         <div class="otp" id="otp"><input inputmode="numeric" maxlength="1" aria-label="رقم ۱"><input inputmode="numeric" maxlength="1" aria-label="رقم ۲"><input inputmode="numeric" maxlength="1" aria-label="رقم ۳"><input inputmode="numeric" maxlength="1" aria-label="رقم ۴"><input inputmode="numeric" maxlength="1" aria-label="رقم ۵"><input inputmode="numeric" maxlength="1" aria-label="رقم ۶"></div>
-        <button type="submit" class="cbtn block" id="toProf">تأیید</button>
+        <button type="submit" class="cbtn block" data-moda4-cta id="toProf">تأیید</button>
         <div style="display:flex;justify-content:space-between"><button type="button" class="lnk" data-back="1">تغییر ایمیل</button><span class="hint" id="resend">ارسال دوباره تا ۰:۴۵</span></div>
       </form>
       <form class="view" id="v3" onsubmit="return false">
@@ -1211,7 +1211,7 @@ body.kidsmode .shop-hd{display:none}
         </div>
         <div class="fld"><label>سایز معمولت</label><div class="tags" id="szTags"><button type="button" class="chip" aria-pressed="false">XS</button><button type="button" class="chip" aria-pressed="false">S</button><button type="button" class="chip" aria-pressed="true">M</button><button type="button" class="chip" aria-pressed="false">L</button><button type="button" class="chip" aria-pressed="false">XL</button></div></div>
         <div class="fld"><label>چه استایلی دوست داری؟</label><div class="tags" id="styTags"><button type="button" class="chip" aria-pressed="true">مینیمال</button><button type="button" class="chip" aria-pressed="false">کلاسیک</button><button type="button" class="chip" aria-pressed="false">اسپرت</button><button type="button" class="chip" aria-pressed="true">رنگ‌های خاکی</button><button type="button" class="chip" aria-pressed="false">رسمی</button><button type="button" class="chip" aria-pressed="false">لایه‌پوشی</button></div></div>
-        <button type="submit" class="cbtn block" id="done">ساخت پروفایل</button>
+        <button type="submit" class="cbtn block" data-moda4-cta id="done">ساخت پروفایل</button>
       </form>
     </div>
   </div>
@@ -1249,7 +1249,7 @@ body.kidsmode .shop-hd{display:none}
             <div class="order">
               <div class="ims"><span><img src="{{IMG:women-coat}}" alt=""></span><span><img src="{{IMG:accessories-bag}}" alt=""></span></div>
               <div style="display:flex;flex-direction:column;gap:4px"><b style="font-weight:500">سفارش <bdi dir="ltr" class="mono">SH-MW-1023</bdi></b><span style="font-size:13px;color:var(--stone)">۲ قطعه · بارانی رها، کیف دستی هانا</span></div>
-              <a href="#profile" class="cbtn sm" style="margin-inline-start:auto">رهگیری مرسوله</a>
+              <a href="#profile" class="cbtn sm" data-moda4-cta style="margin-inline-start:auto">رهگیری مرسوله</a>
             </div>
             <div class="tl"><span class="bar"></span><div class="done"><i></i>ثبت سفارش</div><div class="done"><i></i>تأیید پرداخت</div><div class="done now"><i></i>آماده‌سازی</div><div><i></i>ارسال</div><div><i></i>تحویل</div></div>
           </div>
@@ -1273,13 +1273,13 @@ body.kidsmode .shop-hd{display:none}
   </div>
 </main>
 
-<footer class="ft lace-t">
+<footer class="ft lace-t" data-moda4="footer">
   <div class="wrap">
     <div class="ft-top">
       <form class="news" onsubmit="return false">
-        <h3>Stay in <em>the loop.</em></h3>
+        <h3 data-moda4-display>Stay in <em>the loop.</em></h3>
         <p>کالکشن‌های تازه، لوک‌بوک‌ها و اخبار اتاق پرو — فقط با تأیید ایمیل، هر وقت خواستی لغو کن.</p>
-        <div class="nbox"><label for="news" class="sr">ایمیل</label><input id="news" type="email" placeholder="ایمیل شما" dir="ltr"><button type="submit" class="cbtn accent sm">عضویت</button></div>
+        <div class="nbox"><label for="news" class="sr">ایمیل</label><input id="news" type="email" placeholder="ایمیل شما" dir="ltr"><button type="submit" class="cbtn accent sm" data-moda4-cta>عضویت</button></div>
       </form>
       <div class="cols">
         <div><h4>فروشگاه</h4><a href="#shop-w">زنانه</a><a href="#shop-m">مردانه</a><a href="#shop-k">بچگانه</a><a href="#shop-a">اکسسوری</a></div>
@@ -1288,7 +1288,7 @@ body.kidsmode .shop-hd{display:none}
         <div><h4>حساب</h4><a href="#account">ورود / ثبت‌نام</a><a href="#profile">پروفایل من</a><a href="#profile">علاقه‌مندی‌ها</a></div>
       </div>
     </div>
-    <div class="word" aria-hidden="true">{{LOGO}}</div>
+    <div class="word" aria-hidden="true" data-moda4="footer-wordmark">{{LOGO}}</div>
     <div class="legal"><span>مد، آرام و ماندگار · Iran · Türkiye · Canada</span><div class="pay"><span>CARD</span><span>BANK</span><span>IBAN</span></div></div>
   </div>
 </footer>
@@ -1298,7 +1298,7 @@ body.kidsmode .shop-hd{display:none}
 <aside class="drawer" id="cart" aria-label="سبد خرید" aria-hidden="true">
   <div class="dh"><b>سبد خرید (<span id="cartN">۲</span>)</b><button type="button" class="ib" aria-label="بستن" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
   <div class="db" id="cartList"></div>
-  <div class="df"><div class="sub"><span>جمع اقلام</span><b id="cartSum">$198</b></div><span class="prog">هزینهٔ ارسال و مالیات بر اساس بازار شما در مرحلهٔ بعد شفاف نمایش داده می‌شود.</span><a href="#home" class="cbtn block" data-close>ادامه و پرداخت</a></div>
+  <div class="df"><div class="sub"><span>جمع اقلام</span><b id="cartSum">$198</b></div><span class="prog">هزینهٔ ارسال و مالیات بر اساس بازار شما در مرحلهٔ بعد شفاف نمایش داده می‌شود.</span><a href="#home" class="cbtn block" data-moda4-cta data-close>ادامه و پرداخت</a></div>
 </aside>
 <aside class="drawer menu" id="menu" aria-label="منو" aria-hidden="true">
   <div class="dh"><a href="#home" class="logo" aria-label="MODA4" data-close>{{LOGO}}</a><button type="button" class="ib" aria-label="بستن" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -1369,7 +1369,7 @@ var theme = 'women', userName = 'سارا';
 function card(p){
   var sizes = SIZES[p.d], c0 = p.c[0], kid = p.d === 'k' && IMG['cut/' + c0[2]];
   var pbg = PASTELS[(p.id.length + p.p) % PASTELS.length];
-  return '<article class="pc" data-id="' + p.id + '"><div class="im"' + (kid ? ' style="background:linear-gradient(160deg,' + pbg + ',#FFF9F0)"' : '') + '>' +
+  return '<article class="pc" data-moda4="product-card" data-id="' + p.id + '"><div class="im" data-moda4="product-card-media"' + (kid ? ' style="background:linear-gradient(160deg,' + pbg + ',#FFF9F0)"' : '') + '>' +
     (kid ? '<img class="cutimg" src="' + IMG['cut/' + c0[2]] + '" alt="' + p.n + '" loading="lazy">' : '<img src="' + IMG[c0[2]] + '" alt="' + p.n + '" loading="lazy">') +
     (p.alt ? '<img class="alt" src="' + IMG[p.alt] + '" alt="" loading="lazy">' : '') +
     (p.tag ? '<span class="flag">' + p.tag + '!</span>' : '') +
@@ -1485,7 +1485,7 @@ var LOOKS = [['look-women-coat','City Layers','لایه‌های شهری','#sho
 var ring = $('#ring'), ra = 0, step = 360 / LOOKS.length;
 function radius(){ return window.innerWidth < 760 ? 300 : 430; }
 function layoutRing(){
-  ring.innerHTML = LOOKS.map(function(l, i){ return '<figure class="look" style="transform:rotateY(' + (i * step) + 'deg) translateZ(' + radius() + 'px)"><a href="' + l[3] + '" draggable="false"><img src="' + IMG[l[0]] + '" alt="' + l[2] + '" draggable="false"></a><figcaption><b>' + l[1] + '</b><span>' + l[2] + '</span></figcaption></figure>'; }).join('');
+  ring.innerHTML = LOOKS.map(function(l, i){ return '<figure class="look" data-moda4="lookbook-card" style="transform:rotateY(' + (i * step) + 'deg) translateZ(' + radius() + 'px)"><a href="' + l[3] + '" draggable="false"><img src="' + IMG[l[0]] + '" alt="' + l[2] + '" draggable="false"></a><figcaption><b>' + l[1] + '</b><span>' + l[2] + '</span></figcaption></figure>'; }).join('');
   spin(0);
 }
 function spin(d){
@@ -1791,7 +1791,7 @@ window.addEventListener('scroll', function(){ if (current !== 'home' || reduce) 
   var items = [['kids-dress','پیراهن نیلوفر',42,'#E4DAF7'],['kids-hoodie','هودی رایان',32,'#FFDCCB'],['kids-knit','ژاکت بافت باران',38,'#CFEEDF'],['kids-set','ست راحتی نیلا',48,'#CFE4F8'],['kids-hoodie-sage','هودی رایان · مریم‌گلی',32,'#F8D7E3'],['kids-trousers','شلوار نرم آریو',28,'#FFF0B3']];
   var ring = $('#ttRing'), n = items.length, a = 0, speed = .14, paused = false;
   ring.innerHTML = items.map(function(it){ var pid = it[0] === 'kids-hoodie-sage' ? 'kids-hoodie' : it[0];
-    return '<a class="tt-item" href="#product-' + pid + '" style="--c:' + it[3] + '"><img src="' + IMG['cut/' + it[0]] + '" alt="' + it[1] + '" draggable="false"><span class="pod"></span><span class="ttl">' + it[1] + '<b>$' + it[2] + '</b></span></a>'; }).join('');
+    return '<a class="tt-item" data-moda4="kids-turntable-item" href="#product-' + pid + '" style="--c:' + it[3] + '"><img src="' + IMG['cut/' + it[0]] + '" alt="' + it[1] + '" draggable="false"><span class="pod"></span><span class="ttl">' + it[1] + '<b>$' + it[2] + '</b></span></a>'; }).join('');
   var els = $$('.tt-item', ring);
   function R(){ return window.innerWidth < 760 ? 120 : 270; }
   function frame(){
@@ -1831,7 +1831,7 @@ function drawTry(){
   var slots = [['', 'همه']]; ['top','bottom','dress','outer'].forEach(function(s){ if (A.items.some(function(id){ return GEO[id][0] === s; })) slots.push([s, SLOTNAME[s]]); }); slots.push(['acc', 'اکسسوری']);
   $('#slotf').innerHTML = slots.map(function(s){ return '<button type="button" class="chip' + (s[0] === slotFilter ? ' on' : '') + '" data-sf="' + s[0] + '">' + s[1] + '</button>'; }).join('');
   $('#tgrid').innerHTML = list.map(function(id){ var p = byId[pidOf(id)], on = sel.indexOf(id) > -1;
-    return '<button type="button" class="ti" aria-pressed="' + on + '" data-ti="' + id + '"><em>' + SLOTNAME[GEO[id][0]] + '</em><div class="im"><img src="' + IMG['cut/' + id] + '" alt=""></div><span>' + p.n + (id === 'kids-hoodie-sage' ? ' · مریم‌گلی' : '') + '</span><small>$' + p.p + '</small></button>'; }).join('') || '<p class="hint" style="grid-column:1/-1">در کمد تو برای این بخش هنوز چیزی نیست.</p>';
+    return '<button type="button" class="ti" data-moda4="tryon-item" aria-pressed="' + on + '" data-ti="' + id + '"><em>' + SLOTNAME[GEO[id][0]] + '</em><div class="im"><img src="' + IMG['cut/' + id] + '" alt=""></div><span>' + p.n + (id === 'kids-hoodie-sage' ? ' · مریم‌گلی' : '') + '</span><small>$' + p.p + '</small></button>'; }).join('') || '<p class="hint" style="grid-column:1/-1">در کمد تو برای این بخش هنوز چیزی نیست.</p>';
   drawSel();
 }
 function drawLayers(added){
@@ -1839,7 +1839,7 @@ function drawLayers(added){
   var keep = {}; $$('img', lay).forEach(function(im){ if (sel.indexOf(im.dataset.id) < 0){ im.classList.add('out'); setTimeout(function(){ im.remove(); }, 340); } else keep[im.dataset.id] = im; });
   sel.forEach(function(id){
     var g = GEO[id], im = keep[id];
-    if (!im){ im = document.createElement('img'); im.src = IMG['cut/' + id]; im.alt = byId[pidOf(id)].n; im.dataset.id = id; lay.appendChild(im); }
+    if (!im){ im = document.createElement('img'); im.src = IMG['cut/' + id]; im.alt = byId[pidOf(id)].n; im.dataset.id = id; im.setAttribute('data-moda4', 'tryon-layer'); lay.appendChild(im); }
     var w = g[2] * k, cx = 110 + g[3] * k, top = 560 - (560 - g[1]) * k;
     im.style.width = w + 'px'; im.style.left = (cx - w / 2) + 'px'; im.style.top = top + 'px'; im.style.zIndex = g[4];
     im.style.transform = 'translateZ(' + (g[4] * 9) + 'px)';
