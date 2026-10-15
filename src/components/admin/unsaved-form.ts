@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { ActionResult } from "@/lib/action-result";
+import { registerUnsavedHistory } from "./unsaved-history";
 
 function values(form: HTMLFormElement) {
   return JSON.stringify(
@@ -9,7 +10,7 @@ function values(form: HTMLFormElement) {
       key,
       typeof value === "string"
         ? value
-        : [value.name, value.size, value.lastModified],
+        : [value.name, value.size, value.name ? value.lastModified : 0],
     ]),
   );
 }
@@ -22,12 +23,18 @@ export function useUnsavedForm(
 ) {
   const formRef = useRef<HTMLFormElement>(null);
   const baseline = useRef<string | null>(null);
-  useEffect(() => {
-    if (formRef.current && (baseline.current === null || state?.ok))
-      baseline.current = values(formRef.current);
+  useLayoutEffect(() => {
+    if (!formRef.current) return;
+    if (baseline.current === null) {
+      // Capture the rendered defaults, including when typing starts before
+      // hydration. Reset only a detached clone, never the customer's form.
+      const initial = formRef.current.cloneNode(true) as HTMLFormElement;
+      HTMLFormElement.prototype.reset.call(initial);
+      baseline.current = values(initial);
+    } else if (state?.ok) baseline.current = values(formRef.current);
   }, [state]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let confirmedNavigation = false;
     const dirty = () =>
       dirtyOverride ??
@@ -73,7 +80,16 @@ export function useUnsavedForm(
     };
     window.addEventListener("beforeunload", unload);
     document.addEventListener("click", navigate, true);
+    const unregister = registerUnsavedHistory({
+      dirty,
+      confirm: () => {
+        const accepted = window.confirm(message);
+        if (accepted) confirmedNavigation = true;
+        return accepted;
+      },
+    });
     return () => {
+      unregister();
       window.removeEventListener("beforeunload", unload);
       document.removeEventListener("click", navigate, true);
     };
