@@ -245,244 +245,253 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
   }
 });
 
-test("R3b actual bounded video upload, CMS selection, manual playback and broken-source fallback", async ({
-  page,
-  context,
-}, info) => {
-  test.setTimeout(120000);
-  const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
-  const previous = await db.homepage.findFirst({
-    where: { marketId: market.id },
-  });
-  let uploaded = "";
-  try {
-    await page.goto("/admin/login");
-    await page
-      .locator('input[name="email"]')
-      .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
-    await page
-      .locator('input[name="password"]')
-      .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
-    await fillAdminMfa(page);
-    await page.locator('button[type="submit"]').click();
-    await expect(page).toHaveURL(/\/admin$/);
-    await context.addCookies([
-      {
-        name: "hoda.admin.locale",
-        value: "en",
-        url: info.project.use.baseURL!,
-      },
-    ]);
-    // Synthetic moving-colour clip recorded locally, not content from an owner/provider.
-    const bytes = await page.evaluate(async () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 160;
-      canvas.height = 120;
-      const ctx = canvas.getContext("2d")!;
-      const stream = canvas.captureStream(20);
-      const recorder = new MediaRecorder(stream, {
-        mimeType: "video/webm;codecs=vp8",
-      });
-      const chunks: Blob[] = [];
-      const complete = new Promise<Blob>((resolve) => {
-        recorder.ondataavailable = (e) => chunks.push(e.data);
-        recorder.onstop = () =>
-          resolve(new Blob(chunks, { type: "video/webm" }));
-      });
-      recorder.start();
-      for (let n = 0; n < 6; n++) {
-        ctx.fillStyle = n % 2 ? "#336699" : "#669933";
-        ctx.fillRect(0, 0, 160, 120);
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-      recorder.stop();
-      const clip = await complete;
-      stream.getTracks().forEach((track) => track.stop());
-      return [...new Uint8Array(await clip.arrayBuffer())];
+// This case controls chunk transport to exercise an actual media failure before
+// hydration. Keep service-worker behavior in the dedicated, unchanged PWA specs.
+test.describe("controlled video transport", () => {
+  test.use({ serviceWorkers: "block" });
+  test("R3b actual bounded video upload, CMS selection, manual playback and broken-source fallback", async ({
+    page,
+    context,
+  }, info) => {
+    test.setTimeout(120000);
+    const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+    const previous = await db.homepage.findFirst({
+      where: { marketId: market.id },
     });
-    const upload = await page.request.post("/api/uploads", {
-      multipart: {
-        file: {
-          name: "r3b-technical-motion.webm",
-          mimeType: "image/jpeg",
-          buffer: Buffer.from(bytes),
-        },
-      },
-    });
-    expect(upload.status()).toBe(202);
-    const media = (await upload.json()) as {
-      id: string;
-      url: string;
-      status: string;
-    };
-    uploaded = media.id;
-    expect(media.status).toBe("READY");
-    expect(
-      await db.media.findUnique({
-        where: { id: media.id },
-        select: { kind: true, mime: true },
-      }),
-    ).toEqual({ kind: "video", mime: "video/webm" });
-    const forged = await page.request.post("/api/uploads", {
-      multipart: {
-        file: {
-          name: "forged.webm",
-          mimeType: "video/webm",
-          buffer: Buffer.from("not video bytes"),
-        },
-      },
-    });
-    expect(forged.status()).toBe(415);
-    const tooLarge = await page.request.post("/api/uploads", {
-      multipart: {
-        file: {
-          name: "oversize.webm",
-          mimeType: "video/webm",
-          buffer: Buffer.alloc(30_000_001),
-        },
-      },
-    });
-    expect(tooLarge.status()).toBe(400);
-    await page.goto(`/admin/content/homepage?scope=${market.id}`);
-    const form = page.getByTestId("homepage-form");
-    await form
-      .getByRole("combobox", { name: en.homepageAdmin.add, exact: true })
-      .selectOption("VideoBanner");
-    await form
-      .getByRole("button", { name: en.homepageAdmin.add, exact: true })
-      .click();
-    const block = form.locator("details").last();
-    for (const input of await block
-      .locator(
-        "fieldset.moda-localized-fields input,fieldset.moda-localized-fields textarea",
-      )
-      .all())
-      await input.fill("R3b technical video proof");
-    const poster = await db.media.findUniqueOrThrow({
-      where: { id: "seed-fashion-v2-look-women-coat" },
-    });
-    for (const kind of ["desktop", "mobile"] as const) {
-      const picker = block.locator("fieldset").filter({
-        has: page.locator(`input[name="modaMedia-${en.modaAdmin[kind]}"]`),
-      });
-      await picker.getByRole("button", { name: en.media.chooseMedia }).click();
-      await picker
-        .locator("dialog input[type=search]")
-        .fill(poster.originalName);
-      await picker.getByTestId(`media-picker-item-${poster.id}`).click();
-    }
-    // Find the actual picker wrapper from its hidden selected-ID field.
-    const videoField = block.locator('input[name="modaVideo"]').locator("..");
-    await videoField
-      .getByRole("button", { name: en.media.chooseMedia })
-      .click();
-    const dialog = videoField.locator("dialog");
-    await dialog.locator("input[type=search]").fill("r3b-technical-motion");
-    await dialog.getByTestId(`media-picker-item-${media.id}`).click();
-    await page
-      .getByRole("combobox", { name: en.modaAdmin.previewLanguage })
-      .selectOption("en");
-    const preview = page.getByTestId("homepage-unsaved-preview").contentFrame();
-    const player = preview.locator(`video[src="${media.url}"]`);
-    await expect(player).toBeVisible();
-    await player.evaluate(async (video: HTMLVideoElement) => {
-      video.preload = "auto";
-      video.muted = true;
-      await video.play();
-    });
-    await expect
-      .poll(() =>
-        player.evaluate((video: HTMLVideoElement) => video.videoWidth),
-      )
-      .toBe(160);
-    await player.evaluate((video: HTMLVideoElement) => video.pause());
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await form
-      .getByRole("button", { name: en.homepageAdmin.save, exact: true })
-      .click();
-    await expect(
-      form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
-    ).toBeVisible();
-    await page.reload();
-    await page
-      .getByTestId("homepage-form")
-      .getByRole("button", { name: en.scenes.publishChanges })
-      .click();
-    const shop = await context.newPage();
-    await shop.emulateMedia({ reducedMotion: "reduce" });
-    await shop.goto("/en/m/CA");
-    const publicPlayer = shop.locator(`video[src="${media.url}"]`);
-    await expect(publicPlayer).toBeVisible();
-    expect(
-      await publicPlayer.evaluate((video: HTMLVideoElement) => video.paused),
-    ).toBe(true);
-    const missingUrl = `/media/media/2026/10/missing-technical-video-${media.id}.webm`;
-    await db.media.update({
-      where: { id: media.id },
-      data: { url: missingUrl },
-    });
-    expect((await shop.request.get(missingUrl)).status()).toBe(404);
-    // Make the real 404 finish before hydration. Media errors are not replayed
-    // by React: a component must also inspect the element's existing error.
-    const chunks = /\/_next\/static\/chunks\/.*\.js(?:\?.*)?$/;
-    let releaseScripts!: () => void;
-    const hydrationGate = new Promise<void>((resolve) => {
-      releaseScripts = resolve;
-    });
-    await shop.route(chunks, async (route) => {
-      await hydrationGate;
-      await route.continue();
-    });
-    const missingPlayer = shop.locator(".moda-video-banner video");
+    let uploaded = "";
     try {
-      await shop.reload({ waitUntil: "commit" });
-      await expect(missingPlayer).toHaveAttribute("src", missingUrl);
-      await missingPlayer.evaluate((video: HTMLVideoElement) => {
+      await page.goto("/admin/login");
+      await page
+        .locator('input[name="email"]')
+        .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+      await page
+        .locator('input[name="password"]')
+        .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+      await fillAdminMfa(page);
+      await page.locator('button[type="submit"]').click();
+      await expect(page).toHaveURL(/\/admin$/);
+      await context.addCookies([
+        {
+          name: "hoda.admin.locale",
+          value: "en",
+          url: info.project.use.baseURL!,
+        },
+      ]);
+      // Synthetic moving-colour clip recorded locally, not content from an owner/provider.
+      const bytes = await page.evaluate(async () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 160;
+        canvas.height = 120;
+        const ctx = canvas.getContext("2d")!;
+        const stream = canvas.captureStream(20);
+        const recorder = new MediaRecorder(stream, {
+          mimeType: "video/webm;codecs=vp8",
+        });
+        const chunks: Blob[] = [];
+        const complete = new Promise<Blob>((resolve) => {
+          recorder.ondataavailable = (e) => chunks.push(e.data);
+          recorder.onstop = () =>
+            resolve(new Blob(chunks, { type: "video/webm" }));
+        });
+        recorder.start();
+        for (let n = 0; n < 6; n++) {
+          ctx.fillStyle = n % 2 ? "#336699" : "#669933";
+          ctx.fillRect(0, 0, 160, 120);
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        recorder.stop();
+        const clip = await complete;
+        stream.getTracks().forEach((track) => track.stop());
+        return [...new Uint8Array(await clip.arrayBuffer())];
+      });
+      const upload = await page.request.post("/api/uploads", {
+        multipart: {
+          file: {
+            name: "r3b-technical-motion.webm",
+            mimeType: "image/jpeg",
+            buffer: Buffer.from(bytes),
+          },
+        },
+      });
+      expect(upload.status()).toBe(202);
+      const media = (await upload.json()) as {
+        id: string;
+        url: string;
+        status: string;
+      };
+      uploaded = media.id;
+      expect(media.status).toBe("READY");
+      expect(
+        await db.media.findUnique({
+          where: { id: media.id },
+          select: { kind: true, mime: true },
+        }),
+      ).toEqual({ kind: "video", mime: "video/webm" });
+      const forged = await page.request.post("/api/uploads", {
+        multipart: {
+          file: {
+            name: "forged.webm",
+            mimeType: "video/webm",
+            buffer: Buffer.from("not video bytes"),
+          },
+        },
+      });
+      expect(forged.status()).toBe(415);
+      const tooLarge = await page.request.post("/api/uploads", {
+        multipart: {
+          file: {
+            name: "oversize.webm",
+            mimeType: "video/webm",
+            buffer: Buffer.alloc(30_000_001),
+          },
+        },
+      });
+      expect(tooLarge.status()).toBe(400);
+      await page.goto(`/admin/content/homepage?scope=${market.id}`);
+      const form = page.getByTestId("homepage-form");
+      await form
+        .getByRole("combobox", { name: en.homepageAdmin.add, exact: true })
+        .selectOption("VideoBanner");
+      await form
+        .getByRole("button", { name: en.homepageAdmin.add, exact: true })
+        .click();
+      const block = form.locator("details").last();
+      for (const input of await block
+        .locator(
+          "fieldset.moda-localized-fields input,fieldset.moda-localized-fields textarea",
+        )
+        .all())
+        await input.fill("R3b technical video proof");
+      const poster = await db.media.findUniqueOrThrow({
+        where: { id: "seed-fashion-v2-look-women-coat" },
+      });
+      for (const kind of ["desktop", "mobile"] as const) {
+        const picker = block.locator("fieldset").filter({
+          has: page.locator(`input[name="modaMedia-${en.modaAdmin[kind]}"]`),
+        });
+        await picker
+          .getByRole("button", { name: en.media.chooseMedia })
+          .click();
+        await picker
+          .locator("dialog input[type=search]")
+          .fill(poster.originalName);
+        await picker.getByTestId(`media-picker-item-${poster.id}`).click();
+      }
+      // Find the actual picker wrapper from its hidden selected-ID field.
+      const videoField = block.locator('input[name="modaVideo"]').locator("..");
+      await videoField
+        .getByRole("button", { name: en.media.chooseMedia })
+        .click();
+      const dialog = videoField.locator("dialog");
+      await dialog.locator("input[type=search]").fill("r3b-technical-motion");
+      await dialog.getByTestId(`media-picker-item-${media.id}`).click();
+      await page
+        .getByRole("combobox", { name: en.modaAdmin.previewLanguage })
+        .selectOption("en");
+      const preview = page
+        .getByTestId("homepage-unsaved-preview")
+        .contentFrame();
+      const player = preview.locator(`video[src="${media.url}"]`);
+      await expect(player).toBeVisible();
+      await player.evaluate(async (video: HTMLVideoElement) => {
         video.preload = "auto";
-        video.load();
+        video.muted = true;
+        await video.play();
       });
       await expect
         .poll(() =>
-          missingPlayer.evaluate(
-            (video: HTMLVideoElement) => video.error?.code,
-          ),
+          player.evaluate((video: HTMLVideoElement) => video.videoWidth),
         )
-        .toBe(4);
-    } finally {
-      releaseScripts();
-      await shop.unroute(chunks);
-    }
-    await expect(missingPlayer).toHaveCount(0);
-    await expect(shop.locator(".moda-video-poster")).toContainText(
-      "R3b technical video proof",
-    );
-    await shop.screenshot({
-      scale: "css",
-      path: info.outputPath("r3b-video-fallback-390.png"),
-      fullPage: true,
-    });
-    await shop.close();
-  } finally {
-    if (previous) {
-      const { id, createdAt, updatedAt, ...data } = previous;
-      void createdAt;
-      void updatedAt;
-      await db.homepage.update({
-        where: { id },
-        data: {
-          ...data,
-          blocks: data.blocks as Prisma.InputJsonValue,
-          draftBlocks:
-            data.draftBlocks === null
-              ? Prisma.DbNull
-              : (data.draftBlocks as Prisma.InputJsonValue),
-        },
-      });
-    } else await db.homepage.deleteMany({ where: { marketId: market.id } });
-    if (uploaded)
+        .toBe(160);
+      await player.evaluate((video: HTMLVideoElement) => video.pause());
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await form
+        .getByRole("button", { name: en.homepageAdmin.save, exact: true })
+        .click();
+      await expect(
+        form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
+      ).toBeVisible();
+      await page.reload();
+      await page
+        .getByTestId("homepage-form")
+        .getByRole("button", { name: en.scenes.publishChanges })
+        .click();
+      const shop = await context.newPage();
+      await shop.emulateMedia({ reducedMotion: "reduce" });
+      await shop.goto("/en/m/CA");
+      const publicPlayer = shop.locator(`video[src="${media.url}"]`);
+      await expect(publicPlayer).toBeVisible();
+      expect(
+        await publicPlayer.evaluate((video: HTMLVideoElement) => video.paused),
+      ).toBe(true);
+      const missingUrl = `/media/media/2026/10/missing-technical-video-${media.id}.webm`;
       await db.media.update({
-        where: { id: uploaded },
-        data: { deletedAt: new Date() },
+        where: { id: media.id },
+        data: { url: missingUrl },
       });
-  }
+      expect((await shop.request.get(missingUrl)).status()).toBe(404);
+      // Make the real 404 finish before hydration. Media errors are not replayed
+      // by React: a component must also inspect the element's existing error.
+      const chunks = /\/_next\/static\/chunks\/.*\.js(?:\?.*)?$/;
+      let releaseScripts!: () => void;
+      const hydrationGate = new Promise<void>((resolve) => {
+        releaseScripts = resolve;
+      });
+      await shop.route(chunks, async (route) => {
+        await hydrationGate;
+        await route.continue();
+      });
+      const missingPlayer = shop.locator(".moda-video-banner video");
+      try {
+        await shop.reload({ waitUntil: "commit" });
+        await expect(missingPlayer).toHaveAttribute("src", missingUrl);
+        await missingPlayer.evaluate((video: HTMLVideoElement) => {
+          video.preload = "auto";
+          video.load();
+        });
+        await expect
+          .poll(() =>
+            missingPlayer.evaluate(
+              (video: HTMLVideoElement) => video.error?.code,
+            ),
+          )
+          .toBe(4);
+      } finally {
+        releaseScripts();
+        await shop.unroute(chunks);
+      }
+      await expect(missingPlayer).toHaveCount(0);
+      await expect(shop.locator(".moda-video-poster")).toContainText(
+        "R3b technical video proof",
+      );
+      await shop.screenshot({
+        scale: "css",
+        path: info.outputPath("r3b-video-fallback-390.png"),
+        fullPage: true,
+      });
+      await shop.close();
+    } finally {
+      if (previous) {
+        const { id, createdAt, updatedAt, ...data } = previous;
+        void createdAt;
+        void updatedAt;
+        await db.homepage.update({
+          where: { id },
+          data: {
+            ...data,
+            blocks: data.blocks as Prisma.InputJsonValue,
+            draftBlocks:
+              data.draftBlocks === null
+                ? Prisma.DbNull
+                : (data.draftBlocks as Prisma.InputJsonValue),
+          },
+        });
+      } else await db.homepage.deleteMany({ where: { marketId: market.id } });
+      if (uploaded)
+        await db.media.update({
+          where: { id: uploaded },
+          data: { deletedAt: new Date() },
+        });
+    }
+  });
 });

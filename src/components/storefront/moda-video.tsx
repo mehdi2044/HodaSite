@@ -1,18 +1,24 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-export function ModaVideo({
-  url,
-  fallback,
-  autoplay,
-  sceneId,
-  poster,
-}: {
+type ModaVideoProps = {
   url: string;
   sceneId?: string;
   poster?: string;
   fallback: ReactNode;
   autoplay: boolean;
-}) {
+};
+export function ModaVideo(props: ModaVideoProps) {
+  // A new source has its own readiness/error state; a failed old source must
+  // neither hide its replacement nor receive a late event for that player.
+  return <ModaVideoPlayer key={props.url} {...props} />;
+}
+function ModaVideoPlayer({
+  url,
+  fallback,
+  autoplay,
+  sceneId,
+  poster,
+}: ModaVideoProps) {
   const root = useRef<HTMLDivElement>(null),
     video = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false),
@@ -67,9 +73,15 @@ export function ModaVideo({
     };
   }, [url, autoplay, failed]);
   useEffect(() => {
-    setReady(false);
-    setFailed(false);
-  }, [url]);
+    // A fast/cached network failure can precede hydration. React does not
+    // replay media errors, so reconcile the existing native state on mount.
+    const player = video.current;
+    if (player?.error) {
+      setFailed(true);
+      setReady(false);
+    } else if (player && player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA)
+      setReady(true);
+  }, []);
   return (
     <div ref={root} className="moda-video-banner" data-ready={ready && !failed}>
       <div className="moda-video-poster">{fallback}</div>
