@@ -290,7 +290,13 @@ for (const [locale, marketCode] of [
     await dialog
       .getByRole("button", { name: t.catalog.search, exact: true })
       .click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/search\\?q=`));
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === `/${locale}/search` &&
+        url.searchParams.get("q") ===
+          (product.titleI18n as Record<string, string>)[locale] &&
+        url.searchParams.get("market") === marketCode,
+    );
     await expect(page.locator(".shop-product-card").first()).toBeVisible();
     await page.goto(`/${locale}/m/${marketCode}`);
     const studio = page.getByTestId("shop-look-studio").first();
