@@ -12,8 +12,10 @@ for (const [locale, market, cartLabel] of [
     test.setTimeout(120_000);
     await page.goto(`/${locale}/m/${market}`);
     await page.evaluate(() => document.fonts.ready);
-    const hero = page.getByTestId("storefront-hero");
-    const image = hero.locator("img").first();
+    const hero = page.locator(
+      ".moda-carousel-hero .moda-carousel-slide[data-active=true]",
+    );
+    const image = hero.locator("img:visible").first();
     const brand = page.locator(".moda-brand");
     const brandName = brand.locator(":scope > span");
     const cart = page.locator("header .storefront-cart-toggle");
@@ -32,9 +34,14 @@ for (const [locale, market, cartLabel] of [
           ),
         )
         .toBe(true);
-      await expect(
-        hero.locator(".spatial-cta, .shop-hero-content .button"),
-      ).toHaveAttribute("href", `/${locale}/search`);
+      const target = new URL(
+        (await hero
+          .locator(".shoppable-scene>a.button")
+          .getAttribute("href")) ?? "",
+        info.project.use.baseURL,
+      );
+      expect(target.pathname).toBe(`/${locale}/search`);
+      expect(target.searchParams.get("market")).toBe(market);
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
       await expect(cart.locator("bdi")).toBeVisible();
       await expect(brand).toBeVisible();

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { db } from "@/lib/db";
 import {
   cutoutGeometrySchema,
@@ -6,7 +7,7 @@ import {
   CUTOUT_ANCHORS,
 } from "./contracts";
 import { imageFingerprint, storeCutoutModels } from "./models";
-import type { Media } from "@prisma/client";
+import type { Media, Prisma } from "@prisma/client";
 export function cutoutPublicImage(media: Media) {
   return {
     url: media.url,
@@ -18,11 +19,12 @@ export function cutoutPublicImage(media: Media) {
   };
 }
 /** Select the actual color/size identity before choosing an optional override. */
-export async function currentCatalogCutout(
+async function readCurrentCatalogCutout(
   variantId: string,
   marketId: string,
+  client: Prisma.TransactionClient = db,
 ) {
-  const variant = await db.variant.findFirst({
+  const variant = await client.variant.findFirst({
     where: {
       id: variantId,
       isActive: true,
@@ -39,7 +41,7 @@ export async function currentCatalogCutout(
     include: { product: true },
   });
   if (!variant) return null;
-  const choices = await db.catalogCutout.findMany({
+  const choices = await client.catalogCutout.findMany({
     where: {
       productId: variant.productId,
       colorId: variant.colorId,
@@ -70,6 +72,18 @@ export async function currentCatalogCutout(
     return null;
   return { row, geometry: geometry.data, validation: validation.data, variant };
 }
+const requestCutout = cache((variantId: string, marketId: string) =>
+  readCurrentCatalogCutout(variantId, marketId, db),
+);
+export function currentCatalogCutout(
+  variantId: string,
+  marketId: string,
+  client: Prisma.TransactionClient = db,
+) {
+  return client === db
+    ? requestCutout(variantId, marketId)
+    : readCurrentCatalogCutout(variantId, marketId, client);
+}
 export async function publicCatalogCutout(variantId: string, marketId: string) {
   const current = await currentCatalogCutout(variantId, marketId);
   if (!current) return null;
@@ -88,10 +102,11 @@ export async function resolveCutoutPlacement(
   variantId: string,
   marketId: string,
   modelId: string,
+  client: Prisma.TransactionClient = db,
 ) {
-  const current = await currentCatalogCutout(variantId, marketId);
+  const current = await currentCatalogCutout(variantId, marketId, client);
   if (!current) return null;
-  const model = (await storeCutoutModels()).find(
+  const model = (await storeCutoutModels(client)).find(
     (choice) => choice.id === modelId,
   );
   const placement = current.geometry.models.find(
@@ -109,6 +124,7 @@ export async function resolveCutoutPlacement(
   return {
     profileId: current.row.id,
     profileVersion: current.row.version,
+    mediaId: current.row.mediaId,
     productId: current.variant.productId,
     colorId: current.variant.colorId,
     variantId: current.variant.id,

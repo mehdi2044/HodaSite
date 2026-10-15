@@ -1,3 +1,7 @@
+import {
+  moda4ReferenceProducts,
+  validateModa4References,
+} from "./moda4-references";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -5,13 +9,21 @@ import { withMutation } from "@/lib/mutation-gate";
 import { RevisionConflictError } from "@/lib/revision-conflict";
 import { assertCan } from "@/modules/access";
 import { validateLookReferences } from "@/modules/outfits";
-import { lockMediaReferences, blockMediaIds } from "@/modules/media";
+import { blockMediaIds } from "@/modules/media";
 import { homepageBlocksSchema, type HomepageBlock } from "./homepage";
 import {
   sceneReferenceFingerprint,
   assertPhotoMatch,
   lockSceneCatalog,
 } from "./scenes/references";
+
+import { lockSceneMediaReferences } from "./scenes/composite";
+
+import {
+  blockScenes,
+  mapBlockScenes,
+  bindBlockVideoScenes,
+} from "./block-scenes";
 
 const identity = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const version = z.number().int().min(0).max(2147483646);
@@ -20,7 +32,18 @@ const draftInput = z
     marketId: identity.nullable(),
     expectedVersion: version,
     blocks: homepageBlocksSchema,
-    confirmSceneIds: z.array(identity).max(30).default([]),
+    confirmSceneIds: z.array(identity).max(360).default([]),
+    expectedSceneFingerprints: z
+      .array(
+        z
+          .object({
+            sceneId: identity,
+            fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+          })
+          .strict(),
+      )
+      .max(360)
+      .default([]),
   })
   .strict();
 const publishInput = z
@@ -35,10 +58,7 @@ export const REVISION_FORMAT = "homepage-revision-v1";
 type Tx = Prisma.TransactionClient;
 const scope = (marketId: string | null) =>
   marketId ? { marketId } : undefined;
-const scenes = (blocks: HomepageBlock[]) =>
-  blocks.flatMap((block) =>
-    "scene" in block && block.scene ? [block.scene] : [],
-  );
+const scenes = blockScenes;
 
 async function lockScope(tx: Tx, marketId: string | null) {
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`homepage:${marketId ? `market:${marketId}` : "global"}`}))::text`;
@@ -78,10 +98,14 @@ async function validatedBlocks(
   previous: HomepageBlock[] = [],
   confirmed: string[] = [],
   publish = false,
+  expected: { sceneId: string; fingerprint: string }[] = [],
 ) {
-  const allScenes = scenes(blocks);
+  blocks = bindBlockVideoScenes(blocks);
+  const all = scenes(blocks);
+  const activeBlocks = blocks.filter((block) => block.enabled !== false);
+  const allScenes = scenes(activeBlocks);
   if (
-    new Set(allScenes.map((s) => s.id)).size !== allScenes.length ||
+    new Set(all.map((s) => s.id)).size !== all.length ||
     confirmed.some((id) => !allScenes.some((s) => s.id === id))
   )
     throw new z.ZodError([]);
@@ -90,8 +114,9 @@ async function validatedBlocks(
   // locks then cannot reverse product order across shared pieces.
   const products = [
     ...new Set([
+      ...moda4ReferenceProducts(activeBlocks),
       ...allScenes.flatMap((s) => s.pieces.map((p) => p.productId)),
-      ...blocks.flatMap((b) =>
+      ...activeBlocks.flatMap((b) =>
         b.type === "ShopLook"
           ? b.looks.flatMap((look) => look.items.map((i) => i.productId))
           : [],
@@ -102,7 +127,7 @@ async function validatedBlocks(
     await tx.$queryRaw(
       Prisma.sql`SELECT id FROM "Product" WHERE id IN (${Prisma.join(products)}) ORDER BY id FOR UPDATE`,
     );
-  for (const block of blocks) {
+  for (const block of activeBlocks) {
     if (
       block.type !== "ProductStrip" ||
       (block.source.mode !== "category" && block.source.mode !== "collection")
@@ -120,31 +145,58 @@ async function validatedBlocks(
           >`SELECT id FROM "Collection" WHERE id=${referenceId} AND "deletedAt" IS NULL FOR SHARE`;
     if (!refs.length) throw new z.ZodError([]);
   }
-  await validateLookReferences(blocks, marketId, tx);
+  await validateLookReferences(
+    activeBlocks.filter((block) => !(block.type === "ShopLook" && block.scene)),
+    marketId,
+    tx,
+  );
+  await validateModa4References(tx, activeBlocks, marketId, markets, publish);
   await lockSceneCatalog(allScenes, tx);
-  await lockMediaReferences(tx, blockMediaIds(blocks), { readyImages: true });
+  await lockSceneMediaReferences(
+    allScenes,
+    tx,
+    blockMediaIds(activeBlocks),
+    activeBlocks.flatMap((block) =>
+      block.type === "VideoBanner" ? [block.videoMediaId] : [],
+    ),
+    blockMediaIds(blocks),
+  );
   const matches = new Map<
     string,
     Awaited<ReturnType<typeof sceneReferenceFingerprint>>
   >();
   for (const scene of [...allScenes].sort((a, b) => a.id.localeCompare(b.id)))
     matches.set(scene.id, await sceneReferenceFingerprint(scene, markets, tx));
-  return blocks.map((block) => {
-    if (!("scene" in block) || !block.scene) return block;
-    const scene = block.scene,
-      fingerprint = matches.get(scene.id)!;
+  if (
+    !publish &&
+    confirmed.some(
+      (id) =>
+        !expected.some(
+          (proof) =>
+            proof.sceneId === id && proof.fingerprint === matches.get(id),
+        ),
+    )
+  )
+    throw new RevisionConflictError();
+  return mapBlockScenes(blocks, (scene) => {
+    const fingerprint = matches.get(scene.id);
+    if (!fingerprint)
+      return {
+        ...scene,
+        match: scenes(previous).find((old) => old.id === scene.id)?.match,
+      };
     if (publish) {
       assertPhotoMatch(scene, fingerprint);
-      return block;
+      return scene;
     }
     const old = scenes(previous).find((s) => s.id === scene.id);
     const match =
-      confirmed.includes(scene.id) && scene.mode === "PHOTO"
+      scene.mode === "COMPOSITE" || confirmed.includes(scene.id)
         ? { fingerprint, confirmedAt: new Date().toISOString() }
         : old?.match?.fingerprint === fingerprint
           ? old.match
           : undefined;
-    return { ...block, scene: { ...scene, match } };
+    return { ...scene, match };
   });
 }
 function revisionBlocks(value: Prisma.JsonValue | null) {
@@ -170,6 +222,8 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
         input.marketId,
         old.success ? old.data : [],
         input.confirmSceneIds,
+        false,
+        input.expectedSceneFingerprints,
       );
       await assertCan(actorId, "content.homepage.write", scope(input.marketId));
       const row =

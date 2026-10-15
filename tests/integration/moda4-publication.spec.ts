@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getHomepage, type HomepageBlock } from "@/modules/content/homepage";
+import { sceneReferenceFingerprint } from "@/modules/content/scenes/references";
+import { blockScenes } from "@/modules/content/block-scenes";
 import { shoppableSceneSchema } from "@/modules/content/scenes/contracts";
 import {
   saveHomepageDraft,
@@ -142,6 +144,49 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     });
     const row = () =>
       db.homepage.findFirstOrThrow({ where: { marketId, deletedAt: null } });
+    it("rejects confirmation without a preview proof or with changed source metadata under the same Media identity", async () => {
+      const previous = await db.homepage.findFirst({
+        where: { marketId, deletedAt: null },
+      });
+      const scene = blockScenes(blocks)[0];
+      const fingerprint = await sceneReferenceFingerprint(scene, [marketId]);
+      const request = {
+        marketId,
+        expectedVersion: previous?.version ?? 0,
+        blocks,
+        confirmSceneIds: [scene.id],
+      };
+      await expect(saveHomepageDraft(owner, request)).rejects.toThrow(
+        RevisionConflictError,
+      );
+      const media = await db.media.findUniqueOrThrow({
+        where: { id: scene.desktop.mediaId },
+      });
+      await db.media.update({
+        where: { id: media.id },
+        data: { width: (media.width ?? 1) + 1 },
+      });
+      try {
+        await expect(
+          saveHomepageDraft(owner, {
+            ...request,
+            expectedSceneFingerprints: [{ sceneId: scene.id, fingerprint }],
+          }),
+        ).rejects.toThrow(RevisionConflictError);
+        expect(
+          (
+            await db.homepage.findFirst({
+              where: { marketId, deletedAt: null },
+            })
+          )?.version ?? 0,
+        ).toBe(previous?.version ?? 0);
+      } finally {
+        await db.media.update({
+          where: { id: media.id },
+          data: { width: media.width },
+        });
+      }
+    });
     it("retains global published fallback, ignores forged approval and preserves live content on denied publish", async () => {
       const global = await getHomepage(marketId);
       const before = await db.homepage.findFirst({
@@ -173,6 +218,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expectedVersion: before.version,
         blocks,
         confirmSceneIds: ["r3-proof-scene"],
+        expectedSceneFingerprints: [
+          {
+            sceneId: "r3-proof-scene",
+            fingerprint: await sceneReferenceFingerprint(
+              blockScenes(blocks)[0],
+              [marketId],
+            ),
+          },
+        ],
       });
       const draft = await row();
       expect(JSON.stringify(draft.draftBlocks)).toMatch(/fingerprint/);

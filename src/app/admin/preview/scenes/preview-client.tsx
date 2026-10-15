@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { shoppableSceneSchema } from "@/modules/content/scenes/contracts";
 import type { SceneView } from "@/modules/content/scenes/resolve";
+import { decodedSceneProofs } from "@/components/admin/scene-preview-proof";
 import { ShoppableScene } from "@/components/storefront/shoppable-scene";
 export function ScenePreviewClient({
   channel,
@@ -21,6 +22,21 @@ export function ScenePreviewClient({
   const [view, setView] = useState<SceneView | null>(null),
     [unavailable, setUnavailable] = useState(false);
   const sequence = useRef(0);
+  const root = useRef<HTMLElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (root.current && view)
+      void decodedSceneProofs(root.current).then((result) => {
+        if (!cancelled)
+          window.parent.postMessage(
+            { type: "scene-preview-proof", channel, ...result },
+            location.origin,
+          );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view, channel]);
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "fa" ? "rtl" : "ltr";
@@ -104,6 +120,7 @@ export function ScenePreviewClient({
   }, [channel, scopeMarketId, marketId, locale]);
   return (
     <main
+      ref={root}
       dir={locale === "fa" ? "rtl" : "ltr"}
       lang={locale}
       data-testid="authorized-scene-preview"

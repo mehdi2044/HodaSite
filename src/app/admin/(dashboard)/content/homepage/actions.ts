@@ -8,21 +8,29 @@ import {
   saveHomepageDraft,
   publishHomepageRevision,
 } from "@/modules/content/publication";
+export type HomepageSaveResult = ActionResult & {
+  savedVersion?: number;
+  savedRevisionId?: string;
+  draftSaved?: boolean;
+};
 export async function saveHomepage(
   _previous: ActionResult | null,
   data: FormData,
-): Promise<ActionResult> {
-  return runAction(async () => {
+): Promise<HomepageSaveResult> {
+  let saved: Awaited<ReturnType<typeof saveHomepageDraft>> | undefined;
+  const result = await runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
-    // This legacy all-market builder remains global-only; the new scene editor
-    // exposes actual per-market scopes without broadening its old read contract.
-    await assertCan(session.user.id, "content.homepage.write");
     const marketId =
       z
         .string()
-        .max(100)
+        .regex(/^(?:[A-Za-z0-9_-]{1,100})?$/)
         .parse(data.get("marketId") ?? "") || null;
+    await assertCan(
+      session.user.id,
+      "content.homepage.write",
+      marketId ? { marketId } : undefined,
+    );
     const expectedVersion = z
       .string()
       .regex(/^\d+$/)
@@ -37,19 +45,42 @@ export async function saveHomepage(
     } catch {
       throw new z.ZodError([]);
     }
-    const saved = await saveHomepageDraft(session.user.id, {
+    let expectedSceneFingerprints: unknown;
+    try {
+      expectedSceneFingerprints = JSON.parse(
+        String(data.get("expectedSceneFingerprints") ?? "[]"),
+      );
+    } catch {
+      throw new z.ZodError([]);
+    }
+    saved = await saveHomepageDraft(session.user.id, {
       marketId,
       expectedVersion,
       blocks,
+      confirmSceneIds: data.getAll("confirmSceneIds").map(String),
+      expectedSceneFingerprints,
     });
-    if (intent === "PUBLISH")
-      await publishHomepageRevision(session.user.id, {
-        homepageId: saved.id,
-        revisionId: saved.revisionId,
-        expectedVersion: saved.version,
-      });
-    revalidateTag("homepage");
-    revalidatePath("/admin/content/homepage");
-    revalidatePath("/admin/content/homepage/scenes");
+    try {
+      if (intent === "PUBLISH") {
+        const published = await publishHomepageRevision(session.user.id, {
+          homepageId: saved.id,
+          revisionId: saved.revisionId,
+          expectedVersion: saved.version,
+        });
+        saved = { ...saved, version: published.version };
+      }
+    } finally {
+      revalidateTag("homepage");
+      revalidatePath("/admin/content/homepage");
+      revalidatePath("/admin/content/homepage/scenes");
+    }
   });
+  return saved
+    ? {
+        ...result,
+        savedVersion: saved.version,
+        savedRevisionId: saved.revisionId,
+        draftSaved: true,
+      }
+    : result;
 }

@@ -42,6 +42,7 @@ export async function GET(req: Request) {
       url: m.url,
       status: m.status,
       kind: m.kind,
+      originalName: m.originalName,
       mime: m.mime,
       width: m.width,
       height: m.height,

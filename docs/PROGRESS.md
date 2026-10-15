@@ -1,21 +1,39 @@
+## 2026-10-15 — Real pre-hydration video failure (#62 / R3b)
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
+
+R7b/1260c29 CI found188 browser pass/1 failure/1 skip in the inherited broken-video test (9258 unit/PG and other three jobs passed; subsequent propagation step skipped). A first stricter local probe passed because a service worker could serve hydration chunks outside page routing. With service workers blocked only in this controlled-transport video case, an actual missing source returns404 and native MEDIA_ERR_SRC_NOT_SUPPORTED before hydration; the unchanged production86f4711 deterministically retains the video and fails the original removal assertion. This supersedes the provisional test-only diagnosis in the R7b history. Dedicated PWA specs remain unchanged.
+
+ModaVideo now keys a child by source URL, with independent initial state, and reconciles already-existing native error/readiness on mount. It does not reset an earlier failure during hydration, retry the network or change playback/reduced-motion/visibility controls. The same actual-media test awaits the exact source, gates JS, verifies native error4, releases the gate in finally, and retains the original removal/poster assertions and5000ms limit. Local after-fix and fresh head-matched CI remain pending until recorded in the PR/Issue. No schema/auth/provider/money/owner data changes; no merge/main push. Artifact11943430969 is retained, but shell download is proxy403-blocked; diagnosis is based on CI logs plus the real controlled local reproduction, not an uninspected trace.
+
+## 2026-10-15 — Shared admin history follow-up (#63)
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
+
+Backported the targeted PR60 dirty-form Back/Forward correction, preserving MODA4 root theme/filter/preview and the campaign form dirtyOverride extension. No PR60 dependency/schema changes copied. Root initialization precedes Router listeners; cancellation preserves live fields and indexed history, accepted navigation proceeds, and detached default capture does not reset the live form. Three-language Chromium/WebKit coverage plus real Navigation-API-unavailable traversal are added. PR60 production local evidence: 7 Chromium + 4,228 unit passes; this MODA4 head needs its own CI. Unknown pre-tracker entries without Navigation API use an append fallback which may prune forward history; no values are persisted. D70 review and owner Windows execution remain pending; online R0 BLOCKED_ENV. No PR merge or main write.
+
 # وضعیت پیشرفت پروژه
 
 > Codex: بعد از هر فاز این فایل را به‌روز کن. برای هر فاز بنویس: وضعیت، چه چیزی ساخته شد، **تست دستی به زبان ساده فارسی**، محدودیت‌های شناخته‌شده و سؤال‌های باز برای وی‌بانو/مهدی.
-
 
 ## DESIGN-01 / MODA4 — STARTED، ۲۰۲۶-۱۰-۱۴
 
 Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 
-| مرحله | وضعیت واقعی | مبنا/وابستگی و خروج |
-|---|---|---|
-| R0 | BLOCKED_ENV برای URL/ورود مالک؛ پایهٔ کد پیاده شد | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش. |
-| R1 | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند. |
-| R2 | IN_PROGRESS | شاخهٔ جدا `phase/design-01-r2-storefront-shell`، مبنا PR68؛ پوسته/منو و رسانهٔ nullable، permission بازار، conflict، لینک واقعی دسته/کالکشن، جست‌وجو/drawer و ترجیحات واقعی ایمیل. local: ۹٬۰۵۱ unit/PG + دو navigation + ۷ scope/race، و ۱۱ browser واقعی موفق. CI head نهایی و مشاهدهٔ Windows/پذیرش مالک باقی است. |
-| R3…R7a | NOT_STARTED | طبق وابستگی‌های فاز؛ پنل هم‌زمان با قابلیت مشتری. |
-| R7b | تشخیص واقعی محیط مشکل‌دار UNVERIFIED | دسترسی سرور/صف واقعی مالک موجود نیست؛ بررسی غیرپولی مستقل مجاز. |
-| R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
+| مرحله         | وضعیت واقعی                                                        | مبنا/وابستگی و خروج                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0            | آنلاین BLOCKED_ENV؛ راهنمای Windows آماده، اجرای مالک NOT_VERIFIED | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش.                                                                                                                                                          |
+| R1            | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل      | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند.                                                                                                                                                                      |
+| R2            | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI.                                                                                                                                                                                                                                 |
+| R3a           | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی.                                                                                                                                                                                      |
+| R4            | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز                         | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق.                                                                                                                                                                                            |
+| R3b           | IN_PROGRESS، Draft؛ CI نهایی باز، انتقال Windows فعلاً PR71        | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، از PR71؛ پنل واقعی همهٔ بلوک‌ها/preview خصوصی/کمپین/سیاست خدمات/ویدیوی محدود؛ [شواهد و PNG بومی](design/moda4-redesign/evidence/r3b/README.md). ۱۶ مورد مرورگر و ۳ مورد fitting اصلاح‌شده در دو اجرا موفق؛ propagation انتشار۲۸۸۷ms و قیمت۲۰۴۵ms؛ restore واقعی Local+S3 روی checkpoint قبلی موفق، CI چهارگانهٔ head نهایی مستقل لازم است. |
+| R5 / R6 / R7a | NOT_STARTED؛ بعد از وابستگی‌های مربوط و PR جدا                     | مسیر خرید/تم مستقیم پروفایل/ترکیب مستقل و کمد طبق قرارداد فاز؛ هیچ قابلیت با toast یا mock آماده شمرده نمی‌شود.                                                                                                                                                                                                                                                                                   |
+| R7b           | تشخیص واقعی محیط مشکل‌دار UNVERIFIED                               | دسترسی سرور/صف واقعی مالک موجود نیست؛ بررسی غیرپولی مستقل مجاز.                                                                                                                                                                                                                                                                                                                                   |
+| R7c           | BLOCKED_DECISION                                                   | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست.                                                                                                                                                                                                                                                                                                                      |
 
+- ادامهٔ دستور مالک: cloud به Windows او دسترسی ندارد؛ VPN/TCP grant مقصدی تنظیم نشده است. [فرمان آمادهٔ Codex محلی با حفظ داده](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) و [ثبت نسخهٔ دقیق و چهار CI در Issue62](https://github.com/mehdi2044/HodaSite/issues/62#issuecomment-6177274472). ورود/اجرای Windows، گوشی واقعی، پذیرش بصری و review مستقل هنوز تأیید نشده‌اند. هیچ merge/main push/force-push/paid call انجام نشده است.
+- R3b checkpoint: کوکی زبان آزمون اصلاح شد؛ actual private unsaved preview → clone/disable/remove/restore → save/reload → publish/open-storefront و fa/tr/en بدون overflow موفق. ماتریس واقعی نوشتن با ۱٬۹۴۴ حالت global/بازار مجاز/بازار دیگر و forged actor + ۴۴ guard مجوز موفق. همهٔ اهداف آزمون، دادهٔ اولیه را پس از پایان برمی‌گردانند؛ هیچ DB مالک reset/seed نمی‌شود. نتیجهٔ کامل/CI head تازه پس از پایان جدا ثبت خواهد شد.
 - وضعیت زندهٔ شروع: main `8e0b953`؛ PR60 باز در `3242540`، PR64 تاریخی، PR65 منتخب در `46e9877` و PR66 اسناد در `5a6ed9c`؛ هیچ‌کدام merged نیستند. unsaved/product-save/FIN/MEDIA اصلاحات PR60 دوباره پیاده نشده و در main فرض نمی‌شوند. reviewهای PR60 و backlog #63 مستقل باز می‌مانند.
 - [راهنمای R0 و مانع محیط](design/moda4-redesign/R0_PREVIEW_RUNBOOK_FA.md): محیط cloud شبکه محدود و بدون مقصد استقرار/هویت/ingress دارد. localhost لینک مالک نیست؛ R0 و پذیرش ظاهری DONE نیستند. مالک Windows/Docker موجود را کافی دانست؛ اتصال cloud به آن موجود نیست. [دستور Codex محلی](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) آماده است.
 - Local: frozen pnpm10.15.1 install و Prisma generate، lint/typecheck و ۴٬۱۱۹ unit در ۱۰۱ فایل موفق. production build، ۹٬۰۲۹ unit/PostgreSQL در ۱۵۱ فایل روی DB تازه، backup guard suite و آزمون backend/password+MFA/save→صفحهٔ ازقبل‌باز→reload پنل/منع ناشناس موفق. local Node24 و system Chromium؛ اینها شواهد owner Windows نیستند. هیچ شاهد ناقص pass معرفی نمی‌شود.
@@ -123,29 +141,28 @@ Implemented against docs v1.2 / D-numbers touched: D04, D08, D09, D24, D31, D70,
 - تست دستی: زبان و ارز را جدا انتخاب کنید؛ مدل را عوض و رنگ/سایز محصول را انتخاب کنید؛ پس از تولید موفق ست را ذخیره کنید؛ در محیط آزمون بسته را بخرید و PAID کنید، سپس مرجوعی جزئی را با موجودی کیف مقایسه کنید. daily allowance پس از نیمه‌شب بازار باقی نمی‌ماند؛ سهمیهٔ خاموش چیزی شارژ نمی‌کند.
 - [پیش‌نمایش فروشگاه](https://hoda-style-room-review.mehdi2044.chatgpt.site/) static و خصوصی است. خرید، تصویرسازی و کیف واقعی در آن وصل نیستند؛ کمد و قیمت/نرخ نمونه‌اند. فروشگاه اصلی به Next.js/PostgreSQL، storage، cron و کلید سرور نیاز دارد. هیچ API پولی یا عکس شخصی در توسعه استفاده نشده؛ کیفیت واقعی سرویس و پذیرش گوشی توسط مالک همچنان نیازمند محیط واقعی‌اند. ادعای merge یا فروشگاه زنده وجود ندارد.
 
-
-| فاز | نام                                        | وضعیت           | تاریخ      | PR                                                 |
-| --- | ------------------------------------------ | --------------- | ---------- | -------------------------------------------------- |
-| 00  | Foundation                                 | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1) |
-| 01a | Markets, Settings, Theme                   | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4) |
-| 01b | Media Library                              | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۸ | [#5](https://github.com/mehdi2044/HodaSite/pull/5) |
-| 01c | CMS & Storefront Design                    | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#6](https://github.com/mehdi2044/HodaSite/pull/6) |
-| 02  | Catalog & Storefront                       | ✅ Merge شده    | ۲۰۲۶-۰۹-۰۹ | [#7](https://github.com/mehdi2044/HodaSite/pull/7) |
-| —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق          | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8) |
-| 03  | Pricing / FX / Fees / Inventory / Lot      | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#9](https://github.com/mehdi2044/HodaSite/pull/9) |
-| 04  | Cart / Auth / Checkout / Payment           | ✅ Merge شده | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11) |
-| 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24) |
-| —   | **Checkpoint 2**                           | ⬜              |            |                                                    |
-| 05b | Mobile Storefront / Installable PWA         | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md) |
-| 06 | Finance Core | ✅ توسعه، آزمون خودکار و ادغام تکمیل شد | ۲۰۲۶-۰۹-۱۴ | [#34](https://github.com/mehdi2044/HodaSite/pull/34) |
-| 07 | AI Gateway / Data Entry | ✅ توسعه، CI و ادغام تکمیل شد؛ پذیرش اتصال واقعی معوق | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35) |
-| 08 | SEO / PWA / Performance / Launch Checklist | ✅ توسعهٔ 08a/08b و تکمیل قابلیت‌ها؛ پذیرش محیط واقعی معوق | ۲۰۲۶-۰۹-۱۵ | [برنامهٔ اجرا](PHASE08_IMPLEMENTATION_PLAN.md) |
-| —   | **Checkpoint 3 — Soft Launch**             | ⬜              |            |                                                    |
-| 09  | CRM / Promotions / Loyalty                 | 🟡 09A و 09B تکمیل و ادغام شدند؛ 09C/09D/09E باقی است | ۲۰۲۶-۱۰-۱۰ | [#50](https://github.com/mehdi2044/HodaSite/pull/50)، [09B #54](https://github.com/mehdi2044/HodaSite/pull/54) |
-| 10  | AI Shopping Agent                          | ⬜              |            |                                                    |
-| —   | **Checkpoint 4**                           | ⬜              |            |                                                    |
-| 11  | Visual / Voice / Try-On / App              | ⬜              |            |                                                    |
-| —   | **Checkpoint 5**                           | ⬜              |            |                                                    |
+| فاز | نام                                        | وضعیت                                                              | تاریخ      | PR                                                                                                             |
+| --- | ------------------------------------------ | ------------------------------------------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| 00  | Foundation                                 | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۰۳ | [#1](https://github.com/mehdi2044/HodaSite/pull/1)                                                             |
+| 01a | Markets, Settings, Theme                   | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۰۵ | [#4](https://github.com/mehdi2044/HodaSite/pull/4)                                                             |
+| 01b | Media Library                              | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۰۸ | [#5](https://github.com/mehdi2044/HodaSite/pull/5)                                                             |
+| 01c | CMS & Storefront Design                    | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۰۹ | [#6](https://github.com/mehdi2044/HodaSite/pull/6)                                                             |
+| 02  | Catalog & Storefront                       | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۰۹ | [#7](https://github.com/mehdi2044/HodaSite/pull/7)                                                             |
+| —   | **Checkpoint 1** (تست مهدی)                | ⏸ معوق                                                             | ۲۰۲۶-۰۹-۰۹ | [#8](https://github.com/mehdi2044/HodaSite/pull/8)                                                             |
+| 03  | Pricing / FX / Fees / Inventory / Lot      | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۱۰ | [#9](https://github.com/mehdi2044/HodaSite/pull/9)                                                             |
+| 04  | Cart / Auth / Checkout / Payment           | ✅ Merge شده                                                       | ۲۰۲۶-۰۹-۱۰ | [#11](https://github.com/mehdi2044/HodaSite/pull/11)                                                           |
+| 05  | Shipping / Returns / RBAC / Backup-Restore | ✅ تکمیل و ادغام شد                                                | ۲۰۲۶-۰۹-۱۲ | [#24](https://github.com/mehdi2044/HodaSite/pull/24)                                                           |
+| —   | **Checkpoint 2**                           | ⬜                                                                 |            |                                                                                                                |
+| 05b | Mobile Storefront / Installable PWA        | 🟡 طراحی خرید و PWA ادغام و CI تأیید شد؛ پذیرش گوشی واقعی باقی است | ۲۰۲۶-۰۹-۱۲ | [شرح فاز](phases/phase-05b.md)                                                                                 |
+| 06  | Finance Core                               | ✅ توسعه، آزمون خودکار و ادغام تکمیل شد                            | ۲۰۲۶-۰۹-۱۴ | [#34](https://github.com/mehdi2044/HodaSite/pull/34)                                                           |
+| 07  | AI Gateway / Data Entry                    | ✅ توسعه، CI و ادغام تکمیل شد؛ پذیرش اتصال واقعی معوق              | ۲۰۲۶-۰۹-۱۴ | [#35](https://github.com/mehdi2044/HodaSite/pull/35)                                                           |
+| 08  | SEO / PWA / Performance / Launch Checklist | ✅ توسعهٔ 08a/08b و تکمیل قابلیت‌ها؛ پذیرش محیط واقعی معوق         | ۲۰۲۶-۰۹-۱۵ | [برنامهٔ اجرا](PHASE08_IMPLEMENTATION_PLAN.md)                                                                 |
+| —   | **Checkpoint 3 — Soft Launch**             | ⬜                                                                 |            |                                                                                                                |
+| 09  | CRM / Promotions / Loyalty                 | 🟡 09A و 09B تکمیل و ادغام شدند؛ 09C/09D/09E باقی است              | ۲۰۲۶-۱۰-۱۰ | [#50](https://github.com/mehdi2044/HodaSite/pull/50)، [09B #54](https://github.com/mehdi2044/HodaSite/pull/54) |
+| 10  | AI Shopping Agent                          | ⬜                                                                 |            |                                                                                                                |
+| —   | **Checkpoint 4**                           | ⬜                                                                 |            |                                                                                                                |
+| 11  | Visual / Voice / Try-On / App              | ⬜                                                                 |            |                                                                                                                |
+| —   | **Checkpoint 5**                           | ⬜                                                                 |            |                                                                                                                |
 
 وضعیت‌ها: ⬜ شروع نشده · 🟡 در حال انجام · 🔍 در بازبینی · ✅ Merge شده · 🧪 تست‌شده توسط مهدی
 
@@ -371,7 +388,6 @@ Implemented against docs v1.2 / D-numbers touched: D04, D08, D09, D10, D24, D31,
 
 ---
 
-
 ## ادامهٔ طراحی با عمق ملایم — ۲۰۲۶-۰۹-۱۹
 
 Implemented against docs v1.2 / D09, D10, D26, D31, D50, D63, D67.
@@ -433,7 +449,6 @@ PR #40 در ۲۰۲۶-۰۹-۱۶ با کامیت `f9c729bbf1434566df00d784508c1f19
 این تغییر نظرات/عکس/بررسی مدیر، wishlist، بازدید اخیر، اعلان موجودی، رضایت و analytics، تاریخچهٔ slug و 301، JSON-LD و تصویر اجتماعی، شواهد انتشار، cursor، قیمت‌گذاری batch، هشدار کنتراست و axe را پوشش می‌دهد. بکاپ دستی و بارگذاری/بازیابی در `/admin/system/backups` از فاز ۵ موجود است و حفظ می‌شود.
 
 بیلد محلی analyzer: shared JS 103 kB، خانه/wishlist حدود 120 kB، دسته 121 kB، محصول 124 kB. گزارش head نهایی در artifact `bundle-analysis` CI ثبت می‌شود. این اعداد معیارهای واقعی موبایل را تأیید نمی‌کنند. اجرای واحد محلی: ۳۴۵۸ موفق؛ دیتابیس واقعی و آزمون مرورگر/restore در CI لازم‌اند. معیار ادغام همان موفقیت `checks`, `docker`, `docker-runtime` روی آخرین head است.
-
 
 ## فاز 08b — نشانی‌های پایدار و کنترل سئو
 
@@ -867,13 +882,14 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - Implemented against docs v1.2 / D-numbers touched: D04, D06, D08, D17, D24, D27, D29, D31, D32, D38, D47, D49.
 
 ### آغاز فاز ۰۴ — ۱۰ سپتامبر ۲۰۲۶
+
 - PR #10 و #9 پس از تأیید CI و رفع یافته‌های بازبینی ادغام شدند؛ مبنای فاز ۰۴ commit 58c9fa0 است.
 - CI نهایی فاز ۰۳: ۲۸۱ تست واحد/دیتابیس و ۴۷ تست مرورگر پاس؛ پوشش خطی فایل‌های حساس ۹۹٫۲۵٪؛ Docker و backup→restore در LocalStorage و چرخهٔ رسانه S3/MinIO موفق (run 34465124340).
 - اختیار ادغام و زمان‌بندی زیرساخت مطابق دستور مالک در D50/D51 ثبت شد.
 - فاز ۰۴ در حال پیاده‌سازی است و تا تکمیل جریان خرید و معیارهای سند فاز، تکمیل‌شده اعلام نمی‌شود.
 
-
 ### پیاده‌سازی و آزمون فاز ۰۴ — ۱۰ سپتامبر ۲۰۲۶
+
 - سبد سمت سرور با کوکی تصادفی HttpOnly، قفل بازار، بازقیمت‌گذاری و ادغام زیر قفل هنگام ورود؛ ورود مشتری با Auth.js مستقل از مدیر، OTP ده‌دقیقه‌ای با پنج تلاش و محدودیت ایمیل/IP، لینک یک‌بارمصرف و صف ایمیل رمز‌شده.
 - خرید سه‌مرحله‌ای سه‌زبانه با ذخیره خودکار آدرس، انتخاب حمل، پذیرش قوانین CMS و تراکنش ایجاد سفارش/شماره بازار/رزرو/پرداخت/ایمیل. مبلغ، اقلام، قواعد هزینه و نرخ‌ها snapshot دارند و trigger دیتابیس تغییر یا حذف مالی را منع می‌کند.
 - پرداخت بانکی با تنظیم حساب‌ها و دستورالعمل سه‌زبانه در پنل؛ رسید JPG/PNG/PDF تا ۵MB، تشخیص نوع از بایت، لینک امضاشده ده‌دقیقه‌ای، منع مسیر عمومی و منع تغییر/حذف رسید از مدیریت رسانه.
@@ -897,6 +913,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - این اصلاحات در انتظار CI آخرین commit هستند؛ گزارش نتیجه نهایی و ادغام در PR #11 ثبت می‌شود. اتصال SMTP واقعی، اطلاعات بانکی واقعی، secrets عملیاتی و پذیرش پیش از انتشار همچنان انجام نشده‌اند.
 
 ### آغاز فاز ۰۵ — ۱۰ سپتامبر ۲۰۲۶
+
 - فاز ۰۴ در PR #11 با commit ادغام becb86ef0b90faf9dba9751faa567392d40733e2 بسته شد. اجرای 34476163861: هر سه checks/docker/docker-runtime سبز، ۳۱۱ تست واحد/دیتابیس و ۵۰ تست مرورگر پاس؛ backup→restore در LocalStorage و چرخهٔ رسانه S3/MinIO موفق. گزارش‌های «در انتظار» بالاتر تاریخچه اجرا هستند.
 - فاز ۰۵ از امنیت مدیر، MFA، ابطال نشست و نقش‌ها آغاز می‌شود و سپس عملیات ارسال، فاکتور، مرجوعی و ابزارهای بکاپ تکمیل خواهند شد. بدون خرید هاست و دامنه طبق دستور دوباره مالک و D51 ادامه می‌دهیم؛ پذیرش واقعی پیش از انتشار همچنان باز است.
 
@@ -923,17 +940,20 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - پس از ارتقای وابستگی‌ها، `pnpm audit --prod` روی ۲۲۹ وابستگی اجرایی هیچ advisory شناخته‌شده‌ای گزارش نکرد (۲۰۲۶-۰۹-۱۰). این نتیجه تضمین نبودن آسیب‌پذیری نیست. نتیجه نهایی CI و ادغام این بخش در PR #12 ثبت می‌شود؛ کل فاز ۰۵ همچنان در حال انجام است.
 
 ### نتیجهٔ بخش امنیت فاز ۰۵ — PR #12
+
 - کد `3d43593018f6d31666234708fe394480f9c21428` در اجرای CI شمارهٔ 34484330168 هر سه بررسی checks/docker/docker-runtime را گذراند: ۳۳۷ تست واحد/دیتابیس، ۵۳ تست مرورگر، build و audit وابستگی‌های اجرایی موفق.
 - شواهد بکاپ دقیقاً شامل backup→verify→restore در LocalStorage، بکاپ ایمنی پیش از restore، خروج از حالت تعمیرات و آزمون‌های ورودی مخرب است. شاخه S3 در اسکریپت CI، ذخیره/دریافت/حذف/جایگزینی/پردازش و stream رسانه را بررسی می‌کند و پیش از اجرای ops-restore-cycle خارج می‌شود؛ بازیابی کامل از S3 هنوز تأیید نشده و جزو کارهای باقیماندهٔ بکاپ است. عبارت‌های گسترده‌ترِ گزارش‌های قبلی بالا اصلاح شدند.
 - بازبینی امنیتی توسط عامل پیاده‌ساز انجام شد؛ بررسی مستقل انسانی ادعا نمی‌شود. رشتهٔ review باز وجود نداشت. ادغام طبق D50 با SHA مورد انتظار و پس از سبز بودن همهٔ بررسی‌های آخرین commit انجام می‌شود؛ نتیجهٔ ادغام در PR ثبت می‌شود.
 - فاز ۰۵ هنوز باز است: ارسال چندمرحله‌ای و جزئی، رهگیری، فاکتور خصوصی سه‌زبانه، مرجوعی/تعویض/اعتبار، پنل backup/restore، ماتریس جامع مجوزها و فیلتر دامنه در همه endpointهای عملیاتی، پیش‌نمایش نقش، توقف فروش و تکمیل هشدارها. زیرساخت نهایی و خرید هاست/دامنه طبق دستور مالک به بعد موکول شده‌اند.
 
 ### بخش ارسال فاز ۰۵ — آغاز پیاده‌سازی
+
 - مبنا: PR #12 ادغام‌شده با commit 1b754c7؛ CI نهایی 34485423055، هر سه job موفق، ۳۳۷ تست واحد/دیتابیس و ۵۳ تست مرورگر. شواهد S3 محدود به چرخه رسانه است، نه بازیابی کامل.
 - تصمیم اجرایی مطابق D16: ساخت دستی بسته از سفارش پرداخت‌شده، snapshot مسیر قابل‌ویرایش هر بازار، تخصیص اقلام زیر قفل سفارش و ارسال جزئی. ساخت بسته وضعیت را به PROCESSING می‌برد؛ نخستین حرکت SHIPPED و تحویل تمام مقدار سفارش DELIVERED می‌شود. مراحل متوالی‌اند و لغو/حذف فقط پیش از ارسال و با حفظ سابقه ممکن است. موجودی دوباره کسر نمی‌شود.
 - رهگیری عمومی با شماره سفارش و ایمیل از فرم POST و با محدودیت تلاش؛ خروجی فقط مراحل حمل است و هزینه داخلی، آدرس، اطلاعات پرداخت و تماس را برنمی‌گرداند. هزینه حمل عملیاتی جدا از مبلغ ثابت سفارش ثبت و audit می‌شود. دریافت داده از شرکت حمل در این بخش دستی است.
 
 ### بخش ارسال فاز ۰۵ — آمادهٔ بررسی CI
+
 - پیاده‌سازی: مسیرهای قابل‌ویرایش و پیش‌فرض بازار؛ بستهٔ جزئی و snapshot مراحل؛ ثبت دستی رهگیری، هزینه Decimal و تاریخ UTC؛ لغو با حفظ سابقه؛ قفل سفارش و نسخهٔ بسته برای جلوگیری از تخصیص/اعلان تکراری. هزینه پس از شروع مرحله و مرحلهٔ تحویل‌شده از ویرایش محافظت می‌شود.
 - migration افزایشی با قید پیش‌فرض یکتا، مقدار مثبت، کنترل تخصیص و تعلق قلم به سفارش و تاریخ‌ها؛ ShipmentItem و TrackingEvent در دیتابیس append-only هستند. migration روی بازار/نقش موجود هم تنظیم اولیه می‌سازد و seed برای دیتابیس تازه همان تنظیم قابل‌ویرایش را فراهم می‌کند. ops همچنان فقط prisma را لازم دارد؛ تغییری در اسکریپت بکاپ انجام نشد.
 - محدودهٔ مجوز: خواندن بازارهای مجاز پیش از دسترسی به سفارش/تنظیمات، کنترل دوباره در تراکنش، صفحهٔ غیرمجاز بدون داده و اکشن مستقیم با ForbiddenError/UnauthorizedError. ۳۶ ردیف آزمون نقش×دو مجوز ارسال×بازار، همراه با آزمون‌های مرورگر انبار محدود به TR. این پوشش فقط مجوزهای این بخش است؛ ماتریس جامع کل سامانه همچنان باقی است.
@@ -944,10 +964,12 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - CI اجرای 103: ۴۰۳ تست واحد/دیتابیس موفق و رهگیری هر سه زبان، مهمان خصوصی و کنترل ارسال جزئی در مرورگر اجرا شد. آزمون اصلاح ایمیل بعد از جست‌وجو نشان داد reset خودکار فرمِ React شماره سفارش را خالی می‌کند و اعتبارسنجی مرورگر مانع ارسال بعدی می‌شود. معیارهای جست‌وجو اکنون state کنترل‌شده دارند و پس از نتیجه باقی می‌مانند؛ regression حفظ ورودی و رد ایمیل نادرست اضافه شد. اعلان خطای آزمون نیز به main محدود شد تا با اعلان مسیر Next اشتباه نشود. ادغام منتظر CI نسخهٔ اصلاح‌شده است.
 
 ### نتیجهٔ بخش ارسال فاز ۰۵ — PR #13
+
 - PR #13 با commit ادغام `6e88c49a54c642790a2b93879e81f4655a151253` بسته شد. [اجرای نهایی 104](https://github.com/mehdi2044/HodaSite/actions/runs/34500786607) روی `279f6cae41e8481982cd1fba517f856cbba53908`: هر سه checks/docker/docker-runtime موفق، ۴۰۳ آزمون واحد/دیتابیس و ۵۶ آزمون مرورگر. گزارش‌های «منتظر CI» بالا تاریخچه‌اند.
 - شواهد بازیابی کامل مربوط به LocalStorage است؛ آزمون S3/MinIO فعلاً چرخهٔ رسانه را پوشش می‌دهد. خرید هاست/دامنه و انتشار انجام نشده‌اند.
 
 ### ادامهٔ فاز ۰۵ — کنترل فایل خصوصی و فاکتور
+
 - بررسی مقدماتی فاکتور، یک نقص فعلی در مسیر عمومی رسانه آشکار کرد: فایل `Media.kind=backup` با مجوز `media.upload` قابل خواندن بود. شرط بهره‌برداری، وجود رکورد/فایل بکاپ و دانستن مسیر آن بود؛ وقوع دسترسی غیرمجاز یا افشای واقعی ادعا نمی‌شود.
 - اصلاح این بخش: دانلود بکاپ از همین مسیر به مجوز مستقل `backup.view` نیاز دارد؛ کاربر بدون مجوز پاسخ خالی 404 می‌گیرد و storage خوانده نمی‌شود. پاسخ مجاز خصوصی و بدون کش، attachment، nosniff و sandbox است. فیش‌های پرداخت همچنان فقط از مسیر اختصاصی خود قابل دریافتند.
 - آزمون مستقیم handler برای آپلودکنندهٔ بدون مجوز بکاپ، خوانندهٔ بکاپ بدون مجوز آپلود، نشست نامعتبر، variant قدیمی/جایگزین، فیش، فایل گمشده/حذف‌شده و حفظ کش تصاویر عمومی اضافه شد. این پوشش، جایگزین ماتریس جامع همهٔ مجوزهای فاز ۰۵ نیست.
@@ -957,6 +979,7 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - Implemented against docs v1.2 / D-numbers touched: D12, D19, D23, D24, D29, D31, D44, D50, D51.
 
 ### فاکتور خصوصی فاز ۰۵ — آغاز پیاده‌سازی (۱۱ سپتامبر)
+
 - مبنا PR #14 ادغام‌شده است؛ CI نسخهٔ نهایی 418 آزمون واحد/دیتابیس و 56 مرورگر را گذرانده است. محیط اجرا دوباره در دسترس است.
 - روش انتخابی مجاز فاز ۰۵: HTML→PDF با Playwright/Chromium، قالب داخلی با escape همهٔ داده‌ها، JavaScript خاموش، شبکه مسدود و فونت‌های محلی. هیچ HTML یا URL دلخواه از مشتری برای رندر پذیرفته نمی‌شود. Chromium در image برنامه نصب می‌شود؛ فایل/credential به سرویس تولید PDF خارجی فرستاده نمی‌شود.
 - درخواست اولیه و snapshot در تراکنش PAID ثبت می‌شوند؛ رندر بیرون تراکنش است. نسخهٔ منتشرشده و Media آن تغییرناپذیرند. هر تلاش رندر کلید مستقل دارد و انتشار با lease و کنترل مالک تلاش انجام می‌شود؛ اجرای تکراری نباید فایل نسخهٔ موفق را تغییر دهد. بازتولید نسخهٔ تازه می‌سازد و مبلغ/اطلاعات مالی را از snapshot نخست نگه می‌دارد.
@@ -970,11 +993,13 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - حد عملیاتی: شکست مبهم پاسخ commit پس از آپلود ممکن است فایل یتیم خصوصی باقی بگذارد؛ worker عمداً چنین فایلی را حذف نمی‌کند تا نسخه‌ای که احتمالاً منتشر شده آسیب نبیند. پاک‌سازی این حالت نیازمند تطبیق قطعی DB/storage است. فاز ۰۵ همچنان باز است و خرید هاست/دامنه یا انتشار نهایی انجام نشده است.
 
 ### ادامهٔ فاز ۰۵ و برنامهٔ موبایل — D54
+
 - مبنا PR #15 ادغام‌شده `eada29b` با ۴۴۹ آزمون واحد/دیتابیس، ۶۰ مرورگر و سه CI موفق است. مالک اجرای لوکال تازه را دیده است؛ تأیید نهایی ظاهر یا نصب روی دستگاه واقعی هنوز دریافت/اجرا نشده است.
 - مرحلهٔ ۰۵b برای طراحی موبایل و نصب‌پذیری PWA بین ۰۵ و ۰۶ تعریف شد؛ نصب واقعی اندروید/آیفون، حفظ حریم خصوصی کش و حالت‌های آفلاین معیار مستقل دارند. فاز ۰۶ هنوز آغاز نشده است.
 - کار فعال: مرجوعی/تعویض/بازپرداخت/اعتبار با کنترل مالکیت، سقف مقدار و مبلغ، ثبت موجودی تنها هنگام دریافت و جلوگیری از اجرای دوباره. پنل بکاپ/restore کامل S3، ماتریس جامع مجوزها، preview نقش و rollback همچنان معیارهای باز فاز ۰۵ هستند.
 
 ### Phase 05 returns implementation — pending CI (2026-09-11)
+
 - Implemented customer return/exchange requests from delivered orders, per-market eligibility settings, scoped operations queue, received-item condition and original-lot inventory records, manual original-method refunds, and store-credit settlement. Store credit is a payment with atomic reservation/consumption/release; exchange orders preserve their parent and current price/FX. Default admin/warehouse can process returns but cannot issue money/credit; owner/accountant settlement additionally requires `payment.refund`.
 - Added three mobile browser flows (fa/tr/en), transaction tests for duplicate/concurrent requests, stock conditions, refund/credit replay, scoped forged actions, exchange price differences/rollback and credit concurrency. Local unit run: 317 passed; DB-dependent tests skipped explicitly because no local PostgreSQL. CI and browser results are pending; this is not Phase 05 completion.
 - Phase 05b mobile storefront/PWA and Phase 06 finance are not implemented by this change. Full RBAC matrix, full S3 restore proof and remaining operational acceptance remain open. No hosting/domain purchase or production deployment.
@@ -989,11 +1014,13 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - CI 114 exposed a real compatibility bug: Phase 04's unique approved-payment index rejected a combined credit + bank payment. Added a separate migration preserving one approved external payment, allowing uniquely linked credit payments and enforcing the total/currency cap under an order lock. Added multiple-credit and overpayment regression cases. This is why the partial-payment gate remained required before merge.
 
 ### Phase 05 S3 recovery work — not yet accepted
+
 - Implemented active S3 generations with an atomic shared pointer, archive creation from the active objects and staged/verified restoration. The previous generation is retained. Public logical Media keys do not change; secrets remain in environment variables.
 - Extended docker-runtime to run backup/verify/restore in S3 mode as well as LocalStorage, exercise interruption before generation activation, and request a restored image through the app. Local prefix tests, shell guards, lint and typecheck passed. Real S3 CI proof is pending.
 - This change does not implement the backup control-panel/ops queue or close the full Phase 05 RBAC matrix. Phase 05b and Phase 06 remain subsequent steps.
 
 ### 2026-09-12 — Phase 05 owner backup panel (in progress)
+
 - PR #16 merged at `36c7553`: returns/exchanges/credits, 480 unit/database tests and 63 browser tests passed. PR #17 merged at `f5a5e42`: all three CI jobs green; LocalStorage and S3 full restore and interrupted S3 staging verified.
 - Added typed OpsTask queue, owner password + fresh TOTP restore requests, bounded 5 MiB upload chunks with generated filenames, ops-only quarantine validation, read-only backup download mount and authenticated five-minute signed download links.
 - Ops serializes work with a volume lock; persistent operation markers survive database restore and reconcile historical RUNNING requests without replaying them. No shell commands run in the web process; no Docker socket is used.
@@ -1002,10 +1029,13 @@ _(هر تغییر کوچکی که Claude/مهدی در طول فازها تأی�
 - Remaining: full phase-05 permission matrix and any uncovered security/UI gaps. Phase 05b storefront/mobile/PWA remains between 05 and 06; phase 06 implementation has not started. Real HTTPS installation on Android/iPhone remains a future acceptance gate. No hosting/domain purchase or production deployment.
 
 ### 2026-09-12 — Order scope hardening (in progress)
+
 Order reads and payment/cancel/hold/note/address operations now apply market authorization in the first order query. Unknown and outside-scope admin targets share the same ForbiddenError; rendered pages still translate denial into not-found. Customer reads query by customer identity or the guest token hash before loading order relations. Saving an order view now requires access to at least one order market. Added real TR/IR direct service/action regression tests. This closes a concrete existence/query-scope gap; it is not the full Phase 05 permission matrix.
 
 ### Phase 05 role preview and decision matrix
+
 Read-only role preview now displays each permission for an assigned versus requested market/category/section scope. It never impersonates a role or changes session grants. The shared access evaluator is unchanged in semantics and used by real guards and the preview. A reviewed permission/seeded-grant snapshot pins namespace additions; 2,612 generated decision tests cover seven roles, an override subject, anonymous access and five scope cases. Real DB preview/direct-guard checks and a mobile browser scope preview were added. This is decision-matrix coverage plus concrete endpoint regressions, not a claim that every existing/future endpoint has the complete Cartesian UI/forged-payload coverage requested by V-4; that broader gate remains open.
+
 - PR #18 review corrections: UTC schedule now includes minutes (default 03:30); uploaded archive rejection exposes only a bounded translated reason, with exit-code contract tests against the real validator; retention keeps successful backup history with `localPrunedAt` and removes unavailable copies from the active controls. Existing falsely failed `RETENTION_PRUNED` rows are corrected by an additive migration. Forged verify/export/restore of pruned records is rejected. Local lint/typecheck, schedule/validator/retention tests pass; DB/browser/Docker rerun pending.
 
 - Panel CI #118: all DB/browser/build checks passed; Docker round trip exposed a CLI label length mismatch. UUID labels now stay within the existing 40-character limit with a regression test against the real shell sanitizer. Retained backup/safety files are reconciled into the restored catalog; this path is now asserted in the Docker test. Final runtime acceptance remains pending.
@@ -1013,6 +1043,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Phase 06 calculation foundation merged as PR #20 (`4be1a3b`): CI #120 checks/docker/docker-runtime passed. D57 clarifies that preparation can start while Phase 05 closes; storefront/PWA delivery still comes before the finance dashboard. No production financial postings are active.
 
 ### 2026-09-12 — Phase 05 completion review (local changes; not merged)
+
 - PR #18 exact head `30e70f1`: CI #122 passed checks/docker/docker-runtime, 488 unit/database tests and 64 browser tests. Review found no open review threads. GitHub refused merge because three required checks were expected for the current merge candidate; this PR is **not merged**. Bring it up to date with main and rerun the required gates before another merge attempt.
 - PR #19 CI #124 failed the role-preview integration fixture: it selected an arbitrary active owner, including scoped or overridden test users. The local correction creates a dedicated globally assigned owner; production permission semantics are unchanged. Local lint/typecheck and 2,940 unit tests passed; 170 DB tests were explicitly skipped because PostgreSQL is unavailable.
 - Further restore review found that the old drain loop continued after timeout and could accept a substring instead of a parsed response. New strict JSON/state/count checks abort before backup/restore when draining is unconfirmed. Archive rejection leaves maintenance untouched, and failure to leave maintenance cannot report successful restore. Added helper and real-control-flow shell fixtures for busy/missing/malformed/transport responses, invalid archives, verification failure and maintenance-off failure. Shell guards pass locally; real Docker/S3 rerun is pending.
@@ -1022,20 +1053,22 @@ Read-only role preview now displays each permission for an assigned versus reque
 
 - Authorization update: the owner explicitly authorized all project permissions, including publishing the prepared changes and continuing the test/merge cycle. The role-fixture correction is now on PR #19; PR #18 was updated with main for fresh required checks. The previous automatic approval rejection is resolved by this explicit instruction. Local Git has no write credential; the connected GitHub app is used for authorized writes. No direct commits to main or force pushes.
 
-
 ### Phase 05 deployment rollback — implementation awaiting CI
+
 - Host deployment now pins old/new app and ops image IDs, serializes local deploys, checks that live database/storage configuration matches the proposed ops environment without exposing credentials, builds before downtime, stops workers, confirms maintenance/drain, and verifies a full pre-deploy safety backup before migrations.
 - Detectable failures before reopening sales stop the new release and recover previous image/data through ops. Recovery failure keeps workers stopped and records a retained recovery manifest. Once sales reopen, a worker-start failure never restores an older DB over new orders. First installation, cross-host/configuration migration and SIGKILL recovery remain explicit separate operations.
 - No schema/archive/backup-provider change. Old generation-aware ops runs the host-supplied controller over stdin and retains its own Prisma/migrations. No Docker socket is added to any container. Image references and backup keys are persisted per attempt; no secrets are stored in release records.
 - Local shell orchestration fixtures cover successful release, build-boundary/config drift rejection, failed migration/app, failed restore, failed drain/backup and worker failure after sales reopen. Real CI proof uses a disposable failing app image that changes synthetic data before exiting, then asserts previous image/data and healthy app after automatic recovery. Docker proof is pending; no production deployment or purchase is performed.
 
 ### Phase 05 — operational health and admin locale (implementation, CI pending)
+
 - Cron synchronizes backup/off-site freshness, stale FX, low stock, overdue unpaid orders and failed-job alerts. Concurrent ticks use a database lock; recovered conditions resolve alerts while preserving history. Authorized admins see the unresolved count in the shell.
 - Health shows the last successful verification and job/ops failures in the past 24 hours; email status explicitly describes configuration rather than a delivery probe.
 - Admin locale selector persists fa/tr/en, updates direction and navigation translations, and keeps storefront URL language authoritative. Brand name comes from settings. Browser acceptance covers the 390px viewport, persistence and storefront/admin isolation.
 - Local lint/typecheck and 2,942 tests passed before locale tests; added two authenticated locale action tests. Database/browser/Docker evidence is pending CI for this branch. This does not close the full V-4 endpoint matrix or real-device PWA acceptance.
 
 ### وضعیت تجمیعی پس از مجوز مالک — ۲۰۲۶-۰۹-۱۲
+
 - مالک انتشار و اقدامات لازم پروژه را صریحاً مجاز کرد؛ مانع مجوز گزارش‌شده در یادداشت قبلی رفع شد. تغییرات PRهای ۱۸، ۱۹، ۲۱ و ۲۲ با حفظ تاریخچه در PR ۲۳ جمع شدند تا پذیرش روی یک نسخه انجام شود. ادغام فقط پس از موفقیت checks/docker/docker-runtime همین نسخه انجام می‌شود.
 - پنل بکاپ، اصلاح دامنهٔ سفارش، توقف امن برای بازیابی، بازگشت image و دادهٔ نسخهٔ ناموفق، هشدارهای سلامت و انتخاب زبان پنل پیاده‌سازی شده‌اند. ارسال درخواست بازکردن فروش، حتی با پاسخ نامعلوم، مرز ممنوعیت restore خودکار است تا سفارش تازه از بین نرود.
 - آخرین اجرای محلی: ۲٬۹۴۷ تست موفق؛ ۱۷۱ تست نیازمند دیتابیس محلی اجرا نشده‌اند و در CI اجرا می‌شوند. lint/typecheck و تمام محافظ‌های shell موفق‌اند. شواهد نهایی دیتابیس، مرورگر و Docker در PR ۲۳ ثبت می‌شوند؛ این یادداشت نتیجهٔ در حال اجرا را موفق اعلام نمی‌کند.
@@ -1045,21 +1078,22 @@ Read-only role preview now displays each permission for an assigned versus reque
 - CI مرورگر یک ایراد عرض واقعی در جدول طبقه‌بندی پنل پیدا کرد: اندازهٔ ذاتی fieldset/grid از ستون موبایل بیرون می‌زد و محل کلیک دکمه را خراب می‌کرد. ستون و فرم‌ها داخل عرض پنل محدود شدند، عملیات جدول قابلیت رفتن به خط بعد دارند و آزمون ۳۹۰px اکنون نبود اسکرول افقی کل صفحه و کلیک عادی «ویرایش» را بررسی می‌کند؛ آزمون دوباره لازم است.
 
 ### 2026-09-12 — Phase 05 operational permission acceptance (PR #24)
+
 - Added 3,492 real-operation matrix cases: seven seeded roles, explicit override and anonymous sessions; global and market-scoped targets; UI/server-action payload and direct crafted request. Denials compare PostgreSQL row digests, including unaudited writes. Positive cases must perform the operation successfully.
 - Fixed session-ID existence leakage, made denied bank-account changes return a stable FORBIDDEN result, and moved inventory cost reads behind their own permission guard. Global actions, actual server pages, order/payment/shipping/return/invoice resources, upload routes and fresh-MFA restore requests are covered.
 - D58 records 54 implemented permissions and four reserved names for phases 06/09. Namespace-to-operational-test registry fails CI when a new implementation remains untested. The detailed scope and existence policy are in `phases/phase-05-permission-acceptance.md`.
 - Local lint/typecheck and unit tests passed. Merging this acceptance change requires successful latest-head PostgreSQL integration and checks/docker/docker-runtime; the PR records the exact run. Phase 05 development acceptance closes with that gated merge. Phone installation, owner visual review and production/off-site acceptance remain pre-launch gates under D51.
 
-
 ### 2026-09-12 — Phase 05b first mobile navigation slice
+
 - Phase 05 acceptance merged in PR #24 (123c2d4) after CI #140 passed checks/docker/docker-runtime on 520f5f2: 6,669 unit/database tests, 67 browser tests, and LocalStorage/S3 backup/restore. Phase 06 calculation foundations remain merged in PR #20; financial postings/dashboard follow the mobile storefront delivery (D54/D57).
 - Compact mobile header with visible search, accessible language/market controls in the menu, and four bottom destinations: home, search, cart, account. Persian RTL and Turkish/English labels use runtime translations; merchant brand, menu and theme settings remain authoritative.
 - Touch targets, keyboard Escape/outside-click menu closing, skip-content link and safe-area spacing are implemented. Sticky product purchase controls sit above the bottom navigation. Desktop keeps its full navigation; tablets use the mobile controls below 1024px.
 - Browser acceptance covers fa/tr/en at 360/390/430px, 200% text and desktop. Actual 390px route screenshots and navigation timing measurements are preserved in the `storefront-mobile-proof` CI artifact; these establish a baseline, not a claim of measured performance improvement. Visual acceptance remains subject to those images and the owner's review.
 - This is the first slice of 05b. Full product/cart/account design polish, manifest/icons, Android/iPhone installation help, safe offline/update behavior and physical-device HTTPS acceptance remain in the phase. No completed installation or native application is claimed.
 
-
 ### 2026-09-12 — Phase 05b shopping design and PWA
+
 - Continues merged navigation PR #25. Homepage now has a compact, themed fallback when no merchant hero photo is configured; approved configured images remain authoritative. Product cards, swipe/zoom gallery, accessible filter sheet, sticky add button, stock selection, cart photos/removal, checkout steps/autofill, account and tracking/return surfaces share mobile typography and spacing. Added empty/search/loading/error states and reduced-motion treatment. No invented reviews, discounts or product photographs.
 - Added public locale-specific manifests, stable app identity, standalone display, configurable brand-derived 180/192/512px icons with maskable safe padding, Apple metadata and installation instructions. Fresh installation carries the selected market in the start URL; an existing market cookie wins on later launches.
 - Worker serves a generic public offline document when navigation fails. Only three generic documents and bounded immutable Next static assets enter its cache; no HTML/RSC, media, account, cart, order, receipt, payment, API or POST caching. Static fetches omit credentials. Cache version includes build ID; only owned old caches are removed. A waiting update activates on explicit request from the only open shop window on its home route. It never reloads another tab's checkout. Offline mutations and address autosave are blocked, not queued.
@@ -1072,8 +1106,8 @@ Read-only role preview now displays each permission for an assigned versus reque
 
 - Screenshot review also exposed a stale header cart count after OTP login while checkout held the correct item. Successful customer verification now starts a fresh document using the server-validated return URL, so all shared session-dependent layout reads use the new cookies. Added an explicit header/cart consistency assertion to each three-language purchase test; other commerce steps retain client navigation.
 
-
 ### 2026-09-12 — Phase 05b final automated acceptance and Phase 06 transaction reports
+
 - PR #26 merged at `9ac007b93f0081f8fd44b321bccd71fa6c1cf64e`. CI run `34694552552` passed checks, docker and docker-runtime on head `ef8d1f30066c9b05fb52518da2317710ecd21e33`: 6,702 unit/database tests and 85 Chromium/WebKit browser tests. Actual three-language shopping screenshots were reviewed, including the corrected post-login cart count. This closes the automated implementation slice, not real Android/iPhone/HTTPS acceptance or final merchant imagery approval.
 - Phase 06 first usable slice: `/admin/finance` shows paid-order totals, approved external/credit payments, completed external refunds and issued return/exchange credits, net external movement and daily breakdowns. Market and inclusive UTC date filters (maximum 366 days), exact four-decimal amounts, fa/tr/en, mobile cards and private CSV use the same report service. No currency conversion or cross-currency total is invented.
 - Timing is explicit: order `paidAt`, payment `reviewedAt`, completed-refund `createdAt` (record creation, not bank settlement). Undated approved payments are excluded from period amounts and counted in an all-time warning. This is a readonly transaction report, not bank balance, accounting profit, or recognition policy for the future ledger.
@@ -1088,8 +1122,8 @@ Read-only role preview now displays each permission for an assigned versus reque
 
 - CSV review: strict decimal literals, including negative net movement, stay numeric when opened in a spreadsheet. Formula-like text such as `-SUM(...)` remains neutralized. Regression assertions cover both cases; financial totals are unchanged.
 
-
 ### 2026-09-12 — Admin login visibility and local diagnosis
+
 - Added translated show/hide password controls with keyboard/touch access, preserved password-manager autocomplete, LTR credential fields, automatic re-hide on submit and a retryable network-error state. Generic authentication errors remain generic; MFA, session and rate-limit controls are unchanged.
 - Added an operator-only readonly CLI diagnostic for configured-password drift, missing/admin-vs-customer accounts, MFA configuration, recovery-code count and account throttling. It prints no email/password/hash/token/secret and probes local storefront HTML for the mobile navigation and manifest. No public diagnostic endpoint or automatic reset is added.
 - Updated the Persian setup guide with safe Windows/Docker refresh steps and diagnostic interpretation. Seed's existing-user `update: {}` preserves saved credentials; environment password edits do not reset accounts. Solid-colour sample media are deliberate seed images; Git updates cannot substitute merchant photos.
@@ -1097,6 +1131,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Local lint/typecheck/unit results and final latest-head checks/docker/docker-runtime are recorded on the PR. Added fa/tr/en password visibility/login browser tests, a network failure recovery case, and real PostgreSQL diagnostic tests covering no state changes and no secret disclosure.
 
 ### 2026-09-12 — Phase 05b fashion home and product presentation
+
 - Continues PR #28 on main. Owner accepted prioritizing a visibly complete mobile home/product experience before further financial workflows. Added an editorial image/text hero, compact image categories, mobile product rail, colour previews, photo disclosure, clearer product hierarchy and thumbnail/keyboard/zoom gallery controls. CMS/theme and translations remain authoritative; neutral shopping CTA paths resolve in the current locale.
 - Four AI-generated illustrative fashion assets are bundled and visibly labelled as demo artwork. They are not actual stock photography or accurate selected-colour illustrations. Merchant imagery and final owner approval remain release gates. Assets have local/provider-hosted responsive WebP variants, blur placeholders, explicit dimensions and eager hero/lazy subsequent image loading.
 - Additive sample upgrade only replaces recognized legacy photo relationships, fills untouched seed category pictures, and replaces the exact original global homepage composition. Custom product titles/photos, existing category images, edited homepage blocks, market homepages and soft-deleted entries are preserved. Original media rows/files are retained. A dedicated operator command supports existing Compose previews without running unrelated catalog/account/price seeds. No schema change.
@@ -1125,7 +1160,6 @@ Read-only role preview now displays each permission for an assigned versus reque
 - این تحویل زیرساخت داخلی است و دکمهٔ جدیدی در مدیریت اضافه نمی‌کند. فرم ثبت/برگشت سند و اتصال پرداخت‌ها در مرحلهٔ بعد است؛ خرید، هزینهٔ تمام‌شده، هزینه‌ها و شرکا و سود هنوز تکمیل نشده‌اند. فاز ۶ کامل اعلام نمی‌شود.
 - بررسی دستی پس از استقرار: گزارش موجود `/admin/finance` باید مانند قبل کار کند؛ فروش‌ها/پرداخت‌های گذشته نباید خودکار به سند حسابداری تبدیل شوند. آزمون زیرساخت با `tests/integration/phase06-ledger.spec.ts` روی دیتابیس آزمایشی انجام می‌شود، نه دیتابیس واقعی مشتری. نتایج نهایی lint/typecheck/unit و سه CI اجباری در PR این تحویل ثبت می‌شوند؛ پذیرش گوشی و استقرار هنوز باز است.
 
-
 ## فاز ۰۶ — دفتر کل در مدیریت (۲۰۲۶-۰۹-۱۳)
 
 - زیرساخت PR #31 با سه CI سبز ادغام شد. این تحویل صفحهٔ `/admin/finance/journal`، فیلتر بازار و تاریخ، صفحه‌بندی ۳۰تایی، جزئیات مبلغ اصلی/TRY/USD و نرخ ذخیره‌شده، فرم سند دستی و سند معکوس مرتبط را اضافه می‌کند.
@@ -1137,7 +1171,6 @@ Read-only role preview now displays each permission for an assigned versus reque
 - migration، provider، نسخهٔ وابستگی، سوابق خرید/پرداخت و سیاست امنیت ورود تغییر نکردند. ادامهٔ فاز: سیاست شناسایی و نقطهٔ شروع حسابداری پرداخت/مرجوعی → ثبت خودکار → خرید و بهای تمام‌شده/COGS → هزینه و سرمایهٔ شرکا → داشبورد سود. این تحویل اتمام فاز ۶ نیست؛ نصب روی گوشی واقعی و HTTPS همچنان پیش از انتشار لازم است.
 
 - بررسی مرورگر دو اصلاح کاربردی داشت: پس از ثبت/معکوس، مسیر مستقیماً به جزئیات سند تازه می‌رود تا بازخوانی سرور فرم موفقیت را حذف نکند. کوکی غیرامنِ ترجیح زبان فقط برای APP_URL صریحاً HTTP و loopback در پیش‌نمایش محلی مجاز است؛ HTTPS و همهٔ نشانی‌های عمومی/پیکربندی نامعتبر در production همچنان Secure هستند. کوکی‌های احراز هویت تغییر نکردند. هشت آزمون مستقل این مرز را پوشش می‌دهند؛ تغییر زبان در WebKit از کنترل واقعی مدیریت آزموده می‌شود.
-
 
 ### 2026-09-13 — Phase 06 order reconciliation; development continues without publication
 
@@ -1158,6 +1191,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Local TypeScript and targeted unit checks passed. Real PostgreSQL, mobile browser and backup runtime results must be verified on the final PR head. This entry is not a claim of completed Phase 06 or Phase 07. Remaining scope and correctness review continue in this branch.
 
 ### Phase 06 continuation — draft, not complete
+
 - Immutable per-item attribution now preserves order/product/variant/category/brand classification when automatic journals are posted; refunds/restocks and explicit journal reversals adjust it. Margin reports filter UTC periods and export CSV/XLSX. Excel uses text cells for exact four-decimal amounts, with inert formula-like content.
 - Expense PDF uploads use a dedicated permission-scoped endpoint and private download. Expense documents are excluded from generic media listing/replacement/purge/public delivery and protected when attached. Capital records can reference a purchase.
 - Original lot FX evidence is read directly; rounded equivalent amounts are never divided to invent a historical rate.
@@ -1165,6 +1199,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Local XLSX output opened independently with openpyxl: full precision, inert formula cells and RTL verified. TypeScript and targeted unit tests passed before the latest extensions; all gates are rerun on the updated commit.
 
 ### Phase 06 ongoing validation
+
 - Added shipment-cost accounting with explicit accepted database FX evidence and compensating entries for permitted pre-shipment cost changes; partner statements include opening/movement/closing balances.
 - Added payment-verification and paid-to-delivered duration metrics, return request breakdowns, finance alerts and product-editor warnings. Stock/price scans require finance authorization; threshold warnings do not reject sales.
 - Recurring expenses generate an explicitly reviewed next installment, with month-end handling, fresh rates and server-side deduplication. No unattended spending is introduced.
@@ -1174,6 +1209,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Still under implementation: average-cost setting, global-expense handling, absorbed-fee reporting, expanded workbook metrics, final UI/permission/rounding proofs and phase 07. Neither phase is marked complete.
 
 ### Phase 06 expanded implementation — awaiting current-head validation
+
 - Added opt-in moving-average valuation by physical stock item, with immutable movement valuations and an explicit lock after first valuation. FIFO remains the default. Mixed original currencies in a nonempty average pool and unrepresentable four-decimal valuations fail atomically (D61).
 - Added general expenses visible in consolidated contribution, omitted from market profit; creation, approval and attachment access require unscoped permissions. Category accounts and recurring installments preserve original evidence.
 - Actual shipment costs compensate absorbed shipping estimates. Purchase journals use each item’s landed total so receipt and journal equivalent rounding agree. Partner statements include exact compensating reversals.
@@ -1182,6 +1218,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Current local baseline: TypeScript, ESLint and 3,182 unit tests passed before the final focused test additions. Phase 06 is not yet declared complete. Phase 07 remains next; no site has been published.
 
 ### Phase 06 implementation and automated acceptance completed — 2026-09-14
+
 - PR #34 code head `713a509846197c404fd81f3ae5b6a23e83c69af0`: CI run 34833601972 passed all three required jobs (`checks`, `docker`, `docker-runtime`). 7,674 unit/database tests and 111 browser tests passed. Runtime includes LocalStorage and S3/MinIO backup/restore. No publication or laptop deployment is claimed.
 - Implemented all Phase 06 development scope: immutable balanced journals and reversals; atomic payment/return/shipment recognition; supplier procurement and value/weight landed cost; FIFO/default and opt-in moving average; explicit opening lots for stock gaps; private expense documents, recurring installments and global expenses; partner ownership/capital/statements; scoped profit/operational reports, CSV/XLSX and stock/price/margin alerts. Financial analyst remains the Phase 07 consumer.
 - Manual backup creation, download, uploaded backup and ops-container restoration remain available at `/admin/system/backups`. Additive migrations preserve existing records; no database reset or historical financial backfill was used.
@@ -1190,6 +1227,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Next: Phase 07 implementation plan, gateway/settings, reviewed product assistance and bulk queue, read-only aggregate financial analyst, and regression tests for preserving existing variant identities. Live provider latency/key availability and real-phone/HTTPS acceptance remain separate from automated development proof.
 
 ### Phase 07 implementation in progress — 2026-09-14
+
 - Plan recorded in `PHASE07_IMPLEMENTATION_PLAN.md` and D62. Added environment-only fixed-host Gemini/OpenAI/Anthropic adapters, validated JSON proposals, usage/prompt/draft/cache migrations, monthly budget reservations, per-feature switches, bounded request time and conservative unknown-outcome handling. Optional embeddings have explicit capability handling; no new embedding provider was added.
 - Added fa/tr/en settings and usage pages, product-editor field review, bulk draft jobs/review queue, and a read-only monthly financial narrative using aggregate totals only. AI never receives mutation tools or changes publication/prices/stock.
 - Product save now updates existing variant identities and deactivates removed variants, preserving order and inventory references. SEO extras survive manual saves. Explicit AI patches detect concurrent product edits and preserve unselected fields.
@@ -1198,6 +1236,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Documentation follow-up run 34834864504 retained 7,674 passing unit/database tests and both Docker jobs; 110/111 browser tests passed. The existing PWA synthetic install-event test fired before hydration registered the handler. Its event delivery now waits for the real handler to prevent the cancelable event; visibility, dismissal and standalone assertions are unchanged. Final updated-head gates remain required before merging.
 
 ### Phase 06 merged; Phase 07 final corrections under validation
+
 - PR #34 merged under D50 as `608cbffa3e23f13633da311421e8577d04235d0b`. Final source head `af6b31a1c1f36ec5aa9a29dbee671d8348dbb380`, run 34836072353: all three required jobs passed, 7,674 unit/database tests and 111 browser tests. No hosting or laptop deployment.
 - Phase 07 initial head `cea4e184beef019395ccf98779a6c2111988ca5a`, run 34836180646: all 7,982 unit/database tests passed; Docker and runtime backup/restore passed. Browser 112/114; two new review tests exposed premature admin revalidation removing the success panel. The current correction preserves the panel and explicitly tests a lost response followed by the same Apply request.
 - Bulk jobs now bind to the queued product version and refuse changed products before spending. Apply retries lock the accepted field values. Category and attribute review use labeled controls; editor attribute validation happens before any field is changed. Generation, Apply, discard, review and enqueue permissions are covered for every role/scope matrix case. The integration-level kill switch also blocks calls.
@@ -1208,6 +1247,7 @@ Read-only role preview now displays each permission for an assigned versus reque
 - Framework source review confirmed that any revalidation currently refreshes the action's page, including storefront-only revalidation. The private review list now keeps its active client review session mounted while server caches refresh; a full page reload loads the current queue. This preserves success feedback and identical lost-response retries without suppressing product/storefront invalidation.
 
 ### Phase 07 delivery scope and acceptance record
+
 Implementation is complete in PR #35: gateway/adapters/settings/usage, versioned prompts, budget/kill switches, reviewed trilingual product assistance, bulk queue and read-only financial narrative. Final CI and merge evidence are recorded on [PR #35](https://github.com/mehdi2044/HodaSite/pull/35); a code change is not accepted solely because this document exists. The implementation plan and earlier phase acceptance items are in `PHASE07_IMPLEMENTATION_PLAN.md`, and local setup/manual checks are in `07_SETUP_GUIDE_FA.md`.
 
 Existing data is preserved by additive migrations, immutable finance evidence and stable variant references. Manual backup/download/upload/restore remains in the admin panel. No publication, hosting, domain work or laptop `.env` access occurred. Live API provider switching and timed two-photo generation, CP1/CP2 owner acceptance and real-phone/HTTPS tests remain explicitly unverified.
@@ -1219,7 +1259,6 @@ Existing data is preserved by additive migrations, immutable finance evidence an
 The owner rejected the equal-card interpretation delivered in PR43. Replaced that hero with a portrait-led layered composition, floating department images, offset three-line typography, and self-hosted Bodoni Moda italic. The header integrates category navigation in its main desktop row; utilities remain available. Storefront direction now follows its own locale even after client navigation. All four root departments keep real canonical routes, and custom branding/palette/media remain DB-owned.
 
 The homepage title accepts line breaks in the admin editor. The main selected campaign image is now actually consumed by the spatial hero. The demo upgrade also recognizes the exact unchanged PR43 composition; merchant edits prevent replacement. No schema/payment/auth/backup change. Browser component comparison and full CI evidence are tracked in `design-qa.md` and the PR. Final iPhone and production-speed acceptance remain pending, as agreed.
-
 
 ## Stabilization & Pre-Acceptance — ۲۰۲۶-۱۰-۰۲
 
@@ -1259,7 +1298,6 @@ Real failures fixed without skipping assertions: canonical menu href expectation
 
 Branch phase/design-01-r3a-scenes-cms-preview from PR69. The pre-implementation [R3a contract](design/moda4-redesign/R3A_CONTRACT.md) maps R3a/R3b and the R4 COMPOSITE dependency without dropping AC/MODA requirements. No schema/code or completion evidence is claimed by this entry; only contract/audit preparation. Online R0 and owner Windows gates remain open; independent development continues under owner authorization.
 
-
 ### R3a local implementation — 2026-10-14
 
 Dependency PR69 at ce1d223c33a3d35b434678b91f17edc6ae9bc136. Live main remains8e0b953a6c9872119dd27840b6e99b6b50dd576c; PR60 remains open/unmerged at3242540dd13885b61aac6bf42840f526fda3513b; docs PR66 remains Draft/unmerged at5a6ed9c7f6cac3b4e5c173eb5cddaf2cad5824ba. R2 current-head four CI checks PASS in38600243575; this branch does not merge or blanket cherry-pick PR60.
@@ -1273,7 +1311,6 @@ Local evidence: lint/typecheck and production builds pass. Fresh dedicated datab
 [Admin guide](design/moda4-redesign/R3A_ADMIN_GUIDE_FA.md) and [protected Windows Codex handoff](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) explain exact version pinning, actual ports/runtime, backup/verify, preserved settings/data/MFA/media/volumes and safe recovery. After R3 drafts exist, rollback requires an R3-compatible reader, not an older reader that ignores isPublished. No reset/seed/restore over retained owner data.
 
 R3b still owns all selected MODA4 blocks/campaign/popup/video/discount/shared policy requirements. Neither R3a nor green CI closes AC01–18/MODA01–14, #48/#49 or owner visual acceptance. R4 cutout/geometry precedes COMPOSITE/Kids/fitting consumption. Online R0 BLOCKED_ENV; owner Windows launch/login, physical phones and independent current-head AI review NOT_VERIFIED. R7c remains budget/ADR blocked. No merge/main push/force-push/provider/production email/paid operation.
-
 
 ### R3a Draft PR70 / local browser evidence — 2026-10-14
 
@@ -1294,3 +1331,15 @@ Final additive migration20261014182500 preserves363 existing indexes,173 existin
 Local: lint/typecheck/production builds PASS. Fresh isolated full run9083 unit/PostgreSQL in163files PASS before2 additional focused reference-race/retention cases; focused8 actual PG +3 cutout units +3 preview-status cases PASS, exact card-money4 cases PASS. Native production Chromium panel/password+MFA/private-preview/drag/keyboard/four-model save/reload/category inheritance/already-open operator catalog update/FA-TR-EN390px PASS; combined final R0/R3/R4 flows are being recorded at application0466dcead14384893247aacdf69f0e38eefdf8c1. Backup guard suites and content fixture prepare/verify PASS locally; the latter validates fixture/immutability only, not actual restore. CI runtime extends the real Local+S3 digest to Category presentation and cutout geometry; current-head CI is required independently.
 
 [Protected R4 admin/Windows guide](design/moda4-redesign/R4_ADMIN_GUIDE_FA.md). Same data/env/AUTH_SECRET/MFA/media/volume preservation and backup/verify/build-first apply. Cloud cannot reach owner Windows; online R0 BLOCKED_ENV, Windows/physical phones/owner visual acceptance/independent review NOT_VERIFIED. R3b complete MODA4/campaign/popup/video/policy, KidsWorld ring/COMPOSITE consumption and R5/R6/R7a/R7b remain open; R7c stays budget/ADR blocked. No merge/main/force-push or paid request.
+
+### R3b STARTED — 2026-10-14
+
+Branch phase/design-01-r3b-homepage-campaigns from PR71 0eb1ddd8c460d1647f677bf640ded4c9840b11b1, itself on green PR70 b99c781. The pre-implementation [R3b contract](design/moda4-redesign/R3B_CONTRACT.md) preserves the complete selected MODA4/CMS/campaign/service/COMPOSITE requirements and consumes R4 before Kids/fitting. This entry records contract preparation only; no new blocks/campaign code or completion is claimed. R4 current-head CI remains independently required. Owner Windows/online limits persist; R7c is budget/ADR blocked. No merge/main push or paid operation.
+
+### R4 current-head CI / R3b implementation checkpoint — 2026-10-14
+
+R4 Draft PR71 head0eb1ddd8c460d1647f677bf640ded4c9840b11b1 has all four required CI PASS in38625791117:9085 unit/PostgreSQL /163files;178 ordinary browser PASS +1 optional preview skip and3 explicit R0/R3/R4 PASS =181 actual executions. Actual Local+S3 restore retained Homepage draft/version/schedule, Category presentation, CatalogCutout geometry and immutable content revisions; interrupted S3 staging retained the active generation. [Issue62 Windows handoff](https://github.com/mehdi2044/HodaSite/issues/62#issuecomment-6177274472) pins this exact version and preserves existing data/settings/env/AUTH_SECRET/MFA/media/volumes. Online R0 BLOCKED_ENV; owner Windows still NOT_VERIFIED. No merge.
+
+R3b on this green base is **IN_PROGRESS**, not a completed MODA4/CMS delivery. Current local code adds nested typed blocks/editable fields, actual private RSC unsaved-preview snapshots with scoped owner/expiry/monotonic ordering, real COMPOSITE model/cutout/size overrides and atomic existing cart, decoded-preview-bound PHOTO consent with same-ID media revalidation, actual program clock/capacity/conditional offer projection, common live market policy source, and bounded existing-pipeline video registration. Existing blocks/data stay compatible. Nullable Market.servicePolicy and new ephemeral HomepagePreview were documented before code and migrated only into owned isolated hoda_moda_r3b_core_test; SQL changes only the new objects and nullable field, never historical migrations or retained owner rows. Ephemeral cleanup runs in the authenticated cron's existing maintenance/drain gate.
+
+Local focused38 tests /10files PASS for core/image/model/media-lock/variant-price/cart/preview ownership/scope/sequence/expiry/capacity/service-rule/time/targets; actual role/scope server-read matrix864 PASS. The concurrent preview test exposed and fixed pool exhaustion from an extra authorization connection inside held transactions; the recheck uses the same transaction and the existing evaluateAccess contract. These are partial development evidence, not full-suite/build/browser/restore acceptance for R3b. Body motion/framing/admin publication/rollout/native screenshots/measurement and final review remain to verify; no R3b ready URL or owner execution is claimed. R5/R6/R7a/R7b remain authorized next, R7c budget/ADR blocked. Main/PR60/#48/#49 and owner visual/physical acceptance remain separate.

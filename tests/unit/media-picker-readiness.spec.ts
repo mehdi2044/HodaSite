@@ -91,3 +91,25 @@ describe("media picker readiness", () => {
     expect(fetcher).toHaveBeenCalledTimes(90);
   });
 });
+
+it("uses the selected video kind and rejects an image returned for a video upload", async () => {
+  const fetcher = vi
+    .fn()
+    .mockResolvedValue(
+      response([{ ...item, kind: "video", url: "/clip.webm" }]),
+    );
+  vi.stubGlobal("fetch", fetcher);
+  const signal = new AbortController().signal;
+  expect(await waitForReadyMedia("cover", signal, "video")).toMatchObject({
+    kind: "video",
+    url: "/clip.webm",
+  });
+  expect(fetcher).toHaveBeenCalledWith("/api/admin/media?kind=video&id=cover", {
+    signal,
+    cache: "no-store",
+  });
+  fetcher.mockResolvedValue(response([{ ...item, kind: "image" }]));
+  await expect(waitForReadyMedia("cover", signal, "video")).rejects.toThrow(
+    "MEDIA_UNAVAILABLE",
+  );
+});

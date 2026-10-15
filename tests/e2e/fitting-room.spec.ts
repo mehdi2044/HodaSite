@@ -184,7 +184,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
     });
     try {
       await customerLogin(page, email, locale);
-      await page.goto(`/${locale}/fitting-room`);
+      await page.goto(`/${locale}/fitting-room?q=Saba`);
       const room = page.getByTestId("fitting-room");
       await expect(room).toBeVisible();
       await expect(room.locator(".fitting-models button")).toHaveCount(4);
@@ -379,14 +379,22 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     const customer = await db.customer.findUniqueOrThrow({ where: { email } });
     const f = await returnFixture(db, { customerId: customer.id, code: "CA" });
     productId = f.variants[0].productId;
+    const fittedProduct = await db.product.findUniqueOrThrow({
+      where: { id: productId },
+    });
+    const fittedTitle = (fittedProduct.titleI18n as Record<string, string>).en;
     await db.product.update({
       where: { id: productId },
-      data: { fittingSlot: "TOP", marketIds: [f.market.id] },
+      data: {
+        fittingSlot: "TOP",
+        marketIds: [f.market.id],
+        searchText: fittedTitle,
+      },
     });
     await db.productMedia.create({
       data: { productId, mediaId: "seed-fashion-v2-women-tee" },
     });
-    await page.goto("/en/fitting-room");
+    await page.goto(`/en/fitting-room?q=${encodeURIComponent(fittedTitle)}`);
     const room = page.getByTestId("fitting-room");
     const card = room
       .locator(".fitting-product")
@@ -442,6 +450,15 @@ test("shop repurchase and wardrobe styling keep separate cart intent for the sam
     await restore(f.variants[0].id);
     await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
     await expect(room.locator(".fitting-add")).toHaveCount(0);
+    const trousers = await db.variant.findUniqueOrThrow({
+      where: { id: trousersId },
+      include: { product: true },
+    });
+    await page
+      .locator('.fitting-search input[name="q"]')
+      .fill((trousers.product.titleI18n as Record<string, string>).en);
+    await page.locator(".fitting-search button").click();
+    await expect(room.locator(".fitting-chip")).toContainText(en.fitting.owned);
     await room
       .locator(".fitting-product")
       .filter({ has: page.locator(`option[value="${trousersId}"]`) })

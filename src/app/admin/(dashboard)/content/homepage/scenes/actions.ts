@@ -55,6 +55,9 @@ export async function saveSceneDraft(_: ActionResult | null, form: FormData) {
         .parse(form.get("expectedVersion")),
       blocks: json(form.get("blocks")),
       confirmSceneIds: form.getAll("confirmSceneIds").map(String),
+      expectedSceneFingerprints: json(
+        form.get("expectedSceneFingerprints") ?? "[]",
+      ),
     });
     invalidate();
   });

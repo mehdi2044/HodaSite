@@ -1,4 +1,5 @@
 import "@/styles/tokens.css";
+import { AdminHistoryTracking } from "@/components/admin/unsaved-history";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { getThemeSettings } from "@/modules/settings";
@@ -97,6 +98,7 @@ export default async function RootLayout({
         )}
       </head>
       <body>
+        <AdminHistoryTracking />
         <CrayonFilter />
         <NextIntlClientProvider messages={messages}>
           {preview && <PreviewStatus initial={preview} />}

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createHash } from "node:crypto";
 import type { Media, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -32,7 +33,7 @@ export const cutoutMediaSelect = {
   altI18n: true,
 } as const;
 /** Public approved store imagery does not enable or invoke the paid integration. */
-export async function storeCutoutModels(client: CutoutClient = db) {
+async function readStoreCutoutModels(client: CutoutClient) {
   const row = await client.integration.findUnique({
     where: { key: "fitting-room" },
   });
@@ -61,4 +62,10 @@ export async function storeCutoutModels(client: CutoutClient = db) {
       .digest("hex");
     return [{ ...model, image, fingerprint }];
   });
+}
+
+// React cache lasts only for the current server render; transaction reads stay live.
+const requestModels = cache(() => readStoreCutoutModels(db));
+export function storeCutoutModels(client: CutoutClient = db) {
+  return client === db ? requestModels() : readStoreCutoutModels(client);
 }

@@ -1,3 +1,4 @@
+import { ServicePolicySummary } from "@/components/storefront/service-policy";
 import { seoPath } from "@/lib/seo-urls";
 import Decimal from "decimal.js";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
@@ -58,6 +59,11 @@ export default async function CartPage({
           {t("continueShopping")} ↗
         </Link>
       </header>
+      <ServicePolicySummary
+        marketId={cart.marketId}
+        locale={locale as "fa" | "tr" | "en"}
+        keys={["shipping", "returns"]}
+      />
       {mismatch && (
         <section className="rounded-token border border-warning p-5">
           <p>{t("marketWarning")}</p>

@@ -1,3 +1,4 @@
+import { cleanupExpiredHomepagePreviews } from "@/modules/content/preview-cleanup";
 import {
   registerStockJobs,
   scheduleStockAlerts,
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
     // Don't process the job queue while a restore is in progress.
     if (await isMaintenanceOn())
       return NextResponse.json({ skipped: "maintenance" }, { status: 503 });
+    await cleanupExpiredHomepagePreviews();
     await ensurePurgeSweepScheduled();
     await ensureFxRefreshScheduled();
     await expireReservations();

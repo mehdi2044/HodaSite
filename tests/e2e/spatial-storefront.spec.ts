@@ -1,5 +1,6 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
-import { shoppingProof } from "./helpers/shopping-proof";
+import { shoppingProof, expectImagesDecoded } from "./helpers/shopping-proof";
 
 for (const [locale, market, labels] of [
   ["fa", "IR", ["زنان", "مردان", "کودکان", "اکسسوری"]],
@@ -17,11 +18,7 @@ for (const [locale, market, labels] of [
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await categories.scrollIntoViewIfNeeded();
-      await categories.locator("img").evaluateAll(async (images) => {
-        await Promise.all(
-          images.map((image) => (image as HTMLImageElement).decode()),
-        );
-      });
+      await expectImagesDecoded(categories.locator("img"));
       await shoppingProof(
         page,
         info,
@@ -83,11 +80,7 @@ for (const [locale, market, labels] of [
     );
     await expect(page).toHaveURL(new RegExp(`/${locale}/m/${market}$`));
     await heart.click();
-    await products.locator("img").evaluateAll(async (images) => {
-      await Promise.all(
-        images.map((image) => (image as HTMLImageElement).decode()),
-      );
-    });
+    await expectImagesDecoded(products.locator("img"));
     await shoppingProof(page, info, `editorial-products-${locale}`);
     const href = await product.getByRole("link").getAttribute("href");
     await product.getByRole("link").click();
@@ -120,11 +113,7 @@ for (const [locale, market, labels] of [
         expect(box.height).toBeGreaterThan(44);
       }
       // Wait for the actual campaign images, not just their blur placeholders.
-      await departments.locator("img").evaluateAll(async (images) => {
-        await Promise.all(
-          images.map((image) => (image as HTMLImageElement).decode()),
-        );
-      });
+      await expectImagesDecoded(departments.locator("img"));
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -188,3 +177,5 @@ for (const [locale, market, labels] of [
     await expect(departments).toBeVisible();
   });
 }
+
+useLegacyHomepage();

@@ -10,6 +10,7 @@ test.use({ actionTimeout: 15000, viewport: { width: 390, height: 844 } });
 test("real PHOTO editor: private draft, publication, live price, exact sizes and atomic cart", async ({
   page,
   context,
+  browser,
 }, info) => {
   test.setTimeout(180000);
   const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
@@ -146,7 +147,10 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       .filter({ has: page.locator('input[name="blocks"]') });
     const unsaved = JSON.parse(
       await draftForm.locator('input[name="blocks"]').inputValue(),
-    ).find((block: { scene?: unknown }) => block.scene).scene;
+    ).find(
+      (block: { scene?: { title?: { en?: string } } }) =>
+        block.scene?.title?.en === titles.en,
+    ).scene;
     await page.evaluate((scene) => {
       const iframe = document.querySelector<HTMLIFrameElement>(
         '[data-testid="scene-preview"]',
@@ -211,7 +215,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       expect(observations.publishToOpenStoreMs as number).toBeLessThanOrEqual(
         5000,
       );
-    const scene = shop.getByTestId("shoppable-scene");
+    const scene = shop.locator(`[data-scene-id="${unsaved.id}"]`);
     await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
     await expect(
       scene.getByRole("button", { name: en.scenes.addScene }),
@@ -228,7 +232,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect
       .poll(
         () => scene.locator(".scene-price-list strong").first().textContent(),
-        { timeout: 15000 },
+        { timeout: 15000, intervals: [100] },
       )
       .not.toBe(beforePrice);
     observations.priceToOpenStoreMs = Date.now() - priceStarted;
@@ -284,7 +288,7 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
         path: info.outputPath(`r3-scene-${locale}-390.png`),
         scale: "css",
       });
-      await shop.getByTestId("shoppable-scene").screenshot({
+      await scene.screenshot({
         path: info.outputPath(`r3-scene-${locale}-390-full.png`),
         scale: "css",
       });
@@ -353,12 +357,10 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
     await expect(
       preview.getByRole("heading", { name: titles.en }),
     ).toBeVisible();
-    await preview
-      .locator("main")
-      .screenshot({
-        path: info.outputPath("r3-private-history-en-390.png"),
-        scale: "css",
-      });
+    await preview.locator("main").screenshot({
+      path: info.outputPath("r3-private-history-en-390.png"),
+      scale: "css",
+    });
     await writeFile(
       info.outputPath("observations.json"),
       JSON.stringify(observations, null, 2) + "\n",
@@ -367,24 +369,36 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       body: Buffer.from(JSON.stringify(observations)),
       contentType: "application/json",
     });
-    await shop.setViewportSize({ width: 390, height: 844 });
-    // A failed physical image has an explicit fallback and readable catalog list.
-    await shop.route("**/media/**", (route) => route.abort());
-    await shop.reload();
-    await expect(
-      shop
-        .getByTestId("shoppable-scene")
+    // A fresh public context cannot serve a previously cached image from the PWA.
+    // Scroll the actual lower-page scene into view so its lazy image really loads.
+    const failureContext = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      serviceWorkers: "block",
+    });
+    try {
+      const failureShop = await failureContext.newPage();
+      await failureShop.route("**/media/**", (route) => route.abort());
+      await failureShop.goto(shop.url());
+      const failedScene = failureShop.locator(
+        `[data-scene-id="${unsaved.id}"]`,
+      );
+      await failedScene
         .locator('[data-scene-frame="mobile"]')
-        .getByText(en.scenes.missingImage),
-    ).toBeVisible();
-    await expect(
-      shop.getByTestId("shoppable-scene").locator(".scene-price-list article"),
-    ).toHaveCount(2);
-    await expect(
-      shop
-        .getByTestId("shoppable-scene")
-        .getByRole("button", { name: en.scenes.addScene }),
-    ).toBeDisabled();
+        .scrollIntoViewIfNeeded();
+      await expect(
+        failedScene
+          .locator('[data-scene-frame="mobile"]')
+          .getByText(en.scenes.missingImage),
+      ).toBeVisible();
+      await expect(
+        failedScene.locator(".scene-price-list article"),
+      ).toHaveCount(2);
+      await expect(
+        failedScene.getByRole("button", { name: en.scenes.addScene }),
+      ).toBeDisabled();
+    } finally {
+      await failureContext.close();
+    }
   } finally {
     await shop.close();
     for (const product of products)

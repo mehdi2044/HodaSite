@@ -120,6 +120,7 @@ enum ReservationStatus {
 }
 
 model User {
+  homepagePreviews HomepagePreview[]
   journalEntries   JournalEntry[]
   orderViews       Json                     @default("{}")
   id               String                   @id @default(cuid())
@@ -341,17 +342,20 @@ model ThemeSettings {
 }
 
 model Market {
-  promotionPrograms PromotionProgram[]
-  crmProfiles       CrmProfile[]
-  crmNotes          CrmNote[]
-  marketingConsents MarketingConsent[]
-  consentEvents     ConsentEvent[]
-  privacyRequests   PrivacyRequest[]
-  crmSegments       CrmSegment[]
-  crmMetricsConfig  CrmMetricsConfig?
-  wishlists         Wishlist[]
-  reviews           Review[]
-  stockAlerts       StockAlert[]
+  homepagePreviewViews  HomepagePreview[]  @relation("HomepagePreviewView")
+  homepagePreviewScopes HomepagePreview[]  @relation("HomepagePreviewScope")
+  servicePolicy         Json?
+  promotionPrograms     PromotionProgram[]
+  crmProfiles           CrmProfile[]
+  crmNotes              CrmNote[]
+  marketingConsents     MarketingConsent[]
+  consentEvents         ConsentEvent[]
+  privacyRequests       PrivacyRequest[]
+  crmSegments           CrmSegment[]
+  crmMetricsConfig      CrmMetricsConfig?
+  wishlists             Wishlist[]
+  reviews               Review[]
+  stockAlerts           StockAlert[]
 
   ledgerAccounts  LedgerAccount[]
   journalEntries  JournalEntry[]
@@ -2447,4 +2451,25 @@ model CatalogCutout {
 
   @@index([productId, colorId])
   @@index([mediaId])
+}
+
+/// Expiring private unsaved CMS previews; never a published draft or commerce record.
+model HomepagePreview {
+  id            String   @id @default(cuid())
+  channelHash   String   @unique
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  scopeMarketId String?
+  scopeMarket   Market?  @relation("HomepagePreviewScope", fields: [scopeMarketId], references: [id], onDelete: Cascade)
+  marketId      String
+  market        Market   @relation("HomepagePreviewView", fields: [marketId], references: [id], onDelete: Cascade)
+  locale        String
+  sequence      Int
+  blocks        Json
+  expiresAt     DateTime @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([ownerId, expiresAt])
+  @@index([expiresAt])
 }

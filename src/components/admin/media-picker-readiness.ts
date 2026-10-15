@@ -2,6 +2,8 @@ import type { MediaVariants } from "@/modules/media/constants";
 
 export type PickerItem = {
   id: string;
+  kind?: string;
+  originalName?: string;
   url: string;
   status: "PROCESSING" | "READY" | "FAILED";
   blurDataUrl: string | null;
@@ -25,13 +27,17 @@ function pause(signal: AbortSignal) {
 }
 
 /** Never select a PROCESSING/FAILED upload or keep polling after cancellation. */
-export async function waitForReadyMedia(id: string, signal: AbortSignal) {
+export async function waitForReadyMedia(
+  id: string,
+  signal: AbortSignal,
+  kind: "image" | "video" = "image",
+) {
   // Development cron ticks every 60s. Allow multiple ticks plus processing
   // time instead of timing out just before the first eligible tick.
   for (let attempt = 0; attempt < 90; attempt++) {
     signal.throwIfAborted();
     const response = await fetch(
-      `/api/admin/media?kind=image&id=${encodeURIComponent(id)}`,
+      `/api/admin/media?kind=${kind}&id=${encodeURIComponent(id)}`,
       {
         signal,
         cache: "no-store",
@@ -41,7 +47,8 @@ export async function waitForReadyMedia(id: string, signal: AbortSignal) {
     const body = (await response.json()) as { items?: PickerItem[] };
     signal.throwIfAborted();
     const item = body.items?.find((row) => row.id === id);
-    if (!item || item.status === "FAILED") throw new Error("MEDIA_UNAVAILABLE");
+    if (!item || item.status === "FAILED" || (item.kind && item.kind !== kind))
+      throw new Error("MEDIA_UNAVAILABLE");
     if (item.status === "READY") return item;
     await pause(signal);
   }

@@ -1,3 +1,4 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -249,7 +250,12 @@ for (const [locale, marketCode] of [
     await expect(dialog).not.toHaveAttribute("open", "");
     await expect(search).toBeFocused();
     await search.click();
-    await dialog.getByRole("link").first().click();
+    const searchedSlug = (product.slugI18n as Record<string, string>)[locale];
+    await dialog
+      .locator(
+        `a[href="/${locale}/m/${marketCode}/p/${encodeURIComponent(searchedSlug)}"]`,
+      )
+      .click();
     await expect(page.locator(".shop-product-title")).toBeVisible();
     await expect(dialog).not.toHaveAttribute("open", "");
     const target = locale === "en" ? "tr" : "en";
@@ -365,3 +371,5 @@ for (const [locale, marketCode] of [
     );
   });
 }
+
+useLegacyHomepage();

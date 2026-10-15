@@ -77,7 +77,13 @@ const rows = [
     permission: "catalog.product.view",
     run: (f: boolean) => Products(query(f)),
   },
-  { permission: "content.homepage.read", run: () => Homepage() },
+  {
+    permission: "content.homepage.read",
+    run: (forged: boolean) =>
+      Homepage({
+        searchParams: Promise.resolve(forged ? { scope: "global" } : {}),
+      }),
+  },
   { permission: "content.menu.read", run: () => Menus() },
   { permission: "content.page.read", run: (f: boolean) => Pages(query(f)) },
   { permission: "content.translation.read", run: () => Translations() },
@@ -119,6 +125,46 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
                   where: { code: "TR" },
                 });
                 expect(marketOptions(rendered)).toEqual([tr.id]);
+              } else if (
+                row.permission === "content.homepage.read" &&
+                scope === "market-out" &&
+                granted(name, row.permission)
+              ) {
+                if (forged)
+                  await expect(row.run(true)).rejects.toThrow(
+                    /NEXT_REDIRECT|NEXT_HTTP_ERROR_FALLBACK;404|FORBIDDEN/,
+                  );
+                else {
+                  const rendered = await row.run(false);
+                  const client = React.Children.toArray(
+                    rendered.props.children,
+                  ).find(
+                    (child) =>
+                      React.isValidElement<{
+                        globalAllowed?: boolean;
+                        markets?: { id: string }[];
+                      }>(child) &&
+                      typeof child.props.globalAllowed === "boolean",
+                  ) as React.ReactElement<{
+                    globalAllowed: boolean;
+                    markets: { id: string }[];
+                    versions: Record<string, number>;
+                    compositions: Record<string, unknown>;
+                  }>;
+                  const tr = await db.market.findUniqueOrThrow({
+                    where: { code: "TR" },
+                  });
+                  expect(client.props.globalAllowed).toBe(false);
+                  expect(
+                    client.props.markets.map((market) => market.id),
+                  ).toEqual([tr.id]);
+                  expect(Object.keys(client.props.versions)).not.toContain(
+                    "global",
+                  );
+                  expect(Object.keys(client.props.compositions)).not.toContain(
+                    "global",
+                  );
+                }
               } else if (scope === "in" && granted(name, row.permission))
                 expect(React.isValidElement(await row.run(forged))).toBe(true);
               else

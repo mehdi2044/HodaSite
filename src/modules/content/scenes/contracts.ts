@@ -33,6 +33,8 @@ export const shoppableSceneSchema = z
     version: z.literal(1),
     id,
     mode: z.enum(["PHOTO", "COMPOSITE"]),
+    modelId: id.optional(),
+    relatedVideoMediaId: id.optional(),
     title: localizedTextSchema,
     alt: localizedTextSchema,
     desktop: sceneImageSchema,
@@ -50,6 +52,24 @@ export const shoppableSceneSchema = z
   })
   .strict()
   .superRefine((scene, ctx) => {
+    if (scene.relatedVideoMediaId && scene.mode !== "PHOTO")
+      ctx.addIssue({
+        code: "custom",
+        message: "Filmed garments require PHOTO confirmation",
+      });
+    if (
+      scene.mode === "COMPOSITE" &&
+      (!scene.modelId || scene.pieces.length > 4)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Composite requires a store model and at most four pieces",
+      });
+    if (scene.mode === "PHOTO" && scene.modelId)
+      ctx.addIssue({
+        code: "custom",
+        message: "Photo cannot claim a composite model",
+      });
     if (new Set(scene.pieces.map((p) => p.id)).size !== scene.pieces.length)
       ctx.addIssue({
         code: "custom",
@@ -69,4 +89,21 @@ export function sceneMediaIds(scene: ShoppableScene) {
       ...scene.pieces.map((p) => p.referenceMediaId),
     ]),
   ].sort();
+}
+
+/** Identity of the pixels/catalog relation the operator actually previewed. */
+export function sceneConfirmationKey(scene: ShoppableScene) {
+  return JSON.stringify({
+    mode: scene.mode,
+    modelId: scene.modelId,
+    relatedVideoMediaId: scene.relatedVideoMediaId,
+    desktop: scene.desktop.mediaId,
+    mobile: scene.mobile.mediaId,
+    pieces: scene.pieces.map((piece) => [
+      piece.productId,
+      piece.colorId,
+      piece.referenceMediaId,
+      piece.preferredVariantId,
+    ]),
+  });
 }

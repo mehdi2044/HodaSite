@@ -6,6 +6,8 @@ import { MediaPicker } from "./media-picker";
 import type { ActionResult } from "@/lib/action-result";
 import type { HomepageBlock } from "@/modules/content/homepage";
 import type { ShoppableScene } from "@/modules/content/scenes/contracts";
+import { sceneConfirmationKey } from "@/modules/content/scenes/contracts";
+import type { ScenePreviewProof } from "./scene-preview-proof";
 import {
   SCENE_ASPECTS,
   scenePointInFrame,
@@ -23,10 +25,18 @@ type Product = {
     id: string;
     title: string;
     images: Image[];
+    cutouts: (Image & { variantId: string | null })[];
     variants: { id: string; size: string }[];
   }[];
 };
 type Props = {
+  models: {
+    id: string;
+    kind: string;
+    title: string;
+    mediaId: string;
+    url: string;
+  }[];
   initialBlocks: HomepageBlock[];
   version: number;
   viewedRevision: { id: string; at: string; version: number } | null;
@@ -101,23 +111,19 @@ export function SceneEditor(props: Props) {
     () => initialScene(props.initialBlocks[position], props.seed, position),
     [props.initialBlocks, props.seed, position],
   );
-  const matchKey = JSON.stringify({
-    mode: scene.mode,
-    desktop: scene.desktop.mediaId,
-    mobile: scene.mobile.mediaId,
-    pieces: scene.pieces.map((piece) => [
-      piece.productId,
-      piece.colorId,
-      piece.referenceMediaId,
-    ]),
-  });
+  const matchKey = sceneConfirmationKey(scene);
+  const [proof, setProof] = useState<ScenePreviewProof | null>(null);
+  const lastProof = useRef<ScenePreviewProof | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   useEffect(() => {
     setConfirmed(false);
+    setProof(null);
+    lastProof.current = null;
   }, [matchKey, props.version]);
   const dirty =
     JSON.stringify(scene) !== JSON.stringify(initial) ||
-    enabled !== Boolean(sceneIn(props.initialBlocks[position]));
+    enabled !== Boolean(sceneIn(props.initialBlocks[position])) ||
+    confirmed;
   useEffect(() => {
     setScene(initial);
     setEnabled(Boolean(sceneIn(props.initialBlocks[position])));
@@ -158,10 +164,24 @@ export function SceneEditor(props: Props) {
       if (
         event.origin !== location.origin ||
         event.source !== iframe.current?.contentWindow ||
-        event.data?.channel !== channel ||
-        event.data?.type !== "scene-preview-ready"
+        event.data?.channel !== channel
       )
         return;
+      if (event.data?.type === "scene-preview-proof") {
+        const next = (
+          event.data.proofs as ScenePreviewProof[] | undefined
+        )?.find(
+          (candidate) =>
+            candidate.sceneId === latest.current.id &&
+            candidate.key === sceneConfirmationKey(latest.current),
+        );
+        if (lastProof.current?.fingerprint !== next?.fingerprint)
+          setConfirmed(false);
+        lastProof.current = next ?? null;
+        setProof(next ?? null);
+        return;
+      }
+      if (event.data?.type !== "scene-preview-ready") return;
       ready.current = true;
       iframe.current?.contentWindow?.postMessage(
         { type: "scene-preview", channel, scene: latest.current },
@@ -287,6 +307,15 @@ export function SceneEditor(props: Props) {
           submitLabel={t("saveDraft")}
           disabled={!props.writable || Boolean(props.viewedRevision)}
         >
+          <input
+            type="hidden"
+            name="expectedSceneFingerprints"
+            value={JSON.stringify(
+              proof && proof.key === matchKey
+                ? [{ sceneId: scene.id, fingerprint: proof.fingerprint }]
+                : [],
+            )}
+          />
           <fieldset
             disabled={!props.writable || Boolean(props.viewedRevision)}
             className="grid gap-4"
@@ -326,8 +355,68 @@ export function SceneEditor(props: Props) {
               />{" "}
               {t("enableScene")}
             </label>
-            <p>{t("photoMode")}</p>
-            <p className="text-muted">{t("compositeLater")}</p>
+            <label>
+              {t("sceneMode")}
+              <select
+                className="input"
+                value={scene.mode}
+                onChange={(event) =>
+                  setScene((old) => ({
+                    ...old,
+                    mode: event.target.value as "PHOTO" | "COMPOSITE",
+                    modelId: undefined,
+                    match: undefined,
+                    desktop: { ...old.desktop, mediaId: "" },
+                    mobile: { ...old.mobile, mediaId: "" },
+                    pieces: old.pieces.map((piece) => ({
+                      ...piece,
+                      referenceMediaId: "",
+                      preferredVariantId: undefined,
+                    })),
+                  }))
+                }
+              >
+                <option value="PHOTO">{t("photoMode")}</option>
+                <option value="COMPOSITE">{t("compositeMode")}</option>
+              </select>
+            </label>
+            {scene.mode === "COMPOSITE" && (
+              <>
+                <p className="text-muted">{t("compositeHelp")}</p>
+                <label>
+                  {t("storeModel")}
+                  <select
+                    className="input"
+                    value={scene.modelId ?? ""}
+                    onChange={(event) => {
+                      const model = props.models.find(
+                        (item) => item.id === event.target.value,
+                      );
+                      if (!model) return;
+                      setUrls((old) => ({
+                        ...old,
+                        [model.mediaId]: model.url,
+                      }));
+                      setScene((old) => ({
+                        ...old,
+                        modelId: model.id,
+                        match: undefined,
+                        desktop: { ...old.desktop, mediaId: model.mediaId },
+                        mobile: { ...old.mobile, mediaId: model.mediaId },
+                      }));
+                    }}
+                  >
+                    <option value="">{t("chooseModel")}</option>
+                    {props.models.map((model) => (
+                      <option key={model.id} value={model.id}>
+                        {model.title} — {model.kind}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
+
             {(["title", "alt"] as const).map((field) => (
               <div key={field} className="grid gap-2">
                 {languages.map((locale) => (
@@ -350,20 +439,24 @@ export function SceneEditor(props: Props) {
             ))}
             {(["desktop", "mobile"] as const).map((kind) => (
               <div key={kind} className="card grid gap-3">
-                <MediaPicker
-                  key={`${props.scope}:${position}:${kind}:${scene[kind].mediaId}`}
-                  name={`${kind}SceneMedia`}
-                  label={t(kind === "desktop" ? "desktopImage" : "mobileImage")}
-                  defaultMediaId={scene[kind].mediaId}
-                  defaultUrl={urls[scene[kind].mediaId]}
-                  onSelect={(id, url) => {
-                    setUrls((current) => ({ ...current, [id]: url }));
-                    setScene((s) => ({
-                      ...s,
-                      [kind]: { ...s[kind], mediaId: id },
-                    }));
-                  }}
-                />
+                {scene.mode === "PHOTO" && (
+                  <MediaPicker
+                    key={`${props.scope}:${position}:${kind}:${scene[kind].mediaId}`}
+                    name={`${kind}SceneMedia`}
+                    label={t(
+                      kind === "desktop" ? "desktopImage" : "mobileImage",
+                    )}
+                    defaultMediaId={scene[kind].mediaId}
+                    defaultUrl={urls[scene[kind].mediaId]}
+                    onSelect={(id, url) => {
+                      setUrls((current) => ({ ...current, [id]: url }));
+                      setScene((s) => ({
+                        ...s,
+                        [kind]: { ...s[kind], mediaId: id },
+                      }));
+                    }}
+                  />
+                )}
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label>
                     {t("fit")}
@@ -449,7 +542,15 @@ export function SceneEditor(props: Props) {
               const product = props.products.find(
                   (p) => p.id === piece.productId,
                 ),
-                color = product?.colors.find((c) => c.id === piece.colorId);
+                color = product?.colors.find((c) => c.id === piece.colorId),
+                references =
+                  scene.mode === "COMPOSITE"
+                    ? color?.cutouts.filter(
+                        (cutout) =>
+                          !cutout.variantId ||
+                          cutout.variantId === piece.preferredVariantId,
+                      )
+                    : color?.images;
               return (
                 <div
                   key={piece.id}
@@ -510,20 +611,20 @@ export function SceneEditor(props: Props) {
                       }
                     >
                       <option value="">{t("chooseReference")}</option>
-                      {color?.images.map((image) => (
+                      {references?.map((image) => (
                         <option key={image.id} value={image.id}>
                           {image.originalName}
                         </option>
                       ))}
                     </select>
                   </label>
-                  {color?.images.find(
+                  {references?.find(
                     (image) => image.id === piece.referenceMediaId,
                   ) && (
                     <img
                       className="max-h-40 w-auto object-contain"
                       src={
-                        color.images.find(
+                        references!.find(
                           (image) => image.id === piece.referenceMediaId,
                         )!.url
                       }
@@ -625,7 +726,9 @@ export function SceneEditor(props: Props) {
             <button
               type="button"
               className="button"
-              disabled={scene.pieces.length >= 12}
+              disabled={
+                scene.pieces.length >= (scene.mode === "COMPOSITE" ? 4 : 12)
+              }
               onClick={() =>
                 setScene((s) => ({
                   ...s,
@@ -646,13 +749,14 @@ export function SceneEditor(props: Props) {
             >
               {t("addPiece")}
             </button>
-            {enabled && (
+            {enabled && scene.mode === "PHOTO" && (
               <label>
                 <input
                   type="checkbox"
                   name="confirmSceneIds"
                   value={scene.id}
-                  checked={confirmed}
+                  checked={confirmed && proof?.key === matchKey}
+                  disabled={!proof || proof.key !== matchKey}
                   onChange={(event) => setConfirmed(event.target.checked)}
                 />{" "}
                 {t("confirmMatch")}
@@ -842,7 +946,7 @@ export function SceneEditor(props: Props) {
     </div>
   );
 }
-function SceneAnchorCanvas({
+export function SceneAnchorCanvas({
   scene,
   kind,
   url,

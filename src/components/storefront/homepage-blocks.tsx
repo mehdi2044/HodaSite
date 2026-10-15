@@ -1,3 +1,6 @@
+import { LiveHomepage } from "./live-homepage";
+import { ModaHomepageBlock } from "./moda-homepage-block";
+import { isModa4Block } from "@/modules/content/moda4-contracts";
 import { ShoppableScene } from "./shoppable-scene";
 import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { ShopLook } from "./shop-look";
@@ -19,8 +22,10 @@ export async function HomepageBlocks({
   blocks,
   locale,
   market,
+  preview = false,
 }: {
   blocks: HomepageBlock[];
+  preview?: boolean;
   locale: Locale;
   market: {
     id: string;
@@ -30,6 +35,7 @@ export async function HomepageBlocks({
     roundingRule: unknown;
   };
 }) {
+  blocks = blocks.filter((block) => block.enabled !== false);
   const t = await getTranslations("shopping");
   const mediaIds = [
     ...new Set(
@@ -67,7 +73,9 @@ export async function HomepageBlocks({
     Promise.all(
       blocks.map((block) =>
         "scene" in block && block.scene
-          ? resolveShoppableScene(block.scene, market, locale)
+          ? resolveShoppableScene(block.scene, market, locale, {
+              adminPreview: preview,
+            })
           : Promise.resolve(null),
       ),
     ),
@@ -78,244 +86,267 @@ export async function HomepageBlocks({
     market,
   );
   return (
-    <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
-      {blocks.map((block, index) => {
-        if (sceneViews[index])
-          return (
-            <ShoppableScene
-              key={sceneViews[index]!.id}
-              view={sceneViews[index]!}
-              locale={locale}
-              first={index === 0}
-              body={
-                "body" in block ? localizedValue(block.body, locale) : undefined
-              }
-              cta={
-                "ctaUrl" in block && block.ctaUrl
-                  ? {
-                      href: storefrontHref(block.ctaUrl, locale),
-                      label: localizedValue(block.ctaLabel, locale),
-                    }
-                  : undefined
-              }
-            />
-          );
-        if (block.type === "ShopLook")
-          return (
-            <div className="shell" key={index}>
-              <ShopLook block={block} locale={locale} market={market} />
-            </div>
-          );
-        if (
-          block.type === "Hero" &&
-          block.layout === "spatial" &&
-          categories.length > 0
-        )
-          return (
-            <SpatialHero
-              key={index}
-              block={block}
-              departments={categories.slice(0, 4)}
-              campaignImage={
-                block.mediaId ? mediaById.get(block.mediaId) : undefined
-              }
-              locale={locale}
-              marketCode={market.code}
-              first={index === 0}
-            />
-          );
-        if (block.type === "Hero" || block.type === "Banner") {
-          const image = block.mediaId
-            ? mediaById.get(block.mediaId)
-            : undefined;
-          return (
-            <section
-              key={index}
-              className={`shop-hero ${image ? "shop-hero-with-image" : "shop-hero-text"} ${block.type === "Hero" ? "shop-editorial-hero" : ""}`}
-              data-testid={
-                block.type === "Hero" ? "storefront-hero" : undefined
-              }
-            >
-              {image && (
-                <ResponsiveImage
-                  media={image}
+    <LiveHomepage preview={preview}>
+      <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
+        {blocks.map((block, index) => {
+          if (isModa4Block(block))
+            return (
+              <ModaHomepageBlock
+                key={block.id}
+                block={block}
+                locale={locale}
+                market={market}
+                first={index === 0}
+                preview={preview}
+              />
+            );
+          if (sceneViews[index])
+            return (
+              <ShoppableScene
+                key={sceneViews[index]!.id}
+                view={sceneViews[index]!}
+                locale={locale}
+                preview={preview}
+                poll={false}
+                first={index === 0}
+                body={
+                  "body" in block
+                    ? localizedValue(block.body, locale)
+                    : undefined
+                }
+                cta={
+                  "ctaUrl" in block && block.ctaUrl
+                    ? {
+                        href: storefrontHref(block.ctaUrl, locale),
+                        label: localizedValue(block.ctaLabel, locale),
+                      }
+                    : undefined
+                }
+              />
+            );
+          if (block.type === "ShopLook")
+            return (
+              <div className="shell" key={index}>
+                <ShopLook
+                  block={block}
                   locale={locale}
-                  sizes="(min-width:1024px) 50vw, 100vw"
-                  priority={index === 0}
-                  role="hero"
-                  className="shop-hero-image"
+                  market={market}
+                  preview={preview}
                 />
-              )}
-              <div className="shell shop-hero-content">
-                {isDemoFashionMedia(image) && (
-                  <p className="shop-eyebrow">{t("collectionPreview")}</p>
+              </div>
+            );
+          if (
+            block.type === "Hero" &&
+            block.layout === "spatial" &&
+            categories.length > 0
+          )
+            return (
+              <SpatialHero
+                key={index}
+                block={block}
+                departments={categories.slice(0, 4)}
+                campaignImage={
+                  block.mediaId ? mediaById.get(block.mediaId) : undefined
+                }
+                locale={locale}
+                marketCode={market.code}
+                first={index === 0}
+              />
+            );
+          if (block.type === "Hero" || block.type === "Banner") {
+            const image = block.mediaId
+              ? mediaById.get(block.mediaId)
+              : undefined;
+            return (
+              <section
+                key={index}
+                className={`shop-hero ${image ? "shop-hero-with-image" : "shop-hero-text"} ${block.type === "Hero" ? "shop-editorial-hero" : ""}`}
+                data-testid={
+                  block.type === "Hero" ? "storefront-hero" : undefined
+                }
+              >
+                {image && (
+                  <ResponsiveImage
+                    media={image}
+                    locale={locale}
+                    sizes="(min-width:1024px) 50vw, 100vw"
+                    priority={index === 0}
+                    role="hero"
+                    className="shop-hero-image"
+                  />
                 )}
-                {block.type === "Hero" && index === 0 ? (
-                  <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-7xl">
-                    {localizedValue(block.title, locale)}
-                  </h1>
-                ) : (
-                  <h2 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+                <div className="shell shop-hero-content">
+                  {isDemoFashionMedia(image) && (
+                    <p className="shop-eyebrow">{t("collectionPreview")}</p>
+                  )}
+                  {block.type === "Hero" && index === 0 ? (
+                    <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-7xl">
+                      {localizedValue(block.title, locale)}
+                    </h1>
+                  ) : (
+                    <h2 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+                      {localizedValue(block.title, locale)}
+                    </h2>
+                  )}
+                  <p className="mt-3 max-w-2xl text-lg">
+                    {localizedValue(block.body, locale)}
+                  </p>
+                  {block.ctaUrl && localizedValue(block.ctaLabel, locale) && (
+                    <Link
+                      className="button mt-7 inline-flex w-fit items-center font-semibold shadow-lg"
+                      href={storefrontHref(block.ctaUrl, locale)}
+                    >
+                      {localizedValue(block.ctaLabel, locale)}
+                    </Link>
+                  )}
+                  {isDemoFashionMedia(image) && (
+                    <span className="shop-demo-caption">{t("demoImage")}</span>
+                  )}
+                </div>
+              </section>
+            );
+          }
+          if (block.type === "ProductStrip")
+            return (
+              <section
+                key={index}
+                className="shell shop-home-section"
+                data-testid="home-product-strip"
+              >
+                <div className="shop-section-heading">
+                  <span className="shop-section-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
                     {localizedValue(block.title, locale)}
                   </h2>
-                )}
-                <p className="mt-3 max-w-2xl text-lg">
-                  {localizedValue(block.body, locale)}
-                </p>
-                {block.ctaUrl && localizedValue(block.ctaLabel, locale) && (
-                  <Link
-                    className="button mt-7 inline-flex w-fit items-center font-semibold shadow-lg"
-                    href={storefrontHref(block.ctaUrl, locale)}
-                  >
-                    {localizedValue(block.ctaLabel, locale)}
-                  </Link>
-                )}
-                {isDemoFashionMedia(image) && (
-                  <span className="shop-demo-caption">{t("demoImage")}</span>
-                )}
-              </div>
-            </section>
-          );
-        }
-        if (block.type === "ProductStrip")
-          return (
-            <section
-              key={index}
-              className="shell shop-home-section"
-              data-testid="home-product-strip"
-            >
-              <div className="shop-section-heading">
-                <span className="shop-section-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {localizedValue(block.title, locale)}
-                </h2>
-                {block.source.mode === "latest" && (
-                  <Link
-                    className="shop-section-link"
-                    href={`/${locale}/search`}
-                  >
-                    {t("viewAll")}
-                    <span aria-hidden="true">↗</span>
-                  </Link>
-                )}
-              </div>
-              {!productRows[index]?.items.length && (
-                <p className="shop-inline-empty">{t("emptyCollection")}</p>
-              )}
-              <div className="shop-product-rail">
-                {productRows[index]?.items
-                  .slice(0, block.source.limit)
-                  .map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={{
-                        ...product,
-                        displayPrice: prices.get(product.id),
-                      }}
-                      locale={locale}
-                      market={market}
-                    />
-                  ))}
-              </div>
-            </section>
-          );
-        if (block.type === "CategoryCards")
-          return (
-            <section
-              key={index}
-              className="shell shop-home-section shop-category-section"
-              data-testid="home-categories"
-            >
-              <div className="shop-section-heading">
-                <span className="shop-section-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                  {localizedValue(block.title, locale)}
-                </h2>
-              </div>
-              {!categories.length && (
-                <p className="shop-inline-empty">{t("emptyCategories")}</p>
-              )}
-              <div className="shop-category-grid">
-                {categories
-                  .slice(0, block.source.limit)
-                  .map((category, categoryIndex) => (
+                  {block.source.mode === "latest" && (
                     <Link
-                      key={category.id}
-                      href={seoPath(
-                        locale,
-                        market.code,
-                        "c",
-                        localizedValue(
-                          category.slugI18n as Record<Locale, string>,
-                          locale,
-                        ),
-                      )}
-                      className="shop-category-card group"
-                      aria-label={localizedValue(
-                        category.titleI18n as Record<Locale, string>,
-                        locale,
-                      )}
+                      className="shop-section-link"
+                      href={`/${locale}/search`}
                     >
-                      <div className="shop-category-plane">
-                        {category.media &&
-                          category.media.status === "READY" &&
-                          !category.media.deletedAt && (
-                            <ResponsiveImage
-                              media={category.media}
-                              locale={locale}
-                              sizes="(max-width:640px) 50vw,25vw"
-                              role="editorial"
-                              className="shop-category-image"
-                              imgClassName="h-full w-full object-cover"
-                            />
-                          )}
-                      </div>
-                      <h3 className="shop-category-name">
-                        <span
-                          className="shop-category-number"
-                          aria-hidden="true"
-                        >
-                          {String(categoryIndex + 1).padStart(2, "0")}
-                        </span>
-                        <span>
-                          {localizedValue(
-                            category.titleI18n as Record<Locale, string>,
-                            locale,
-                          )}
-                        </span>
-                      </h3>
+                      {t("viewAll")}
+                      <span aria-hidden="true">↗</span>
                     </Link>
+                  )}
+                </div>
+                {!productRows[index]?.items.length && (
+                  <p className="shop-inline-empty">{t("emptyCollection")}</p>
+                )}
+                <div className="shop-product-rail">
+                  {productRows[index]?.items
+                    .slice(0, block.source.limit)
+                    .map((product) => (
+                      <ProductCard
+                        readOnly={preview}
+                        key={product.id}
+                        product={{
+                          ...product,
+                          displayPrice: prices.get(product.id),
+                        }}
+                        locale={locale}
+                        market={market}
+                      />
+                    ))}
+                </div>
+              </section>
+            );
+          if (block.type === "CategoryCards")
+            return (
+              <section
+                key={index}
+                className="shell shop-home-section shop-category-section"
+                data-testid="home-categories"
+              >
+                <div className="shop-section-heading">
+                  <span className="shop-section-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                    {localizedValue(block.title, locale)}
+                  </h2>
+                </div>
+                {!categories.length && (
+                  <p className="shop-inline-empty">{t("emptyCategories")}</p>
+                )}
+                <div className="shop-category-grid">
+                  {categories
+                    .slice(0, block.source.limit)
+                    .map((category, categoryIndex) => (
+                      <Link
+                        key={category.id}
+                        href={seoPath(
+                          locale,
+                          market.code,
+                          "c",
+                          localizedValue(
+                            category.slugI18n as Record<Locale, string>,
+                            locale,
+                          ),
+                        )}
+                        className="shop-category-card group"
+                        aria-label={localizedValue(
+                          category.titleI18n as Record<Locale, string>,
+                          locale,
+                        )}
+                      >
+                        <div className="shop-category-plane">
+                          {category.media &&
+                            category.media.status === "READY" &&
+                            !category.media.deletedAt && (
+                              <ResponsiveImage
+                                media={category.media}
+                                locale={locale}
+                                sizes="(max-width:640px) 50vw,25vw"
+                                role="editorial"
+                                className="shop-category-image"
+                                imgClassName="h-full w-full object-cover"
+                              />
+                            )}
+                        </div>
+                        <h3 className="shop-category-name">
+                          <span
+                            className="shop-category-number"
+                            aria-hidden="true"
+                          >
+                            {String(categoryIndex + 1).padStart(2, "0")}
+                          </span>
+                          <span>
+                            {localizedValue(
+                              category.titleI18n as Record<Locale, string>,
+                              locale,
+                            )}
+                          </span>
+                        </h3>
+                      </Link>
+                    ))}
+                </div>
+              </section>
+            );
+          if (block.type === "TrustBar")
+            return (
+              <section key={index} className="shop-service-strip">
+                <div className="shell shop-service-grid">
+                  {block.items.map((item, itemIndex) => (
+                    <p key={itemIndex} className="shop-service-item">
+                      <span aria-hidden="true">
+                        {String(itemIndex + 1).padStart(2, "0")}
+                      </span>
+                      {localizedValue(item, locale)}
+                    </p>
                   ))}
-              </div>
-            </section>
-          );
-        if (block.type === "TrustBar")
+                </div>
+              </section>
+            );
           return (
-            <section key={index} className="shop-service-strip">
-              <div className="shell shop-service-grid">
-                {block.items.map((item, itemIndex) => (
-                  <p key={itemIndex} className="shop-service-item">
-                    <span aria-hidden="true">
-                      {String(itemIndex + 1).padStart(2, "0")}
-                    </span>
-                    {localizedValue(item, locale)}
-                  </p>
-                ))}
-              </div>
+            <section key={index} className="shell shop-home-section">
+              <p className="mx-auto max-w-3xl whitespace-pre-wrap text-lg leading-9 text-muted md:text-xl">
+                {localizedValue(block.text, locale)}
+              </p>
             </section>
           );
-        return (
-          <section key={index} className="shell shop-home-section">
-            <p className="mx-auto max-w-3xl whitespace-pre-wrap text-lg leading-9 text-muted md:text-xl">
-              {localizedValue(block.text, locale)}
-            </p>
-          </section>
-        );
-      })}
-    </main>
+        })}
+      </main>
+    </LiveHomepage>
   );
 }

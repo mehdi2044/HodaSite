@@ -1,3 +1,4 @@
+import { useLegacyHomepage } from "./helpers/legacy-homepage";
 import { test, expect } from "@playwright/test";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { randomUUID } from "node:crypto";
@@ -154,7 +155,10 @@ for (const [locale, market] of [
       for (const [field, value] of Object.entries(address))
         await page.locator(`main input[name=${field}]`).fill(value);
       await page
-        .getByRole("button", { name: { fa, tr, en }[locale].commerce.next, exact: true })
+        .getByRole("button", {
+          name: { fa, tr, en }[locale].commerce.next,
+          exact: true,
+        })
         .click();
       await expect(page).toHaveURL(/checkout\?step=2$/);
       await expect(
@@ -213,3 +217,5 @@ for (const [locale, market] of [
     }
   });
 }
+
+useLegacyHomepage();
