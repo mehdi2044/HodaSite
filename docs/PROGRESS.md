@@ -1,3 +1,9 @@
+## 2026-10-15 — R7a cumulative production acceptance checkpoint
+
+Implemented against docs v1.2 / D-numbers touched: D09, D10, D24, D31, D70, D78, D79, D80.
+
+All28 native Chromium cases pass in1.8m on production86f4711/build01:37:42.284Z: FA/TR/EN and legacy Back/Forward, real catalog/search/mobile shell/cart, guest→OTP→private wardrobe/export-linked operations and independent free-mode settings while paid AI has no key. Existing fractional settings and original-key lost-response grant replay remain successful. Price75ms/reference2316ms;13 native PNGs/manifest refreshed. First attempt's incompatible PR60 nav locator timed out and was stopped; actual MODA4 sidebar locator now preserves all assertions. WebKit remains CI-only. Prior c8d5b84 has four successful CI jobs,9276 unit/PG,190browser+3propagation and actual Local+S3 restore; new shared-history final head still requires new CI. Current exact head and protected Windows handoff are recorded in Issue62. R0 online BLOCKED_ENV, owner Windows/login/visual and independent D70 review pending. R7c BLOCKED_BUDGET_ADR. No merge/main push or owner-data/environment changes.
+
 ## 2026-10-15 — Shared admin history follow-up (#63)
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D31, D70.
