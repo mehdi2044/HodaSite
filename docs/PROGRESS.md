@@ -1,3 +1,11 @@
+## 2026-10-15 — Real pre-hydration video failure (#62 / R3b)
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
+
+R7b/1260c29 CI found188 browser pass/1 failure/1 skip in the inherited broken-video test (9258 unit/PG and other three jobs passed; subsequent propagation step skipped). A first stricter local probe passed because a service worker could serve hydration chunks outside page routing. With service workers blocked only in this controlled-transport video case, an actual missing source returns404 and native MEDIA_ERR_SRC_NOT_SUPPORTED before hydration; the unchanged production86f4711 deterministically retains the video and fails the original removal assertion. This supersedes the provisional test-only diagnosis in the R7b history. Dedicated PWA specs remain unchanged.
+
+ModaVideo now keys a child by source URL, with independent initial state, and reconciles already-existing native error/readiness on mount. It does not reset an earlier failure during hydration, retry the network or change playback/reduced-motion/visibility controls. The same actual-media test awaits the exact source, gates JS, verifies native error4, releases the gate in finally, and retains the original removal/poster assertions and5000ms limit. Local after-fix and fresh head-matched CI remain pending until recorded in the PR/Issue. No schema/auth/provider/money/owner data changes; no merge/main push. Artifact11943430969 is retained, but shell download is proxy403-blocked; diagnosis is based on CI logs plus the real controlled local reproduction, not an uninspected trace.
+
 ## 2026-10-15 — R7a cumulative production acceptance checkpoint
 
 Implemented against docs v1.2 / D-numbers touched: D09, D10, D24, D31, D70, D78, D79, D80.
