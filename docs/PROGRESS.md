@@ -1,3 +1,9 @@
+## 2026-10-15 — Current video correction verification / protected handoff
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D78, D79, D80.
+
+Productionaedf0dd/build02:19:38.454Z:9 current native history/CMS/instant cases passed; the tenth failed at test-route cleanup. Corrected cleanup plus verified chunk gate: full actual video upload/CMS/playback/publish/404-before-hydration/fallback passes separately25.7s on the same binary. Exact old/new React SSR + native404 A/B independently fails on the old component and passes on the new one339ms. This confirms the real media-error correction; no assertion/5000ms limit or dedicated PWA spec weakened.13 instant PNGs/manifest refreshed, price73ms/reference2322ms. [Video proof](design/moda4-redesign/evidence/video-hydration/README.md). Prior f764655 had all four CI jobs,9276unit/PG,197browser+3propagation and actual Local+S3 restore; current video-fix final heads need fresh CI, recorded in Issue62. Native source is a checkpoint: later commits change only test cleanup/docs/Windows pin. R0 online BLOCKED_ENV, owner Windows/login/visual/phones and D70 review remain pending; R7c BLOCKED_BUDGET_ADR. No merge/main write or owner data/env/MFA/AUTH_SECRET/volume change.
+
 ## 2026-10-15 — Real pre-hydration video failure (#62 / R3b)
 
 Implemented against docs v1.2 / D-numbers touched: D31, D70, D78.
