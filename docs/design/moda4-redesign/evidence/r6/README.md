@@ -1,0 +1,11 @@
+# R6 native profile and authentication evidence
+
+Runtime source `f3bcb896033b1ce580884891697727c23de060cf`, production build UTC `2026-10-15T00:11:43.767Z`. PNGs are unchanged native Chromium CSS-pixel screenshots of the actual application, not mockups. Manifest records bytes and SHA256. Isolated synthetic PostgreSQL, local storage and Mailpit only; no owner data or remote provider was used. Traces with authentication tokens are deliberately excluded.
+
+Five browser cases passed in56.1s: existing complete FA/TR/EN passwordless purchase→private receipt→manual admin approval→actual PAID profile timeline; actual OTP resend, Persian digit paste/backspace, ROSE/SLATE/SAND selection and real catalog preferences→save→reload→clear; real MFA theme account-image selection→save→reload→public login image and same-document magic link requiring explicit confirmation. Profile rendering is asserted not to grant coins. Three-language390px/no-overflow, desktop1440px and profile WCAG checks pass. Unset preferred market follows the actual viewed market; an explicit stored preference is retained.
+
+Ten focused PostgreSQL/media cases passed: session/guest/forged identity, live references, concurrent conflict, revision after clear, owner export, theme permission/legacy payload/READY media, and protection against purging referenced retired media. Fresh full run initially had9266 passing assertions and one raw-image guard failure; the private output was moved through ResponsiveImage without changing its owner-only endpoint and that guard passed separately. That original full run is still a failed run; final-head complete CI is required.
+
+The expanded content-restore fixture's prepare/verify passed locally; that alone is not an actual restore. Final CI must perform real Local+S3 restore including profile fields, monotonic revision and account media. Migration is additive; existing business preferences remain NULL. Full privacy requests remain reviewed/manual; clearing presentation does not erase financial history or fulfill account deletion.
+
+Online R0 BLOCKED_ENV. Owner Windows execution/login, final visual acceptance, real phones and independent D70 review remain NOT_VERIFIED. No merge authorization is implied.
