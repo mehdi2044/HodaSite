@@ -51,7 +51,7 @@ export function registerUnsavedHistoryTests(
           messages.commerce.dashboard,
         );
       }
-      await page.locator('nav a[href="/admin/settings/brand"]').click();
+      await page.locator('.sidebar a[href="/admin/settings/brand"]').click();
       await expect(page).toHaveURL(/\/admin\/settings\/brand$/);
       const field = page.locator('input[name="nameFa"]'),
         original = await field.inputValue(),
@@ -78,7 +78,7 @@ export function registerUnsavedHistoryTests(
       await page.evaluate(() => history.forward());
       await expect(page).toHaveURL(/\/admin\/settings\/brand$/);
       await expect(field).toHaveValue(original);
-      await page.locator('nav a[href="/admin/settings/contact"]').click();
+      await page.locator('.sidebar a[href="/admin/settings/contact"]').click();
       await expect(page).toHaveURL(/\/admin\/settings\/contact$/);
       await page.evaluate(() => history.back());
       await expect(page).toHaveURL(/\/admin\/settings\/brand$/);
