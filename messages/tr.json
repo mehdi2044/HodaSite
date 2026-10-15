@@ -493,7 +493,8 @@
     "addRow": "Satır ekle",
     "variantStock": "Stok: {onHand} · Satılabilir: {available}",
     "manageStock": "Stok al ve yönet",
-    "seoKeywords": "SEO anahtar kelimeleri"
+    "seoKeywords": "SEO anahtar kelimeleri",
+    "newArrival": "Yeni ürün etiketini göster"
   },
   "phase03Admin": {
     "amount": "Tutar",
@@ -1212,7 +1213,17 @@
     "collectionPreview": "Günlük stile bir bakış",
     "carousel": "Kayan galeri",
     "backCollection": "Kategoriye dön",
-    "fullImage": "Tam görseli aç"
+    "fullImage": "Tam görseli aç",
+    "activeFilters": "Etkin filtreler",
+    "removeFilter": "{filter} filtresini kaldır",
+    "decreaseQuantity": "{product} adedini azalt",
+    "increaseQuantity": "{product} adedini artır",
+    "quickAddSize": "{size} bedeni sepete ekle",
+    "cardColor": "Ürün rengi",
+    "sortName": "Ürün adı",
+    "cardOutOfStock": "Stokta yok",
+    "productDescription": "Ürün açıklaması",
+    "tryOnModel": "Model üzerinde dene"
   },
   "finance": {
     "eyebrow": "Finans · işlem raporları",

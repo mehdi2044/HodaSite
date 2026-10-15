@@ -1,5 +1,6 @@
 "use server";
 
+import { merchandisingTags } from "@/modules/catalog/merchandising";
 import { persistVariants } from "@/modules/catalog/persist-variants";
 import { Prisma } from "@prisma/client";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -50,7 +51,12 @@ export async function saveProduct(
       fit: optional(data, "fit"),
       season: optional(data, "season"),
       originCountry: optional(data, "originCountry").toUpperCase(),
-      tags: splitList(data.get("tags")),
+      tags: merchandisingTags(
+        splitList(data.get("tags")),
+        data.get("merchandisingFields") === "1"
+          ? data.get("newArrival") === "on"
+          : undefined,
+      ),
       status,
       basePriceAmount: String(data.get("basePriceAmount") || ""),
       coinPackCoins: optional(data, "coinPackCoins"),

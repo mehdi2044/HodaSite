@@ -88,7 +88,13 @@ for (const locale of ["fa", "tr", "en"] as const)
       const search = page.locator('.moda-search-dialog input[name="q"]');
       await search.fill("linen");
       await search.press("Enter");
-      await expect(page).toHaveURL(new RegExp(`/${locale}/search\\?q=linen`));
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === `/${locale}/search` &&
+          url.searchParams.get("q") === "linen" &&
+          url.searchParams.get("market") ===
+            { fa: "IR", tr: "TR", en: "CA" }[locale],
+      );
       await expect(nav.locator(`a[href="/${locale}/search"]`)).toHaveAttribute(
         "aria-current",
         "page",

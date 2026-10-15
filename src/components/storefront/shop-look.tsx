@@ -1,3 +1,5 @@
+import { ShoppableScene } from "./shoppable-scene";
+import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { getTranslations } from "next-intl/server";
 import { addLookAction } from "@/app/[locale]/commerce-actions";
 import { preparedLooks, type ShopLookBlock } from "@/modules/outfits";
@@ -16,6 +18,17 @@ export async function ShopLook({
   locale: "fa" | "tr" | "en";
   market: Parameters<typeof getDisplayPrice>[2];
 }) {
+  if (block.scene)
+    return (
+      <ShoppableScene
+        view={await resolveShoppableScene(block.scene, market, locale, {
+          adminPreview: preview,
+        })}
+        locale={locale}
+        preview={preview}
+        body={localizedValue(block.body, locale)}
+      />
+    );
   const [looks, t] = await Promise.all([
     preparedLooks(block, market, locale),
     getTranslations("outfit"),

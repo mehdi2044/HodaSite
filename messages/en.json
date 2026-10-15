@@ -493,7 +493,8 @@
     "addRow": "Add row",
     "variantStock": "On hand: {onHand} · Sellable: {available}",
     "manageStock": "Receive and manage stock",
-    "seoKeywords": "SEO keywords"
+    "seoKeywords": "SEO keywords",
+    "newArrival": "Show new-arrival badge"
   },
   "phase03Admin": {
     "amount": "Amount",
@@ -1212,7 +1213,17 @@
     "collectionPreview": "A look at everyday style",
     "carousel": "Carousel",
     "backCollection": "Back to collection",
-    "fullImage": "View full image"
+    "fullImage": "View full image",
+    "activeFilters": "Active filters",
+    "removeFilter": "Remove filter {filter}",
+    "decreaseQuantity": "Decrease {product} quantity",
+    "increaseQuantity": "Increase {product} quantity",
+    "quickAddSize": "Add size {size} to bag",
+    "cardColor": "Product colour",
+    "sortName": "Product name",
+    "cardOutOfStock": "Out of stock",
+    "productDescription": "Product description",
+    "tryOnModel": "Try on the model"
   },
   "finance": {
     "eyebrow": "Finance · transaction reports",

@@ -9,6 +9,10 @@ import tr from "../../messages/tr.json";
 const db = new PrismaClient();
 const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
 async function submit(page: Page, field: string) {
+  if (field === "variantId") {
+    await page.locator(".shop-product-submit .shop-add-button").click();
+    return;
+  }
   await page
     .locator("form")
     .filter({
@@ -99,7 +103,9 @@ for (const [locale, slug, province, city, postal] of [
       .toBe(true);
     await page.locator('[name="code"]').fill(code);
     await submit(page, "code");
-    await expect(page).toHaveURL(`http://127.0.0.1:3000/${locale}/checkout`);
+    await expect(page).toHaveURL(
+      new URL(`/${locale}/checkout`, info.project.use.baseURL).href,
+    );
     const headerCart = page.locator("header .storefront-cart-toggle");
     await expect(headerCart).toBeVisible();
     await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);

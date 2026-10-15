@@ -10,6 +10,13 @@ vi.mock("@/components/engagement/wishlist", () => ({
 vi.mock("@/components/storefront/link-pending", () => ({
   LinkPending: () => null,
 }));
+// This server-rendering test covers the legacy non-interactive card. The
+// actual client quick-add/variant branch is covered by moda5-commerce e2e.
+vi.mock("@/components/storefront/moda-product-card", () => ({
+  ModaProductCard: () => {
+    throw Error("Legacy fixture must retain its server card");
+  },
+}));
 vi.mock("@/modules/pricing", () => ({
   getDisplayPrice: () => {
     throw new Error("Provided display price must be reused");

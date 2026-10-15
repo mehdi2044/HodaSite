@@ -12,47 +12,83 @@ export function ProductGallery({
   variants,
   locale,
   initialColorId,
+  initialVariantId,
 }: {
   base: Entry[];
-  variants: Array<{ colorId: string; media: Entry[] }>;
+  variants: Array<{ id?: string; colorId: string; media: Entry[] }>;
   locale: "fa" | "tr" | "en";
   initialColorId?: string;
+  initialVariantId?: string;
 }) {
   const t = useTranslations("shopping"),
     [color, setColor] = useState(initialColorId ?? ""),
-    [active, setActive] = useState(0);
+    [active, setActive] = useState(0),
+    [variant, setVariant] = useState(initialVariantId ?? "");
   const track = useRef<HTMLDivElement>(null),
-    zoom = useRef<HTMLDialogElement>(null);
+    zoom = useRef<HTMLDialogElement>(null),
+    variantRef = useRef(initialVariantId ?? "");
   useEffect(() => {
     const listener = (e: Event) => {
       setColor((e as CustomEvent<string>).detail);
       setActive(0);
     };
+    const variantListener = (event: Event) => {
+      const next = (event as CustomEvent<string>).detail;
+      if (variantRef.current !== next) {
+        variantRef.current = next;
+        setVariant(next);
+        setActive(0);
+      }
+    };
     window.addEventListener("catalog-color", listener);
-    return () => window.removeEventListener("catalog-color", listener);
+    window.addEventListener("catalog-variant", variantListener);
+    return () => {
+      window.removeEventListener("catalog-color", listener);
+      window.removeEventListener("catalog-variant", variantListener);
+    };
   }, []);
-  const items = useMemo(
-    () =>
-      variants.find((v) => v.colorId === color)?.media.length
-        ? variants.find((v) => v.colorId === color)!.media
-        : base,
-    [base, variants, color],
+  const items = useMemo(() => {
+    const chosen = variants.find(
+      (item) => item.id === variant && item.colorId === color,
+    );
+    if (chosen?.media.length) return chosen.media;
+    const colorMedia = variants.find(
+      (item) => item.colorId === color && item.media.length,
+    );
+    return colorMedia?.media ?? base;
+  }, [base, variants, color, variant]);
+  const mediaKey = JSON.stringify(
+    items.map((item) => [item.id, item.media.url, item.media.variants]),
   );
   useEffect(() => {
     const root = track.current;
     if (!root) return;
     root.scrollLeft = 0;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries)
-          if (e.isIntersecting && e.intersectionRatio >= 0.6)
-            setActive(Number((e.target as HTMLElement).dataset.index));
-      },
-      { root, threshold: 0.6 },
-    );
-    for (const child of root.children) observer.observe(child);
-    return () => observer.disconnect();
-  }, [items]);
+    const desktop = matchMedia("(min-width:1024px)");
+    let observer: IntersectionObserver;
+    const connect = () => {
+      observer?.disconnect();
+      observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter(
+              (entry) => entry.isIntersecting && entry.intersectionRatio >= 0.6,
+            )
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+          if (visible[0])
+            setActive(Number((visible[0].target as HTMLElement).dataset.index));
+        },
+        { root: desktop.matches ? null : root, threshold: 0.6 },
+      );
+      for (const child of root.children) observer.observe(child);
+    };
+    connect();
+    desktop.addEventListener("change", connect);
+    return () => {
+      observer.disconnect();
+      desktop.removeEventListener("change", connect);
+    };
+  }, [mediaKey]);
   const move = (index: number) =>
     track.current?.children[index]?.scrollIntoView({
       block: "nearest",

@@ -29,6 +29,7 @@ export function SearchBox({
   const [q, setQ] = useState(initial);
   const [items, setItems] = useState<Item[]>([]);
   const sequence = useRef(0);
+  useEffect(() => setQ(initial), [initial]);
   useEffect(() => {
     const turn = ++sequence.current;
     setItems([]);
@@ -57,12 +58,13 @@ export function SearchBox({
     };
   }, [q, marketId, collectionId]);
   return (
-    <div className="relative max-w-2xl">
+    <div className="relative z-30 max-w-2xl">
       <form
         action={`/${locale}/search`}
         method="get"
         className="my-7 flex gap-2"
       >
+        <input type="hidden" name="market" value={marketCode} />
         {collectionId && (
           <input type="hidden" name="collectionId" value={collectionId} />
         )}

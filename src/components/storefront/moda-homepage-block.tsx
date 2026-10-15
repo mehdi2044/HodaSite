@@ -10,10 +10,7 @@ import type { Moda4Block } from "@/modules/content/moda4-contracts";
 import { resolveContentTarget } from "@/modules/content/moda4-targets";
 import { moda4Products } from "@/modules/content/moda4-products";
 import { resolvePublicCampaign } from "@/modules/content/campaigns";
-import {
-  getDisplayPrices,
-  type getVariantDisplayPrices,
-} from "@/modules/pricing";
+import { getDisplayPrices, getVariantDisplayPrices } from "@/modules/pricing";
 import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { ResponsiveImage } from "./responsive-image";
 import { ShoppableScene } from "./shoppable-scene";
@@ -290,8 +287,11 @@ export async function ModaHomepageBlock({
     );
   }
   if (block.type === "NewIn" || block.type === "KidsWorld") {
-    const products = await moda4Products(market.id, locale, block.source),
-      prices = await getDisplayPrices(products, market);
+    const products = await moda4Products(market.id, locale, block.source);
+    const [prices, variantPrices] = await Promise.all([
+      getDisplayPrices(products, market),
+      getVariantDisplayPrices(products, market),
+    ]);
     const href = await resolveContentTarget(block.target, market.id, locale);
     const kidsItems =
       block.type === "KidsWorld"
@@ -362,6 +362,7 @@ export async function ModaHomepageBlock({
             products.map((product) =>
               ProductCard({
                 product: { ...product, displayPrice: prices.get(product.id)! },
+                variantPrices,
                 locale,
                 market,
                 readOnly: preview,

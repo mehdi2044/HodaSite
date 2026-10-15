@@ -1,5 +1,6 @@
 "use client";
 
+import { NEW_ARRIVAL_TAG } from "@/modules/catalog/merchandising";
 import { ProductAi } from "./product-ai";
 import { attributesSchema, type Proposal } from "@/modules/ai/proposals";
 import { useMemo, useState } from "react";
@@ -254,6 +255,7 @@ export function ProductEditor({
             prefix="description"
             label={t("description")}
             value={initial.descriptionI18n}
+            required
           />
           <div className="grid gap-3 md:grid-cols-3">
             <label>
@@ -309,7 +311,26 @@ export function ProductEditor({
               label={t("originCountry")}
               defaultValue={initial.originCountry}
             />
-            <Field name="tags" label={t("tags")} defaultValue={initial.tags} />
+            <Field
+              name="tags"
+              label={t("tags")}
+              defaultValue={initial.tags
+                .split(",")
+                .map((tag) => tag.trim())
+                .filter((tag) => tag !== NEW_ARRIVAL_TAG)
+                .join(", ")}
+            />
+            <input type="hidden" name="merchandisingFields" value="1" />
+            <label className="flex items-center gap-2 min-h-11">
+              <input
+                type="checkbox"
+                name="newArrival"
+                defaultChecked={initial.tags
+                  .split(",")
+                  .some((tag) => tag.trim() === NEW_ARRIVAL_TAG)}
+              />
+              {t("newArrival")}
+            </label>
           </div>
           <fieldset>
             <legend>{t("collections")}</legend>
@@ -746,10 +767,12 @@ function LocalizedAreas({
   prefix,
   label,
   value,
+  required = false,
 }: {
   prefix: string;
   label: string;
   value: Localized;
+  required?: boolean;
 }) {
   return (
     <fieldset className="grid gap-3 rounded-[10px] border border-black/10 p-3 md:grid-cols-3">
@@ -760,7 +783,7 @@ function LocalizedAreas({
           <textarea
             name={`${prefix}${cap(locale)}`}
             defaultValue={value[locale]}
-            required
+            required={required}
             className="mt-1 min-h-28 w-full rounded-[10px] border border-black/15 p-3"
           />
         </label>

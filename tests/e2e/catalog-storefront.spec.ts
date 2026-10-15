@@ -47,7 +47,7 @@ for (const entry of [
       .filter({ hasText: /راهنمای سایز|Beden ve bakım|Size and care/ })
       .click();
     await expect(
-      page.locator("main").getByRole("button", { name: /سبد|Sepete|bag/ }),
+      page.locator(".shop-product-submit .shop-add-button"),
     ).toBeVisible();
   });
 }

@@ -1,9 +1,10 @@
+import { listingFilters } from "@/modules/catalog/listing-query";
 import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
 import { ShopLook } from "@/components/storefront/shop-look";
 import { categoryRootId } from "@/modules/catalog/tree";
 import { relevantLookBlocks } from "@/modules/outfits";
 import { seoPath } from "@/lib/seo-urls";
-import { getDisplayPrices } from "@/modules/pricing";
+import { getDisplayPrices, getVariantDisplayPrices } from "@/modules/pricing";
 import { publicMetadata } from "@/modules/seo";
 import { filteredListing, singleFacetQuery } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -82,20 +83,11 @@ export default async function CategoryPage({
   const presentation = await inheritedCategoryPresentation(category.id);
   const result = await listCatalogProducts(market.id, safe, {
     categoryId: category.id,
-    brandId: one(query.brand),
-    colorId: one(query.color),
-    sizeId: one(query.size),
-    material: one(query.material),
-    minPrice: one(query.min),
-    maxPrice: one(query.max),
-    available: one(query.available) === "1",
-    sort: one(query.sort) as
-      "newest" | "price-asc" | "price-desc" | "name" | undefined,
-    page: Number(one(query.page) || 1),
-    after: one(query.after),
+    ...listingFilters(query),
   });
-  const [prices, looks] = await Promise.all([
+  const [prices, variantPrices, looks] = await Promise.all([
     getDisplayPrices(result.items, market),
+    getVariantDisplayPrices(result.items, market),
     relevantLookBlocks(market.id, {
       categoryId: categoryRootId(facets.categories, category.id) ?? undefined,
     }),
@@ -180,6 +172,7 @@ export default async function CategoryPage({
             <ProductCard
               key={product.id}
               product={{ ...product, displayPrice: prices.get(product.id) }}
+              variantPrices={variantPrices}
               locale={safe}
               market={market}
             />

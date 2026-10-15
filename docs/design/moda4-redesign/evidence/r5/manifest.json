@@ -1,0 +1,41 @@
+{
+  "runtimeSourceSha": "17f14ee4c2716a87ae0a53c13dc56b4c5c4fbad8",
+  "builtAtUTC": "2026-10-14T23:13:42.369Z",
+  "files": [
+    {
+      "file": "r5-pdp-fa-390.png",
+      "bytes": 341817,
+      "sha256": "61eeb5d000279f10ffdb89487fee9e376c0fb8b863bcdabc8b5a53e7cf1ea3ee"
+    },
+    {
+      "file": "r5-pdp-tr-390.png",
+      "bytes": 354739,
+      "sha256": "456c97f2703acb59d0a8d1cb25bc736fadfa94b5f84d0be30ba3e52f0b34cf32"
+    },
+    {
+      "file": "r5-pdp-en-390.png",
+      "bytes": 338744,
+      "sha256": "3ee80a2e9121735d400cf45e13503d465b562fe04ee18ac614321ec5967e6251"
+    },
+    {
+      "file": "r5-pdp-en-1440.png",
+      "bytes": 513151,
+      "sha256": "4ab3a8e616aa725c2ca7a086b03408977775420b352b00e6f583c55ebfa045f1"
+    },
+    {
+      "file": "r5-checkout-fa-390.png",
+      "bytes": 49409,
+      "sha256": "45fb62fc0851f5ccc20992ede261c021cd204c8581373c9cf0f5a45027d66f72"
+    },
+    {
+      "file": "r5-checkout-tr-390.png",
+      "bytes": 52226,
+      "sha256": "392213cfc175f562c0d0560da1aaa163197001e314a550fbdc78c709c03588e0"
+    },
+    {
+      "file": "r5-checkout-en-390.png",
+      "bytes": 50784,
+      "sha256": "60a2144c3f7708addb4250affee5378338b415745b5f566c667425fc01aeda17"
+    }
+  ]
+}
