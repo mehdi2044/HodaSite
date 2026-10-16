@@ -79,19 +79,6 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
   await expect(
     page.locator('.moda-auth-progress [aria-current="step"]'),
   ).toContainText(en.accountDesign.steps.profile);
-  const personal = page.locator("#personal-details form");
-  await personal.locator('[name="firstName"]').fill("Sara");
-  await personal.locator('[name="lastName"]').fill("Fixture");
-  await personal
-    .getByRole("button", { name: en.commerce.save, exact: true })
-    .click();
-  await expect
-    .poll(
-      async () =>
-        (await db.customer.findUniqueOrThrow({ where: { email } })).firstName,
-    )
-    .toBe("Sara");
-  await page.reload();
   const actor = await db.customer.findUniqueOrThrow({ where: { email } });
   const variant = await db.variant.findUniqueOrThrow({
     where: { id: "seed-style-v2-women-tee-m" },
@@ -174,7 +161,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       expect(
         (await db.customer.findUniqueOrThrow({ where: { id: actor.id } }))
           .gender,
-      ).toBe(actor.gender);
+      ).toBeNull();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth + 1,
@@ -239,6 +226,43 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         exact: true,
       }),
     ).toBeChecked();
+    // Complete the real personal form after verifying the original empty-market fallback.
+    await page.locator('.moda-account-nav a[href="#personal-details"]').click();
+    const personal = page.locator("#personal-details form");
+    await personal.locator('[name="firstName"]').fill("Sara");
+    await personal.locator('[name="lastName"]').fill("Fixture");
+    await personal
+      .getByRole("button", { name: en.commerce.save, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.customer.findUniqueOrThrow({ where: { email } })).firstName,
+      )
+      .toBe("Sara");
+    await page.reload();
+    await page.locator('.moda-account-nav a[href="#appearance"]').click();
+    await appearance
+      .getByRole("radio", { name: en.accountDesign.themes.SAND, exact: true })
+      .check();
+    await appearance
+      .getByRole("button", { name: en.accountDesign.save, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.customer.findUniqueOrThrow({ where: { email } }))
+            .profileTheme,
+      )
+      .toBe("SAND");
+    await page.locator('.moda-account-nav a[href="#overview"]').click();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({
+      path: info.outputPath("r6-profile-created-en-1440.png"),
+      fullPage: true,
+      scale: "css",
+    });
   } finally {
     await db.customer.update({
       where: { id: actor.id },
