@@ -45,3 +45,7 @@
 .moda-instant-variant[open] { padding-top:8px; border-top:1px solid var(--border); }
 .moda-instant-ready { display:flex; align-items:center; gap:8px; font-size:12px; min-height:44px; margin-block:8px; }
 @media(max-width:760px) { .moda-instant-howto { grid-template-columns:minmax(0,1fr); } }
+/* D77: explicit Latin marketing display retains Manrope inside the Persian page. */
+html[lang="fa"] .storefront-app [data-moda4-display][lang="en"] {
+  font-family: var(--font-heading-latin,Manrope),sans-serif;
+}
