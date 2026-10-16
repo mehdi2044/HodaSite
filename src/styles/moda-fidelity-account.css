@@ -46,3 +46,9 @@ html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --bu
  .moda-profile .moda-account-nav { flex-direction:row; position:static; }
  .moda-profile .moda-account-panel { padding:20px; }
 }
+/* Prototype's neutral Sand entry state; direct profile themes stay a private choice. */
+.moda-login { background:var(--sandBackground); }
+.moda-login-form h1 [data-moda4-display] { font-family:var(--font-heading-latin,Manrope),sans-serif; font-weight:300; }
+.moda-login .moda-auth-progress { margin-bottom:4px; }
+html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --button-fill:var(--sandAccent); color:var(--surface); }
+.moda-login-notice { font-size:12px; color:var(--muted); line-height:1.75; }

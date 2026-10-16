@@ -394,7 +394,7 @@ async function main() {
   if (freshAccountTheme)
     await db.themeSettings.update({
       where: { id: "default" },
-      data: { accountMediaId: "seed-fashion-v2-look-women-knit" },
+      data: { accountMediaId: "seed-fashion-v2-accessories-scarf" },
     });
   await seedPhase03(user.id);
   await seedPhase04();

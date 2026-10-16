@@ -9,7 +9,6 @@ export default async function LoginPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params,
-    t = await getTranslations("commerce"),
     a = await getTranslations("accountDesign");
   const theme = await getThemeSettings();
   const media = theme?.accountMediaId
@@ -44,8 +43,6 @@ export default async function LoginPage({
         </div>
       </div>
       <section className="moda-login-form rounded-token border border-black/10 bg-surface p-6 shadow-sm">
-        <h1 className="mb-5 text-2xl font-semibold">{t("login")}</h1>
-        <p className="moda-login-lead">{a("passwordlessHelp")}</p>
         <CustomerLogin locale={locale} />
       </section>
     </main>
