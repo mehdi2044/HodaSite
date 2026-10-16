@@ -1,0 +1,32 @@
+/* D81 / FID-4: prototype .pdp/.gal/.buy; existing variant/gallery/cart handlers. */
+.shop-page:has(.shop-product-layout) {
+  max-width: 1440px;
+  padding: 28px 48px 80px;
+}
+.shop-product-layout { gap: 56px; align-items: start; grid-template-columns: minmax(0,1fr); }
+.shop-product-information { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.shop-product-information > * { margin-block: 0; }
+.shop-product-information .shop-product-title { font-size: 36px; font-weight: 400; letter-spacing: -.01em; line-height: 1.3; }
+.moda-product-latin { font-family: var(--font-heading-latin,Manrope),sans-serif; font-style: italic; font-size: 20px; color: var(--muted); }
+.moda-pdp-sizes { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; direction: ltr; }
+.moda-pdp-sizes button { min-height: 50px; min-width: 0; border-radius: 10px; background: var(--surface); }
+.moda-pdp-sizes button[aria-pressed="true"] { background: var(--text); color: var(--background); }
+.moda-pdp-sizes button:disabled { background: transparent; }
+.shop-add-button { min-height: 54px; }
+.shop-gallery-image img { object-position: 50% 0%; }
+@media (min-width:1100px) {
+  .shop-product-layout { grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); }
+  .shop-product-information { position: sticky; top: calc(var(--storefront-header-height,72px) + 20px); align-self: start; }
+  .shop-product-layout > .shop-gallery { display: grid; grid-template-columns: 72px minmax(0,1fr); gap: 14px; }
+  .shop-gallery-track { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 14px; overflow: visible; }
+  .shop-gallery-dots { grid-column: 1; grid-row: 1; top: calc(var(--storefront-header-height,72px) + 20px); gap: 10px; }
+  .shop-gallery-dots button { width: 72px; border-radius: 6px; }
+  .shop-gallery-slide { border-radius: 8px; }
+  .storefront-purchase { position: static; padding: 0; box-shadow: none; }
+}
+@media (max-width:760px) {
+  .shop-page:has(.shop-product-layout) { padding: 20px 20px 64px; }
+  .shop-product-layout { gap: 30px; }
+  .shop-product-information .shop-product-title { font-size: 28px; }
+  .shop-product-information { position: static; gap: 18px; }
+}

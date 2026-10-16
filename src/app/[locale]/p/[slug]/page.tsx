@@ -289,7 +289,7 @@ export default async function ProductPage({
           initialColorId={selectedVariant?.colorId}
           initialVariantId={selectedVariant?.id}
         />
-        <section className="shop-product-information">
+        <section data-moda4="pdp-buybox" className="shop-product-information">
           <p className="shop-eyebrow text-sm text-muted">
             {product.brand ? catalogText(product.brand.nameI18n, safe) : ""}
           </p>

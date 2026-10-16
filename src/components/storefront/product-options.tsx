@@ -139,7 +139,7 @@ export function ProductOptions({
       </fieldset>
       <fieldset>
         <legend className="mb-2 font-medium">{labels.size}</legend>
-        <div className="flex flex-wrap gap-2">
+        <div data-moda4="pdp-sizes" className="moda-pdp-sizes">
           {available.map((v) => (
             <button
               key={v.id}
@@ -183,6 +183,8 @@ export function ProductOptions({
           </span>
         </p>
         <button
+          data-moda4="pdp-add"
+          data-moda4-cta=""
           className="shop-add-button button w-full"
           disabled={!selected || !selected.isActive || selected.available <= 0}
         >
