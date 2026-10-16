@@ -1,3 +1,5 @@
+import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
+import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { listingFilters } from "@/modules/catalog/listing-query";
 import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
 import { ShopLook } from "@/components/storefront/shop-look";
@@ -95,28 +97,64 @@ export default async function CategoryPage({
   const children = facets.categories.filter(
     (item) => item.parentId === category.id,
   );
+  const kidsArt =
+    presentation?.kind === "kids"
+      ? (
+          await Promise.all(
+            result.items
+              .slice(0, 3)
+              .map((product) =>
+                product.variants[0]
+                  ? publicCatalogCutout(product.variants[0].id, market.id)
+                  : null,
+              ),
+          )
+        ).filter((item) => item !== null)
+      : [];
   return (
     <main
       className={`shell shop-page py-10 md:py-16 ${presentation?.kind === "kids" ? "kids-category" : ""}`}
       data-kids-tone={
         presentation?.kind === "kids" ? presentation.tone : undefined
       }
-      style={
-        presentation?.kind === "kids"
-          ? {
-              background: `linear-gradient(135deg,var(--${presentation.tone}),var(--kidsButter))`,
-            }
-          : undefined
-      }
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <header className="shop-category-intro mb-8">
+      <header
+        className="shop-category-intro mb-8"
+        data-moda4={presentation?.kind === "kids" ? "kids-header" : undefined}
+      >
+        {presentation?.kind === "kids" && (
+          <p
+            className="moda-kids-category-display"
+            data-moda4-kids-display=""
+            lang="en"
+            dir="ltr"
+          >
+            {t.rich("kidsDisplay", {
+              accent: (chunks) => <span>{chunks}</span>,
+            })}
+          </p>
+        )}
         <h1 className="text-4xl font-semibold">
           {catalogText(category.titleI18n, safe)}
         </h1>
         <p className="mt-3 max-w-3xl text-muted">
           {catalogText(category.descriptionI18n, safe)}
         </p>
+        {kidsArt.length > 0 && (
+          <div className="moda-kids-header-art" aria-hidden="true">
+            {kidsArt.map((item) => (
+              <ResponsiveImage
+                key={item.id}
+                media={{ ...item.media, altI18n: {} }}
+                locale={safe}
+                role="catalog"
+                sizes="140px"
+                imgClassName="h-full w-full object-contain"
+              />
+            ))}
+          </div>
+        )}
       </header>
       {children.length > 0 && (
         <nav className="shop-subcategories" aria-label={t("filters")}>
@@ -167,7 +205,7 @@ export default async function CategoryPage({
         {t("results", { count: result.total })}
       </p>
       {result.items.length ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div data-moda4="plp-grid" className="moda-category-grid">
           {result.items.map((product) => (
             <ProductCard
               key={product.id}

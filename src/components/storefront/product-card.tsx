@@ -234,12 +234,13 @@ export async function ProductCard({
     );
   }
   const card = (
-    <article className="shop-product-card group">
+    <article data-moda4="product-card" className="shop-product-card group">
       <Link
         href={seoPath(locale, market.code, "p", slug)}
         className="shop-product-link block"
       >
         <div
+          data-moda4="product-card-media"
           className={`shop-card-image aspect-[3/4] overflow-hidden bg-black/5 ${kids ? "kids-card-image" : ""}`}
         >
           <div

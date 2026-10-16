@@ -62,6 +62,11 @@ export async function seedFreshModa4Homepage(
   });
   if (home.marketId || home.deletedAt || home.draftBlocks || home.version !== 0)
     return;
+  // Only the proven-empty demo gets the inherited pastel kids default.
+  await db.category.update({
+    where: { id: "seed-category-kids" },
+    data: { presentation: { version: 1, kind: "kids", tone: "kidsMint" } },
+  });
   const modelImages = await Promise.all(
     Object.entries(modelKeys).map(async ([id, [kind, key]]) => {
       const image = await db.media.findUniqueOrThrow({

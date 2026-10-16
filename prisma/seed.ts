@@ -182,6 +182,12 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 };
 async function main() {
   const freshModa4Demo =
+    // Never classify a retained theme/catalog/media/menu/provider as a new demo.
+    (await db.themeSettings.count()) === 0 &&
+    (await db.category.count()) === 0 &&
+    (await db.media.count()) === 0 &&
+    (await db.menu.count()) === 0 &&
+    (await db.integration.count()) === 0 &&
     (await db.siteSettings.count()) === 0 &&
     (await db.homepage.count()) === 0 &&
     (await db.product.count()) === 0 &&

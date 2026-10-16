@@ -12,6 +12,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
     it("never touches any merchant data or files when bootstrap is not fresh", async () => {
       const tables = [
         "Homepage",
+        "Category",
         "Media",
         "CatalogCutout",
         "Product",
@@ -31,6 +32,13 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const home = await db.homepage.findUniqueOrThrow({
         where: { id: "seed-homepage-global" },
       });
+      expect(
+        (
+          await db.category.findUniqueOrThrow({
+            where: { id: "seed-category-kids" },
+          })
+        ).presentation,
+      ).toEqual({ version: 1, kind: "kids", tone: "kidsMint" });
       const blocks = homepageBlocksSchema.parse(home.blocks);
       expect(blocks.map((block) => block.type)).toEqual([
         "HeroSlider",

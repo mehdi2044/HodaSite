@@ -141,7 +141,7 @@ jobs:
           full_status=$?
           set -e
           echo "Full-contract process exit: $full_status (later-stage rows remain reported)"
-          node scripts/check-fidelity-stage.mjs 2
+          node scripts/check-fidelity-stage.mjs 3
           node scripts/fidelity-section-proof.mjs
       - name: Preserve every measurement and paired screenshot
         if: always()
