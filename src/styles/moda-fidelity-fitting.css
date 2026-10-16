@@ -49,3 +49,4 @@
 html[lang="fa"] .storefront-app [data-moda4-display][lang="en"] {
   font-family: var(--font-heading-latin,Manrope),sans-serif;
 }
+html[lang="fa"] .moda-instant header [data-moda4-display] { text-align:right; }
