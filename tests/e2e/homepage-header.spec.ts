@@ -10,6 +10,8 @@ for (const [locale, market, cartLabel] of [
     page,
   }, info) => {
     test.setTimeout(120_000);
+    // Test the first slide deterministically through the supported reduced-motion mode.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(`/${locale}/m/${market}`);
     await page.evaluate(() => document.fonts.ready);
     const hero = page.locator(
@@ -36,12 +38,14 @@ for (const [locale, market, cartLabel] of [
         .toBe(true);
       const target = new URL(
         (await hero
-          .locator(".shoppable-scene>a.button")
+          .locator(".moda-hero-acts > a.button:not(.button-outline)")
           .getAttribute("href")) ?? "",
         info.project.use.baseURL,
       );
-      expect(target.pathname).toBe(`/${locale}/search`);
-      expect(target.searchParams.get("market")).toBe(market);
+      const slugs = { fa: "زنانه", tr: "kadin", en: "women" };
+      expect(decodeURIComponent(target.pathname)).toBe(
+        `/${locale}/m/${market}/c/${slugs[locale]}`,
+      );
       await expect(cart).toHaveAccessibleName(`${cartLabel} (0)`);
       await expect(cart.locator("bdi")).toBeVisible();
       await expect(brand).toBeVisible();
