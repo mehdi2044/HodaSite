@@ -148,6 +148,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         "data-profile-theme",
         theme,
       );
+      await expect(page).toHaveURL(/#appearance$/);
       await page.reload();
       await expect(
         appearance.getByRole("radio", {

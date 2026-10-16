@@ -39,7 +39,6 @@ export function AccountSections({
     return () => window.removeEventListener("hashchange", read);
   }, [fallback]);
   useEffect(() => {
-    if (location.hash.slice(1) !== section) return;
     const frame = requestAnimationFrame(() =>
       document.getElementById(section)?.scrollIntoView({ block: "start" }),
     );
@@ -59,14 +58,15 @@ export function AccountSections({
             "addresses",
           ] as const
         ).map((id) => (
-          <a
+          <Link
             key={id}
             href={`#${id}`}
+            scroll={false}
             aria-current={section === id ? "page" : undefined}
             onClick={() => setSection(id)}
           >
             {labels[id]}
-          </a>
+          </Link>
         ))}
         <Link href={`/${locale}/account/wishlist`}>{labels.wishlist}</Link>
         <Link href={`/${locale}/account/preferences`}>{labels.privacy}</Link>
