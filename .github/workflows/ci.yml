@@ -143,6 +143,7 @@ jobs:
           echo "Full-contract process exit: $full_status (later-stage rows remain reported)"
           node scripts/check-fidelity-stage.mjs 5
           node scripts/fidelity-section-proof.mjs
+          node scripts/fidelity-fitting-proof.mjs
       - name: Preserve every measurement and paired screenshot
         if: always()
         uses: actions/upload-artifact@v4
