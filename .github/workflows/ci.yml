@@ -106,6 +106,8 @@ jobs:
       ADMIN_EMAIL: owner@example.com
       ADMIN_PASSWORD: FidelityTestFixture123!
       AUTH_SECRET: fidelity-ci-fixture
+      CRON_SECRET: fidelity-ci-cron
+      MAINTENANCE_SECRET: fidelity-ci-maintenance
       APP_URL: http://127.0.0.1:3000
       EMAIL_PROVIDER: noop
     steps:
