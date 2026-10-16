@@ -13,3 +13,5 @@ Native Chromium, production source **84a89859e4afed523c9f33dbdf421e7e5f58f40d**,
 - Consent is dismissed by clicking the real reject button before comparison. No consent is injected, accepted or bypassed. PWA/privacy controls now live in footer utilities and keep their original behavior.
 
 Owner visual approval is **pending**. Green geometry checks are not a claim of exact visual acceptance. Required branch-protection configuration remains NOT_VERIFIED (GitHub integration403). Owner Windows runtime/login and an owner-accessible hosted URL remain NOT_VERIFIED/BLOCKED_ENV; cloud loopback addresses are not a Windows delivery. No merge/main push or paid provider call.
+
+Follow-up from real R5 mobile purchase regression: the first FA run hit a nonmodal privacy-panel overlay over the empty-results reset link. The panel is now inline with the footer utilities; it never covers shopping controls. Native scroll padding also accounts for the sticky header/mobile dock. Its reject/accept, tracking gates and persistence are unchanged. Updated build/screens and unchanged purchase rerun are required before this follow-up is called verified.

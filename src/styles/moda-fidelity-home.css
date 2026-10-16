@@ -1015,16 +1015,14 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
   max-width: none;
 }
 .moda-consent-panel {
-  position: fixed;
-  z-index: 60;
-  bottom: calc(var(--storefront-nav-offset, 0px) + 12px);
-  inset-inline-end: 16px;
-  width: min(640px, calc(100vw - 32px));
-  max-height: 70dvh;
-  overflow: auto;
+  position: relative;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 640px;
   color: var(--text);
   background: var(--background);
 }
+
 @media (max-width: 760px) {
   [data-moda4="shop-the-look"] {
     min-height: 0;
@@ -1134,4 +1132,8 @@ html[data-button-style="crayon"] .moda-prism-links .button {
 }
 @media (max-width: 760px) {
   .moda-carousel-prism .moda-3d-orbit { width: 240px; height: 320px; }
+}
+/* Native scrolling keeps controls clear of the sticky header and mobile dock. */
+html:has(.storefront-app) {
+  scroll-padding-block: calc(var(--storefront-header-height,72px) + 16px) calc(var(--storefront-nav-offset,0px) + 20px);
 }
