@@ -315,7 +315,7 @@
     "inStock": "In stock",
     "lowStock": "Low stock",
     "outOfStock": "Out of stock",
-    "kidsDisplay": "Little Wanderers"
+    "kidsDisplay": "Little <accent>Wanderers</accent>"
   },
   "homepage": {
     "empty": "Homepage content has not been published yet.",

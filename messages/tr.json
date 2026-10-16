@@ -315,7 +315,7 @@
     "inStock": "Stokta",
     "lowStock": "Son ürünler",
     "outOfStock": "Stokta yok",
-    "kidsDisplay": "Little Wanderers"
+    "kidsDisplay": "Little <accent>Wanderers</accent>"
   },
   "homepage": {
     "empty": "Ana sayfa içeriği henüz yayımlanmadı.",

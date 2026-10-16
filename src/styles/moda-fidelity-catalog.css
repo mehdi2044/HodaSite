@@ -72,3 +72,39 @@ html[data-button-style="crayon"] .kids-category .kids-turntable-controls .button
   .moda-category-grid .moda-card-swatches button { min-width: 44px; }
   .kids-category .shop-category-intro { padding: 26px 24px; margin-top: 12px; }
 }
+/* Compact source filter chips; the same URL facets and complete sheet remain. */
+html[data-button-style="crayon"] .shop-page:has(.moda-category-grid) .moda-size-shortcuts .button {
+  --button-fill: transparent;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  min-height:44px;
+  padding-inline:14px;
+  font-size:12px;
+}
+html[data-button-style="crayon"] .shop-page:has(.moda-category-grid) .moda-size-shortcuts .button::after { display:none; }
+html[data-button-style="crayon"] .shop-page:has(.moda-category-grid) .moda-size-shortcuts .button[aria-pressed="true"] { background:var(--text); color:var(--background); }
+.shop-page:has(.moda-category-grid) .moda-catalog-toolbar { background:none; padding:0; margin-top:16px; gap:12px; }
+.shop-page:has(.moda-category-grid) .shop-subcategories { gap:8px; margin-block:12px; }
+.shop-page:has(.moda-category-grid) .shop-subcategories a { border-radius:999px; min-height:44px; padding:6px 14px; font-size:12px; }
+.kids-category .shop-category-intro { position:relative; overflow:hidden; padding:30px 40px; min-height:160px; margin-top:0; }
+.kids-category .shop-category-intro .moda-kids-category-display { text-align:end; font-size:clamp(40px,4.5vw,64px); position:relative; z-index:1; }
+.moda-kids-category-display span { color:var(--kidsAccent); font-weight:300; }
+.kids-category .shop-category-intro h1, .kids-category .shop-category-intro > p:not(.moda-kids-category-display) { text-align:start; margin:0; font-size:12px; position:relative; z-index:1; }
+.moda-kids-header-art { position:absolute; bottom:-10px; left:24px; width:45%; height:145px; display:flex; align-items:end; gap:12px; }
+.moda-kids-header-art > picture { flex:1; min-width:0; height:100%; }
+.kids-motion-card { position:relative; }
+.kids-motion-tools { position:absolute; inset-inline-end:8px; top:8px; z-index:5; }
+.kids-motion-tools summary { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; background:var(--background); cursor:pointer; list-style:none; }
+.kids-motion-tools[open] { padding:4px; border-radius:14px; background:var(--background); box-shadow:0 8px 24px #14121022; }
+.kids-motion-tools .kids-turntable-controls { max-width:170px; }
+.moda-category-grid > .kids-motion-card:nth-child(4n+1) { --kids-card-tone:var(--kidsPeach)!important; }
+.moda-category-grid > .kids-motion-card:nth-child(4n+2) { --kids-card-tone:var(--kidsMint)!important; }
+.moda-category-grid > .kids-motion-card:nth-child(4n+3) { --kids-card-tone:var(--kidsLilac)!important; }
+.moda-category-grid > .kids-motion-card:nth-child(4n) { --kids-card-tone:var(--kidsSky)!important; }
+@media (max-width:760px) {
+ .kids-category .shop-category-intro { padding:22px 20px 118px; }
+ .kids-category .shop-category-intro .moda-kids-category-display { font-size:40px; }
+ .moda-kids-header-art { width:85%; height:115px; }
+}

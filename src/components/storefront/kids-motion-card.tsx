@@ -107,41 +107,44 @@ export function KidsMotionCard({
       }}
     >
       {children}
-      <div
-        className="kids-turntable-controls flex flex-wrap gap-2 mt-2"
-        aria-label={t("angleControls")}
-      >
-        <button
-          type="button"
-          className="button"
-          aria-label={t("angleLeft")}
-          onClick={() => {
-            setAutomatic(false);
-            paint(angle.current - 10);
-          }}
+      <details className="kids-motion-tools">
+        <summary aria-label={t("angleControls")}>↻</summary>
+        <div
+          className="kids-turntable-controls flex flex-wrap gap-2 mt-2"
+          aria-label={t("angleControls")}
         >
-          ↶
-        </button>
-        <button
-          type="button"
-          className="button"
-          aria-label={t("angleRight")}
-          onClick={() => {
-            setAutomatic(false);
-            paint(angle.current + 10);
-          }}
-        >
-          ↷
-        </button>
-        <button
-          type="button"
-          className="button"
-          aria-pressed={automatic}
-          onClick={() => setAutomatic((value) => !value)}
-        >
-          {t(automatic ? "pauseMotion" : "startMotion")}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="button"
+            aria-label={t("angleLeft")}
+            onClick={() => {
+              setAutomatic(false);
+              paint(angle.current - 10);
+            }}
+          >
+            ↶
+          </button>
+          <button
+            type="button"
+            className="button"
+            aria-label={t("angleRight")}
+            onClick={() => {
+              setAutomatic(false);
+              paint(angle.current + 10);
+            }}
+          >
+            ↷
+          </button>
+          <button
+            type="button"
+            className="button"
+            aria-pressed={automatic}
+            onClick={() => setAutomatic((value) => !value)}
+          >
+            {t(automatic ? "pauseMotion" : "startMotion")}
+          </button>
+        </div>
+      </details>
     </div>
   );
 }

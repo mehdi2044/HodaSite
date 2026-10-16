@@ -1,3 +1,5 @@
+import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
+import { ResponsiveImage } from "@/components/storefront/responsive-image";
 import { listingFilters } from "@/modules/catalog/listing-query";
 import { inheritedCategoryPresentation } from "@/modules/catalog/category-presentation";
 import { ShopLook } from "@/components/storefront/shop-look";
@@ -95,6 +97,20 @@ export default async function CategoryPage({
   const children = facets.categories.filter(
     (item) => item.parentId === category.id,
   );
+  const kidsArt =
+    presentation?.kind === "kids"
+      ? (
+          await Promise.all(
+            result.items
+              .slice(0, 3)
+              .map((product) =>
+                product.variants[0]
+                  ? publicCatalogCutout(product.variants[0].id, market.id)
+                  : null,
+              ),
+          )
+        ).filter((item) => item !== null)
+      : [];
   return (
     <main
       className={`shell shop-page py-10 md:py-16 ${presentation?.kind === "kids" ? "kids-category" : ""}`}
@@ -114,7 +130,9 @@ export default async function CategoryPage({
             lang="en"
             dir="ltr"
           >
-            {t("kidsDisplay")}
+            {t.rich("kidsDisplay", {
+              accent: (chunks) => <span>{chunks}</span>,
+            })}
           </p>
         )}
         <h1 className="text-4xl font-semibold">
@@ -123,6 +141,20 @@ export default async function CategoryPage({
         <p className="mt-3 max-w-3xl text-muted">
           {catalogText(category.descriptionI18n, safe)}
         </p>
+        {kidsArt.length > 0 && (
+          <div className="moda-kids-header-art" aria-hidden="true">
+            {kidsArt.map((item) => (
+              <ResponsiveImage
+                key={item.id}
+                media={{ ...item.media, altI18n: {} }}
+                locale={safe}
+                role="catalog"
+                sizes="140px"
+                imgClassName="h-full w-full object-contain"
+              />
+            ))}
+          </div>
+        )}
       </header>
       {children.length > 0 && (
         <nav className="shop-subcategories" aria-label={t("filters")}>

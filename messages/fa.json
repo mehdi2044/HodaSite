@@ -315,7 +315,7 @@
     "inStock": "موجود",
     "lowStock": "موجودی رو به پایان",
     "outOfStock": "ناموجود",
-    "kidsDisplay": "Little Wanderers"
+    "kidsDisplay": "Little <accent>Wanderers</accent>"
   },
   "homepage": {
     "empty": "هنوز محتوایی برای صفحهٔ اصلی منتشر نشده است.",
