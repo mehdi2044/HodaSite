@@ -10,6 +10,8 @@ for (const [locale, market, cartLabel] of [
     page,
   }, info) => {
     test.setTimeout(120_000);
+    // Test the first slide deterministically through the supported reduced-motion mode.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(`/${locale}/m/${market}`);
     await page.evaluate(() => document.fonts.ready);
     const hero = page.locator(
