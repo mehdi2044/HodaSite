@@ -39,6 +39,16 @@ logo = open(os.path.join(PKG, "brand/moda4-wordmark.svg"), encoding="utf-8").rea
 logo = logo.replace('role="img" aria-label="MODA4"><title>MODA4</title>', 'aria-hidden="true" focusable="false">').replace('<path fill="none" stroke', '<path class="hk" fill="none" stroke')
 t = t.replace("{{LOGO}}", logo)
 mark = open(os.path.join(PKG, "brand/moda4-mark.svg"), encoding="utf-8").read()
+# Fonts: the app's own self-hosted @font-face rules (D26/D77), embedded so the prototype
+# renders the approved typography offline and without Google Fonts.
+css = open(os.path.join(ROOT, "src/styles/tokens.css"), encoding="utf-8").read()
+faces = [f for f in re.findall(r"@font-face\s*\{[^}]*\}", css) if re.search(r"Manrope|Inter|Vazirmatn", f)]
+def _font(m):
+    data = open(os.path.join(ROOT, "public", m.group(1).lstrip("/")), "rb").read()
+    return 'url("data:font/woff2;base64,' + base64.b64encode(data).decode() + '")'
+faces = [re.sub(r'url\("(/fonts/[^"]+\.woff2)"\)', _font, f) for f in faces]
+assert faces and all("data:font/woff2" in f for f in faces), "font faces not found"
+t = t.replace("{{FONTFACES}}", "\n".join(faces))
 t = t.replace("{{MARK}}", "data:image/svg+xml;base64," + base64.b64encode(mark.encode()).decode())
 open(OUT, "w", encoding="utf-8").write(t)
 print(len(m), "images ->", os.path.relpath(OUT, ROOT), round(len(t) / 1e6, 2), "MB")

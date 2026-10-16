@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MODA4 — Autumn / Winter 26</title>
 <link rel="icon" type="image/svg+xml" href="{{MARK}}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200..800&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Caveat:wght@500;700&family=Fredoka:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>/* self-hosted fonts (D26), copied from src/styles/tokens.css by build.py */
+{{FONTFACES}}
+</style>
 <style>
 :root{
   --paper:#F7F4EF; --ink:#141210; --stone:#6B645C; --line:rgba(20,18,16,.12); --sand:#ECE5DA; --sand-2:#E2D8CA;
   --accent:#FF6A1A; --accent-ink:#B93D0B; --white:#fff; --ok:#2E7D4F;
-  --fa:Vazirmatn, Tahoma, sans-serif; --serif:"Bodoni Moda", "Didot", Georgia, serif; --hand:Caveat, "Comic Sans MS", cursive; --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --fa:Vazirmatn, Tahoma, sans-serif; --serif:Manrope, Inter, sans-serif; --hand:Manrope, Inter, sans-serif; --mono:Inter, sans-serif;
   --hdr:72px;
 }
 *{box-sizing:border-box}
@@ -645,7 +645,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stro
 </style>
 <style>
 /* ===== v3 additions ===== */
-:root{--k1:#F8D7E3;--k2:#CFEEDF;--k3:#CFE4F8;--k4:#FFF0B3;--k5:#E4DAF7;--k6:#FFDCCB;--kid:"Fredoka", Vazirmatn, sans-serif}
+:root{--k1:#F8D7E3;--k2:#CFEEDF;--k3:#CFE4F8;--k4:#FFF0B3;--k5:#E4DAF7;--k6:#FFDCCB;--kid:Manrope, Vazirmatn, sans-serif}
 /* logo */
 .logo{display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .logo svg{height:30px;width:auto;display:block;overflow:visible}
@@ -826,10 +826,14 @@ body.kidsmode .shop-hd{display:none}
   .kid-hd{padding:26px 22px}.kid-hd img{height:100px}
 }
 
+/* D77 typography: Manrope display, Inter UI/prices, Vazirmatn Persian */
+html{font-synthesis:weight}
+[data-moda4-display],[data-moda4-kids-display]{font-weight:700;letter-spacing:-.035em}
+[data-moda4-display] em,[data-moda4-kids-display] span{font-weight:300}
+.float .note{font-size:17px;font-weight:600}
 </style>
 </head>
 <body>
-<div id="loader" aria-hidden="true"><div class="lg">{{LOGO}}<i></i></div></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <filter id="crayon" x="-5%" y="-20%" width="110%" height="140%">
@@ -1718,8 +1722,7 @@ $('#gsel [data-g="neutral"]').setAttribute('aria-pressed', 'true');
 /* ===================== v3 additions ===================== */
 
 /* loader */
-window.addEventListener('load', function(){ setTimeout(function(){ $('#loader').classList.add('out'); }, reduce ? 0 : 1500); });
-setTimeout(function(){ $('#loader').classList.add('out'); }, 3500);
+/* removed under D77: no blocking splash screen */
 
 /* split hero titles into letters */
 $$('.slide h1, .slide h2').forEach(function(h){

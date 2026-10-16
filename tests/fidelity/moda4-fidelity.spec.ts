@@ -48,6 +48,13 @@ const VIEWPORTS = [
 ] as const;
 
 const OUT = path.join(ROOT, "test-results/moda4-fidelity", TARGET);
+
+/**
+ * Typography roles from the owner-approved D77 amendment of D26: Manrope for Latin display
+ * headings (kids included), Inter for Latin UI/body/prices, Vazirmatn for Persian.
+ * Change these only together with the ADR.
+ */
+const DISPLAY_FONT = "Manrope";
 type Result = {
   page: string;
   viewport: string;
@@ -112,6 +119,10 @@ for (const vp of VIEWPORTS) {
         const ctx = { page: name, viewport: vp.name };
         const desktop = vp.name === "desktop";
         await open(page, name);
+        // In-page rules cannot see Node scope; expose the approved display font on <html>.
+        await page.evaluate((f) => {
+          document.documentElement.dataset.moda4TestFont = f;
+        }, DISPLAY_FONT);
         fs.mkdirSync(OUT, { recursive: true });
         await page.screenshot({
           path: path.join(OUT, `${name}-${vp.width}.png`),
@@ -141,13 +152,13 @@ for (const vp of VIEWPORTS) {
           page,
           ctx,
           "G2",
-          "logo [data-moda4=logo] is inline SVG" +
+          "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)" +
             (desktop ? ", centred in header (±4%)" : ""),
           (vw) => {
             const l = document.querySelector<HTMLElement>("[data-moda4=logo]");
             if (!l) return [false, "missing"];
-            if (!l.querySelector("svg"))
-              return [false, "no inline <svg> (hanger hook cannot swing)"];
+            const mark = l.querySelector("svg, img");
+            if (!mark) return [false, "no logo svg/img inside the hook"];
             const r = l.getBoundingClientRect();
             const off = Math.abs(r.left + r.width / 2 - vw / 2) / vw;
             return [
@@ -160,16 +171,16 @@ for (const vp of VIEWPORTS) {
           page,
           ctx,
           "G3",
-          "footer [data-moda4=footer] with giant SVG wordmark (≥50% width on desktop)",
+          "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
           (vw) => {
             const f = document.querySelector("[data-moda4=footer]");
             const w = document.querySelector<HTMLElement>(
               "[data-moda4=footer-wordmark]",
             );
             if (!f || !w) return [false, `footer ${!!f}, wordmark ${!!w}`];
-            const svg = w.querySelector("svg");
-            if (!svg) return [false, "wordmark is not inline SVG"];
-            const r = svg.getBoundingClientRect();
+            const mark = w.querySelector("svg, img");
+            if (!mark) return [false, "wordmark has no logo svg/img"];
+            const r = mark.getBoundingClientRect();
             return [
               vw < 760 || r.width >= vw * 0.5,
               `wordmark width ${Math.round(r.width)}px`,
@@ -224,7 +235,11 @@ for (const vp of VIEWPORTS) {
               els.length,
               els
                 .filter(
-                  (e) => !/Bodoni Moda/i.test(getComputedStyle(e).fontFamily),
+                  (e) =>
+                    !new RegExp(
+                      document.documentElement.dataset.moda4TestFont ?? "",
+                      "i",
+                    ).test(getComputedStyle(e).fontFamily),
                 )
                 .map((e) => getComputedStyle(e).fontFamily.split(",")[0]),
             ];
@@ -234,12 +249,33 @@ for (const vp of VIEWPORTS) {
             ...ctx,
             id: "G7",
             rule:
-              "display headings [data-moda4-display] use Bodoni Moda" +
+              `display headings [data-moda4-display] use ${DISPLAY_FONT}` +
               (required ? " (at least one on this page)" : ""),
             pass: bad.length === 0 && (!required || count > 0),
             detail: bad.length
-              ? `not Bodoni: ${bad.slice(0, 3).join(" / ")}`
+              ? `not ${DISPLAY_FONT}: ${bad.slice(0, 3).join(" / ")}`
               : `${count} visible`,
+          });
+        }
+
+        {
+          // Declared is not enough: the self-hosted display face must really load (D26/D77).
+          const loaded = await page.evaluate(async (f) => {
+            await document.fonts.ready;
+            await Promise.allSettled([
+              document.fonts.load(`700 48px "${f}"`, "MODA"),
+              document.fonts.load(`700 48px "${f}"`, "ğşİ"),
+            ]);
+            return document.fonts.check(`700 48px "${f}"`, "MODA ğşİ");
+          }, DISPLAY_FONT);
+          results.push({
+            ...ctx,
+            id: "G8",
+            rule: `${DISPLAY_FONT} is actually loaded from self-hosted files (incl. Turkish glyphs)`,
+            pass: loaded,
+            detail: loaded
+              ? "loaded"
+              : "not available — check @font-face/self-hosting",
           });
         }
 
@@ -319,7 +355,7 @@ for (const vp of VIEWPORTS) {
             page,
             ctx,
             "H4",
-            "hero title [data-moda4=hero-title] is Bodoni Moda, ≥56px desktop / ≥40px mobile",
+            `hero title [data-moda4=hero-title] is ${DISPLAY_FONT}, ≥56px desktop / ≥40px mobile`,
             (vw) => {
               const t = document.querySelector<HTMLElement>(
                 "[data-moda4=hero-title]",
@@ -328,8 +364,10 @@ for (const vp of VIEWPORTS) {
               const cs = getComputedStyle(t);
               const size = parseFloat(cs.fontSize);
               return [
-                /Bodoni Moda/i.test(cs.fontFamily) &&
-                  size >= (vw >= 760 ? 56 : 40),
+                new RegExp(
+                  document.documentElement.dataset.moda4TestFont ?? "",
+                  "i",
+                ).test(cs.fontFamily) && size >= (vw >= 760 ? 56 : 40),
                 `${cs.fontFamily.split(",")[0]} ${size}px`,
               ];
             },
@@ -488,7 +526,7 @@ for (const vp of VIEWPORTS) {
             page,
             ctx,
             "H13",
-            "kids world: pastel gradient ground, Fredoka heading, turntable ≥4 items",
+            `kids world: pastel gradient ground, ${DISPLAY_FONT} display heading, turntable ≥4 items`,
             () => {
               const k = document.querySelector<HTMLElement>(
                 "[data-moda4=kids-world]",
@@ -503,7 +541,12 @@ for (const vp of VIEWPORTS) {
                 "[data-moda4=kids-turntable-item]",
               ).length;
               return [
-                bg.includes("gradient") && /Fredoka/i.test(ff) && items >= 4,
+                bg.includes("gradient") &&
+                  new RegExp(
+                    document.documentElement.dataset.moda4TestFont ?? "",
+                    "i",
+                  ).test(ff) &&
+                  items >= 4,
                 `bg ${bg.slice(0, 30)}…, heading ${ff.split(",")[0] || "missing"}, ${items} items`,
               ];
             },
@@ -519,7 +562,7 @@ for (const vp of VIEWPORTS) {
             page,
             ctx,
             "H15",
-            "home page stays compact: no duplicated scenes (≤8,500px desktop / ≤9,500px mobile; prototype ≈6,800 / 7,600)",
+            "home page stays compact: no duplicated scenes (≤8,500px desktop / ≤9,500px mobile; prototype ≈6,800 / 7,700)",
             (vw) => {
               const h = document.documentElement.scrollHeight;
               return [h <= (vw >= 760 ? 8500 : 9500), `${h}px`];
@@ -606,7 +649,7 @@ for (const vp of VIEWPORTS) {
             page,
             ctx,
             "K1",
-            "kids presentation: pastel header [data-moda4=kids-header] with gradient + Fredoka",
+            `kids presentation: pastel header [data-moda4=kids-header] with gradient + ${DISPLAY_FONT} heading`,
             () => {
               const h = document.querySelector<HTMLElement>(
                 "[data-moda4=kids-header]",
@@ -618,7 +661,10 @@ for (const vp of VIEWPORTS) {
               const ok =
                 getComputedStyle(h).backgroundImage.includes("gradient") &&
                 !!t &&
-                /Fredoka/i.test(getComputedStyle(t).fontFamily);
+                new RegExp(
+                  document.documentElement.dataset.moda4TestFont ?? "",
+                  "i",
+                ).test(getComputedStyle(t).fontFamily);
               return [ok, getComputedStyle(h).backgroundImage.slice(0, 40)];
             },
           );
