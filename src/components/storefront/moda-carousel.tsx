@@ -1,5 +1,5 @@
+"use client";
 import { ModaWordmark } from "./moda-wordmark";
-("use client");
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { useTranslations } from "next-intl";
