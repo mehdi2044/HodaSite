@@ -2907,6 +2907,11 @@
     "chooseVariant": "Choose an actual colour and size",
     "try": "Try on model",
     "moreLooks": "More saved looks",
-    "reviewCurrent": "Review and use current clothes"
+    "reviewCurrent": "Review and use current clothes",
+    "displayTitle": "Your fitting room.",
+    "stepModel": "Choose a model and drag or use the arrow keys to turn it.",
+    "stepPick": "Pick up to four pieces. Each ready cutout appears in its validated position immediately.",
+    "stepSave": "Save to your private wardrobe or add the actual available sizes to your bag.",
+    "onlyCompatible": "Show compatible cutouts for this model"
   }
 }

@@ -27,3 +27,21 @@
   .moda-instant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
 @media (prefers-reduced-motion:reduce) { .moda-instant-turn { transition:none; } }
+.moda-instant header { max-width:none; }
+.moda-instant header h1, .moda-instant header h2 { font-family:var(--font-heading-latin,Manrope),sans-serif; font-size:clamp(38px,4vw,56px); font-weight:400; text-align:start; }
+.moda-instant-howto { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-block:26px; }
+.moda-instant-howto li { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; font-size:12px; line-height:1.7; }
+.moda-instant-howto b { color:var(--primaryText); font-size:20px; display:block; }
+.moda-instant-models { justify-content:center; gap:8px; }
+.moda-instant-workspace fieldset { margin:0; }
+.moda-instant-workspace .moda-instant-stage { margin-top:14px; }
+.moda-instant-product { align-items:center; }
+.moda-instant-product > button.moda-instant-pick { height:104px; padding:0!important; border:0; border-radius:8px; margin:0; background:none; }
+.moda-instant-product:has(.moda-instant-pick[aria-pressed="true"]) { border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent); }
+.moda-instant-product h3 { margin:0; }
+.moda-instant-product bdi { margin:0; }
+.moda-instant-variant { width:100%; font-size:11px; }
+.moda-instant-variant > summary { min-height:44px; cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center; list-style:none; }
+.moda-instant-variant[open] { padding-top:8px; border-top:1px solid var(--border); }
+.moda-instant-ready { display:flex; align-items:center; gap:8px; font-size:12px; min-height:44px; margin-block:8px; }
+@media(max-width:760px) { .moda-instant-howto { grid-template-columns:minmax(0,1fr); } }

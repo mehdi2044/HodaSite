@@ -74,6 +74,7 @@ async function choose(page: Page, locale: "fa" | "tr" | "en", key: string) {
   await room.getByRole("button", { name: dict.search, exact: true }).click();
   const card = room.locator(`[data-product-id="${profile.productId}"]`);
   await expect(card).toBeVisible();
+  await card.locator(".moda-instant-variant > summary").click();
   await card.getByLabel(dict.variant, { exact: true }).selectOption(v.id);
   await card.getByRole("button", { name: dict.try, exact: true }).click();
   await expect(
