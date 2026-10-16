@@ -3,7 +3,11 @@ import { useTranslations } from "next-intl";
 export function AccountProgress({ step }: { step: 1 | 2 | 3 }) {
   const t = useTranslations("accountDesign");
   return (
-    <ol className="moda-auth-progress" aria-label={t("progress")}>
+    <ol
+      data-moda4="auth-steps"
+      className="moda-auth-progress"
+      aria-label={t("progress")}
+    >
       {(["email", "code", "profile"] as const).map((label, index) => (
         <li
           key={label}

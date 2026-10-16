@@ -2863,7 +2863,14 @@
       "code": "Doğrulama kodu",
       "profile": "Profil"
     },
-    "activeOrder": "Güncel sipariş"
+    "activeOrder": "Güncel sipariş",
+    "joinClub": "Join the <accent>club.</accent>",
+    "clubHelp": "Özel gardırobun, kayıtlı bedenlerin ve sana özel prova odan.",
+    "passwordlessHelp": "Şifre yok. E-postanı yaz, sana tek kullanımlık bir kod gönderelim.",
+    "signInDisplay": "Giriş yap veya kaydol",
+    "welcomeDisplay": "Welcome",
+    "enterCodeDisplay": "Kodunu gir",
+    "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
     "eyebrow": "Anında stil",

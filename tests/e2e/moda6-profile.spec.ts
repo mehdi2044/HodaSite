@@ -100,6 +100,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await expect(
         page.locator('select[name="preferredMarketId"]'),
       ).toHaveValue(selectedMarket.id);
+      await page.locator('.moda-account-nav a[href$="#appearance"]').click();
       const appearance = page.locator("#appearance"),
         form = appearance.locator("form");
       await appearance
@@ -114,6 +115,27 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await appearance
         .locator('input[name="categoryIds"][value="seed-category-women"]')
         .check();
+      // Native hash navigation must retain unsaved selections without saving them.
+      await page.locator('.moda-account-nav a[href$="#overview"]').click();
+      await expect(
+        page.locator('[data-account-view="overview"]'),
+      ).toBeVisible();
+      await expect(appearance).not.toBeVisible();
+      await page.goBack();
+      await expect(appearance).toBeVisible();
+      await expect(
+        appearance.getByRole("radio", {
+          name: copy.accountDesign.themes[theme],
+          exact: true,
+        }),
+      ).toBeChecked();
+      expect(
+        (await db.customer.findUniqueOrThrow({ where: { id: actor.id } }))
+          .presentationVersion,
+      ).toBe(version);
+      await page.goForward();
+      await expect(appearance).not.toBeVisible();
+      await page.locator('.moda-account-nav a[href$="#appearance"]').click();
       await form
         .getByRole("button", { name: copy.accountDesign.save, exact: true })
         .click();
@@ -129,6 +151,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         "data-profile-theme",
         theme,
       );
+      await expect(page).toHaveURL(/#appearance$/);
       await page.reload();
       await expect(
         appearance.getByRole("radio", {
@@ -148,6 +171,15 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       ).toBe(true);
+      await page.locator('.moda-account-nav a[href$="#overview"]').click();
+      await expect(
+        page.locator('[data-account-view="overview"]'),
+      ).toBeVisible();
+      const reject = page.getByTestId("consent-reject");
+      if (await reject.isVisible()) {
+        await reject.click();
+        await expect(reject).not.toBeVisible();
+      }
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
       await page.evaluate(() => scrollTo(0, 0));
       await page.evaluate(() => document.fonts.ready);
@@ -174,6 +206,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         await page.setViewportSize({ width: 390, height: 844 });
       }
     }
+    await page.locator('.moda-account-nav a[href$="#appearance"]').click();
     const appearance = page.locator("#appearance");
     await appearance.locator("details summary").click();
     await appearance
@@ -205,6 +238,59 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         exact: true,
       }),
     ).toBeChecked();
+    // Complete the real personal form after verifying the original empty-market fallback.
+    await page
+      .locator('.moda-account-nav a[href$="#personal-details"]')
+      .click();
+    const personal = page.locator("#personal-details form");
+    await personal.locator('[name="firstName"]').fill("Sara");
+    await personal.locator('[name="lastName"]').fill("Fixture");
+    await personal
+      .getByRole("button", { name: en.commerce.save, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.customer.findUniqueOrThrow({ where: { email } })).firstName,
+      )
+      .toBe("Sara");
+    await page.reload();
+    await page.locator('.moda-account-nav a[href$="#appearance"]').click();
+    await appearance
+      .getByRole("radio", { name: en.accountDesign.themes.SAND, exact: true })
+      .check();
+    await appearance
+      .getByRole("button", { name: en.accountDesign.save, exact: true })
+      .click();
+    await expect
+      .poll(
+        async () =>
+          (await db.customer.findUniqueOrThrow({ where: { email } }))
+            .profileTheme,
+      )
+      .toBe("SAND");
+    await page.locator('.moda-account-nav a[href$="#overview"]').click();
+    await expect(page.locator('[data-account-view="overview"]')).toBeVisible();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({
+      path: info.outputPath("r6-profile-created-en-1440.png"),
+      fullPage: true,
+      scale: "css",
+    });
+    await context.addCookies([
+      { name: "market", value: "IR", url: info.project.use.baseURL! },
+    ]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/fa/account?view=overview#overview");
+    const reject = page.getByTestId("consent-reject");
+    if (await reject.isVisible()) await reject.click();
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({
+      path: info.outputPath("r6-profile-created-fa-390.png"),
+      fullPage: true,
+      scale: "css",
+    });
   } finally {
     await db.customer.update({
       where: { id: actor.id },

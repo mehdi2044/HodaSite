@@ -62,6 +62,18 @@ export function CustomerLogin({ locale }: { locale: string }) {
   return (
     <div className="grid gap-5">
       <AccountProgress step={challenge ? 2 : 1} />
+      <h1>
+        {challenge ? (
+          a("enterCodeDisplay")
+        ) : (
+          <>
+            {a("signInDisplay")}{" "}
+            <span data-moda4-display="" lang="en" dir="ltr">
+              {a("welcomeDisplay")}
+            </span>
+          </>
+        )}
+      </h1>
       {challenge ? (
         <>
           <CommerceForm
@@ -133,7 +145,7 @@ export function CustomerLogin({ locale }: { locale: string }) {
         </>
       ) : (
         <CommerceForm action={request}>
-          <p className="text-muted">{t("loginIntro")}</p>
+          <p className="moda-login-lead">{a("passwordlessHelp")}</p>
           <label>
             {t("email")}
             <input
@@ -147,6 +159,7 @@ export function CustomerLogin({ locale }: { locale: string }) {
             />
           </label>
           <button className="button">{t("sendCode")}</button>
+          <p className="moda-login-notice">{a("signInNotice")}</p>
         </CommerceForm>
       )}
     </div>
