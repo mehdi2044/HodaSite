@@ -81,6 +81,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
   ).toContainText(en.accountDesign.steps.profile);
   const personal = page.locator("#personal-details form");
   await personal.locator('[name="firstName"]').fill("Sara");
+  await personal.locator('[name="lastName"]').fill("Fixture");
   await personal
     .getByRole("button", { name: en.commerce.save, exact: true })
     .click();
@@ -173,7 +174,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       expect(
         (await db.customer.findUniqueOrThrow({ where: { id: actor.id } }))
           .gender,
-      ).toBeNull();
+      ).toBe(actor.gender);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth + 1,
