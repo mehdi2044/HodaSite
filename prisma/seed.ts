@@ -192,6 +192,8 @@ async function main() {
     (await db.homepage.count()) === 0 &&
     (await db.product.count()) === 0 &&
     (await db.order.count()) === 0;
+  const freshAccountTheme =
+    freshModa4Demo && (await db.themeSettings.count()) === 0;
   const freshInstantDemo =
     freshModa4Demo &&
     (await db.integration.count({ where: { key: "fitting-room" } })) === 0;
@@ -389,6 +391,11 @@ async function main() {
     freshModa4Demo,
     freshInstantDemo,
   );
+  if (freshAccountTheme)
+    await db.themeSettings.update({
+      where: { id: "default" },
+      data: { accountMediaId: "seed-fashion-v2-look-women-knit" },
+    });
   await seedPhase03(user.id);
   await seedPhase04();
   await seedLedgerAccounts(db);

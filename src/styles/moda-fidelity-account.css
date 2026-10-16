@@ -1,0 +1,48 @@
+/* D81 / FID-6: prototype .acct/.form/.steps and .prof/.pcover/.playout. */
+.moda-login { max-width:none; margin:0; width:100%; padding:0; min-height:calc(100vh - var(--storefront-header-height,72px) - 36px); display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0; background:var(--background); }
+.moda-login-art { position:relative; overflow:hidden; min-height:760px; border-radius:0; background:var(--sand); }
+.moda-login-art picture, .moda-login-art img { position:absolute; inset:0; width:100%; height:100%; max-height:none; object-fit:cover; object-position:50% 0%; }
+.moda-login-art::after { content:""; position:absolute; inset:0; background:linear-gradient(transparent 55%,#1412108c); }
+.moda-login-caption { position:absolute; inset-inline:40px; bottom:40px; z-index:2; color:var(--background); }
+.moda-login-caption h2 { font-family:var(--font-heading-latin,Manrope),sans-serif; font-size:64px; line-height:.95; font-weight:400; margin:0; text-align:end; }
+.moda-login-caption p { margin-top:10px; font-size:16px; }
+.moda-login .moda-login-form { display:flex; flex-direction:column; justify-content:center; align-self:stretch; justify-self:center; width:100%; max-width:640px; padding:56px clamp(24px,6vw,96px); gap:26px; border:0; border-radius:0; box-shadow:none; background:none; }
+.moda-login-form h1 { font-size:38px; font-weight:300; line-height:1.3; margin:0; }
+.moda-login-lead { margin:0; color:var(--muted); font-size:15px; line-height:1.9; }
+.moda-login .moda-auth-progress { gap:8px; font-size:12px; }
+.moda-login .moda-auth-progress li { position:relative; padding-top:14px; }
+.moda-login .moda-auth-progress li::before { content:""; position:absolute; inset-inline:0; top:0; height:3px; border-radius:3px; background:color-mix(in srgb,var(--text) 12%,transparent); }
+.moda-login .moda-auth-progress li[aria-current="step"]::before, .moda-login .moda-auth-progress li[data-complete="true"]::before { background:var(--text); }
+.moda-login .moda-auth-progress span { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.moda-login input:not([type=checkbox]) { min-height:54px; border-radius:10px; background:var(--surface); }
+html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --button-fill:var(--text); color:var(--background); }
+.moda-profile { width:100%; max-width:none; border-radius:0; padding:0 0 40px; margin:0; }
+.moda-profile > :not(.moda-profile-cover) { max-width:1344px; width:calc(100% - 96px); margin-inline:auto; }
+.moda-profile .moda-profile-cover { width:100%; max-width:none; padding:56px max(48px,calc((100vw - 1344px)/2)) 70px; background:var(--profile-ink); color:var(--background); border-radius:0; position:relative; overflow:hidden; gap:28px; }
+.moda-profile-cover::before { content:""; position:absolute; inset:0; background:radial-gradient(circle at 85% 30%,color-mix(in srgb,var(--profile-accent) 70%,transparent),transparent 55%),radial-gradient(circle at 10% 110%,color-mix(in srgb,var(--profile-soft) 35%,transparent),transparent 45%); }
+.moda-profile-cover > * { position:relative; }
+.moda-profile-avatar { width:112px; height:112px; font-family:var(--font-heading-latin,Manrope),Vazirmatn,sans-serif; font-size:44px; font-weight:500; background:none; border:3px dashed var(--primary); }
+.moda-profile-cover h2 { font-size:40px; font-weight:300; }
+.moda-profile-cover p { color:var(--background); opacity:.85; }
+.moda-profile .moda-account-layout { grid-template-columns:240px minmax(0,1fr); gap:40px; padding-top:36px; }
+.moda-profile .moda-account-nav { border:0; border-radius:0; gap:4px; top:calc(var(--storefront-header-height,72px) + 20px); }
+.moda-profile .moda-account-nav a { border:0; border-radius:12px; min-height:48px; padding:0 16px; font-size:14.5px; }
+.moda-profile .moda-account-nav a[aria-current] { background:var(--surface); color:var(--profile-accent); box-shadow:0 10px 30px -20px #14121066; }
+.moda-profile .moda-account-panel { background:var(--surface); border:0; border-radius:18px; padding:26px; }
+.moda-profile .moda-profile-stats { gap:16px; }
+.moda-profile-stats > div { background:var(--surface); border:0; border-radius:16px; padding:22px; }
+.moda-profile-stats dd { color:var(--profile-accent); font-family:var(--font-price-latin,Inter),Vazirmatn,sans-serif; font-size:36px; line-height:1; }
+@media (max-width:760px) {
+ .moda-login { grid-template-columns:minmax(0,1fr); }
+ .moda-login-art { min-height:300px; height:300px; max-height:none; }
+ .moda-login-caption { inset-inline:20px; bottom:20px; }
+ .moda-login-caption h2 { font-size:44px; }
+ .moda-login .moda-login-form { padding:36px 24px; }
+ .moda-profile > :not(.moda-profile-cover) { width:calc(100% - 40px); }
+ .moda-profile .moda-profile-cover { padding:36px 20px 48px; gap:20px; }
+ .moda-profile-avatar { width:84px; height:84px; }
+ .moda-profile-cover h2 { font-size:30px; }
+ .moda-profile .moda-account-layout { display:block; padding-top:12px; }
+ .moda-profile .moda-account-nav { flex-direction:row; position:static; }
+ .moda-profile .moda-account-panel { padding:20px; }
+}

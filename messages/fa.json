@@ -2863,7 +2863,10 @@
       "code": "کد تأیید",
       "profile": "پروفایل"
     },
-    "activeOrder": "سفارش جاری"
+    "activeOrder": "سفارش جاری",
+    "joinClub": "Join the <accent>club.</accent>",
+    "clubHelp": "کمد شخصی، سایزهای ذخیره‌شده و اتاق پرو مخصوص تو",
+    "passwordlessHelp": "بدون رمز عبور. ایمیلت را بنویس تا یک کد یک‌بار مصرف برایت بفرستیم."
   },
   "instantFitting": {
     "eyebrow": "استایل فوری",

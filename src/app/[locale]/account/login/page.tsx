@@ -9,7 +9,8 @@ export default async function LoginPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params,
-    t = await getTranslations("commerce");
+    t = await getTranslations("commerce"),
+    a = await getTranslations("accountDesign");
   const theme = await getThemeSettings();
   const media = theme?.accountMediaId
     ? await db.media.findFirst({
@@ -22,7 +23,7 @@ export default async function LoginPage({
       })
     : null;
   return (
-    <main className="shell shop-page py-12 moda-login">
+    <main data-moda4="auth" className="shell shop-page py-12 moda-login">
       <div className="moda-login-art" aria-hidden="true">
         {media ? (
           <ResponsiveImage
@@ -35,9 +36,16 @@ export default async function LoginPage({
         ) : (
           <span className="moda-login-decoration" />
         )}
+        <div className="moda-login-caption">
+          <h2 data-moda4-display="" lang="en" dir="ltr">
+            {a.rich("joinClub", { accent: (chunks) => <em>{chunks}</em> })}
+          </h2>
+          <p>{a("clubHelp")}</p>
+        </div>
       </div>
       <section className="moda-login-form rounded-token border border-black/10 bg-surface p-6 shadow-sm">
         <h1 className="mb-5 text-2xl font-semibold">{t("login")}</h1>
+        <p className="moda-login-lead">{a("passwordlessHelp")}</p>
         <CustomerLogin locale={locale} />
       </section>
     </main>

@@ -2863,7 +2863,10 @@
       "code": "Verification code",
       "profile": "Profile"
     },
-    "activeOrder": "Current order"
+    "activeOrder": "Current order",
+    "joinClub": "Join the <accent>club.</accent>",
+    "clubHelp": "Your private wardrobe, saved sizes and your own fitting room.",
+    "passwordlessHelp": "No password. Enter your email and we’ll send you a single-use code."
   },
   "instantFitting": {
     "eyebrow": "Instant styling",
