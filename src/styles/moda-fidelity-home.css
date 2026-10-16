@@ -1132,3 +1132,6 @@ html[data-button-style="crayon"] .moda-prism-links .button {
     transform: rotateX(90deg) translateZ(160px);
   }
 }
+@media (max-width: 760px) {
+  .moda-carousel-prism .moda-3d-orbit { width: 240px; height: 320px; }
+}
