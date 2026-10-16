@@ -100,6 +100,7 @@ export function ProductGallery({
   const current = items[active] || items[0];
   return (
     <section
+      data-moda4="pdp-gallery"
       className="shop-gallery"
       aria-label={t("gallery")}
       aria-roledescription={t("carousel")}
