@@ -74,6 +74,7 @@ async function choose(page: Page, locale: "fa" | "tr" | "en", key: string) {
   await room.getByRole("button", { name: dict.search, exact: true }).click();
   const card = room.locator(`[data-product-id="${profile.productId}"]`);
   await expect(card).toBeVisible();
+  await card.locator(".moda-instant-variant > summary").click();
   await card.getByLabel(dict.variant, { exact: true }).selectOption(v.id);
   await card.getByRole("button", { name: dict.try, exact: true }).click();
   await expect(
@@ -417,5 +418,49 @@ test("R7a real MFA admin switches free mode while existing paid AI has no key", 
         isActive: before.isActive,
       },
     });
+  }
+});
+
+test("FID-5 draws a validated garment before the live server action can return", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await page.goto("/en/fitting-room");
+  const room = page.getByTestId("instant-fitting");
+  await expect(room.locator('[data-model-kind="WOMAN"]')).toBeVisible();
+  const pick = room
+    .locator('[data-moda4="tryon-item"][aria-pressed="false"]')
+    .first();
+  await expect(pick).toBeEnabled();
+  let release: () => void = () => {};
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let held = false;
+  await page.route("**/en/fitting-room", async (route) => {
+    if (route.request().method() === "POST") {
+      held = true;
+      await gate;
+    }
+    await route.continue();
+  });
+  try {
+    await pick.click();
+    await expect(room.locator('[data-moda4="tryon-layer"]')).toHaveCount(1, {
+      timeout: 900,
+    });
+    await expect.poll(() => held).toBe(true);
+    await expect(
+      room.getByRole("button", { name: en.instantFitting.addAll, exact: true }),
+    ).toBeDisabled();
+    release();
+    await expect(room).toHaveAttribute("aria-busy", "false");
+    await expect(room.locator('[data-moda4="tryon-layer"]')).toHaveCount(1);
+    await expect(
+      room.getByRole("button", { name: en.instantFitting.addAll, exact: true }),
+    ).toBeEnabled();
+  } finally {
+    release();
+    await page.unroute("**/en/fitting-room");
   }
 });

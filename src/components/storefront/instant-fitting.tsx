@@ -63,7 +63,9 @@ export function InstantFitting({
     [moreSaved, setMoreSaved] = useState(saved.length === 100),
     [moreArchived, setMoreArchived] = useState(archived.length === 100),
     [query, setQuery] = useState(""),
+    [onlyReady, setOnlyReady] = useState(true),
     [view, setView] = useState<View | null>(null),
+    [localLayers, setLocalLayers] = useState<View["layers"] | null>(null),
     [ids, setIds] = useState<string[]>([]),
     [name, setName] = useState(""),
     [message, setMessage] = useState(""),
@@ -176,6 +178,7 @@ export function InstantFitting({
     if (!nextIds.length) {
       setIds([]);
       setView(null);
+      setLocalLayers(null);
       setReview(false);
       return;
     }
@@ -185,6 +188,7 @@ export function InstantFitting({
     });
     if (seq !== sequence.current) return;
     if (!result.ok) {
+      setLocalLayers(null);
       setView(null);
       setIds(nextIds);
       setReview(true);
@@ -196,6 +200,7 @@ export function InstantFitting({
     if (current.ok) mergeCatalog(current.value);
     setIds(nextIds);
     setView(result.value);
+    setLocalLayers(null);
     setReview(
       Boolean(
         savedFingerprint && savedFingerprint !== result.value.fingerprint,
@@ -268,29 +273,47 @@ export function InstantFitting({
   }
   async function choose(variantId: string) {
     requestKey.current = crypto.randomUUID();
-    const single = await previewInstant(locale, {
-      modelId,
-      variantIds: [variantId],
-    });
-    if (!single.ok) {
-      error(single.error);
-      return;
+    // Geometry was validated server-side for this exact public variant/model.
+    // Paint synchronously, then let the existing live resolver authorize the selection.
+    let next = catalog
+      .find((p) => p.variantId === variantId)
+      ?.placements?.find((p) => p.model.id === modelId);
+    if (!next) {
+      const single = await previewInstant(locale, {
+        modelId,
+        variantIds: [variantId],
+      });
+      if (!single.ok) {
+        error(single.error);
+        return;
+      }
+      next = single.value.layers[0];
     }
-    const next = single.value.layers[0];
-    const keep = (view?.layers ?? [])
-      .filter(
-        (v) =>
-          v.productId !== next.productId &&
-          !(v.slot === next.slot && v.anchor === next.anchor) &&
-          !(next.slot === "ONE_PIECE" && ["TOP", "BOTTOM"].includes(v.slot)) &&
-          !(["TOP", "BOTTOM"].includes(next.slot) && v.slot === "ONE_PIECE"),
-      )
-      .map((v) => v.variantId);
+    const keepLayers = (localLayers ?? view?.layers ?? []).filter(
+      (v) =>
+        v.productId !== next.productId &&
+        !(v.slot === next.slot && v.anchor === next.anchor) &&
+        !(next.slot === "ONE_PIECE" && ["TOP", "BOTTOM"].includes(v.slot)) &&
+        !(["TOP", "BOTTOM"].includes(next.slot) && v.slot === "ONE_PIECE"),
+    );
+    const keep = keepLayers.map((v) => v.variantId);
     if (keep.length >= 4) {
       error("INVALID_COMBINATION");
       return;
     }
-    await resolve(modelId, [...keep, variantId]);
+    setLocalLayers([...keepLayers, next]);
+    setIds([...keep, variantId]);
+    setView(null);
+    start(async () => {
+      try {
+        await resolve(modelId, [...keep, variantId]);
+      } catch {
+        setLocalLayers(null);
+        setView(null);
+        setReview(true);
+        error("REQUEST_UNKNOWN");
+      }
+    });
   }
   async function save() {
     if (!view) return;
@@ -379,39 +402,57 @@ export function InstantFitting({
     >
       <header>
         <p className="eyebrow">{t("eyebrow")}</p>
-        <Heading>{t("title")}</Heading>
+        <Heading
+          data-moda4-display=""
+          lang="en"
+          dir="ltr"
+          aria-label={t("title")}
+        >
+          {t("displayTitle")}
+        </Heading>
         <p>{t("help")}</p>
         <p>{t("free")}</p>
       </header>
-      <fieldset disabled={pending}>
-        <legend>{t("models")}</legend>
-        <div className="moda-instant-models">
-          {models.map((m) => (
-            <button
-              type="button"
-              key={m.id}
-              aria-pressed={modelId === m.id}
-              data-model-kind={m.kind}
-              onClick={() => {
-                sequence.current++;
-                setModel(m.id);
-                setIds([]);
-                setView(null);
-                setReview(false);
-                setEditing(null);
-                setAngle(0);
-              }}
-            >
-              {m.label[locale]}
-            </button>
-          ))}
-        </div>
-      </fieldset>
       {!models.length && <p>{t("noModels")}</p>}
+      <ol className="moda-instant-howto">
+        {["stepModel", "stepPick", "stepSave"].map((key, index) => (
+          <li key={key}>
+            <b>{index + 1}</b>
+            {t(key)}
+          </li>
+        ))}
+      </ol>
       <div className="moda-instant-workspace">
         <div>
+          <fieldset disabled={pending}>
+            <legend className="sr-only">{t("models")}</legend>
+            <div className="moda-instant-models">
+              {models.map((m) => (
+                <button
+                  type="button"
+                  key={m.id}
+                  aria-pressed={modelId === m.id}
+                  data-model-kind={m.kind}
+                  onClick={() => {
+                    sequence.current++;
+                    setModel(m.id);
+                    setIds([]);
+                    setView(null);
+                    setLocalLayers(null);
+                    setReview(false);
+                    setEditing(null);
+                    setAngle(0);
+                  }}
+                >
+                  {m.label[locale]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
           <div
             ref={stage}
+            data-moda4="tryon-stage"
             className="moda-instant-stage"
             tabIndex={0}
             role="group"
@@ -457,35 +498,43 @@ export function InstantFitting({
             }}
           >
             <div
+              data-moda4="tryon-turntable"
               className="moda-instant-turn"
               style={{ transform: `perspective(900px) rotateY(${angle}deg)` }}
             >
               {model && (
-                <ResponsiveImage
-                  media={{ ...model.media, presentation: { fit: "contain" } }}
-                  locale={locale}
-                  role="catalog"
-                  sizes="(min-width:900px) 40vw,90vw"
-                  className="block h-full w-full"
-                  imgClassName="h-full w-full object-contain"
-                />
-              )}
-              {view?.model.id === modelId &&
-                view.layers.map((layer) => (
-                  <SceneLayerImage
-                    key={layer.variantId}
-                    pieceId={layer.variantId}
-                    layer={layer}
-                    model={model?.media ?? { width: 0, height: 0 }}
+                <div
+                  className="moda-instant-mannequin"
+                  data-moda4="tryon-mannequin"
+                >
+                  <ResponsiveImage
+                    media={{ ...model.media, presentation: { fit: "contain" } }}
                     locale={locale}
-                    frame={{
-                      mediaId: view.snapshot.modelMediaId,
-                      fit: "contain",
-                      aspect: "3:4",
-                      focal: { x: 0.5, y: 0.5 },
-                    }}
+                    role="catalog"
+                    sizes="(min-width:900px) 40vw,90vw"
+                    className="block h-full w-full"
+                    imgClassName="h-full w-full object-contain"
                   />
-                ))}
+                </div>
+              )}
+              {(
+                localLayers ?? (view?.model.id === modelId ? view.layers : [])
+              ).map((layer) => (
+                <SceneLayerImage
+                  key={layer.variantId}
+                  instant
+                  pieceId={layer.variantId}
+                  layer={layer}
+                  model={model?.media ?? { width: 0, height: 0 }}
+                  locale={locale}
+                  frame={{
+                    mediaId: view?.snapshot.modelMediaId ?? modelId,
+                    fit: "contain",
+                    aspect: "3:4",
+                    focal: { x: 0.5, y: 0.5 },
+                  }}
+                />
+              ))}
             </div>
           </div>
           <p className="muted text-sm">{t("rotateHelp")}</p>
@@ -632,27 +681,47 @@ export function InstantFitting({
               {t("search")}
             </button>
           </form>
-          {[...grouped].map(([productId, variants]) => (
-            <InstantProduct
-              key={productId}
-              variants={variants}
-              locale={locale}
-              currency={currency}
-              disabled={pending || !model}
-              choose={(id) => start(() => choose(id))}
-              more={() =>
-                start(async () => {
-                  const after = variants.at(-1)?.nextCursor;
-                  if (!after) return;
-                  const r = await loadInstantCatalog(locale, {
-                    productId,
-                    after,
-                  });
-                  r.ok ? mergeCatalog(r.value) : error(r.error);
-                })
-              }
+          <label className="moda-instant-ready">
+            <input
+              type="checkbox"
+              checked={onlyReady}
+              onChange={(e) => setOnlyReady(e.target.checked)}
             />
-          ))}
+            {t("onlyCompatible")}
+          </label>
+          <div className="moda-instant-grid" data-moda4="tryon-grid">
+            {[...grouped]
+              .filter(
+                ([, variants]) =>
+                  !onlyReady ||
+                  variants.some((v) =>
+                    v.placements?.some((layer) => layer.model.id === modelId),
+                  ),
+              )
+              .map(([productId, variants]) => (
+                <InstantProduct
+                  key={`${productId}:${modelId}`}
+                  variants={variants}
+                  locale={locale}
+                  currency={currency}
+                  disabled={pending || !model}
+                  modelId={modelId}
+                  selectedIds={ids}
+                  choose={(id) => void choose(id)}
+                  more={() =>
+                    start(async () => {
+                      const after = variants.at(-1)?.nextCursor;
+                      if (!after) return;
+                      const r = await loadInstantCatalog(locale, {
+                        productId,
+                        after,
+                      });
+                      r.ok ? mergeCatalog(r.value) : error(r.error);
+                    })
+                  }
+                />
+              ))}
+          </div>
           {!catalog.length && <p>{t("empty")}</p>}
           {productCursor && (
             <button
@@ -810,6 +879,8 @@ function InstantProduct({
   locale,
   currency,
   disabled,
+  modelId,
+  selectedIds,
   choose,
   more,
 }: {
@@ -817,35 +888,59 @@ function InstantProduct({
   locale: "fa" | "tr" | "en";
   currency: "IRT" | "TRY" | "CAD";
   disabled: boolean;
+  modelId: string;
+  selectedIds: string[];
   choose: (id: string) => void;
   more: () => void;
 }) {
   const t = useTranslations("instantFitting"),
-    [selected, setSelected] = useState(""),
+    [selected, setSelected] = useState(
+      variants.find(
+        (v) => v.available && v.placements?.some((p) => p.model.id === modelId),
+      )?.variantId ?? "",
+    ),
     p = variants.find((v) => v.variantId === selected) ?? variants[0];
+  const placement = p.placements?.find((layer) => layer.model.id === modelId);
   return (
     <article className="moda-instant-product" data-product-id={p.productId}>
-      <ResponsiveImage
-        media={{
-          url: p.url,
-          width: null,
-          height: null,
-          variants: {},
-          blurDataUrl: null,
-          altI18n: { [locale]: p.title },
-          presentation: { fit: "contain" },
-        }}
-        locale={locale}
-        role="catalog"
-        sizes="120px"
-        className="block aspect-[3/4]"
-        imgClassName="h-full w-full object-contain"
-      />
-      <div>
-        <h3>{p.title}</h3>
-        <p>
+      <button
+        type="button"
+        className="moda-instant-pick"
+        data-moda4={placement ? "tryon-item" : undefined}
+        aria-pressed={selectedIds.includes(p.variantId)}
+        aria-label={t("try")}
+        disabled={disabled || !selected || !p.available || p.amount === null}
+        onClick={() => choose(selected)}
+      >
+        <ResponsiveImage
+          media={
+            placement?.media ?? {
+              url: p.url,
+              width: null,
+              height: null,
+              variants: {},
+              blurDataUrl: null,
+              altI18n: { [locale]: p.title },
+              presentation: { fit: "contain" },
+            }
+          }
+          locale={locale}
+          role="catalog"
+          sizes="120px"
+          className="block w-full h-full"
+          imgClassName="h-full w-full object-contain"
+        />
+      </button>
+      <h3>{p.title}</h3>
+      <bdi>
+        {p.amount
+          ? formatStorefrontAmount(p.amount, currency, locale)
+          : t("unavailable")}
+      </bdi>
+      <details className="moda-instant-variant">
+        <summary>
           {p.color} · {p.size}
-        </p>
+        </summary>
         <label>
           {t("variant")}
           <select
@@ -867,24 +962,12 @@ function InstantProduct({
             ))}
           </select>
         </label>
-        <bdi>
-          {p.amount
-            ? formatStorefrontAmount(p.amount, currency, locale)
-            : t("unavailable")}
-        </bdi>
-        <button
-          type="button"
-          disabled={disabled || !selected || !p.available || p.amount === null}
-          onClick={() => choose(selected)}
-        >
-          {t("try")}
-        </button>
         {variants.at(-1)?.nextCursor && (
           <button type="button" disabled={disabled} onClick={more}>
             {t("moreVariants")}
           </button>
         )}
-      </div>
+      </details>
     </article>
   );
 }

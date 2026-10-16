@@ -6,6 +6,7 @@ import { getRequestContext } from "@/lib/request-context";
 import { currentCustomer } from "@/modules/customers";
 import {
   currentCatalogCutout,
+  publicCutoutPlacements,
   resolveCutoutPlacement,
 } from "@/modules/catalog/cutouts/resolve";
 import {
@@ -324,5 +325,24 @@ export async function instantCatalog(
 ) {
   if (!(await readConfig(db)).instantEnabled)
     throw new FittingError("DISABLED");
-  return fittingProducts("", marketId, locale, query, false, page);
+  const products = await fittingProducts(
+    "",
+    marketId,
+    locale,
+    query,
+    false,
+    page,
+  );
+  // Bound DB concurrency even when a full page contains many actual variants.
+  const result = [];
+  for (let i = 0; i < products.length; i += 8)
+    result.push(
+      ...(await Promise.all(
+        products.slice(i, i + 8).map(async (product) => ({
+          ...product,
+          placements: await publicCutoutPlacements(product.variantId, marketId),
+        })),
+      )),
+    );
+  return result;
 }

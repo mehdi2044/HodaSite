@@ -109,6 +109,13 @@ export async function resolveCutoutPlacement(
   const model = (await storeCutoutModels(client)).find(
     (choice) => choice.id === modelId,
   );
+  return placementFor(current, model);
+}
+function placementFor(
+  current: NonNullable<Awaited<ReturnType<typeof currentCatalogCutout>>>,
+  model: Awaited<ReturnType<typeof storeCutoutModels>>[number] | undefined,
+) {
+  const modelId = model?.id;
   const placement = current.geometry.models.find(
     (item) => item.modelId === modelId,
   );
@@ -139,4 +146,19 @@ export async function resolveCutoutPlacement(
       media: cutoutPublicImage(model.image),
     },
   };
+}
+
+/** Public, already validated geometry for immediate client presentation only.
+ * Mutation endpoints always resolve current references again; this is no authority to save/buy.
+ */
+export async function publicCutoutPlacements(
+  variantId: string,
+  marketId: string,
+) {
+  const current = await currentCatalogCutout(variantId, marketId);
+  if (!current) return [];
+  return (await storeCutoutModels()).flatMap((model) => {
+    const layer = placementFor(current, model);
+    return layer ? [layer] : [];
+  });
 }

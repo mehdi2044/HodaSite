@@ -32,9 +32,12 @@ export async function seedModa4PhotoScene(
   put: (key: string, bytes: Buffer) => Promise<string>,
   id: string,
   n: number,
+  portrait = false,
 ): Promise<ShoppableScene> {
   const look = looks[n % looks.length];
-  const wideId = `seed-moda4-wide-${look.photo}`;
+  const wideId = portrait
+    ? `seed-fashion-v2-${look.photo}`
+    : `seed-moda4-wide-${look.photo}`;
   let wide = await db.media.findUnique({ where: { id: wideId } });
   if (!wide) {
     const bytes = await readFile(

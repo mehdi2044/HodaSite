@@ -7,6 +7,11 @@ import {
   formatServiceUnits,
 } from "@/modules/catalog/format";
 export type FittingProduct = {
+  placements?: Awaited<
+    ReturnType<
+      typeof import("@/modules/catalog/cutouts/resolve").publicCutoutPlacements
+    >
+  >;
   variantId: string;
   productId: string;
   title: string;
