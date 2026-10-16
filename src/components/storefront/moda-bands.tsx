@@ -33,6 +33,7 @@ export function ModaBands({
     <section
       ref={root}
       className="moda-crossing-bands"
+      data-moda4="bands"
       data-paused={paused || !visible || hidden || focus}
       onMouseEnter={() => setFocus(true)}
       onMouseLeave={() =>
@@ -45,7 +46,7 @@ export function ModaBands({
       style={{ "--band-duration": `${seconds}s` } as React.CSSProperties}
     >
       {[first, second].map((words, row) => (
-        <div key={row} className="moda-band">
+        <div key={row} className="moda-band" data-moda4="band">
           <div>
             {words.map((word, index) => (
               <span key={index}>{word}</span>

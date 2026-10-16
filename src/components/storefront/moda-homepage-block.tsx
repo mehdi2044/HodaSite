@@ -20,7 +20,6 @@ import { ModaBands } from "./moda-bands";
 import { ModaCampaign } from "./moda-campaign";
 import { ModaVideo } from "./moda-video";
 import { SceneArt } from "./scene-art";
-import { ScenePriceSummary } from "./scene-price-summary";
 import { ServicePolicySummary } from "./service-policy";
 type Market = Parameters<typeof getVariantDisplayPrices>[1];
 type Locale = "fa" | "tr" | "en";
@@ -114,10 +113,32 @@ export async function ModaHomepageBlock({
             ? resolveContentTarget(slide.secondaryTarget, market.id, locale)
             : null,
         ]);
+        const decorations = Object.fromEntries(
+          await Promise.all(
+            view.pieces.map(async (piece) => [
+              piece.id,
+              !view.reason && piece.variants[0]
+                ? ((await publicCatalogCutout(piece.variants[0].id, market.id))
+                    ?.media ?? null)
+                : null,
+            ]),
+          ),
+        );
         return (
-          <div className="moda-hero-slide" data-text-side={slide.textSide}>
-            <p className="moda-eyebrow">{text(slide.eyebrow)}</p>
+          <div
+            className="moda-hero-slide"
+            data-moda4="hero-slide"
+            data-text-side={slide.textSide}
+          >
             <ShoppableScene
+              presentation="hero"
+              decorations={decorations}
+              eyebrow={text(slide.eyebrow)}
+              secondary={
+                secondary && slide.secondaryLabel
+                  ? { href: secondary, label: text(slide.secondaryLabel) }
+                  : undefined
+              }
               poll={false}
               view={view}
               locale={locale}
@@ -128,11 +149,6 @@ export async function ModaHomepageBlock({
               body={text(slide.body)}
               cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
             />
-            {secondary && slide.secondaryLabel && (
-              <Link className="button button-outline" href={secondary}>
-                {text(slide.secondaryLabel)}
-              </Link>
-            )}
           </div>
         );
       }),
@@ -146,35 +162,15 @@ export async function ModaHomepageBlock({
     );
   }
   if (block.type === "WorldsPrism") {
-    const views = await Promise.all(
-      block.faces.map((face) =>
-        face.scene
-          ? resolveShoppableScene(face.scene, market, locale, {
-              adminPreview: preview,
-            })
-          : null,
-      ),
-    );
     const items = await Promise.all(
-      block.faces.map(async (face, index) => {
+      block.faces.map(async (face) => {
         const href = await resolveContentTarget(
           { kind: "category", id: face.categoryId },
           market.id,
           locale,
         );
-        const view = views[index];
         return (
           <article className="moda-world-face">
-            {view ? (
-              <ShoppableScene
-                poll={false}
-                view={view}
-                locale={locale}
-                preview={preview}
-              />
-            ) : (
-              await photo(face.desktop, face.mobile, text(face.title))
-            )}
             <h3>{text(face.title)}</h3>
             <p>{text(face.subtitle)}</p>
             {href && (
@@ -187,16 +183,34 @@ export async function ModaHomepageBlock({
       }),
     );
     const art = await Promise.all(
-      block.faces.map((face, index) =>
-        views[index] ? (
-          <SceneArt view={views[index]!} locale={locale} />
-        ) : (
-          photo(face.desktop, face.mobile, text(face.title))
-        ),
-      ),
+      block.faces.map(async (face, index) => {
+        const href = await resolveContentTarget(
+          { kind: "category", id: face.categoryId },
+          market.id,
+          locale,
+        );
+        return (
+          <Link className="moda-world-art" href={href ?? `/${locale}/search`}>
+            {await photo(face.desktop, face.mobile, text(face.title))}
+            <span className="moda-world-number">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div className="moda-world-caption">
+              <span>{text(face.title)}</span>
+              <b data-moda4-display="" lang="en" dir="ltr">
+                {localizedValue(face.title, "en")}
+              </b>
+            </div>
+          </Link>
+        );
+      }),
     );
     return (
-      <>
+      <div className="moda-worlds-layout">
+        <div className="moda-worlds-copy">
+          <h2>{text(block.title)}</h2>
+          <p>{t("worldsIntro")}</p>
+        </div>
         <ModaCarousel
           art={art}
           kind="prism"
@@ -205,11 +219,7 @@ export async function ModaHomepageBlock({
           labels={block.faces.map((face) => text(face.title))}
           seconds={block.autoplaySeconds}
         />
-        <ScenePriceSummary
-          views={views.flatMap((view) => (view ? [view] : []))}
-          locale={locale}
-        />
-      </>
+      </div>
     );
   }
   if (block.type === "Lookbook" || block.type === "FittingAd") {
@@ -225,7 +235,7 @@ export async function ModaHomepageBlock({
     const items =
       block.type === "FittingAd"
         ? await Promise.all(
-            block.looks.map(async (look, index) => {
+            block.looks.map(async (look) => {
               const staged = await resolveShoppableScene(
                 look.scene,
                 market,
@@ -237,34 +247,41 @@ export async function ModaHomepageBlock({
                   key={look.id}
                   view={staged}
                   locale={locale}
-                  final={
-                    <ShoppableScene
-                      poll={false}
-                      view={views[index]}
-                      locale={locale}
-                      preview={preview}
-                    />
-                  }
+                  final={null}
                 />
               );
             }),
           )
         : views.map((view) => (
-            <ShoppableScene
-              poll={false}
+            <Link
               key={view.id}
-              view={view}
-              locale={locale}
-              preview={preview}
-            />
+              href={view.pieces[0]?.href ?? `/${locale}/search`}
+            >
+              {view.title}
+            </Link>
           ));
     return (
       <div
+        data-moda4={block.type === "FittingAd" ? "fitting-ad" : "lookbook"}
         className={
           block.type === "FittingAd" ? "moda-fitting-ad" : "moda-lookbook"
         }
       >
-        {block.type === "FittingAd" && <p>{text(block.body)}</p>}
+        {block.type === "FittingAd" && (
+          <div className="moda-fitting-copy">
+            <h2 data-moda4-display="" lang="en" dir="ltr">
+              {text(block.title)}
+            </h2>
+            <p>{text(block.body)}</p>
+            <Link
+              data-moda4-cta=""
+              className="button"
+              href={`/${locale}/fitting-room?market=${market.code}`}
+            >
+              {text(block.ctaLabel)}
+            </Link>
+          </div>
+        )}
         <ModaCarousel
           art={
             block.type === "Lookbook"
@@ -274,15 +291,11 @@ export async function ModaHomepageBlock({
               : undefined
           }
           kind={block.type === "Lookbook" ? "lookbook" : "fitting"}
-          title={text(block.title)}
+          title={block.type === "Lookbook" ? text(block.title) : undefined}
           items={items}
           labels={views.map((view) => view.title)}
           seconds={block.type === "Lookbook" ? block.autoplaySeconds : 8}
         />
-        {block.type === "Lookbook" && (
-          <ScenePriceSummary views={views} locale={locale} />
-        )}
-        {block.type === "FittingAd" && <p>{t("fittingStaticExplanation")}</p>}
       </div>
     );
   }
@@ -331,17 +344,25 @@ export async function ModaHomepageBlock({
         : [];
     return (
       <section
+        data-moda4={block.type === "KidsWorld" ? "kids-world" : "new-in"}
         className={`moda-product-rail ${block.type === "KidsWorld" ? "moda-kids-world" : ""}`}
         style={
           block.type === "KidsWorld"
-            ? {
-                background: `var(--${block.tone})`,
-              }
+            ? ({
+                "--kids-world-tone": `var(--${block.tone})`,
+              } as React.CSSProperties)
             : undefined
         }
       >
         <div className="moda-section-head">
-          <h2>{text(block.title)}</h2>
+          <h2
+            data-moda4-kids-display={
+              block.type === "KidsWorld" ? "" : undefined
+            }
+            lang={block.type === "KidsWorld" ? "en" : undefined}
+          >
+            {text(block.title)}
+          </h2>
           {href && (
             <Link className="button button-outline" href={href}>
               {text(block.ctaLabel)}
@@ -357,26 +378,31 @@ export async function ModaHomepageBlock({
             )}
           />
         )}
-        <div className="moda-snap-products">
-          {await Promise.all(
-            products.map((product) =>
-              ProductCard({
-                product: { ...product, displayPrice: prices.get(product.id)! },
-                variantPrices,
-                locale,
-                market,
-                readOnly: preview,
-              }),
-            ),
-          )}
-        </div>
+        {block.type === "NewIn" && (
+          <div className="moda-snap-products">
+            {await Promise.all(
+              products.map((product) =>
+                ProductCard({
+                  product: {
+                    ...product,
+                    displayPrice: prices.get(product.id)!,
+                  },
+                  variantPrices,
+                  locale,
+                  market,
+                  readOnly: preview,
+                }),
+              ),
+            )}
+          </div>
+        )}
         {products.length === 0 && <p>{t("noProducts")}</p>}
       </section>
     );
   }
   if (block.type === "Services")
     return (
-      <section className="moda-services">
+      <section data-moda4="services" className="moda-services">
         <h2>{text(block.title)}</h2>
         <ServicePolicySummary
           marketId={market.id}
@@ -402,14 +428,15 @@ export async function ModaHomepageBlock({
     <div className="moda-banner-content">
       {view && <h2>{text(block.title)}</h2>}
       {view ? (
-        <ShoppableScene
-          poll={false}
-          view={view}
-          locale={locale}
-          preview={preview}
-          body={text(block.body)}
-          cta={href ? { href, label: text(block.ctaLabel) } : undefined}
-        />
+        <>
+          <SceneArt view={view} locale={locale} />
+          <p>{text(block.body)}</p>
+          {href && (
+            <Link data-moda4-cta="" className="button" href={href}>
+              {text(block.ctaLabel)}
+            </Link>
+          )}
+        </>
       ) : (
         <>
           {await photo(block.desktop, block.mobile, text(block.title))}

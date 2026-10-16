@@ -74,6 +74,15 @@ function url(page: string) {
 async function open(page: Page, name: string) {
   await page.goto(url(name), { waitUntil: "load" });
   await page.waitForTimeout(TARGET === "prototype" ? 1900 : 1200); // prototype logo loader ≤1.5 s
+  // The reference has no tracking prompt. Match its idle state by declining
+  // optional analytics through the real UI, never injecting consent or accepting it.
+  if (TARGET === "app") {
+    const reject = page.getByTestId("consent-reject");
+    if (await reject.isVisible()) {
+      await reject.click();
+      await expect(reject).not.toBeVisible();
+    }
+  }
   // Trigger scroll-reveal / lazy media, then return to top.
   await page.evaluate(async () => {
     for (let y = 0; y < Math.min(document.body.scrollHeight, 12000); y += 600) {

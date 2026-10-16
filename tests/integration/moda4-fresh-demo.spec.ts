@@ -4,6 +4,7 @@ import { homepageBlocksSchema } from "@/modules/content/homepage";
 import { blockScenes } from "@/modules/content/block-scenes";
 import { compositeSceneReferences } from "@/modules/content/scenes/composite";
 import { seedFreshModa4Homepage } from "../../prisma/moda4-homepage-seed";
+import { sceneReferenceSnapshot } from "@/modules/content/scenes/references";
 import { fingerprint } from "../helpers/permission-subjects";
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "R3b fresh MODA4 demo preserves existing merchant rows",
@@ -44,15 +45,25 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ]);
       const scenes = blockScenes(blocks);
       expect(new Set(scenes.map((scene) => scene.id)).size).toBe(scenes.length);
-      expect(new Set(scenes.map((scene) => scene.modelId))).toEqual(
-        new Set(["woman", "man", "girl", "boy"]),
-      );
+      expect(
+        new Set(
+          scenes
+            .filter((scene) => scene.mode === "COMPOSITE")
+            .map((scene) => scene.modelId),
+        ),
+      ).toEqual(new Set(["woman", "man", "girl", "boy"]));
       for (const market of await db.market.findMany({
         where: { code: { in: ["IR", "TR", "CA"] } },
       }))
         for (const scene of scenes) {
-          const result = await compositeSceneReferences(scene, market.id);
-          expect(result.pieces).toHaveLength(scene.pieces.length);
+          if (scene.mode === "COMPOSITE") {
+            const result = await compositeSceneReferences(scene, market.id);
+            expect(result.pieces).toHaveLength(scene.pieces.length);
+          } else {
+            const snapshot = await sceneReferenceSnapshot(scene, [market.id]);
+            expect(snapshot.fingerprint).toBe(scene.match?.fingerprint);
+            expect(snapshot.images.length).toBeGreaterThanOrEqual(3);
+          }
         }
     }, 30000);
   },

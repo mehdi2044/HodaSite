@@ -73,6 +73,7 @@ export function ModaProductCard({
   return (
     <article
       ref={root}
+      data-moda4="product-card"
       className="shop-product-card moda-product-card"
       onPointerLeave={reset}
       onFocusCapture={reset}
@@ -105,7 +106,7 @@ export function ModaProductCard({
         });
       }}
     >
-      <div className="moda-card-visual">
+      <div data-moda4="product-card-media" className="moda-card-visual">
         <Link
           href={`${href}?color=${encodeURIComponent(color.id)}`}
           className="shop-product-link moda-card-image-link"

@@ -1,3 +1,4 @@
+import { SceneArt } from "./scene-art";
 import { LiveHomepage } from "./live-homepage";
 import { ModaHomepageBlock } from "./moda-homepage-block";
 import { isModa4Block } from "@/modules/content/moda4-contracts";
@@ -101,9 +102,32 @@ export async function HomepageBlocks({
                 preview={preview}
               />
             );
+          if (sceneViews[index] && block.type === "Banner")
+            return (
+              <section key={block.id} className="moda-editorial-banner">
+                <SceneArt view={sceneViews[index]!} locale={locale} />
+                <h2>{localizedValue(block.title, locale)}</h2>
+                {block.ctaUrl && (
+                  <Link
+                    data-moda4-cta=""
+                    className="button"
+                    href={storefrontHref(block.ctaUrl, locale)}
+                  >
+                    {localizedValue(block.ctaLabel, locale)}
+                  </Link>
+                )}
+              </section>
+            );
           if (sceneViews[index])
             return (
               <ShoppableScene
+                presentation={
+                  block.type === "ShopLook"
+                    ? "look"
+                    : block.type === "Hero"
+                      ? "hero"
+                      : undefined
+                }
                 key={sceneViews[index]!.id}
                 view={sceneViews[index]!}
                 locale={locale}

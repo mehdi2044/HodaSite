@@ -8,21 +8,36 @@ export function CrayonFilter() {
       style={{ position: "absolute", pointerEvents: "none" }}
     >
       <defs>
-        <filter id="moda4-crayon" x="-8%" y="-20%" width="116%" height="140%">
+        <filter id="moda4-crayon" x="-5%" y="-20%" width="110%" height="140%">
           <feTurbulence
             type="fractalNoise"
             baseFrequency="0.8"
-            numOctaves="3"
-            seed="4"
-            result="grain"
+            numOctaves="2"
+            seed="7"
+            result="n"
           />
           <feDisplacementMap
             in="SourceGraphic"
-            in2="grain"
+            in2="n"
             scale="4.5"
             xChannelSelector="R"
             yChannelSelector="G"
+            result="d"
           />
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="1.4"
+            numOctaves="1"
+            seed="11"
+            result="g"
+          />
+          <feColorMatrix
+            in="g"
+            type="matrix"
+            values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2.2"
+            result="gm"
+          />
+          <feComposite in="d" in2="gm" operator="in" />
         </filter>
       </defs>
     </svg>

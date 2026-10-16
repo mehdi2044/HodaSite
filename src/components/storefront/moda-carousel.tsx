@@ -61,6 +61,7 @@ export function ModaCarousel({
   return (
     <section
       ref={root}
+      data-moda4={kind === "hero" ? "hero" : undefined}
       className={`moda-carousel moda-carousel-${kind}`}
       data-reduced={reduced}
       data-running={!paused && !engaged && !reduced && !hidden && visible}
@@ -110,19 +111,21 @@ export function ModaCarousel({
       >
         {art && art.length > 1 ? (
           <div
+            data-moda4={kind === "prism" ? "worlds-prism" : "lookbook-ring"}
             className="moda-3d-orbit"
             style={{
-              transform: `rotateX(${kind === "prism" ? -9 : 0}deg) rotateY(${-current * (360 / art.length) + dragAngle}deg)`,
+              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${kind === "prism" ? -9 : 0}deg) rotateY(${-current * (360 / art.length) + dragAngle}deg)`,
             }}
           >
             {art.map((image, n) => (
               <div
                 key={n}
+                data-moda4={kind === "prism" ? "worlds-face" : "lookbook-card"}
                 inert={n !== current}
                 aria-hidden={n !== current}
                 className={`moda-3d-face ${kind === "lookbook" ? "moda-arch-face" : ""}`}
                 style={{
-                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? 165 : 430}px)`,
+                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "165px" : "var(--look-radius)"})`,
                 }}
               >
                 {image}
@@ -163,7 +166,10 @@ export function ModaCarousel({
           >
             ←
           </button>
-          <div className="moda-carousel-tabs">
+          <div
+            className="moda-carousel-tabs"
+            data-moda4={kind === "hero" ? "hero-progress" : undefined}
+          >
             {labels.map((label, n) => (
               <button
                 key={n}

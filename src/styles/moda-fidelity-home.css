@@ -1,0 +1,1039 @@
+/* D81 / FID-2: values ported from the approved prototype. */
+.moda-carousel-hero {
+  padding: 0;
+  margin-top: -72px;
+  height: max(50vw, min(92vh, 940px));
+  min-height: 600px;
+  overflow: hidden;
+  background: var(--sand);
+}
+.moda-carousel-hero .moda-carousel-stage,
+.moda-carousel-hero .moda-carousel-slide,
+.moda-hero-slide {
+  height: 100%;
+  padding: 0;
+}
+.moda-hero-slide .shoppable-scene {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  padding: 0;
+  display: block;
+  background: transparent;
+}
+.moda-hero-slide .shoppable-scene > .scene-photo {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+  margin: 0;
+  aspect-ratio: auto !important;
+  max-width: none;
+  grid-column: auto;
+  grid-row: auto;
+}
+.moda-hero-slide .scene-photo > picture,
+.moda-hero-slide .scene-photo > picture > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.moda-hero-slide .scene-photo > picture > img {
+  object-fit: cover !important;
+  object-position: 50% 0% !important;
+}
+.moda-hero-slide .shoppable-scene > .moda-scene-heading {
+  position: absolute;
+  z-index: 3;
+  top: 26%;
+  inset-inline-start: 7%;
+  margin: 0;
+  width: 46%;
+  max-width: 620px;
+  font-family: var(--font-heading-latin, Manrope), sans-serif;
+  font-size: clamp(56px, 7.4vw, 128px);
+  line-height: 0.92;
+  font-weight: 400;
+  direction: ltr;
+  text-align: start;
+  letter-spacing: -0.025em;
+}
+html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
+  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
+}
+.moda-hero-slide > .moda-eyebrow {
+  position: absolute;
+  z-index: 4;
+  top: calc(72px + 7%);
+  inset-inline-start: 7%;
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.22em;
+}
+.moda-hero-slide .shoppable-scene > p.mb-5 {
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: 7%;
+  top: 52%;
+  width: 34%;
+  font-size: 15.5px;
+  line-height: 1.95;
+  margin: 0;
+}
+.moda-hero-slide .shoppable-scene > a {
+  position: absolute;
+  z-index: 4;
+  inset-inline-start: 7%;
+  top: 68%;
+  margin: 0;
+}
+.moda-hero-slide .scene-image-note {
+  position: absolute;
+  z-index: 4;
+  bottom: 100px;
+  inset-inline-end: 24px;
+  padding: 3px 9px;
+  background: color-mix(in srgb, var(--background) 90%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  max-width: 55%;
+}
+.moda-hero-slide .scene-review {
+  position: absolute;
+  z-index: 4;
+  bottom: 110px;
+  inset-inline-start: 7%;
+  max-width: 40%;
+  font-size: 12px;
+}
+.moda-hero-slide .moda-scene-purchase {
+  position: absolute;
+  z-index: 6;
+  top: 78%;
+  inset-inline-start: 7%;
+  width: min(90%, 440px);
+}
+.moda-purchase-toggle {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  border: 1px solid var(--text);
+  border-radius: 999px;
+  padding: 6px 20px;
+  background: var(--background);
+  font-size: 13px;
+}
+.moda-scene-purchase[open] {
+  max-height: 75vh;
+  overflow: auto;
+  top: 16%;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+.moda-scene-purchase[open] .scene-price-list {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.moda-scene-purchase[open] .scene-price-list article {
+  padding: 8px;
+}
+.moda-carousel-hero > .moda-carousel-controls {
+  position: absolute;
+  z-index: 5;
+  inset-inline: 48px;
+  bottom: 16px;
+  margin: 0;
+  justify-content: space-between;
+}
+.moda-carousel-hero .moda-carousel-tabs {
+  flex: 1;
+  max-width: 520px;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+.moda-carousel-hero .moda-carousel-tabs > button {
+  position: relative;
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  border-top: 2px solid color-mix(in srgb, var(--text) 18%, transparent);
+  color: var(--text);
+  font-family: var(--font-body-latin, Inter);
+}
+.moda-carousel-hero .moda-slide-progress {
+  height: 2px;
+  top: -2px;
+  bottom: auto;
+  background: var(--text);
+}
+.moda-carousel-controls .button {
+  font-size: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--background);
+}
+.moda-carousel-controls .button::before {
+  background: transparent !important;
+  border: 1px solid color-mix(in srgb, var(--text) 30%, transparent);
+  filter: none !important;
+}
+.moda-carousel-controls .button::after {
+  display: none;
+}
+.moda-crossing-bands {
+  height: 190px;
+  padding: 0;
+  margin-top: -1px;
+}
+.moda-crossing-bands .moda-band {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  top: 50%;
+  margin: 0;
+  padding: 14px 0;
+  white-space: nowrap;
+  transform: translateY(-50%) rotate(-3deg);
+  background: var(--text);
+  color: var(--background);
+}
+.moda-crossing-bands .moda-band + div {
+  transform: translateY(-50%) rotate(2.4deg);
+  background: var(--primary);
+  color: var(--primaryInk);
+}
+.moda-crossing-bands .moda-band span {
+  font-family: var(--font-heading-latin, Manrope);
+  font-size: 34px;
+  font-weight: 400;
+}
+.moda-crossing-bands .moda-band + div span {
+  font-family: var(--font-body-latin, Inter);
+  font-size: 15px;
+  letter-spacing: 0.3em;
+}
+.moda-crossing-bands > button {
+  position: absolute;
+  right: 20px;
+  bottom: 8px;
+  min-height: 44px !important;
+  font-size: 11px;
+}
+.moda-worlds-layout {
+  max-width: 1440px;
+  margin: auto;
+  padding: 90px 48px 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+.moda-worlds-copy h2 {
+  font-size: clamp(34px, 3.6vw, 54px);
+  font-weight: 300;
+  line-height: 1.2;
+}
+.moda-worlds-copy p {
+  font-size: 15.5px;
+  line-height: 1.95;
+  max-width: 460px;
+  margin-block: 22px;
+}
+.moda-worlds-layout .moda-section-heading {
+  display: none;
+}
+.moda-carousel-prism {
+  padding: 0;
+}
+.moda-carousel-prism .moda-carousel-stage {
+  height: 620px;
+  perspective: 1600px;
+  perspective-origin: 50% 30%;
+  overflow: hidden;
+}
+.moda-carousel-prism .moda-3d-orbit {
+  width: 330px;
+  height: 440px;
+}
+.moda-3d-face {
+  border: 0;
+  box-shadow: none;
+  border-radius: 4px;
+}
+.moda-3d-face .moda-scene-art picture img {
+  object-fit: cover !important;
+  object-position: 50% 0% !important;
+}
+.moda-scene-art figcaption {
+  background: linear-gradient(transparent, #14121099);
+  color: var(--background);
+  font-size: 24px;
+  text-align: start;
+  padding: 50px 22px 20px;
+}
+.moda-orbit-selected {
+  margin-block: 0;
+  font-size: 14px;
+}
+.moda-orbit-selected h3 {
+  display: none;
+}
+.moda-orbit-selected p {
+  font-size: 13px;
+}
+.moda-product-rail {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 100px 48px 40px;
+}
+.moda-section-head {
+  margin-bottom: 40px;
+}
+.moda-section-head h2 {
+  margin: 0;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 300;
+  line-height: 1.25;
+}
+.moda-snap-products {
+  gap: 20px;
+  padding-bottom: 18px;
+}
+.moda-snap-products > .shop-product-card {
+  flex: 0 0 clamp(220px, 22vw, 320px);
+}
+.moda-card-visual {
+  aspect-ratio: 3/4;
+}
+.moda-fitting-ad {
+  background: var(--sand);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 40px;
+  align-items: center;
+  padding: 80px 48px;
+  margin-block: 80px 0;
+}
+.moda-fitting-copy h2 {
+  font-family: var(--font-heading-latin, Manrope), sans-serif !important;
+  font-size: clamp(44px, 4.6vw, 70px);
+  line-height: 1.04;
+  font-weight: 400;
+}
+.moda-fitting-copy p {
+  font-size: 15.5px;
+  line-height: 1.95;
+  margin-block: 22px;
+}
+.moda-fitting-ad .moda-carousel {
+  padding: 0;
+}
+.moda-fitting-ad .moda-fitting-stage {
+  height: 460px;
+}
+.moda-fitting-ad .moda-carousel-controls {
+  margin-block: 0;
+}
+.moda-fitting-final {
+  padding-block: 16px;
+}
+[data-moda4="shop-the-look"] {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-height: 720px;
+  padding: 0;
+  margin-block: 80px;
+  overflow: hidden;
+}
+[data-moda4="shop-the-look"] > .scene-photo {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  aspect-ratio: auto !important;
+  border-radius: 0;
+}
+[data-moda4="shop-the-look"] > .scene-photo > picture > img {
+  object-fit: cover !important;
+  object-position: 50% 0% !important;
+}
+[data-moda4="shop-the-look"] > .moda-scene-heading {
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: 7%;
+  top: 8%;
+  font-size: clamp(36px, 4vw, 60px);
+  font-weight: 400;
+}
+[data-moda4="shop-the-look"] .moda-scene-purchase {
+  position: relative;
+  z-index: 3;
+  width: 360px;
+  margin-inline-start: 7%;
+  padding-top: 150px;
+  padding-bottom: 30px;
+}
+[data-moda4="shop-the-look"] .scene-price-list {
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 20px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--background) 96%, transparent);
+}
+[data-moda4="shop-the-look"] .scene-price-list article {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  grid-template-columns: 1fr auto;
+  gap: 2px;
+}
+[data-moda4="shop-the-look"] .scene-price-list article a {
+  font-size: 13px;
+  min-height: 24px;
+}
+[data-moda4="shop-the-look"] .scene-price-list article p {
+  font-size: 11px;
+}
+[data-moda4="shop-the-look"] .scene-price-list label {
+  font-size: 12px;
+  grid-column: auto;
+}
+[data-moda4="shop-the-look"] > .scene-image-note {
+  position: absolute;
+  bottom: 8px;
+  inset-inline-end: 20px;
+  z-index: 3;
+  font-size: 10px;
+  background: var(--background);
+  padding: 3px 9px;
+  border-radius: 99px;
+}
+.moda-lookbook {
+  margin-top: 100px;
+  overflow: hidden;
+}
+.moda-carousel-lookbook .moda-carousel-stage {
+  height: 620px;
+  perspective: 1300px;
+}
+.moda-carousel-lookbook .moda-3d-orbit {
+  width: 240px;
+  height: 360px;
+}
+.moda-lookbook .moda-section-heading {
+  max-width: 1344px;
+  margin: 0 auto 40px;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 300;
+  padding-inline: 48px;
+}
+.moda-carousel-lookbook .moda-3d-face {
+  border-radius: 140px 140px 8px 8px;
+}
+.moda-lookbook .moda-orbit-selected {
+  text-align: center;
+}
+.moda-kids-world {
+  position: relative;
+  max-width: none;
+  border-radius: 0;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--kidsPink) 60%, white) 0%,
+    color-mix(in srgb, var(--kidsButter) 70%, white) 45%,
+    color-mix(in srgb, var(--kids-world-tone, var(--kidsMint)) 70%, white) 100%
+  );
+  margin-top: 110px;
+  padding: 100px 48px 90px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: 30px;
+  align-items: center;
+}
+.moda-kids-world .moda-section-head {
+  display: block;
+  margin: 0;
+}
+.moda-kids-world .moda-section-head h2 {
+  font-family: var(--font-heading-latin, Manrope), sans-serif !important;
+  font-size: clamp(52px, 6vw, 96px);
+  font-weight: 600;
+  line-height: 0.95;
+  color: var(--kidsInk);
+}
+.moda-kids-world > p {
+  grid-column: 1;
+  color: var(--kidsInk);
+}
+.moda-kids-world .moda-kids-ring-section {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.moda-kids-ring-stage {
+  height: 540px;
+  perspective: 1300px;
+}
+.moda-kids-billboard {
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.moda-kids-billboard picture {
+  height: 250px;
+  filter: drop-shadow(0 18px 14px #5b4a6b2e);
+}
+.moda-kids-billboard figcaption {
+  margin-top: 24px;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #ffffffd9;
+  color: var(--kidsInk);
+}
+.moda-services {
+  max-width: 1440px;
+  margin: 90px auto;
+  padding: 0 48px;
+}
+.moda-services > h2 {
+  font-size: 30px;
+  font-weight: 300;
+}
+.moda-services-policy {
+  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.moda-services-policy article {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.moda-services-policy h3 {
+  font-size: 17px;
+  font-weight: 500;
+}
+.moda-services-policy p {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+@media (max-width: 1100px) {
+  .moda-worlds-layout {
+    grid-template-columns: 1fr;
+  }
+  .moda-kids-world {
+    grid-template-columns: 1fr;
+  }
+  .moda-kids-world .moda-kids-ring-section {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .moda-fitting-ad {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .moda-carousel-hero {
+    margin-top: -64px;
+    height: calc(100svh - 36px);
+    min-height: 600px;
+  }
+  .moda-hero-slide .scene-photo-desktop {
+    display: none;
+  }
+  .moda-hero-slide .scene-photo-mobile {
+    display: block;
+  }
+  .moda-hero-slide .shoppable-scene > .moda-scene-heading {
+    top: auto;
+    bottom: 26%;
+    width: calc(100% - 40px);
+    inset-inline-start: 20px;
+    font-size: 44px;
+  }
+  .moda-hero-slide > .moda-eyebrow {
+    top: auto;
+    bottom: 34%;
+    inset-inline-start: 20px;
+    font-size: 10px;
+  }
+  .moda-hero-slide .shoppable-scene > p.mb-5 {
+    top: auto;
+    bottom: 20%;
+    width: calc(100% - 40px);
+    inset-inline-start: 20px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .moda-hero-slide .shoppable-scene > a {
+    top: auto;
+    bottom: 12%;
+    inset-inline-start: 20px;
+    min-height: 44px !important;
+    font-size: 12px;
+  }
+  .moda-hero-slide .moda-scene-purchase {
+    top: auto;
+    bottom: 6%;
+    inset-inline-start: 20px;
+    font-size: 12px;
+  }
+  .moda-hero-slide .moda-scene-purchase[open] {
+    top: 10%;
+    bottom: auto;
+  }
+  .moda-hero-slide .scene-image-note {
+    bottom: 100px;
+    font-size: 9px;
+  }
+  .moda-carousel-hero > .moda-carousel-controls {
+    inset-inline: 20px;
+    bottom: 6px;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+  .moda-carousel-controls .button {
+    padding: 0 8px;
+  }
+  .moda-crossing-bands {
+    height: 130px;
+  }
+  .moda-worlds-layout {
+    padding: 72px 20px 24px;
+    gap: 20px;
+  }
+  .moda-carousel-prism .moda-carousel-stage {
+    height: 460px;
+  }
+  .moda-product-rail {
+    padding: 72px 20px 24px;
+  }
+  .moda-snap-products > .shop-product-card {
+    flex-basis: 220px;
+  }
+  .moda-fitting-ad {
+    padding: 64px 20px 40px;
+    margin-block-start: 64px;
+    gap: 20px;
+  }
+  .moda-fitting-ad .moda-fitting-stage {
+    height: 300px;
+  }
+  [data-moda4="shop-the-look"] {
+    margin-block: 64px;
+    padding-top: 400px;
+    min-height: 0;
+  }
+  [data-moda4="shop-the-look"] > .scene-photo {
+    height: 540px;
+  }
+  [data-moda4="shop-the-look"] > .moda-scene-heading {
+    top: 410px;
+    inset-inline: 36px;
+    font-size: 34px;
+  }
+  [data-moda4="shop-the-look"] .moda-scene-purchase {
+    margin-inline: 20px;
+    width: calc(100% - 40px);
+    padding-top: 80px;
+  }
+  [data-moda4="shop-the-look"] .scene-price-list {
+    padding: 16px;
+  }
+  .moda-lookbook {
+    margin-top: 64px;
+  }
+  .moda-carousel-lookbook .moda-carousel-stage {
+    height: 500px;
+  }
+  .moda-lookbook .moda-section-heading {
+    padding-inline: 20px;
+  }
+  .moda-kids-world {
+    margin-top: 64px;
+    padding: 64px 20px 40px;
+    gap: 20px;
+  }
+  .moda-services {
+    margin-block: 64px;
+    padding-inline: 20px;
+  }
+  .moda-services-policy {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 761px) {
+  .moda-hero-slide .scene-photo-desktop {
+    display: block;
+  }
+  .moda-hero-slide .scene-photo-mobile {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moda-carousel-hero * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+[data-presentation] {
+  isolation: isolate;
+}
+.moda-hero-slide .scene-pin-price {
+  display: inline;
+}
+
+/* Prototype .copy and .ring: retain their grouping and camera compensation. */
+.moda-header[data-home="true"][data-scrolled="false"] {
+  background: transparent;
+}
+.moda-header[data-home="true"][data-scrolled="false"] .moda-lace {
+  opacity: 0;
+}
+.moda-hero-copy {
+  position: absolute;
+  z-index: 3;
+  top: calc(72px + 7%);
+  bottom: 16%;
+  width: min(46%, 620px);
+  inset-inline-start: 7%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+.moda-hero-copy > .moda-eyebrow {
+  margin: 0;
+  font-family: var(--font-body-latin, Inter);
+  font-size: 11.5px;
+  letter-spacing: 0.22em;
+}
+.moda-hero-slide .moda-hero-copy > .moda-scene-heading {
+  position: static;
+  margin: 0;
+  width: auto;
+  max-width: none;
+  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
+  font-size: clamp(56px, 7.4vw, 128px);
+  font-weight: 400;
+  line-height: 0.92;
+  direction: ltr;
+  text-align: right;
+  letter-spacing: -0.025em;
+}
+html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
+  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
+}
+.moda-hero-copy > p.mb-5 {
+  position: static;
+  margin: 0;
+  width: auto;
+  font-size: 15.5px;
+  line-height: 1.95;
+  max-width: 440px;
+  white-space: pre-line;
+}
+.moda-hero-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.moda-hero-copy .moda-hero-acts > a {
+  margin: 0;
+  --button-fill: var(--text);
+  color: var(--background);
+}
+.moda-hero-copy .moda-hero-acts > .button-outline {
+  --button-fill: transparent;
+  color: var(--text);
+  border: 1.5px solid var(--text);
+}
+.moda-carousel-lookbook {
+  --look-radius: 430px;
+}
+.moda-carousel-lookbook .moda-carousel-stage {
+  height: 450px;
+  perspective: 1500px;
+  perspective-origin: 50% 40%;
+}
+.moda-carousel-lookbook .moda-3d-orbit {
+  width: 270px;
+  height: 360px;
+}
+.moda-header-tools {
+  gap: 2px;
+}
+.moda-mega {
+  gap: 2px;
+}
+.moda-menu-root {
+  padding-inline: 9px;
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .moda-carousel-hero {
+    height: min(92svh, 780px);
+    min-height: 640px;
+  }
+  .moda-hero-slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      transparent 38%,
+      color-mix(in srgb, var(--background) 92%, transparent) 72%
+    );
+    pointer-events: none;
+  }
+  .moda-hero-copy {
+    inset-inline: 20px;
+    width: auto;
+    top: auto;
+    bottom: 96px;
+    gap: 14px;
+    z-index: 4;
+  }
+  .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
+    font-size: 56px;
+  }
+  .moda-hero-copy > p.mb-5 {
+    display: none;
+  }
+  .moda-hero-copy .moda-hero-acts .button {
+    min-height: 44px;
+    font-size: 12px;
+    padding-inline: 20px;
+  }
+  .moda-carousel-lookbook {
+    --look-radius: 300px;
+  }
+  .moda-carousel-lookbook .moda-carousel-stage {
+    height: 470px;
+  }
+  .moda-carousel-lookbook .moda-3d-orbit {
+    width: 220px;
+    height: 293px;
+  }
+  .moda-carousel-hero .moda-carousel-tabs > button > span:first-child {
+    visibility: hidden;
+  }
+}
+
+.moda-hero-slide[data-text-side="end"] .moda-hero-copy {
+  inset-inline-start: auto;
+  inset-inline-end: 7%;
+}
+.moda-world-art {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.moda-world-art .moda-content-photo,
+.moda-world-art .moda-content-photo > .scene-photo {
+  height: 100%;
+}
+.moda-world-number {
+  position: absolute;
+  top: 16px;
+  inset-inline-start: 16px;
+  font-family: var(--font-heading-latin, Manrope);
+  font-size: 56px;
+  font-weight: 400;
+  color: var(--background);
+  opacity: 0.9;
+}
+.moda-world-caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 60px 22px 20px;
+  background: linear-gradient(transparent, #14121099);
+  color: var(--background);
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+}
+.moda-world-caption b {
+  font-family: var(--font-heading-latin, Manrope), sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+}
+.moda-hero-slide .scene-pin:has(.moda-hero-float) {
+  flex-direction: column;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.moda-hero-float {
+  display: block;
+  width: 140px;
+  height: 180px;
+  filter: drop-shadow(0 30px 30px #3c281447);
+}
+.moda-hero-float img {
+  object-fit: contain !important;
+}
+.moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-index {
+  display: none;
+}
+.moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-price {
+  border: 2px dashed var(--primary);
+  border-radius: 50%;
+  padding: 8px 12px;
+  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+@media (max-width: 760px) {
+  .moda-hero-float {
+    display: none;
+  }
+  .moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-price {
+    font-size: 11px;
+    border-width: 1px;
+    padding: 4px 8px;
+    background: color-mix(in srgb, var(--background) 90%, transparent);
+  }
+  .moda-hero-slide[data-text-side="end"] .moda-hero-copy {
+    inset-inline: 20px;
+  }
+}
+
+.moda-hero-slide .moda-hero-copy > .moda-scene-heading {
+  font-weight: 700;
+}
+.moda-hero-copy .moda-title-fragment:last-child {
+  font-weight: 300;
+}
+.moda-kids-world .moda-section-head h2 {
+  font-weight: 700;
+}
+.moda-fitting-copy h2 {
+  font-weight: 700;
+}
+.moda-carousel-hero .moda-carousel-tabs > button {
+  font-size: 12px;
+}
+
+.moda-hero-subtitle {
+  font-size: clamp(18px, 1.7vw, 24px);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+@media (max-width: 760px) {
+  .moda-hero-slide::after {
+    display: none;
+  }
+  .moda-hero-slide .scene-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      transparent 38%,
+      color-mix(in srgb, var(--background) 92%, transparent) 72%
+    );
+    pointer-events: none;
+  }
+}
+
+.moda-editorial-banner {
+  max-width: 1440px;
+  margin: 80px auto;
+  padding-inline: 48px;
+}
+.moda-editorial-banner > .moda-scene-art {
+  height: 480px;
+}
+
+/* Avoid duplicated motion controls and keep touch targets at44px. */
+html[data-button-style="crayon"] .moda-carousel-controls .button,
+html[data-button-style="crayon"] .moda-fitting-utilities .button {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.moda-fitting-utilities {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+}
+.moda-fitting-utilities > p {
+  font-size: 11px;
+  margin: 0;
+  max-width: 200px;
+}
+.moda-kids-ring-section {
+  position: relative;
+}
+.moda-kids-ring-section > .moda-carousel-controls {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  margin: 0;
+}
+[data-moda4="shop-the-look"] {
+  min-height: max(46vw, 620px);
+}
+.moda-footer-links nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: span 2;
+  gap: 4px 24px;
+}
+.moda-footer-links > div:last-child:not(:first-child) {
+  grid-column: 1/-1;
+}
+.moda-footer-utilities {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  grid-column: 1/-1;
+  border-top: 1px solid color-mix(in srgb, var(--background) 14%, transparent);
+}
+.moda-footer-utilities > .shell {
+  padding: 0;
+  width: auto;
+  margin: 0;
+  max-width: none;
+}
+.moda-consent-panel {
+  position: fixed;
+  z-index: 60;
+  bottom: calc(var(--storefront-nav-offset, 0px) + 12px);
+  inset-inline-end: 16px;
+  width: min(640px, calc(100vw - 32px));
+  max-height: 70dvh;
+  overflow: auto;
+  color: var(--text);
+  background: var(--background);
+}
+@media (max-width: 760px) {
+  [data-moda4="shop-the-look"] {
+    min-height: 0;
+  }
+  .moda-footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .moda-footer-utilities {
+    margin-block-start: 24px;
+    display: grid;
+  }
+}

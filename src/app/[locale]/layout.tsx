@@ -160,11 +160,6 @@ export default async function LocaleLayout({
           <div id="storefront-content" tabIndex={-1}>
             {children}
           </div>
-          <PwaControls />
-          <Consent
-            marketId={market.id}
-            ids={normalizeSeo(site?.seo).analytics}
-          />
           <Footer
             locale={locale}
             market={market}
@@ -173,7 +168,13 @@ export default async function LocaleLayout({
             legal={(site?.legal ?? {}) as Legal}
             siteName={siteName}
             logoMediaId={theme?.logoMediaId}
-          />
+          >
+            <PwaControls />
+            <Consent
+              marketId={market.id}
+              ids={normalizeSeo(site?.seo).analytics}
+            />
+          </Footer>
         </div>
       </EngagementProvider>
     </NextIntlClientProvider>
