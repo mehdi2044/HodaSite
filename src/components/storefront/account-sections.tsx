@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 const panels = {
   overview: "overview",
   wardrobe: "overview",
@@ -28,11 +29,22 @@ export function AccountSections({
   details: ReactNode;
 }) {
   const fallback: Section = defaultDetails ? "personal-details" : "overview";
-  const [section, setSection] = useState<Section>(fallback);
+  const params = useSearchParams();
+  const selected = params.get("view");
+  const [legacySection, setLegacySection] = useState<Section>(fallback);
+  const section =
+    selected && Object.hasOwn(panels, selected)
+      ? (selected as Section)
+      : legacySection;
+  const sectionHref = (id: Section) => {
+    const next = new URLSearchParams(params.toString());
+    next.set("view", id);
+    return `?${next}#${id}`;
+  };
   useEffect(() => {
     const read = () => {
       const id = location.hash.slice(1);
-      setSection(Object.hasOwn(panels, id) ? (id as Section) : fallback);
+      setLegacySection(Object.hasOwn(panels, id) ? (id as Section) : fallback);
     };
     read();
     window.addEventListener("hashchange", read);
@@ -60,10 +72,9 @@ export function AccountSections({
         ).map((id) => (
           <Link
             key={id}
-            href={`#${id}`}
+            href={sectionHref(id)}
             scroll={false}
             aria-current={section === id ? "page" : undefined}
-            onClick={() => setSection(id)}
           >
             {labels[id]}
           </Link>

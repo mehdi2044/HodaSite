@@ -100,7 +100,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await expect(
         page.locator('select[name="preferredMarketId"]'),
       ).toHaveValue(selectedMarket.id);
-      await page.locator('.moda-account-nav a[href="#appearance"]').click();
+      await page.locator('.moda-account-nav a[href$="#appearance"]').click();
       const appearance = page.locator("#appearance"),
         form = appearance.locator("form");
       await appearance
@@ -116,7 +116,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         .locator('input[name="categoryIds"][value="seed-category-women"]')
         .check();
       // Native hash navigation must retain unsaved selections without saving them.
-      await page.locator('.moda-account-nav a[href="#overview"]').click();
+      await page.locator('.moda-account-nav a[href$="#overview"]').click();
       await expect(appearance).not.toBeVisible();
       await page.goBack();
       await expect(appearance).toBeVisible();
@@ -132,7 +132,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       ).toBe(version);
       await page.goForward();
       await expect(appearance).not.toBeVisible();
-      await page.locator('.moda-account-nav a[href="#appearance"]').click();
+      await page.locator('.moda-account-nav a[href$="#appearance"]').click();
       await form
         .getByRole("button", { name: copy.accountDesign.save, exact: true })
         .click();
@@ -168,7 +168,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       ).toBe(true);
-      await page.locator('.moda-account-nav a[href="#overview"]').click();
+      await page.locator('.moda-account-nav a[href$="#overview"]').click();
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
       await page.evaluate(() => scrollTo(0, 0));
       await page.evaluate(() => document.fonts.ready);
@@ -195,7 +195,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         await page.setViewportSize({ width: 390, height: 844 });
       }
     }
-    await page.locator('.moda-account-nav a[href="#appearance"]').click();
+    await page.locator('.moda-account-nav a[href$="#appearance"]').click();
     const appearance = page.locator("#appearance");
     await appearance.locator("details summary").click();
     await appearance
@@ -228,7 +228,9 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       }),
     ).toBeChecked();
     // Complete the real personal form after verifying the original empty-market fallback.
-    await page.locator('.moda-account-nav a[href="#personal-details"]').click();
+    await page
+      .locator('.moda-account-nav a[href$="#personal-details"]')
+      .click();
     const personal = page.locator("#personal-details form");
     await personal.locator('[name="firstName"]').fill("Sara");
     await personal.locator('[name="lastName"]').fill("Fixture");
@@ -242,7 +244,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       )
       .toBe("Sara");
     await page.reload();
-    await page.locator('.moda-account-nav a[href="#appearance"]').click();
+    await page.locator('.moda-account-nav a[href$="#appearance"]').click();
     await appearance
       .getByRole("radio", { name: en.accountDesign.themes.SAND, exact: true })
       .check();
@@ -256,7 +258,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
             .profileTheme,
       )
       .toBe("SAND");
-    await page.locator('.moda-account-nav a[href="#overview"]').click();
+    await page.locator('.moda-account-nav a[href$="#overview"]').click();
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({
