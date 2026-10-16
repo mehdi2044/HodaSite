@@ -1037,3 +1037,81 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
     display: grid;
   }
 }
+
+/* Prototype .w4, tabs in the copy column and the actual top face of the prism. */
+.moda-worlds-layout {
+  display: block;
+  padding-top: 120px;
+}
+.moda-carousel-prism {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+.moda-prism-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.moda-prism-copy .moda-worlds-copy p {
+  margin-bottom: 0;
+}
+.moda-prism-copy .moda-carousel-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin: 0;
+  gap: 8px;
+}
+.moda-prism-copy .moda-carousel-tabs {
+  order: -1;
+  flex-basis: 100%;
+  gap: 8px;
+}
+.moda-prism-copy .moda-carousel-tabs > button {
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  background: none;
+  color: var(--text);
+}
+.moda-prism-copy .moda-carousel-tabs > button[aria-pressed="true"] {
+  background: var(--text);
+  color: var(--background);
+}
+.moda-prism-links .button {
+  --button-fill: var(--text);
+  color: var(--background);
+}
+.moda-prism-cap {
+  position: absolute;
+  left: 0;
+  top: 55px;
+  width: 330px;
+  height: 330px;
+  background: var(--text);
+  backface-visibility: hidden;
+  display: grid;
+  place-items: center;
+  transform: rotateX(90deg) translateZ(55px);
+  color: var(--background);
+}
+.moda-prism-cap > svg {
+  width: 46%;
+  height: auto;
+}
+@media (max-width: 1100px) {
+  .moda-carousel-prism {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .moda-worlds-layout {
+    padding-top: 72px;
+  }
+}
+
+.moda-hero-slide .scene-pin .scene-pin-price {
+  font-family: var(--font-price-latin, Inter), Vazirmatn, sans-serif;
+}

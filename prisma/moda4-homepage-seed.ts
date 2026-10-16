@@ -407,7 +407,14 @@ export async function seedFreshModa4Homepage(
               accessories: ["اکسسوری", "Aksesuar", "Accessories"],
             }[key] as [string, string, string]),
           ),
-          subtitle: text("انتخاب‌های تازه", "Yeni seçimler", "Fresh choices"),
+          subtitle: text(
+            ...({
+              women: ["Women", "Women", "Women"],
+              men: ["Men", "Men", "Men"],
+              kids: ["Kids", "Kids", "Kids"],
+              accessories: ["Accessories", "Accessories", "Accessories"],
+            }[key] as [string, string, string]),
+          ),
           desktop: offer.desktop,
           mobile: offer.mobile,
           scene: offer,

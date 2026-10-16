@@ -171,11 +171,9 @@ export async function ModaHomepageBlock({
         );
         return (
           <article className="moda-world-face">
-            <h3>{text(face.title)}</h3>
-            <p>{text(face.subtitle)}</p>
             {href && (
               <Link className="button" href={href}>
-                {text(face.title)}
+                {t("worldEnter", { title: text(face.title) })}
               </Link>
             )}
           </article>
@@ -197,8 +195,27 @@ export async function ModaHomepageBlock({
             </span>
             <div className="moda-world-caption">
               <span>{text(face.title)}</span>
-              <b data-moda4-display="" lang="en" dir="ltr">
-                {localizedValue(face.title, "en")}
+              <b
+                data-moda4-display={
+                  /\p{Script=Latin}/u.test(text(face.subtitle)) &&
+                  !/\p{Script=Arabic}/u.test(text(face.subtitle))
+                    ? ""
+                    : undefined
+                }
+                lang={
+                  /\p{Script=Latin}/u.test(text(face.subtitle)) &&
+                  !/\p{Script=Arabic}/u.test(text(face.subtitle))
+                    ? "en"
+                    : locale
+                }
+                dir={
+                  /\p{Script=Latin}/u.test(text(face.subtitle)) &&
+                  !/\p{Script=Arabic}/u.test(text(face.subtitle))
+                    ? "ltr"
+                    : undefined
+                }
+              >
+                {text(face.subtitle)}
               </b>
             </div>
           </Link>
@@ -207,11 +224,13 @@ export async function ModaHomepageBlock({
     );
     return (
       <div className="moda-worlds-layout">
-        <div className="moda-worlds-copy">
-          <h2>{text(block.title)}</h2>
-          <p>{t("worldsIntro")}</p>
-        </div>
         <ModaCarousel
+          intro={
+            <div className="moda-worlds-copy">
+              <h2>{text(block.title)}</h2>
+              <p>{t("worldsIntro")}</p>
+            </div>
+          }
           art={art}
           kind="prism"
           title={text(block.title)}

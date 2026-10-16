@@ -2712,7 +2712,8 @@
     "cutoutFallback": "Şeffaf görsel yok: gerçek ürün fotoğrafı",
     "stylingDemonstration": "Seçilen mağaza görselleriyle stil gösterimi",
     "replay": "Yeniden oynat",
-    "worldsIntro": "Dört stil dünyasını keşfet."
+    "worldsIntro": "Dört stil dünyasını keşfet.",
+    "worldEnter": "{title} dünyasını keşfet"
   },
   "modaAdmin": {
     "help": "Blokları, görselleri ve gerçek fiyatları yönetin. Özel önizleme kaydedilmemiş değişiklikleri gösterir.",

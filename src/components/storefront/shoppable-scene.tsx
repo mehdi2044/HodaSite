@@ -188,7 +188,9 @@ export function ShoppableScene({
         <h1
           data-moda4={presentation === "hero" ? "hero-title" : undefined}
           data-moda4-display={
-            presentation === "hero" && /^[\x00-\x7F]+$/.test(view.title)
+            presentation === "hero" &&
+            /\p{Script=Latin}/u.test(view.title) &&
+            !/\p{Script=Arabic}/u.test(view.title)
               ? ""
               : undefined
           }
@@ -203,7 +205,9 @@ export function ShoppableScene({
         <h2
           data-moda4={presentation === "hero" ? "hero-title" : undefined}
           data-moda4-display={
-            presentation === "hero" && /^[\x00-\x7F]+$/.test(view.title)
+            presentation === "hero" &&
+            /\p{Script=Latin}/u.test(view.title) &&
+            !/\p{Script=Arabic}/u.test(view.title)
               ? ""
               : undefined
           }
