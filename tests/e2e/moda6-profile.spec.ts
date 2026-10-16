@@ -117,6 +117,9 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         .check();
       // Native hash navigation must retain unsaved selections without saving them.
       await page.locator('.moda-account-nav a[href$="#overview"]').click();
+      await expect(
+        page.locator('[data-account-view="overview"]'),
+      ).toBeVisible();
       await expect(appearance).not.toBeVisible();
       await page.goBack();
       await expect(appearance).toBeVisible();
@@ -169,6 +172,14 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         ),
       ).toBe(true);
       await page.locator('.moda-account-nav a[href$="#overview"]').click();
+      await expect(
+        page.locator('[data-account-view="overview"]'),
+      ).toBeVisible();
+      const reject = page.getByTestId("consent-reject");
+      if (await reject.isVisible()) {
+        await reject.click();
+        await expect(reject).not.toBeVisible();
+      }
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
       await page.evaluate(() => scrollTo(0, 0));
       await page.evaluate(() => document.fonts.ready);
@@ -259,6 +270,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       )
       .toBe("SAND");
     await page.locator('.moda-account-nav a[href$="#overview"]').click();
+    await expect(page.locator('[data-account-view="overview"]')).toBeVisible();
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({
