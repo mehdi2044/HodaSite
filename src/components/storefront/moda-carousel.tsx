@@ -201,7 +201,7 @@ export function ModaCarousel({
                 aria-hidden={n !== current}
                 className={`moda-3d-face ${kind === "lookbook" ? "moda-arch-face" : ""}`}
                 style={{
-                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "165px" : "var(--look-radius)"})`,
+                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "var(--prism-depth)" : "var(--look-radius)"})`,
                 }}
               >
                 {image}

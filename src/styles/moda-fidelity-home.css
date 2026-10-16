@@ -1115,3 +1115,20 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
 .moda-hero-slide .scene-pin .scene-pin-price {
   font-family: var(--font-price-latin, Inter), Vazirmatn, sans-serif;
 }
+
+/* The theme crayon selector has higher specificity than a component class. */
+html[data-button-style="crayon"] .moda-hero-copy .moda-hero-acts > a:not(.button-outline),
+html[data-button-style="crayon"] .moda-prism-links .button {
+  color: var(--background);
+}
+.moda-carousel-prism { --prism-depth: 165px; }
+.moda-prism-cap { transform: rotateX(90deg) translateZ(220px); }
+@media (max-width: 760px) {
+  .moda-carousel-prism { --prism-depth: 120px; }
+  .moda-prism-cap {
+    top: 40px;
+    width: 240px;
+    height: 240px;
+    transform: rotateX(90deg) translateZ(160px);
+  }
+}
