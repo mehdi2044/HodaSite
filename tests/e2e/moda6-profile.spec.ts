@@ -266,6 +266,19 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       fullPage: true,
       scale: "css",
     });
+    await context.addCookies([
+      { name: "market", value: "IR", url: info.project.use.baseURL! },
+    ]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/fa/account?view=overview#overview");
+    const reject = page.getByTestId("consent-reject");
+    if (await reject.isVisible()) await reject.click();
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({
+      path: info.outputPath("r6-profile-created-fa-390.png"),
+      fullPage: true,
+      scale: "css",
+    });
   } finally {
     await db.customer.update({
       where: { id: actor.id },
