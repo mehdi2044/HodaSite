@@ -79,6 +79,18 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
   await expect(
     page.locator('.moda-auth-progress [aria-current="step"]'),
   ).toContainText(en.accountDesign.steps.profile);
+  const personal = page.locator("#personal-details form");
+  await personal.locator('[name="firstName"]').fill("Sara");
+  await personal
+    .getByRole("button", { name: en.commerce.save, exact: true })
+    .click();
+  await expect
+    .poll(
+      async () =>
+        (await db.customer.findUniqueOrThrow({ where: { email } })).firstName,
+    )
+    .toBe("Sara");
+  await page.reload();
   const actor = await db.customer.findUniqueOrThrow({ where: { email } });
   const variant = await db.variant.findUniqueOrThrow({
     where: { id: "seed-style-v2-women-tee-m" },
@@ -100,6 +112,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await expect(
         page.locator('select[name="preferredMarketId"]'),
       ).toHaveValue(selectedMarket.id);
+      await page.locator('.moda-account-nav a[href="#appearance"]').click();
       const appearance = page.locator("#appearance"),
         form = appearance.locator("form");
       await appearance
@@ -148,6 +161,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
       ).toBe(true);
+      await page.locator('.moda-account-nav a[href="#overview"]').click();
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
       await page.evaluate(() => scrollTo(0, 0));
       await page.evaluate(() => document.fonts.ready);
@@ -174,6 +188,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
         await page.setViewportSize({ width: 390, height: 844 });
       }
     }
+    await page.locator('.moda-account-nav a[href="#appearance"]').click();
     const appearance = page.locator("#appearance");
     await appearance.locator("details summary").click();
     await appearance

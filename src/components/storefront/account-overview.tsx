@@ -10,6 +10,7 @@ import {
   usableGrants,
   walletDebt,
 } from "@/modules/fitting/ledger";
+import { AccountSections } from "./account-sections";
 import { savedLooks } from "@/modules/fitting";
 import { resolveContentTarget } from "@/modules/content/moda4-targets";
 import { ResponsiveImage } from "./responsive-image";
@@ -23,9 +24,13 @@ const STEPS = [
 export async function AccountOverview({
   locale,
   children,
+  appearance,
+  orders: orderPanel,
 }: {
   locale: "fa" | "tr" | "en";
   children?: React.ReactNode;
+  appearance: React.ReactNode;
+  orders: React.ReactNode;
 }) {
   const actor = await currentCustomer();
   if (!actor || actor.isGuest) return null;
@@ -111,110 +116,112 @@ export async function AccountOverview({
           <p>{t("yourSpace")}</p>
         </div>
       </section>
-      <div className="moda-account-layout">
-        <nav className="moda-account-nav" aria-label={t("navigation")}>
-          <a href="#overview" aria-current="page">
-            {t("overview")}
-          </a>
-          <a href="#appearance">{t("appearance")}</a>
-          <a href="#personal-details">{commerce("profile")}</a>
-          <a href="#orders">{commerce("orders")}</a>
-          <a href="#wardrobe">{t("wardrobe")}</a>
-          <Link href={`/${locale}/account/wishlist`}>
-            {commerce("wishlist")}
-          </Link>
-          <Link href={`/${locale}/account/preferences`}>
-            {commerce("privacy")}
-          </Link>
-        </nav>
-        <div className="moda-account-content">
-          <p className="text-sm text-muted">
-            {t("marketScope", { market: market.code })}
-          </p>
-          <dl className="moda-profile-stats">
-            {[
-              [t("inTransit"), String(inTransit)],
-              [t("coins"), balance],
-              [commerce("wishlist"), String(wishlist)],
-              [t("savedAiLooks"), String(looksCount)],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>
-                  <bdi>{value}</bdi>
-                </dd>
-              </div>
-            ))}
-          </dl>
-          {order && (
-            <section className="moda-account-panel">
-              <h2>{t(orders.length ? "activeOrder" : "latestOrder")}</h2>
-              <Link href={`/${locale}/orders/${order.number}/pay`}>
-                <bdi>{order.number}</bdi> ·{" "}
-                {commerce(`statuses.${order.status}`)}
-              </Link>
-              {(STEPS.some((status) => status === order.status) ||
-                ["AWAITING_VERIFICATION", "NEEDS_REVIEW"].includes(
-                  order.status,
-                )) && (
-                <ol className="moda-order-timeline">
-                  {STEPS.map((status, index) => (
-                    <li
-                      key={status}
-                      data-reached={index <= progress}
-                      aria-current={index === progress ? "step" : undefined}
-                    >
-                      {commerce(`statuses.${status}`)}
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-          )}
-          <section id="wardrobe" className="moda-account-panel">
-            <h2>{t("wardrobe")}</h2>
-            <p>{t("aiWardrobeHelp")}</p>
-            <div className="moda-wardrobe-grid">
-              {instant.slice(0, 8).map((look) => (
-                <InstantLookTile
-                  key={look.id}
-                  look={look}
-                  marketId={market.id}
-                  locale={locale}
-                />
+      <AccountSections
+        locale={locale}
+        defaultDetails={!actor.firstName}
+        labels={{
+          navigation: t("navigation"),
+          overview: t("overview"),
+          appearance: t("appearance"),
+          "personal-details": commerce("profile"),
+          addresses: commerce("addresses"),
+          orders: commerce("orders"),
+          wardrobe: t("wardrobe"),
+          wishlist: commerce("wishlist"),
+          privacy: commerce("privacy"),
+        }}
+        appearance={appearance}
+        orders={orderPanel}
+        details={children}
+        overview={
+          <>
+            <p className="text-sm text-muted">
+              {t("marketScope", { market: market.code })}
+            </p>
+            <dl className="moda-profile-stats">
+              {[
+                [t("inTransit"), String(inTransit)],
+                [t("coins"), balance],
+                [commerce("wishlist"), String(wishlist)],
+                [t("savedAiLooks"), String(looksCount)],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>
+                    <bdi>{value}</bdi>
+                  </dd>
+                </div>
               ))}
-              {looks.map((look) => (
-                <Link key={look.id} href={`/${locale}/fitting-room`}>
-                  <ResponsiveImage
-                    media={{
-                      url: look.imageUrl,
-                      variants: {},
-                      width: null,
-                      height: null,
-                      blurDataUrl: null,
-                      altI18n: { [locale]: look.name || t("savedAiLooks") },
-                      presentation: { fit: "contain" },
-                    }}
+            </dl>
+            {order && (
+              <section className="moda-account-panel">
+                <h2>{t(orders.length ? "activeOrder" : "latestOrder")}</h2>
+                <Link href={`/${locale}/orders/${order.number}/pay`}>
+                  <bdi>{order.number}</bdi> ·{" "}
+                  {commerce(`statuses.${order.status}`)}
+                </Link>
+                {(STEPS.some((status) => status === order.status) ||
+                  ["AWAITING_VERIFICATION", "NEEDS_REVIEW"].includes(
+                    order.status,
+                  )) && (
+                  <ol className="moda-order-timeline">
+                    {STEPS.map((status, index) => (
+                      <li
+                        key={status}
+                        data-reached={index <= progress}
+                        aria-current={index === progress ? "step" : undefined}
+                      >
+                        {commerce(`statuses.${status}`)}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+            )}
+            <section id="wardrobe" className="moda-account-panel">
+              <h2>{t("wardrobe")}</h2>
+              <p>{t("aiWardrobeHelp")}</p>
+              <div className="moda-wardrobe-grid">
+                {instant.slice(0, 8).map((look) => (
+                  <InstantLookTile
+                    key={look.id}
+                    look={look}
+                    marketId={market.id}
                     locale={locale}
-                    role="catalog"
-                    sizes="(max-width:767px) 50vw,25vw"
-                    className="block aspect-[3/4]"
-                    imgClassName="h-full w-full object-contain"
                   />
-                  <span>{look.name || t("savedAiLooks")}</span>
-                </Link>
-              ))}
-              {fitting && (
-                <Link className="moda-new-look" href={fitting}>
-                  {t("newLook")}
-                </Link>
-              )}
-            </div>
-            {!looks.length && !instant.length && <p>{t("noLooks")}</p>}
-          </section>
-          {children}
-        </div>
-      </div>
+                ))}
+                {looks.map((look) => (
+                  <Link key={look.id} href={`/${locale}/fitting-room`}>
+                    <ResponsiveImage
+                      media={{
+                        url: look.imageUrl,
+                        variants: {},
+                        width: null,
+                        height: null,
+                        blurDataUrl: null,
+                        altI18n: { [locale]: look.name || t("savedAiLooks") },
+                        presentation: { fit: "contain" },
+                      }}
+                      locale={locale}
+                      role="catalog"
+                      sizes="(max-width:767px) 50vw,25vw"
+                      className="block aspect-[3/4]"
+                      imgClassName="h-full w-full object-contain"
+                    />
+                    <span>{look.name || t("savedAiLooks")}</span>
+                  </Link>
+                ))}
+                {fitting && (
+                  <Link className="moda-new-look" href={fitting}>
+                    {t("newLook")}
+                  </Link>
+                )}
+              </div>
+              {!looks.length && !instant.length && <p>{t("noLooks")}</p>}
+            </section>
+          </>
+        }
+      />
     </>
   );
 }

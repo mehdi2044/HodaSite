@@ -52,3 +52,5 @@ html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --bu
 .moda-login .moda-auth-progress { margin-bottom:4px; }
 html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --button-fill:var(--sandAccent); color:var(--surface); }
 .moda-login-notice { font-size:12px; color:var(--muted); line-height:1.75; }
+.moda-account-content > [data-account-view] { display:grid; gap:24px; min-width:0; }
+.moda-account-content > [data-account-view][hidden] { display:none; }

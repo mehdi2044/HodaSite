@@ -82,71 +82,82 @@ export default async function AccountPage({
         </form>
       </div>
       {!customer.firstName && <AccountProgress step={3} />}
-      <AccountOverview locale={locale as "fa" | "tr" | "en"}>
-        <AccountPresentation
-          locale={locale}
-          revision={customer.presentationVersion}
-          initial={{
-            theme: profileTheme(customer.profileTheme) ?? "",
-            sizeIds: preferences.sizeIds,
-            categoryIds: preferences.categoryIds,
-          }}
-          sizes={sizes.map((size) => ({
-            id: size.id,
-            label: `${size.value} · ${size.scale}${sizes.some((other) => other.id !== size.id && other.value === size.value && other.scale === size.scale) ? ` (${size.groupKey})` : ""}`,
-          }))}
-          categories={categories.map((category) => ({
-            id: category.id,
-            label: catalogText(
-              category.titleI18n,
-              locale as "fa" | "tr" | "en",
-            ),
-          }))}
-        />
-        <section className="grid gap-4" id="orders">
-          <h2 className="text-xl font-semibold">{t("orders")}</h2>
-          {orders.length ? (
-            orders.map((order) => (
-              <Link
-                className="flex flex-wrap justify-between gap-3 rounded-token border border-black/10 bg-surface p-5"
-                prefetch={false}
-                key={order.id}
-                href={`/${locale}/orders/${order.number}/pay`}
-              >
-                <Iso>{order.number}</Iso>
-                <span>{t(`statuses.${order.status}`)}</span>
-                <Iso>
-                  {order.totalAmount.toString()} {order.currency}
-                </Iso>
-              </Link>
-            ))
-          ) : (
-            <p className="text-muted">{t("noOrders")}</p>
-          )}
-        </section>
-        <section className="grid gap-3">
-          <h2 className="text-xl font-semibold">
-            {(await getTranslations("returns"))("creditBalance")}
-          </h2>
-          {(
-            await db.storeCredit.groupBy({
-              by: ["currency"],
-              where: {
-                customerId: customer.id,
-                balance: { gt: 0 },
-                OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-              },
-              _sum: { balance: true },
-            })
-          ).map((c) => (
-            <p key={c.currency}>
-              <bdi dir="ltr">
-                {c._sum.balance?.toString()} {c.currency}
-              </bdi>
-            </p>
-          ))}
-        </section>
-        <div className="grid gap-8 lg:grid-cols-2">
+      <AccountOverview
+        locale={locale as "fa" | "tr" | "en"}
+        appearance={
+          <AccountPresentation
+            locale={locale}
+            revision={customer.presentationVersion}
+            initial={{
+              theme: profileTheme(customer.profileTheme) ?? "",
+              sizeIds: preferences.sizeIds,
+              categoryIds: preferences.categoryIds,
+            }}
+            sizes={sizes.map((size) => ({
+              id: size.id,
+              label: `${size.value} · ${size.scale}${sizes.some((other) => other.id !== size.id && other.value === size.value && other.scale === size.scale) ? ` (${size.groupKey})` : ""}`,
+            }))}
+            categories={categories.map((category) => ({
+              id: category.id,
+              label: catalogText(
+                category.titleI18n,
+                locale as "fa" | "tr" | "en",
+              ),
+            }))}
+          />
+        }
+        orders={
+          <>
+            <section className="grid gap-4" id="orders">
+              <h2 className="text-xl font-semibold">{t("orders")}</h2>
+              {orders.length ? (
+                orders.map((order) => (
+                  <Link
+                    className="flex flex-wrap justify-between gap-3 rounded-token border border-black/10 bg-surface p-5"
+                    prefetch={false}
+                    key={order.id}
+                    href={`/${locale}/orders/${order.number}/pay`}
+                  >
+                    <Iso>{order.number}</Iso>
+                    <span>{t(`statuses.${order.status}`)}</span>
+                    <Iso>
+                      {order.totalAmount.toString()} {order.currency}
+                    </Iso>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-muted">{t("noOrders")}</p>
+              )}
+            </section>
+            <section className="grid gap-3">
+              <h2 className="text-xl font-semibold">
+                {(await getTranslations("returns"))("creditBalance")}
+              </h2>
+              {(
+                await db.storeCredit.groupBy({
+                  by: ["currency"],
+                  where: {
+                    customerId: customer.id,
+                    balance: { gt: 0 },
+                    OR: [
+                      { expiresAt: null },
+                      { expiresAt: { gt: new Date() } },
+                    ],
+                  },
+                  _sum: { balance: true },
+                })
+              ).map((c) => (
+                <p key={c.currency}>
+                  <bdi dir="ltr">
+                    {c._sum.balance?.toString()} {c.currency}
+                  </bdi>
+                </p>
+              ))}
+            </section>
+          </>
+        }
+      >
+        <div className="grid gap-8">
           <section
             className="rounded-token bg-surface p-6"
             id="personal-details"
@@ -203,7 +214,10 @@ export default async function AccountPage({
               <button className="button">{t("save")}</button>
             </CommerceForm>
           </section>
-          <section className="grid content-start gap-5 rounded-token bg-surface p-6">
+          <section
+            id="addresses"
+            className="grid content-start gap-5 rounded-token bg-surface p-6"
+          >
             <h2 className="text-xl font-semibold">{t("addresses")}</h2>
             {addresses.map((a) => (
               <p key={a.id}>

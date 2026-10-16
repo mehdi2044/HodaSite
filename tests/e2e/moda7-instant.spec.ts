@@ -211,6 +211,7 @@ test("R7a guest composition survives verified login, private save/reload/profile
       scale: "css",
     });
     await page.goto("/en/account");
+    await page.locator('.moda-account-nav a[href="#overview"]').click();
     await expect(
       page
         .locator(".moda-wardrobe-grid")
