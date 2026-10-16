@@ -1,4 +1,5 @@
 "use client";
+import { ModaWordmark } from "./moda-wordmark";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { useTranslations } from "next-intl";
@@ -10,6 +11,7 @@ export function ModaCarousel({
   kind = "hero",
   title,
   art,
+  intro,
 }: {
   items: ReactNode[];
   labels: string[];
@@ -17,6 +19,7 @@ export function ModaCarousel({
   kind?: "hero" | "prism" | "lookbook" | "fitting";
   title?: string;
   art?: ReactNode[];
+  intro?: ReactNode;
 }) {
   const t = useTranslations("modaHomepage");
   const root = useRef<HTMLElement>(null),
@@ -58,9 +61,69 @@ export function ModaCarousel({
   }, [paused, engaged, reduced, hidden, visible, items.length, seconds]);
   const change = (delta: number) =>
     setIndex((current + delta + items.length) % items.length);
+  const controls = (
+    <>
+      {" "}
+      {items.length > 1 && (
+        <div className="moda-carousel-controls">
+          <button
+            type="button"
+            className="button button-outline"
+            aria-label={t("previous")}
+            onClick={() => change(-1)}
+          >
+            ←
+          </button>
+          <div
+            className="moda-carousel-tabs"
+            data-moda4={kind === "hero" ? "hero-progress" : undefined}
+          >
+            {labels.map((label, n) => (
+              <button
+                key={n}
+                type="button"
+                aria-label={label}
+                aria-pressed={n === current}
+                onClick={() => setIndex(n)}
+              >
+                <span aria-hidden="true">
+                  {kind === "prism" ? label : n + 1}
+                </span>
+                {n === current && (
+                  <span
+                    key={current}
+                    className="moda-slide-progress"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="button button-outline"
+            aria-label={t("next")}
+            onClick={() => change(1)}
+          >
+            →
+          </button>
+          <button
+            type="button"
+            className="button button-outline"
+            aria-pressed={paused || reduced}
+            onClick={() => setPaused((old) => !old)}
+            disabled={reduced}
+          >
+            {paused || reduced ? t("resume") : t("pause")}
+          </button>
+        </div>
+      )}
+    </>
+  );
   return (
     <section
       ref={root}
+      data-moda4={kind === "hero" ? "hero" : undefined}
       className={`moda-carousel moda-carousel-${kind}`}
       data-reduced={reduced}
       data-running={!paused && !engaged && !reduced && !hidden && visible}
@@ -77,7 +140,21 @@ export function ModaCarousel({
           setEngaged(false);
       }}
     >
-      {title && <h2 className="moda-section-heading">{title}</h2>}
+      {kind === "prism" && intro ? (
+        <div className="moda-prism-copy">
+          {intro}
+          {controls}
+          <div className="moda-prism-links">
+            {items.map((item, n) => (
+              <div key={n} hidden={n !== current}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        title && <h2 className="moda-section-heading">{title}</h2>
+      )}
       <div
         className="moda-carousel-stage"
         onPointerDown={(event) => {
@@ -110,24 +187,31 @@ export function ModaCarousel({
       >
         {art && art.length > 1 ? (
           <div
+            data-moda4={kind === "prism" ? "worlds-prism" : "lookbook-ring"}
             className="moda-3d-orbit"
             style={{
-              transform: `rotateX(${kind === "prism" ? -9 : 0}deg) rotateY(${-current * (360 / art.length) + dragAngle}deg)`,
+              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${kind === "prism" ? -9 : 0}deg) rotateY(${-current * (360 / art.length) + dragAngle}deg)`,
             }}
           >
             {art.map((image, n) => (
               <div
                 key={n}
+                data-moda4={kind === "prism" ? "worlds-face" : "lookbook-card"}
                 inert={n !== current}
                 aria-hidden={n !== current}
                 className={`moda-3d-face ${kind === "lookbook" ? "moda-arch-face" : ""}`}
                 style={{
-                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? 165 : 430}px)`,
+                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "var(--prism-depth)" : "var(--look-radius)"})`,
                 }}
               >
                 {image}
               </div>
             ))}
+            {kind === "prism" && (
+              <div className="moda-prism-cap" aria-hidden="true">
+                <ModaWordmark />
+              </div>
+            )}
           </div>
         ) : null}
         {!art &&
@@ -144,7 +228,7 @@ export function ModaCarousel({
             </div>
           ))}
       </div>
-      {art && (
+      {art && kind !== "prism" && (
         <div className="moda-orbit-selected">
           {items.map((item, n) => (
             <div key={n} hidden={n !== current}>
@@ -153,55 +237,7 @@ export function ModaCarousel({
           ))}
         </div>
       )}
-      {items.length > 1 && (
-        <div className="moda-carousel-controls">
-          <button
-            type="button"
-            className="button button-outline"
-            aria-label={t("previous")}
-            onClick={() => change(-1)}
-          >
-            ←
-          </button>
-          <div className="moda-carousel-tabs">
-            {labels.map((label, n) => (
-              <button
-                key={n}
-                type="button"
-                aria-label={label}
-                aria-pressed={n === current}
-                onClick={() => setIndex(n)}
-              >
-                <span aria-hidden="true">{n + 1}</span>
-                {n === current && (
-                  <span
-                    key={current}
-                    className="moda-slide-progress"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="button button-outline"
-            aria-label={t("next")}
-            onClick={() => change(1)}
-          >
-            →
-          </button>
-          <button
-            type="button"
-            className="button button-outline"
-            aria-pressed={paused || reduced}
-            onClick={() => setPaused((old) => !old)}
-            disabled={reduced}
-          >
-            {paused || reduced ? t("resume") : t("pause")}
-          </button>
-        </div>
-      )}
+      {kind !== "prism" && controls}
     </section>
   );
 }

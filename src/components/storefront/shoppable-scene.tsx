@@ -10,7 +10,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
+import {
+  ResponsiveImage,
+  isDemoFashionMedia,
+  type ResponsiveImageMedia,
+} from "./responsive-image";
 import { CommerceForm } from "./commerce-form";
 import { addSceneAction } from "@/app/[locale]/commerce-actions";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
@@ -30,6 +34,10 @@ export function ShoppableScene({
   body,
   cta,
   revealTitle = false,
+  presentation,
+  eyebrow,
+  secondary,
+  decorations,
 }: {
   view: SceneView;
   locale: "fa" | "tr" | "en";
@@ -41,8 +49,13 @@ export function ShoppableScene({
   body?: string;
   cta?: { label: string; href: string };
   revealTitle?: boolean;
+  presentation?: "hero" | "look";
+  eyebrow?: string;
+  secondary?: { label: string; href: string };
+  decorations?: Record<string, ResponsiveImageMedia | null>;
 }) {
   const activeSlide = useContext(ActiveCarouselSlide);
+  const PurchasePanel = presentation === "hero" ? "details" : "div";
   const t = useTranslations("scenes"),
     shopping = useTranslations("shopping"),
     cutouts = useTranslations("cutouts");
@@ -168,21 +181,19 @@ export function ShoppableScene({
   ) : (
     view.title
   );
-  return (
-    <section
-      ref={root}
-      className="shoppable-scene"
-      data-testid="shoppable-scene"
-      data-scene-id={view.id}
-      data-scene-confirmation={
-        preview ? view.confirmationFingerprint : undefined
-      }
-      data-scene-confirmation-key={preview ? view.confirmationKey : undefined}
-      data-scene-related-video={preview ? view.relatedVideo?.url : undefined}
-      dir={locale === "fa" ? "rtl" : "ltr"}
-    >
+  const copy = (
+    <>
+      {eyebrow && <p className="moda-eyebrow">{eyebrow}</p>}
       {(headingLevel ?? (first ? 1 : 2)) === 1 && activeSlide ? (
         <h1
+          data-moda4={presentation === "hero" ? "hero-title" : undefined}
+          data-moda4-display={
+            presentation === "hero" &&
+            /\p{Script=Latin}/u.test(view.title) &&
+            !/\p{Script=Arabic}/u.test(view.title)
+              ? ""
+              : undefined
+          }
           className="moda-scene-heading"
           aria-label={revealTitle ? view.title : undefined}
         >
@@ -192,17 +203,66 @@ export function ShoppableScene({
         <h3>{view.title}</h3>
       ) : (
         <h2
+          data-moda4={presentation === "hero" ? "hero-title" : undefined}
+          data-moda4-display={
+            presentation === "hero" &&
+            /\p{Script=Latin}/u.test(view.title) &&
+            !/\p{Script=Arabic}/u.test(view.title)
+              ? ""
+              : undefined
+          }
           className="moda-scene-heading"
           aria-label={revealTitle ? view.title : undefined}
         >
           {title}
         </h2>
       )}
-      {body && <p className="mb-5">{body}</p>}
-      {cta && (
-        <a className="button mb-5 inline-flex" href={cta.href}>
-          {cta.label}
-        </a>
+      {body &&
+        (presentation === "hero" && body.includes("\n") ? (
+          <>
+            <div className="moda-hero-subtitle">{body.split("\n")[0]}</div>
+            <p className="mb-5">{body.split("\n").slice(1).join("\n")}</p>
+          </>
+        ) : (
+          <p className="mb-5">{body}</p>
+        ))}
+      <div className="moda-hero-acts">
+        {cta && (
+          <a
+            data-moda4-cta=""
+            className="button mb-5 inline-flex"
+            href={cta.href}
+          >
+            {cta.label}
+          </a>
+        )}
+        {secondary && (
+          <a className="button button-outline" href={secondary.href}>
+            {secondary.label}
+          </a>
+        )}
+      </div>
+    </>
+  );
+  return (
+    <section
+      ref={root}
+      className="shoppable-scene"
+      data-testid="shoppable-scene"
+      data-moda4={presentation === "look" ? "shop-the-look" : undefined}
+      data-presentation={presentation}
+      data-scene-id={view.id}
+      data-scene-confirmation={
+        preview ? view.confirmationFingerprint : undefined
+      }
+      data-scene-confirmation-key={preview ? view.confirmationKey : undefined}
+      data-scene-related-video={preview ? view.relatedVideo?.url : undefined}
+      dir={locale === "fa" ? "rtl" : "ltr"}
+    >
+      {presentation === "hero" ? (
+        <div className="moda-hero-copy">{copy}</div>
+      ) : (
+        copy
       )}
       {view.mode === "COMPOSITE" && (
         <p className="scene-image-note">{cutouts("stylingOnly")}</p>
@@ -290,8 +350,24 @@ export function ShoppableScene({
                       top: `${point.y * 100}%`,
                     }}
                     aria-label={`${piece.title} · ${price(piece)}`}
+                    onClick={() => {
+                      const panel =
+                        root.current?.querySelector<HTMLDetailsElement>(
+                          "details.moda-scene-purchase",
+                        );
+                      if (panel) panel.open = true;
+                    }}
                   >
-                    <span aria-hidden="true">
+                    {presentation === "hero" && decorations?.[piece.id] && (
+                      <ResponsiveImage
+                        media={decorations[piece.id]!}
+                        locale={locale}
+                        sizes="180px"
+                        imgClassName="w-full h-full object-contain"
+                        className="moda-hero-float"
+                      />
+                    )}
+                    <span className="scene-pin-index" aria-hidden="true">
                       {new Intl.NumberFormat(locale).format(n + 1)}
                     </span>
                     <span className="scene-pin-price moda-price">
@@ -307,73 +383,91 @@ export function ShoppableScene({
         isDemoFashionMedia(view.mobile.media ?? undefined)) && (
         <p className="scene-image-note">{shopping("demoImage")}</p>
       )}
-      <CommerceForm
-        action={addSceneAction.bind(null, locale)}
-        className="scene-price-list"
+      <PurchasePanel
+        className="moda-scene-purchase"
+        open={
+          presentation === "hero" &&
+          (view.reason || imageFailed("mobile") || imageFailed("desktop"))
+            ? true
+            : undefined
+        }
       >
-        <input type="hidden" name="sceneId" value={view.id} />
-        {view.pieces.map((piece, n) => (
-          <article
-            key={piece.id}
-            id={`scene-piece-${view.id}-${piece.id}`}
-            data-testid={`scene-piece-${piece.id}`}
-          >
-            <div>
-              {preview && piece.referenceImage && (
-                <ResponsiveImage
-                  media={piece.referenceImage}
-                  locale={locale}
-                  sizes="120px"
-                  className="block w-24"
-                  imgClassName="w-full h-auto"
-                />
-              )}
-              <a href={piece.href}>
-                {new Intl.NumberFormat(locale).format(n + 1)}. {piece.title}
-              </a>
-              <p>{piece.color}</p>
-            </div>
-            <strong className="moda-price">
-              <bdi>{price(piece)}</bdi>
-            </strong>
-            <label>
-              {t("size")}
-              <select
-                className="input"
-                name="variantId"
-                value={selections[piece.id] ?? ""}
-                onChange={(event) =>
-                  select((old) => ({ ...old, [piece.id]: event.target.value }))
-                }
-                disabled={Boolean(view.reason) && !preview}
-              >
-                <option value="">{t("chooseSize")}</option>
-                {piece.variants.map((v) => (
-                  <option
-                    key={v.id}
-                    value={v.id}
-                    disabled={v.available <= 0 || v.amount === null}
-                  >
-                    {v.size}
-                    {v.id === piece.preferredVariantId
-                      ? ` · ${t("suggested")}`
-                      : ""}
-                    {v.available <= 0 ? ` · ${t("outOfStock")}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </article>
-        ))}
-        {view.pieces.length > 0 && (
-          <>
-            <p>{preview ? t("previewOnly") : t("chooseEverySize")}</p>
-            <button className="button" disabled={!ready}>
-              {t("addScene")}
-            </button>
-          </>
+        {presentation === "hero" && (
+          <summary className="moda-purchase-toggle sr-only focus:not-sr-only">
+            {t("chooseSize")}
+          </summary>
         )}
-      </CommerceForm>
+        <CommerceForm
+          action={addSceneAction.bind(null, locale)}
+          className="scene-price-list"
+        >
+          <input type="hidden" name="sceneId" value={view.id} />
+          {view.pieces.map((piece, n) => (
+            <article
+              key={piece.id}
+              id={`scene-piece-${view.id}-${piece.id}`}
+              data-testid={`scene-piece-${piece.id}`}
+            >
+              <div>
+                {preview && piece.referenceImage && (
+                  <ResponsiveImage
+                    media={piece.referenceImage}
+                    locale={locale}
+                    sizes="120px"
+                    className="block w-24"
+                    imgClassName="w-full h-auto"
+                  />
+                )}
+                <a href={piece.href}>
+                  {new Intl.NumberFormat(locale).format(n + 1)}. {piece.title}
+                </a>
+                <p>{piece.color}</p>
+              </div>
+              <strong className="moda-price">
+                <bdi>{price(piece)}</bdi>
+              </strong>
+              <label>
+                {t("size")}
+                <select
+                  className="input"
+                  name="variantId"
+                  value={selections[piece.id] ?? ""}
+                  onChange={(event) =>
+                    select((old) => ({
+                      ...old,
+                      [piece.id]: event.target.value,
+                    }))
+                  }
+                  disabled={Boolean(view.reason) && !preview}
+                >
+                  <option value="">{t("chooseSize")}</option>
+                  {piece.variants.map((v) => (
+                    <option
+                      key={v.id}
+                      value={v.id}
+                      disabled={v.available <= 0 || v.amount === null}
+                    >
+                      {v.size}
+                      {v.id === piece.preferredVariantId
+                        ? ` · ${t("suggested")}`
+                        : ""}
+                      {v.available <= 0 ? ` · ${t("outOfStock")}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </article>
+          ))}
+          {view.pieces.length > 0 && (
+            <>
+              <p>{preview ? t("previewOnly") : t("chooseEverySize")}</p>
+              <button className="button" disabled={!ready}>
+                {t("addScene")}
+              </button>
+            </>
+          )}
+        </CommerceForm>
+      </PurchasePanel>
     </section>
   );
 }

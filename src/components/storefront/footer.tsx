@@ -30,6 +30,7 @@ export async function Footer({
   legal,
   siteName = "",
   logoMediaId,
+  children,
 }: {
   locale: string;
   market: Market;
@@ -38,6 +39,7 @@ export async function Footer({
   legal: Legal;
   siteName?: string;
   logoMediaId?: string | null;
+  children?: React.ReactNode;
 }) {
   const [t, navT] = await Promise.all([
     getTranslations("footer"),
@@ -133,6 +135,7 @@ export async function Footer({
           <strong>{siteName}</strong>
         )}
       </div>
+      {children && <div className="moda-footer-utilities">{children}</div>}
     </footer>
   );
 }

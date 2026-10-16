@@ -105,11 +105,12 @@ export function ModaKidsRing({
           drag.current = null;
         }}
       >
-        <div className="moda-kids-ring">
+        <div className="moda-kids-ring" data-moda4="kids-turntable">
           {items.map((item, n) => (
             <div
               key={n}
               className="moda-kids-podium"
+              data-moda4="kids-turntable-item"
               style={
                 {
                   "--podium-angle": `${(n * 360) / Math.max(1, items.length)}deg`,

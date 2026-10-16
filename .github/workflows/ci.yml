@@ -121,14 +121,28 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Reference must pass the entire contract
         run: MODA4_FIDELITY_TARGET=prototype pnpm test:fidelity
-      - name: Measure app and enforce cumulative stage
+      - name: Measure app, enforce cumulative stage and capture scrolled sections
         run: |
+          cp -r .next/static .next/standalone/.next/
+          cp -r public .next/standalone/
+          mkdir -p test-results/moda4-fidelity
+          HOSTNAME=127.0.0.1 PORT=3000 node .next/standalone/server.js > test-results/moda4-fidelity/server.log 2>&1 &
+          fidelity_server_pid=$!
+          trap 'kill "$fidelity_server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          export MODA4_APP_URL=http://127.0.0.1:3000
           set +e
           pnpm test:fidelity
           full_status=$?
           set -e
           echo "Full-contract process exit: $full_status (later-stage rows remain reported)"
-          node scripts/check-fidelity-stage.mjs 1
+          node scripts/check-fidelity-stage.mjs 2
+          node scripts/fidelity-section-proof.mjs
       - name: Preserve every measurement and paired screenshot
         if: always()
         uses: actions/upload-artifact@v4

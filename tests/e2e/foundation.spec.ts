@@ -8,9 +8,9 @@ for (const locale of ["fa", "tr", "en"] as const)
   test(`${locale} mobile home`, async ({ page }) => {
     await page.goto(`/${locale}`);
     const titles = {
-      fa: "لایه‌های شهری",
-      tr: "Şehir katmanları",
-      en: "City layers",
+      fa: "City Layers",
+      tr: "City Layers",
+      en: "City Layers",
     };
     await expect(page.locator("h1")).toContainText(titles[locale]);
     await expect(page.locator("main")).toHaveAttribute(

@@ -182,12 +182,16 @@ export function Consent({
       {(choice === null || open) && (
         <section
           aria-label={t("title")}
-          className="mx-auto my-4 grid max-w-2xl gap-3 rounded-token border bg-bg p-5 shadow-xl"
+          className="moda-consent-panel mx-auto my-4 grid max-w-2xl gap-3 rounded-token border bg-bg p-5 shadow-xl"
         >
           <h2 className="text-lg font-semibold">{t("title")}</h2>
           <p>{t("description")}</p>
           <div className="flex flex-wrap gap-3">
-            <button className="button" onClick={() => choose(false)}>
+            <button
+              data-testid="consent-reject"
+              className="button"
+              onClick={() => choose(false)}
+            >
               {t("reject")}
             </button>
             <button className="button" onClick={() => choose(true)}>

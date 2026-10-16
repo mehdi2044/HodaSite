@@ -1,3 +1,4 @@
+import { seedModa4PhotoScene } from "./moda4-photo-seed";
 import type { Prisma, PrismaClient, Media } from "@prisma/client";
 import { readFile } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
@@ -304,26 +305,70 @@ export async function seedFreshModa4Homepage(
   });
   const explore = text("مشاهده", "Keşfet", "Explore");
   const catalog = { kind: "catalog" };
+  const photoScenes: Awaited<ReturnType<typeof seedModa4PhotoScene>>[] = [];
+  // The sixth look reuses the first media identity; bootstrap it sequentially.
+  for (let n = 0; n < 6; n++)
+    photoScenes.push(
+      await seedModa4PhotoScene(db, put, `seed-moda4-photo-${n}`, n),
+    );
   const blocks = [
     {
       ...common("seed-moda4-hero", "HeroSlider"),
       autoplaySeconds: 7,
-      slides: outfits.slice(0, 2).map((_, n) => ({
+      slides: Array.from({ length: 4 }, (_, n) => ({
         id: `seed-moda4-slide-${n}`,
-        scene: makeScene(`seed-moda4-hero-scene-${n}`, n),
+        scene: {
+          ...photoScenes[n],
+          id: `seed-moda4-hero-scene-${n}`,
+          ...(n === 3
+            ? {
+                title: text(
+                  "Try before you buy",
+                  "Try before you buy",
+                  "Try before you buy",
+                ),
+              }
+            : {}),
+        },
         eyebrow: text(
-          "چهار دنیای استایل",
-          "Stilin dört dünyası",
-          "Four worlds of style",
+          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
+          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
+          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
         ),
-        body: text(
-          "ترکیب نمایشی قابل تغییر؛ هر قطعه با قیمت واقعی",
-          "Düzenlenebilir örnek kombin; gerçek ürün fiyatları",
-          "Editable demo styling, with actual product prices",
-        ),
+        body:
+          n === 0
+            ? text(
+                "لایه‌های شهری — بارانی، بافت و رنگ‌های خاکی\nست کامل را ببین، هر قطعه را با سایز خودت انتخاب کن یا اول روی مدل امتحانش کن.",
+                "Şehir katmanları — trençkot, triko ve toprak tonları.\nKombini keşfet; kendi bedenini seç veya model üzerinde dene.",
+                "City layers — trench, knits and earthy tones.\nExplore the look; choose your size or try it on the store model first.",
+              )
+            : text(
+                "استایل خودت را بساز؛ قیمت هر قطعه از کاتالوگ زنده است.",
+                "Kendi stilini oluştur; canlı katalog fiyatlarıyla.",
+                "Build your styling with live catalog prices.",
+              ),
         textSide: n ? "end" : "start",
-        ctaLabel: explore,
-        target: catalog,
+        ctaLabel:
+          n === 0
+            ? text("خرید کالکشن زنانه", "Kadın koleksiyonu", "Shop womenswear")
+            : n === 3
+              ? text(
+                  "ورود به اتاق پرو",
+                  "Deneme odasına gir",
+                  "Enter the fitting room",
+                )
+              : explore,
+        target:
+          n === 3
+            ? { kind: "fitting" }
+            : n === 0
+              ? { kind: "category", id: "seed-category-women" }
+              : catalog,
+        secondaryLabel:
+          n === 0
+            ? text("امتحان روی مدل", "Model üzerinde dene", "Try on the model")
+            : undefined,
+        secondaryTarget: n === 0 ? { kind: "fitting" } : undefined,
       })),
     },
     {
@@ -362,7 +407,14 @@ export async function seedFreshModa4Homepage(
               accessories: ["اکسسوری", "Aksesuar", "Accessories"],
             }[key] as [string, string, string]),
           ),
-          subtitle: text("انتخاب‌های تازه", "Yeni seçimler", "Fresh choices"),
+          subtitle: text(
+            ...({
+              women: ["Women", "Women", "Women"],
+              men: ["Men", "Men", "Men"],
+              kids: ["Kids", "Kids", "Kids"],
+              accessories: ["Accessories", "Accessories", "Accessories"],
+            }[key] as [string, string, string]),
+          ),
           desktop: offer.desktop,
           mobile: offer.mobile,
           scene: offer,
@@ -389,13 +441,17 @@ export async function seedFreshModa4Homepage(
     },
     {
       ...common("seed-moda4-fitting", "FittingAd"),
-      title: text("ترکیب خودت را ببین", "Kombinini gör", "See your styling"),
+      title: text(
+        "From the rail to you.",
+        "From the rail to you.",
+        "From the rail to you.",
+      ),
       body: text(
         "نمایش لایه‌ای، بدون درخواست هوش مصنوعی",
         "Katmanlı görünüm; yapay zekâ isteği yok",
         "Layered styling, with no AI request",
       ),
-      looks: outfits.slice(0, 2).map((row, n) => ({
+      looks: outfits.map((row, n) => ({
         id: `seed-moda4-fitting-look-${n}`,
         label: row[2],
         scene: makeScene(`seed-moda4-fitting-scene-${n}`, n),
@@ -412,23 +468,20 @@ export async function seedFreshModa4Homepage(
         "Choose each actual size",
       ),
       looks: [],
-      scene: makeScene("seed-moda4-shop-scene", 0),
+      scene: { ...photoScenes[1], id: "seed-moda4-shop-scene" },
     },
     {
       ...common("seed-moda4-lookbook", "Lookbook"),
       title: text("دفتر استایل", "Stil defteri", "Lookbook"),
       autoplaySeconds: 4.8,
-      scenes: Array.from({ length: 6 }, (_, n) =>
-        makeScene(`seed-moda4-lookbook-scene-${n}`, n),
-      ),
+      scenes: photoScenes.map((scene, n) => ({
+        ...scene,
+        id: `seed-moda4-lookbook-scene-${n}`,
+      })),
     },
     {
       ...common("seed-moda4-kids", "KidsWorld"),
-      title: text(
-        "دنیای رنگی کودکان",
-        "Çocukların renkli dünyası",
-        "A colourful kids world",
-      ),
+      title: text("Little worlds.", "Little worlds.", "Little worlds."),
       body: text("برای روزهای بازی", "Oyun günleri için", "For days of play"),
       tone: "kidsMint",
       source: {

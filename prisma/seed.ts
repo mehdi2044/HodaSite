@@ -341,7 +341,22 @@ async function main() {
     await db.market.upsert({
       where: { code: m.code },
       update: {},
-      create: { ...m, paymentDeadlineHours: 48 },
+      create: {
+        ...m,
+        paymentDeadlineHours: 48,
+        ...(freshModa4Demo
+          ? {
+              announcementBar: {
+                enabled: true,
+                text: {
+                  fa: "کالکشن پاییز و زمستان ۱۴۰۵ رسید — ببینید",
+                  tr: "Sonbahar / Kış 26 koleksiyonunu keşfet",
+                  en: "Discover the Autumn / Winter 26 collection",
+                },
+              },
+            }
+          : {}),
+      },
     });
   await db.integration.upsert({
     where: { key: "storage" },
@@ -353,7 +368,7 @@ async function main() {
     },
   });
 
-  await seedContent();
+  await seedContent(freshModa4Demo);
 
   await seedDemoMedia();
   // Brand seed names must not suppress the legacy demo-media bootstrap guard.
@@ -450,7 +465,7 @@ const SEEDED_PAGES = [
   },
 ] as const;
 
-async function seedContent() {
+async function seedContent(freshModa4Demo = false) {
   for (const page of SEEDED_PAGES) {
     await db.page.upsert({
       where: { id: page.id },
@@ -477,10 +492,58 @@ async function seedContent() {
       update: {},
       create: { id: `seed-menu-${key}`, key },
     });
+    const hasModa4Menu =
+      key !== "footer" &&
+      Boolean(
+        await db.menuItem.findFirst({
+          where: {
+            menuId: menu.id,
+            id: { startsWith: `seed-moda4-menu-${key}-` },
+          },
+        }),
+      );
     const pageIds =
       key === "footer"
         ? SEEDED_PAGES.map((page) => page.id)
-        : ["seed-page-about", "seed-page-contact"];
+        : freshModa4Demo || hasModa4Menu
+          ? []
+          : ["seed-page-about", "seed-page-contact"];
+    if (freshModa4Demo && key !== "footer") {
+      const labels = {
+        women: { fa: "زنانه", tr: "Kadın", en: "Women" },
+        men: { fa: "مردانه", tr: "Erkek", en: "Men" },
+        kids: { fa: "کودکان", tr: "Çocuk", en: "Kids" },
+        accessories: { fa: "اکسسوری", tr: "Aksesuar", en: "Accessories" },
+      };
+      for (const [sortOrder, category] of [
+        "women",
+        "men",
+        "kids",
+        "accessories",
+      ].entries())
+        await db.menuItem.create({
+          data: {
+            id: `seed-moda4-menu-${key}-${category}`,
+            menuId: menu.id,
+            labelI18n: labels[category as keyof typeof labels],
+            linkType: "category",
+            referenceId: `seed-category-${category}`,
+            enabled: true,
+            sortOrder,
+          },
+        });
+      await db.menuItem.create({
+        data: {
+          id: `seed-moda4-menu-${key}-fitting`,
+          menuId: menu.id,
+          labelI18n: { fa: "اتاق پرو", tr: "Deneme odası", en: "Fitting room" },
+          linkType: "url",
+          url: "/fitting-room",
+          enabled: true,
+          sortOrder: 4,
+        },
+      });
+    }
     for (const [sortOrder, pageId] of pageIds.entries()) {
       const page = SEEDED_PAGES.find((candidate) => candidate.id === pageId)!;
       await db.menuItem.upsert({

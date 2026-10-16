@@ -1,0 +1,1170 @@
+[
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope (at least one on this page)",
+    "pass": true,
+    "detail": "7 visible"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H1",
+    "rule": "hero [data-moda4=hero] is full-bleed (edge to edge)",
+    "pass": true,
+    "detail": "left 0 width 1440 of 1440"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H2",
+    "rule": "hero height ≥ 50vw and ≥ 560px",
+    "pass": true,
+    "detail": "height 828px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H3",
+    "rule": "hero has ≥3 [data-moda4=hero-slide]; active image fills the hero and is top-anchored (no head crop)",
+    "pass": true,
+    "detail": "4 slides, image covers 100%, object-position 50% 0px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H4",
+    "rule": "hero title [data-moda4=hero-title] is Manrope, ≥56px desktop / ≥40px mobile",
+    "pass": true,
+    "detail": "Manrope 106.56px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H5",
+    "rule": "hero progress bars [data-moda4=hero-progress]",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H6",
+    "rule": "home section order: hero → bands → worlds-prism → new-in → fitting-ad → shop-the-look → lookbook → kids-world → services",
+    "pass": true,
+    "detail": "in order"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H7",
+    "rule": "two crossing marquee bands [data-moda4=band], both rotated",
+    "pass": true,
+    "detail": "2 bands, 2 rotated"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H8",
+    "rule": "worlds prism: preserve-3d, 4 faces [data-moda4=worlds-face] in 3:4",
+    "pass": true,
+    "detail": "transform-style preserve-3d, 4 faces, ratio 1.33"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H9",
+    "rule": "new-in rail [data-moda4=new-in] with ≥4 product cards, media 3:4",
+    "pass": true,
+    "detail": "6 cards, media ratio 1.33"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H10",
+    "rule": "3D fitting ad [data-moda4=fitting-ad] with rack and mannequin",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H11",
+    "rule": "shop-the-look [data-moda4=shop-the-look] is a full-bleed banner",
+    "pass": true,
+    "detail": "width 1440"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H12",
+    "rule": "lookbook ring: preserve-3d with ≥5 cards",
+    "pass": true,
+    "detail": "preserve-3d, 6 cards"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H13",
+    "rule": "kids world: pastel gradient ground, Manrope display heading, turntable ≥4 items",
+    "pass": true,
+    "detail": "bg linear-gradient(160deg, color(…, heading Manrope, 5 items"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H14",
+    "rule": "services strip [data-moda4=services]",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H15",
+    "rule": "home page stays compact: no duplicated scenes (≤8,500px desktop / ≤9,500px mobile; prototype ≈6,800 / 7,700)",
+    "pass": true,
+    "detail": "7003px"
+  },
+  {
+    "page": "home",
+    "viewport": "desktop",
+    "id": "H16",
+    "rule": "no repeated full-size scenes: a visible photo ≥45% of the page wide appears at most twice",
+    "pass": true,
+    "detail": "2 large images, most repeated ×1"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "women",
+    "viewport": "desktop",
+    "id": "C1",
+    "rule": "category grid [data-moda4=plp-grid]: ≥4 cards, 4 per row, media 3:4",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "C1",
+    "rule": "category grid [data-moda4=plp-grid]: ≥4 cards, 4 per row, media 3:4",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "K1",
+    "rule": "kids presentation: pastel header [data-moda4=kids-header] with gradient + Manrope heading",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "desktop",
+    "id": "K2",
+    "rule": "kids cards show cut-outs on a pastel gradient",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "P1",
+    "rule": "gallery [data-moda4=pdp-gallery] and buy box [data-moda4=pdp-buybox] side by side, buy box sticky",
+    "pass": false,
+    "detail": "gallery false, buybox false"
+  },
+  {
+    "page": "product",
+    "viewport": "desktop",
+    "id": "P2",
+    "rule": "size buttons [data-moda4=pdp-sizes] ≥44px tall; add to bag is a crayon CTA",
+    "pass": false,
+    "detail": "size button 0px, add missing"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope (at least one on this page)",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "F1",
+    "rule": "try-on stage: 3D turntable (preserve-3d) with mannequin and ≥6 pickable items",
+    "pass": false,
+    "detail": "stage false, turntable missing, mannequin false, 0 items"
+  },
+  {
+    "page": "fitting",
+    "viewport": "desktop",
+    "id": "F2",
+    "rule": "picking an item puts a new [data-moda4=tryon-layer] on the mannequin instantly",
+    "pass": false,
+    "detail": "layers 0 → 0, new 0"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists, height 64–84px",
+    "pass": true,
+    "detail": "height 72px"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset), centred in header (±4%)",
+    "pass": true,
+    "detail": "centre offset 0.0%"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 1100px"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 1440"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "account",
+    "viewport": "desktop",
+    "id": "A1",
+    "rule": "sign-in: [data-moda4=auth] split layout (image | form) on desktop with 3-step indicator",
+    "pass": false,
+    "detail": "auth false, steps false"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope (at least one on this page)",
+    "pass": true,
+    "detail": "7 visible"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H1",
+    "rule": "hero [data-moda4=hero] is full-bleed (edge to edge)",
+    "pass": true,
+    "detail": "left 0 width 390 of 390"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H2",
+    "rule": "hero height ≥ 600px",
+    "pass": true,
+    "detail": "height 776px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H3",
+    "rule": "hero has ≥3 [data-moda4=hero-slide]; active image fills the hero and is top-anchored (no head crop)",
+    "pass": true,
+    "detail": "4 slides, image covers 100%, object-position 50% 0px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H4",
+    "rule": "hero title [data-moda4=hero-title] is Manrope, ≥56px desktop / ≥40px mobile",
+    "pass": true,
+    "detail": "Manrope 56px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H5",
+    "rule": "hero progress bars [data-moda4=hero-progress]",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H6",
+    "rule": "home section order: hero → bands → worlds-prism → new-in → fitting-ad → shop-the-look → lookbook → kids-world → services",
+    "pass": true,
+    "detail": "in order"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H7",
+    "rule": "two crossing marquee bands [data-moda4=band], both rotated",
+    "pass": true,
+    "detail": "2 bands, 2 rotated"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H8",
+    "rule": "worlds prism: preserve-3d, 4 faces [data-moda4=worlds-face] in 3:4",
+    "pass": true,
+    "detail": "transform-style preserve-3d, 4 faces, ratio 1.33"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H9",
+    "rule": "new-in rail [data-moda4=new-in] with ≥4 product cards, media 3:4",
+    "pass": true,
+    "detail": "6 cards, media ratio 1.33"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H10",
+    "rule": "3D fitting ad [data-moda4=fitting-ad] with rack and mannequin",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H11",
+    "rule": "shop-the-look [data-moda4=shop-the-look] is a full-bleed banner",
+    "pass": true,
+    "detail": "width 390"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H12",
+    "rule": "lookbook ring: preserve-3d with ≥5 cards",
+    "pass": true,
+    "detail": "preserve-3d, 6 cards"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H13",
+    "rule": "kids world: pastel gradient ground, Manrope display heading, turntable ≥4 items",
+    "pass": true,
+    "detail": "bg linear-gradient(160deg, color(…, heading Manrope, 5 items"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H14",
+    "rule": "services strip [data-moda4=services]",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H15",
+    "rule": "home page stays compact: no duplicated scenes (≤8,500px desktop / ≤9,500px mobile; prototype ≈6,800 / 7,700)",
+    "pass": true,
+    "detail": "7964px"
+  },
+  {
+    "page": "home",
+    "viewport": "mobile",
+    "id": "H16",
+    "rule": "no repeated full-size scenes: a visible photo ≥45% of the page wide appears at most twice",
+    "pass": true,
+    "detail": "2 large images, most repeated ×1"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "women",
+    "viewport": "mobile",
+    "id": "C1",
+    "rule": "category grid: ≥4 cards, 2 per row",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "C1",
+    "rule": "category grid: ≥4 cards, 2 per row",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "K1",
+    "rule": "kids presentation: pastel header [data-moda4=kids-header] with gradient + Manrope heading",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "kids",
+    "viewport": "mobile",
+    "id": "K2",
+    "rule": "kids cards show cut-outs on a pastel gradient",
+    "pass": false,
+    "detail": "missing"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "P1",
+    "rule": "gallery [data-moda4=pdp-gallery] and buy box [data-moda4=pdp-buybox]",
+    "pass": false,
+    "detail": "gallery false, buybox false"
+  },
+  {
+    "page": "product",
+    "viewport": "mobile",
+    "id": "P2",
+    "rule": "size buttons [data-moda4=pdp-sizes] ≥44px tall; add to bag is a crayon CTA",
+    "pass": false,
+    "detail": "size button 0px, add missing"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope (at least one on this page)",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "F1",
+    "rule": "try-on stage: 3D turntable (preserve-3d) with mannequin and ≥6 pickable items",
+    "pass": false,
+    "detail": "stage false, turntable missing, mannequin false, 0 items"
+  },
+  {
+    "page": "fitting",
+    "viewport": "mobile",
+    "id": "F2",
+    "rule": "picking an item puts a new [data-moda4=tryon-layer] on the mannequin instantly",
+    "pass": false,
+    "detail": "layers 0 → 0, new 0"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G1",
+    "rule": "header [data-moda4=header] exists",
+    "pass": true,
+    "detail": "height 64px"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G2",
+    "rule": "logo [data-moda4=logo] is the MODA4 logo (code-owned SVG or image asset)",
+    "pass": true,
+    "detail": "centre offset 11.8%"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G3",
+    "rule": "footer [data-moda4=footer] with giant logo wordmark (≥50% width on desktop)",
+    "pass": true,
+    "detail": "wordmark width 350px"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G4",
+    "rule": "page ground is paper #F7F4EF (or kids pastel variant)",
+    "pass": true,
+    "detail": "rgb(247, 244, 239)"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G5",
+    "rule": "crayon buttons: [data-moda4-cta] ::before uses an SVG displacement filter",
+    "pass": true,
+    "detail": "::before filter=url(\"#moda4-crayon\"); ::after border=dashed"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G6",
+    "rule": "no horizontal overflow",
+    "pass": true,
+    "detail": "scrollWidth 390"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G7",
+    "rule": "display headings [data-moda4-display] use Manrope",
+    "pass": true,
+    "detail": "1 visible"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "G8",
+    "rule": "Manrope is actually loaded from self-hosted files (incl. Turkish glyphs)",
+    "pass": true,
+    "detail": "loaded"
+  },
+  {
+    "page": "account",
+    "viewport": "mobile",
+    "id": "A1",
+    "rule": "sign-in: [data-moda4=auth] split layout (image | form) on desktop with 3-step indicator",
+    "pass": false,
+    "detail": "auth false, steps false"
+  }
+]

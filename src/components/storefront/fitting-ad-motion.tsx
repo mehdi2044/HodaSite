@@ -196,7 +196,7 @@ export function FittingAdMotion({
   return (
     <div ref={root} className="moda-fitting-motion" data-running={active}>
       <div className="moda-fitting-stage" aria-hidden="true">
-        <div className="moda-clothes-rack">
+        <div className="moda-clothes-rack" data-moda4="fitting-ad-rack">
           {view.pieces.map((piece, index) => (
             <div
               className="moda-hanging-garment"
@@ -223,28 +223,30 @@ export function FittingAdMotion({
             </div>
           ))}
         </div>
-        <div className="moda-fitting-model">
+        <div className="moda-fitting-model" data-moda4="fitting-ad-mannequin">
           <SceneArt view={view} locale={locale} sketch />
           <div className="moda-fitting-scan" />
         </div>
       </div>
-      <p>{t("stylingDemonstration")}</p>
-      <button
-        className="button button-outline"
-        type="button"
-        aria-pressed={paused}
-        onClick={() => setPaused((value) => !value)}
-      >
-        {paused ? t("resume") : t("pause")}
-      </button>
-      <button
-        className="button button-outline"
-        type="button"
-        onClick={() => setReplay((value) => value + 1)}
-      >
-        {t("replay")}
-      </button>
-      <div className="moda-fitting-final">{final}</div>
+      <div className="moda-fitting-utilities">
+        <p>{t("stylingDemonstration")}</p>
+        <button
+          className="button button-outline"
+          type="button"
+          aria-pressed={paused}
+          onClick={() => setPaused((value) => !value)}
+        >
+          {paused ? t("resume") : t("pause")}
+        </button>
+        <button
+          className="button button-outline"
+          type="button"
+          onClick={() => setReplay((value) => value + 1)}
+        >
+          {t("replay")}
+        </button>
+      </div>
+      {final && <div className="moda-fitting-final">{final}</div>}
     </div>
   );
 }
