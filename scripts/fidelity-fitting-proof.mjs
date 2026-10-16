@@ -53,17 +53,24 @@ try {
             "false",
           );
       }
+      console.log(`Capture selected ${target}/${width}`);
       const stage = page.locator("[data-moda4=tryon-stage]");
       await stage.scrollIntoViewIfNeeded();
       await page.mouse.move(0, 0);
       await expect(stage.locator("[data-moda4=tryon-layer]")).toHaveCount(2);
       await expect
         .poll(() =>
-          stage
-            .locator("img")
-            .evaluateAll((images) =>
-              images.every((image) => image.complete && image.naturalWidth > 0),
-            ),
+          stage.locator("[data-moda4=tryon-layer]").evaluateAll((layers) => {
+            const images = layers.flatMap((layer) =>
+              layer.tagName === "IMG"
+                ? [layer]
+                : [...layer.querySelectorAll("img")],
+            );
+            return (
+              images.length === 2 &&
+              images.every((image) => image.complete && image.naturalWidth > 0)
+            );
+          }),
         )
         .toBe(true);
       const dir = path.join(root, "sections", target);
