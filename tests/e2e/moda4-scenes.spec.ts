@@ -217,6 +217,8 @@ test("real PHOTO editor: private draft, publication, live price, exact sizes and
       );
     const scene = shop.locator(`[data-scene-id="${unsaved.id}"]`);
     await expect(scene.locator(".scene-price-list article")).toHaveCount(2);
+    // D81 keeps this purchase form inside the hero's real pin disclosure.
+    await scene.locator(".scene-pin:visible").first().click();
     await expect(
       scene.getByRole("button", { name: en.scenes.addScene }),
     ).toBeDisabled();

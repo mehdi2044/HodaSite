@@ -213,8 +213,18 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
       await assertCan(actorId, "content.homepage.write", scope(input.marketId));
       if ((before?.version ?? 0) !== input.expectedVersion)
         throw new RevisionConflictError();
+      // A new market editor starts from the publicly published global fallback.
+      // Reuse only its DB-held proof; live fingerprints below still revalidate
+      // every reference. Never trust incoming match data or a global draft.
+      const inherited =
+        !before && input.marketId
+          ? await tx.homepage.findFirst({
+              where: { marketId: null, deletedAt: null, isPublished: true },
+              select: { blocks: true },
+            })
+          : null;
       const old = homepageBlocksSchema.safeParse(
-        before?.draftBlocks ?? before?.blocks ?? [],
+        before?.draftBlocks ?? before?.blocks ?? inherited?.blocks ?? [],
       );
       const blocks = await validatedBlocks(
         tx,
