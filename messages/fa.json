@@ -314,7 +314,8 @@
     "taxExcluded": "مالیات و هزینه‌ها هنگام ثبت سفارش محاسبه می‌شود",
     "inStock": "موجود",
     "lowStock": "موجودی رو به پایان",
-    "outOfStock": "ناموجود"
+    "outOfStock": "ناموجود",
+    "kidsDisplay": "Little Wanderers"
   },
   "homepage": {
     "empty": "هنوز محتوایی برای صفحهٔ اصلی منتشر نشده است.",
@@ -1889,7 +1890,11 @@
     "samplePersian": "فارسی و مبلغ دقیق:",
     "samplePrice": "24.0001 CAD",
     "primaryInk": "متن دکمه اصلی",
-    "accountMedia": "تصویر ورود و حساب"
+    "accountMedia": "تصویر ورود و حساب",
+    "kidsBackground": "کاغذ صفحه کودک",
+    "kidsHeaderStart": "ابتدای سربرگ کودک",
+    "kidsHeaderMiddle": "میانه سربرگ کودک",
+    "kidsHeaderEnd": "انتهای سربرگ کودک"
   },
   "foundationAdmin": {
     "preview": "پیش‌نمایش زندهٔ پوسته",

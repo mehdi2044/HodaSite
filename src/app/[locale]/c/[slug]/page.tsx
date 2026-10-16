@@ -101,16 +101,22 @@ export default async function CategoryPage({
       data-kids-tone={
         presentation?.kind === "kids" ? presentation.tone : undefined
       }
-      style={
-        presentation?.kind === "kids"
-          ? {
-              background: `linear-gradient(135deg,var(--${presentation.tone}),var(--kidsButter))`,
-            }
-          : undefined
-      }
       dir={safe === "fa" ? "rtl" : "ltr"}
     >
-      <header className="shop-category-intro mb-8">
+      <header
+        className="shop-category-intro mb-8"
+        data-moda4={presentation?.kind === "kids" ? "kids-header" : undefined}
+      >
+        {presentation?.kind === "kids" && (
+          <p
+            className="moda-kids-category-display"
+            data-moda4-kids-display=""
+            lang="en"
+            dir="ltr"
+          >
+            {t("kidsDisplay")}
+          </p>
+        )}
         <h1 className="text-4xl font-semibold">
           {catalogText(category.titleI18n, safe)}
         </h1>
@@ -167,7 +173,7 @@ export default async function CategoryPage({
         {t("results", { count: result.total })}
       </p>
       {result.items.length ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div data-moda4="plp-grid" className="moda-category-grid">
           {result.items.map((product) => (
             <ProductCard
               key={product.id}

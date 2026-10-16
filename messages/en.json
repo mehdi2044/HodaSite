@@ -314,7 +314,8 @@
     "taxExcluded": "Tax and fees are calculated at checkout",
     "inStock": "In stock",
     "lowStock": "Low stock",
-    "outOfStock": "Out of stock"
+    "outOfStock": "Out of stock",
+    "kidsDisplay": "Little Wanderers"
   },
   "homepage": {
     "empty": "Homepage content has not been published yet.",
@@ -1889,7 +1890,11 @@
     "samplePersian": "فارسی و مبلغ دقیق:",
     "samplePrice": "24.0001 CAD",
     "primaryInk": "Primary button text",
-    "accountMedia": "Login and account image"
+    "accountMedia": "Login and account image",
+    "kidsBackground": "Kids paper",
+    "kidsHeaderStart": "Kids header start",
+    "kidsHeaderMiddle": "Kids header middle",
+    "kidsHeaderEnd": "Kids header end"
   },
   "foundationAdmin": {
     "preview": "Live theme preview",

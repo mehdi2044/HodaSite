@@ -314,7 +314,8 @@
     "taxExcluded": "Vergi ve ücretler ödeme sırasında hesaplanır",
     "inStock": "Stokta",
     "lowStock": "Son ürünler",
-    "outOfStock": "Stokta yok"
+    "outOfStock": "Stokta yok",
+    "kidsDisplay": "Little Wanderers"
   },
   "homepage": {
     "empty": "Ana sayfa içeriği henüz yayımlanmadı.",
@@ -1889,7 +1890,11 @@
     "samplePersian": "فارسی و مبلغ دقیق:",
     "samplePrice": "24.0001 CAD",
     "primaryInk": "Ana düğme metni",
-    "accountMedia": "Giriş ve hesap görseli"
+    "accountMedia": "Giriş ve hesap görseli",
+    "kidsBackground": "Çocuk sayfa zemini",
+    "kidsHeaderStart": "Çocuk başlık başlangıcı",
+    "kidsHeaderMiddle": "Çocuk başlık ortası",
+    "kidsHeaderEnd": "Çocuk başlık sonu"
   },
   "foundationAdmin": {
     "preview": "Canlı tema önizlemesi",
