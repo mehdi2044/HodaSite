@@ -218,6 +218,15 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
     await expect(cards.first()).toBeVisible();
     await expect(page.getByText(en.cutouts.cardFallback).first()).toBeVisible();
     const first = cards.first();
+    const angleControls = first.locator("summary");
+    await expect(angleControls).toHaveAttribute(
+      "aria-label",
+      en.cutouts.angleControls,
+    );
+    await angleControls.click();
+    await expect(
+      first.getByRole("button", { name: en.cutouts.angleRight, exact: true }),
+    ).toBeVisible();
     await first
       .getByRole("button", { name: en.cutouts.angleRight, exact: true })
       .click();

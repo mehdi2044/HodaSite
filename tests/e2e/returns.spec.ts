@@ -137,6 +137,15 @@ for (const locale of ["fa", "tr", "en"] as const) {
       );
     } else if (op === "CREDIT") {
       await page.goto(`/${locale}/account`);
+      await page
+        .getByRole("navigation", {
+          name: { fa, tr, en }[locale].accountDesign.navigation,
+        })
+        .getByRole("link", {
+          name: { fa, tr, en }[locale].commerce.orders,
+          exact: true,
+        })
+        .click();
       await expect(
         page.getByRole("heading", { name: t.creditBalance }),
       ).toBeVisible();
