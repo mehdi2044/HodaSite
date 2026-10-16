@@ -1,3 +1,4 @@
+import { seedModa4Mannequin } from "./moda4-mannequin-seed";
 import { seedModa4PhotoScene } from "./moda4-photo-seed";
 import type { Prisma, PrismaClient, Media } from "@prisma/client";
 import { readFile } from "node:fs/promises";
@@ -23,27 +24,26 @@ const modelKeys = {
   girl: ["GIRL", "look-girl"],
   boy: ["BOY", "look-kids"],
 } as const;
+// Prototype GEO values in pixels within the centered 220x560 body on a420x560 canvas.
 const geometry: Record<string, [number, number, number, number]> = {
-  "women-knit": [0.18, 0.43, 0.5, 2],
-  "women-tee": [0.18, 0.39, 0.5, 2],
-  "women-trousers": [0.45, 0.255, 0.5, 1],
-  "women-coat": [0.16, 0.414, 0.5, 3],
-  "women-dress": [0.17, 0.423, 0.5, 2],
-  "men-shirt": [0.17, 0.459, 0.5, 2],
-  "men-tee": [0.18, 0.4, 0.5, 2],
-  "men-knit": [0.17, 0.45, 0.5, 2],
-  "men-hoodie": [0.13, 0.45, 0.5, 2],
-  "men-chino": [0.45, 0.241, 0.5, 1],
-  "kids-knit": [0.18, 0.455, 0.5, 2],
-  "kids-hoodie": [0.14, 0.464, 0.5, 2],
-  "kids-trousers": [0.45, 0.318, 0.5, 1],
-  // The approved girl reference has a lower neckline than the boy reference.
-  // Fresh demo geometry must keep the flat dress clear of the model's face.
-  "kids-dress": [0.26, 0.527, 0.5, 2],
-  "kids-set": [0.16, 0.527, 0.5, 2],
-  "accessories-bag": [0.37, 0.195, 0.68, 5],
-  "accessories-scarf": [0.17, 0.255, 0.5, 4],
-  "accessories-cap": [0.04, 0.182, 0.51, 5],
+  "women-knit": [98, 190, 0, 2],
+  "women-tee": [100, 172, 0, 2],
+  "women-trousers": [290, 112, 0, 1],
+  "women-coat": [90, 182, 0, 3],
+  "women-dress": [94, 186, 0, 2],
+  "men-shirt": [94, 202, 0, 2],
+  "men-tee": [100, 176, 0, 2],
+  "men-knit": [96, 198, 0, 2],
+  "men-hoodie": [70, 198, 0, 2],
+  "men-chino": [292, 106, 0, 1],
+  "kids-knit": [236, 148, 0, 2],
+  "kids-hoodie": [230, 152, 0, 2],
+  "kids-trousers": [356, 95, 0, 1],
+  "kids-dress": [230, 170, 0, 2],
+  "kids-set": [232, 168, 0, 2],
+  "accessories-bag": [208, 86, 74, 5],
+  "accessories-scarf": [94, 112, 0, 4],
+  "accessories-cap": [0, 80, 4, 5],
 };
 /** Fresh bootstrap only, never an upgrade of an existing merchant/draft/theme.
  * Approved supplied raster cutouts, actual decoded alpha and current model fingerprints;
@@ -68,10 +68,8 @@ export async function seedFreshModa4Homepage(
     data: { presentation: { version: 1, kind: "kids", tone: "kidsMint" } },
   });
   const modelImages = await Promise.all(
-    Object.entries(modelKeys).map(async ([id, [kind, key]]) => {
-      const image = await db.media.findUniqueOrThrow({
-        where: { id: `seed-fashion-v2-${key}` },
-      });
+    Object.entries(modelKeys).map(async ([id, [kind]]) => {
+      const image = await seedModa4Mannequin(db, put, id);
       return {
         id,
         kind,
@@ -80,6 +78,25 @@ export async function seedFreshModa4Homepage(
       };
     }),
   );
+  const fittingModels = await db.integration.findUniqueOrThrow({
+    where: { key: "fitting-room" },
+  });
+  const config = fittingModels.config as Prisma.JsonObject & {
+    models: { id: string; mediaId: string }[];
+  };
+  await db.integration.update({
+    where: { id: fittingModels.id },
+    data: {
+      config: {
+        ...config,
+        models: config.models.map((m) => ({
+          ...m,
+          mediaId:
+            modelImages.find((v) => v.id === m.id)?.image.id ?? m.mediaId,
+        })),
+      },
+    },
+  });
   const products = await db.product.findMany({
     where: {
       id: { in: Object.keys(geometry).map((key) => `seed-style-v2-${key}`) },
@@ -206,15 +223,33 @@ export async function seedFreshModa4Homepage(
         geometry: {
           version: 1,
           models: choices.map((model) => {
-            const w = width * (["GIRL", "BOY"].includes(model.kind) ? 0.82 : 1);
+            const child = ["GIRL", "BOY"].includes(model.kind);
+            // Child shoulders/neck/hip anchors are independently authored for each outline.
+            const childAccessory =
+              key === "accessories-cap"
+                ? [model.kind === "GIRL" ? 153 : 144, 62, 3]
+                : key === "accessories-scarf"
+                  ? [model.kind === "GIRL" ? 224 : 218, 80, 0]
+                  : key === "accessories-bag"
+                    ? [315, 64, 58]
+                    : null;
+            const topPx =
+              childAccessory?.[0] ??
+              top + (model.kind === "GIRL" && key.startsWith("kids-") ? 5 : 0);
+            const w =
+              (childAccessory?.[1] ??
+                width +
+                  (model.kind === "BOY" && key.startsWith("kids-") ? 4 : 0)) /
+              420;
+            const xCenter = 0.5 + (childAccessory?.[2] ?? x) / 420;
             const height =
               (((w * metadata.height!) / metadata.width!) *
                 model.image.width!) /
               model.image.height!;
             return {
               modelId: model.id,
-              x,
-              y: Math.min(0.95, top + height / 2),
+              x: xCenter,
+              y: Math.min(0.95, topPx / 560 + height / 2),
               width: w,
               height,
               scale: 1,
@@ -260,8 +295,8 @@ export async function seedFreshModa4Homepage(
     modelId,
     title,
     alt: title,
-    desktop: frame(`seed-fashion-v2-${modelKeys[modelId][1]}`),
-    mobile: frame(`seed-fashion-v2-${modelKeys[modelId][1]}`),
+    desktop: frame(modelImages.find((m) => m.id === modelId)!.image.id),
+    mobile: frame(modelImages.find((m) => m.id === modelId)!.image.id),
     pieces: keys
       .map((key, index) => ({
         id: `${id}-piece-${index}`,
@@ -315,6 +350,17 @@ export async function seedFreshModa4Homepage(
   for (let n = 0; n < 6; n++)
     photoScenes.push(
       await seedModa4PhotoScene(db, put, `seed-moda4-photo-${n}`, n),
+    );
+  const worldPhotos: Awaited<ReturnType<typeof seedModa4PhotoScene>>[] = [];
+  for (let n = 0; n < 4; n++)
+    worldPhotos.push(
+      await seedModa4PhotoScene(
+        db,
+        put,
+        `seed-moda4-world-scene-${n}`,
+        n === 3 ? 0 : n,
+        true,
+      ),
     );
   const blocks = [
     {
@@ -400,7 +446,7 @@ export async function seedFreshModa4Homepage(
       ),
       autoplaySeconds: 3.8,
       faces: ["women", "men", "kids", "accessories"].map((key, n) => {
-        const offer = makeScene(`seed-moda4-world-scene-${n}`, n === 3 ? 0 : n);
+        const offer = worldPhotos[n];
         return {
           id: `seed-moda4-face-${n}`,
           categoryId: `seed-category-${key}`,

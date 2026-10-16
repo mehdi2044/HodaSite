@@ -8,8 +8,10 @@ export function SceneLayerImage({
   frame,
   locale,
   pieceId,
+  instant = false,
 }: {
   pieceId?: string;
+  instant?: boolean;
   layer: SceneLayer;
   model: { width: number | null; height: number | null };
   frame: ShoppableScene["desktop"];
@@ -23,6 +25,8 @@ export function SceneLayerImage({
   if (!projected) return null;
   return (
     <div
+      data-moda4={instant ? "tryon-layer" : undefined}
+      data-item={instant ? pieceId : undefined}
       data-scene-layer="true"
       data-fitting-piece-target={pieceId}
       data-fitting-rotation={layer.geometry.rotation}

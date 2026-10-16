@@ -1,0 +1,29 @@
+/* D81 / FID-5: approved .frg3/.tstage/.turn/.tgrid geometry. */
+.shop-page:has(.moda-instant) { max-width: 1440px; padding: 28px 48px 80px; }
+.moda-instant-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); gap: 40px; }
+.moda-instant-workspace > div:first-child { position: sticky; top: calc(var(--storefront-header-height,72px) + 16px); }
+.moda-instant-stage { height: 640px; width: 100%; max-width: none; aspect-ratio: auto; border: 0; border-radius: 280px 280px 24px 24px; background: radial-gradient(ellipse at 50% 30%,var(--background),var(--sandDeep) 70%); perspective: 1100px; perspective-origin: 50% 40%; }
+.moda-instant-stage::before { content:""; position:absolute; left:50%; bottom:18px; width:300px; height:64px; margin-left:-150px; border-radius:50%; background: radial-gradient(ellipse at 50% 35%,var(--surface),var(--sandDeep) 70%); box-shadow: 0 18px 0 -4px var(--sand),0 40px 40px -16px #3c281459; }
+.moda-instant-turn { inset: auto; left: 50%; top:44px; width: 420px; height: 560px; margin-left: -210px; transform-style: preserve-3d; }
+.moda-instant-mannequin { position: absolute; inset: 0; transform-origin: 50% 100%; }
+.moda-instant-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.moda-instant-product { display: flex; flex-direction: column; min-width: 0; padding: 10px 8px 8px; border: 1.5px solid var(--border); border-radius: 14px; background: var(--surface); gap:6px; }
+.moda-instant-product > picture { width:100%; height:104px; aspect-ratio:auto; }
+.moda-instant-product > picture img { width:100%; height:96px; object-fit:contain; }
+.moda-instant-product > div { min-width: 0; width: 100%; }
+.moda-instant-product h3 { font-size: 12px; font-weight: 500; text-align:center; line-height:1.4; }
+.moda-instant-product p, .moda-instant-product label { font-size:11px; }
+.moda-instant-product select { width:100%; padding:4px; font-size:11px; }
+.moda-instant-product bdi { font-size:12px; overflow-wrap:anywhere; }
+.moda-instant-product button { width:100%; margin:4px 0 0; padding:4px!important; font-size:12px; }
+.moda-instant-catalog > form { display:flex; flex-wrap:wrap; align-items:end; gap:10px; margin-bottom:16px; }
+.moda-instant-catalog > form label { flex:1; }
+@media (max-width:1100px) { .moda-instant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:760px) {
+  .shop-page:has(.moda-instant) { padding: 22px 20px 64px; }
+  .moda-instant-workspace { grid-template-columns:minmax(0,1fr); gap:26px; }
+  .moda-instant-workspace > div:first-child { position:static; }
+  .moda-instant-stage { height:600px; }
+  .moda-instant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion:reduce) { .moda-instant-turn { transition:none; } }
