@@ -127,6 +127,24 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await appearance
         .locator('input[name="categoryIds"][value="seed-category-women"]')
         .check();
+      // Native hash navigation must retain unsaved selections without saving them.
+      await page.locator('.moda-account-nav a[href="#overview"]').click();
+      await expect(appearance).not.toBeVisible();
+      await page.goBack();
+      await expect(appearance).toBeVisible();
+      await expect(
+        appearance.getByRole("radio", {
+          name: copy.accountDesign.themes[theme],
+          exact: true,
+        }),
+      ).toBeChecked();
+      expect(
+        (await db.customer.findUniqueOrThrow({ where: { id: actor.id } }))
+          .presentationVersion,
+      ).toBe(version);
+      await page.goForward();
+      await expect(appearance).not.toBeVisible();
+      await page.locator('.moda-account-nav a[href="#appearance"]').click();
       await form
         .getByRole("button", { name: copy.accountDesign.save, exact: true })
         .click();
