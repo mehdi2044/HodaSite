@@ -1,0 +1,15 @@
+# FID-2 — homepage composition evidence
+
+Implemented against docs v1.2 / D-numbers touched: D26, D31, D40, D70, D77, D78, D81.
+
+Native Chromium, production source **84a89859e4afed523c9f33dbdf421e7e5f58f40d**, isolated freshly seeded PostgreSQL16. Prototype unmodified and previously independently verified **146/146**. Same1440×900/390×844 viewports. Source left, actual application right.
+
+- Before **96/146**, after **128/146**; cumulative FID-2 **128/128**. All G/H rows pass in the attached complete report. The complete fidelity command intentionally remains red on18 later-stage rows; none are deleted, skipped or relaxed.
+- Ports the hero, bands, four-world prism/cap, actual product rail, rack→mannequin ad, full-bleed Shop the look, lookbook camera/ring, kids turntable and services. Only hero/Shop the look have pins; other blocks no longer append a repeated large scene. Public live prices/variant selections/atomic cart and editable CMS data remain.
+- Fresh seed only: approved supplied wide photos, validated curated PHOTO scenes and responsive renditions; four real composite models remain. Existing merchant content/settings/media are never rewritten. The Docker ops seed carries the same supplied banner bytes under prisma/demo-assets.
+- Full unchanged unit/PostgreSQL run on immutable application snapshot **2d305670321e17ca2218e5f61928a5aab31ccebd**: **9276/9276 in174files**, no skips. Subsequent source changes concern prism presentation, supplied ops assets and proof capture. Final production build/lint/typecheck pass; current-head CI remains required.
+- Existing video and real consent-gating browser tests pass. Existing admin unsaved→private preview→draft/save/reload→publish→open-store propagation test initially timed out at its5s UI status while other suites ran; server save returned success. The unchanged test independently reran and passed (31.5s), including FA/TR/EN/1920px. The first run is not claimed successful. Native mobile hero pin→real size selection→actual add-all returned success.
+- Full-page reference screenshots contain offscreen scroll-reveal blanks. Supplemental **18 section pairs** show both actual pages after native scrolling, with reduced motion; capture waits for real visibility and does not change DOM/styles/reveal classes. These screenshots and the final complete gate were rerun on the source SHA above. JPEG conversion quality88 only; CI retains native PNGs.
+- Consent is dismissed by clicking the real reject button before comparison. No consent is injected, accepted or bypassed. PWA/privacy controls now live in footer utilities and keep their original behavior.
+
+Owner visual approval is **pending**. Green geometry checks are not a claim of exact visual acceptance. Required branch-protection configuration remains NOT_VERIFIED (GitHub integration403). Owner Windows runtime/login and an owner-accessible hosted URL remain NOT_VERIFIED/BLOCKED_ENV; cloud loopback addresses are not a Windows delivery. No merge/main push or paid provider call.
