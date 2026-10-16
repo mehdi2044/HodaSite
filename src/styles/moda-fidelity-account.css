@@ -54,3 +54,7 @@ html[data-button-style="crayon"] .moda-login .button:not(.button-outline) { --bu
 .moda-login-notice { font-size:12px; color:var(--muted); line-height:1.75; }
 .moda-account-content > [data-account-view] { display:grid; gap:24px; min-width:0; }
 .moda-account-content > [data-account-view][hidden] { display:none; }
+/* A Latin customer name retains D77 even inside the Persian profile. */
+html[lang="fa"] .moda-profile .moda-profile-cover h2 {
+  font-family: var(--font-heading-latin,Manrope), var(--font-body-fa,Vazirmatn), sans-serif;
+}
