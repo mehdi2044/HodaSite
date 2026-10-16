@@ -25,7 +25,7 @@ export async function AnnouncementBar({
   const t = await getTranslations();
 
   return (
-    <div className="moda-announcement">
+    <div className="moda-announcement" data-moda4="announcement">
       <div>
         {policy?.policy?.announcement ? (
           <ServicePolicySummary

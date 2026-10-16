@@ -24,6 +24,7 @@ export function Button({
 }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
   return (
     <button
+      data-moda4-cta={variant !== "ghost" ? "" : undefined}
       data-variant={variant}
       data-size={size}
       className={cn(

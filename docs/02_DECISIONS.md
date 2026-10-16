@@ -1,5 +1,13 @@
 # تصمیم‌های قطعی پروژه (Architecture Decision Records) — v1.2.1
 
+### MODA4 composition and measured fidelity — D81 (2026-10-16)
+
+Owner instruction in PR77's FIDELITY_HANDOFF_FA.md is accepted before presentation changes. D77 font roles remain unchanged: Manrope display, Inter UI/prices, Vazirmatn Persian; approved outlined brand asset remains. FIDELITY_SPEC.md is the binding presentation contract, followed by its unchanged measured rules and prototype/source/template.html values. Preserve all catalog/market/CMS/cart/instant-wardrobe/profile capabilities, authorization, accessibility and reduced motion.
+
+Price pins and shoppable scene imagery belong **inside hero slides and Shop the look only**. Other block types render their own prototype section without an appended full-size scene, pin overlay or boxed disclosure. Existing CMS records and editable references are retained; their presentation follows their block type. Image disclosure is one compact chip per image. Prices still resolve live through the existing market/Decimal pipeline. This supersedes D77's presentation wording where it was interpreted as requiring a generic scene wrapper; it does not remove catalog truth or media/reference validation.
+
+Fresh synthetic seed follows the prototype's default section composition; never seed/overwrite an existing merchant homepage. No schema, auth, money, provider or backup change is authorized by fidelity work. FID-1 through FID-6 ship as separate stacked Draft PRs. Every stage includes unchanged fidelity measurements, paired reference/app screenshots and cumulative stage gates; full acceptance requires 146/146 plus Mehdi's visual approval. Branch protection configuration must be verified separately from adding a CI job. No merge without D70 and Mehdi's explicit permission.
+
 ### Free instant composition and independent customer wardrobe — D80 (2026-10-15)
 
 Recorded before R7a code/schema under D78. Add CustomerInstantLook, a nonfinancial owner-scoped row with Customer and Market foreign keys, bounded name, model identity, version1 variant/cutout/model revision snapshot JSON, requestKey dedupe, monotonic version, created/updated/archive timestamps. Do not store price snapshots, private AI output or fake DONE FittingSession. Existing paid sessions, wallet and coin ledgers remain unchanged; free preview/save/cart cannot grant, reserve or debit coins or call a provider. Additive migration only; no existing-customer wardrobe backfill. Explicit owner deletion of these compositions is supported and exported in reviewed privacy export; this does not fulfill full account deletion or delete retained commerce history.

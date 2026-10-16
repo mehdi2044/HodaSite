@@ -126,6 +126,7 @@ export async function Header({
         <div className="moda-header-grid">
           <div
             className="moda-desktop-navigation"
+            data-moda4="nav"
             data-testid="department-navigation"
           >
             <MegaNavigation items={complete(desktopMenu)} locale={safe} />
@@ -159,6 +160,7 @@ export async function Header({
           <Link
             href={seoPath(safe, market.code, "home")}
             className="moda-brand"
+            data-moda4="logo"
             style={{ width: logoWidth }}
           >
             {logo ? (

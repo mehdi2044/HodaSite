@@ -6,7 +6,12 @@ jobs:
     services:
       postgres:
         image: postgres:16
-        env: { POSTGRES_USER: hoda, POSTGRES_PASSWORD: hoda, POSTGRES_DB: hoda_test }
+        env:
+          {
+            POSTGRES_USER: hoda,
+            POSTGRES_PASSWORD: hoda,
+            POSTGRES_DB: hoda_test,
+          }
         ports: ["5432:5432"]
         options: --health-cmd "pg_isready -U hoda -d hoda_test" --health-interval 5s --health-timeout 5s --health-retries 10
       mailpit:
@@ -78,6 +83,59 @@ jobs:
           name: browser-failure-diagnostics
           path: test-results/
           if-no-files-found: ignore
+
+  # Cumulative fidelity gate; D81 owner visual approval remains separate.
+  # Repository administrator must also require this check in branch protection.
+  fidelity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          {
+            POSTGRES_USER: hoda,
+            POSTGRES_PASSWORD: hoda,
+            POSTGRES_DB: hoda_fidelity_test,
+          }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U hoda -d hoda_fidelity_test" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://hoda:hoda@127.0.0.1:5432/hoda_fidelity_test
+      MEDIA_DIR: /tmp/hoda-media
+      ADMIN_EMAIL: owner@example.com
+      ADMIN_PASSWORD: FidelityTestFixture123!
+      AUTH_SECRET: fidelity-ci-fixture
+      CRON_SECRET: fidelity-ci-cron
+      MAINTENANCE_SECRET: fidelity-ci-maintenance
+      APP_URL: http://127.0.0.1:3000
+      EMAIL_PROVIDER: noop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: mkdir -p "$MEDIA_DIR" && pnpm prisma migrate deploy && pnpm prisma db seed
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Reference must pass the entire contract
+        run: MODA4_FIDELITY_TARGET=prototype pnpm test:fidelity
+      - name: Measure app and enforce cumulative stage
+        run: |
+          set +e
+          pnpm test:fidelity
+          full_status=$?
+          set -e
+          echo "Full-contract process exit: $full_status (later-stage rows remain reported)"
+          node scripts/check-fidelity-stage.mjs 1
+      - name: Preserve every measurement and paired screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: moda4-fidelity
+          path: test-results/moda4-fidelity/
+          if-no-files-found: error
 
   docker:
     runs-on: ubuntu-latest

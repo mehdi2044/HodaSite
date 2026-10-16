@@ -1,0 +1,157 @@
+/* D81 / FID-1. Prototype shell values; theme colours/fonts stay DB-owned. */
+.storefront-app {
+  -webkit-font-smoothing: antialiased;
+}
+.moda-header {
+  height: 72px;
+  border: 0;
+}
+.moda-header-grid {
+  height: 100%;
+  min-height: 0;
+  padding-inline: 48px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.moda-announcement {
+  font-size: 12.5px;
+}
+.moda-mega {
+  flex-wrap: nowrap;
+  gap: 2px;
+}
+.moda-desktop-navigation {
+  overflow: clip;
+}
+.moda-desktop-navigation:focus-within,
+.moda-desktop-navigation:hover {
+  overflow: visible;
+}
+.moda-footer {
+  position: relative;
+  margin-block-start: 0;
+  padding-block: 72px 28px;
+  background: var(--text);
+  color: var(--background);
+}
+.moda-footer .moda-lace {
+  position: absolute;
+  top: -12px;
+  inset-inline: 0;
+  --surface: var(--text);
+}
+.moda-footer-top {
+  padding: 0 48px 42px;
+  border-color: color-mix(in srgb, var(--background) 16%, transparent);
+}
+.moda-newsletter h2[data-moda4-display] {
+  font-family: var(--font-heading-latin, Manrope), sans-serif;
+  font-size: clamp(36px, 4vw, 58px);
+  line-height: 1;
+  font-weight: 400;
+}
+.moda-footer .button {
+  --button-fill: var(--primary);
+  color: var(--primaryInk);
+}
+.moda-footer-wordmark {
+  width: 100%;
+  max-width: 1196px;
+  padding: 24px 48px 0;
+}
+.moda-footer-wordmark picture {
+  display: block;
+  width: 100%;
+}
+.moda-footer-wordmark img {
+  width: 100%;
+  filter: none;
+}
+html[data-button-style="crayon"] :is(.button, .moda-button)::before {
+  background-image: none;
+  z-index: -2;
+}
+html[data-button-style="crayon"] :is(.button, .moda-button)::after {
+  border-width: 1.2px;
+  z-index: -1;
+}
+@media (max-width: 1100px) {
+  .moda-desktop-navigation {
+    display: none;
+  }
+  .moda-mobile-navigation {
+    display: block;
+  }
+}
+@media (max-width: 760px) {
+  .moda-header {
+    height: 64px;
+  }
+  .moda-header-grid {
+    padding-inline: 18px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+  }
+  .moda-brand {
+    width: 100px !important;
+  }
+  .moda-footer {
+    padding-block-start: 44px;
+  }
+  .moda-footer-top {
+    padding-inline: 20px;
+  }
+  .moda-footer-wordmark {
+    padding: 24px 20px 0;
+  }
+}
+
+/* The approved outlined asset retains its orange mark on the dark footer. */
+
+.moda-footer-wordmark {
+  max-width: 1196px;
+}
+.moda-footer {
+  display: grid;
+  grid-template-columns: 1.3fr 2fr;
+  column-gap: 56px;
+  padding-inline: 48px;
+}
+.moda-footer-top {
+  padding: 0;
+  border: 0;
+}
+.moda-footer-links {
+  padding: 0;
+  gap: 24px;
+  align-items: start;
+}
+.moda-footer-wordmark {
+  grid-column: 1/-1;
+  margin-block-start: 56px;
+}
+.moda-footer .moda-newsletter h2[data-moda4-display] {
+  font-size: 40px;
+}
+.moda-footer p {
+  color: color-mix(in srgb, var(--background) 72%, transparent);
+}
+@media (max-width: 760px) {
+  .moda-footer {
+    display: block;
+    padding-inline: 20px;
+  }
+  .moda-footer-links {
+    margin-block: 36px;
+  }
+  .moda-footer-wordmark {
+    padding-inline: 0;
+    margin-block-start: 32px;
+  }
+}
+
+.moda-footer-wordmark > svg {
+  width: min(100%, 1100px);
+  height: auto;
+  display: block;
+  overflow: visible;
+  margin: 24px auto 0;
+}
