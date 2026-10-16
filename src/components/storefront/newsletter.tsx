@@ -22,7 +22,10 @@ export async function Newsletter({
     : null;
   return (
     <section className="moda-newsletter">
-      <h2>{t("newsletterTitle")}</h2>
+      <h2 data-moda4-display="" lang="en" dir="ltr">
+        {t("newsletterDisplay")}
+      </h2>
+      <p>{t("newsletterTitle")}</p>
       <p>{t("newsletterIntro")}</p>
       {verified ? (
         <>
@@ -41,11 +44,17 @@ export async function Newsletter({
                 <option value="OPTED_IN">{crm("states.OPTED_IN")}</option>
               </select>
             </label>
-            <button className="button">{crm("save")}</button>
+            <button data-moda4-cta="" className="button">
+              {crm("save")}
+            </button>
           </EngagementForm>
         </>
       ) : (
-        <Link className="button" href={`/${locale}/account/preferences`}>
+        <Link
+          data-moda4-cta=""
+          className="button"
+          href={`/${locale}/account/preferences`}
+        >
           {t("newsletterManage")}
         </Link>
       )}

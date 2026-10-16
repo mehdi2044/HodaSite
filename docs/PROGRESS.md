@@ -1,3 +1,7 @@
+## اصلاح شباهت MODA4 — ۲۰۲۶-۱۰-۱۶
+
+مرجع ظاهر: [FIDELITY_SPEC.md](design/moda4-redesign/FIDELITY_SPEC.md)، تصمیم ترکیب D81 با حفظ فونت‌های D77. مبنا PR77/b5ea30c روی PR76/b5e9c1c است؛ داده/امکانات قبلی حفظ می‌شوند. گزارش تحویل مبنا 44/146 و نمونه 146/146 است؛ اجرای مستقل دوباره ثبت خواهد شد. FID-1 در حال اجرا؛ FID-2…6 پس از وابستگی در PRهای جدا. تأیید بصری مالک و merge مجاز نشده‌اند. URL آنلاین و اجرای Windows همچنان از آزمون ابری جدا هستند.
+
 ## 2026-10-15 — Current video correction verification / protected handoff
 
 Implemented against docs v1.2 / D-numbers touched: D31, D70, D78, D79, D80.

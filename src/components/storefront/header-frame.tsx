@@ -44,6 +44,7 @@ export function HeaderFrame({
   return (
     <header
       ref={header}
+      data-moda4="header"
       className="moda-header"
       data-header-style={style}
       data-home={home}

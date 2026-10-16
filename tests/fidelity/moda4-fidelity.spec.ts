@@ -22,11 +22,12 @@ const TARGET =
   process.env.MODA4_FIDELITY_TARGET === "prototype" ? "prototype" : "app";
 const ROOT = process.cwd();
 const PROTO =
+  process.env.MODA4_PROTOTYPE_URL ??
   "file://" +
-  path.join(
-    ROOT,
-    "docs/design/moda4-redesign/prototype/MODA4-Redesign-v3.html",
-  );
+    path.join(
+      ROOT,
+      "docs/design/moda4-redesign/prototype/MODA4-Redesign-v3.html",
+    );
 const APP = process.env.MODA4_APP_URL ?? "http://127.0.0.1:3000";
 const enc = encodeURIComponent;
 

@@ -1,5 +1,6 @@
 import "@/styles/tokens.css";
 import "@/styles/instant-fitting.css";
+import "@/styles/moda-fidelity.css";
 import { AdminHistoryTracking } from "@/components/admin/unsaved-history";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";

@@ -1,3 +1,4 @@
+import { ModaWordmark } from "./moda-wordmark";
 import { getTranslations } from "next-intl/server";
 import type { Market } from "@/lib/request-context";
 import {
@@ -66,12 +67,12 @@ export async function Footer({
     : null;
 
   return (
-    <footer className="moda-footer">
+    <footer className="moda-footer" data-moda4="footer">
       <div className="moda-lace" aria-hidden="true" />
       <div className="moda-footer-top">
         {await Newsletter({ locale, marketId: market.id })}
       </div>
-      <div className="shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div className="moda-footer-links shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div className="grid gap-1">
           <strong>{t("contactTitle")}</strong>
           {contact.email && (
@@ -111,8 +112,10 @@ export async function Footer({
           </div>
         )}
       </div>
-      <div className="moda-footer-wordmark">
-        {logo ? (
+      <div className="moda-footer-wordmark" data-moda4="footer-wordmark">
+        {logo?.originalName === "seed-moda4-logo.png" ? (
+          <ModaWordmark />
+        ) : logo ? (
           <ResponsiveImage
             media={{
               url: logo.url,
@@ -123,7 +126,7 @@ export async function Footer({
               altI18n: { fa: siteName, tr: siteName, en: siteName },
             }}
             locale={locale as "fa" | "tr" | "en"}
-            sizes="(min-width:1024px) 600px,80vw"
+            sizes="90vw"
             imgClassName="w-full h-auto object-contain"
           />
         ) : (
