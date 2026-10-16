@@ -383,7 +383,15 @@ export function ShoppableScene({
         isDemoFashionMedia(view.mobile.media ?? undefined)) && (
         <p className="scene-image-note">{shopping("demoImage")}</p>
       )}
-      <PurchasePanel className="moda-scene-purchase">
+      <PurchasePanel
+        className="moda-scene-purchase"
+        open={
+          presentation === "hero" &&
+          (view.reason || imageFailed("mobile") || imageFailed("desktop"))
+            ? true
+            : undefined
+        }
+      >
         {presentation === "hero" && (
           <summary className="moda-purchase-toggle sr-only focus:not-sr-only">
             {t("chooseSize")}
