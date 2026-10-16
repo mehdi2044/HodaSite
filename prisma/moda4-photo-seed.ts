@@ -40,7 +40,7 @@ export async function seedModa4PhotoScene(
     const bytes = await readFile(
       path.join(
         process.cwd(),
-        "docs/design/moda4-redesign/assets/banners",
+        "prisma/demo-assets/moda4/banners",
         `${look.photo}-wide.webp`,
       ),
     );
