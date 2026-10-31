@@ -6,6 +6,26 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import sharp from "sharp";
 const text = (fa: string, tr: string, en: string) => ({ fa, tr, en });
+// M4-01 composition is local to the hero. Other scenes retain their existing seed contract.
+const heroPoints = [
+  [
+    { desktop: { x: 0.345, y: 0.44 }, mobile: { x: 0.6, y: 0.34 } },
+    { desktop: { x: 0.235, y: 0.63 }, mobile: { x: 0.33, y: 0.66 } },
+  ],
+  [
+    { desktop: { x: 0.705, y: 0.3 }, mobile: { x: 0.34, y: 0.31 } },
+    { desktop: { x: 0.675, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+  ],
+  [
+    { desktop: { x: 0.215, y: 0.33 }, mobile: { x: 0.33, y: 0.33 } },
+    { desktop: { x: 0.275, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+  ],
+  [
+    { desktop: { x: 0.665, y: 0.3 }, mobile: { x: 0.62, y: 0.25 } },
+    { desktop: { x: 0.695, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+    { desktop: { x: 0.765, y: 0.74 }, mobile: { x: 0.33, y: 0.66 } },
+  ],
+] as const;
 const hash = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 // Mirrors the public cutout identity contract; integration tests resolve these real rows.
@@ -371,6 +391,13 @@ export async function seedFreshModa4Homepage(
         scene: {
           ...photoScenes[n],
           id: `seed-moda4-hero-scene-${n}`,
+          pieces: photoScenes[n].pieces.map((piece, index) => ({
+            ...piece,
+            ...heroPoints[n][index],
+          })),
+          ...(n === 2
+            ? { title: text("Ready to|Play", "Ready to|Play", "Ready to|Play") }
+            : {}),
           ...(n === 3
             ? {
                 title: text(

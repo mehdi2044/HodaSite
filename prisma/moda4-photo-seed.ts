@@ -8,59 +8,25 @@ import sharp from "sharp";
 // Only called inside the proven-empty MODA4 demo bootstrap. These are the
 // supplied, approved synthetic reference photos and their curated catalog pieces;
 // this is never an automatic confirmation of merchant content or changed pixels.
-// M4-01: every point sits ON the garment, measured on the seeded wide (2:1)
-// banner (d) and the portrait 3:4 photo (m). Points are not fingerprinted.
-type P = { x: number; y: number };
-const looks: {
-  photo: string;
-  title: string;
-  pieces: readonly string[];
-  points: readonly { d: P; m: P }[];
-}[] = [
+const looks = [
   {
     photo: "look-women-coat",
     title: "City Layers",
     pieces: ["women-coat", "accessories-bag"],
-    points: [
-      { d: { x: 0.345, y: 0.44 }, m: { x: 0.6, y: 0.34 } },
-      { d: { x: 0.235, y: 0.63 }, m: { x: 0.33, y: 0.66 } },
-    ],
   },
-  {
-    photo: "look-men",
-    title: "Easy Days",
-    pieces: ["men-shirt", "men-chino"],
-    points: [
-      { d: { x: 0.705, y: 0.3 }, m: { x: 0.34, y: 0.31 } },
-      { d: { x: 0.675, y: 0.62 }, m: { x: 0.55, y: 0.6 } },
-    ],
-  },
+  { photo: "look-men", title: "Easy Days", pieces: ["men-shirt", "men-chino"] },
   {
     photo: "look-kids",
-    title: "Ready to Play",
+    title: "Play Date",
     pieces: ["kids-knit", "kids-trousers"],
-    points: [
-      { d: { x: 0.215, y: 0.33 }, m: { x: 0.33, y: 0.33 } },
-      { d: { x: 0.275, y: 0.62 }, m: { x: 0.55, y: 0.6 } },
-    ],
   },
   {
     photo: "look-women-knit",
     title: "Soft Forms",
     pieces: ["women-knit", "women-trousers", "accessories-bag"],
-    points: [
-      { d: { x: 0.665, y: 0.3 }, m: { x: 0.62, y: 0.25 } },
-      { d: { x: 0.695, y: 0.62 }, m: { x: 0.55, y: 0.6 } },
-      { d: { x: 0.765, y: 0.74 }, m: { x: 0.33, y: 0.66 } },
-    ],
   },
-  {
-    photo: "look-girl",
-    title: "Little Worlds",
-    pieces: ["kids-dress"],
-    points: [{ d: { x: 0.5, y: 0.45 }, m: { x: 0.5, y: 0.45 } }],
-  },
-];
+  { photo: "look-girl", title: "Little Worlds", pieces: ["kids-dress"] },
+] as const;
 export async function seedModa4PhotoScene(
   db: PrismaClient,
   put: (key: string, bytes: Buffer) => Promise<string>,
@@ -147,9 +113,8 @@ export async function seedModa4PhotoScene(
         productId: p.id,
         colorId: v.colorId,
         referenceMediaId: p.media[0].mediaId,
-        // portrait scenes use the 3:4 photo on both frames
-        desktop: portrait ? look.points[index].m : look.points[index].d,
-        mobile: look.points[index].m,
+        desktop: { x: 0.25 + index * 0.2, y: 0.46 },
+        mobile: { x: 0.3 + index * 0.22, y: 0.4 + index * 0.1 },
         side: "end",
       };
     }),
