@@ -313,7 +313,7 @@ export function ModaHeroSlide({
       <div className="m4-copy" data-moda4="hero-copy">
         {eyebrow && <p className="m4-eyebrow">{eyebrow}</p>}
         <Heading
-          className="m4-title"
+          className="m4-title moda-scene-heading"
           data-moda4="hero-title"
           data-moda4-display={latin ? "" : undefined}
           lang={latin ? "en" : locale}
