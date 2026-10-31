@@ -60,6 +60,7 @@
   justify-content: center;
   gap: 22px;
   color: var(--text);
+  line-height: normal;
 }
 .m4-slide[data-copy-side="right"] .m4-copy {
   right: 7%;
@@ -119,10 +120,11 @@ html[dir="ltr"] .m4-title {
   flex-wrap: wrap;
   gap: 12px;
 }
-.m4-acts .button {
+.m4-slide .m4-acts .button {
   margin: 0;
   min-height: 54px;
   padding: 0 30px;
+  letter-spacing: 0.01em;
 }
 .m4-acts .m4-cta-ink {
   --button-fill: var(--text);
@@ -371,7 +373,7 @@ html[dir="ltr"] .m4-title {
   .m4-title {
     font-size: clamp(40px, 12.4vw, 56px);
   }
-  .m4-acts .button {
+  .m4-slide .m4-acts .button {
     min-height: 48px;
     padding: 0 22px;
     font-size: 14px;
