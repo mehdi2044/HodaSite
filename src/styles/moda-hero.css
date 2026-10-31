@@ -570,3 +570,16 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
 .m4-title:lang(fa) {
   font-family: var(--font-fa, Vazirmatn), sans-serif;
 }
+
+.m4-media {
+  z-index: 0;
+}
+.m4-image-fallback {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--moda-header-height, 72px) + 12px);
+  inset-inline: 20px;
+  padding: 8px;
+  background: var(--background);
+  color: var(--text);
+}

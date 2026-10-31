@@ -201,7 +201,10 @@ export function ModaHeroSlide({
       data-image-failed={failed}
       style={style}
     >
-      <div className="m4-media m4-media-desktop">
+      <div className="m4-media m4-media-desktop" data-scene-frame="desktop">
+        {(failed || !desktop.media) && (
+          <p className="m4-image-fallback">{t("missingImage")}</p>
+        )}
         <div className="m4-image-canvas">
           {desktop.media && (
             <ResponsiveImage
@@ -217,7 +220,10 @@ export function ModaHeroSlide({
           )}
         </div>
       </div>
-      <div className="m4-media m4-media-mobile">
+      <div className="m4-media m4-media-mobile" data-scene-frame="mobile">
+        {(failed || !mobile.media) && (
+          <p className="m4-image-fallback">{t("missingImage")}</p>
+        )}
         <div className="m4-image-canvas">
           {mobile.media && (
             <ResponsiveImage

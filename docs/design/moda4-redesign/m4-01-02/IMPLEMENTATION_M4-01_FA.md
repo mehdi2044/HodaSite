@@ -37,3 +37,8 @@ Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D70,
 ## اثر داده و بازگشت
 
 بدون schema/migration/تغییر موتور قیمت، موجودی، auth، provider یا backup. JSON جدید اختیاری است؛ seed فقط در bootstrap اثبات‌شده خالی اجرا می‌شود. برگشت برنامه، اطلاعات مالی یا سفارش را بازنویسی نمی‌کند؛ برای سازگاری تمام‌عیار محتوای تازه، buildی که `layout/float` را می‌خواند نگه داشته شود. هیچ restore روی اطلاعات جدیدتر انجام نشود.
+
+
+## رفع مانع audit در وابستگی مبنا
+
+CI اولیه پیش از تست‌ها متوقف شد: Next.js 15.5.25 و Zod 4.5.4 از مبنای FID-6 در gate امنیتی high رد شدند. حداقل نسخه‌های ترمیمی همان شاخه‌ها، Next/eslint-config-next 15.5.28 و Zod 4.6.6، با lockfile به‌روز شدند. تغییر major، معماری، provider یا قرارداد دامنه وجود ندارد؛ build و کل آزمون‌ها باید روی وابستگی‌های تازه دوباره تأیید شوند. مرجع: [ترمیم Next.js](https://github.com/advisories/GHSA-2464-fhr4-w9xw)، [ترمیم Zod](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). آستانه audit کاهش نیافته است.

@@ -284,7 +284,10 @@ export function ShoppableScene({
       className="moda-scene-purchase"
       open={
         sheet &&
-        (view.reason || imageFailed("mobile") || imageFailed("desktop"))
+        (!heroImageValid ||
+          view.reason ||
+          imageFailed("mobile") ||
+          imageFailed("desktop"))
           ? true
           : undefined
       }
