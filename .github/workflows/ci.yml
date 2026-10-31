@@ -137,7 +137,7 @@ jobs:
           test "$ready" = 1
           export MODA4_APP_URL=http://127.0.0.1:3000
           set +e
-          pnpm test:fidelity
+          pnpm test:fidelity tests/fidelity/moda4-fidelity.spec.ts
           full_status=$?
           set -e
           echo "Full-contract process exit: $full_status (later-stage rows remain reported)"

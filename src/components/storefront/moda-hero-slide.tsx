@@ -173,6 +173,16 @@ export function ModaHeroSlide({
       displayTitleText(title)
     );
   const Heading = first && active ? "h1" : "h2";
+  const modelFrame = (frame: SceneView["desktop"], key: "d" | "m") =>
+    view.mode === "COMPOSITE" && frame.frame.fit === "contain"
+      ? {
+          [`--rw-${key}`]: `min(100cqw, (100cqh - var(--moda-header-height, 72px)) * var(--ar-${key}))`,
+          [`--rh-${key}`]: `calc(var(--rw-${key}) / var(--ar-${key}))`,
+          [`--oy-${key}`]: "var(--moda-header-height, 72px)",
+          [`--fx-${key}`]:
+            key === "m" ? 0.5 : layout.copySide === "right" ? 0 : 1,
+        }
+      : {};
   const style = {
     "--ar-d": ratio(desktop.media, 2),
     "--fx-d": desktop.focal.x,
@@ -182,6 +192,8 @@ export function ModaHeroSlide({
     "--fy-m": mobile.focal.y,
     "--x0": layout.subject.x0,
     "--x1": layout.subject.x1,
+    ...modelFrame(view.desktop, "d"),
+    ...modelFrame(view.mobile, "m"),
   } as CSSProperties;
   return (
     <div

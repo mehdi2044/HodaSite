@@ -3,6 +3,101 @@ import en from "../../messages/en.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import { PrismaClient } from "@prisma/client";
 import { homepageBlocksSchema } from "../../src/modules/content/homepage";
+import { randomUUID } from "node:crypto";
+
+test("legacy contained composite keeps the dressed model visible with reduced motion", async ({
+  page,
+}, info) => {
+  test.setTimeout(120000);
+  const db = new PrismaClient();
+  try {
+    const home = await db.homepage.findUniqueOrThrow({
+      where: { id: "seed-homepage-global" },
+    });
+    const blocks = homepageBlocksSchema.parse(home.draftBlocks ?? home.blocks);
+    const hero = blocks.find((block) => block.type === "HeroSlider");
+    const fitting = blocks.find((block) => block.type === "FittingAd");
+    if (hero?.type !== "HeroSlider" || fitting?.type !== "FittingAd")
+      throw new Error("Demo scenes missing");
+    const scene = fitting.looks[0].scene;
+    const channel = randomUUID();
+    await page.goto("/admin/login");
+    await page
+      .locator('[name="email"]')
+      .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+    await page
+      .locator('[name="password"]')
+      .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+    await fillAdminMfa(page);
+    await page.getByRole("button", { name: "ورود امن" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    const market = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
+    const response = await page.request.post("/api/admin/homepage/preview", {
+      headers: { Origin: info.project.use.baseURL! },
+      data: {
+        channel,
+        scopeMarketId: null,
+        marketId: market.id,
+        locale: "en",
+        sequence: 1,
+        blocks: [
+          {
+            ...hero,
+            slides: [
+              {
+                ...hero.slides[0],
+                layout: undefined,
+                float: undefined,
+                textSide: "end",
+                scene: {
+                  ...scene,
+                  id: `legacy-${channel}`,
+                  desktop: { ...scene.desktop, fit: "contain" },
+                  mobile: { ...scene.mobile, fit: "contain" },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(response.ok(), await response.text()).toBe(true);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+      await page.goto(`/admin/preview/homepage?channel=${channel}`);
+      const slide = page.locator("[data-moda4=hero-slide]:visible");
+      const canvas = slide.locator(".m4-image-canvas:visible");
+      await expect(canvas.locator("[data-scene-layer=true]")).toHaveCount(
+        scene.pieces.length,
+      );
+      await canvas.locator("img").evaluateAll(async (images) => {
+        await Promise.all(
+          images.map((image) => (image as HTMLImageElement).decode()),
+        );
+      });
+      await page.evaluate(() => document.fonts.ready);
+      await slide.screenshot({
+        path: info.outputPath(`legacy-composite-${width}.png`),
+        scale: "css",
+      });
+      const [canvasBox, heroBox] = await Promise.all([
+        canvas.boundingBox(),
+        slide.boundingBox(),
+      ]);
+      expect(canvasBox!.y).toBeGreaterThanOrEqual(heroBox!.y);
+      expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(
+        heroBox!.y + heroBox!.height + 1,
+      );
+      expect(canvasBox!.x).toBeGreaterThanOrEqual(heroBox!.x);
+      expect(canvasBox!.x + canvasBox!.width).toBeLessThanOrEqual(
+        heroBox!.x + heroBox!.width + 1,
+      );
+    }
+  } finally {
+    await db.$disconnect();
+  }
+});
 
 test("a differently priced size updates the in-hero pin and purchase quote together", async ({
   page,

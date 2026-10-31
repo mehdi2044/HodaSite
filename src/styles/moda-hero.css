@@ -16,8 +16,9 @@
   --ar: var(--ar-d);
   --fx: var(--fx-d);
   --fy: var(--fy-d, 0);
-  --rw: max(100cqw, 100cqh * var(--ar));
-  --rh: max(100cqh, 100cqw / var(--ar));
+  --rw: var(--rw-d, max(100cqw, 100cqh * var(--ar)));
+  --rh: var(--rh-d, max(100cqh, 100cqw / var(--ar)));
+  --oy: var(--oy-d, calc((100cqh - var(--rh)) * var(--fy)));
 }
 .m4-media {
   position: absolute;
@@ -44,7 +45,7 @@
   visibility: hidden;
   left: calc((100cqw - var(--rw)) * var(--fx) + var(--x0) * var(--rw));
   width: calc((var(--x1) - var(--x0)) * var(--rw));
-  top: calc((100cqh - var(--rh)) * var(--fy));
+  top: var(--oy);
   height: var(--rh);
 }
 
@@ -150,7 +151,7 @@ html[dir="ltr"] .m4-title {
   --px: var(--px-d);
   --py: var(--py-d);
   left: calc((100cqw - var(--rw)) * var(--fx) + var(--px) * var(--rw));
-  top: calc((100cqh - var(--rh)) * var(--fy) + var(--py) * var(--rh));
+  top: calc(var(--oy) + var(--py) * var(--rh));
 }
 .m4-pin[hidden] {
   display: none;
@@ -323,6 +324,9 @@ html[dir="ltr"] .m4-title {
     --ar: var(--ar-m);
     --fx: var(--fx-m);
     --fy: var(--fy-m, 0);
+    --rw: var(--rw-m, max(100cqw, 100cqh * var(--ar)));
+    --rh: var(--rh-m, max(100cqh, 100cqw / var(--ar)));
+    --oy: var(--oy-m, calc((100cqh - var(--rh)) * var(--fy)));
   }
   .m4-pin {
     --px: var(--px-m);
@@ -476,7 +480,7 @@ html[dir="ltr"] .m4-title {
 .m4-image-canvas {
   position: absolute;
   left: calc((100cqw - var(--rw)) * var(--fx));
-  top: calc((100cqh - var(--rh)) * var(--fy));
+  top: var(--oy);
   width: var(--rw);
   height: var(--rh);
 }
