@@ -137,6 +137,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
       );
     } else if (op === "CREDIT") {
       await page.goto(`/${locale}/account`);
+      await page.locator('.moda-account-nav a[href$="#orders"]').click();
       await expect(
         page.getByRole("heading", { name: t.creditBalance }),
       ).toBeVisible();

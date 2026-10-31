@@ -1,55 +1,43 @@
-# Editorial depth continuation — visual QA
+# M4-01 design QA
 
-The owner accepted the PR #44 upper-page composition and requested creative three-dimensional detail in the continuation. This slice preserves that header/hero and extends its framed imagery to categories, products and the existing CMS service strip. There is no supplied lower-page mockup; this review checks visual coherence and usability, not pixel equivalence to an invented reference.
+Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D70, D77, D78, D81.
 
-- Actual `HomepageBlocks` and `ProductCard` were server-rendered with catalog fixtures and the repository CSS/fonts. English desktop (1280px), Persian mobile (390px), and Turkish mobile were inspected in the browser. The fixture harness is not evidence of database or hydrated commerce behavior.
-- Categories retain full subjects, warm surfaces, readable labels and two aligned mobile columns. Desktop alternates frame height, with restrained perspective on hover/focus. The observed hovered plane used a 3D transform while its siblings remained static.
-- Product cards retain color swatches, image disclosures, price and product links. The wishlist remains a separate 44px button over the photo; the real interaction is covered by the new database-backed browser tests, not the static harness.
-- Mobile DOM measurements showed equal scroll/client widths; no horizontal overflow. Persian product text and prices remain readable; labels use logical spacing. Existing merchant content and colors are unchanged. No invented trust claims or product imagery were introduced.
-- Motion runs only for fine-pointer hover and `prefers-reduced-motion: no-preference`. Coarse touch and reduced-motion users receive the same static layout. No pointer listener, canvas, animation loop, extra dependency or image request was added.
-- Browser console inspection showed only historical extension-metadata errors, not an application error. Required real-route checks, mobile screenshots and reduced-motion/wishlist assertions run in CI on the final PR head before merge.
+This is Codex self-review of M4-01, not independent review or Mehdi's visual approval. M4-02 is excluded. The PR stays Draft. Current-head CI and D70 review gates must be assessed separately.
 
-Visual review result: passed. Production-speed and physical iPhone acceptance remain separate.
+## Evidence and inspection
 
----
+Reference: the supplied Claude v3 HTML and both package specifications, based on c0781c31adfa1db6938ddf77704bc72bf30a8854. Implementation evidence was captured from production build 706b2d54f5ec9ab040c48393b5fe4e1099ea06ca on Windows, using a freshly provisioned review database. Later test/report-only commits do not change the UI implementation.
 
-# Lovable fidelity correction — visual QA
+I inspected all four [comparison boards](docs/design/moda4-redesign/m4-01-02/evidence/README_FA.md), covering 48 actual states, and the full-size FA/EN mobile pairs. Each pair puts Claude on the left and Codex on the right. Captures use equal CSS viewport, density 1 and loaded fonts. Original pairs retain their pixel dimensions; overview boards are proportionally reduced. White padding aligns unequal element heights. No generated replacement or stretched screenshot is used.
 
-Source: owner-supplied Lovable screenshot and the project's latest screenshot (`lovable-design.png`, 1920 × 1080). Target: the spatial hero's layered composition, offset display typography and compact header, adapted to the owner's four-department catalog. The existing shop brand, images and palette remain merchant-owned; this is not an exact copy of the women's campaign photography or MODA4 brand.
+| CSS viewport | Claude hero capture | Codex hero capture |
+| --- | --- | --- |
+| 390 × 844 | 390 × 812 | 390 × 760 |
+| 768 × 1024 | 768 × 937 | 768 × 940 |
+| 1024 × 768 | 1024 × 742 | 1024 × 758 |
+| 1440 × 900 | 1440 × 864 | 1440 × 880 |
 
-## Comparison evidence
+## Findings and resolution history
 
-- Browser-rendered component: `spatial-desktop-final.png`; real `SpatialHeroView` rendered with the current demo catalog, CSS and fonts in a temporary visual harness. CSS viewport 1920 × 900; iframe scaled by 2/3 for capture. Hero comparison region: 1280 × 560 pixels.
-- Source normalized from its 1920 × 840 hero region (browser/header excluded) to 1280 × 560. `spatial-comparison.png` stacks both normalized inputs in one 1280 × 1120 comparison. This is the combined input used for review, not separate remembered screenshots.
-- Mobile: `spatial-mobile-final.png`, 390 CSS px, Persian/RTL, 1:1 capture. No mobile source was supplied; checked responsive behavior rather than claiming pixel fidelity.
-- Full header: `spatial-full-desktop.png` (1280 CSS px) and `spatial-full-mobile.png` (390 × 844 CSS px). The actual async Header and its real child components were server-rendered with fixture data; no substitute header markup. The temporary harness proves rendering and native disclosure target areas only; its fixture links do not prove commerce. Database-backed navigation is separately verified by the required CI Playwright suite before merge.
+| Priority | Observed finding | Resolution and evidence |
+| --- | --- | --- |
+| P1 | Three-decimal authored pin coordinates were rejected by native two-decimal step validation, blocking normal CMS saves. | Both scene editors and the new layout fields accept continuous geometry precision. Bounds and server validation remain. The browser now verifies that the seeded form has no invalid controls; real draft/save/reload/publication tests pass. |
+| P2 | Generic button padding and stale seed copy caused a mobile CTA wrap and a missing secondary CTA. | Scoped Hero button geometry, correct reference copy and fresh-bootstrap-only seed changes. See the before-mobile image and the final mobile pairs. |
+| P2 | Explicit resume appeared active while retained focus/hover kept the carousel stopped. | Resume advances from the retained frame with focus on its button. Pause and resize preserve elapsed time; reduced motion prevents further playback. |
+| P2 | Legacy COMPOSITE contain content was rendered on a cover canvas, cropping the dressed mannequin. | Frame fit is respected without changing saved JSON. Actual before/after captures show the selected layers with reduced motion and no final photograph. |
+| P2 | An offscreen admin measurement could wait indefinitely for iframe animation frames. | Eager image decode with a bound, font readiness and the visible parent's frame scheduling. Two complete private audit runs now finish and expose the intended warning. |
 
-## Findings and iteration history
+No open P1/P2 visual finding remains within M4-01. The following visible P3 differences are disclosed, rather than hidden by changing the sample: the real market/header and fixed mobile navigation reserve different space; actual purchase pins have 44px targets; explicit playback controls and the demo-image badge remain visible; subtitle leads use regular weight where the sample emphasizes them; live CAD/FX values and currency notation differ from the sample's fixed values. The existing crayon button treatment and branding tokens are retained.
 
-1. **P1 — equal-card grid replaced the source composition.** Removed equal grid geometry. The revised rendering has one portrait plane, three floating department planes, offset frames, a three-line title and a plain arrow CTA. Resolved in the combined desktop comparison.
-2. **P1 — display typography lost its hierarchy.** Added self-hosted Bodoni Moda italic for the Latin middle line; retained Inter and Vazirmatn for the shop. CMS-controlled line breaks replace arbitrary wrapping. Persian uses lighter upright emphasis to preserve readability. Resolved in desktop/mobile captures.
-3. **P2 — mobile eyebrow overlapped the main photograph.** Replaced percentage-driven mobile picture heights with a stable image stage; re-captured after the fix with all four images loaded. Resolved.
-4. **P2 — header density differed substantially.** Main navigation now contains root departments and utilities use a separate compact row. Actual Header render checked at 1280px and 390px. Search, language, market, account, wishlist and cart remain reachable. The utility row is 44px rather than the reference's 28px to keep link hit areas usable. Resolved; the height difference is intentional.
+## Functional and visual checks
 
-## Focused review
+- New Hero fidelity: FA/TR/EN, four viewport sizes and four slides, 48 states, zero H-01…H-07 findings. Both reference and app pass their 25 browser cases.
+- Previous fidelity: 146/146, with the previous specification file unchanged. No threshold, assertion or acceptance item was removed.
+- Real touch, mouse and Enter open the existing D81 form inside the hero, focus the selected piece and require actual size choices. Variable Decimal prices stay consistent with the purchase quote. Archived references cannot offer an invalid set.
+- Private admin audit: healthy result first; deliberately invalid subject bounds then show H-01 in the permitted language/size matrix. Unit checks cover all seven warning classes. Audit does not publish content or grant additional scope.
+- [Identity contact sheet](docs/design/moda4-redesign/m4-01-02/evidence/hero-garment-identities.jpg): inspected four final synthetic looks against nine catalog image references for style/color identity. IDs and file hashes are recorded alongside it. Existing server fingerprint checks and explicit PHOTO approval are preserved.
+- Legacy textSide and optional layout/float contracts remain supported. Dead Hero CSS is removed; current Hero rules are scoped. The full 96-scenario browser acceptance is recorded as 93 passing in the full run and three successful final rechecks; trace is disabled for the measured rechecks, retaining the 5000ms publication/price limits.
 
-The normalized hero pair was readable at 1280px, including the display letterforms, caption labels, frame offsets and all four subjects; a separate hero crop was unnecessary. Header spacing and controls were checked in the dedicated full-header captures, and mobile text/image separation in the 390px capture. These are structural comparisons: source marketing copy and photographs differ from the current CMS catalog by design.
-
-## Required surfaces
-
-- Typography: hierarchy, line breaks, italic family and RTL emphasis checked. Longer merchant titles fall back to flowing text.
-- Layout: portrait position and title/photo overlap compared at the same normalized desktop size. Four-group imagery, larger usable labels and the mobile stage are intentional adaptations.
-- Colors: existing DB theme colors retained, including its brighter orange; no undocumented brand reset.
-- Images: current demo catalog assets, full face retained, no invented logo/orbit seal, no parallax dependency. Reference campaign photographs differ intentionally from the four-department catalog imagery.
-- Copy: inclusive editable campaign title; shop brand and category labels stay in the CMS. No fake location, seasonal claim or concept-site domain was copied into commerce.
-
-## Interaction and console checks
-
-Cloud browser opened the rendered component, verified loaded image dimensions, clicked the men's target in RTL, opened/closed the native mobile menu, opened the cart disclosure and checked the desktop search destination. No application console error was observed; the cloud browser's extension metadata error was unrelated. Real category/history/gallery/locale and mobile control coverage remains in the repository's Playwright suite.
-
-## Remaining checklist
-
-- Full-header visual review completed. Real route/history/gallery behavior and hydrated close/Escape controls must pass the required CI suite.
-- Verify all required checks on the final PR head before merging.
+The untouched FittingAd's MATCH_REQUIRED diagnosis and M4-02 remain documented separately. Native Windows standalone symlink EPERM, current-head CI, independent Claude/Vee review and Mehdi's approval are not claimed as visual passes or release authorization.
 
 final result: passed

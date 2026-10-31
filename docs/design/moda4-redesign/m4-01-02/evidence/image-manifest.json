@@ -1,0 +1,722 @@
+[
+  {
+    "file": "compare/hero-fa-390-s0.jpg",
+    "locale": "fa",
+    "width": 390,
+    "slide": 0,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-390-s0.jpg",
+    "locale": "tr",
+    "width": 390,
+    "slide": 0,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-390-s0.jpg",
+    "locale": "en",
+    "width": 390,
+    "slide": 0,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-768-s0.jpg",
+    "locale": "fa",
+    "width": 768,
+    "slide": 0,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-768-s0.jpg",
+    "locale": "tr",
+    "width": 768,
+    "slide": 0,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-768-s0.jpg",
+    "locale": "en",
+    "width": 768,
+    "slide": 0,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1024-s0.jpg",
+    "locale": "fa",
+    "width": 1024,
+    "slide": 0,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1024-s0.jpg",
+    "locale": "tr",
+    "width": 1024,
+    "slide": 0,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1024-s0.jpg",
+    "locale": "en",
+    "width": 1024,
+    "slide": 0,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1440-s0.jpg",
+    "locale": "fa",
+    "width": 1440,
+    "slide": 0,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1440-s0.jpg",
+    "locale": "tr",
+    "width": 1440,
+    "slide": 0,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1440-s0.jpg",
+    "locale": "en",
+    "width": 1440,
+    "slide": 0,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-390-s1.jpg",
+    "locale": "fa",
+    "width": 390,
+    "slide": 1,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-390-s1.jpg",
+    "locale": "tr",
+    "width": 390,
+    "slide": 1,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-390-s1.jpg",
+    "locale": "en",
+    "width": 390,
+    "slide": 1,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-768-s1.jpg",
+    "locale": "fa",
+    "width": 768,
+    "slide": 1,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-768-s1.jpg",
+    "locale": "tr",
+    "width": 768,
+    "slide": 1,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-768-s1.jpg",
+    "locale": "en",
+    "width": 768,
+    "slide": 1,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1024-s1.jpg",
+    "locale": "fa",
+    "width": 1024,
+    "slide": 1,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1024-s1.jpg",
+    "locale": "tr",
+    "width": 1024,
+    "slide": 1,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1024-s1.jpg",
+    "locale": "en",
+    "width": 1024,
+    "slide": 1,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1440-s1.jpg",
+    "locale": "fa",
+    "width": 1440,
+    "slide": 1,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1440-s1.jpg",
+    "locale": "tr",
+    "width": 1440,
+    "slide": 1,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1440-s1.jpg",
+    "locale": "en",
+    "width": 1440,
+    "slide": 1,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-390-s2.jpg",
+    "locale": "fa",
+    "width": 390,
+    "slide": 2,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-390-s2.jpg",
+    "locale": "tr",
+    "width": 390,
+    "slide": 2,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-390-s2.jpg",
+    "locale": "en",
+    "width": 390,
+    "slide": 2,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-768-s2.jpg",
+    "locale": "fa",
+    "width": 768,
+    "slide": 2,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-768-s2.jpg",
+    "locale": "tr",
+    "width": 768,
+    "slide": 2,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-768-s2.jpg",
+    "locale": "en",
+    "width": 768,
+    "slide": 2,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1024-s2.jpg",
+    "locale": "fa",
+    "width": 1024,
+    "slide": 2,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1024-s2.jpg",
+    "locale": "tr",
+    "width": 1024,
+    "slide": 2,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1024-s2.jpg",
+    "locale": "en",
+    "width": 1024,
+    "slide": 2,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1440-s2.jpg",
+    "locale": "fa",
+    "width": 1440,
+    "slide": 2,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1440-s2.jpg",
+    "locale": "tr",
+    "width": 1440,
+    "slide": 2,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1440-s2.jpg",
+    "locale": "en",
+    "width": 1440,
+    "slide": 2,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-390-s3.jpg",
+    "locale": "fa",
+    "width": 390,
+    "slide": 3,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-390-s3.jpg",
+    "locale": "tr",
+    "width": 390,
+    "slide": 3,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-390-s3.jpg",
+    "locale": "en",
+    "width": 390,
+    "slide": 3,
+    "source": {
+      "width": 390,
+      "height": 812
+    },
+    "app": {
+      "width": 390,
+      "height": 760
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-768-s3.jpg",
+    "locale": "fa",
+    "width": 768,
+    "slide": 3,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-768-s3.jpg",
+    "locale": "tr",
+    "width": 768,
+    "slide": 3,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-768-s3.jpg",
+    "locale": "en",
+    "width": 768,
+    "slide": 3,
+    "source": {
+      "width": 768,
+      "height": 937
+    },
+    "app": {
+      "width": 768,
+      "height": 940
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1024-s3.jpg",
+    "locale": "fa",
+    "width": 1024,
+    "slide": 3,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1024-s3.jpg",
+    "locale": "tr",
+    "width": 1024,
+    "slide": 3,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1024-s3.jpg",
+    "locale": "en",
+    "width": 1024,
+    "slide": 3,
+    "source": {
+      "width": 1024,
+      "height": 742
+    },
+    "app": {
+      "width": 1024,
+      "height": 758
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-fa-1440-s3.jpg",
+    "locale": "fa",
+    "width": 1440,
+    "slide": 3,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-tr-1440-s3.jpg",
+    "locale": "tr",
+    "width": 1440,
+    "slide": 3,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  },
+  {
+    "file": "compare/hero-en-1440-s3.jpg",
+    "locale": "en",
+    "width": 1440,
+    "slide": 3,
+    "source": {
+      "width": 1440,
+      "height": 864
+    },
+    "app": {
+      "width": 1440,
+      "height": 880
+    },
+    "normalization": "Equal CSS viewport and density 1. No stretching; white padding where the mobile app reserves fixed navigation space."
+  }
+]

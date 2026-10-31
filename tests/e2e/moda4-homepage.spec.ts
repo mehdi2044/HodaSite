@@ -5,11 +5,8 @@ import { fillAdminMfa } from "./helpers/admin-mfa";
 const db = new PrismaClient();
 async function expectDraftSaved(form: Locator) {
   await expect(
-    form.getByRole("button", { name: en.homepageAdmin.save, exact: true }),
-  ).toBeEnabled({ timeout: 30000 });
-  await expect(
-    form.getByRole("status").filter({ hasText: en.homepageAdmin.save }),
-  ).toBeVisible();
+    form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
+  ).toBeVisible({ timeout: 30000 });
 }
 test.use({ viewport: { width: 390, height: 844 }, actionTimeout: 20000 });
 test("R3b full real CMS: private unsaved renderer, ordered blocks and publication visible in open storefront", async ({

@@ -1,8 +1,10 @@
-## 2026-10-31 — M4-01، در حال تکمیل بازبینی مستقل بنر
+## 2026-11-01 — M4-01، قبول محلی و Draft برای بازبینی مستقل
 
-Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D31, D70, D77, D78, D81.
+Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D70, D77, D78, D81.
 
-worktree مستقل روی HEAD واقعی FID-6؛ فقط Hero از پیشنهاد Claude با اصلاح Decimal، نقاط خرید واقعی، سازگاری textSide و پیش‌نمایش هشدارهای H-01…H-07. کل ۹۲۹۷ آزمون Unit/PG بدون skip موفق؛ build Docker و نمونه‌های Fidelity موفق. آزمون برنامه/پنل، تصاویر و CI همین head در حال تکمیل‌اند. [گزارش مرحله](design/moda4-redesign/m4-01-02/IMPLEMENTATION_M4-01_FA.md). M4-02 منتظر تحویل و بازبینی مرحله اول؛ علت واقعی رگال در DB تازه MATCH_REQUIRED بود. نسخه موجود/اطلاعات/Volumeها حفظ شده، بدون merge یا production.
+فقط Hero از بسته Claude روی worktree مستقل FID-6: چیدمان اندازه‌گیری‌شده، Decimal، نقاط واقعی خرید D81، pause/resume بدون restart، COMPOSITE قدیمی پوشیده، حفظ textSide، مختصات پیوسته و هشدارهای خصوصی H-01…H-07. ۹۳۰۰ Unit/PG در ۱۷۷ فایل بدون skip، ۹۶ browser مرتبط، production Docker روی Windows و Fidelity قبلی ۱۴۶/۱۴۶ به‌اضافه ۴۸ حالت تازه موفق‌اند. standalone بومی Windows به EPERM symlink رسید و pass معرفی نمی‌شود. [گزارش و راه آزمون دستی](design/moda4-redesign/m4-01-02/IMPLEMENTATION_M4-01_FA.md)، [۴۸ مقایسه واقعی](design/moda4-redesign/m4-01-02/evidence/README_FA.md) و [Draft PR86](https://github.com/mehdi2044/HodaSite/pull/86). CI و AI review باید برای head جاری بررسی شوند؛ خودبازبینی مستقل نیست.
+
+دمو مستقل پورت ۳۰۸۸ با origin جدا روشن نگه داشته می‌شود؛ نسخه localhost:3087 و داده‌های آن حفظ شده‌اند. بدون schema migration، reset، حذف Volume، main push، merge یا production. برای آزمون، سه زبان/چهار اندازه، pause→resize→resume، نقاط لمس/Enter، انتخاب سایز/سبد و ذخیره+reload/audit خصوصی پنل را بررسی کنید. علت ۱۲ حالت رگال در DB آزمایشی MATCH_REQUIRED با match غایب بود؛ FittingAd اصلاح نشده و M4-02 پس از بازبینی Claude/وی‌بانو و تأیید بصری مهدی شروع می‌شود.
 
 ## 2026-10-16 — FID-6، شواهد فنی نهایی و تأیید تصویری باز
 
