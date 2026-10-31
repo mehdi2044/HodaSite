@@ -1,8 +1,9 @@
 "use client";
-import { HeroImageValid } from "./hero-image-state";
+import { HeroImageValid, HeroPriceSelection } from "./hero-image-state";
 import { subscribeSceneRefresh } from "./scene-refresh";
 import {
   useContext,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -59,6 +60,7 @@ export function ShoppableScene({
   only?: "purchase";
 }) {
   const heroImageValid = useContext(HeroImageValid);
+  const publishPrices = useContext(HeroPriceSelection);
   const activeSlide = useContext(ActiveCarouselSlide);
   const sheet = only === "purchase" || presentation === "hero";
   const PurchasePanel = sheet ? "details" : "div";
@@ -149,25 +151,39 @@ export function ShoppableScene({
     !imageFailed("mobile") &&
     view.pieces.length > 0 &&
     chosen.every((v) => v && v.available > 0 && v.amount !== null);
-  const price = (piece: SceneView["pieces"][number]) => {
-    const selected = piece.variants.find((v) => v.id === selections[piece.id]);
-    if (
-      selected?.amount !== null &&
-      selected?.amount !== undefined &&
-      selected.available > 0
-    )
-      return formatStorefrontAmount(selected.amount, view.currency, locale);
-    if (!piece.range)
-      return t(
-        piece.variants.some((v) => v.available > 0)
-          ? "priceUnavailable"
-          : "outOfStock",
+  const price = useCallback(
+    (piece: SceneView["pieces"][number]) => {
+      const selected = piece.variants.find(
+        (v) => v.id === selections[piece.id],
       );
-    const min = formatStorefrontAmount(piece.range.min, view.currency, locale);
-    return piece.range.min === piece.range.max
-      ? min
-      : t("from", { price: min });
-  };
+      if (
+        selected?.amount !== null &&
+        selected?.amount !== undefined &&
+        selected.available > 0
+      )
+        return formatStorefrontAmount(selected.amount, view.currency, locale);
+      if (!piece.range)
+        return t(
+          piece.variants.some((v) => v.available > 0)
+            ? "priceUnavailable"
+            : "outOfStock",
+        );
+      const min = formatStorefrontAmount(
+        piece.range.min,
+        view.currency,
+        locale,
+      );
+      return piece.range.min === piece.range.max
+        ? min
+        : t("from", { price: min });
+    },
+    [selections, view.currency, locale, t],
+  );
+  useEffect(() => {
+    publishPrices?.(
+      Object.fromEntries(view.pieces.map((piece) => [piece.id, price(piece)])),
+    );
+  }, [publishPrices, view.pieces, price]);
   // Keep Persian joining intact; Latin headings reveal graphemes independently.
   const title = revealTitle ? (
     <span aria-hidden="true">

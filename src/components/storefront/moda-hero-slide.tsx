@@ -19,7 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import { HeroImageValid } from "./hero-image-state";
+import { HeroImageValid, HeroPriceSelection } from "./hero-image-state";
 import type { SceneView } from "@/modules/content/scenes/resolve";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
@@ -98,12 +98,17 @@ export function ModaHeroSlide({
 }) {
   const t = useTranslations("scenes");
   const [failed, setFailed] = useState(false);
+  const [selectedPrices, setSelectedPrices] = useState<Record<string, string>>(
+    {},
+  );
+  const pinPrice = (pin: HeroPinView) => selectedPrices[pin.id] ?? pin.price;
   const active = useContext(ActiveCarouselSlide);
   const ref = useRef<HTMLDivElement>(null);
   useHeroLayoutGuard(
     ref,
     active,
     JSON.stringify([
+      selectedPrices,
       layout,
       desktop,
       mobile,
@@ -247,7 +252,7 @@ export function ModaHeroSlide({
               type="button"
               className="scene-pin"
               aria-controls={`scene-piece-${sceneId}-${pin.id}`}
-              aria-label={`${pin.title} · ${pin.price}`}
+              aria-label={`${pin.title} · ${pinPrice(pin)}`}
               onClick={() => openSheet(pin.id)}
             >
               <span className="m4-dot" aria-hidden="true">
@@ -255,7 +260,7 @@ export function ModaHeroSlide({
               </span>
               <span className="m4-tag" aria-hidden="true">
                 <b>{pin.title}</b>
-                <bdi className="moda-price">{pin.price}</bdi>
+                <bdi className="moda-price">{pinPrice(pin)}</bdi>
               </span>
             </button>
           </li>
@@ -320,7 +325,7 @@ export function ModaHeroSlide({
                 >
                   <i aria-hidden="true">{number.format(n + 1)}</i>
                   <span>{pin.title}</span>
-                  <bdi className="moda-price">{pin.price}</bdi>
+                  <bdi className="moda-price">{pinPrice(pin)}</bdi>
                 </button>
               </li>
             ))}
@@ -354,7 +359,9 @@ export function ModaHeroSlide({
         </p>
       )}
       <HeroImageValid.Provider value={!failed}>
-        {purchase}
+        <HeroPriceSelection.Provider value={setSelectedPrices}>
+          {purchase}
+        </HeroPriceSelection.Provider>
       </HeroImageValid.Provider>
     </div>
   );

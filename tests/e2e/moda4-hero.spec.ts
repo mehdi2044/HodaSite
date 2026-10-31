@@ -4,6 +4,46 @@ import { fillAdminMfa } from "./helpers/admin-mfa";
 import { PrismaClient } from "@prisma/client";
 import { homepageBlocksSchema } from "../../src/modules/content/homepage";
 
+test("a differently priced size updates the in-hero pin and purchase quote together", async ({
+  page,
+}) => {
+  const db = new PrismaClient();
+  const product = await db.product.findUniqueOrThrow({
+    where: { id: "seed-moda4-style-women-coat" },
+    include: {
+      variants: { where: { isActive: true }, orderBy: { id: "asc" } },
+    },
+  });
+  const variant = product.variants[0];
+  try {
+    await db.variant.update({
+      where: { id: variant.id },
+      data: { priceOverrideUsd: product.basePriceAmount.plus("17.25") },
+    });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/en/m/CA");
+    const slide = page.locator("[data-moda4=hero-slide]:visible"),
+      chip = slide.locator("[data-moda4=hero-prices] button").first();
+    await expect(chip).toContainText("From");
+    await chip.tap();
+    const sheet = slide.locator("details.moda-scene-purchase");
+    await sheet.locator("select").first().selectOption(variant.id);
+    const exact = (
+      await sheet.locator("strong.moda-price").first().innerText()
+    ).trim();
+    await expect(chip.locator(".moda-price")).toHaveText(exact);
+    await expect(slide.locator(".m4-pin[data-n='1'] .moda-price")).toHaveText(
+      exact,
+    );
+  } finally {
+    await db.variant.update({
+      where: { id: variant.id },
+      data: { priceOverrideUsd: variant.priceOverrideUsd },
+    });
+    await db.$disconnect();
+  }
+});
+
 test("hero pause and resize preserve the elapsed animation frame, resume continues it", async ({
   page,
 }) => {
