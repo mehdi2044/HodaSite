@@ -1,0 +1,592 @@
+/* =====================================================================
+   M4-01 — MODA4 hero composition (normative; mirrors the design reference
+   docs/design/moda4-redesign/m4-01-02/reference/assets/hero.css).
+   Modes: A ≤760 · B 761–1099 portrait · C 761–1279 landscape · D ≥1280.
+   Physical rule: copy on the photo's empty side; photo never mirrored.
+   ===================================================================== */
+.moda-carousel-hero .moda-carousel-slide {
+  position: absolute;
+  inset: 0;
+} /* inactive slides stay [hidden] (not focusable) */
+
+.m4-slide {
+  position: absolute;
+  inset: 0;
+  container-type: size;
+  --ar: var(--ar-d);
+  --fx: var(--fx-d);
+  --fy: var(--fy-d, 0);
+  --rw: var(--rw-d, max(100cqw, 100cqh * var(--ar)));
+  --rh: var(--rh-d, max(100cqh, 100cqw / var(--ar)));
+  --oy: var(--oy-d, calc((100cqh - var(--rh)) * var(--fy)));
+}
+.m4-media {
+  position: absolute;
+  inset: 0;
+}
+.m4-media-mobile {
+  display: none;
+}
+.m4-media picture,
+.m4-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.m4-media img {
+  object-fit: cover !important;
+  object-position: calc(var(--fx) * 100%) calc(var(--fy) * 100%) !important;
+}
+
+.m4-subject {
+  position: absolute;
+  pointer-events: none;
+  visibility: hidden;
+  left: calc((100cqw - var(--rw)) * var(--fx) + var(--x0) * var(--rw));
+  width: calc((var(--x1) - var(--x0)) * var(--rw));
+  top: var(--oy);
+  height: var(--rh);
+}
+
+.m4-copy {
+  position: absolute;
+  z-index: 4;
+  top: calc(var(--moda-header-height, 72px) + 7%);
+  bottom: 16%;
+  width: fit-content;
+  max-width: min(42%, 620px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  color: var(--text);
+  line-height: normal;
+}
+.m4-slide[data-copy-side="right"] .m4-copy {
+  right: 7%;
+}
+.m4-slide[data-copy-side="left"] .m4-copy {
+  left: 7%;
+}
+html[dir="rtl"] .m4-copy {
+  text-align: right;
+}
+html[dir="ltr"] .m4-copy {
+  text-align: left;
+}
+.m4-eyebrow {
+  margin: 0;
+  font-family: var(--font-body-latin, Inter), sans-serif;
+  font-size: 11.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  direction: ltr;
+}
+html[dir="rtl"] .m4-eyebrow {
+  text-align: right;
+}
+.m4-title {
+  margin: 0;
+  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: clamp(56px, 7.4vw, 128px);
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+}
+.m4-title em {
+  font-style: normal;
+  font-weight: 300;
+}
+html[dir="rtl"] .m4-title {
+  text-align: right;
+}
+html[dir="ltr"] .m4-title {
+  text-align: left;
+}
+.m4-sub {
+  font-size: clamp(18px, 1.7vw, 24px);
+  font-weight: 300;
+}
+.m4-body {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.95;
+  max-width: 440px;
+  color: color-mix(in srgb, var(--text) 82%, transparent);
+}
+.m4-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.m4-slide .m4-acts .button {
+  margin: 0;
+  min-height: 54px;
+  padding: 0 30px;
+  letter-spacing: 0.01em;
+}
+.m4-acts .m4-cta-ink {
+  --button-fill: var(--text);
+  color: var(--background);
+}
+.m4-acts .m4-cta-accent {
+  --button-fill: var(--primary);
+  color: var(--text);
+}
+.m4-acts .button-outline {
+  --button-fill: transparent;
+  color: var(--text);
+}
+
+.m4-pins {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.m4-pin {
+  position: absolute;
+  z-index: 3;
+  --px: var(--px-d);
+  --py: var(--py-d);
+  left: calc((100cqw - var(--rw)) * var(--fx) + var(--px) * var(--rw));
+  top: calc(var(--oy) + var(--py) * var(--rh));
+}
+.m4-pin[hidden] {
+  display: none;
+}
+.m4-pin > button {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.m4-dot {
+  position: absolute;
+  left: -15px;
+  top: -15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font:
+    600 12px/1 var(--font-body-latin, Inter),
+    sans-serif;
+  box-shadow:
+    0 0 0 1.5px var(--text),
+    0 6px 18px rgb(20 18 16/0.25);
+}
+.m4-dot::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+.m4-tag {
+  position: absolute;
+  top: 0;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  box-shadow: 0 8px 22px -10px rgb(20 18 16/0.35);
+  white-space: nowrap;
+}
+.m4-tag b {
+  font-weight: 500;
+  font-size: 13px;
+}
+.m4-tag bdi {
+  font:
+    600 13.5px/1.2 var(--font-body-latin, Inter),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.m4-pin[data-label="left"] .m4-tag {
+  right: 24px;
+}
+.m4-pin[data-label="right"] .m4-tag {
+  left: 24px;
+}
+.m4-pin[data-label="none"] .m4-tag {
+  display: none;
+}
+
+.m4-float {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  width: clamp(120px, 9vw, 150px);
+  filter: drop-shadow(0 30px 30px rgb(60 40 20/0.28));
+}
+.m4-float[hidden] {
+  display: none;
+}
+.m4-float-note {
+  position: absolute;
+  inset-inline: -30px;
+  top: calc(100% + 12px);
+  margin-inline: auto;
+  width: max-content;
+  max-width: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  font:
+    600 15px/1.2 var(--font-body-latin, Inter),
+    Vazirmatn,
+    sans-serif;
+  white-space: nowrap;
+}
+.m4-float-note svg {
+  position: absolute;
+  inset: -10px -16px;
+  width: calc(100% + 32px);
+  height: calc(100% + 20px);
+  pointer-events: none;
+}
+
+.m4-strip {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m4-slide[data-strip="on"] .m4-strip {
+  display: flex;
+}
+.m4-strip button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.m4-strip i {
+  font:
+    600 11px/1 var(--font-body-latin, Inter),
+    sans-serif;
+  font-style: normal;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 1.2px var(--text);
+}
+.m4-strip bdi {
+  font:
+    600 12.5px var(--font-body-latin, Inter),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.m4-demo {
+  position: absolute;
+  z-index: 4;
+  bottom: 84px;
+  inset-inline-end: 24px;
+  margin: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  background: color-mix(in srgb, var(--background) 90%, transparent);
+}
+
+/* C: desktop-compact */
+@media (min-width: 761px) and (max-width: 1279px) and (orientation: landscape) {
+  .m4-copy {
+    max-width: min(44%, 560px);
+    gap: 18px;
+  }
+  .m4-title {
+    font-size: clamp(52px, 6.4vw, 84px);
+  }
+  .m4-float {
+    display: none;
+  }
+}
+/* A + B: stacked, mobile photo, numbered dots + always-visible price strip */
+@media (max-width: 760px),
+  (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
+  .m4-slide {
+    --ar: var(--ar-m);
+    --fx: var(--fx-m);
+    --fy: var(--fy-m, 0);
+    --rw: var(--rw-m, max(100cqw, 100cqh * var(--ar)));
+    --rh: var(--rh-m, max(100cqh, 100cqw / var(--ar)));
+    --oy: var(--oy-m, calc((100cqh - var(--rh)) * var(--fy)));
+  }
+  .m4-pin {
+    --px: var(--px-m);
+    --py: var(--py-m);
+  }
+  .m4-media-desktop {
+    display: none;
+  }
+  .m4-media-mobile {
+    display: block;
+  }
+  .m4-slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      transparent 36%,
+      color-mix(in srgb, var(--background) 94%, transparent) 66%
+    );
+  }
+  .m4-slide .m4-copy,
+  .m4-slide[data-copy-side] .m4-copy {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    max-width: none;
+    top: auto;
+    bottom: 84px;
+    gap: 14px;
+    justify-content: flex-end;
+  }
+  .m4-body,
+  .m4-float,
+  .m4-tag {
+    display: none;
+  }
+  .m4-strip {
+    display: flex;
+  }
+  .m4-demo {
+    bottom: auto;
+    top: calc(var(--moda-header-height, 64px) + 12px);
+  }
+}
+@media (max-width: 760px) {
+  .m4-title {
+    font-size: clamp(40px, 12.4vw, 56px);
+  }
+  .m4-slide .m4-acts .button {
+    min-height: 48px;
+    padding: 0 22px;
+    font-size: 14px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
+  .moda-carousel-hero {
+    height: min(88svh, 1000px);
+  }
+  .m4-slide .m4-copy,
+  .m4-slide[data-copy-side] .m4-copy {
+    left: 48px;
+    right: 48px;
+    bottom: 96px;
+    gap: 18px;
+  }
+  .m4-title {
+    font-size: clamp(56px, 9vw, 88px);
+  }
+  .m4-body {
+    display: block;
+    max-width: 520px;
+  }
+}
+
+/* pins reuse the D81 scene-pin link (opens the in-hero purchase sheet); neutralise the generic pill */
+.m4-pin > button.scene-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: none;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  display: block;
+}
+
+/* D81 purchase sheet: closed = only an sr-only toggle; open = card on the copy side / bottom sheet when stacked */
+.m4-slide .m4-sheet {
+  position: static;
+}
+.m4-slide .moda-scene-purchase {
+  position: absolute;
+  z-index: 6;
+  inset: auto;
+  top: auto;
+  bottom: auto;
+}
+.m4-slide .moda-scene-purchase:not([open]) {
+  left: 7%;
+  bottom: 12%;
+}
+.m4-slide .moda-scene-purchase[open] {
+  top: calc(var(--moda-header-height, 72px) + 24px);
+  bottom: auto;
+  width: min(440px, 42%);
+  max-height: calc(100% - var(--moda-header-height, 72px) - 120px);
+  overflow: auto;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--background);
+  box-shadow: 0 30px 60px -30px rgb(20 18 16/0.45);
+}
+.m4-slide[data-copy-side="right"] .moda-scene-purchase[open] {
+  right: 7%;
+  left: auto;
+}
+.m4-slide[data-copy-side="left"] .moda-scene-purchase[open] {
+  left: 7%;
+  right: auto;
+}
+.m4-slide .moda-scene-purchase[open] > summary {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  clip: auto !important;
+  clip-path: none !important;
+  white-space: normal !important;
+  margin: 0 0 8px !important;
+  overflow: visible !important;
+}
+@media (max-width: 760px),
+  (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
+  .m4-slide .moda-scene-purchase[open],
+  .m4-slide[data-copy-side] .moda-scene-purchase[open] {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    top: auto;
+    bottom: 12px;
+    max-height: 70%;
+  }
+}
+
+.m4-image-canvas {
+  position: absolute;
+  left: calc((100cqw - var(--rw)) * var(--fx));
+  top: var(--oy);
+  width: var(--rw);
+  height: var(--rh);
+}
+.m4-layer {
+  position: absolute;
+  pointer-events: none;
+}
+.m4-layer picture,
+.m4-layer img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+.m4-pin > button.scene-pin {
+  left: -22px;
+  top: -22px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  color: inherit;
+}
+.m4-dot {
+  left: 7px;
+  top: 7px;
+}
+.m4-tag {
+  top: 22px;
+}
+.m4-pin[data-label="left"] .m4-tag {
+  right: 46px;
+}
+.m4-pin[data-label="right"] .m4-tag {
+  left: 46px;
+}
+.m4-strip button {
+  min-height: 44px;
+  cursor: pointer;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+}
+.m4-pin > button:focus-visible,
+.m4-strip button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 4px;
+}
+.m4-slide[data-image-failed="true"] .m4-pins,
+.m4-slide[data-image-failed="true"] .m4-float {
+  display: none;
+}
+.m4-unavailable {
+  position: absolute;
+  z-index: 5;
+  bottom: 72px;
+  inset-inline: 20px;
+  margin: 0;
+  background: var(--background);
+  padding: 8px;
+  font-size: 12px;
+}
+
+html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
+  color: var(--background);
+}
+.moda-carousel-hero > .moda-carousel-controls .button {
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .moda-carousel-hero .moda-carousel-tabs {
+    gap: 2px;
+  }
+  .moda-carousel-hero > .moda-carousel-controls .button {
+    padding-inline: 6px;
+  }
+}
+
+/* Keep the real mobile navigation clear; the reference has no fixed bottom bar. */
+@media (max-width: 760px) {
+  .moda-carousel-hero {
+    height: calc(100svh - var(--m4-page-top, 36px) - var(--m4-nav-height, 0px));
+  }
+}
+@media (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
+  .moda-carousel-hero {
+    height: min(
+      88svh,
+      1000px,
+      calc(100svh - var(--m4-page-top, 36px) - var(--m4-nav-height, 0px))
+    );
+  }
+}
+.m4-title:lang(fa) {
+  font-family: var(--font-fa, Vazirmatn), sans-serif;
+}
+
+.m4-media {
+  z-index: 0;
+}
+.m4-image-fallback {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--moda-header-height, 72px) + 12px);
+  inset-inline: 20px;
+  padding: 8px;
+  background: var(--background);
+  color: var(--text);
+}

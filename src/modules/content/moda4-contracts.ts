@@ -41,7 +41,26 @@ export const modaHeroSlideSchema = z
     eyebrow: localizedTextSchema,
     scene: shoppableSceneSchema,
     body: localizedTextSchema,
+    /** @deprecated M4-01: logical side; read only through normalizeHeroLayout(). */
     textSide: z.enum(["start", "end"]).default("start"),
+    /** M4-01: physical composition of the photo, locale independent. */
+    layout: z
+      .object({
+        copySide: z.enum(["left", "right"]),
+        subject: z
+          .object({
+            x0: z.number().min(0).max(1),
+            x1: z.number().min(0).max(1),
+          })
+          .strict()
+          .refine((v) => v.x1 - v.x0 >= 0.05, {
+            message: "Subject must be at least 5% of the photo width",
+          }),
+      })
+      .strict()
+      .optional(),
+    /** M4-01: optional decorative cutout beside the person (desktop ≥1280 only). Price from catalog. */
+    float: z.object({ productId: id, colorId: id }).strict().optional(),
     ctaLabel: localizedTextSchema,
     target: contentTargetSchema,
     secondaryLabel: localizedTextSchema.optional(),

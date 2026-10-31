@@ -19,6 +19,7 @@ import {
   emptyModaScene,
   type ModaAdminOptions,
 } from "./moda4-block-fields";
+import { HeroLayoutAudit } from "./hero-layout-audit";
 import { FullHomepagePreview } from "./full-homepage-preview";
 import { useUnsavedForm } from "./unsaved-form";
 import {
@@ -597,6 +598,14 @@ export function ModaHomepageBuilder(props: {
                 {props.labels.desktop}
               </button>
             </div>
+            {blocks.some((block) => block.type === "HeroSlider") && (
+              <HeroLayoutAudit
+                markets={props.markets}
+                blocks={blocks}
+                marketId={market?.id}
+                scopeMarketId={scope === "global" ? null : scope}
+              />
+            )}
             <FullHomepagePreview
               key={scope}
               scopeMarketId={scope === "global" ? null : scope}

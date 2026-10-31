@@ -118,7 +118,17 @@ export function PrivateHomepageFrame({
       lang={rendered.locale}
       dir={rendered.locale === "fa" ? "rtl" : "ltr"}
     >
-      <p className="p-3">{t("previewOnly")}</p>
+      <div
+        data-moda4="header"
+        style={{
+          height: 72,
+          position: "relative",
+          zIndex: 10,
+          pointerEvents: "none",
+        }}
+      >
+        <p className="p-3">{t("previewOnly")}</p>
+      </div>
       <div
         onClickCapture={(event) => {
           const anchor = (event.target as Element).closest<HTMLAnchorElement>(

@@ -6,6 +6,26 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import sharp from "sharp";
 const text = (fa: string, tr: string, en: string) => ({ fa, tr, en });
+// M4-01 composition is local to the hero. Other scenes retain their existing seed contract.
+const heroPoints = [
+  [
+    { desktop: { x: 0.345, y: 0.44 }, mobile: { x: 0.6, y: 0.34 } },
+    { desktop: { x: 0.235, y: 0.63 }, mobile: { x: 0.33, y: 0.66 } },
+  ],
+  [
+    { desktop: { x: 0.705, y: 0.3 }, mobile: { x: 0.34, y: 0.31 } },
+    { desktop: { x: 0.675, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+  ],
+  [
+    { desktop: { x: 0.215, y: 0.33 }, mobile: { x: 0.33, y: 0.33 } },
+    { desktop: { x: 0.275, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+  ],
+  [
+    { desktop: { x: 0.665, y: 0.3 }, mobile: { x: 0.62, y: 0.25 } },
+    { desktop: { x: 0.695, y: 0.62 }, mobile: { x: 0.55, y: 0.6 } },
+    { desktop: { x: 0.765, y: 0.74 }, mobile: { x: 0.33, y: 0.66 } },
+  ],
+] as const;
 const hash = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 // Mirrors the public cutout identity contract; integration tests resolve these real rows.
@@ -371,20 +391,42 @@ export async function seedFreshModa4Homepage(
         scene: {
           ...photoScenes[n],
           id: `seed-moda4-hero-scene-${n}`,
+          pieces: photoScenes[n].pieces.map((piece, index) => ({
+            ...piece,
+            ...heroPoints[n][index],
+          })),
+          ...(n === 2
+            ? { title: text("Ready to|Play", "Ready to|Play", "Ready to|Play") }
+            : {}),
           ...(n === 3
             ? {
                 title: text(
-                  "Try before you buy",
-                  "Try before you buy",
-                  "Try before you buy",
+                  "Try before|you buy",
+                  "Try before|you buy",
+                  "Try before|you buy",
                 ),
               }
             : {}),
         },
         eyebrow: text(
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
         ),
         body:
           n === 0
@@ -393,12 +435,39 @@ export async function seedFreshModa4Homepage(
                 "Şehir katmanları — trençkot, triko ve toprak tonları.\nKombini keşfet; kendi bedenini seç veya model üzerinde dene.",
                 "City layers — trench, knits and earthy tones.\nExplore the look; choose your size or try it on the store model first.",
               )
-            : text(
-                "استایل خودت را بساز؛ قیمت هر قطعه از کاتالوگ زنده است.",
-                "Kendi stilini oluştur; canlı katalog fiyatlarıyla.",
-                "Build your styling with live catalog prices.",
+            : [
+                undefined,
+                text(
+                  "روزهای بی‌تکلف — اورشرت، تی‌شرت نخی، چینو\nسه قطعه که با هم یا جدا کار می‌کنند؛ برای هر روز هفته.",
+                  "Rahat günler — gömlek ceket, pamuklu tişört, chino\nBirlikte ya da ayrı giyilen üç parça; haftanın her günü için.",
+                  "Easy days — overshirt, cotton tee, chinos\nThree pieces that work together or apart, every day of the week.",
+                ),
+                text(
+                  "برای روزهای بازی — نرم، رنگی، بادوام\nبافت‌های نرم و پارچه‌های نخی برای بدوبدوهای پاییزی.",
+                  "Oyun günleri — yumuşak, renkli, dayanıklı\nSonbahar koşturmacası için yumuşak örgüler ve pamuklu kumaşlar.",
+                  "Play days — soft, colourful, durable\nSoft knits and cotton fabrics for autumn running around.",
+                ),
+                text(
+                  "اتاق پروی هوشمند — ترکیبت را روی مدل ببین\nتا چهار قطعه انتخاب کن و همان لحظه روی مدل فروشگاه ببین.",
+                  "Akıllı deneme odası — kombinini modelde gör\nDört parçaya kadar seç, mağaza modelinde anında gör.",
+                  "Smart fitting room — see your look on the model\nPick up to four pieces and see them on the store model instantly.",
+                ),
+              ][n],
+        textSide: n % 2 ? "end" : "start",
+        // M4-01: physical composition measured on the seeded wide banners (2:1).
+        layout: [
+          { copySide: "right", subject: { x0: 0.2, x1: 0.39 } },
+          { copySide: "left", subject: { x0: 0.6, x1: 0.72 } },
+          { copySide: "right", subject: { x0: 0.19, x1: 0.33 } },
+          { copySide: "left", subject: { x0: 0.62, x1: 0.79 } },
+        ][n],
+        ...(n < 3
+          ? {
+              float: (({ productId, colorId }) => ({ productId, colorId }))(
+                profiles.get(["women-knit", "men-knit", "kids-hoodie"][n])!,
               ),
-        textSide: n ? "end" : "start",
+            }
+          : {}),
         ctaLabel:
           n === 0
             ? text("خرید کالکشن زنانه", "Kadın koleksiyonu", "Shop womenswear")
@@ -408,18 +477,29 @@ export async function seedFreshModa4Homepage(
                   "Deneme odasına gir",
                   "Enter the fitting room",
                 )
-              : explore,
+              : n === 1
+                ? text("خرید کل ست", "Kombini al", "Shop the look")
+                : text("خرید بچگانه", "Çocuk alışverişi", "Shop kids"),
         target:
           n === 3
             ? { kind: "fitting" }
             : n === 0
               ? { kind: "category", id: "seed-category-women" }
-              : catalog,
+              : n === 2
+                ? { kind: "category", id: "seed-category-kids" }
+                : catalog,
         secondaryLabel:
           n === 0
             ? text("امتحان روی مدل", "Model üzerinde dene", "Try on the model")
-            : undefined,
-        secondaryTarget: n === 0 ? { kind: "fitting" } : undefined,
+            : n === 1
+              ? text("همهٔ مردانه", "Tüm erkek", "All menswear")
+              : undefined,
+        secondaryTarget:
+          n === 0
+            ? { kind: "fitting" }
+            : n === 1
+              ? { kind: "category", id: "seed-category-men" }
+              : undefined,
       })),
     },
     {

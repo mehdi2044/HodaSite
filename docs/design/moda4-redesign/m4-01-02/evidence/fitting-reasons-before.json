@@ -1,0 +1,86 @@
+[
+  {
+    "market": "IR",
+    "look": "seed-moda4-fitting-look-0",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "IR",
+    "look": "seed-moda4-fitting-look-1",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "IR",
+    "look": "seed-moda4-fitting-look-2",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "IR",
+    "look": "seed-moda4-fitting-look-3",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "TR",
+    "look": "seed-moda4-fitting-look-0",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "TR",
+    "look": "seed-moda4-fitting-look-1",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "TR",
+    "look": "seed-moda4-fitting-look-2",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "TR",
+    "look": "seed-moda4-fitting-look-3",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "CA",
+    "look": "seed-moda4-fitting-look-0",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "CA",
+    "look": "seed-moda4-fitting-look-1",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "CA",
+    "look": "seed-moda4-fitting-look-2",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  },
+  {
+    "market": "CA",
+    "look": "seed-moda4-fitting-look-3",
+    "reason": "MATCH_REQUIRED",
+    "pieces": 0,
+    "matchPresent": false
+  }
+]

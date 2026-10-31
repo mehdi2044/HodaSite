@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-01",
+  "scope": "M4-01",
+  "implementationSha": "706b2d54f5ec9ab040c48393b5fe4e1099ea06ca",
+  "unitAndPostgreSQL": {
+    "files": 177,
+    "passed": 9300,
+    "skipped": 0
+  },
+  "browser": {
+    "uniqueAccepted": 96,
+    "fullRun": {
+      "passed": 93,
+      "rechecked": 3
+    },
+    "finalRecheck": {
+      "passed": 3,
+      "trace": "off; the 5000ms publication and price limits are unchanged"
+    },
+    "additionalCIRegressions": 2,
+    "existing": 88,
+    "newHero": 8,
+    "workers": 1,
+    "engines": [
+      "Chromium",
+      "WebKit"
+    ]
+  },
+  "previousFidelity": {
+    "passed": 146,
+    "total": 146,
+    "specificationUnchanged": true
+  },
+  "heroFidelity": {
+    "locales": [
+      "fa",
+      "tr",
+      "en"
+    ],
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        768,
+        1024
+      ],
+      [
+        1024,
+        768
+      ],
+      [
+        1440,
+        900
+      ]
+    ],
+    "slides": 4,
+    "states": 48,
+    "violations": 0
+  },
+  "productionBuild": "Docker on Windows passed",
+  "nativeStandalone": "EPERM symlink; not passed",
+  "audit": {
+    "high": 0,
+    "critical": 0,
+    "moderate": 7
+  },
+  "backupGuards": "passed",
+  "preview": "Windows loopback, independent browser origin on port 3088; exact address in private handoff",
+  "preservedPreview": "http://localhost:3087",
+  "independentReview": "pending Claude, Vee and Mehdi; Draft only",
+  "ci": "Consult the current-head checks in PR86; never infer current-head success from an earlier run."
+}

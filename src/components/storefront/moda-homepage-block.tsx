@@ -1,4 +1,14 @@
 import { FittingAdMotion } from "./fitting-ad-motion";
+import { ModaHeroSlide } from "./moda-hero-slide";
+import { ShoppableScene } from "./shoppable-scene";
+import { isDemoFashionMedia } from "./responsive-image";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
+import {
+  displayTitleText,
+  heroFocalX,
+  normalizeHeroLayout,
+} from "@/modules/content/hero-layout";
+import { resolveHeroFloat } from "@/modules/content/moda4-hero";
 import { ModaKidsRing } from "./moda-kids-ring";
 import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
 import { catalogText } from "@/modules/catalog";
@@ -13,7 +23,6 @@ import { resolvePublicCampaign } from "@/modules/content/campaigns";
 import { getDisplayPrices, getVariantDisplayPrices } from "@/modules/pricing";
 import { resolveShoppableScene } from "@/modules/content/scenes/resolve";
 import { ResponsiveImage } from "./responsive-image";
-import { ShoppableScene } from "./shoppable-scene";
 import { ProductCard } from "./product-card";
 import { ModaCarousel } from "./moda-carousel";
 import { ModaBands } from "./moda-bands";
@@ -102,9 +111,29 @@ export async function ModaHomepageBlock({
       />
     );
   if (block.type === "HeroSlider") {
+    // M4-01: physical composition + every worn garment priced (owner rule 2026-10-14).
+    const scenes = await getTranslations("scenes");
+    const priceOf = (
+      piece: Awaited<
+        ReturnType<typeof resolveShoppableScene>
+      >["pieces"][number],
+      currency: string,
+    ) => {
+      if (!piece.range)
+        return scenes(
+          piece.variants.some((v) => v.available > 0)
+            ? "priceUnavailable"
+            : "outOfStock",
+        );
+      const min = formatStorefrontAmount(piece.range.min, currency, locale);
+      return piece.range.min === piece.range.max
+        ? min
+        : scenes("from", { price: min });
+    };
     const items = await Promise.all(
       block.slides.map(async (slide, index) => {
-        const [view, href, secondary] = await Promise.all([
+        const layout = normalizeHeroLayout(slide);
+        const [view, href, secondary, float] = await Promise.all([
           resolveShoppableScene(slide.scene, market, locale, {
             adminPreview: preview,
           }),
@@ -112,51 +141,82 @@ export async function ModaHomepageBlock({
           slide.secondaryTarget
             ? resolveContentTarget(slide.secondaryTarget, market.id, locale)
             : null,
+          slide.float
+            ? resolveHeroFloat(slide.float, market, locale)
+            : Promise.resolve(null),
         ]);
-        const decorations = Object.fromEntries(
-          await Promise.all(
-            view.pieces.map(async (piece) => [
-              piece.id,
-              !view.reason && piece.variants[0]
-                ? ((await publicCatalogCutout(piece.variants[0].id, market.id))
-                    ?.media ?? null)
-                : null,
-            ]),
-          ),
-        );
+        const [subtitle, ...rest] = text(slide.body).split("\n");
         return (
-          <div
-            className="moda-hero-slide"
-            data-moda4="hero-slide"
-            data-text-side={slide.textSide}
-          >
-            <ShoppableScene
-              presentation="hero"
-              decorations={decorations}
-              eyebrow={text(slide.eyebrow)}
-              secondary={
-                secondary && slide.secondaryLabel
-                  ? { href: secondary, label: text(slide.secondaryLabel) }
-                  : undefined
-              }
-              poll={false}
-              view={view}
-              locale={locale}
-              first={first && index === 0}
-              headingLevel={first ? 1 : 2}
-              revealTitle
-              preview={preview}
-              body={text(slide.body)}
-              cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
-            />
-          </div>
+          <ModaHeroSlide
+            key={slide.id}
+            locale={locale}
+            index={index}
+            first={first && index === 0}
+            layout={layout}
+            desktop={{
+              media: view.desktop.media,
+              focal: { x: heroFocalX(layout), y: view.desktop.frame.focal.y },
+            }}
+            mobile={{
+              media: view.mobile.media,
+              focal: view.mobile.frame.focal,
+            }}
+            eyebrow={text(slide.eyebrow)}
+            title={view.title}
+            subtitle={rest.length ? subtitle : undefined}
+            body={rest.length ? rest.join("\n") : subtitle}
+            cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
+            secondary={
+              secondary && slide.secondaryLabel
+                ? { href: secondary, label: text(slide.secondaryLabel) }
+                : undefined
+            }
+            accent={slide.target.kind === "fitting"}
+            // A scene that is not publicly valid shows no pins and no prices (never stale/fabricated).
+            pins={
+              view.reason
+                ? []
+                : view.pieces.map((piece) => ({
+                    id: piece.id,
+                    title: piece.title,
+                    price: priceOf(piece, view.currency),
+                    href: piece.href,
+                    desktop: piece.desktop,
+                    mobile: piece.mobile,
+                  }))
+            }
+            float={float}
+            demoNote={
+              isDemoFashionMedia(view.desktop.media ?? undefined) ||
+              isDemoFashionMedia(view.mobile.media ?? undefined)
+                ? t("demoImage")
+                : undefined
+            }
+            labels={{ prices: t("heroPrices") }}
+            sceneId={view.id}
+            view={view}
+            preview={preview}
+            purchase={
+              view.pieces.length > 0 ? (
+                <ShoppableScene
+                  only="purchase"
+                  view={view}
+                  locale={locale}
+                  poll={false}
+                  preview={preview}
+                />
+              ) : undefined
+            }
+          />
         );
       }),
     );
     return (
       <ModaCarousel
         items={items}
-        labels={block.slides.map((slide) => text(slide.scene.title))}
+        labels={block.slides.map((slide) =>
+          displayTitleText(text(slide.scene.title)),
+        )}
         seconds={block.autoplaySeconds}
       />
     );

@@ -2718,7 +2718,11 @@
     "stylingDemonstration": "نمایش استایل با تصاویر منتخب فروشگاه",
     "replay": "پخش دوباره",
     "worldsIntro": "چهار دنیای استایل در کنار هم؛ لباس‌ها و تصاویر هر دنیا را کشف کن.",
-    "worldEnter": "ورود به جهان {title}"
+    "worldEnter": "ورود به جهان {title}",
+    "demoImage": "تصویر نمایشی",
+    "heroPrices": "قیمت لباس‌های این تصویر",
+    "pauseShort": "توقف",
+    "resumeShort": "ادامه"
   },
   "modaAdmin": {
     "help": "بلوک‌ها، تصاویر و قیمت‌های واقعی را مدیریت کنید. پیش‌نمایش خصوصی تغییرات ذخیره‌نشده را نشان می‌دهد.",
@@ -2822,7 +2826,20 @@
     "tone_kidsSky": "آسمانی",
     "tone_kidsButter": "کرم",
     "tone_kidsLilac": "یاسی",
-    "tone_kidsPeach": "هلویی"
+    "tone_kidsPeach": "هلویی",
+    "copySide": "جای متن روی عکس (سمت خالی عکس، مستقل از زبان)",
+    "copyLeft": "چپ عکس",
+    "copyRight": "راست عکس",
+    "subjectStart": "شروع بدن مدل در عکس دسکتاپ (۰ تا ۱)",
+    "subjectEnd": "پایان بدن مدل در عکس دسکتاپ (۰ تا ۱)",
+    "heroFloat": "لباس شناور کنار مدل (فقط دسکتاپ بزرگ)",
+    "heroFloatNone": "بدون لباس شناور",
+    "heroLayoutWarning": "هشدار چیدمان {rule} در {mode}",
+    "heroAudit": "بررسی چیدمان بنر · ۳ زبان × ۴ اندازه",
+    "heroAuditRunning": "در حال بررسی چیدمان بنر…",
+    "heroAuditPassed": "در پیش‌نمایش فعلی تخلف H-01 تا H-07 یافت نشد.",
+    "heroAuditFailed": "بررسی چیدمان در دسترس نیست. پس از بارگیری پیش‌نمایش دوباره تلاش کنید.",
+    "heroAuditLocaleUnavailable": "زبان {locale} در بازار مجاز فعال نیست؛ این بخش از ماتریس بررسی نشد."
   },
   "accountDesign": {
     "appearance": "ظاهر پروفایل شما",

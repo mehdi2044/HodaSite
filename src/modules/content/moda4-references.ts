@@ -13,6 +13,7 @@ export function moda4ReferenceProducts(blocks: HomepageBlock[]) {
         ...row.productIds.filter((id): id is string => typeof id === "string"),
       );
   });
+  ids.push(...heroFloatReferences(blocks).map((ref) => ref.productId));
   return [...new Set(ids)].sort();
 }
 function walk(value: unknown, visit: (row: Record<string, unknown>) => void) {
@@ -211,5 +212,39 @@ export async function validateModa4References(
       )
         throw new z.ZodError([]);
     }
+  }
+}
+
+export function heroFloatReferences(blocks: HomepageBlock[]) {
+  return blocks.flatMap((b) =>
+    b.type === "HeroSlider"
+      ? b.slides.flatMap((s) => (s.float ? [s.float] : []))
+      : [],
+  );
+}
+export async function validateHeroFloats(
+  tx: Prisma.TransactionClient,
+  blocks: HomepageBlock[],
+  marketIds: string[],
+) {
+  for (const ref of heroFloatReferences(blocks)) {
+    const variant = await tx.variant.findFirst({
+      where: {
+        productId: ref.productId,
+        colorId: ref.colorId,
+        isActive: true,
+        color: { deletedAt: null },
+        size: { deletedAt: null },
+        product: {
+          status: "ACTIVE",
+          deletedAt: null,
+          coinPackCoins: null,
+          marketIds: { hasEvery: marketIds },
+          category: { deletedAt: null },
+        },
+      },
+      select: { id: true },
+    });
+    if (!variant) throw new z.ZodError([]);
   }
 }

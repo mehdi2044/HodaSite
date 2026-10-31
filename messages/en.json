@@ -2718,7 +2718,11 @@
     "stylingDemonstration": "Styling demonstration using selected store images",
     "replay": "Replay",
     "worldsIntro": "Four worlds. One wardrobe. Discover your next style.",
-    "worldEnter": "Explore {title}"
+    "worldEnter": "Explore {title}",
+    "demoImage": "Demo image",
+    "heroPrices": "Prices of the pieces in this image",
+    "pauseShort": "Pause",
+    "resumeShort": "Resume"
   },
   "modaAdmin": {
     "help": "Manage blocks, imagery and live catalog prices. The private preview shows unsaved changes.",
@@ -2822,7 +2826,20 @@
     "tone_kidsSky": "Sky",
     "tone_kidsButter": "Butter",
     "tone_kidsLilac": "Lilac",
-    "tone_kidsPeach": "Peach"
+    "tone_kidsPeach": "Peach",
+    "copySide": "Copy position on the photo (empty side, language independent)",
+    "copyLeft": "Left of photo",
+    "copyRight": "Right of photo",
+    "subjectStart": "Model starts at (0–1, desktop photo)",
+    "subjectEnd": "Model ends at (0–1, desktop photo)",
+    "heroFloat": "Floating piece beside the model (wide desktop only)",
+    "heroFloatNone": "No floating piece",
+    "heroLayoutWarning": "Layout warning {rule} in {mode}",
+    "heroAudit": "Check hero layout · 3 languages × 4 sizes",
+    "heroAuditRunning": "Checking hero layout…",
+    "heroAuditPassed": "No H-01–H-07 violations in the current preview.",
+    "heroAuditFailed": "Layout check unavailable. Try again after the preview loads.",
+    "heroAuditLocaleUnavailable": "Language {locale} is disabled in the authorized market. This part of the matrix was not checked."
   },
   "accountDesign": {
     "appearance": "Your profile style",

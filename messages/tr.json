@@ -2718,7 +2718,11 @@
     "stylingDemonstration": "Seçilen mağaza görselleriyle stil gösterimi",
     "replay": "Yeniden oynat",
     "worldsIntro": "Dört stil dünyasını keşfet.",
-    "worldEnter": "{title} dünyasını keşfet"
+    "worldEnter": "{title} dünyasını keşfet",
+    "demoImage": "Örnek görsel",
+    "heroPrices": "Bu görseldeki parçaların fiyatları",
+    "pauseShort": "Duraklat",
+    "resumeShort": "Sürdür"
   },
   "modaAdmin": {
     "help": "Blokları, görselleri ve gerçek fiyatları yönetin. Özel önizleme kaydedilmemiş değişiklikleri gösterir.",
@@ -2822,7 +2826,20 @@
     "tone_kidsSky": "Gökyüzü",
     "tone_kidsButter": "Krem",
     "tone_kidsLilac": "Lila",
-    "tone_kidsPeach": "Şeftali"
+    "tone_kidsPeach": "Şeftali",
+    "copySide": "Metnin görseldeki yeri (boş taraf, dilden bağımsız)",
+    "copyLeft": "Görselin solu",
+    "copyRight": "Görselin sağı",
+    "subjectStart": "Modelin başlangıcı (0–1)",
+    "subjectEnd": "Modelin bitişi (0–1)",
+    "heroFloat": "Model yanındaki yüzen parça (yalnız geniş masaüstü)",
+    "heroFloatNone": "Yüzen parça yok",
+    "heroLayoutWarning": "{mode} düzeninde {rule} uyarısı",
+    "heroAudit": "Banner düzenini denetle · 3 dil × 4 boyut",
+    "heroAuditRunning": "Banner düzeni denetleniyor…",
+    "heroAuditPassed": "Geçerli önizlemede H-01–H-07 ihlali yok.",
+    "heroAuditFailed": "Düzen denetimi kullanılamıyor. Önizleme yüklendikten sonra yeniden deneyin.",
+    "heroAuditLocaleUnavailable": "Yetkili pazarda {locale} dili etkin değil. Matrisin bu bölümü denetlenmedi."
   },
   "accountDesign": {
     "appearance": "Profil görünümünüz",

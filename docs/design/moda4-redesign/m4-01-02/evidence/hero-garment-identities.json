@@ -1,0 +1,100 @@
+[
+  {
+    "sceneId": "seed-moda4-hero-scene-0",
+    "mode": "PHOTO",
+    "matchPresent": true,
+    "finalImage": {
+      "mediaId": "seed-moda4-wide-look-women-coat",
+      "sha256": "d5c47c672e3c1d426d269459341522bc539ade9e656a5d651677df54985c6248"
+    },
+    "references": [
+      {
+        "mediaId": "seed-fashion-v2-women-coat",
+        "productId": "seed-moda4-style-women-coat",
+        "colorId": "seed-color-sand",
+        "sha256": "f8375d69c88d83642cea93b854c64780f57f0373a25431f6bad795e460cea77c"
+      },
+      {
+        "mediaId": "seed-fashion-v2-accessories-bag",
+        "productId": "seed-moda4-style-accessories-bag",
+        "colorId": "seed-color-cognac",
+        "sha256": "89573a3dfbfacf3abc16f64cc611828368e93249ad39bba2c6f551ade03a163f"
+      }
+    ]
+  },
+  {
+    "sceneId": "seed-moda4-hero-scene-1",
+    "mode": "PHOTO",
+    "matchPresent": true,
+    "finalImage": {
+      "mediaId": "seed-moda4-wide-look-men",
+      "sha256": "d73a171d4a358f0a3cf5b1fc2944583d9e4c7e9da1c34b649ea328526b436bcd"
+    },
+    "references": [
+      {
+        "mediaId": "seed-fashion-v2-men-shirt",
+        "productId": "seed-moda4-style-men-shirt",
+        "colorId": "seed-color-navy",
+        "sha256": "18891dd11595a3f5f2d41e7ff087644661967ec019fa02a344902050662ec4bf"
+      },
+      {
+        "mediaId": "seed-fashion-v2-men-chino",
+        "productId": "seed-moda4-style-men-chino",
+        "colorId": "seed-color-sand",
+        "sha256": "e2d87374e7500b1e084da8c53fffed2d9f1b8f97e8a57b5946ba973c0b71b8b6"
+      }
+    ]
+  },
+  {
+    "sceneId": "seed-moda4-hero-scene-2",
+    "mode": "PHOTO",
+    "matchPresent": true,
+    "finalImage": {
+      "mediaId": "seed-moda4-wide-look-kids",
+      "sha256": "0166a7fd37523f5aab5638754bb015c59b7552551610570aa365bef023d709e4"
+    },
+    "references": [
+      {
+        "mediaId": "seed-fashion-v2-kids-knit",
+        "productId": "seed-moda4-style-kids-knit",
+        "colorId": "seed-color-sage",
+        "sha256": "34f59d63a01fa4a93d90ec349a44f80deb6ae38340f1cb0bb68af04a70a07791"
+      },
+      {
+        "mediaId": "seed-fashion-v2-kids-trousers",
+        "productId": "seed-moda4-style-kids-trousers",
+        "colorId": "seed-color-ivory",
+        "sha256": "349d9f641a7e44fb39badc989399b023acf00a6871dcf7fc79377806004a0384"
+      }
+    ]
+  },
+  {
+    "sceneId": "seed-moda4-hero-scene-3",
+    "mode": "PHOTO",
+    "matchPresent": true,
+    "finalImage": {
+      "mediaId": "seed-moda4-wide-look-women-knit",
+      "sha256": "f963f980c16b192890ade4bd43934f77eae131da69ff69f3ea6999140a91a6fb"
+    },
+    "references": [
+      {
+        "mediaId": "seed-fashion-v2-women-knit",
+        "productId": "seed-moda4-style-women-knit",
+        "colorId": "seed-color-ivory",
+        "sha256": "4feb9c9340cd07a8bc61318a952fd1d6645a38afe2e7d82e958d1cd55b42906e"
+      },
+      {
+        "mediaId": "seed-fashion-v2-women-trousers",
+        "productId": "seed-moda4-style-women-trousers",
+        "colorId": "seed-color-sand",
+        "sha256": "6ceb69d7813f215229adffc67cdea185bd11db7c9103334aa7a7e0a855d12c47"
+      },
+      {
+        "mediaId": "seed-fashion-v2-accessories-bag",
+        "productId": "seed-moda4-style-accessories-bag",
+        "colorId": "seed-color-cognac",
+        "sha256": "89573a3dfbfacf3abc16f64cc611828368e93249ad39bba2c6f551ade03a163f"
+      }
+    ]
+  }
+]

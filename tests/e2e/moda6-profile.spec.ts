@@ -8,6 +8,18 @@ import tr from "../../messages/tr.json";
 import en from "../../messages/en.json";
 const db = new PrismaClient();
 const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
+async function dismissConsentIfShown(page: Page) {
+  const reject = page.getByTestId("consent-reject");
+  if (!(await reject.isVisible())) return;
+  try {
+    await reject.click({ timeout: 2000 });
+  } catch (error) {
+    // A stored decision can hydrate and remove this optional banner after
+    // isVisible. A still-visible or obstructed control remains a failure.
+    if (await reject.isVisible()) throw error;
+  }
+  await expect(reject).not.toBeVisible();
+}
 async function message(page: Page, email: string, minimum = 1) {
   let mail: { Text: string } | undefined;
   await expect
@@ -175,11 +187,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
       await expect(
         page.locator('[data-account-view="overview"]'),
       ).toBeVisible();
-      const reject = page.getByTestId("consent-reject");
-      if (await reject.isVisible()) {
-        await reject.click();
-        await expect(reject).not.toBeVisible();
-      }
+      await dismissConsentIfShown(page);
       const image = info.outputPath(`r6-profile-${locale}-390.png`);
       await page.evaluate(() => scrollTo(0, 0));
       await page.evaluate(() => document.fonts.ready);
@@ -283,8 +291,7 @@ test("R6 real OTP resend/paste, direct themes and actual preference save/reload/
     ]);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/fa/account?view=overview#overview");
-    const reject = page.getByTestId("consent-reject");
-    if (await reject.isVisible()) await reject.click();
+    await dismissConsentIfShown(page);
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({
       path: info.outputPath("r6-profile-created-fa-390.png"),

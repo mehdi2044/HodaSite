@@ -8,6 +8,10 @@ import { sceneConfirmationKey } from "@/modules/content/scenes/contracts";
 import { SCENE_ASPECTS } from "@/modules/content/scenes/geometry";
 import type { ContentTarget } from "@/modules/content/moda4-targets";
 import type { ScenePreviewProof } from "./scene-preview-proof";
+import {
+  normalizeHeroLayout,
+  type HeroLayout,
+} from "@/modules/content/hero-layout";
 type Localized = { fa: string; tr: string; en: string };
 export type ModaAdminOptions = {
   categories: { id: string; title: string }[];
@@ -363,7 +367,7 @@ export function ModaImageField({
           {t(axis === "x" ? "focalX" : "focalY")}
           <input
             type="number"
-            step="0.01"
+            step="any"
             min="0"
             max="1"
             className="input"
@@ -631,7 +635,7 @@ export function ModaSceneField({
                       type="number"
                       min="0"
                       max="1"
-                      step="0.01"
+                      step="any"
                       value={piece[kind][axis]}
                       onChange={(event) =>
                         changePiece(index, {
@@ -926,29 +930,106 @@ export function Moda4BlockFields({
                 })
               }
             />
-            <label>
-              {t("textSide")}
-              <select
-                className="input"
-                value={slide.textSide}
-                onChange={(event) =>
-                  change({
-                    ...block,
-                    slides: block.slides.map((item, n) =>
-                      n === index
-                        ? {
-                            ...item,
-                            textSide: event.target.value as "start" | "end",
+            {(() => {
+              // M4-01: physical composition; legacy textSide is read through normalizeHeroLayout.
+              const layout = normalizeHeroLayout(slide);
+              const setLayout = (next: HeroLayout) =>
+                change({
+                  ...block,
+                  slides: block.slides.map((item, n) =>
+                    n === index ? { ...item, layout: next } : item,
+                  ),
+                });
+              const floats = options.products.flatMap((product) =>
+                product.colors
+                  .filter((color) => color.cutouts.length > 0)
+                  .map((color) => ({
+                    value: `${product.id}::${color.id}`,
+                    label: `${product.title} · ${color.title}`,
+                  })),
+              );
+              return (
+                <fieldset className="grid gap-2">
+                  <legend>{t("copySide")}</legend>
+                  <div className="flex gap-4">
+                    {(["left", "right"] as const).map((side) => (
+                      <label key={side} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`copy-side-${slide.id}`}
+                          checked={layout.copySide === side}
+                          onChange={() =>
+                            setLayout({ ...layout, copySide: side })
                           }
-                        : item,
-                    ),
-                  })
-                }
-              >
-                <option value="start">{t("start")}</option>
-                <option value="end">{t("end")}</option>
-              </select>
-            </label>
+                        />
+                        {t(side === "left" ? "copyLeft" : "copyRight")}
+                      </label>
+                    ))}
+                  </div>
+                  {(["x0", "x1"] as const).map((edge) => (
+                    <label key={edge}>
+                      {t(edge === "x0" ? "subjectStart" : "subjectEnd")}
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        max={1}
+                        step="any"
+                        value={layout.subject[edge]}
+                        onChange={(event) =>
+                          setLayout({
+                            ...layout,
+                            subject: {
+                              ...layout.subject,
+                              [edge]: Math.min(
+                                1,
+                                Math.max(0, Number(event.target.value)),
+                              ),
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                  <label>
+                    {t("heroFloat")}
+                    <select
+                      className="input"
+                      value={
+                        slide.float
+                          ? `${slide.float.productId}::${slide.float.colorId}`
+                          : ""
+                      }
+                      onChange={(event) => {
+                        const [productId, colorId] =
+                          event.target.value.split("::");
+                        change({
+                          ...block,
+                          slides: block.slides.map((item, n) =>
+                            n === index
+                              ? {
+                                  ...item,
+                                  float:
+                                    productId && colorId
+                                      ? { productId, colorId }
+                                      : undefined,
+                                }
+                              : item,
+                          ),
+                        });
+                      }}
+                    >
+                      <option value="">{t("heroFloatNone")}</option>
+                      {floats.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </fieldset>
+              );
+            })()}
             <label>
               <input
                 type="checkbox"
