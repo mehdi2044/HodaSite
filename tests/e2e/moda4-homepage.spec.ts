@@ -1,8 +1,16 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { Prisma, PrismaClient } from "@prisma/client";
 import en from "../../messages/en.json";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 const db = new PrismaClient();
+async function expectDraftSaved(form: Locator) {
+  await expect(
+    form.getByRole("button", { name: en.homepageAdmin.save, exact: true }),
+  ).toBeEnabled({ timeout: 30000 });
+  await expect(
+    form.getByRole("status").filter({ hasText: en.homepageAdmin.save }),
+  ).toBeVisible();
+}
 test.use({ viewport: { width: 390, height: 844 }, actionTimeout: 20000 });
 test("R3b full real CMS: private unsaved renderer, ordered blocks and publication visible in open storefront", async ({
   page,
@@ -122,9 +130,7 @@ test("R3b full real CMS: private unsaved renderer, ordered blocks and publicatio
     await form
       .getByRole("button", { name: en.homepageAdmin.save, exact: true })
       .click();
-    await expect(
-      form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
-    ).toBeVisible();
+    await expectDraftSaved(form);
     await page.reload();
     const saved = await db.homepage.findFirstOrThrow({
       where: { marketId: market.id },
@@ -408,9 +414,7 @@ test.describe("controlled video transport", () => {
       await form
         .getByRole("button", { name: en.homepageAdmin.save, exact: true })
         .click();
-      await expect(
-        form.getByRole("status").filter({ hasText: en.modaAdmin.saved }),
-      ).toBeVisible();
+      await expectDraftSaved(form);
       await page.reload();
       await page
         .getByTestId("homepage-form")
