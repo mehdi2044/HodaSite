@@ -508,7 +508,7 @@ export function SceneEditor(props: Props) {
                       <input
                         className="input"
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         max="1"
                         value={scene[kind].focal[axis]}
@@ -693,7 +693,7 @@ export function SceneEditor(props: Props) {
                             type="number"
                             min="0"
                             max="1"
-                            step="0.01"
+                            step="any"
                             value={piece[kind][axis]}
                             onChange={(e) =>
                               modifyPiece(index, {

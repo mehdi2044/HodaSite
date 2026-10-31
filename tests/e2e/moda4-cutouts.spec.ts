@@ -218,9 +218,7 @@ test("cutout geometry: real panel/preview/keyboard/save/reload and inherited Kid
     await expect(cards.first()).toBeVisible();
     await expect(page.getByText(en.cutouts.cardFallback).first()).toBeVisible();
     const first = cards.first();
-    await first
-      .getByRole("button", { name: en.cutouts.angleControls, exact: true })
-      .click();
+    await first.locator(".kids-motion-tools > summary").click();
     await first
       .getByRole("button", { name: en.cutouts.angleRight, exact: true })
       .click();

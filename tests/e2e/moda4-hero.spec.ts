@@ -77,6 +77,10 @@ test("legacy contained composite keeps the dressed model visible with reduced mo
         );
       });
       await page.evaluate(() => document.fonts.ready);
+      const purchase = slide.locator("details.moda-scene-purchase");
+      if ((await purchase.getAttribute("open")) !== null)
+        await purchase.locator("summary").press("Enter");
+      await expect(purchase).not.toHaveAttribute("open", "");
       await slide.screenshot({
         path: info.outputPath(`legacy-composite-${width}.png`),
         scale: "css",
@@ -307,6 +311,22 @@ test("admin privately measures every hero slide in 3 languages and 4 sizes", asy
     { name: "hoda.admin.locale", value: "en", url: info.project.use.baseURL! },
   ]);
   await page.goto("/admin/content/homepage");
+  const invalid = await page.getByTestId("homepage-form").evaluate((form) =>
+    Array.from(
+      form.querySelectorAll<HTMLInputElement>(
+        "input:invalid,select:invalid,textarea:invalid",
+      ),
+      (field) => ({
+        name: field.name,
+        value: field.value,
+        message: field.validationMessage,
+      }),
+    ),
+  );
+  expect(
+    invalid,
+    "Coordinate precision must not block normal draft saves",
+  ).toEqual([]);
   const audit = page.getByTestId("hero-layout-audit");
   await expect(audit).toBeVisible();
   await audit.getByRole("button").click();
