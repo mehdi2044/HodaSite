@@ -1,3 +1,9 @@
+## 2026-10-31 — M4-01، در حال تکمیل بازبینی مستقل بنر
+
+Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D31, D70, D77, D78, D81.
+
+worktree مستقل روی HEAD واقعی FID-6؛ فقط Hero از پیشنهاد Claude با اصلاح Decimal، نقاط خرید واقعی، سازگاری textSide و پیش‌نمایش هشدارهای H-01…H-07. کل ۹۲۹۷ آزمون Unit/PG بدون skip موفق؛ build Docker و نمونه‌های Fidelity موفق. آزمون برنامه/پنل، تصاویر و CI همین head در حال تکمیل‌اند. [گزارش مرحله](design/moda4-redesign/m4-01-02/IMPLEMENTATION_M4-01_FA.md). M4-02 منتظر تحویل و بازبینی مرحله اول؛ علت واقعی رگال در DB تازه MATCH_REQUIRED بود. نسخه موجود/اطلاعات/Volumeها حفظ شده، بدون merge یا production.
+
 ## 2026-10-16 — FID-6، شواهد فنی نهایی و تأیید تصویری باز
 
 Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D78, D79, D80, D81.

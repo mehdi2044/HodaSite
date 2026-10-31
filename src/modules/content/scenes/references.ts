@@ -152,7 +152,7 @@ export function assertPhotoMatch(scene: ShoppableScene, fingerprint: string) {
 }
 
 export async function lockSceneCatalog(
-  allScenes: ShoppableScene[],
+  allScenes: { pieces: { productId: string; colorId: string }[] }[],
   tx: Client,
 ) {
   const productIds = [

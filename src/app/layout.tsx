@@ -2,6 +2,7 @@ import "@/styles/tokens.css";
 import "@/styles/instant-fitting.css";
 import "@/styles/moda-fidelity.css";
 import "@/styles/moda-fidelity-home.css";
+import "@/styles/moda-hero.css";
 import "@/styles/moda-fidelity-catalog.css";
 import "@/styles/moda-fidelity-product.css";
 import "@/styles/moda-fidelity-fitting.css";

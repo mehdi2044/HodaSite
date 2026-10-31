@@ -1,5 +1,7 @@
 import {
   moda4ReferenceProducts,
+  heroFloatReferences,
+  validateHeroFloats,
   validateModa4References,
 } from "./moda4-references";
 import { Prisma } from "@prisma/client";
@@ -151,7 +153,11 @@ async function validatedBlocks(
     tx,
   );
   await validateModa4References(tx, activeBlocks, marketId, markets, publish);
-  await lockSceneCatalog(allScenes, tx);
+  await lockSceneCatalog(
+    [...allScenes, { pieces: heroFloatReferences(activeBlocks) }],
+    tx,
+  );
+  await validateHeroFloats(tx, activeBlocks, markets);
   await lockSceneMediaReferences(
     allScenes,
     tx,

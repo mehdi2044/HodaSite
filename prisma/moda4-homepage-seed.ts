@@ -374,9 +374,9 @@ export async function seedFreshModa4Homepage(
           ...(n === 3
             ? {
                 title: text(
-                  "Try before you buy",
-                  "Try before you buy",
-                  "Try before you buy",
+                  "Try before|you buy",
+                  "Try before|you buy",
+                  "Try before|you buy",
                 ),
               }
             : {}),
@@ -398,7 +398,21 @@ export async function seedFreshModa4Homepage(
                 "Kendi stilini oluştur; canlı katalog fiyatlarıyla.",
                 "Build your styling with live catalog prices.",
               ),
-        textSide: n ? "end" : "start",
+        textSide: n % 2 ? "end" : "start",
+        // M4-01: physical composition measured on the seeded wide banners (2:1).
+        layout: [
+          { copySide: "right", subject: { x0: 0.2, x1: 0.39 } },
+          { copySide: "left", subject: { x0: 0.6, x1: 0.72 } },
+          { copySide: "right", subject: { x0: 0.19, x1: 0.33 } },
+          { copySide: "left", subject: { x0: 0.62, x1: 0.79 } },
+        ][n],
+        ...(n < 3
+          ? {
+              float: (({ productId, colorId }) => ({ productId, colorId }))(
+                profiles.get(["women-knit", "men-knit", "kids-hoodie"][n])!,
+              ),
+            }
+          : {}),
         ctaLabel:
           n === 0
             ? text("خرید کالکشن زنانه", "Kadın koleksiyonu", "Shop womenswear")

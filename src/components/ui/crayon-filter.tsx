@@ -39,6 +39,16 @@ export function CrayonFilter() {
           />
           <feComposite in="d" in2="gm" operator="in" />
         </filter>
+        {/* M4-01/M4-02: hand-drawn line for price ellipses and the mannequin outline */}
+        <filter id="moda4-crayon-line">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="1.1"
+            numOctaves="2"
+            seed="3"
+          />
+          <feDisplacementMap in="SourceGraphic" scale="3" />
+        </filter>
       </defs>
     </svg>
   );

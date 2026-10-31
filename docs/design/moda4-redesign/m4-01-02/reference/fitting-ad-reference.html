@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MODA4 Fitting ad — M4-02 reference</title>
+<link rel="stylesheet" href="assets/fonts.css"><link rel="stylesheet" href="assets/base.css"><link rel="stylesheet" href="assets/fitting-ad.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<filter id="crayon" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="11" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2 2.2" result="gm"/><feComposite in="d" in2="gm" operator="in"/></filter>
+</defs></svg>
+<section class="m4-fit" data-moda4="fitting-ad" id="fit">
+  <div class="wrap">
+    <div class="m4-fit-txt">
+      <span class="m4-fit-eyebrow">AI FITTING ROOM</span>
+      <h2 data-moda4-display dir="ltr" lang="en">From the rail <em>to you.</em></h2>
+      <div class="m4-fit-sub" id="sub"></div>
+      <p class="m4-fit-body" id="body"></p>
+      <div class="m4-fit-sets" role="group"></div>
+      <div><a href="#" class="cbtn accent" data-moda4-cta id="cta"></a></div>
+    </div>
+    <div class="m4-scene-box">
+      <div class="m4-scene" aria-hidden="true">
+        <div class="m4-step">01 — PICK</div>
+        <div class="m4-floor"></div>
+        <div class="m4-rack" data-moda4="fitting-ad-rack"><span class="leg a"></span><span class="leg b"></span><span class="base a"></span><span class="base b"></span><span class="rail"></span></div>
+        <div class="m4-model" data-moda4="fitting-ad-mannequin"><img id="mq" alt=""></div>
+        <div class="m4-scan"></div>
+        <div class="m4-reveal" data-moda4="fitting-ad-reveal"><img alt=""></div>
+        <div class="m4-ready">Your look is ready ✦</div>
+      </div>
+    </div>
+  </div>
+</section>
+<script src="assets/paths.js"></script>
+<script src="assets/fitting-ad.js"></script>
+<script>
+var P = new URLSearchParams(location.search), L = P.get('lang') || 'fa', ST = P.get('state') || 'ok';
+document.documentElement.lang = L; document.documentElement.dir = L === 'fa' ? 'rtl' : 'ltr';
+var T = function(fa, tr, en){ return {fa:fa, tr:tr, en:en}[L]; };
+document.getElementById('sub').textContent = T('از رگال، مستقیم تن مانکن','Askıdan doğrudan mankene','Straight from the rail to the mannequin');
+document.getElementById('body').textContent = T('لباس‌ها را از رگال بردار، روی مانکن بچین و در یک لحظه ست کامل را روی مدل ببین. بعد در «کمد من» ذخیره کن یا یکجا به سبد ببر.','Kıyafetleri askıdan al, mankene giydir ve kombini anında modelde gör. Sonra dolabına kaydet ya da tek seferde sepete ekle.','Take pieces from the rail, dress the mannequin and see the whole look on the model in a moment. Then save it to your wardrobe or add it all to the bag.');
+document.getElementById('cta').textContent = T('خودت امتحان کن','Kendin dene','Try it yourself');
+document.getElementById('mq').src = ASSET('woman','svg');
+var looks = [
+  {label:T('ست زنانه','Kadın kombini','Women’s look'), finalPhoto:ASSET('look-women-knit'), reason:null, pieces:[
+    {key:'women-knit', slot:'TOP', cutout:ASSET('women-knit'), target:{cx:.5, top:.1786, w:.452}},
+    {key:'women-trousers', slot:'BOTTOM', cutout:ASSET('women-trousers'), target:{cx:.5, top:.518, w:.267}},
+    {key:'accessories-bag', slot:'ACCESSORY', cutout:ASSET('accessories-bag'), target:{cx:.674, top:.375, w:.205}}]},
+  {label:T('ست مردانه','Erkek kombini','Men’s look'), finalPhoto:ASSET('look-men'), reason:null, pieces:[
+    {key:'men-tee', slot:'TOP', cutout:ASSET('men-tee'), target:{cx:.5, top:.1786, w:.419}},
+    {key:'men-shirt', slot:'LAYER', cutout:ASSET('men-shirt'), target:{cx:.5, top:.171, w:.476}},
+    {key:'men-chino', slot:'BOTTOM', cutout:ASSET('men-chino'), target:{cx:.5, top:.521, w:.252}}]}
+];
+if (ST === 'static') looks.forEach(function(l){ l.reason = 'MATCH_REQUIRED'; });
+if (ST === 'copy') looks.forEach(function(l){ l.reason = 'INVALID_REFERENCE'; l.finalPhoto = null; });
+if (ST === 'partial') looks[1].reason = 'MATCH_REQUIRED';
+window.__fit = MODA4FittingAd.mount(document.getElementById('fit'), {looks:looks, mannequin:ASSET('woman','svg'),
+  t:{replay:T('دوباره','Tekrar','Replay'), pause:T('توقف حرکت','Hareketi durdur','Pause motion'), staticAlt:T('ست کامل روی مدل','Modelde kombin','The look on the model'), stylingOnly:T('نمایش استایل','Stil gösterimi','Styling preview')}});
+</script>
+</body></html>

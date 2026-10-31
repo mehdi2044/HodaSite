@@ -32,6 +32,7 @@ export function ModaCarousel({
     [hidden, setHidden] = useState(true),
     [dragAngle, setDragAngle] = useState(0);
   const current = Math.min(index, Math.max(0, items.length - 1));
+  const clock = useRef({ index: current, seconds, remaining: seconds * 1000 });
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const motion = () => setReduced(media.matches),
@@ -53,12 +54,30 @@ export function ModaCarousel({
   useEffect(() => {
     if (paused || engaged || reduced || hidden || !visible || items.length < 2)
       return;
-    const timer = setInterval(
-      () => setIndex((old) => (old + 1) % items.length),
-      seconds * 1000,
-    );
-    return () => clearInterval(timer);
-  }, [paused, engaged, reduced, hidden, visible, items.length, seconds]);
+    if (clock.current.index !== current || clock.current.seconds !== seconds)
+      clock.current = { index: current, seconds, remaining: seconds * 1000 };
+    const started = performance.now();
+    const timer = setTimeout(() => {
+      clock.current.remaining = seconds * 1000;
+      setIndex((old) => (old + 1) % items.length);
+    }, clock.current.remaining);
+    return () => {
+      clearTimeout(timer);
+      clock.current.remaining = Math.max(
+        0,
+        clock.current.remaining - (performance.now() - started),
+      );
+    };
+  }, [
+    paused,
+    engaged,
+    reduced,
+    hidden,
+    visible,
+    items.length,
+    seconds,
+    current,
+  ]);
   const change = (delta: number) =>
     setIndex((current + delta + items.length) % items.length);
   const controls = (
@@ -114,7 +133,11 @@ export function ModaCarousel({
             onClick={() => setPaused((old) => !old)}
             disabled={reduced}
           >
-            {paused || reduced ? t("resume") : t("pause")}
+            {kind === "hero"
+              ? t(paused || reduced ? "resumeShort" : "pauseShort")
+              : paused || reduced
+                ? t("resume")
+                : t("pause")}
           </button>
         </div>
       )}

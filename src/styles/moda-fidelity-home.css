@@ -8,113 +8,9 @@
   background: var(--sand);
 }
 .moda-carousel-hero .moda-carousel-stage,
-.moda-carousel-hero .moda-carousel-slide,
-.moda-hero-slide {
+.moda-carousel-hero .moda-carousel-slide {
   height: 100%;
   padding: 0;
-}
-.moda-hero-slide .shoppable-scene {
-  position: relative;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  padding: 0;
-  display: block;
-  background: transparent;
-}
-.moda-hero-slide .shoppable-scene > .scene-photo {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  border-radius: 0;
-  margin: 0;
-  aspect-ratio: auto !important;
-  max-width: none;
-  grid-column: auto;
-  grid-row: auto;
-}
-.moda-hero-slide .scene-photo > picture,
-.moda-hero-slide .scene-photo > picture > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.moda-hero-slide .scene-photo > picture > img {
-  object-fit: cover !important;
-  object-position: 50% 0% !important;
-}
-.moda-hero-slide .shoppable-scene > .moda-scene-heading {
-  position: absolute;
-  z-index: 3;
-  top: 26%;
-  inset-inline-start: 7%;
-  margin: 0;
-  width: 46%;
-  max-width: 620px;
-  font-family: var(--font-heading-latin, Manrope), sans-serif;
-  font-size: clamp(56px, 7.4vw, 128px);
-  line-height: 0.92;
-  font-weight: 400;
-  direction: ltr;
-  text-align: start;
-  letter-spacing: -0.025em;
-}
-html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
-  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
-}
-.moda-hero-slide > .moda-eyebrow {
-  position: absolute;
-  z-index: 4;
-  top: calc(72px + 7%);
-  inset-inline-start: 7%;
-  margin: 0;
-  font-size: 11.5px;
-  letter-spacing: 0.22em;
-}
-.moda-hero-slide .shoppable-scene > p.mb-5 {
-  position: absolute;
-  z-index: 3;
-  inset-inline-start: 7%;
-  top: 52%;
-  width: 34%;
-  font-size: 15.5px;
-  line-height: 1.95;
-  margin: 0;
-}
-.moda-hero-slide .shoppable-scene > a {
-  position: absolute;
-  z-index: 4;
-  inset-inline-start: 7%;
-  top: 68%;
-  margin: 0;
-}
-.moda-hero-slide .scene-image-note {
-  position: absolute;
-  z-index: 4;
-  bottom: 100px;
-  inset-inline-end: 24px;
-  padding: 3px 9px;
-  background: color-mix(in srgb, var(--background) 90%, transparent);
-  border-radius: 999px;
-  font-size: 10px;
-  max-width: 55%;
-}
-.moda-hero-slide .scene-review {
-  position: absolute;
-  z-index: 4;
-  bottom: 110px;
-  inset-inline-start: 7%;
-  max-width: 40%;
-  font-size: 12px;
-}
-.moda-hero-slide .moda-scene-purchase {
-  position: absolute;
-  z-index: 6;
-  top: 78%;
-  inset-inline-start: 7%;
-  width: min(90%, 440px);
 }
 .moda-purchase-toggle {
   cursor: pointer;
@@ -548,54 +444,6 @@ html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
     height: calc(100svh - 36px);
     min-height: 600px;
   }
-  .moda-hero-slide .scene-photo-desktop {
-    display: none;
-  }
-  .moda-hero-slide .scene-photo-mobile {
-    display: block;
-  }
-  .moda-hero-slide .shoppable-scene > .moda-scene-heading {
-    top: auto;
-    bottom: 26%;
-    width: calc(100% - 40px);
-    inset-inline-start: 20px;
-    font-size: 44px;
-  }
-  .moda-hero-slide > .moda-eyebrow {
-    top: auto;
-    bottom: 34%;
-    inset-inline-start: 20px;
-    font-size: 10px;
-  }
-  .moda-hero-slide .shoppable-scene > p.mb-5 {
-    top: auto;
-    bottom: 20%;
-    width: calc(100% - 40px);
-    inset-inline-start: 20px;
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  .moda-hero-slide .shoppable-scene > a {
-    top: auto;
-    bottom: 12%;
-    inset-inline-start: 20px;
-    min-height: 44px !important;
-    font-size: 12px;
-  }
-  .moda-hero-slide .moda-scene-purchase {
-    top: auto;
-    bottom: 6%;
-    inset-inline-start: 20px;
-    font-size: 12px;
-  }
-  .moda-hero-slide .moda-scene-purchase[open] {
-    top: 10%;
-    bottom: auto;
-  }
-  .moda-hero-slide .scene-image-note {
-    bottom: 100px;
-    font-size: 9px;
-  }
   .moda-carousel-hero > .moda-carousel-controls {
     inset-inline: 20px;
     bottom: 6px;
@@ -672,14 +520,6 @@ html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (min-width: 761px) {
-  .moda-hero-slide .scene-photo-desktop {
-    display: block;
-  }
-  .moda-hero-slide .scene-photo-mobile {
-    display: none;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .moda-carousel-hero * {
     animation: none !important;
@@ -690,9 +530,6 @@ html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
 [data-presentation] {
   isolation: isolate;
 }
-.moda-hero-slide .scene-pin-price {
-  display: inline;
-}
 
 /* Prototype .copy and .ring: retain their grouping and camera compensation. */
 .moda-header[data-home="true"][data-scrolled="false"] {
@@ -700,64 +537,6 @@ html[lang="fa"] .moda-hero-slide .shoppable-scene > .moda-scene-heading {
 }
 .moda-header[data-home="true"][data-scrolled="false"] .moda-lace {
   opacity: 0;
-}
-.moda-hero-copy {
-  position: absolute;
-  z-index: 3;
-  top: calc(72px + 7%);
-  bottom: 16%;
-  width: min(46%, 620px);
-  inset-inline-start: 7%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 22px;
-}
-.moda-hero-copy > .moda-eyebrow {
-  margin: 0;
-  font-family: var(--font-body-latin, Inter);
-  font-size: 11.5px;
-  letter-spacing: 0.22em;
-}
-.moda-hero-slide .moda-hero-copy > .moda-scene-heading {
-  position: static;
-  margin: 0;
-  width: auto;
-  max-width: none;
-  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
-  font-size: clamp(56px, 7.4vw, 128px);
-  font-weight: 400;
-  line-height: 0.92;
-  direction: ltr;
-  text-align: right;
-  letter-spacing: -0.025em;
-}
-html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
-  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
-}
-.moda-hero-copy > p.mb-5 {
-  position: static;
-  margin: 0;
-  width: auto;
-  font-size: 15.5px;
-  line-height: 1.95;
-  max-width: 440px;
-  white-space: pre-line;
-}
-.moda-hero-acts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.moda-hero-copy .moda-hero-acts > a {
-  margin: 0;
-  --button-fill: var(--text);
-  color: var(--background);
-}
-.moda-hero-copy .moda-hero-acts > .button-outline {
-  --button-fill: transparent;
-  color: var(--text);
-  border: 1.5px solid var(--text);
 }
 .moda-carousel-lookbook {
   --look-radius: 430px;
@@ -786,35 +565,6 @@ html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
     height: min(92svh, 780px);
     min-height: 640px;
   }
-  .moda-hero-slide::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      transparent 38%,
-      color-mix(in srgb, var(--background) 92%, transparent) 72%
-    );
-    pointer-events: none;
-  }
-  .moda-hero-copy {
-    inset-inline: 20px;
-    width: auto;
-    top: auto;
-    bottom: 96px;
-    gap: 14px;
-    z-index: 4;
-  }
-  .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
-    font-size: 56px;
-  }
-  .moda-hero-copy > p.mb-5 {
-    display: none;
-  }
-  .moda-hero-copy .moda-hero-acts .button {
-    min-height: 44px;
-    font-size: 12px;
-    padding-inline: 20px;
-  }
   .moda-carousel-lookbook {
     --look-radius: 300px;
   }
@@ -828,11 +578,6 @@ html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
   .moda-carousel-hero .moda-carousel-tabs > button > span:first-child {
     visibility: hidden;
   }
-}
-
-.moda-hero-slide[data-text-side="end"] .moda-hero-copy {
-  inset-inline-start: auto;
-  inset-inline-end: 7%;
 }
 .moda-world-art {
   display: block;
@@ -870,54 +615,6 @@ html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
   font-size: 30px;
   font-weight: 400;
 }
-.moda-hero-slide .scene-pin:has(.moda-hero-float) {
-  flex-direction: column;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-}
-.moda-hero-float {
-  display: block;
-  width: 140px;
-  height: 180px;
-  filter: drop-shadow(0 30px 30px #3c281447);
-}
-.moda-hero-float img {
-  object-fit: contain !important;
-}
-.moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-index {
-  display: none;
-}
-.moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-price {
-  border: 2px dashed var(--primary);
-  border-radius: 50%;
-  padding: 8px 12px;
-  font-family: var(--font-heading-latin, Manrope), Vazirmatn, sans-serif;
-  font-size: 18px;
-  font-weight: 400;
-}
-@media (max-width: 760px) {
-  .moda-hero-float {
-    display: none;
-  }
-  .moda-hero-slide .scene-pin:has(.moda-hero-float) .scene-pin-price {
-    font-size: 11px;
-    border-width: 1px;
-    padding: 4px 8px;
-    background: color-mix(in srgb, var(--background) 90%, transparent);
-  }
-  .moda-hero-slide[data-text-side="end"] .moda-hero-copy {
-    inset-inline: 20px;
-  }
-}
-
-.moda-hero-slide .moda-hero-copy > .moda-scene-heading {
-  font-weight: 700;
-}
-.moda-hero-copy .moda-title-fragment:last-child {
-  font-weight: 300;
-}
 .moda-kids-world .moda-section-head h2 {
   font-weight: 700;
 }
@@ -926,27 +623,6 @@ html[lang="fa"] .moda-hero-slide .moda-hero-copy > .moda-scene-heading {
 }
 .moda-carousel-hero .moda-carousel-tabs > button {
   font-size: 12px;
-}
-
-.moda-hero-subtitle {
-  font-size: clamp(18px, 1.7vw, 24px);
-  font-weight: 300;
-  letter-spacing: 0.01em;
-}
-@media (max-width: 760px) {
-  .moda-hero-slide::after {
-    display: none;
-  }
-  .moda-hero-slide .scene-photo::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      transparent 38%,
-      color-mix(in srgb, var(--background) 92%, transparent) 72%
-    );
-    pointer-events: none;
-  }
 }
 
 .moda-editorial-banner {
@@ -1110,19 +786,20 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
   }
 }
 
-.moda-hero-slide .scene-pin .scene-pin-price {
-  font-family: var(--font-price-latin, Inter), Vazirmatn, sans-serif;
-}
-
 /* The theme crayon selector has higher specificity than a component class. */
-html[data-button-style="crayon"] .moda-hero-copy .moda-hero-acts > a:not(.button-outline),
 html[data-button-style="crayon"] .moda-prism-links .button {
   color: var(--background);
 }
-.moda-carousel-prism { --prism-depth: 165px; }
-.moda-prism-cap { transform: rotateX(90deg) translateZ(220px); }
+.moda-carousel-prism {
+  --prism-depth: 165px;
+}
+.moda-prism-cap {
+  transform: rotateX(90deg) translateZ(220px);
+}
 @media (max-width: 760px) {
-  .moda-carousel-prism { --prism-depth: 120px; }
+  .moda-carousel-prism {
+    --prism-depth: 120px;
+  }
   .moda-prism-cap {
     top: 40px;
     width: 240px;
@@ -1131,9 +808,13 @@ html[data-button-style="crayon"] .moda-prism-links .button {
   }
 }
 @media (max-width: 760px) {
-  .moda-carousel-prism .moda-3d-orbit { width: 240px; height: 320px; }
+  .moda-carousel-prism .moda-3d-orbit {
+    width: 240px;
+    height: 320px;
+  }
 }
 /* Native scrolling keeps controls clear of the sticky header and mobile dock. */
 html:has(.storefront-app) {
-  scroll-padding-block: calc(var(--storefront-header-height,72px) + 16px) calc(var(--storefront-nav-offset,0px) + 20px);
+  scroll-padding-block: calc(var(--storefront-header-height, 72px) + 16px)
+    calc(var(--storefront-nav-offset, 0px) + 20px);
 }

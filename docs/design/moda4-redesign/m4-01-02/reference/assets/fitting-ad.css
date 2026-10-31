@@ -1,0 +1,80 @@
+/* =====================================================================
+   MODA4 "From the rail to you" — reference CSS for M4-02
+   Logical scene: fixed coordinate system, scaled as one unit.
+     wide    1100 × 640  (> 760px)   rack + mannequin + reveal side by side
+     compact  720 × 640  (≤ 760px)   active look's garments only
+   The scene is always LTR (rack → mannequin reads left→right in every
+   language); only the copy column follows the page direction.
+   ===================================================================== */
+.m4-fit{position:relative;background:#EFE9E0;overflow:hidden;margin-top:100px}
+.m4-fit .wrap{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr);gap:40px;align-items:center;padding-block:96px}
+.m4-fit-txt{display:flex;flex-direction:column;gap:22px}
+.m4-fit-eyebrow{font:500 11.5px/1 var(--ui);letter-spacing:.2em;color:var(--stone);direction:ltr}
+:root[dir=rtl] .m4-fit-eyebrow{text-align:right}
+.m4-fit h2{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(44px,5vw,84px);line-height:.95;letter-spacing:-.02em;direction:ltr}
+.m4-fit h2 em{font-style:normal;font-weight:300}
+:root[dir=rtl] .m4-fit h2{text-align:right}
+.m4-fit-sub{font-size:22px;font-weight:300}
+.m4-fit-body{margin:0;color:#3B352F;font-size:15.5px;line-height:1.95}
+.m4-fit-sets{display:flex;gap:8px;flex-wrap:wrap}
+.m4-fit-sets .chip.icon{width:40px;padding:0;justify-content:center}
+.m4-fit-sets .chip svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.m4-scene-box{position:relative;width:100%;aspect-ratio:var(--scene-w)/var(--scene-h);--scene-w:1100;--scene-h:640}
+.m4-scene{position:absolute;top:0;left:0;width:calc(var(--scene-w) * 1px);height:calc(var(--scene-h) * 1px);transform-origin:0 0;
+  transform:scale(var(--k,1));direction:ltr;perspective:1300px;perspective-origin:50% 35%}
+.m4-step{position:absolute;right:20px;top:10px;font:500 12px/1 var(--ui);letter-spacing:.14em;color:var(--stone)}
+.m4-floor{position:absolute;left:-200px;right:-200px;bottom:20px;height:150px;background:radial-gradient(ellipse at 60% 0%,rgba(120,95,70,.18),transparent 70%);transform:rotateX(70deg);transform-origin:bottom}
+
+/* rack — z 1..3 */
+.m4-rack{position:absolute;left:40px;top:70px;width:560px;height:520px;transform-style:preserve-3d;transform:rotateY(18deg)}
+.m4-rack .rail{position:absolute;left:0;right:0;top:40px;height:8px;border-radius:8px;background:linear-gradient(#3a332c,#141210);box-shadow:0 2px 0 rgba(255,255,255,.3) inset}
+.m4-rack .leg{position:absolute;top:40px;width:8px;height:470px;border-radius:6px;background:linear-gradient(90deg,#3a332c,#141210)}
+.m4-rack .leg.a{left:6px}.m4-rack .leg.b{right:6px}
+.m4-rack .base{position:absolute;bottom:4px;width:70px;height:8px;border-radius:8px;background:#141210}
+.m4-rack .base.a{left:-25px}.m4-rack .base.b{right:-25px}
+.m4-garm{position:absolute;top:28px;transform-origin:50% 0;transform-style:preserve-3d;will-change:transform}
+.m4-garm .hang{width:64px;height:44px;margin:0 auto -6px;display:block;color:#5b5047}
+.m4-garm img{width:100%;height:auto;filter:drop-shadow(0 16px 14px rgba(60,40,20,.25))}
+.m4-garm.sway{animation:m4sway 4s ease-in-out infinite}
+@keyframes m4sway{0%,100%{transform:rotateY(-26deg) rotateZ(-.8deg)}50%{transform:rotateY(-20deg) rotateZ(.8deg)}}
+
+/* mannequin box = the composite's store-model frame (3:4). z 1 */
+.m4-model{position:absolute;left:660px;top:40px;width:420px;height:560px;z-index:1;transition:opacity .6s}
+.m4-model > img{width:100%;height:100%;object-fit:contain}
+/* flying / dressed garments live on the scene, z = 4 + slot order (BOTTOM 5, TOP 6, LAYER 7, ACCESSORY 8) */
+.m4-fly{position:absolute;transform-origin:50% 0;will-change:transform}
+.m4-fly .hang{width:64px;height:44px;margin:0 auto -6px;display:block;color:#5b5047}
+.m4-fly img{width:100%;height:auto;filter:drop-shadow(0 16px 14px rgba(60,40,20,.25))}
+.m4-scan{position:absolute;z-index:19;left:705px;width:330px;height:3px;top:30px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;box-shadow:0 0 18px var(--accent)}
+.m4-reveal{position:absolute;z-index:20;left:705px;top:30px;width:330px;height:440px;border-radius:200px 200px 10px 10px;overflow:hidden;opacity:0;transform:scale(.92);box-shadow:0 40px 60px -30px rgba(60,40,20,.5);background:var(--sand)}
+.m4-reveal img{width:100%;height:100%;object-fit:cover;object-position:top}
+.m4-ready{position:absolute;z-index:20;left:760px;top:490px;font:600 26px/1.2 var(--display);opacity:0;white-space:nowrap}
+
+/* compact scene for phones: only the active look on a short rack */
+.m4-scene-box[data-scene=compact]{--scene-w:720}
+[data-scene=compact] .m4-rack{left:24px;width:300px;transform:rotateY(14deg)}
+[data-scene=compact] .m4-model{left:300px}
+[data-scene=compact] .m4-scan,[data-scene=compact] .m4-reveal{left:345px}
+[data-scene=compact] .m4-ready{left:380px}
+[data-scene=compact] .m4-step{right:12px}
+
+/* static fallback (no playable look): one photo, no rack, no prices */
+.m4-static{position:relative;width:min(100%,420px);margin-inline:auto;aspect-ratio:3/4;border-radius:200px 200px 10px 10px;overflow:hidden;box-shadow:0 40px 60px -30px rgba(60,40,20,.5);background:var(--sand)}
+.m4-static img{width:100%;height:100%;object-fit:cover;object-position:top}
+.m4-static figcaption{position:absolute;inset-inline:0;bottom:14px;display:flex;justify-content:center}
+.m4-static figcaption span{padding:4px 12px;border-radius:999px;background:rgba(247,244,239,.92);font-size:12px}
+.m4-fit[data-state=copy-only] .wrap{grid-template-columns:minmax(0,1fr) minmax(0,.7fr)}
+.m4-fit-sketch{width:min(100%,260px);margin-inline:auto;opacity:.9}
+
+@media (max-width:1100px){.m4-fit .wrap{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .m4-fit{margin-top:64px}
+  .m4-fit .wrap{padding-block:64px;gap:24px}
+  .m4-fit h2{font-size:44px}
+  .m4-fit-body{font-size:14.5px;line-height:1.85}
+}
+@media (prefers-reduced-motion:reduce){
+  .m4-garm.sway{animation:none}
+  .m4-model{transition:none}
+}

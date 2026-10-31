@@ -1,4 +1,5 @@
 "use client";
+import { HeroImageValid } from "./hero-image-state";
 import { subscribeSceneRefresh } from "./scene-refresh";
 import {
   useContext,
@@ -38,6 +39,7 @@ export function ShoppableScene({
   eyebrow,
   secondary,
   decorations,
+  only,
 }: {
   view: SceneView;
   locale: "fa" | "tr" | "en";
@@ -53,9 +55,13 @@ export function ShoppableScene({
   eyebrow?: string;
   secondary?: { label: string; href: string };
   decorations?: Record<string, ResponsiveImageMedia | null>;
+  /** M4-01: the hero renders its own composition and embeds only this purchase sheet (D81). */
+  only?: "purchase";
 }) {
+  const heroImageValid = useContext(HeroImageValid);
   const activeSlide = useContext(ActiveCarouselSlide);
-  const PurchasePanel = presentation === "hero" ? "details" : "div";
+  const sheet = only === "purchase" || presentation === "hero";
+  const PurchasePanel = sheet ? "details" : "div";
   const t = useTranslations("scenes"),
     shopping = useTranslations("shopping"),
     cutouts = useTranslations("cutouts");
@@ -136,6 +142,7 @@ export function ShoppableScene({
     piece.variants.find((v) => v.id === selections[piece.id]),
   );
   const ready =
+    heroImageValid &&
     !preview &&
     !view.reason &&
     !imageFailed("desktop") &&
@@ -244,6 +251,99 @@ export function ShoppableScene({
       </div>
     </>
   );
+  const purchase = (
+    <PurchasePanel
+      className="moda-scene-purchase"
+      open={
+        sheet &&
+        (view.reason || imageFailed("mobile") || imageFailed("desktop"))
+          ? true
+          : undefined
+      }
+    >
+      {sheet && (
+        <summary className="moda-purchase-toggle sr-only focus:not-sr-only">
+          {t("chooseSize")}
+        </summary>
+      )}
+      <CommerceForm
+        action={addSceneAction.bind(null, locale)}
+        className="scene-price-list"
+      >
+        <input type="hidden" name="sceneId" value={view.id} />
+        {view.pieces.map((piece, n) => (
+          <article
+            key={piece.id}
+            id={`scene-piece-${view.id}-${piece.id}`}
+            data-testid={`scene-piece-${piece.id}`}
+          >
+            <div>
+              {preview && piece.referenceImage && (
+                <ResponsiveImage
+                  media={piece.referenceImage}
+                  locale={locale}
+                  sizes="120px"
+                  className="block w-24"
+                  imgClassName="w-full h-auto"
+                />
+              )}
+              <a href={piece.href}>
+                {new Intl.NumberFormat(locale).format(n + 1)}. {piece.title}
+              </a>
+              <p>{piece.color}</p>
+            </div>
+            <strong className="moda-price">
+              <bdi>{price(piece)}</bdi>
+            </strong>
+            <label>
+              {t("size")}
+              <select
+                className="input"
+                name="variantId"
+                value={selections[piece.id] ?? ""}
+                onChange={(event) =>
+                  select((old) => ({
+                    ...old,
+                    [piece.id]: event.target.value,
+                  }))
+                }
+                disabled={Boolean(view.reason) && !preview}
+              >
+                <option value="">{t("chooseSize")}</option>
+                {piece.variants.map((v) => (
+                  <option
+                    key={v.id}
+                    value={v.id}
+                    disabled={v.available <= 0 || v.amount === null}
+                  >
+                    {v.size}
+                    {v.id === piece.preferredVariantId
+                      ? ` · ${t("suggested")}`
+                      : ""}
+                    {v.available <= 0 ? ` · ${t("outOfStock")}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </article>
+        ))}
+        {view.pieces.length > 0 && (
+          <>
+            <p>{preview ? t("previewOnly") : t("chooseEverySize")}</p>
+            <button className="button" disabled={!ready}>
+              {t("addScene")}
+            </button>
+          </>
+        )}
+      </CommerceForm>
+    </PurchasePanel>
+  );
+  if (only === "purchase")
+    return (
+      <div ref={root as React.RefObject<HTMLDivElement>} className="m4-sheet">
+        {purchase}
+      </div>
+    );
   return (
     <section
       ref={root}
@@ -383,91 +483,7 @@ export function ShoppableScene({
         isDemoFashionMedia(view.mobile.media ?? undefined)) && (
         <p className="scene-image-note">{shopping("demoImage")}</p>
       )}
-      <PurchasePanel
-        className="moda-scene-purchase"
-        open={
-          presentation === "hero" &&
-          (view.reason || imageFailed("mobile") || imageFailed("desktop"))
-            ? true
-            : undefined
-        }
-      >
-        {presentation === "hero" && (
-          <summary className="moda-purchase-toggle sr-only focus:not-sr-only">
-            {t("chooseSize")}
-          </summary>
-        )}
-        <CommerceForm
-          action={addSceneAction.bind(null, locale)}
-          className="scene-price-list"
-        >
-          <input type="hidden" name="sceneId" value={view.id} />
-          {view.pieces.map((piece, n) => (
-            <article
-              key={piece.id}
-              id={`scene-piece-${view.id}-${piece.id}`}
-              data-testid={`scene-piece-${piece.id}`}
-            >
-              <div>
-                {preview && piece.referenceImage && (
-                  <ResponsiveImage
-                    media={piece.referenceImage}
-                    locale={locale}
-                    sizes="120px"
-                    className="block w-24"
-                    imgClassName="w-full h-auto"
-                  />
-                )}
-                <a href={piece.href}>
-                  {new Intl.NumberFormat(locale).format(n + 1)}. {piece.title}
-                </a>
-                <p>{piece.color}</p>
-              </div>
-              <strong className="moda-price">
-                <bdi>{price(piece)}</bdi>
-              </strong>
-              <label>
-                {t("size")}
-                <select
-                  className="input"
-                  name="variantId"
-                  value={selections[piece.id] ?? ""}
-                  onChange={(event) =>
-                    select((old) => ({
-                      ...old,
-                      [piece.id]: event.target.value,
-                    }))
-                  }
-                  disabled={Boolean(view.reason) && !preview}
-                >
-                  <option value="">{t("chooseSize")}</option>
-                  {piece.variants.map((v) => (
-                    <option
-                      key={v.id}
-                      value={v.id}
-                      disabled={v.available <= 0 || v.amount === null}
-                    >
-                      {v.size}
-                      {v.id === piece.preferredVariantId
-                        ? ` · ${t("suggested")}`
-                        : ""}
-                      {v.available <= 0 ? ` · ${t("outOfStock")}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </article>
-          ))}
-          {view.pieces.length > 0 && (
-            <>
-              <p>{preview ? t("previewOnly") : t("chooseEverySize")}</p>
-              <button className="button" disabled={!ready}>
-                {t("addScene")}
-              </button>
-            </>
-          )}
-        </CommerceForm>
-      </PurchasePanel>
+      {purchase}
     </section>
   );
 }
