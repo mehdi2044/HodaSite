@@ -382,9 +382,24 @@ export async function seedFreshModa4Homepage(
             : {}),
         },
         eyebrow: text(
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
-          n === 0 ? "AUTUMN / WINTER 26 — LOOK 01" : `MODA4 — LOOK 0${n + 1}`,
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
+          [
+            "Autumn / Winter 26 — Look 01",
+            "Menswear — Look 02",
+            "Kids — Look 03",
+            "AI Fitting Room — New",
+          ][n],
         ),
         body:
           n === 0
@@ -393,11 +408,24 @@ export async function seedFreshModa4Homepage(
                 "Şehir katmanları — trençkot, triko ve toprak tonları.\nKombini keşfet; kendi bedenini seç veya model üzerinde dene.",
                 "City layers — trench, knits and earthy tones.\nExplore the look; choose your size or try it on the store model first.",
               )
-            : text(
-                "استایل خودت را بساز؛ قیمت هر قطعه از کاتالوگ زنده است.",
-                "Kendi stilini oluştur; canlı katalog fiyatlarıyla.",
-                "Build your styling with live catalog prices.",
-              ),
+            : [
+                undefined,
+                text(
+                  "روزهای بی‌تکلف — اورشرت، تی‌شرت نخی، چینو\nسه قطعه که با هم یا جدا کار می‌کنند؛ برای هر روز هفته.",
+                  "Rahat günler — gömlek ceket, pamuklu tişört, chino\nBirlikte ya da ayrı giyilen üç parça; haftanın her günü için.",
+                  "Easy days — overshirt, cotton tee, chinos\nThree pieces that work together or apart, every day of the week.",
+                ),
+                text(
+                  "برای روزهای بازی — نرم، رنگی، بادوام\nبافت‌های نرم و پارچه‌های نخی برای بدوبدوهای پاییزی.",
+                  "Oyun günleri — yumuşak, renkli, dayanıklı\nSonbahar koşturmacası için yumuşak örgüler ve pamuklu kumaşlar.",
+                  "Play days — soft, colourful, durable\nSoft knits and cotton fabrics for autumn running around.",
+                ),
+                text(
+                  "اتاق پروی هوشمند — ترکیبت را روی مدل ببین\nتا چهار قطعه انتخاب کن و همان لحظه روی مدل فروشگاه ببین.",
+                  "Akıllı deneme odası — kombinini modelde gör\nDört parçaya kadar seç, mağaza modelinde anında gör.",
+                  "Smart fitting room — see your look on the model\nPick up to four pieces and see them on the store model instantly.",
+                ),
+              ][n],
         textSide: n % 2 ? "end" : "start",
         // M4-01: physical composition measured on the seeded wide banners (2:1).
         layout: [
@@ -422,18 +450,29 @@ export async function seedFreshModa4Homepage(
                   "Deneme odasına gir",
                   "Enter the fitting room",
                 )
-              : explore,
+              : n === 1
+                ? text("خرید کل ست", "Kombini al", "Shop the look")
+                : text("خرید بچگانه", "Çocuk alışverişi", "Shop kids"),
         target:
           n === 3
             ? { kind: "fitting" }
             : n === 0
               ? { kind: "category", id: "seed-category-women" }
-              : catalog,
+              : n === 2
+                ? { kind: "category", id: "seed-category-kids" }
+                : catalog,
         secondaryLabel:
           n === 0
             ? text("امتحان روی مدل", "Model üzerinde dene", "Try on the model")
-            : undefined,
-        secondaryTarget: n === 0 ? { kind: "fitting" } : undefined,
+            : n === 1
+              ? text("همهٔ مردانه", "Tüm erkek", "All menswear")
+              : undefined,
+        secondaryTarget:
+          n === 0
+            ? { kind: "fitting" }
+            : n === 1
+              ? { kind: "category", id: "seed-category-men" }
+              : undefined,
       })),
     },
     {
