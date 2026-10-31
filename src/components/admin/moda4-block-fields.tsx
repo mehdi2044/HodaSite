@@ -367,7 +367,7 @@ export function ModaImageField({
           {t(axis === "x" ? "focalX" : "focalY")}
           <input
             type="number"
-            step="0.01"
+            step="any"
             min="0"
             max="1"
             className="input"
@@ -635,7 +635,7 @@ export function ModaSceneField({
                       type="number"
                       min="0"
                       max="1"
-                      step="0.01"
+                      step="any"
                       value={piece[kind][axis]}
                       onChange={(event) =>
                         changePiece(index, {
@@ -974,7 +974,7 @@ export function Moda4BlockFields({
                         type="number"
                         min={0}
                         max={1}
-                        step={0.01}
+                        step="any"
                         value={layout.subject[edge]}
                         onChange={(event) =>
                           setLayout({

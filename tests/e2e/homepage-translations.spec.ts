@@ -55,6 +55,9 @@ test("homepage preview uses the real private renderer and keeps unsaved content 
 test("UI override changes runtime text and reset restores file default", async ({
   page,
 }) => {
+  // MFA, two editor visits and the finally reset share the workflow budget.
+  // Individual visibility/assertion deadlines remain unchanged.
+  test.setTimeout(60000);
   await login(page);
   await page.goto("/admin/content/translations");
   await page.getByPlaceholder("جست‌وجوی کلید یا متن…").fill("catalog.search");
