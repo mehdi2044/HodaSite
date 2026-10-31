@@ -19,7 +19,12 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import { HeroImageValid, HeroPriceSelection } from "./hero-image-state";
+import {
+  HeroImageValid,
+  HeroPriceSelection,
+  HeroLayerSelection,
+  type HeroSelectedLayers,
+} from "./hero-image-state";
 import type { SceneView } from "@/modules/content/scenes/resolve";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
@@ -98,6 +103,7 @@ export function ModaHeroSlide({
 }) {
   const t = useTranslations("scenes");
   const [failed, setFailed] = useState(false);
+  const [selectedLayers, setSelectedLayers] = useState<HeroSelectedLayers>({});
   const [selectedPrices, setSelectedPrices] = useState<Record<string, string>>(
     {},
   );
@@ -109,6 +115,7 @@ export function ModaHeroSlide({
     active,
     JSON.stringify([
       selectedPrices,
+      selectedLayers,
       layout,
       desktop,
       mobile,
@@ -150,7 +157,7 @@ export function ModaHeroSlide({
         img.removeEventListener("error", check);
         img.removeEventListener("load", check);
       });
-  }, [desktop.media, mobile.media]);
+  }, [desktop.media, mobile.media, selectedLayers]);
   const ratio = (m: ResponsiveImageMedia | null, fallback: number) =>
     m?.width && m?.height ? m.width / m.height : fallback;
   // Latin display title: last word light (prototype "City <em>Layers</em>").
@@ -206,7 +213,7 @@ export function ModaHeroSlide({
             />
           )}
           {view.mode === "COMPOSITE" && (
-            <HeroLayers view={view} locale={locale} />
+            <HeroLayers view={view} locale={locale} selected={selectedLayers} />
           )}
         </div>
       </div>
@@ -222,7 +229,7 @@ export function ModaHeroSlide({
             />
           )}
           {view.mode === "COMPOSITE" && (
-            <HeroLayers view={view} locale={locale} />
+            <HeroLayers view={view} locale={locale} selected={selectedLayers} />
           )}
         </div>
       </div>
@@ -360,7 +367,9 @@ export function ModaHeroSlide({
       )}
       <HeroImageValid.Provider value={!failed}>
         <HeroPriceSelection.Provider value={setSelectedPrices}>
-          {purchase}
+          <HeroLayerSelection.Provider value={setSelectedLayers}>
+            {purchase}
+          </HeroLayerSelection.Provider>
         </HeroPriceSelection.Provider>
       </HeroImageValid.Provider>
     </div>
@@ -369,34 +378,30 @@ export function ModaHeroSlide({
 function HeroLayers({
   view,
   locale,
+  selected,
 }: {
   view: SceneView;
+  selected: HeroSelectedLayers;
   locale: "fa" | "tr" | "en";
 }) {
-  return view.pieces.map((piece) =>
-    piece.layer ? (
+  return view.pieces.map((piece) => {
+    const layer = selected[piece.id] ?? piece.layer;
+    return layer ? (
       <div
         key={piece.id}
         data-scene-layer="true"
         className="m4-layer"
         style={{
-          left: piece.layer.geometry.x * 100 + "%",
-          top: piece.layer.geometry.y * 100 + "%",
-          width:
-            piece.layer.geometry.width * piece.layer.geometry.scale * 100 + "%",
-          height:
-            piece.layer.geometry.height * piece.layer.geometry.scale * 100 +
-            "%",
-          zIndex: piece.layer.geometry.zIndex,
-          transform: `translate(-50%,-50%) rotate(${piece.layer.geometry.rotation}deg)`,
+          left: layer.geometry.x * 100 + "%",
+          top: layer.geometry.y * 100 + "%",
+          width: layer.geometry.width * layer.geometry.scale * 100 + "%",
+          height: layer.geometry.height * layer.geometry.scale * 100 + "%",
+          zIndex: layer.geometry.zIndex,
+          transform: `translate(-50%,-50%) rotate(${layer.geometry.rotation}deg)`,
         }}
       >
-        <ResponsiveImage
-          media={piece.layer.media}
-          locale={locale}
-          sizes="50vw"
-        />
+        <ResponsiveImage media={layer.media} locale={locale} sizes="50vw" />
       </div>
-    ) : null,
-  );
+    ) : null;
+  });
 }

@@ -1,5 +1,9 @@
 "use client";
-import { HeroImageValid, HeroPriceSelection } from "./hero-image-state";
+import {
+  HeroImageValid,
+  HeroPriceSelection,
+  HeroLayerSelection,
+} from "./hero-image-state";
 import { subscribeSceneRefresh } from "./scene-refresh";
 import {
   useContext,
@@ -61,6 +65,7 @@ export function ShoppableScene({
 }) {
   const heroImageValid = useContext(HeroImageValid);
   const publishPrices = useContext(HeroPriceSelection);
+  const publishLayers = useContext(HeroLayerSelection);
   const activeSlide = useContext(ActiveCarouselSlide);
   const sheet = only === "purchase" || presentation === "hero";
   const PurchasePanel = sheet ? "details" : "div";
@@ -76,6 +81,13 @@ export function ShoppableScene({
         ?.layer ?? piece.layer,
   );
   const layerKey = JSON.stringify(layers);
+  useEffect(() => {
+    publishLayers?.(
+      Object.fromEntries(
+        view.pieces.map((piece, index) => [piece.id, layers[index]]),
+      ),
+    );
+  }, [publishLayers, layerKey, view.pieces]);
   const [failedImages, failImage] = useState<Record<string, string>>({});
   const imageKey = (kind: "desktop" | "mobile") =>
     JSON.stringify([

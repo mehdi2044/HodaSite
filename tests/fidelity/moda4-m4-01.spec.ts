@@ -84,6 +84,7 @@ test.describe("M4-01 hero composition", () => {
               page.locator("[data-moda4=hero-slide]").count());
         expect(slides).toBeGreaterThanOrEqual(3);
         const failures: string[] = [];
+        const measurements: unknown[] = [];
         for (let n = 0; n < slides; n++) {
           await openHero(page, locale, market, n);
           const result = await page.evaluate(() =>
@@ -99,6 +100,13 @@ test.describe("M4-01 hero composition", () => {
             ).MODA4Hero.auditHero(),
           );
           const box = await page.locator("[data-moda4=hero]").boundingBox();
+          measurements.push({
+            locale,
+            market,
+            viewport: vp,
+            slide: n,
+            ...result,
+          });
           await page.screenshot({
             path: path.join(OUT, `hero-${locale}-${vp.name}-s${n}.jpg`),
             type: "jpeg",
@@ -116,6 +124,10 @@ test.describe("M4-01 hero composition", () => {
           for (const v of result.violations)
             failures.push(`slide ${n} [${result.mode}] ${v.id}: ${v.msg}`);
         }
+        fs.writeFileSync(
+          path.join(OUT, `hero-${locale}-${vp.name}-measurements.json`),
+          JSON.stringify(measurements, null, 2),
+        );
         expect(failures, failures.join("\n")).toEqual([]);
       });
 });
