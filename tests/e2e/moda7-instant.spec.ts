@@ -80,6 +80,7 @@ async function choose(page: Page, locale: "fa" | "tr" | "en", key: string) {
   await expect(
     room.locator(`[data-fitting-piece-target="${v.id}"]`),
   ).toBeAttached();
+  await expect(room).toHaveAttribute("aria-busy", "false");
   return v;
 }
 test("R7a guest four real models, RTL/TR/EN, keyboard/reduced motion and no paid session", async ({
@@ -239,6 +240,7 @@ test("R7a guest composition survives verified login, private save/reload/profile
           .then((v) => v?.archivedAt === null),
       )
       .toBe(true);
+    await expect(room).toHaveAttribute("aria-busy", "false");
     await list.getByLabel(t.confirm, { exact: true }).check();
     await list.getByRole("button", { name: t.delete, exact: true }).click();
     await expect
