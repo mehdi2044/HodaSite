@@ -90,25 +90,43 @@ export function HeroLayoutAudit({
           iframe.src = `/admin/preview/homepage?${new URLSearchParams({ channel })}`;
         });
         const doc = iframe.contentDocument!;
+        // Offscreen frames defer lazy images and their own animation frames.
+        // Force their layout/assets, then schedule from the visible admin page.
+        doc.documentElement.getBoundingClientRect();
         await doc.fonts.ready;
         const root = doc.querySelector(
           "[data-testid=private-homepage-preview]",
         );
         if (!root || root.getAttribute("lang") !== locale)
           throw new Error("PREVIEW_UNAVAILABLE");
-        await Promise.all(
-          [...doc.querySelectorAll<HTMLImageElement>(".m4-media img")].map(
-            (img) => img.decode().catch(() => undefined),
-          ),
-        );
+        const images = [
+          ...doc.querySelectorAll<HTMLImageElement>(".m4-media img"),
+        ];
+        for (const image of images) image.loading = "eager";
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error("PREVIEW_IMAGES_TIMEOUT")),
+            20000,
+          );
+          Promise.all(
+            images.map((img) => img.decode().catch(() => undefined)),
+          ).then(
+            () => {
+              clearTimeout(timeout);
+              resolve();
+            },
+            (error: unknown) => {
+              clearTimeout(timeout);
+              reject(error);
+            },
+          );
+        });
         for (const [width, height] of sizes) {
           if (epoch.current !== current) return;
           iframe.style.width = `${width}px`;
           iframe.style.height = `${height}px`;
           await new Promise<void>((r) =>
-            iframe.contentWindow!.requestAnimationFrame(() =>
-              iframe.contentWindow!.requestAnimationFrame(() => r()),
-            ),
+            requestAnimationFrame(() => requestAnimationFrame(() => r())),
           );
           for (const hero of doc.querySelectorAll<HTMLElement>(
             "[data-moda4=hero]",

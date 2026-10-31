@@ -214,6 +214,11 @@ test("admin privately measures every hero slide in 3 languages and 4 sizes", asy
   await page.goto("/admin/content/homepage");
   const audit = page.getByTestId("hero-layout-audit");
   await expect(audit).toBeVisible();
+  await audit.getByRole("button").click();
+  await expect(audit.getByRole("button")).toBeEnabled({ timeout: 180000 });
+  await expect(audit.getByRole("status")).toHaveText(
+    en.modaAdmin.heroAuditPassed,
+  );
   await page
     .getByLabel(en.modaAdmin.subjectEnd, { exact: true })
     .first()
