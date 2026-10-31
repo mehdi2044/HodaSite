@@ -1,6 +1,6 @@
 /**
- * M4-01 (hero composition) and M4-02 ("From the rail to you") acceptance gate.
- * Contract: docs/design/moda4-redesign/m4-01-02/SPEC_M4-01_HERO.md and SPEC_M4-02_FITTING_AD.md
+ * M4-01 hero composition acceptance gate.
+ * Contract: docs/design/moda4-redesign/m4-01-02/SPEC_M4-01_HERO.md
  *
  *   MODA4_FIDELITY_TARGET=prototype → self-test against the design reference (must be green)
  *   default                          → the running app (MODA4_APP_URL, seeded demo)

@@ -78,9 +78,7 @@ test("hero pause and resize preserve the elapsed animation frame, resume continu
   ).toBeLessThan(30);
   await hero
     .getByRole("button", { name: en.modaHomepage.resumeShort, exact: true })
-    .click();
-  await page.locator("[data-moda4=header] a").first().focus();
-  await page.mouse.move(0, 0);
+    .press("Enter");
   await expect(hero).toHaveAttribute("data-running", "true");
   const resumed = await progress.evaluate((el) =>
     Number(el.getAnimations()[0].currentTime),
@@ -91,6 +89,8 @@ test("hero pause and resize preserve the elapsed animation frame, resume continu
       progress.evaluate((el) => Number(el.getAnimations()[0].currentTime)),
     )
     .toBeGreaterThan(frozen + 200);
+  await page.locator("[data-moda4=header] a:visible").first().focus();
+  await page.mouse.move(0, 0);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(hero).toHaveAttribute("data-running", "false");
   const slide = await hero

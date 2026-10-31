@@ -123,6 +123,14 @@ describe("M4-01 collision rules", () => {
       "H-01",
     );
   });
+  it.each([{ t: 80 }, { b: 800 }, { r: 1450 }])(
+    "H-02 copy under header, over controls or outside hero: %j",
+    (edge) => {
+      expect(
+        heroViolations({ ...ok, copy: { ...ok.copy, ...edge } }),
+      ).toContain("H-02");
+    },
+  );
   it("H-03 bold title (the FID-6 defect)", () => {
     expect(
       heroViolations({ ...ok, title: { ...ok.title, weight: "700" } }),

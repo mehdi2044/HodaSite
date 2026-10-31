@@ -27,11 +27,16 @@ export function ModaCarousel({
   const [index, setIndex] = useState(0),
     [paused, setPaused] = useState(false),
     [engaged, setEngaged] = useState(false),
+    [resumeEngaged, setResumeEngaged] = useState(false),
     [visible, setVisible] = useState(false),
     [reduced, setReduced] = useState(true),
     [hidden, setHidden] = useState(true),
     [dragAngle, setDragAngle] = useState(0);
   const current = Math.min(index, Math.max(0, items.length - 1));
+  // Explicit resume also starts while its control has focus. A fresh
+  // hover/focus engagement pauses rotation again.
+  const running =
+    !paused && (!engaged || resumeEngaged) && !reduced && !hidden && visible;
   const clock = useRef({ index: current, seconds, remaining: seconds * 1000 });
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
@@ -52,8 +57,7 @@ export function ModaCarousel({
     };
   }, []);
   useEffect(() => {
-    if (paused || engaged || reduced || hidden || !visible || items.length < 2)
-      return;
+    if (!running || items.length < 2) return;
     if (clock.current.index !== current || clock.current.seconds !== seconds)
       clock.current = { index: current, seconds, remaining: seconds * 1000 };
     const started = performance.now();
@@ -68,16 +72,7 @@ export function ModaCarousel({
         clock.current.remaining - (performance.now() - started),
       );
     };
-  }, [
-    paused,
-    engaged,
-    reduced,
-    hidden,
-    visible,
-    items.length,
-    seconds,
-    current,
-  ]);
+  }, [running, items.length, seconds, current]);
   const change = (delta: number) =>
     setIndex((current + delta + items.length) % items.length);
   const controls = (
@@ -130,7 +125,10 @@ export function ModaCarousel({
             type="button"
             className="button button-outline"
             aria-pressed={paused || reduced}
-            onClick={() => setPaused((old) => !old)}
+            onClick={() => {
+              setResumeEngaged(paused);
+              setPaused(!paused);
+            }}
             disabled={reduced}
           >
             {kind === "hero"
@@ -149,18 +147,29 @@ export function ModaCarousel({
       data-moda4={kind === "hero" ? "hero" : undefined}
       className={`moda-carousel moda-carousel-${kind}`}
       data-reduced={reduced}
-      data-running={!paused && !engaged && !reduced && !hidden && visible}
+      data-running={running}
       style={{ "--slide-seconds": `${seconds}s` } as React.CSSProperties}
       aria-roledescription={t("carousel")}
       aria-label={title || labels[current]}
-      onMouseEnter={() => setEngaged(true)}
-      onMouseLeave={() =>
-        setEngaged(Boolean(root.current?.contains(document.activeElement)))
-      }
-      onFocusCapture={() => setEngaged(true)}
+      onMouseEnter={() => {
+        setEngaged(true);
+        setResumeEngaged(false);
+      }}
+      onMouseLeave={() => {
+        const focused = Boolean(root.current?.contains(document.activeElement));
+        setEngaged(focused);
+        if (!focused) setResumeEngaged(false);
+      }}
+      onFocusCapture={() => {
+        setEngaged(true);
+        setResumeEngaged(false);
+      }}
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget))
-          setEngaged(false);
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          const hovered = event.currentTarget.matches(":hover");
+          setEngaged(hovered);
+          if (!hovered) setResumeEngaged(false);
+        }
       }}
     >
       {kind === "prism" && intro ? (

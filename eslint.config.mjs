@@ -30,7 +30,7 @@ const noFloatMoney = [
 ];
 
 export default tseslint.config(
-  { ignores: [".next/**", "node_modules/**"] },
+  { ignores: [".next/**", "node_modules/**", ".deploy/**"] },
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: { parser: tseslint.parser },

@@ -455,6 +455,7 @@ html[dir="ltr"] .m4-title {
   width: auto !important;
   height: auto !important;
   clip: auto !important;
+  clip-path: none !important;
   white-space: normal !important;
   margin: 0 0 8px !important;
   overflow: visible !important;
