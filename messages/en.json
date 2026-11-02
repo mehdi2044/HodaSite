@@ -2896,7 +2896,7 @@
     "free": "Free · no coins · no AI request",
     "models": "Choose a model",
     "noModels": "No approved store model is available.",
-    "rotateHelp": "Drag or use left/right arrows to turn the preview; Home resets it.",
+    "rotateHelp": "Rotate the mannequin by dragging, using the buttons or the left and right arrow keys; Home shows the front view.",
     "unavailable": "Unavailable",
     "remove": "Remove",
     "review": "References changed or cannot be resolved. Review the current clothes and confirm before saving an updated look. Purchase is blocked until an updated look is saved.",
@@ -2932,7 +2932,7 @@
     "try": "Try on model",
     "moreLooks": "More saved looks",
     "reviewCurrent": "Review and use current clothes",
-    "displayTitle": "Your fitting room",
+    "displayTitle": "Your <em>fitting room</em>",
     "stepModel": "Choose a model and drag or use the arrow keys to turn it.",
     "stepPick": "Pick up to four pieces. Each ready cutout appears in its validated position immediately.",
     "stepSave": "Save to your private wardrobe or add the actual available sizes to your bag.",
@@ -2940,6 +2940,13 @@
     "displayEyebrow": "MODA4 FITTING ROOM",
     "displaySubtitle": "Your fitting room and wardrobe — pick a garment and see it on the model.",
     "instantMode": "Instant fitting · free",
-    "paidMode": "Realistic AI preview"
+    "paidMode": "Realistic AI preview",
+    "rotationControls": "Mannequin rotation controls",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "front": "Front",
+    "clearSelection": "Clear",
+    "dragHint": "Drag to rotate",
+    "motionReduced": "Reduced motion; selected clothes remain visible"
   }
 }

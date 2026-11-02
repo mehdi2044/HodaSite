@@ -114,7 +114,13 @@ test("R7a guest four real models, RTL/TR/EN, keyboard/reduced motion and no paid
       await room.locator(`[data-model-kind="${kind}"]`).click();
       await choose(page, locale, key);
       const stage = room.locator(".moda-instant-stage");
+      await expect(
+        room.locator("[data-moda4=tryon-turntable]"),
+      ).toHaveAttribute("data-yaw", "-14");
       await stage.focus();
+      // D77 starts at -14°; keep the existing five-degree keyboard assertion
+      // from an explicit front view instead of assuming the old initial pose.
+      await page.keyboard.press("Home");
       await page.keyboard.press("ArrowRight");
       await expect(room.locator(".moda-instant-turn")).toHaveAttribute(
         "style",

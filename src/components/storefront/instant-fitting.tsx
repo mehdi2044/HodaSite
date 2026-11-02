@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
-import { SceneLayerImage } from "./scene-layer";
+import { InstantFittingStage } from "./instant-fitting-stage";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import {
   instantSelectionSchema,
@@ -79,14 +79,11 @@ export function InstantFitting({
       null,
     ),
     [review, setReview] = useState(false),
-    [confirmed, setConfirmed] = useState(false),
-    [angle, setAngle] = useState(0);
+    [confirmed, setConfirmed] = useState(false);
   const sequence = useRef(0),
     ready = useRef(false),
     requestKey = useRef(""),
-    root = useRef<HTMLElement>(null),
-    stage = useRef<HTMLDivElement>(null),
-    drag = useRef<number | null>(null);
+    root = useRef<HTMLElement>(null);
   async function loadCatalog(input: Parameters<typeof loadInstantCatalog>[1]) {
     const result = await loadInstantCatalog(locale, input);
     if (!result.ok) return result;
@@ -199,7 +196,7 @@ export function InstantFitting({
     if (!nextIds.length) {
       setIds([]);
       setView(null);
-      setLocalLayers(null);
+      setLocalLayers([]);
       setReview(false);
       return;
     }
@@ -265,27 +262,6 @@ export function InstantFitting({
       else sessionStorage.removeItem(draftKey);
     } catch {}
   }, [draftKey, modelId, ids]);
-  useEffect(() => {
-    const reset = () => {
-      setAngle(0);
-      drag.current = null;
-    };
-    const hidden = () => {
-      if (document.hidden) reset();
-    };
-    document.addEventListener("visibilitychange", hidden);
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries[0]?.isIntersecting) reset();
-    });
-    if (stage.current) observer.observe(stage.current);
-    const media = matchMedia("(prefers-reduced-motion: reduce)");
-    media.addEventListener("change", reset);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", hidden);
-      media.removeEventListener("change", reset);
-    };
-  }, []);
   const grouped = new Map<string, FittingProduct[]>();
   for (const p of catalog) {
     const list = grouped.get(p.productId) ?? [];
@@ -430,7 +406,7 @@ export function InstantFitting({
             dir="ltr"
             aria-label={t("title")}
           >
-            {t("displayTitle")}
+            {t.rich("displayTitle", { em: (chunks) => <em>{chunks}</em> })}
           </Heading>
           <p className="moda-fr-subtitle">{t("displaySubtitle")}</p>
         </div>
@@ -470,7 +446,6 @@ export function InstantFitting({
                     setLocalLayers(null);
                     setReview(false);
                     setEditing(null);
-                    setAngle(0);
                   }}
                 >
                   {m.label[locale]}
@@ -479,94 +454,18 @@ export function InstantFitting({
             </div>
           </fieldset>
 
-          <div
-            ref={stage}
-            data-moda4="tryon-stage"
-            className="moda-instant-stage"
-            tabIndex={0}
-            role="group"
-            aria-label={t("rotateHelp")}
-            onKeyDown={(e) => {
-              if (["ArrowLeft", "ArrowRight", "Home"].includes(e.key)) {
-                e.preventDefault();
-                setAngle(
-                  e.key === "Home"
-                    ? 0
-                    : Math.max(
-                        -25,
-                        Math.min(25, angle + (e.key === "ArrowLeft" ? -5 : 5)),
-                      ),
-                );
-              }
-            }}
-            onPointerDown={(e) => {
-              if (e.pointerType === "mouse" && e.button !== 0) return;
-              drag.current = e.clientX;
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (
-                drag.current === null ||
-                matchMedia("(prefers-reduced-motion: reduce)").matches
-              )
-                return;
-              setAngle(
-                Math.max(-25, Math.min(25, (e.clientX - drag.current) / 5)),
-              );
-            }}
-            onPointerUp={() => {
-              drag.current = null;
-            }}
-            onPointerCancel={() => {
-              drag.current = null;
-              setAngle(0);
-            }}
-            onBlur={() => {
-              drag.current = null;
-              setAngle(0);
-            }}
-          >
-            <div
-              data-moda4="tryon-turntable"
-              className="moda-instant-turn"
-              style={{ transform: `perspective(900px) rotateY(${angle}deg)` }}
-            >
-              {model && (
-                <div
-                  className="moda-instant-mannequin"
-                  data-moda4="tryon-mannequin"
-                >
-                  <ResponsiveImage
-                    media={{ ...model.media, presentation: { fit: "contain" } }}
-                    locale={locale}
-                    role="catalog"
-                    sizes="(min-width:900px) 40vw,90vw"
-                    className="block h-full w-full"
-                    imgClassName="h-full w-full object-contain"
-                  />
-                </div>
-              )}
-              {(
-                localLayers ?? (view?.model.id === modelId ? view.layers : [])
-              ).map((layer) => (
-                <SceneLayerImage
-                  key={layer.variantId}
-                  instant
-                  pieceId={layer.variantId}
-                  layer={layer}
-                  model={model?.media ?? { width: 0, height: 0 }}
-                  locale={locale}
-                  frame={{
-                    mediaId: view?.snapshot.modelMediaId ?? modelId,
-                    fit: "contain",
-                    aspect: "3:4",
-                    focal: { x: 0.5, y: 0.5 },
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          <p className="muted text-sm">{t("rotateHelp")}</p>
+          <InstantFittingStage
+            key={modelId}
+            model={model}
+            layers={
+              localLayers ?? (view?.model.id === modelId ? view.layers : [])
+            }
+            frameMediaId={view?.snapshot.modelMediaId ?? modelId}
+            locale={locale}
+            canClear={!pending && ids.length > 0}
+            animateRemovals={!review && (localLayers !== null || view !== null)}
+            onClear={() => start(() => resolve(modelId, []))}
+          />
         </div>
         <div className="moda-instant-catalog">
           <form
@@ -727,6 +626,7 @@ export function InstantFitting({
                 disabled={
                   pending ||
                   !view ||
+                  !ids.length ||
                   review ||
                   ids.some(
                     (id) => !catalog.find((v) => v.variantId === id)?.available,
@@ -760,7 +660,7 @@ export function InstantFitting({
                   <button
                     className="button"
                     type="button"
-                    disabled={pending || !view || !name.trim()}
+                    disabled={pending || !view || !ids.length || !name.trim()}
                     onClick={() => start(save)}
                   >
                     {editing ? t("update") : t("save")}

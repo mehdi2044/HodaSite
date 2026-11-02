@@ -2896,7 +2896,7 @@
     "free": "Ücretsiz · jeton yok · AI isteği yok",
     "models": "Model seçin",
     "noModels": "Onaylı mağaza modeli bulunamadı.",
-    "rotateHelp": "Sürükleyin veya sol/sağ okları kullanın; Home görünümü sıfırlar.",
+    "rotateHelp": "Sürükleyerek, düğmelerle veya sol ve sağ ok tuşlarıyla modeli döndürün; Home önden görünümü gösterir.",
     "unavailable": "Mevcut değil",
     "remove": "Kaldır",
     "review": "Referanslar değişti veya çözümlenemiyor. Güncel giysileri inceleyip yeni kaydı onaylayın. Güncellenmiş kombin kaydedilene kadar satın alma kapalıdır.",
@@ -2932,7 +2932,7 @@
     "try": "Modelde dene",
     "moreLooks": "Daha fazla kombin",
     "reviewCurrent": "Güncel giysileri incele ve kullan",
-    "displayTitle": "Your fitting room",
+    "displayTitle": "Your <em>fitting room</em>",
     "stepModel": "Bir model seç; sürükleyerek veya ok tuşlarıyla çevir.",
     "stepPick": "Dörde kadar parça seç. Hazır kesimler doğrulanmış yerlerinde hemen görünür.",
     "stepSave": "Özel gardırobuna kaydet veya stoktaki gerçek bedenleri sepete ekle.",
@@ -2940,6 +2940,13 @@
     "displayEyebrow": "MODA4 FITTING ROOM",
     "displaySubtitle": "Prova odanız ve gardırobunuz — bir giysi seçin, anında modelde görün.",
     "instantMode": "Anında prova · ücretsiz",
-    "paidMode": "Yapay zekâ ile gerçek görünüm"
+    "paidMode": "Yapay zekâ ile gerçek görünüm",
+    "rotationControls": "Model döndürme kontrolleri",
+    "rotateLeft": "Sola döndür",
+    "rotateRight": "Sağa döndür",
+    "front": "Önden",
+    "clearSelection": "Temizle",
+    "dragHint": "Döndürmek için sürükleyin",
+    "motionReduced": "Azaltılmış hareket; giysiler görünür kalır"
   }
 }

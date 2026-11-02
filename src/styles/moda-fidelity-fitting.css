@@ -87,7 +87,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
   display:inline-block; flex:none; width:18px; height:18px;
   background:currentColor; mask:center / contain no-repeat;
 }
-.moda-fr12 .moda-fr-hanger { mask-image:url('/moda4/fitting/hanger.svg'); }
+.moda-fr12 .moda-fr-hanger { mask-image:url('../../public/moda4/fitting/hanger.svg'); }
 .moda-fr12 .moda-instant-howto { margin:0 0 26px; }
 .moda-fr12 .moda-instant-howto li {
   padding:12px; font-size:12.5px; line-height:1.7; border-radius:14px;
@@ -122,3 +122,75 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 }
 
 @media(min-width:761px) { .moda-fr12 .moda-instant-howto li { min-height:104px; } }
+
+/* FR2: reference rotation rig around the unchanged, centered source surface. */
+.moda-fr12 .moda-fr-stage {
+  height:640px; touch-action:pan-y; cursor:grab; user-select:none;
+  perspective:1100px; perspective-origin:50% 40%; isolation:auto;
+}
+.moda-fr12 .moda-fr-stage[data-dragging="true"] { cursor:grabbing; }
+.moda-fr12 .moda-fr-turn {
+  position:absolute; left:50%; top:44px; width:220px; height:560px;
+  margin-left:-110px; transform-style:preserve-3d; pointer-events:none;
+  transition:transform .5s cubic-bezier(.2,.8,.2,1);
+}
+.moda-fr12 .moda-fr-surface {
+  position:absolute; left:50%; top:0; width:420px; height:560px;
+  margin-left:-210px; transform-style:preserve-3d;
+}
+.moda-fr12 .moda-fr-dress {
+  position:absolute; inset:0; pointer-events:none; transform-style:preserve-3d;
+}
+.moda-fr12 .moda-fr-dress img {
+  filter:drop-shadow(0 10px 10px #3c281438); transform-origin:50% 0;
+}
+.moda-fr12 .moda-fr-dress[data-motion="enter"] img {
+  animation:moda-fr-dress-in .8s cubic-bezier(.2,.9,.2,1.15) both;
+}
+.moda-fr12 .moda-fr-dress[data-motion="exit"] img { animation:moda-fr-dress-out .35s ease forwards; }
+.moda-fr12 .moda-fr-stage[data-paused="true"] .moda-fr-dress img { animation-play-state:paused; }
+.moda-fr12 .moda-fr-stage:is([data-dragging="true"],[data-paused="true"]) .moda-fr-turn { transition:none; }
+.moda-fr12 .moda-fr-drag-hint {
+  position:absolute; top:22px; left:50%; transform:translateX(-50%);
+  z-index:10; pointer-events:none; border-radius:999px; padding:6px 12px;
+  color:var(--muted); background:color-mix(in srgb,var(--surface) 80%,transparent);
+  font-size:12px; white-space:nowrap;
+}
+.moda-fr12 .moda-fr-stage:is([data-stage-model-kind="GIRL"],[data-stage-model-kind="BOY"]) {
+  background:radial-gradient(ellipse at 50% 30%,var(--background),var(--kidsPink) 55%,var(--kidsMint));
+}
+.moda-fr12 .moda-fr-stage:is([data-stage-model-kind="GIRL"],[data-stage-model-kind="BOY"])::before {
+  background:radial-gradient(ellipse at 50% 35%,var(--surface),var(--kidsPink) 70%);
+  box-shadow:0 18px 0 -4px color-mix(in srgb,var(--kidsPink) 85%,var(--text)),0 40px 40px -16px #783c5a4d;
+}
+.moda-fr12 .moda-fr-rotation {
+  display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin:4px 0 8px;
+}
+.moda-fr12 .moda-fr-rotation button {
+  min-width:44px; min-height:44px; padding:0 16px; border-radius:999px;
+  border:1px solid var(--border); background:var(--surface); font-size:13.5px;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.moda-fr12 .moda-fr-rotation button:has(.moda-fr-icon) { width:44px; padding:0; }
+.moda-fr12 .moda-fr-left { mask-image:url('../../public/moda4/fitting/left.svg'); }
+.moda-fr12 .moda-fr-right { mask-image:url('../../public/moda4/fitting/right.svg'); }
+.moda-fr12 .moda-fr-stage:focus-visible,
+.moda-fr12 .moda-fr-rotation button:focus-visible,
+.moda-fr12 .moda-fr-modes a:focus-visible { outline:2px solid var(--primary); outline-offset:4px; }
+@keyframes moda-fr-dress-in {
+  from { opacity:0; transform:translate3d(0,-90px,60px) rotateY(80deg) scale(.6); }
+  to { opacity:1; }
+}
+@keyframes moda-fr-dress-out { to { opacity:0; transform:translate3d(0,40px,30px) scale(.8); } }
+@media(max-width:760px) {
+  .moda-fr12 .moda-fr-stage { height:560px; }
+  .moda-fr12 .moda-fr-turn { --moda-model-scale:.88; top:20px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .moda-fr12 .moda-fr-turn { transition:none; }
+  .moda-fr12 .moda-fr-dress img { animation:none!important; }
+}
+
+.moda-fr12 .moda-fr-stage[data-reduced-motion="true"] { cursor:auto; }
+
+.moda-fr12 .moda-fr-heading [data-moda4-display] em { font-style:normal; font-weight:300; }

@@ -1,5 +1,25 @@
 ## 2026-11-02 — بازبینی S0، تفکیک snapshot CAD و نمایش مبلغ سبد
 
+
+## FR0–FR2 D77 fitting presentation — local review in progress
+
+- Implemented against docs v1.2 / D-numbers touched: D26/D31/D70/D77/D80/D81.
+- Owner-authorized scope and immutable reference hash: `phases/phase-fr0-fr2-d77.md`.
+  Base is `742dea84262c9115590231fdd0eaf665290c1b93`; previous previews/data/WIP are preserved.
+- FR0 freezes provenance and calibrates the 220×560 rig around the existing
+  420×560 source frame. FR1 ports the local shell/type/layout. FR2 adds the real
+  four-model stage, cumulative drag, buttons/keyboard, entry/exit and Reduced Motion.
+- Existing variant, stock, cutout validation, Market Context, price, cart and owner
+  services remain authoritative. No schema, seed, financial or provider changes.
+- Verify the three isolated Windows previews, FA/TR/EN at mobile/desktop, four
+  models and zero/one/four real pieces. Run all existing browser and fidelity
+  assertions plus `tests/e2e/fr12-d77.spec.ts`; private handoff records exact results.
+- Gallery cropping/restored pickers, new subtotal/wardrobe/coin settings and paid
+  presentation remain deferred to FR3–FR6. Their future security/ownership/coin
+  concurrency acceptance additions are in `design/moda4-redesign/FITTING_FUTURE_ACCEPTANCE.md`.
+- No PR, push, merge or release. Stop for Vee/owner review after FR2; local technical
+  verification is not visual or release approval.
+
 Implemented against docs v1.2 / D-numbers touched: D04, D08, D09, D31, D70.
 
 تأیید نهایی S0/طراحی صادر نشده است. بررسی read-only در DB آزمایشی قبلی نشان داد cron آزمون ورود، نرخ CA را از seed1.4 به Frankfurter1.3982 با AUTO_ACCEPT تغییر داده؛ همین Variant از44.80 به44.74 رسیده و گزارش قبلی snapshot را درست تفکیک نکرده بود. نمایش سبد و drawer با helper مجزای Decimal به دو اعشار CAD اصلاح شد؛ quote دقیق74.1354 و سایر محاسبات/ذخیره‌سازی دست‌نخورده‌اند. [علت، دامنه و روش آزمون](reviews/S0_REVIEW_FIXES_FA.md). محیط تازهٔ بازبینی جداست؛ نتیجهٔ۳۳ آزمون در یک اجرای کامل و سایر شواهد در بستهٔ تحویل ثبت می‌شود. بازطراحی اتاق پرو فقط بررسی/برنامه است و تا تأیید مالک اجرا نمی‌شود. هیچ PR/push/merge یا تغییر محیط‌های حفاظت‌شده مجاز نیست.
