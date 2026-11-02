@@ -215,9 +215,10 @@ export default async function Page(props: {
           products={products}
           saved={saved}
           archived={archived}
+          paidAvailable={showPaid && config.enabled}
           primaryHeading={!showPaid}
         />
-        {showPaid && (await PaidPage(props))}
+        {showPaid && <div id="fitting-paid">{await PaidPage(props)}</div>}
       </main>
     </>
   );

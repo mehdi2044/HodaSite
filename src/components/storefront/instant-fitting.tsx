@@ -38,6 +38,7 @@ export function InstantFitting({
   saved,
   archived,
   primaryHeading = true,
+  paidAvailable = false,
 }: {
   locale: "fa" | "tr" | "en";
   marketId: string;
@@ -53,6 +54,7 @@ export function InstantFitting({
   saved: Saved[];
   archived: Saved[];
   primaryHeading?: boolean;
+  paidAvailable?: boolean;
 }) {
   const t = useTranslations("instantFitting"),
     Heading = primaryHeading ? "h1" : "h2";
@@ -415,28 +417,36 @@ export function InstantFitting({
   return (
     <section
       ref={root}
-      className="moda-instant"
+      className="moda-instant moda-fr12"
       data-testid="instant-fitting"
       aria-busy={pending}
     >
-      <header>
-        <p className="eyebrow">{t("eyebrow")}</p>
-        <Heading
-          data-moda4-display=""
-          lang="en"
-          dir="ltr"
-          aria-label={t("title")}
-        >
-          {t("displayTitle")}
-        </Heading>
-        <p>{t("help")}</p>
-        <p>{t("free")}</p>
+      <header className="moda-fr-heading">
+        <div>
+          <p className="eyebrow">{t("displayEyebrow")}</p>
+          <Heading
+            data-moda4-display=""
+            lang="en"
+            dir="ltr"
+            aria-label={t("title")}
+          >
+            {t("displayTitle")}
+          </Heading>
+          <p className="moda-fr-subtitle">{t("displaySubtitle")}</p>
+        </div>
+        <div className="moda-fr-modes">
+          <span className="moda-fr-mode" title={t("free")}>
+            <span className="moda-fr-icon moda-fr-hanger" aria-hidden="true" />
+            {t("instantMode")}
+          </span>
+          {paidAvailable && <a href="#fitting-paid">{t("paidMode")}</a>}
+        </div>
       </header>
       {!models.length && <p>{t("noModels")}</p>}
       <ol className="moda-instant-howto">
         {["stepModel", "stepPick", "stepSave"].map((key, index) => (
           <li key={key}>
-            <b>{index + 1}</b>
+            <b>{new Intl.NumberFormat(locale).format(index + 1)}</b>
             {t(key)}
           </li>
         ))}
@@ -557,119 +567,6 @@ export function InstantFitting({
             </div>
           </div>
           <p className="muted text-sm">{t("rotateHelp")}</p>
-          <ul className="moda-instant-pieces">
-            {ids.map((id) => {
-              const p = catalog.find((v) => v.variantId === id);
-              return (
-                <li key={id}>
-                  <span>
-                    {p
-                      ? `${p.title} · ${p.color} · ${p.size}`
-                      : t("unavailable")}
-                  </span>
-                  <bdi>
-                    {p?.amount
-                      ? formatStorefrontAmount(p.amount, currency, locale)
-                      : t("unavailable")}
-                  </bdi>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() =>
-                      start(() =>
-                        resolve(
-                          modelId,
-                          ids.filter((v) => v !== id),
-                        ),
-                      )
-                    }
-                  >
-                    {t("remove")}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {review && (
-            <div role="alert">
-              <p>{t("review")}</p>
-              {!editing && view && (
-                <>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                    />
-                    {t("confirm")}
-                  </label>
-                  <button
-                    type="button"
-                    disabled={pending || !confirmed}
-                    onClick={() => start(() => resolve(modelId, ids))}
-                  >
-                    {t("reviewCurrent")}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-          <p role="status">{message}</p>
-          <div className="moda-instant-actions">
-            <button
-              className="button"
-              type="button"
-              disabled={
-                pending ||
-                !view ||
-                review ||
-                ids.some(
-                  (id) => !catalog.find((v) => v.variantId === id)?.available,
-                )
-              }
-              onClick={() =>
-                start(async () => {
-                  if (!view) return;
-                  const r = await buyInstant(locale, {
-                    modelId,
-                    variantIds: ids,
-                    fingerprint: view.fingerprint,
-                  });
-                  r.ok ? setMessage(t("added")) : error(r.error);
-                })
-              }
-            >
-              {t("addAll")}
-            </button>
-            {customerId ? (
-              <div className="moda-instant-save">
-                <label>
-                  {t("name")}
-                  <input
-                    className="input"
-                    value={name}
-                    maxLength={120}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </label>
-                <button
-                  className="button"
-                  type="button"
-                  disabled={pending || !view || !name.trim()}
-                  onClick={() => start(save)}
-                >
-                  {editing ? t("update") : t("save")}
-                </button>
-              </div>
-            ) : (
-              <Link
-                className="button-outline"
-                href={`/${locale}/account/login?next=/${locale}/fitting-room`}
-              >
-                {t("loginSave")}
-              </Link>
-            )}
-          </div>
         </div>
         <div className="moda-instant-catalog">
           <form
@@ -764,8 +661,124 @@ export function InstantFitting({
               {t("moreProducts")}
             </button>
           )}
+          <div className="moda-fr-existing-selection">
+            <ul className="moda-instant-pieces">
+              {ids.map((id) => {
+                const p = catalog.find((v) => v.variantId === id);
+                return (
+                  <li key={id}>
+                    <span>
+                      {p
+                        ? `${p.title} · ${p.color} · ${p.size}`
+                        : t("unavailable")}
+                    </span>
+                    <bdi>
+                      {p?.amount
+                        ? formatStorefrontAmount(p.amount, currency, locale)
+                        : t("unavailable")}
+                    </bdi>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        start(() =>
+                          resolve(
+                            modelId,
+                            ids.filter((v) => v !== id),
+                          ),
+                        )
+                      }
+                    >
+                      {t("remove")}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {review && (
+              <div role="alert">
+                <p>{t("review")}</p>
+                {!editing && view && (
+                  <>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={confirmed}
+                        onChange={(e) => setConfirmed(e.target.checked)}
+                      />
+                      {t("confirm")}
+                    </label>
+                    <button
+                      type="button"
+                      disabled={pending || !confirmed}
+                      onClick={() => start(() => resolve(modelId, ids))}
+                    >
+                      {t("reviewCurrent")}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            <p role="status">{message}</p>
+            <div className="moda-instant-actions">
+              <button
+                className="button"
+                type="button"
+                disabled={
+                  pending ||
+                  !view ||
+                  review ||
+                  ids.some(
+                    (id) => !catalog.find((v) => v.variantId === id)?.available,
+                  )
+                }
+                onClick={() =>
+                  start(async () => {
+                    if (!view) return;
+                    const r = await buyInstant(locale, {
+                      modelId,
+                      variantIds: ids,
+                      fingerprint: view.fingerprint,
+                    });
+                    r.ok ? setMessage(t("added")) : error(r.error);
+                  })
+                }
+              >
+                {t("addAll")}
+              </button>
+              {customerId ? (
+                <div className="moda-instant-save">
+                  <label>
+                    {t("name")}
+                    <input
+                      className="input"
+                      value={name}
+                      maxLength={120}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </label>
+                  <button
+                    className="button"
+                    type="button"
+                    disabled={pending || !view || !name.trim()}
+                    onClick={() => start(save)}
+                  >
+                    {editing ? t("update") : t("save")}
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  className="button-outline"
+                  href={`/${locale}/account/login?next=/${locale}/fitting-room`}
+                >
+                  {t("loginSave")}
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+      <p className="moda-fr-disclaimer">{t("help")}</p>
       {customerId && (
         <section className="moda-instant-wardrobe">
           <h2>{t("wardrobe")}</h2>

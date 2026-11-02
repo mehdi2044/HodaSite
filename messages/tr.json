@@ -2932,10 +2932,14 @@
     "try": "Modelde dene",
     "moreLooks": "Daha fazla kombin",
     "reviewCurrent": "Güncel giysileri incele ve kullan",
-    "displayTitle": "Your fitting room.",
+    "displayTitle": "Your fitting room",
     "stepModel": "Bir model seç; sürükleyerek veya ok tuşlarıyla çevir.",
     "stepPick": "Dörde kadar parça seç. Hazır kesimler doğrulanmış yerlerinde hemen görünür.",
     "stepSave": "Özel gardırobuna kaydet veya stoktaki gerçek bedenleri sepete ekle.",
-    "onlyCompatible": "Bu modele uygun hazır kesimleri göster"
+    "onlyCompatible": "Bu modele uygun hazır kesimleri göster",
+    "displayEyebrow": "MODA4 FITTING ROOM",
+    "displaySubtitle": "Prova odanız ve gardırobunuz — bir giysi seçin, anında modelde görün.",
+    "instantMode": "Anında prova · ücretsiz",
+    "paidMode": "Yapay zekâ ile gerçek görünüm"
   }
 }

@@ -2932,10 +2932,14 @@
     "try": "Try on model",
     "moreLooks": "More saved looks",
     "reviewCurrent": "Review and use current clothes",
-    "displayTitle": "Your fitting room.",
+    "displayTitle": "Your fitting room",
     "stepModel": "Choose a model and drag or use the arrow keys to turn it.",
     "stepPick": "Pick up to four pieces. Each ready cutout appears in its validated position immediately.",
     "stepSave": "Save to your private wardrobe or add the actual available sizes to your bag.",
-    "onlyCompatible": "Show compatible cutouts for this model"
+    "onlyCompatible": "Show compatible cutouts for this model",
+    "displayEyebrow": "MODA4 FITTING ROOM",
+    "displaySubtitle": "Your fitting room and wardrobe — pick a garment and see it on the model.",
+    "instantMode": "Instant fitting · free",
+    "paidMode": "Realistic AI preview"
   }
 }
