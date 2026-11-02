@@ -184,7 +184,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 @keyframes moda-fr-dress-out { to { opacity:0; transform:translate3d(0,40px,30px) scale(.8); } }
 @media(max-width:760px) {
   .moda-fr12 .moda-fr-stage { height:560px; }
-  .moda-fr12 .moda-fr-turn { --moda-model-scale:.88; top:20px; }
+  .moda-fr12 .moda-fr-turn { top:20px; }
 }
 @media(prefers-reduced-motion:reduce) {
   .moda-fr12 .moda-fr-turn { transition:none; }

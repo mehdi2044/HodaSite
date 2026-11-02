@@ -165,7 +165,7 @@ export function InstantFittingStage({
           data-yaw={yaw}
           className="moda-instant-turn moda-fr-turn"
           style={{
-            transform: `rotateY(${yaw}deg) scale(var(--moda-model-scale,1))`,
+            transform: `rotateY(${yaw}deg)`,
           }}
         >
           <div className="moda-fr-surface">
@@ -252,18 +252,18 @@ export function InstantFittingStage({
         </button>
         <button
           type="button"
+          disabled={!model || reduced}
+          onClick={() => setYaw(0)}
+        >
+          {t("front")}
+        </button>
+        <button
+          type="button"
           aria-label={t("rotateRight")}
           disabled={!model || reduced}
           onClick={() => setYaw((value) => clampYaw(value + 25))}
         >
           <span className="moda-fr-icon moda-fr-right" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          disabled={!model || reduced}
-          onClick={() => setYaw(0)}
-        >
-          {t("front")}
         </button>
         <button type="button" disabled={!canClear} onClick={onClear}>
           {t("clearSelection")}

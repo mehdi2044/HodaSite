@@ -74,3 +74,11 @@ FR3–FR6 are **not authorized**: gallery slot/source/filter work, restored pick
 selection changes, new composition summary/subtotal, new wardrobe/coin settings,
 or paid AI/persistence redesign must not be implemented in this change.
 The future acceptance additions are in `../design/moda4-redesign/FITTING_FUTURE_ACCEPTANCE.md`.
+
+## Rendered-reference calibration note
+
+The original D77 at a 390px viewport computes a unit-scale `rotateY(-14deg)`
+on its 220×560 rig: its inline pose overrides the mobile stylesheet's `.88`
+transform. Match that observed rendering with top 20px and height 560px;
+do not silently implement the inactive scale or edit the reference. Rotation
+control DOM order also follows the source: left, front, right, clear all.

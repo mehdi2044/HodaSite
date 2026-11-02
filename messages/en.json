@@ -2945,7 +2945,7 @@
     "rotateLeft": "Rotate left",
     "rotateRight": "Rotate right",
     "front": "Front",
-    "clearSelection": "Clear",
+    "clearSelection": "Clear all",
     "dragHint": "Drag to rotate",
     "motionReduced": "Reduced motion; selected clothes remain visible"
   }
