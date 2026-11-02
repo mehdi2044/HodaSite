@@ -56,9 +56,19 @@ export function LocaleSwitcher({
         "page",
         "minPrice",
         "maxPrice",
+        "market",
       ])
         for (const value of query.getAll(key)) kept.append(key, value);
       setSearch(kept.size ? `?${kept}` : "");
+    } else if (
+      /^\/(fa|tr|en)\/(fitting-room|cart|checkout)\/?$/.test(pathname)
+    ) {
+      const market = new URLSearchParams(queryString).get("market");
+      setSearch(
+        market && /^[A-Za-z0-9_-]{1,40}$/.test(market)
+          ? `?${new URLSearchParams({ market })}`
+          : "",
+      );
     } else if (/\/(?:p)\/[^/]+\/?$/.test(pathname)) {
       const color = new URLSearchParams(queryString).get("color");
       setSearch(

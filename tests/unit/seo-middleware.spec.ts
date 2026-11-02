@@ -134,6 +134,38 @@ describe("SEO routing transport boundaries", () => {
       ).toBe(false);
     }
   });
+  it.each(["IR", "CA"])(
+    "binds a fitting Server Action to TR despite a %s cookie",
+    async (cookie) => {
+      const response = await invoke(
+        new NextRequest("http://127.0.0.1:3000/tr/fitting-room?market=TR", {
+          method: "POST",
+          headers: {
+            cookie: `market=${cookie}`,
+            "next-action": "fitting-catalog",
+            "sec-fetch-dest": "empty",
+            "x-hoda-seo-market": cookie,
+          },
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(
+        response.headers.get("x-middleware-request-x-hoda-seo-market"),
+      ).toBe("TR");
+      expect(response.headers.get("set-cookie") ?? "").not.toContain("market=");
+    },
+  );
+  it("pins legacy fitting links before rendering without changing other queries", async () => {
+    const response = await invoke(
+      new NextRequest("http://127.0.0.1:3000/tr/fitting-room?q=hoodie", {
+        headers: { cookie: "market=TR" },
+      }),
+    );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "http://127.0.0.1:3000/tr/fitting-room?q=hoodie&market=TR",
+    );
+  });
   it("does not forward a caller-supplied route market on legacy pages", async () => {
     const response = await invoke(
       new NextRequest("http://127.0.0.1:3000/tr", {

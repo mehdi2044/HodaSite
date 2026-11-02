@@ -55,6 +55,15 @@ export function MarketSwitcher({
       window.location.assign(url);
       return;
     }
+    if (
+      /^\/(fa|tr|en)\/(search|fitting-room|cart|checkout)\/?$/.test(
+        url.pathname,
+      )
+    ) {
+      url.searchParams.set("market", code);
+      window.location.assign(url);
+      return;
+    }
     // A hard reload lets the middleware re-run the enabledLocales gate for
     // the newly selected market (it may not offer the current locale).
     window.location.reload();

@@ -96,7 +96,11 @@ test("R7a guest four real models, RTL/TR/EN, keyboard/reduced motion and no paid
     await page.context().clearCookies();
     const t = { fa, tr, en }[locale].instantFitting;
     await page.goto(`/${locale}/fitting-room`);
-    await expect(page).toHaveURL(new RegExp(`/${locale}/fitting-room$`));
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/${locale}/fitting-room\\?market=${{ fa: "IR", tr: "TR", en: "CA" }[locale]}$`,
+      ),
+    );
     const room = page.getByTestId("instant-fitting");
     await expect(
       room.getByRole("heading", { name: t.title, exact: true }),
@@ -176,7 +180,7 @@ test("R7a guest composition survives verified login, private save/reload/profile
     await expect(room.locator("[data-scene-layer]")).toHaveCount(2);
     await room.getByRole("link", { name: t.loginSave, exact: true }).click();
     await login(page, email);
-    await expect(page).toHaveURL(/\/en\/fitting-room$/);
+    await expect(page).toHaveURL(/\/en\/fitting-room\?market=CA$/);
     room = page.getByTestId("instant-fitting");
     await expect(room.locator("[data-scene-layer]")).toHaveCount(2);
     customerId = (await db.customer.findUniqueOrThrow({ where: { email } })).id;
@@ -440,7 +444,7 @@ test("FID-5 draws a validated garment before the live server action can return",
     release = resolve;
   });
   let held = false;
-  await page.route("**/en/fitting-room", async (route) => {
+  await page.route("**/en/fitting-room?market=CA", async (route) => {
     if (route.request().method() === "POST") {
       held = true;
       await gate;
@@ -464,6 +468,6 @@ test("FID-5 draws a validated garment before the live server action can return",
     ).toBeEnabled();
   } finally {
     release();
-    await page.unroute("**/en/fitting-room");
+    await page.unroute("**/en/fitting-room?market=CA");
   }
 });

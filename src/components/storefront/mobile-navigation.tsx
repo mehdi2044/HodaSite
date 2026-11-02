@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { StorefrontIcon } from "./storefront-icon";
 export function MobileNavigation({
   locale,
+  marketCode,
   labels,
 }: {
   locale: string;
+  marketCode?: string;
   labels: {
     navigation: string;
     home: string;
@@ -56,7 +58,10 @@ export function MobileNavigation({
   const items = [
     { key: "home", href: `/${locale}` },
     { key: "search", href: `/${locale}/search` },
-    { key: "cart", href: `/${locale}/cart` },
+    {
+      key: "cart",
+      href: `/${locale}/cart${marketCode ? `?market=${encodeURIComponent(marketCode)}` : ""}`,
+    },
     { key: "account", href: `/${locale}/account` },
   ] as const;
   return (

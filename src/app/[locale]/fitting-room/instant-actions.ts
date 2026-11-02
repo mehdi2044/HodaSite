@@ -34,7 +34,10 @@ export async function previewInstant(locale: string, input: unknown) {
   return safe(async () => {
     const l = localeSchema.parse(locale),
       { market } = await getRequestContext(l);
-    return resolveInstantSelection(market.id, input);
+    return {
+      context: { marketId: market.id, currency: market.currency, locale: l },
+      selection: await resolveInstantSelection(market.id, input),
+    };
   });
 }
 export async function loadInstantCatalog(locale: string, input: unknown) {
@@ -55,7 +58,10 @@ export async function loadInstantCatalog(locale: string, input: unknown) {
       })
       .strict()
       .parse(input);
-    return instantCatalog(market.id, l, v.query, v);
+    return {
+      context: { marketId: market.id, currency: market.currency, locale: l },
+      products: await instantCatalog(market.id, l, v.query, v),
+    };
   });
 }
 export async function saveInstant(locale: string, input: unknown) {

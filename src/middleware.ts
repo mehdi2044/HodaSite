@@ -336,11 +336,13 @@ async function applicationMiddleware(req: NextAuthRequest) {
         return NextResponse.redirect(url, 301);
       }
       // CMS targets use the actual search/fitting routes. An explicitly selected
-      // live market must govern their first response even with an older cookie.
+      // live market governs both the document and its Server Actions. Cookies
+      // are shared between tabs and cannot identify an open fitting room.
       const linkedMarket =
         explicit &&
-        ["GET", "HEAD"].includes(req.method) &&
-        /^\/(fa|tr|en)\/(search|fitting-room)\/?$/.test(pathname)
+        (["GET", "HEAD"].includes(req.method) ||
+          (req.method === "POST" && req.headers.has("next-action"))) &&
+        /^\/(fa|tr|en)\/(search|fitting-room|cart|checkout)\/?$/.test(pathname)
           ? explicit
           : undefined;
       const market = resolveMarket(
@@ -365,6 +367,18 @@ async function applicationMiddleware(req: NextAuthRequest) {
             maxAge: MARKET_COOKIE_MAX_AGE,
           });
         return redirectRes;
+      }
+      // Legacy fitting links still work. Pin the resolved market in the URL
+      // before rendering, so later actions cannot switch it through a cookie.
+      if (
+        market &&
+        !explicit &&
+        ["GET", "HEAD"].includes(req.method) &&
+        /^\/(fa|tr|en)\/fitting-room\/?$/.test(pathname)
+      ) {
+        const url = new URL(req.url);
+        url.searchParams.set("market", market.code);
+        return NextResponse.redirect(url);
       }
       const res = intlMiddleware(req);
       if (market && market.code !== cookieCode && !isBackgroundRequest) {

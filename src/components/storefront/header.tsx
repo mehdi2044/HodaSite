@@ -204,6 +204,7 @@ export async function Header({
             </Link>
             <CartDrawer
               locale={locale}
+              marketCode={market.code}
               currency={quote?.currency ?? cart?.currency ?? market.currency}
               marketMismatch={Boolean(
                 cart &&
@@ -255,6 +256,7 @@ export async function Header({
       </HeaderFrame>
       <MobileNavigation
         locale={locale}
+        marketCode={market.code}
         labels={{
           navigation: t("mobileStorefront.navigation"),
           home: t("mobileStorefront.home"),

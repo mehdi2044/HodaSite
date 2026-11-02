@@ -1,3 +1,9 @@
+## 2026-11-02 — S0، اصلاح مستقل Market Context؛ تحویل برای بازبینی مستقل
+
+Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D64, D70, D78.
+
+بر پایهٔ صریح PR86 در fa36ad1 و worktree مستقل؛ R-F02 با همان Variant پیش از اصلاح روی seed تازه بازتولید شد. بازار URL در GET و Server Action یکسان و پاسخ‌های قیمت/preview به context صفحه مقید شدند؛ مقصد کنترل کشور/زبان و سبد بازار را حفظ می‌کند. قیمت و stock/permission/quote از مسیرهای قبلی‌اند؛ هیچ تغییر طراحی، migration، WIP Hero یا دادهٔ preview قبلی انجام نشد. 9304 Unit/PG و تکرار4177 Unit، lint/TS و backup guards پاس‌اند؛ همهٔ۳۳ سناریوی مرورگر پس از اصلاح الگوی URL تست قدیمی موفق‌اند؛ build اولیه production پاس است و مشخصات artifact نهایی و تکرار آزمون‌های آن در بستهٔ تحویل ثبت می‌شوند. [گزارش و راه بررسی](reviews/S0_PRICE_CONTEXT_FA.md). هیچ PR/push/merge؛ پس از تحویل S0، انتظار بازبینی وی‌بانو، بدون شروع S1.
+
 ## 2026-11-01 — M4-01، قبول محلی و Draft برای بازبینی مستقل
 
 Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D70, D77, D78, D81.

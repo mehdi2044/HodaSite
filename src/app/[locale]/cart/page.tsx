@@ -227,7 +227,7 @@ export default async function CartPage({
               {!mismatch && (
                 <Link
                   className="button block text-center"
-                  href={`/${locale}/checkout`}
+                  href={`/${locale}/checkout?market=${encodeURIComponent(market.code)}`}
                 >
                   {t("checkout")}
                 </Link>
@@ -239,7 +239,7 @@ export default async function CartPage({
               {!mismatch && (
                 <Link
                   className="button mt-4 block text-center"
-                  href={`/${locale}/checkout?step=2`}
+                  href={`/${locale}/checkout?step=2&market=${encodeURIComponent(market.code)}`}
                 >
                   {t("checkout")}
                 </Link>

@@ -9,6 +9,7 @@ import {
   instantSelectionSchema,
   instantSnapshotSchema,
 } from "@/modules/fitting/instant-contract";
+import { sameFittingMarket } from "@/modules/fitting/market-context";
 import type { FittingProduct } from "./fitting-room";
 import type { resolveInstantSelection } from "@/modules/fitting/instant";
 import {
@@ -84,6 +85,24 @@ export function InstantFitting({
     root = useRef<HTMLElement>(null),
     stage = useRef<HTMLDivElement>(null),
     drag = useRef<number | null>(null);
+  async function loadCatalog(input: Parameters<typeof loadInstantCatalog>[1]) {
+    const result = await loadInstantCatalog(locale, input);
+    if (!result.ok) return result;
+    if (
+      !sameFittingMarket({ marketId, currency, locale }, result.value.context)
+    )
+      return { ok: false as const, error: "INVALID_SELECTION" };
+    return { ok: true as const, value: result.value.products };
+  }
+  async function preview(input: Parameters<typeof previewInstant>[1]) {
+    const result = await previewInstant(locale, input);
+    if (!result.ok) return result;
+    if (
+      !sameFittingMarket({ marketId, currency, locale }, result.value.context)
+    )
+      return { ok: false as const, error: "INVALID_SELECTION" };
+    return { ok: true as const, value: result.value.selection };
+  }
   const draftKey = `hoda.instant:${marketId}:${customerId ?? "guest"}`;
   const model = models.find((m) => m.id === modelId);
   useEffect(() => {
@@ -104,8 +123,8 @@ export function InstantFitting({
       const seq = sequence.current;
       try {
         const [next, current] = await Promise.all([
-          previewInstant(locale, { modelId, variantIds: ids }),
-          loadInstantCatalog(locale, { variantIds: ids }),
+          preview({ modelId, variantIds: ids }),
+          loadCatalog({ variantIds: ids }),
         ]);
         if (!active || seq !== sequence.current) return;
         if (current.ok)
@@ -182,7 +201,7 @@ export function InstantFitting({
       setReview(false);
       return;
     }
-    const result = await previewInstant(locale, {
+    const result = await preview({
       modelId: nextModel,
       variantIds: nextIds,
     });
@@ -195,7 +214,7 @@ export function InstantFitting({
       error(result.error);
       return;
     }
-    const current = await loadInstantCatalog(locale, { variantIds: nextIds });
+    const current = await loadCatalog({ variantIds: nextIds });
     if (seq !== sequence.current) return;
     if (current.ok) mergeCatalog(current.value);
     setIds(nextIds);
@@ -279,7 +298,7 @@ export function InstantFitting({
       .find((p) => p.variantId === variantId)
       ?.placements?.find((p) => p.model.id === modelId);
     if (!next) {
-      const single = await previewInstant(locale, {
+      const single = await preview({
         modelId,
         variantIds: [variantId],
       });
@@ -657,7 +676,7 @@ export function InstantFitting({
             onSubmit={(e) => {
               e.preventDefault();
               start(async () => {
-                const r = await loadInstantCatalog(locale, { query });
+                const r = await loadCatalog({ query });
                 if (r.ok) {
                   setProductCursor(r.value[0]?.nextProductCursor ?? null);
                   setCatalog((old) => [
@@ -712,7 +731,7 @@ export function InstantFitting({
                     start(async () => {
                       const after = variants.at(-1)?.nextCursor;
                       if (!after) return;
-                      const r = await loadInstantCatalog(locale, {
+                      const r = await loadCatalog({
                         productId,
                         after,
                       });
@@ -731,7 +750,7 @@ export function InstantFitting({
                 start(async () => {
                   const afterProduct = productCursor;
                   if (!afterProduct) return;
-                  const r = await loadInstantCatalog(locale, {
+                  const r = await loadCatalog({
                     query,
                     afterProduct,
                   });

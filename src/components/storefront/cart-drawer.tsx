@@ -10,6 +10,7 @@ import { StorefrontIcon } from "./storefront-icon";
 import { Iso } from "./iso";
 export function CartDrawer({
   locale,
+  marketCode,
   items,
   currency,
   subtotal,
@@ -18,6 +19,7 @@ export function CartDrawer({
   quoteUnavailable = false,
 }: {
   locale: string;
+  marketCode?: string;
   items: {
     id?: string;
     variantId?: string;
@@ -187,7 +189,7 @@ export function CartDrawer({
         )}
         <Link
           className="button"
-          href={`/${locale}/cart`}
+          href={`/${locale}/cart${marketCode ? `?market=${encodeURIComponent(marketCode)}` : ""}`}
           onClick={() => dialog.current?.close()}
         >
           {t("viewCart")}
