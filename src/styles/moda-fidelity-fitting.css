@@ -196,3 +196,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr12 .moda-fr-stage[data-reduced-motion="true"] { cursor:auto; }
 
 .moda-fr12 .moda-fr-heading [data-moda4-display] em { font-style:normal; font-weight:300; }
+
+.moda-fr12 { --moda-fr-border: color-mix(in srgb, var(--line, var(--text)) 12%, transparent); }
+
+.moda-fr12 .moda-fr-icon { width:16px; height:16px; }
