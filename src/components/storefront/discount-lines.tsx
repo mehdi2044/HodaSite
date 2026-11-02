@@ -1,13 +1,18 @@
 import { Iso } from "./iso";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
+import {
+  formatCartAmount,
+  formatStorefrontAmount,
+} from "@/modules/catalog/format";
 export function DiscountLines({
   lines,
   currency,
   locale,
+  cartDisplay = false,
 }: {
   lines: readonly { title: string; amount: string }[];
   currency: string;
   locale?: string;
+  cartDisplay?: boolean;
 }) {
   return lines.map((line, index) => (
     <div
@@ -20,7 +25,11 @@ export function DiscountLines({
         <Iso>
           −
           {locale
-            ? formatStorefrontAmount(line.amount, currency, locale)
+            ? (cartDisplay ? formatCartAmount : formatStorefrontAmount)(
+                line.amount,
+                currency,
+                locale,
+              )
             : `${line.amount} ${currency}`}
         </Iso>
       </dd>

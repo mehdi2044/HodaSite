@@ -71,6 +71,19 @@ export function formatStorefrontAmount(
   return `${new Decimal(amount).toString()} ${currency}`;
 }
 
+/** Customer cart display only. Never use the rounded text as quote/payment input. */
+export function formatCartAmount(
+  amount: Decimal.Value,
+  currency: string,
+  locale: string,
+) {
+  const displayed = new Decimal(amount).toFixed(
+    currency === "IRT" ? 0 : 2,
+    Decimal.ROUND_HALF_UP,
+  );
+  return formatStorefrontAmount(displayed, currency, locale);
+}
+
 /** Service units retain Decimal precision; never pass a wallet balance through Number. */
 export function formatServiceUnits(
   value: Decimal.Value,

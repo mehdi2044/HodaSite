@@ -126,6 +126,31 @@ for (const [locale, market] of [
       new RegExp(`/${locale}/cart\\?market=${market}$`),
     );
     await expect(page.locator(".shop-cart-item")).toContainText(price);
+    if (locale === "en") {
+      const amounts = await page
+        .locator(".shop-order-summary dd bdi")
+        .allTextContents();
+      expect(amounts.length).toBeGreaterThan(1);
+      for (const value of amounts)
+        expect(value.trim()).toMatch(/^CA\$[\d,]+\.\d{2}$/);
+      await page.locator(".storefront-cart-toggle").click();
+      const drawer = page.locator("dialog[open]");
+      await expect(drawer.locator(".moda-drawer-total bdi").last()).toHaveText(
+        amounts.at(-1)!,
+      );
+      await drawer
+        .getByRole("button", { name: messages.en.shopping.close, exact: true })
+        .click();
+      await info.attach("verified-CAD-unit-and-total", {
+        body: JSON.stringify({
+          variantId,
+          market,
+          unitPrice: price,
+          cartAmounts: amounts,
+        }),
+        contentType: "application/json",
+      });
+    }
     await page.screenshot({
       path: info.outputPath(`cart-${market}.png`),
       fullPage: true,

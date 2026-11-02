@@ -1,5 +1,5 @@
 import { variantImages } from "@/modules/catalog/variant-images";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
+import { formatCartAmount } from "@/modules/catalog/format";
 import { seoPath } from "@/lib/seo-urls";
 import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
@@ -213,12 +213,12 @@ export async function Header({
               )}
               subtotal={
                 quote
-                  ? formatStorefrontAmount(quote.subtotal, quote.currency, safe)
+                  ? formatCartAmount(quote.subtotal, quote.currency, safe)
                   : undefined
               }
               total={
                 quote
-                  ? formatStorefrontAmount(quote.total, quote.currency, safe)
+                  ? formatCartAmount(quote.total, quote.currency, safe)
                   : undefined
               }
               quoteUnavailable={Boolean(cart?.items.length && !quote)}
@@ -240,7 +240,7 @@ export async function Header({
                   price: quote?.items.find(
                     (line) => line.variantId === item.variantId,
                   )
-                    ? formatStorefrontAmount(
+                    ? formatCartAmount(
                         quote.items.find(
                           (line) => line.variantId === item.variantId,
                         )!.unitPrice,
