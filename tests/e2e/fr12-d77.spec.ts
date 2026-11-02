@@ -160,6 +160,8 @@ for (const [locale, market] of [
         const pose = await turn.getAttribute("data-yaw");
         await room.getByLabel(t.search, { exact: true }).focus();
         await expect(turn).toHaveAttribute("data-yaw", pose!);
+        await stage.press("Control+Home");
+        await expect(turn).toHaveAttribute("data-yaw", pose!);
         await page.setViewportSize({
           width: width === 390 ? 1440 : 390,
           height: 1000,

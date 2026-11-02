@@ -118,6 +118,9 @@ export function InstantFittingStage({
         onKeyDown={(event) => {
           if (
             !model ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.altKey ||
             reduced ||
             !["ArrowLeft", "ArrowRight", "Home"].includes(event.key)
           )
@@ -132,6 +135,9 @@ export function InstantFittingStage({
         onPointerDown={(event) => {
           if (
             !model ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.altKey ||
             reduced ||
             (event.pointerType === "mouse" && event.button !== 0)
           )
@@ -248,7 +254,7 @@ export function InstantFittingStage({
           disabled={!model || reduced}
           onClick={() => setYaw((value) => clampYaw(value - 25))}
         >
-          <span className="moda-fr-icon moda-fr-left" aria-hidden="true" />
+          <span className="moda-fr-icon moda-fr-right" aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -263,7 +269,7 @@ export function InstantFittingStage({
           disabled={!model || reduced}
           onClick={() => setYaw((value) => clampYaw(value + 25))}
         >
-          <span className="moda-fr-icon moda-fr-right" aria-hidden="true" />
+          <span className="moda-fr-icon moda-fr-left" aria-hidden="true" />
         </button>
         <button type="button" disabled={!canClear} onClick={onClear}>
           {t("clearSelection")}

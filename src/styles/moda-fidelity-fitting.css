@@ -73,7 +73,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 }
 .moda-fr12 .moda-fr-modes {
   display:flex; flex-wrap:wrap; align-items:center; gap:8px;
-  background:var(--surface); border:1px solid var(--border);
+  background:var(--surface); border:1px solid var(--moda-fr-border);
   border-radius:999px; padding:4px; font-size:13.5px;
 }
 .moda-fr12 .moda-fr-mode,
@@ -101,6 +101,8 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 }
 .moda-fr12 .moda-instant-models { padding:0; }
 .moda-fr12 .moda-instant-models button {
+  border: 1px solid var(--moda-fr-border);
+  background: transparent;
   border-radius:999px; font-size:13.5px; padding:0 16px;
 }
 .moda-fr12 .moda-instant-models button[aria-pressed="true"] {
@@ -168,7 +170,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 }
 .moda-fr12 .moda-fr-rotation button {
   min-width:44px; min-height:44px; padding:0 16px; border-radius:999px;
-  border:1px solid var(--border); background:var(--surface); font-size:13.5px;
+  border:1px solid var(--moda-fr-border); background:var(--surface); font-size:13.5px;
   display:inline-flex; align-items:center; justify-content:center;
 }
 .moda-fr12 .moda-fr-rotation button:has(.moda-fr-icon) { width:44px; padding:0; }
