@@ -13,7 +13,7 @@ test("canonical RSC prefetch preserves an explicit market even when Flight heade
 }) => {
   await ensureMaintenanceOff(page.request);
   await context.addCookies([
-    { name: "market", value: "TR", url: "http://127.0.0.1:3000" },
+    { name: "market", value: "TR", url: test.info().project.use.baseURL! },
   ]);
   const response = await page.request.get("/en/m/CA/c/women", {
     headers: {
@@ -59,7 +59,7 @@ test("canonical cart link refreshes the header and engagement market context", a
       {
         name: "hoda.cart",
         value: token,
-        url: "http://127.0.0.1:3000",
+        url: test.info().project.use.baseURL!,
         httpOnly: true,
       },
     ]);
