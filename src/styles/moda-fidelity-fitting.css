@@ -234,7 +234,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr3-image picture { display:flex; align-items:center; justify-content:center; min-width:0; width:100%; height:100%; background:none!important; }
 .moda-fr3-contained { display:block; width:auto; max-width:100%; height:96px; object-fit:contain; transition:transform .4s; }
 .moda-fr3-title { font-size:12px; font-weight:500; text-align:center; line-height:1.4; overflow-wrap:anywhere; }
-.moda-fr3-card .moda-instant-pick bdi { font-size:11px; }
+.moda-fr3-card > bdi { font-size:11px; }
 .moda-fr3-card .moda-instant-variant { margin-block-start:auto; }
 .moda-fr3-card .moda-instant-variant[open] { border-color:var(--moda-fr-border); }
 .moda-fr3-card .moda-instant-variant select { min-height:44px; }

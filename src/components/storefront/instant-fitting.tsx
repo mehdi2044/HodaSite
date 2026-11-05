@@ -191,19 +191,43 @@ export function InstantFitting({
   function error(code: string) {
     setMessage(t.has(`error_${code}`) ? t(`error_${code}`) : t("error"));
   }
-  function mergeCatalog(next: FittingProduct[], refreshedIds: string[] = []) {
+  function mergeCatalog(
+    next: FittingProduct[],
+    {
+      refreshedIds = [],
+      replaceVariantPages = false,
+    }: {
+      refreshedIds?: string[];
+      replaceVariantPages?: boolean;
+    } = {},
+  ) {
     setCatalog((old) => {
       const merged = new Map(old.map((item) => [item.variantId, item]));
       const returned = new Set(next.map((item) => item.variantId));
-      for (const id of refreshedIds) {
-        const item = merged.get(id);
-        if (item && !returned.has(id))
-          merged.set(id, {
+      const pages = replaceVariantPages
+        ? new Map(next.map((item) => [item.productId, item.nextCursor]))
+        : new Map<string, string | null | undefined>();
+      for (const item of old) {
+        if (returned.has(item.variantId)) continue;
+        if (refreshedIds.includes(item.variantId)) {
+          merged.set(item.variantId, {
             ...item,
             amount: null,
             available: false,
             placements: [],
           });
+        } else if (pages.has(item.productId)) {
+          // A new first page replaces cached options. Keep the exact selected
+          // variant while it may still be on a later page.
+          if (!ids.includes(item.variantId)) merged.delete(item.variantId);
+          else if (!pages.get(item.productId))
+            merged.set(item.variantId, {
+              ...item,
+              amount: null,
+              available: false,
+              placements: [],
+            });
+        }
       }
       for (const item of next) merged.set(item.variantId, item);
       return [...merged.values()];
@@ -229,7 +253,7 @@ export function InstantFitting({
       loadCatalog({ variantIds: nextIds }),
     ]);
     if (seq !== sequence.current) return;
-    if (current.ok) mergeCatalog(current.value, nextIds);
+    if (current.ok) mergeCatalog(current.value, { refreshedIds: nextIds });
     setIds(nextIds);
     if (!result.ok) {
       const validLayers = current.ok
@@ -533,7 +557,9 @@ export function InstantFitting({
                 try {
                   const result = await loadCatalog(input);
                   if (!result.ok) return error(result.error);
-                  mergeCatalog(result.value);
+                  mergeCatalog(result.value, {
+                    replaceVariantPages: !input.after,
+                  });
                   onSuccess(result.value);
                 } catch {
                   error("REQUEST_UNKNOWN");

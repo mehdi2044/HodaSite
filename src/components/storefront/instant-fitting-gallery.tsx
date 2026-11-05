@@ -324,12 +324,12 @@ function GalleryCard({
         <span className="moda-fr3-title" id={description}>
           {current.title}
         </span>
-        <bdi>
-          {current.amount !== null
-            ? formatStorefrontAmount(current.amount, currency, locale)
-            : t("galleryPriceUnavailable")}
-        </bdi>
       </button>
+      <bdi>
+        {current.amount !== null
+          ? formatStorefrontAmount(current.amount, currency, locale)
+          : t("galleryPriceUnavailable")}
+      </bdi>
       {status && <p className="moda-fr3-status">{status}</p>}
       <details className="moda-instant-variant">
         <summary>
@@ -349,6 +349,9 @@ function GalleryCard({
               })
             }
           >
+            <option value="" disabled>
+              {t("chooseVariant")}
+            </option>
             {variants.map((item) => (
               <option
                 key={item.variantId}
