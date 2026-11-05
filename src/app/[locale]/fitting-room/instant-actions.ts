@@ -1,5 +1,7 @@
 "use server";
 import { z } from "zod";
+import { CUTOUT_SLOTS } from "@/modules/catalog/cutouts/contracts";
+import { INSTANT_COMPOSITION_CAPACITY } from "@/modules/fitting/instant-contract";
 import { revalidatePath } from "next/cache";
 import { getRequestContext } from "@/lib/request-context";
 import { MaintenanceError } from "@/lib/mutation-gate";
@@ -47,13 +49,14 @@ export async function loadInstantCatalog(locale: string, input: unknown) {
     const v = z
       .object({
         query: z.string().max(100).default(""),
+        slot: z.enum(CUTOUT_SLOTS).optional(),
         productId: z.string().min(1).max(100).optional(),
         after: z.string().min(1).max(100).optional(),
         afterProduct: z.string().min(1).max(100).optional(),
         variantIds: z
           .array(z.string().min(1).max(100))
           .min(1)
-          .max(4)
+          .max(INSTANT_COMPOSITION_CAPACITY)
           .optional(),
       })
       .strict()

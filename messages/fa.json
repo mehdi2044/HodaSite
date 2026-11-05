@@ -2890,6 +2890,18 @@
     "signInNotice": "ایمیل برای ورود استفاده می‌شود. پیام‌های بازاریابی به انتخاب و تأیید جداگانهٔ شما نیاز دارند."
   },
   "instantFitting": {
+    "galleryTitle": "محصولات جدید",
+    "galleryCount": "{count, number} / {capacity, number}",
+    "galleryFilters": "گروه لباس",
+    "galleryAll": "همه",
+    "slot_TOP": "بالاتنه",
+    "slot_BOTTOM": "پایین‌تنه",
+    "slot_ONE_PIECE": "پیراهن / ست",
+    "slot_LAYER": "روپوش",
+    "slot_ACCESSORY": "اکسسوری",
+    "slot_SHOES": "کفش",
+    "galleryPriceUnavailable": "قیمت در دسترس نیست",
+    "galleryIncompatible": "برای این مانکن آماده نیست",
     "eyebrow": "استایل فوری",
     "title": "اتاق پروی فوری شما",
     "help": "تا چهار لباس واقعی را روی مدل فروشگاه ترکیب کنید. این پیش‌نمایش استایل است؛ اندازه‌گیری تن‌خور بدن یا عکس ساخته‌شده با هوش مصنوعی نیست.",

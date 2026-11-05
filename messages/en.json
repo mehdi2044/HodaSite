@@ -2890,6 +2890,18 @@
     "signInNotice": "Your email is used for sign-in. Marketing messages need your separate verified choice."
   },
   "instantFitting": {
+    "galleryTitle": "New arrivals",
+    "galleryCount": "{count, number} / {capacity, number}",
+    "galleryFilters": "Garment groups",
+    "galleryAll": "All",
+    "slot_TOP": "Tops",
+    "slot_BOTTOM": "Bottoms",
+    "slot_ONE_PIECE": "Dresses / sets",
+    "slot_LAYER": "Outerwear",
+    "slot_ACCESSORY": "Accessories",
+    "slot_SHOES": "Shoes",
+    "galleryPriceUnavailable": "Price unavailable",
+    "galleryIncompatible": "Unavailable for this model",
     "eyebrow": "Instant styling",
     "title": "Your instant fitting room",
     "help": "Combine up to four real garments on a store model. This is a styling preview, not a body-fit prediction or an AI-generated photograph.",

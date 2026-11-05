@@ -2890,6 +2890,18 @@
     "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
+    "galleryTitle": "Yeni ürünler",
+    "galleryCount": "{count, number} / {capacity, number}",
+    "galleryFilters": "Giysi grupları",
+    "galleryAll": "Tümü",
+    "slot_TOP": "Üst giyim",
+    "slot_BOTTOM": "Alt giyim",
+    "slot_ONE_PIECE": "Elbise / takım",
+    "slot_LAYER": "Dış giyim",
+    "slot_ACCESSORY": "Aksesuar",
+    "slot_SHOES": "Ayakkabı",
+    "galleryPriceUnavailable": "Fiyat mevcut değil",
+    "galleryIncompatible": "Bu manken için hazır değil",
     "eyebrow": "Anında stil",
     "title": "Anında prova odanız",
     "help": "Mağaza modelinde en fazla dört gerçek giysiyi birleştirin. Bu bir stil önizlemesidir; beden uyumu tahmini veya yapay zekâ fotoğrafı değildir.",

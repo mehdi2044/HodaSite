@@ -1,3 +1,13 @@
+## FR3 D77 fitting gallery — local review
+
+- Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D80, D81.
+- [Scope and acceptance](phases/phase-fr3.md). The gallery uses real catalog,
+  variant, slot and cutout data. Search, pagination, selection, restoration and
+  four model flows are available in the independent local preview.
+- FR4 composition, subtotal and final action presentation remain separate.
+  The private handoff records the exact revision, tests and comparison evidence
+  for Vee and owner review.
+
 ## 2026-11-02 — بازبینی S0، تفکیک snapshot CAD و نمایش مبلغ سبد
 
 
