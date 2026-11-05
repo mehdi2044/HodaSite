@@ -19,7 +19,7 @@ const layer = (page: Page, id: string) =>
 const ready = (page: Page) =>
   expect(room(page)).toHaveAttribute("aria-busy", "false");
 
-test.use({ hasTouch: true, reducedMotion: "reduce" });
+test.use({ hasTouch: true, contextOptions: { reducedMotion: "reduce" } });
 test.afterAll(() => db.$disconnect());
 
 async function variant(page: Page, key: string) {
@@ -89,7 +89,7 @@ for (const locale of ["fa", "tr", "en"] as const) {
       },
     });
     const colorOption = select.locator(`option[value="${alternateColor.id}"]`);
-    await expect(colorOption).toBeDisabled();
+    await expect(colorOption).toHaveJSProperty("disabled", true);
     await expect(colorOption).toContainText(t.galleryIncompatible);
     const next = await select
       .locator(`option:not(:disabled):not([value="${tee}"])`)
