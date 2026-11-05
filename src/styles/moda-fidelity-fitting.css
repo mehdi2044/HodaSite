@@ -206,18 +206,20 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr3-heading h2 { margin:0; border-radius:999px; padding:9px 16px; font-size:13.5px; font-weight:600; color:var(--background); background:var(--text); }
 .moda-fr3-heading bdi, .moda-fr3-card bdi { font-family:var(--font-ui-latin,Inter),sans-serif; font-variant-numeric:tabular-nums; color:var(--muted); font-size:12px; }
 .moda-fr3-filters { display:flex; flex-wrap:wrap; gap:6px; }
-.moda-fr3-filters button, .moda-fr3-tools button, .moda-fr3-more {
+.moda-instant .moda-fr3-gallery :is(.moda-fr3-filters,.moda-fr3-tools) button,
+.moda-instant .moda-fr3-gallery .moda-fr3-more {
   border:1px solid var(--moda-fr-border); border-radius:999px; padding:0 12px;
   min-height:36px; background:var(--surface); font-size:13px;
 }
-.moda-fr3-filters button[aria-pressed="true"] { outline:none; background:var(--text); color:var(--background); }
+.moda-instant .moda-fr3-gallery .moda-fr3-filters button[aria-pressed="true"] { background:var(--text); color:var(--background); }
+.moda-instant .moda-fr3-gallery .moda-fr3-filters button[aria-pressed="true"]:not(:focus-visible) { outline:none; }
 .moda-fr3-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
 .moda-fr3-tools form { display:flex; flex:1 1 230px; flex-wrap:nowrap; min-width:0; gap:6px; align-items:center; }
 .moda-fr3-tools .input { flex:1 1 0; width:0; min-width:0; min-height:44px; }
-.moda-fr3-tools button { flex:none; min-height:44px; }
+.moda-instant .moda-fr3-gallery .moda-fr3-tools button { flex:none; min-height:44px; }
 .moda-fr3-tools .moda-instant-ready { margin:0; }
-.moda-fr3-more { align-self:center; min-height:44px; }
-.moda-fr3-gallery .moda-fr3-card { position:relative; border-color:var(--moda-fr-border); gap:6px; scroll-margin-block:88px; }
+.moda-instant .moda-fr3-gallery .moda-fr3-more { align-self:center; min-height:44px; }
+.moda-fr3-gallery .moda-fr3-card { position:relative; border:1.5px solid var(--moda-fr-border); gap:6px; scroll-margin-block:88px; }
 .moda-fr3-gallery .moda-fr3-card:has(.moda-instant-pick[aria-pressed="true"]) {
   border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent);
 }
@@ -237,6 +239,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr3-card .moda-instant-variant[open] { border-color:var(--moda-fr-border); }
 .moda-fr3-card .moda-instant-variant select { min-height:44px; }
 .moda-fr3-status,.moda-fr3-empty { color:var(--muted); font-size:12px; text-align:center; }
+.moda-fr3-gallery :is(button,summary,input,select) { scroll-margin-block:calc(var(--storefront-header-height, 80px) + 12px) 92px; }
 .moda-fr3-gallery :is(button,summary,input,select):focus-visible,
 .moda-fr3-gallery .moda-instant-pick[aria-pressed="true"]:focus-visible { outline:2px solid var(--primaryText); outline-offset:2px; }
 @media (hover:hover) and (prefers-reduced-motion:no-preference) {
@@ -245,5 +248,5 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
   .moda-fr3-card .moda-instant-pick:not([aria-disabled="true"]):hover .moda-fr3-contained { transform:rotateY(14deg) scale(1.05); }
 }
 @media (max-width:760px) {
-  .moda-fr3-filters button,.moda-fr3-tools button { min-height:44px; }
+  .moda-instant .moda-fr3-gallery .moda-fr3-filters button { min-height:44px; }
 }

@@ -59,6 +59,10 @@ for (const locale of ["fa", "tr", "en"] as const) {
       "aria-pressed",
       "true",
     );
+    await expect(card(page, "women-knit")).toHaveCSS(
+      "border-top-style",
+      "solid",
+    );
     await expect(layer(page, knit)).toBeAttached();
     await expect(pick(page, "women-knit")).toBeFocused();
     const pants = await variant(page, "women-trousers");
