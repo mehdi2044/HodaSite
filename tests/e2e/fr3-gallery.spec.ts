@@ -82,6 +82,15 @@ for (const locale of ["fa", "tr", "en"] as const) {
     const select = card(page, "women-tee").getByRole("combobox", {
       name: t.variant,
     });
+    const alternateColor = await db.variant.findFirstOrThrow({
+      where: {
+        productId: productId("women-tee"),
+        colorId: "seed-color-charcoal",
+      },
+    });
+    const colorOption = select.locator(`option[value="${alternateColor.id}"]`);
+    await expect(colorOption).toBeDisabled();
+    await expect(colorOption).toContainText(t.galleryIncompatible);
     const next = await select
       .locator(`option:not(:disabled):not([value="${tee}"])`)
       .first()

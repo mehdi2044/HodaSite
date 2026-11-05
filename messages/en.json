@@ -2890,6 +2890,10 @@
     "signInNotice": "Your email is used for sign-in. Marketing messages need your separate verified choice."
   },
   "instantFitting": {
+    "anchor_HAND": "Bag",
+    "anchor_NECK": "Scarf",
+    "anchor_HEAD": "Hat",
+    "galleryApplyVariant": "Use Try on model to apply the change.",
     "galleryTitle": "New arrivals",
     "galleryCount": "{count, number} / {capacity, number}",
     "galleryFilters": "Garment groups",

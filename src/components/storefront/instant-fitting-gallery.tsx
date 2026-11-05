@@ -264,13 +264,20 @@ function GalleryCard({
   const slot = CUTOUT_SLOTS.find(
     (value) => value === (placement?.slot ?? current.slot),
   );
-  const status = !current.available
-    ? t("unavailable")
-    : current.amount === null
-      ? t("galleryPriceUnavailable")
-      : !placement
-        ? t("galleryIncompatible")
-        : null;
+  const statusFor = (item: FittingProduct) =>
+    !item.available
+      ? t("unavailable")
+      : item.amount === null
+        ? t("galleryPriceUnavailable")
+        : !placementFor(item)
+          ? t("galleryIncompatible")
+          : null;
+  const status = statusFor(current);
+  const group = placement?.anchor
+    ? t(`anchor_${placement.anchor}`)
+    : slot
+      ? t(`slot_${slot}`)
+      : null;
   return (
     <article
       className="moda-instant-product moda-fr3-card"
@@ -296,7 +303,7 @@ function GalleryCard({
           else if (ready(candidate)) choose(candidate.variantId);
         }}
       >
-        {slot && <em>{t(`slot_${slot}`)}</em>}
+        {group && <em>{group}</em>}
         <span className="moda-fr3-image">
           <ResponsiveImage
             media={
@@ -349,11 +356,14 @@ function GalleryCard({
                 disabled={!ready(item)}
               >
                 {item.color} · {item.size}
-                {!ready(item) ? ` · ${t("unavailable")}` : ""}
+                {statusFor(item) ? ` · ${statusFor(item)}` : ""}
               </option>
             ))}
           </select>
         </label>
+        {selected && proposed && selected.variantId !== proposed.variantId && (
+          <p className="moda-fr3-status">{t("galleryApplyVariant")}</p>
+        )}
         {more && (
           <button type="button" disabled={disabled} onClick={more}>
             {t("moreVariants")}

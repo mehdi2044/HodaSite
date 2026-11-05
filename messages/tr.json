@@ -2890,6 +2890,10 @@
     "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
+    "anchor_HAND": "Çanta",
+    "anchor_NECK": "Atkı",
+    "anchor_HEAD": "Şapka",
+    "galleryApplyVariant": "Değişikliği mankende dene düğmesiyle uygula.",
     "galleryTitle": "Yeni ürünler",
     "galleryCount": "{count, number} / {capacity, number}",
     "galleryFilters": "Giysi grupları",

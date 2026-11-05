@@ -2890,6 +2890,10 @@
     "signInNotice": "ایمیل برای ورود استفاده می‌شود. پیام‌های بازاریابی به انتخاب و تأیید جداگانهٔ شما نیاز دارند."
   },
   "instantFitting": {
+    "anchor_HAND": "کیف",
+    "anchor_NECK": "شال",
+    "anchor_HEAD": "کلاه",
+    "galleryApplyVariant": "تغییر را با دکمهٔ پرو روی مدل اعمال کنید.",
     "galleryTitle": "محصولات جدید",
     "galleryCount": "{count, number} / {capacity, number}",
     "galleryFilters": "گروه لباس",
