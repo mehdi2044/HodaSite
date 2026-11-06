@@ -76,6 +76,11 @@ test("FR3.1 locates all three accessories on four models on desktop and mobile",
     }
   }
   const total = await receipt.locator(".moda-fr31-total bdi").innerText();
+  const chosenVariants = await Promise.all(
+    accessories.map((kind) =>
+      room.locator(card(kind)).getAttribute("data-fitting-variant"),
+    ),
+  );
   await receipt.getByRole("button", { name: labels.addAll }).click();
   await expect(receipt.getByRole("status")).toHaveText(labels.added);
   if (process.env.FR31_EVIDENCE) {
@@ -84,7 +89,15 @@ test("FR3.1 locates all three accessories on four models on desktop and mobile",
   }
   await page.goto("/en/cart?market=CA");
   await expect(page.locator(".shop-cart-item")).toHaveCount(3);
-  await expect(page.getByText(total, { exact: true }).first()).toBeVisible();
+  const cartVariants = await page
+    .locator('.shop-cart-controls input[name="variantId"]')
+    .evaluateAll((nodes) =>
+      nodes.map((node) => (node as HTMLInputElement).value),
+    );
+  expect(cartVariants.sort()).toEqual(chosenVariants.sort());
+  await expect(
+    page.locator(".shop-order-summary dl > div").first().locator("dd"),
+  ).toHaveText(total);
 });
 
 test("FR3.1 dock opens real category and product with correct active state", async ({

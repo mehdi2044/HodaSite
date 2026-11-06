@@ -153,10 +153,9 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr12 .moda-fr-stage[data-paused="true"] .moda-fr-dress img { animation-play-state:paused; }
 .moda-fr12 .moda-fr-stage:is([data-dragging="true"],[data-paused="true"]) .moda-fr-turn { transition:none; }
 .moda-fr12 .moda-fr-drag-hint {
-  position:absolute; top:22px; left:50%; transform:translateX(-50%);
-  z-index:10; pointer-events:none; border-radius:999px; padding:6px 12px;
+  display:table; margin:4px auto 8px; border-radius:999px; padding:6px 12px;
   color:var(--muted); background:color-mix(in srgb,var(--surface) 80%,transparent);
-  font-size:12px; white-space:nowrap;
+  font-size:12px; text-align:center;
 }
 .moda-fr12 .moda-fr-stage:is([data-stage-model-kind="GIRL"],[data-stage-model-kind="BOY"]) {
   background:radial-gradient(ellipse at 50% 30%,var(--background),var(--kidsPink) 55%,var(--kidsMint));

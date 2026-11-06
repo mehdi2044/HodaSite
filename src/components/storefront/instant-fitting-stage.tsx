@@ -165,13 +165,6 @@ export function InstantFittingStage({
         onLostPointerCapture={endDrag}
         onBlur={endDrag}
       >
-        <span className="moda-fr-drag-hint">
-          {!model
-            ? t("noModels")
-            : reduced
-              ? t("motionReduced")
-              : t("dragHint")}
-        </span>
         <div
           data-moda4="tryon-turntable"
           data-yaw={yaw}
@@ -251,6 +244,9 @@ export function InstantFittingStage({
           </div>
         </div>
       </div>
+      <span className="moda-fr-drag-hint">
+        {!model ? t("noModels") : reduced ? t("motionReduced") : t("dragHint")}
+      </span>
       <div
         className="moda-fr-rotation"
         role="group"

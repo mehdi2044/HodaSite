@@ -410,7 +410,7 @@ export function CutoutEditor(props: Props) {
                         className="input"
                         type="number"
                         value={placement[field]}
-                        step={field === "zIndex" ? 1 : 0.01}
+                        step={field === "zIndex" ? 1 : "any"}
                         min={
                           field === "rotation"
                             ? -180
@@ -449,7 +449,7 @@ export function CutoutEditor(props: Props) {
                         type="number"
                         min={0}
                         max={0.49}
-                        step={0.01}
+                        step="any"
                         value={placement.mask?.[edge] ?? 0}
                         onChange={(event) =>
                           change({
