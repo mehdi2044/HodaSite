@@ -192,7 +192,9 @@ export function ModaCarousel({
         onPointerDown={(event) => {
           if (
             items.length < 2 ||
-            (event.target as Element).closest("a,button,input,select,textarea")
+            (event.target as Element).closest(
+              "a,button,input,select,textarea,summary",
+            )
           )
             return;
           drag.current = { x: event.clientX, id: event.pointerId };
