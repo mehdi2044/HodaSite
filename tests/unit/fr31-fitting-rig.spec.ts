@@ -20,7 +20,7 @@ const image = (id: string) => ({
   width: 420,
   height: 560,
 });
-const bag = { id: "seed-moda4-profile-accessories-bag", version: 1 };
+const bag = { id: "seed-moda4-profile-accessories-bag", version: 0 };
 
 describe("FR3.1 fitting geometry", () => {
   it("uses different positions for the actual mannequin artwork and preserves operator overrides", () => {
@@ -34,7 +34,7 @@ describe("FR3.1 fitting geometry", () => {
     expect(child.x).toBeCloseTo(256 / 420);
     expect(child.y).toBeGreaterThan(adult.y);
     expect(
-      instantPlacement(legacy, { ...bag, version: 2 }, image("woman")),
+      instantPlacement(legacy, { ...bag, version: 1 }, image("woman")),
     ).toBe(legacy);
     expect(
       instantPlacement(legacy, bag, {

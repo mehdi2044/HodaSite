@@ -125,7 +125,7 @@ export function instantPlacement(
   if (
     !preset ||
     !rig ||
-    profile.version !== 1 ||
+    profile.version !== 0 ||
     model.mediaId !== `seed-moda4-mannequin-${model.id}` ||
     model.width !== 420 ||
     model.height !== 560
