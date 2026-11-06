@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { SceneArt } from "./scene-art";
 import { LiveHomepage } from "./live-homepage";
 import { ModaHomepageBlock } from "./moda-homepage-block";
@@ -89,7 +90,10 @@ export async function HomepageBlocks({
   ]);
   return (
     <LiveHomepage preview={preview}>
-      <main className="shop-homepage" dir={locale === "fa" ? "rtl" : "ltr"}>
+      <HomepageLayout
+        locale={locale}
+        leadingHero={blocks[0]?.type === "HeroSlider"}
+      >
         {blocks.map((block, index) => {
           if (isModa4Block(block))
             return (
@@ -372,7 +376,34 @@ export async function HomepageBlocks({
             </section>
           );
         })}
-      </main>
+      </HomepageLayout>
     </LiveHomepage>
+  );
+}
+
+function HomepageLayout({
+  children,
+  locale,
+  leadingHero,
+}: {
+  children: ReactNode[];
+  locale: string;
+  leadingHero: boolean;
+}) {
+  return (
+    <main
+      className="shop-homepage"
+      dir={locale === "fa" ? "rtl" : "ltr"}
+      data-m4-leading-hero={leadingHero || undefined}
+    >
+      {leadingHero ? (
+        <>
+          {children[0]}
+          <div className="m4-home-remainder">{children.slice(1)}</div>
+        </>
+      ) : (
+        children
+      )}
+    </main>
   );
 }

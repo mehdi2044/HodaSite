@@ -559,18 +559,78 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
   }
 }
 
-/* Keep the real mobile navigation clear; the reference has no fixed bottom bar. */
-@media (max-width: 760px) {
+/* The viewport budget spans the real announcement, header, optional market
+   suggestion and hero rows. Only the hero row flexes; no client measurement
+   may resize the section after its controls have already been painted. */
+.m4-home-remainder {
+  display: contents;
+}
+@media (max-width: 760px),
+  (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
   .moda-carousel-hero {
-    height: calc(100svh - var(--m4-page-top, 36px) - var(--m4-nav-height, 0px));
+    height: calc(100svh - 36px - var(--storefront-nav-height, 0px));
+  }
+  @supports (grid-template-rows: subgrid) {
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: max-content max-content max-content 1fr auto auto;
+      --m4-fold-budget: calc(100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px));
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero])::before {
+      content: "";
+      grid-area: 1 / 1 / 5 / 2;
+      visibility: hidden;
+      pointer-events: none;
+      block-size: var(--m4-fold-budget);
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-announcement {
+      grid-area: 1 / 1;
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-header {
+      grid-area: 2 / 1;
+      align-self: start;
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > [data-moda4="geo-suggestion"] {
+      grid-area: 3 / 1;
+    }
+    #storefront-content:has(.shop-homepage[data-m4-leading-hero]),
+    #storefront-content > .moda-live-homepage:has(.shop-homepage[data-m4-leading-hero]),
+    #storefront-content .shop-homepage[data-m4-leading-hero] {
+      grid-column: 1;
+      grid-row: span 2;
+      display: grid;
+      grid-template-rows: subgrid;
+      min-width: 0;
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > #storefront-content {
+      grid-row: 4 / 6;
+    }
+    #storefront-content .shop-homepage[data-m4-leading-hero] > .moda-carousel-hero {
+      grid-row: 1;
+      height: auto;
+      align-self: stretch;
+    }
+    #storefront-content .shop-homepage[data-m4-leading-hero] > .m4-home-remainder {
+      display: flow-root;
+      grid-row: 2;
+      min-width: 0;
+    }
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-footer {
+      grid-area: 6 / 1;
+    }
   }
 }
 @media (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
   .moda-carousel-hero {
-    height: min(
-      88svh,
-      1000px,
-      calc(100svh - var(--m4-page-top, 36px) - var(--m4-nav-height, 0px))
+    height: min(88svh, 1000px, calc(100svh - 52px - var(--storefront-nav-height, 0px)));
+  }
+  /* Retain the portrait tablet height cap. The standard tablet
+     announcement occupies 52px and the hero overlaps the 72px header. */
+  .storefront-app:has(.shop-homepage[data-m4-leading-hero]) {
+    --m4-fold-budget: min(
+      calc(100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)),
+      calc(min(88svh, 1000px) + 52px)
     );
   }
 }

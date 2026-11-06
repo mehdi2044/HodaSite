@@ -35,18 +35,6 @@ function rectOf(el: Element | null, base: DOMRect): Rect | null {
 
 export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
   const win = slide.ownerDocument.defaultView!;
-  const hero = slide.closest<HTMLElement>("[data-moda4=hero]");
-  if (hero) {
-    const top = Math.max(0, hero.getBoundingClientRect().top + win.scrollY);
-    const nav = slide.ownerDocument.querySelector(
-      "[data-testid=mobile-bottom-navigation]",
-    );
-    hero.style.setProperty("--m4-page-top", `${top}px`);
-    hero.style.setProperty(
-      "--m4-nav-height",
-      `${nav?.getBoundingClientRect().height ?? 0}px`,
-    );
-  }
   const base = slide.getBoundingClientRect(),
     W = base.width,
     H = base.height;

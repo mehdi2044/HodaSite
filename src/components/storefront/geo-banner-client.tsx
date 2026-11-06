@@ -30,6 +30,7 @@ export function GeoBannerClient({
   return (
     <div
       role="note"
+      data-moda4="geo-suggestion"
       className="flex items-center justify-between gap-3 border-b border-black/5 bg-surface px-4 py-2 text-sm"
     >
       <span>{text}</span>
