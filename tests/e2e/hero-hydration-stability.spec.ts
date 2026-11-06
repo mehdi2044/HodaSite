@@ -6,7 +6,10 @@ const markets = [
   ["en", "CA"],
 ] as const;
 
-test.use({ hasTouch: true, reducedMotion: "reduce" });
+test.use({ hasTouch: true });
+test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+});
 
 async function box(locator: Locator) {
   const result = await locator.boundingBox();
