@@ -137,6 +137,7 @@ export default async function CutoutsAdmin({
         <button className="button">{t("search")}</button>
       </form>
       <CutoutEditor
+        staleModelIds={staleModelIds}
         productId={product.id}
         colorId={colorId}
         variantId={query.variant ?? null}
