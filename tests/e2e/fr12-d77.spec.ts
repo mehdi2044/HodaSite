@@ -48,7 +48,9 @@ async function choose(
   await expect(
     room.locator(`[data-fitting-piece-target="${variant.id}"]`),
   ).toBeAttached();
-  await expect(room.locator(".moda-instant-actions > button")).toBeEnabled();
+  await expect(
+    room.getByRole("button", { name: t.addAll, exact: true }),
+  ).toBeEnabled();
   return variant.id;
 }
 
@@ -189,7 +191,7 @@ for (const [locale, market] of [
           0,
         );
         await expect(
-          room.locator(".moda-instant-actions > button"),
+          room.getByRole("button", { name: t.addAll, exact: true }),
         ).toBeDisabled();
         await page.emulateMedia({ reducedMotion: "no-preference" });
         expect(
