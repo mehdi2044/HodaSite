@@ -2591,6 +2591,10 @@
     "chooseModel": "Choose a model"
   },
   "cutouts": {
+    "placementStale": "The Cutout or mannequin image changed after approval. Check the placement and confirm it again.",
+    "attachmentSuggest": "Suggest attachment position",
+    "attachmentHelp": "The suggestion uses the mannequin landmarks and Cutout image ratio. Check and adjust it before saving.",
+    "attachmentManual": "A suggestion is unavailable for this model or image. Adjust and confirm the position manually.",
     "placementView": "Placement view",
     "placementViews": {
       "front": "Front",
@@ -2903,6 +2907,12 @@
     "signInNotice": "Your email is used for sign-in. Marketing messages need your separate verified choice."
   },
   "instantFitting": {
+    "receiptEditVariant": "Edit color and size",
+    "receiptColor": "Color",
+    "receiptSize": "Size",
+    "receiptChooseSize": "Choose a size",
+    "receiptApplyVariant": "Apply selection",
+    "receiptRetryOptions": "Reload options",
     "dockFitting": "Fitting room",
     "receiptTitle": "Selected outfit",
     "receiptEmpty": "No pieces selected yet.",

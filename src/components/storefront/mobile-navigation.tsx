@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useFittingDockProduct } from "./fitting-dock-context";
 import { StorefrontIcon } from "./storefront-icon";
 export function MobileNavigation({
   locale,
@@ -11,7 +12,7 @@ export function MobileNavigation({
 }: {
   locale: string;
   marketCode?: string;
-  fittingLinks: { home: string; category: string; product: string };
+  fittingLinks: { home: string; category: string };
   labels: {
     navigation: string;
     home: string;
@@ -26,6 +27,7 @@ export function MobileNavigation({
   };
 }) {
   const pathname = usePathname();
+  const product = useFittingDockProduct()?.href;
   const params = useSearchParams();
   const inFitting =
     pathname.split("/")[2] === "fitting-room" ||
@@ -40,7 +42,9 @@ export function MobileNavigation({
       if (height > 0)
         document.documentElement.style.setProperty(
           "--storefront-nav-offset",
-          `calc(${height + dockGap}px - env(safe-area-inset-bottom, 0px))`,
+          inFitting
+            ? `${height + dockGap}px`
+            : `calc(${height}px - env(safe-area-inset-bottom, 0px))`,
         );
       else
         document.documentElement.style.removeProperty(
@@ -95,11 +99,22 @@ export function MobileNavigation({
   const fittingItems = [
     { key: "home", href: fittingLinks.home },
     { key: "category", href: fittingLinks.category },
-    { key: "product", href: fittingLinks.product },
+    {
+      key: "product",
+      href:
+        product ??
+        (segment === "p"
+          ? pathname
+          : local("fitting-room") + "#instant-gallery"),
+    },
     { key: "fitting", href: local("fitting-room") },
     { key: "login", href: local("account/login") },
     { key: "profile", href: local("account") },
   ] as const;
+  function fittingHref(href: string) {
+    const [path, hash] = href.split("#");
+    return `${path}${path.includes("?") ? "&" : "?"}fittingNav=1${hash ? "#" + hash : ""}`;
+  }
   return (
     <nav
       ref={nav}
@@ -112,7 +127,7 @@ export function MobileNavigation({
           {fittingItems.map((item) => (
             <Link
               key={item.key}
-              href={`${item.href}${item.href.includes("?") ? "&" : "?"}fittingNav=1`}
+              href={fittingHref(item.href)}
               prefetch={false}
               aria-current={fittingActive === item.key ? "page" : undefined}
             >

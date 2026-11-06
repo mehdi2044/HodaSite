@@ -2591,6 +2591,10 @@
     "chooseModel": "Model seçin"
   },
   "cutouts": {
+    "placementStale": "Kesit veya manken görseli son onaydan sonra değişti. Konumu kontrol edip yeniden onaylayın.",
+    "attachmentSuggest": "Bağlantı konumu öner",
+    "attachmentHelp": "Öneri mankenin bağlantı noktaları ve kesit görselinin oranına dayanır. Kaydetmeden önce kontrol edin ve ayarlayın.",
+    "attachmentManual": "Bu model veya görsel için öneri hesaplanamıyor. Konumu elle ayarlayıp onaylayın.",
     "placementView": "Yerleşim görünümü",
     "placementViews": {
       "front": "Ön",
@@ -2903,6 +2907,12 @@
     "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
+    "receiptEditVariant": "Renk ve beden düzenle",
+    "receiptColor": "Renk",
+    "receiptSize": "Beden",
+    "receiptChooseSize": "Beden seçin",
+    "receiptApplyVariant": "Seçimi uygula",
+    "receiptRetryOptions": "Seçenekleri tekrar yükle",
     "dockFitting": "Prova odası",
     "receiptTitle": "Seçilen kombin",
     "receiptEmpty": "Henüz parça seçilmedi.",

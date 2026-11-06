@@ -1,11 +1,14 @@
 "use client";
 import Link from "next/link";
+import { seoPath } from "@/lib/seo-urls";
+import { useFittingDockProduct } from "./fitting-dock-context";
 import Decimal from "decimal.js";
 import { ResponsiveImage } from "./responsive-image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import type { ResponsiveImageMedia } from "./responsive-image";
 import { InstantFittingGallery } from "./instant-fitting-gallery";
+import { ReceiptVariant } from "./receipt-variant";
 import { InstantFittingStage } from "./instant-fitting-stage";
 import {
   formatCartAmount,
@@ -73,6 +76,7 @@ export function InstantFitting({
     [view, setView] = useState<View | null>(null),
     [localLayers, setLocalLayers] = useState<View["layers"] | null>(null),
     [ids, setIds] = useState<string[]>([]),
+    [dockVariant, setDockVariant] = useState<string>(),
     [draftReady, setDraftReady] = useState(false),
     [name, setName] = useState(""),
     [message, setMessage] = useState(""),
@@ -111,6 +115,17 @@ export function InstantFitting({
     id,
     product: catalog.find((item) => item.variantId === id),
   }));
+  const selectDockProduct = useFittingDockProduct()?.select;
+  const dockProduct =
+    receiptRows.find((row) => row.id === dockVariant)?.product ??
+    receiptRows.at(-1)?.product;
+  const dockHref =
+    dockProduct?.productSlug && dockProduct.marketCode
+      ? seoPath(locale, dockProduct.marketCode, "p", dockProduct.productSlug)
+      : null;
+  useEffect(() => {
+    if (draftReady) selectDockProduct?.(dockHref);
+  }, [dockHref, draftReady, selectDockProduct]);
   const subtotal = receiptRows.every(({ product }) => product?.amount != null)
     ? receiptRows.reduce(
         (sum, { product }) => sum.plus(product!.amount!),
@@ -384,6 +399,7 @@ export function InstantFitting({
     }
     setLocalLayers([...keepLayers, next]);
     setIds([...keep, variantId]);
+    setDockVariant(variantId);
     setView(null);
     start(async () => {
       try {
@@ -393,6 +409,58 @@ export function InstantFitting({
         setView(null);
         setReview(true);
         error("REQUEST_UNKNOWN");
+      }
+    });
+  }
+  async function loadReceiptOptions(productId: string, after?: string) {
+    const result = await loadCatalog({ productId, after });
+    if (!result.ok) throw new Error(result.error);
+    return result.value;
+  }
+  function replaceReceiptVariant(from: string, to: string) {
+    if (pending || !ids.includes(from) || from === to) return;
+    const productId = catalog.find((v) => v.variantId === from)?.productId;
+    if (!productId) return;
+    const nextIds = ids.map((id) => (id === from ? to : id));
+    const seq = ++sequence.current;
+    setMessage("");
+    start(async () => {
+      try {
+        const [selection, current] = await Promise.all([
+          preview({ modelId, variantIds: nextIds }),
+          loadCatalog({ variantIds: nextIds }),
+        ]);
+        if (seq !== sequence.current) return;
+        if (!selection.ok) {
+          error(selection.error);
+          return;
+        }
+        if (!current.ok) {
+          error(current.error);
+          return;
+        }
+        const target = current.value.find((v) => v.variantId === to);
+        if (
+          target?.productId !== productId ||
+          !nextIds.every((id) =>
+            current.value.some(
+              (v) => v.variantId === id && v.available && v.amount !== null,
+            ),
+          )
+        ) {
+          error("INVALID_SELECTION");
+          return;
+        }
+        mergeCatalog(current.value, { refreshedIds: nextIds });
+        requestKey.current = crypto.randomUUID();
+        setIds(nextIds);
+        setDockVariant(to);
+        setView(selection.value);
+        setLocalLayers(null);
+        setConfirmed(false);
+        setReview(false);
+      } catch {
+        if (seq === sequence.current) error("REQUEST_UNKNOWN");
       }
     });
   }
@@ -600,7 +668,7 @@ export function InstantFitting({
             <ul className="moda-instant-pieces">
               {receiptRows.map(({ id, product: p }) => {
                 return (
-                  <li key={id}>
+                  <li key={p?.productId ?? id} data-receipt-variant={id}>
                     {p && (
                       <span className="moda-fr31-thumb">
                         <ResponsiveImage
@@ -624,11 +692,6 @@ export function InstantFitting({
                     )}
                     <span className="moda-fr31-row-copy">
                       <strong>{p?.title ?? t("unavailable")}</strong>
-                      {p && (
-                        <small>
-                          {p.color} · <bdi>{p.size}</bdi>
-                        </small>
-                      )}
                     </span>
                     <bdi>
                       {p?.amount
@@ -642,6 +705,15 @@ export function InstantFitting({
                     >
                       {t("remove")}
                     </button>
+                    {p && (
+                      <ReceiptVariant
+                        product={p}
+                        modelId={modelId}
+                        disabled={pending || review}
+                        load={loadReceiptOptions}
+                        replace={replaceReceiptVariant}
+                      />
+                    )}
                   </li>
                 );
               })}

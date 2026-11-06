@@ -15,6 +15,7 @@ import {
 import {
   cutoutClip,
   cutoutPlacementForView,
+  suggestFittingPlacement,
 } from "@/modules/catalog/cutouts/fitting-rig";
 import { projectCutout } from "@/modules/catalog/cutouts/geometry";
 import type { CutoutPreview } from "@/modules/catalog/cutouts/preview";
@@ -41,6 +42,7 @@ type Props = {
     archived: boolean;
   } | null;
   initialGeometry: CutoutGeometry;
+  staleModelIds: string[];
   initialImage: (Image & { id: string; fingerprint: string }) | null;
   models: Model[];
   markets: { id: string; code: string; enabledLocales: string[] }[];
@@ -216,6 +218,33 @@ export function CutoutEditor(props: Props) {
         };
       }),
     }));
+  const suggestionImage =
+    view?.image ??
+    (mediaId === props.initialImage?.id ? props.initialImage : null);
+  const slot = CUTOUT_SLOTS.find((value) => value === props.slot);
+  const suggestion =
+    selected && slot && suggestionImage
+      ? suggestFittingPlacement(
+          {
+            slot,
+            anchor: CUTOUT_ANCHORS.find((value) => value === anchor) ?? null,
+          },
+          {
+            id: selected.id,
+            mediaId: selected.mediaId,
+            width: selected.image.width,
+            height: selected.image.height,
+          },
+          suggestionImage,
+        )
+      : null;
+  function applySuggestion() {
+    if (!suggestion) return;
+    const { modelId: _model, views: _views, ...pose } = suggestion;
+    if (placement) change(pose);
+    else
+      setGeometry((old) => ({ ...old, models: [...old.models, suggestion] }));
+  }
   const navigate = (
     productId: string,
     colorId?: string,
@@ -361,9 +390,26 @@ export function CutoutEditor(props: Props) {
               !modelPlacement.views?.[angle] && (
                 <p>{t("placementInherited")}</p>
               )}
+            {selected && props.staleModelIds.includes(selected.id) && (
+              <p role="alert">{t("placementStale")}</p>
+            )}
             {selected && !placement && (
               <p role="alert">{t("placementMissing")}</p>
             )}
+            <div className="grid gap-2">
+              <p className="text-muted">
+                {t(suggestion ? "attachmentHelp" : "attachmentManual")}
+              </p>
+              {suggestion && (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={applySuggestion}
+                >
+                  {t("attachmentSuggest")}
+                </button>
+              )}
+            </div>
             {!placement ? (
               <button
                 type="button"

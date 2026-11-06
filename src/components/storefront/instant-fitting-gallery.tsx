@@ -118,7 +118,11 @@ export function InstantFittingGallery({
   }
 
   return (
-    <section className="moda-fr3-gallery" aria-label={t("galleryTitle")}>
+    <section
+      id="instant-gallery"
+      className="moda-fr3-gallery"
+      aria-label={t("galleryTitle")}
+    >
       <div className="moda-fr3-heading">
         <h2>{t("galleryTitle")}</h2>
         <bdi data-testid="instant-gallery-count" aria-live="polite">

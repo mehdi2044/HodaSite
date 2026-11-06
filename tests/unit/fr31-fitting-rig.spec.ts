@@ -5,6 +5,7 @@ import {
   cutoutPlacementForView,
   cutoutViewForYaw,
   instantPlacement,
+  suggestFittingPlacement,
 } from "@/modules/catalog/cutouts/fitting-rig";
 
 const legacy = placementSchema.parse({
@@ -20,7 +21,7 @@ const image = (id: string) => ({
   width: 420,
   height: 560,
 });
-const bag = { id: "seed-moda4-profile-accessories-bag", version: 0 };
+const bag = { slot: "ACCESSORY", anchor: "HAND", version: 0 };
 
 describe("FR3.1 fitting geometry", () => {
   it("uses different positions for the actual mannequin artwork and preserves operator overrides", () => {
@@ -42,6 +43,43 @@ describe("FR3.1 fitting geometry", () => {
         mediaId: "other-artwork",
       }),
     ).toBe(legacy);
+  });
+
+  it("proposes placements for real Cutout roles without product IDs", () => {
+    const media = { width: 120, height: 75 };
+    for (const anchor of ["HEAD", "NECK", "HAND"] as const) {
+      const woman = suggestFittingPlacement(
+        { slot: "ACCESSORY", anchor },
+        image("woman"),
+        media,
+      );
+      const boy = suggestFittingPlacement(
+        { slot: "ACCESSORY", anchor },
+        image("boy"),
+        media,
+      );
+      expect(woman?.height).toBeCloseTo(
+        (((woman!.width * 420) / 560) * 75) / 120,
+      );
+      expect(boy?.y).toBeGreaterThan(woman!.y);
+    }
+    const shoes = { slot: "SHOES", anchor: null } as const;
+    expect(
+      suggestFittingPlacement(shoes, image("woman"), media)?.y,
+    ).toBeGreaterThan(0.85);
+    expect(
+      suggestFittingPlacement(
+        shoes,
+        { ...image("woman"), mediaId: "custom" },
+        media,
+      ),
+    ).toBeNull();
+    expect(
+      suggestFittingPlacement(shoes, image("woman"), {
+        width: null,
+        height: null,
+      }),
+    ).toBeNull();
   });
 
   it("validates view overrides and keeps masks local to their authored placement", () => {

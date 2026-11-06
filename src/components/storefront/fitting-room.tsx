@@ -14,6 +14,10 @@ export type FittingProduct = {
   >;
   variantId: string;
   productId: string;
+  productSlug?: string;
+  marketCode?: string;
+  colorId?: string;
+  sizeId?: string;
   title: string;
   color: string;
   hex: string;

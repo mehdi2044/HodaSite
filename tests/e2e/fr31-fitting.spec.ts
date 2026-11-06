@@ -107,6 +107,14 @@ test("FR3.1 dock opens real category and product with correct active state", asy
   await page.goto("/fa/fitting-room?market=IR");
   const dock = page.locator(".moda-fr31-dock");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+  // The product destination now depends on a real selection.
+  await expect(
+    dock.getByRole("link", { name: "محصول", exact: true }),
+  ).toHaveAttribute("href", /#instant-gallery$/);
+  await page.locator(card("cap")).locator(".moda-instant-pick").click();
+  await expect(
+    dock.getByRole("link", { name: "محصول", exact: true }),
+  ).toHaveAttribute("href", /\/p\//);
   for (const [name, route] of [
     ["دسته", /\/c\//],
     ["محصول", /\/p\//],

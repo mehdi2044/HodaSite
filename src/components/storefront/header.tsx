@@ -40,7 +40,7 @@ export async function Header({
   logoWidth?: number;
 }) {
   const safe = locale as "fa" | "tr" | "en";
-  const [logo, desktopMenu, mobileMenu, t, departments, cart, dockProduct] =
+  const [logo, desktopMenu, mobileMenu, t, departments, cart] =
     await Promise.all([
       logoMediaId
         ? db.media.findFirst({
@@ -61,24 +61,6 @@ export async function Header({
         select: { id: true, titleI18n: true, slugI18n: true },
       }),
       readCart(),
-      db.product.findFirst({
-        where: {
-          status: "ACTIVE",
-          deletedAt: null,
-          coinPackCoins: null,
-          marketIds: { has: market.id },
-          category: { deletedAt: null },
-          variants: {
-            some: {
-              isActive: true,
-              color: { deletedAt: null },
-              size: { deletedAt: null },
-            },
-          },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-        select: { slugI18n: true, category: { select: { slugI18n: true } } },
-      }),
     ]);
   const departmentItems: PublicMenuItem[] = departments.flatMap((category) => {
     const slug = localizedValue(
@@ -101,12 +83,6 @@ export async function Header({
         ]
       : [];
   });
-  const dockSlug = (value: unknown) =>
-    localizedValue(value as Record<"fa" | "tr" | "en", string>, safe);
-  const productSlug = dockProduct ? dockSlug(dockProduct.slugI18n) : "";
-  const categorySlug = dockProduct
-    ? dockSlug(dockProduct.category.slugI18n)
-    : "";
   const complete = (items: PublicMenuItem[]): PublicMenuItem[] => {
     const missing = departmentItems.filter(
       (category) => !items.some((item) => item.href === category.href),
@@ -283,12 +259,9 @@ export async function Header({
         <MobileNavigation
           fittingLinks={{
             home: seoPath(safe, market.code),
-            category: categorySlug
-              ? seoPath(safe, market.code, "c", categorySlug)
-              : (departmentItems[0]?.href ?? `/${locale}/search`),
-            product: productSlug
-              ? seoPath(safe, market.code, "p", productSlug)
-              : `/${locale}/search`,
+            category:
+              departmentItems[0]?.href ??
+              `/${locale}/search?market=${encodeURIComponent(market.code)}`,
           }}
           locale={locale}
           marketCode={market.code}

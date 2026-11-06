@@ -2591,6 +2591,10 @@
     "chooseModel": "مدل را انتخاب کنید"
   },
   "cutouts": {
+    "placementStale": "تصویر لباس یا مانکن پس از آخرین تأیید تغییر کرده است. موقعیت را بررسی و دوباره تأیید کنید.",
+    "attachmentSuggest": "پیشنهاد موقعیت اتصال",
+    "attachmentHelp": "پیشنهاد از نقاط اتصال مانکن و نسبت تصویر Cutout می‌آید. پیش از ذخیره جای آن را بررسی و تنظیم کنید.",
+    "attachmentManual": "برای این مدل یا تصویر پیشنهاد قابل محاسبه نیست. جای لباس را دستی تنظیم و تأیید کنید.",
     "placementView": "نمای تنظیم",
     "placementViews": {
       "front": "روبه‌رو",
@@ -2903,6 +2907,12 @@
     "signInNotice": "ایمیل برای ورود استفاده می‌شود. پیام‌های بازاریابی به انتخاب و تأیید جداگانهٔ شما نیاز دارند."
   },
   "instantFitting": {
+    "receiptEditVariant": "ویرایش رنگ و سایز",
+    "receiptColor": "رنگ",
+    "receiptSize": "سایز",
+    "receiptChooseSize": "انتخاب سایز",
+    "receiptApplyVariant": "اعمال انتخاب",
+    "receiptRetryOptions": "دریافت دوبارهٔ گزینه‌ها",
     "dockFitting": "اتاق پرو",
     "receiptTitle": "ترکیب انتخاب‌شده",
     "receiptEmpty": "هنوز لباسی انتخاب نشده است.",
