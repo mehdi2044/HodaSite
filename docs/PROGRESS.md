@@ -1,3 +1,17 @@
+## FR3 D77 follow-up — color proof and Hero diagnosis
+
+- Browser evidence uses the existing Rayan hoodie variants at size 6Y. The
+  repository's sage garment is validated and saved through the authorized
+  cutout editor in an independent local catalog. Commercial data is unchanged.
+- The opt-in browser spec checks the two rendered images, stable price and
+  draft restoration. Fixture preparation, screenshots and logs are in the
+  private handoff.
+- The Hero touch issue predates FR3. On mobile, the first layout pass replaces
+  the server-rendered height defaults. In the reproduced race, the resulting
+  shift places the category CTA under the old price-button coordinate.
+- Local evidence is pending independent review. FR4 stays separate.
+
+
 ## FR3 D77 fitting gallery — local review
 
 - Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D80, D81.
