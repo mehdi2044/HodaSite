@@ -14,6 +14,7 @@ editor, fitting navigation, and selection receipt. FR3.2 is a design document.
   apply in the fitting room. Side views are rotations of the existing artwork.
 - The D77 dock is visible on the fitting page and on destinations opened from
   it. Canonical category/product destinations come from the active catalog.
+  Mobile also keeps the existing market-specific cart shortcut.
 - The white selection receipt uses current variant data and a Decimal display
   total. Cart and wardrobe use their existing authorized server mutations.
   Real view displays its unavailable state while the new service is pending.

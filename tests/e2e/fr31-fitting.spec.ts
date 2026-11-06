@@ -75,6 +75,7 @@ test("FR3.1 locates all three accessories on four models on desktop and mobile",
       await expect(row.locator(":scope > bdi")).toContainText("CA$");
     }
   }
+  await expect(dock.locator('a[href="/en/cart?market=CA"]')).toBeVisible();
   const total = await receipt.locator(".moda-fr31-total bdi").innerText();
   const chosenVariants = await Promise.all(
     accessories.map((kind) =>

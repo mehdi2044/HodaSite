@@ -107,8 +107,9 @@ export function MobileNavigation({
       aria-label={labels.navigation}
       data-testid="mobile-bottom-navigation"
     >
-      {inFitting
-        ? fittingItems.map((item) => (
+      {inFitting ? (
+        <>
+          {fittingItems.map((item) => (
             <Link
               key={item.key}
               href={`${item.href}${item.href.includes("?") ? "&" : "?"}fittingNav=1`}
@@ -117,24 +118,32 @@ export function MobileNavigation({
             >
               {labels[item.key]}
             </Link>
-          ))
-        : items.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              prefetch={
-                item.key === "cart" || item.key === "account"
-                  ? false
-                  : undefined
-              }
-              aria-current={active === item.key ? "page" : undefined}
-            >
-              <span className="mobile-nav-symbol">
-                <StorefrontIcon name={item.key} />
-              </span>
-              <span>{labels[item.key]}</span>
-            </Link>
           ))}
+          <Link
+            className="moda-fr31-cart-shortcut"
+            href={local("cart")}
+            prefetch={false}
+          >
+            {labels.cart}
+          </Link>
+        </>
+      ) : (
+        items.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            prefetch={
+              item.key === "cart" || item.key === "account" ? false : undefined
+            }
+            aria-current={active === item.key ? "page" : undefined}
+          >
+            <span className="mobile-nav-symbol">
+              <StorefrontIcon name={item.key} />
+            </span>
+            <span>{labels[item.key]}</span>
+          </Link>
+        ))
+      )}
     </nav>
   );
 }
