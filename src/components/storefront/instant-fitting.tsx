@@ -1,11 +1,16 @@
 "use client";
 import Link from "next/link";
+import Decimal from "decimal.js";
+import { ResponsiveImage } from "./responsive-image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import type { ResponsiveImageMedia } from "./responsive-image";
 import { InstantFittingGallery } from "./instant-fitting-gallery";
 import { InstantFittingStage } from "./instant-fitting-stage";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
+import {
+  formatCartAmount,
+  formatStorefrontAmount,
+} from "@/modules/catalog/format";
 import {
   INSTANT_COMPOSITION_CAPACITY,
   instantSelectionSchema,
@@ -102,6 +107,16 @@ export function InstantFitting({
   }
   const draftKey = `hoda.instant:${marketId}:${customerId ?? "guest"}`;
   const model = models.find((m) => m.id === modelId);
+  const receiptRows = ids.map((id) => ({
+    id,
+    product: catalog.find((item) => item.variantId === id),
+  }));
+  const subtotal = receiptRows.every(({ product }) => product?.amount != null)
+    ? receiptRows.reduce(
+        (sum, { product }) => sum.plus(product!.amount!),
+        new Decimal(0),
+      )
+    : null;
   useEffect(() => {
     if (!view || !ids.length || pending) return;
     let active = true,
@@ -569,16 +584,51 @@ export function InstantFitting({
             choose={(id) => void choose(id)}
             remove={remove}
           />
-          <div className="moda-fr-existing-selection">
+          <section className="moda-fr31-receipt" aria-label={t("receiptTitle")}>
+            <h3>
+              {t("receiptTitle")}{" "}
+              <span>
+                {t("galleryCount", {
+                  count: ids.length,
+                  capacity: INSTANT_COMPOSITION_CAPACITY,
+                })}
+              </span>
+            </h3>
+            {!ids.length && (
+              <p className="moda-fr31-empty">{t("receiptEmpty")}</p>
+            )}
             <ul className="moda-instant-pieces">
-              {ids.map((id) => {
-                const p = catalog.find((v) => v.variantId === id);
+              {receiptRows.map(({ id, product: p }) => {
                 return (
                   <li key={id}>
-                    <span>
-                      {p
-                        ? `${p.title} · ${p.color} · ${p.size}`
-                        : t("unavailable")}
+                    {p && (
+                      <span className="moda-fr31-thumb">
+                        <ResponsiveImage
+                          media={
+                            p.placements?.find(
+                              (layer) => layer.model.id === modelId,
+                            )?.media ?? {
+                              url: p.url,
+                              width: null,
+                              height: null,
+                              variants: {},
+                              blurDataUrl: null,
+                              altI18n: {},
+                            }
+                          }
+                          locale={locale}
+                          sizes="38px"
+                          imgClassName="moda-fr31-thumb-img"
+                        />
+                      </span>
+                    )}
+                    <span className="moda-fr31-row-copy">
+                      <strong>{p?.title ?? t("unavailable")}</strong>
+                      {p && (
+                        <small>
+                          {p.color} · <bdi>{p.size}</bdi>
+                        </small>
+                      )}
                     </span>
                     <bdi>
                       {p?.amount
@@ -620,6 +670,14 @@ export function InstantFitting({
                 )}
               </div>
             )}
+            <div className="moda-fr31-total">
+              <span>{t("receiptTotal")}</span>
+              <bdi>
+                {subtotal === null
+                  ? t("unavailable")
+                  : formatCartAmount(subtotal, currency, locale)}
+              </bdi>
+            </div>
             <p role="status">{message}</p>
             <div className="moda-instant-actions">
               <button
@@ -647,6 +705,14 @@ export function InstantFitting({
                 }
               >
                 {t("addAll")}
+              </button>
+              <button
+                type="button"
+                className="button moda-fr31-ai"
+                disabled
+                aria-describedby="instant-real-view-note"
+              >
+                {t("realView")}
               </button>
               {customerId ? (
                 <div className="moda-instant-save">
@@ -677,7 +743,10 @@ export function InstantFitting({
                 </Link>
               )}
             </div>
-          </div>
+            <p id="instant-real-view-note" className="moda-fr31-empty">
+              {t("realViewUnavailable")}
+            </p>
+          </section>
         </div>
       </div>
       <p className="moda-fr-disclaimer">{t("help")}</p>

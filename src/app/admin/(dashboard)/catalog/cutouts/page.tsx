@@ -1,3 +1,4 @@
+import { instantPlacement } from "@/modules/catalog/cutouts/fitting-rig";
 import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
@@ -140,7 +141,24 @@ export default async function CutoutsAdmin({
             : null
         }
         initialGeometry={
-          geometry.success ? geometry.data : { version: 1, models: [] }
+          geometry.success && row
+            ? {
+                ...geometry.data,
+                models: geometry.data.models.map((placement) => {
+                  const model = models.find(
+                    (item) => item.id === placement.modelId,
+                  );
+                  return model
+                    ? instantPlacement(placement, row, {
+                        id: model.id,
+                        mediaId: model.mediaId,
+                        width: model.image.width,
+                        height: model.image.height,
+                      })
+                    : placement;
+                }),
+              }
+            : { version: 1, models: [] }
         }
         initialImage={
           media

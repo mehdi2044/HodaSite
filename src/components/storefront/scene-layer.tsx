@@ -1,5 +1,6 @@
 import { ResponsiveImage } from "./responsive-image";
 import type { SceneLayer } from "@/modules/content/scenes/resolve";
+import { cutoutClip } from "@/modules/catalog/cutouts/fitting-rig";
 import { projectCutout } from "@/modules/catalog/cutouts/geometry";
 import type { ShoppableScene } from "@/modules/content/scenes/contracts";
 export function SceneLayerImage({
@@ -39,6 +40,7 @@ export function SceneLayerImage({
         width: `${projected.width * 100}%`,
         height: `${projected.height * 100}%`,
         zIndex: projected.zIndex + 21,
+        clipPath: instant ? cutoutClip(layer.geometry) : undefined,
         transform: `translate(-50%, -50%) rotate(${projected.rotation}deg)`,
       }}
     >

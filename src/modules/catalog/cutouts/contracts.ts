@@ -10,9 +10,14 @@ export const CUTOUT_SLOTS = [
 ] as const;
 export const CUTOUT_ANCHORS = ["HAND", "NECK", "HEAD"] as const;
 export const MODEL_KINDS = ["WOMAN", "MAN", "GIRL", "BOY"] as const;
-export const placementSchema = z
+const cutoutMask = z
   .object({
-    modelId: id,
+    top: z.number().min(0).max(0.49),
+    bottom: z.number().min(0).max(0.49),
+  })
+  .strict();
+const poseSchema = z
+  .object({
     x: z.number().min(0).max(1),
     y: z.number().min(0).max(1),
     width: z.number().min(0.01).max(1.5),
@@ -20,8 +25,16 @@ export const placementSchema = z
     scale: z.number().min(0.2).max(3).default(1),
     rotation: z.number().min(-180).max(180).default(0),
     zIndex: z.number().int().min(-20).max(100).default(0),
+    mask: cutoutMask.optional(),
   })
   .strict();
+export const placementSchema = poseSchema.extend({
+  modelId: id,
+  views: z
+    .object({ left: poseSchema.optional(), right: poseSchema.optional() })
+    .strict()
+    .optional(),
+});
 export const cutoutGeometrySchema = z
   .object({
     version: z.literal(1),

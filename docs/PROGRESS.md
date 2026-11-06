@@ -1,3 +1,10 @@
+## FR3.1 D77 fitting room — local review
+
+- [Phase scope](phases/phase-fr3-1.md) and [FR3.2 design only](phases/phase-fr3-2-design-fa.md).
+- Per-model attachment calibration, view-specific Cutout geometry and masks,
+  the fitting navigation dock, and the selection receipt are in local review.
+- Real view is disabled in the receipt pending the separate service decision.
+
 ## FR3 D77 follow-up — color proof and Hero diagnosis
 
 - Browser evidence uses the existing Rayan hoodie variants at size 6Y. The

@@ -7,6 +7,7 @@ import {
   CUTOUT_ANCHORS,
 } from "./contracts";
 import { imageFingerprint, storeCutoutModels } from "./models";
+import { instantPlacement } from "./fitting-rig";
 import type { Media, Prisma } from "@prisma/client";
 export function cutoutPublicImage(media: Media) {
   return {
@@ -103,17 +104,19 @@ export async function resolveCutoutPlacement(
   marketId: string,
   modelId: string,
   client: Prisma.TransactionClient = db,
+  instant = false,
 ) {
   const current = await currentCatalogCutout(variantId, marketId, client);
   if (!current) return null;
   const model = (await storeCutoutModels(client)).find(
     (choice) => choice.id === modelId,
   );
-  return placementFor(current, model);
+  return placementFor(current, model, instant);
 }
 function placementFor(
   current: NonNullable<Awaited<ReturnType<typeof currentCatalogCutout>>>,
   model: Awaited<ReturnType<typeof storeCutoutModels>>[number] | undefined,
+  instant = false,
 ) {
   const modelId = model?.id;
   const placement = current.geometry.models.find(
@@ -138,7 +141,14 @@ function placementFor(
     slot: current.row.slot as (typeof CUTOUT_SLOTS)[number],
     anchor: current.row.anchor as (typeof CUTOUT_ANCHORS)[number] | null,
     media: cutoutPublicImage(current.row.media),
-    geometry: placement,
+    geometry: instant
+      ? instantPlacement(placement, current.row, {
+          id: model.id,
+          mediaId: model.mediaId,
+          width: model.image.width,
+          height: model.image.height,
+        })
+      : placement,
     model: {
       id: model.id,
       kind: model.kind,
@@ -158,7 +168,7 @@ export async function publicCutoutPlacements(
   const current = await currentCatalogCutout(variantId, marketId);
   if (!current) return [];
   return (await storeCutoutModels()).flatMap((model) => {
-    const layer = placementFor(current, model);
+    const layer = placementFor(current, model, true);
     return layer ? [layer] : [];
   });
 }

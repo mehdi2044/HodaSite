@@ -45,7 +45,7 @@ export async function resolveInstantSelection(
   if (!model) throw new FittingError("INVALID_SELECTION");
   const layers = await Promise.all(
     input.variantIds.map((id) =>
-      resolveCutoutPlacement(id, marketId, model.id, tx),
+      resolveCutoutPlacement(id, marketId, model.id, tx, true),
     ),
   );
   if (

@@ -2591,6 +2591,19 @@
     "chooseModel": "Model seçin"
   },
   "cutouts": {
+    "placementView": "Yerleşim görünümü",
+    "placementViews": {
+      "front": "Ön",
+      "left": "Sol",
+      "right": "Sağ"
+    },
+    "placementInherited": "Bu görünüm ön yerleşimi kullanır.",
+    "placementMissing": "Bu model için yerleşim ayarlanmadı.",
+    "resetPlacementView": "Ön yerleşime dön",
+    "mask": {
+      "top": "Üst maske (0–0,49)",
+      "bottom": "Alt maske (0–0,49)"
+    },
     "title": "Kesilmiş görseller ve model geometrisi",
     "intro": "Aynı ürün ve rengin saydam görselini seçin; her model için yerleşimi ayrı ayarlayın.",
     "product": "Ürün",
@@ -2890,6 +2903,15 @@
     "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
+    "receiptTitle": "Seçilen kombin",
+    "receiptEmpty": "Henüz parça seçilmedi.",
+    "receiptTotal": "Toplam",
+    "realView": "Gerçek görünüm",
+    "realViewUnavailable": "Gerçek görünüm, hizmet bağlandığında açılır.",
+    "dockCategory": "Kategori",
+    "dockProduct": "Ürün",
+    "dockLogin": "Giriş / kayıt",
+    "dockProfile": "Profil",
     "anchor_HAND": "Çanta",
     "anchor_NECK": "Atkı",
     "anchor_HEAD": "Şapka",
@@ -2925,12 +2947,12 @@
     "error_REQUEST_CONFLICT": "İstek ilk kayıtlı sürümle eşleşmiyor.",
     "error_MAINTENANCE": "Mağaza bakımda. Lütfen sonra deneyin.",
     "added": "Güncel fiyatlarla çantaya eklendi.",
-    "addAll": "Seçili tüm giysileri ekle",
+    "addAll": "Tümünü sepete ekle",
     "name": "Kombin adı",
-    "save": "Özel olarak kaydet",
+    "save": "Dolaba kaydet",
     "update": "Kombini güncelle",
     "saved": "Kaydedildi",
-    "loginSave": "Bu kombini kaydetmek için giriş yapın",
+    "loginSave": "Dolaba kaydetmek için giriş yap",
     "search": "Giysi ara",
     "empty": "Eşleşen giysi yok.",
     "moreProducts": "Daha fazla ürün",

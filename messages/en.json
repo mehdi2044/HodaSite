@@ -2591,6 +2591,19 @@
     "chooseModel": "Choose a model"
   },
   "cutouts": {
+    "placementView": "Placement view",
+    "placementViews": {
+      "front": "Front",
+      "left": "Left",
+      "right": "Right"
+    },
+    "placementInherited": "This view uses the front placement.",
+    "placementMissing": "Placement is missing for this model.",
+    "resetPlacementView": "Use front placement",
+    "mask": {
+      "top": "Top mask (0–0.49)",
+      "bottom": "Bottom mask (0–0.49)"
+    },
     "title": "Cutouts and model geometry",
     "intro": "Choose the transparent image of this product and color; adjust each model independently.",
     "product": "Product",
@@ -2890,6 +2903,15 @@
     "signInNotice": "Your email is used for sign-in. Marketing messages need your separate verified choice."
   },
   "instantFitting": {
+    "receiptTitle": "Selected outfit",
+    "receiptEmpty": "No pieces selected yet.",
+    "receiptTotal": "Total",
+    "realView": "Real view",
+    "realViewUnavailable": "Real view becomes available when the service is connected.",
+    "dockCategory": "Category",
+    "dockProduct": "Product",
+    "dockLogin": "Sign in / register",
+    "dockProfile": "Profile",
     "anchor_HAND": "Bag",
     "anchor_NECK": "Scarf",
     "anchor_HEAD": "Hat",
@@ -2925,12 +2947,12 @@
     "error_REQUEST_CONFLICT": "This request no longer matches its original saved version.",
     "error_MAINTENANCE": "The shop is under maintenance. Please try later.",
     "added": "Added to your bag at current prices.",
-    "addAll": "Add all selected garments",
+    "addAll": "Add all to cart",
     "name": "Look name",
-    "save": "Save privately",
+    "save": "Save to wardrobe",
     "update": "Update saved look",
     "saved": "Saved",
-    "loginSave": "Sign in to save this look",
+    "loginSave": "Sign in to save to wardrobe",
     "search": "Search garments",
     "empty": "No matching garments.",
     "moreProducts": "More products",

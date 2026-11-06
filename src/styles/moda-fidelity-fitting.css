@@ -250,3 +250,59 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 @media (max-width:760px) {
   .moda-instant .moda-fr3-gallery .moda-fr3-filters button { min-height:44px; }
 }
+
+/* FR3.1 — D77 outfit receipt and fitting navigation. */
+.moda-fr12 .moda-fr31-receipt {
+  display:grid; gap:10px; margin-block-start:20px; padding:18px;
+  border-radius:18px; color:var(--text); background:var(--surface);
+  scroll-margin-block-end:84px;
+}
+.moda-fr31-receipt h3 {
+  display:flex; justify-content:space-between; gap:8px; margin:0; font-size:15px; font-weight:600;
+}
+.moda-fr31-receipt h3 span,.moda-fr31-empty,.moda-fr31-row-copy small {color:var(--muted);font-size:12px;}
+.moda-fr12 .moda-fr31-receipt .moda-instant-pieces {margin:0;padding:0;gap:0;}
+.moda-fr12 .moda-fr31-receipt .moda-instant-pieces li {
+  display:grid; grid-template-columns:44px minmax(0,1fr) auto auto; gap:8px; align-items:center;
+  border:0; border-block-start:1px solid var(--border); padding:8px 0; border-radius:0; font-size:13px;
+}
+.moda-fr31-thumb {
+  display:grid; place-items:center; width:44px; height:44px; border-radius:10px; background:var(--sand);
+}
+.moda-fr31-thumb-img {width:38px;height:38px;object-fit:contain;}
+.moda-fr31-row-copy {display:grid;gap:2px;overflow-wrap:anywhere;}
+.moda-fr31-receipt li>button {min-height:44px; padding-inline:5px;}
+.moda-fr31-receipt li>bdi {white-space:nowrap;}
+.moda-fr31-total {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  border-block-start:1.5px solid var(--text); padding-block-start:12px;
+}
+.moda-fr31-total bdi {font-size:clamp(18px,4vw,26px); font-weight:600;}
+.moda-fr31-receipt [role="status"]:empty {display:none;}
+.moda-fr12 .moda-fr31-receipt .moda-instant-actions {gap:8px;}
+.moda-fr31-receipt .moda-instant-actions>.button:first-child {
+  color:var(--surface); background:var(--text); border-color:var(--text);
+}
+.moda-fr31-receipt .moda-instant-actions>.moda-fr31-ai {
+  color:var(--text); background:var(--primary); border-color:var(--primary);
+}
+.moda-fr31-receipt .moda-instant-actions :is(.button,.button-outline) {min-height:44px;border-radius:999px;}
+.mobile-bottom-nav.moda-fr31-dock {
+  display:flex; position:fixed; inset:auto; left:18px;
+  bottom:calc(18px + env(safe-area-inset-bottom,0px)); z-index:40;
+  gap:2px; padding:5px; min-height:0; border:0; border-radius:999px;
+  background:rgba(20,18,16,.94); color:white; box-shadow:0 14px 30px #0004;
+}
+.mobile-bottom-nav.moda-fr31-dock a {
+  display:grid; place-items:center; padding:8px 13px; min-height:44px; border-radius:999px;
+  font-size:12.5px; white-space:nowrap; color:inherit;
+}
+.mobile-bottom-nav.moda-fr31-dock a[aria-current="page"] {background:var(--primary);color:#171310;}
+.mobile-bottom-nav.moda-fr31-dock a:focus-visible {outline:2px solid white;outline-offset:-3px;}
+@media (max-width:1023px) {
+  .mobile-bottom-nav.moda-fr31-dock {
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));left:8px;right:8px;
+    bottom:calc(8px + env(safe-area-inset-bottom,0px));border-radius:24px;
+  }
+  .mobile-bottom-nav.moda-fr31-dock a {white-space:normal;padding:4px 3px;font-size:11px;}
+}

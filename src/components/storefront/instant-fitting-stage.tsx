@@ -8,6 +8,10 @@ type FittingLayer = Awaited<
 >["layers"][number];
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
 import { SceneLayerImage } from "./scene-layer";
+import {
+  cutoutViewForYaw,
+  cutoutPlacementForView,
+} from "@/modules/catalog/cutouts/fitting-rig";
 
 type Dress = { layer: FittingLayer; phase: "enter" | "steady" | "exit" };
 const motionQuery = "(prefers-reduced-motion: reduce)";
@@ -61,6 +65,7 @@ export function InstantFittingStage({
   );
   const [yaw, setYaw] = useState(-14);
   const [dragging, setDragging] = useState(false);
+  const view = reduced ? "front" : cutoutViewForYaw(yaw);
   const drag = useRef<{ x: number; yaw: number; pointer: number } | null>(null);
   const [dresses, setDresses] = useState<Dress[]>(() =>
     layers.map((layer) => ({ layer, phase: "enter" })),
@@ -104,6 +109,7 @@ export function InstantFittingStage({
         data-dragging={dragging}
         data-paused={hidden}
         data-stage-model-kind={model?.kind}
+        data-stage-view={view}
         data-reduced-motion={reduced}
         className="moda-instant-stage moda-fr-stage"
         tabIndex={0}
@@ -195,51 +201,53 @@ export function InstantFittingStage({
               </div>
             )}
             {model &&
-              dresses.map(({ layer, phase }) => (
-                <div
-                  key={layer.variantId}
-                  className="moda-fr-dress"
-                  data-motion={phase}
-                  aria-hidden="true"
-                  style={{
-                    transform: `translateZ(${Math.max(-20, Math.min(45, layer.geometry.zIndex * 9))}px)`,
-                    zIndex: layer.geometry.zIndex + 21,
-                  }}
-                  onAnimationEnd={(event) => {
-                    const finished =
-                      event.animationName === "moda-fr-dress-out"
-                        ? "exit"
-                        : event.animationName === "moda-fr-dress-in"
-                          ? "enter"
-                          : null;
-                    if (!finished) return;
-                    setDresses((old) =>
-                      old.flatMap((row) =>
-                        row.layer.variantId !== layer.variantId ||
-                        row.phase !== finished
-                          ? [row]
-                          : finished === "exit"
-                            ? []
-                            : [{ ...row, phase: "steady" }],
-                      ),
-                    );
-                  }}
-                >
-                  <SceneLayerImage
-                    instant
-                    pieceId={layer.variantId}
-                    layer={layer}
-                    model={model.media}
-                    locale={locale}
-                    frame={{
-                      mediaId: frameMediaId,
-                      fit: "contain",
-                      aspect: "3:4",
-                      focal: { x: 0.5, y: 0.5 },
+              dresses.map(({ layer, phase }) => {
+                const geometry = cutoutPlacementForView(layer.geometry, view);
+                return (
+                  <div
+                    key={layer.variantId}
+                    className="moda-fr-dress"
+                    data-motion={phase}
+                    aria-hidden="true"
+                    style={{
+                      zIndex: geometry.zIndex + 21,
                     }}
-                  />
-                </div>
-              ))}
+                    onAnimationEnd={(event) => {
+                      const finished =
+                        event.animationName === "moda-fr-dress-out"
+                          ? "exit"
+                          : event.animationName === "moda-fr-dress-in"
+                            ? "enter"
+                            : null;
+                      if (!finished) return;
+                      setDresses((old) =>
+                        old.flatMap((row) =>
+                          row.layer.variantId !== layer.variantId ||
+                          row.phase !== finished
+                            ? [row]
+                            : finished === "exit"
+                              ? []
+                              : [{ ...row, phase: "steady" }],
+                        ),
+                      );
+                    }}
+                  >
+                    <SceneLayerImage
+                      instant
+                      pieceId={layer.variantId}
+                      layer={{ ...layer, geometry }}
+                      model={model.media}
+                      locale={locale}
+                      frame={{
+                        mediaId: frameMediaId,
+                        fit: "contain",
+                        aspect: "3:4",
+                        focal: { x: 0.5, y: 0.5 },
+                      }}
+                    />
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>
