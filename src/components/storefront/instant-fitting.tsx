@@ -679,6 +679,19 @@ export function InstantFitting({
               </bdi>
             </div>
             <p role="status">{message}</p>
+            {customerId && (
+              <div className="moda-instant-save">
+                <label>
+                  {t("name")}
+                  <input
+                    className="input"
+                    value={name}
+                    maxLength={120}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </label>
+              </div>
+            )}
             <div className="moda-instant-actions">
               <button
                 className="button"
@@ -715,25 +728,14 @@ export function InstantFitting({
                 {t("realView")}
               </button>
               {customerId ? (
-                <div className="moda-instant-save">
-                  <label>
-                    {t("name")}
-                    <input
-                      className="input"
-                      value={name}
-                      maxLength={120}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </label>
-                  <button
-                    className="button"
-                    type="button"
-                    disabled={pending || !view || !ids.length || !name.trim()}
-                    onClick={() => start(save)}
-                  >
-                    {editing ? t("update") : t("save")}
-                  </button>
-                </div>
+                <button
+                  className="button-outline"
+                  type="button"
+                  disabled={pending || !view || !ids.length || !name.trim()}
+                  onClick={() => start(save)}
+                >
+                  {editing ? t("update") : t("save")}
+                </button>
               ) : (
                 <Link
                   className="button-outline"

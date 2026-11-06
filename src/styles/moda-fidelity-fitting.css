@@ -263,7 +263,7 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 .moda-fr12 .moda-fr31-receipt .moda-instant-pieces {margin:0;padding:0;gap:0;}
 .moda-fr12 .moda-fr31-receipt .moda-instant-pieces li {
   display:grid; grid-template-columns:44px minmax(0,1fr) auto auto; gap:8px; align-items:center;
-  border:0; border-block-start:1px solid var(--border); padding:8px 0; border-radius:0; font-size:13px;
+  border:0; border-block-start:1px solid var(--moda-fr-border); padding:8px 0; border-radius:0; font-size:13px;
 }
 .moda-fr31-thumb {
   display:grid; place-items:center; width:44px; height:44px; border-radius:10px; background:var(--sand);
@@ -278,14 +278,17 @@ html[lang="fa"] .moda-fr12 .moda-fr-heading :is(h1,h2) { text-align:right; }
 }
 .moda-fr31-total bdi {font-size:clamp(18px,4vw,26px); font-weight:600;}
 .moda-fr31-receipt [role="status"]:empty {display:none;}
-.moda-fr12 .moda-fr31-receipt .moda-instant-actions {gap:8px;}
+.moda-fr12 .moda-fr31-receipt .moda-instant-actions {display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .moda-fr31-receipt .moda-instant-actions>.button:first-child {
-  color:var(--surface); background:var(--text); border-color:var(--text);
+  --button-fill:var(--text); color:var(--surface); background:var(--text); border-color:var(--text);
 }
 .moda-fr31-receipt .moda-instant-actions>.moda-fr31-ai {
-  color:var(--text); background:var(--primary); border-color:var(--primary);
+  --button-fill:var(--primary); color:var(--text); background:var(--primary); border-color:var(--primary);
 }
-.moda-fr31-receipt .moda-instant-actions :is(.button,.button-outline) {min-height:44px;border-radius:999px;}
+.moda-fr31-receipt .moda-instant-actions :is(.button,.button-outline) {width:auto;min-height:44px;padding-inline:18px;border-radius:999px;}
+html[data-button-style="crayon"] .moda-fr31-receipt .moda-instant-actions>.button:first-child {color:var(--surface);background:transparent;}
+html[data-button-style="crayon"] .moda-fr31-receipt .moda-instant-actions>.moda-fr31-ai {background:transparent;}
+.moda-fr31-receipt .moda-instant-actions>.button-outline {border:1px solid var(--text);color:var(--text);}
 .mobile-bottom-nav.moda-fr31-dock {
   display:flex; position:fixed; inset:auto; left:18px;
   bottom:calc(18px + env(safe-area-inset-bottom,0px)); z-index:40;
