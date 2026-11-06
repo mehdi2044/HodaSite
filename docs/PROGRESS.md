@@ -1464,3 +1464,7 @@ Local focused38 tests /10files PASS for core/image/model/media-lock/variant-pric
 ### FR3.1b — local fitting room review
 
 Independent branch from FR3.1. The mobile dock follows the selected product, the Cutout editor offers semantic model attachment suggestions, and receipt rows change real color/size variants before purchase. See [phase scope and checks](phases/phase-fr3-1b.md). Visual approval remains pending. FR3.2 remains a design document.
+
+### Hero hydration stability — FR3.1b acceptance follow-up
+
+The stacked leading Hero uses a CSS viewport budget from first paint. See [scope and checks](phases/phase-hero-hydration-stability.md). To verify manually, load the homepage in a narrow viewport under network throttling and use the first price chip; the same target should open the in-Hero purchase sheet. FR3.2 remains untouched and owner acceptance is pending.
