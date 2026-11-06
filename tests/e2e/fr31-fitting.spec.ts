@@ -18,7 +18,9 @@ test("FR3.1 locates all three accessories on four models on desktop and mobile",
   const stage = room.locator('[data-moda4="tryon-stage"]');
   const receipt = room.getByRole("region", { name: labels.receiptTitle });
   const dock = page.locator(".moda-fr31-dock");
-  await expect(dock.locator('a[aria-current="page"]')).toHaveText(labels.title);
+  await expect(dock.locator('a[aria-current="page"]')).toHaveText(
+    labels.dockFitting,
+  );
   await expect(dock.getByRole("link")).toHaveCount(6);
 
   await expect(

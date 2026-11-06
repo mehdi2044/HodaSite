@@ -36,10 +36,11 @@ export function MobileNavigation({
     if (!element) return;
     const observe = () => {
       const height = element.getBoundingClientRect().height;
+      const dockGap = inFitting ? 8 : 0;
       if (height > 0)
         document.documentElement.style.setProperty(
           "--storefront-nav-offset",
-          `calc(${height}px - env(safe-area-inset-bottom, 0px))`,
+          `calc(${height + dockGap}px - env(safe-area-inset-bottom, 0px))`,
         );
       else
         document.documentElement.style.removeProperty(

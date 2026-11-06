@@ -2903,6 +2903,7 @@
     "signInNotice": "Your email is used for sign-in. Marketing messages need your separate verified choice."
   },
   "instantFitting": {
+    "dockFitting": "Fitting room",
     "receiptTitle": "Selected outfit",
     "receiptEmpty": "No pieces selected yet.",
     "receiptTotal": "Total",

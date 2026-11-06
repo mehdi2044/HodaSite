@@ -300,7 +300,7 @@ export async function Header({
             account: t("commerce.account"),
             category: t("instantFitting.dockCategory"),
             product: t("instantFitting.dockProduct"),
-            fitting: t("instantFitting.title"),
+            fitting: t("instantFitting.dockFitting"),
             login: t("instantFitting.dockLogin"),
             profile: t("instantFitting.dockProfile"),
           }}

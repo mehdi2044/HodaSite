@@ -2903,6 +2903,7 @@
     "signInNotice": "E-postan giriş için kullanılır. Pazarlama mesajları ayrıca doğruladığın tercihe bağlıdır."
   },
   "instantFitting": {
+    "dockFitting": "Prova odası",
     "receiptTitle": "Seçilen kombin",
     "receiptEmpty": "Henüz parça seçilmedi.",
     "receiptTotal": "Toplam",
