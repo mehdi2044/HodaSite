@@ -107,7 +107,10 @@ test("FR3.1b receipt edits real color and size and buys exactly the displayed co
   const before = await hoodieLayer.getAttribute("src");
   await row.locator("summary").click();
   await row
-    .getByLabel(en.instantFitting.receiptColor, { exact: true })
+    .getByRole("combobox", {
+      name: en.instantFitting.receiptColor,
+      exact: true,
+    })
     .selectOption("seed-color-sage");
   const apply = row.getByRole("button", {
     name: en.instantFitting.receiptApplyVariant,
@@ -116,7 +119,10 @@ test("FR3.1b receipt edits real color and size and buys exactly the displayed co
   await apply.click();
   await expect(row).toHaveAttribute("data-receipt-variant", /-sage-4y$/);
   await expect(hoodieLayer).not.toHaveAttribute("src", before!);
-  const size = row.getByLabel(en.instantFitting.receiptSize, { exact: true });
+  const size = row.getByRole("combobox", {
+    name: en.instantFitting.receiptSize,
+    exact: true,
+  });
   const sizeValue = await size
     .locator("option")
     .filter({ hasText: /^8\s*Y$/i })
