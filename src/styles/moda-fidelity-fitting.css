@@ -314,6 +314,7 @@ html[data-button-style="crayon"] .moda-fr31-receipt .moda-instant-actions>.moda-
   .storefront-app:has(.moda-fr31-dock) { --storefront-nav-height: 109px; }
   .mobile-bottom-nav.moda-fr31-dock {
     grid-template-columns:repeat(12,minmax(0,1fr)); gap:2px;
+    background:#171512;
     padding:5px; bottom:calc(8px + env(safe-area-inset-bottom,0px));
   }
   .mobile-bottom-nav.moda-fr31-dock a {
