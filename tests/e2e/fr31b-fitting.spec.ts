@@ -189,4 +189,13 @@ test("FR3.1b Cutout panel proposes and previews an attachment before approval", 
   await expect(x).toHaveValue("0.5");
   await expect(page.getByTestId("cutout-visual")).toBeVisible();
   await expect(form.getByLabel(c.confirm, { exact: true })).not.toBeChecked();
+
+  await page.goto(
+    "/admin/catalog/cutouts?product=seed-moda4-style-men-tee&color=seed-color-navy",
+  );
+  await form
+    .getByRole("combobox", { name: c.model, exact: true })
+    .selectOption("man");
+  await expect(form.getByRole("alert")).toContainText(c.placementMissing);
+  await expect(form.getByText(c.attachmentManual)).toBeVisible();
 });
