@@ -2742,6 +2742,7 @@
     "resumeShort": "Resume"
   },
   "modaAdmin": {
+    "heroFramePreviewWidth": "Preview width (pixels)",
     "heroFramingHelp": "Adjust each slide’s framing for each screen size. Images are never mirrored; keep the head and face below the header and copy on empty image space. Check the actual preview.",
     "heroFrame_compact": "Small mobile (up to 375px)",
     "heroFrame_mobile": "Mobile (376–413px)",

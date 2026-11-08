@@ -2742,6 +2742,7 @@
     "resumeShort": "Sürdür"
   },
   "modaAdmin": {
+    "heroFramePreviewWidth": "Önizleme genişliği (piksel)",
     "heroFramingHelp": "Her slaytın kadrajını ekran boyutuna göre ayarlayın. Görsel aynalanmaz; baş ve yüz üstbilginin altında, metin görselin boş alanında kalmalıdır. Gerçek önizlemeyi kontrol edin.",
     "heroFrame_compact": "Küçük mobil (375 piksele kadar)",
     "heroFrame_mobile": "Mobil (376–413 piksel)",
