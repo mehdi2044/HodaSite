@@ -1475,3 +1475,18 @@ Local verification completed: unchanged 33 storefront regressions, 12 fitting/Cu
 Hero photographs start below the real header row in normal CSS flow, avoiding logo/face overlap while retaining the first-paint viewport budget. Per-slide optional focal/zoom settings support three mobile widths, tablet and desktop; existing content retains its source framing. See [scope and acceptance](phases/phase-hero-headroom.md). Owner visual review remains pending; no FR3.2, paid API or publication.
 
 Local completion evidence: 25 new headroom/admin/short-viewport browser cases, 10 hydration/input cases, unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 25 Fidelity cases / 146 criteria, and the fresh isolated full 9,328-test / 181-file Unit/PostgreSQL run passed. Lint, typecheck and production build passed. The final browser queue used a fresh database and ran sequentially. Initial test setup/SSR-stream synchronization failures and an expired draft-audit transaction during an overlapping QA attempt remain in the local report; no assertion or transaction timeout was weakened. Physical phones and independent owner visual acceptance remain open. No push, PR or merge.
+
+
+### Shared D77 floating storefront navigation — local review handoff
+
+Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D81.
+
+One shared black dock now replaces the white mobile menu and appears on direct public storefront entry on desktop. Six real market-aware destinations use a validated current PDP, a real fitting selection, or the catalog/gallery fallback. No temporary navigation query or arbitrary product identity is required. Fitting's mobile cart shortcut and header cart remain. Checkout/payment/order detail routes suppress the dock; dialogs hide it without changing its layout budget.
+
+An optional boolean in the existing theme JSON is editable through the authorized/audited theme action. Missing legacy settings default to enabled; legacy form payloads preserve an existing disabled value. No schema, migration, money, inventory, payment, wallet or AI-provider change was made. See [scope and acceptance](phases/phase-global-floating-navigation.md) and the Persian setup guide.
+
+Local verification: 30 navigation/mobile browser cases, unchanged 33 storefront regressions, 12 fitting/Cutout cases, 25 headroom cases, 10 hydration/native-input cases, and 25 Fidelity cases / 146 criteria passed. A fresh isolated full Unit/PostgreSQL run passed 9,349 cases in 182 files after migration/seed. Lint, typecheck, production build, backup guards and isolated backup/restore passed. The original Hero frame/photo/copy remains intact; only its desktop controller row excludes the dock footprint. A dedicated four-slide/three-language geometry case also verifies no unintended scrolling or target overlap.
+
+Earlier visibility-only test locators, mobile fitting width inheritance, over-constrained desktop Hero sizing, full-width scroll padding, and a test-selector encoding error were diagnosed rather than hidden by looser criteria or longer timeouts. Initial logs and the actual before/after matrix stay in the private local review bundle. Owned runtime revision metadata was corrected without changing the image or Build ID. Protected previews and the 358-file WIP hash baseline were retained; the pre-existing Ops restart loop remains outside this change.
+
+Owner visual acceptance and independent review remain pending. Chromium viewport emulation is not physical-device/WebKit acceptance. No push, PR, merge, public release or FR3.2 work.
