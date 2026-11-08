@@ -98,12 +98,8 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
 }) => {
   const { fillAdminMfa } = await import("./helpers/admin-mfa");
   await page.goto("/admin/login");
-  await page
-    .locator('[name="email"]')
-    .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
-  await page
-    .locator('[name="password"]')
-    .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+  await page.locator('[name="email"]').fill(process.env.ADMIN_EMAIL!);
+  await page.locator('[name="password"]').fill(process.env.ADMIN_PASSWORD!);
   await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
@@ -136,7 +132,8 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
         ),
     )
     .toBe("1.15");
-  const widthControl = page.getByLabel("عرض پیش‌نمایش (پیکسل)", {
+  const widthControl = page.getByRole("combobox", {
+    name: "عرض پیش‌نمایش (پیکسل)",
     exact: true,
   });
   for (const otherWidth of ["360", "430"]) {
