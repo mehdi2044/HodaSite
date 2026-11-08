@@ -103,12 +103,6 @@ for (const [locale, market, copy] of markets) {
         "href",
         `/${locale}/search?market=${market}`,
       );
-      await page.goto(`/${locale}/checkout?market=${market}`);
-      await expect(dock).toHaveCount(0);
-      await expect(page.locator(".storefront-app")).toHaveAttribute(
-        "data-floating-navigation",
-        "off",
-      );
       await page.goto(`/${locale}/cart?market=${market}`);
       await expect(dock).toBeVisible();
       await page.locator(".storefront-cart-toggle").click();

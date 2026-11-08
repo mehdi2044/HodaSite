@@ -176,3 +176,15 @@ body:has(dialog[open]) .storefront-floating-nav {
     }
   }
 }
+
+/* Keep the first following section out of the dock's reserved band. */
+.storefront-app[data-floating-navigation="on"]
+  .shop-homepage[data-m4-leading-hero]
+  > .m4-home-remainder {
+  padding-block-start: var(--storefront-nav-height);
+}
+html:has(.storefront-app[data-floating-navigation="on"]) {
+  scroll-padding-block-end: calc(
+    var(--storefront-nav-offset, 84px) + env(safe-area-inset-bottom, 0px) + 16px
+  );
+}
