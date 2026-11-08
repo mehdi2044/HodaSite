@@ -185,13 +185,13 @@ test("admin can disable and restore the shared dock through authorized theme set
 }) => {
   await page.goto("/admin/login");
   await page
-    .getByLabel("ایمیل")
+    .getByLabel("Ø§ÛŒÙ…ÛŒÙ„")
     .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
   await page
-    .getByLabel("رمز عبور")
+    .getByLabel("Ø±Ù…Ø² Ø¹Ø¨ÙˆØ±")
     .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
   await fillAdminMfa(page);
-  await page.getByRole("button", { name: "ورود امن" }).click();
+  await page.getByRole("button", { name: "ÙˆØ±ÙˆØ¯ Ø§Ù…Ù†" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
   await page.goto("/admin/settings/theme");
@@ -202,7 +202,7 @@ test("admin can disable and restore the shared dock through authorized theme set
   await expect(toggle).toBeChecked();
   try {
     await toggle.uncheck();
-    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await page.getByRole("button", { name: "Ø°Ø®ÛŒØ±Ù‡", exact: true }).click();
     await expect(page.locator("p[role=status]")).toBeVisible();
     await page.goto("/fa/m/IR");
     await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
@@ -210,7 +210,7 @@ test("admin can disable and restore the shared dock through authorized theme set
   } finally {
     await page.goto("/admin/settings/theme");
     await toggle.check();
-    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await page.getByRole("button", { name: "Ø°Ø®ÛŒØ±Ù‡", exact: true }).click();
     await expect(page.locator("p[role=status]")).toBeVisible();
   }
   await page.goto("/fa/m/IR");
@@ -238,20 +238,35 @@ test("desktop dock preserves the original Hero frame and excludes all visible pu
       for (let slide = 0; slide < 4; slide++) {
         await tabs.nth(slide).click();
         await page.evaluate(() => scrollTo(0, 0));
-        const n = await dock.boundingBox();
-        const targets = hero.locator(
-          '[data-moda4="hero-slide"]:visible button:visible, .moda-carousel-controls button:visible, [data-moda4="hero-slide"]:visible a:visible',
-        );
-        for (const target of await targets.all()) {
-          const t = await target.boundingBox();
-          if (!t) continue;
-          expect(
-            t.x < n!.x + n!.width &&
-              t.x + t.width > n!.x &&
-              t.y < n!.y + n!.height &&
-              t.y + t.height > n!.y,
-          ).toBe(false);
-        }
+        await expect(
+          hero.locator('[data-moda4="hero-slide"]:visible'),
+        ).toHaveAttribute("data-slide", String(slide));
+        const snapshot = await hero
+          .locator(
+            '[data-moda4="hero-slide"]:visible button:visible, .moda-carousel-controls button:visible, [data-moda4="hero-slide"]:visible a:visible',
+          )
+          .evaluateAll((nodes) => {
+            const n = document
+              .querySelector('[data-testid="mobile-bottom-navigation"]')!
+              .getBoundingClientRect();
+            const overlapping = nodes
+              .filter((node) => {
+                const t = node.getBoundingClientRect();
+                return (
+                  t.left < n.right &&
+                  t.right > n.left &&
+                  t.top < n.bottom &&
+                  t.bottom > n.top
+                );
+              })
+              .map((node) => ({
+                text: node.textContent,
+                className: node.className,
+              }));
+            return { count: nodes.length, overlapping };
+          });
+        expect(snapshot.count).toBeGreaterThanOrEqual(7);
+        expect(snapshot.overlapping).toEqual([]);
       }
     }
   }
