@@ -1490,3 +1490,10 @@ Local verification: 30 navigation/mobile browser cases, unchanged 33 storefront 
 Earlier visibility-only test locators, mobile fitting width inheritance, over-constrained desktop Hero sizing, full-width scroll padding, and a test-selector encoding error were diagnosed rather than hidden by looser criteria or longer timeouts. Initial logs and the actual before/after matrix stay in the private local review bundle. Owned runtime revision metadata was corrected without changing the image or Build ID. Protected previews and the 358-file WIP hash baseline were retained; the pre-existing Ops restart loop remains outside this change.
 
 Owner visual acceptance and independent review remain pending. Chromium viewport emulation is not physical-device/WebKit acceptance. No push, PR, merge, public release or FR3.2 work.
+
+
+### Floating navigation — narrow mobile label follow-up
+
+Mobile tracks now respect each translated word's minimum width, with normal word boundaries instead of arbitrary character wrapping. The existing 13px text, 76px dock height, 84px layout budget, black/orange treatment and minimum 44px targets remain. No labels, routes, Hero/fitting layout, data, schema or money code changed.
+
+Local verification: 9 new whole-word/geometry/touch/focus cases (FA/TR/EN at 360/390/430), 65 existing navigation/mobile/headroom/hydration cases, and the fresh full 9,349-case / 182-file Unit/PostgreSQL suite passed. Lint, typecheck and production build passed. Nine final images and paired before/after views remain in the private review bundle. The previous delivery branch, running services, 358-file WIP baseline and original D77 hash were retained. Owner visual review remains pending; no push, PR, merge or public release.
