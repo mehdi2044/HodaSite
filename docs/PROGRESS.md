@@ -1468,3 +1468,5 @@ Independent branch from FR3.1. The mobile dock follows the selected product, the
 ### Hero hydration stability — FR3.1b acceptance follow-up
 
 The stacked leading Hero uses a CSS viewport budget from first paint. See [scope and checks](phases/phase-hero-hydration-stability.md). To verify manually, load the homepage in a narrow viewport under network throttling and use the first price chip; the same target should open the in-Hero purchase sheet. FR3.2 remains untouched and owner acceptance is pending.
+
+Local verification completed: unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 10 new hydration/input cases, three repeated original Turkish Hero flows, and 25 Fidelity browser cases (146 criteria) passed. The initial PostgreSQL run had three failures; the unchanged corresponding base files passed 413 cases on a fresh database, and the fresh isolated full run passed all 9,321 cases. Initial logs and the environment/timing investigation remain in the local review bundle. Lint, typecheck, build and isolated restore/seed passed. No push, PR or merge; owner and independent review remain pending.
