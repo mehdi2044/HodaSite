@@ -195,8 +195,11 @@ for (const [locale, market] of [
       const tabs = hero.locator(".moda-carousel-tabs > button");
       for (let index = 0; index < 4; index++) {
         await tabs.nth(index).click();
+        await page.locator(".storefront-skip-link").focus();
         await page.keyboard.press("Control+Home");
+        await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
         const slide = hero.locator("[data-moda4=hero-slide]:visible");
+        await expect(slide).toHaveAttribute("data-slide", String(index));
         const bounds = await slide.boundingBox();
         const header = await page.locator("[data-moda4=header]").boundingBox();
         expect(bounds!.height).toBeGreaterThanOrEqual(640);

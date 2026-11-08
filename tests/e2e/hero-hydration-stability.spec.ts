@@ -138,6 +138,9 @@ test("Hero budgets for the actual market suggestion and tablet navigation from f
     await page.evaluate(() => document.fonts.ready);
     const before = await box(chip);
     const banner = await box(hero);
+    // The server streams the navigation after the first Hero controls.
+    // Require its SSR visibility before measuring; React scripts remain blocked.
+    await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
     const nav = await box(page.getByTestId("mobile-bottom-navigation"));
     expect(Math.abs(banner.y + banner.height - nav.y)).toBeLessThanOrEqual(1);
     release();
