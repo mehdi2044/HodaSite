@@ -105,20 +105,25 @@ test("FR3.1 dock opens real category and product with correct active state", asy
   page,
 }) => {
   await page.goto("/fa/fitting-room?market=IR");
-  const dock = page.locator(".moda-fr31-dock");
+  const dock = page.getByTestId("mobile-bottom-navigation");
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
-  // The product destination now depends on a real selection.
-  await expect(
-    dock.getByRole("link", { name: "محصول", exact: true }),
-  ).toHaveAttribute("href", /#instant-gallery$/);
+  const product = dock.getByRole("link", { name: "محصول", exact: true });
+  await expect(product).toHaveAttribute("href", /#instant-gallery$/);
   await page.locator(card("cap")).locator(".moda-instant-pick").click();
-  await expect(
-    dock.getByRole("link", { name: "محصول", exact: true }),
-  ).toHaveAttribute("href", /\/p\//);
+  await expect(product).toHaveAttribute("href", /\/p\//);
+  const selected = await product.getAttribute("href");
+  await dock.getByRole("link", { name: "دسته", exact: true }).click();
+  await expect(page).toHaveURL(/\/c\//);
+  await expect(dock.locator('a[aria-current="page"]')).toHaveText("دسته");
+  // Public catalog pages do not silently reuse an old fitting selection.
+  await expect(product).toHaveAttribute("href", "/fa/search?market=IR");
+  await dock.getByRole("link", { name: "اتاق پرو", exact: true }).click();
+  await expect(product).toHaveAttribute("href", selected!);
+  await product.click();
+  await expect(page).toHaveURL(/\/p\//);
+  await expect(dock.locator('a[aria-current="page"]')).toHaveText("محصول");
   for (const [name, route] of [
-    ["دسته", /\/c\//],
-    ["محصول", /\/p\//],
-    ["خانه", /\/fa\/m\/IR\?/],
+    ["خانه", /\/fa\/m\/IR$/],
     ["ورود / ثبت‌نام", /\/account\/login/],
   ] as const) {
     await dock.getByRole("link", { name, exact: true }).click();

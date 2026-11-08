@@ -68,6 +68,13 @@ for (const [locale, market, copy] of markets) {
       await page.screenshot({
         path: info.outputPath(`home-${locale}-${width}.png`),
       });
+      await dock.getByRole("link").nth(1).click();
+      await expect(page).toHaveURL(/\/c\//);
+      await expect(dock.getByRole("link").nth(1)).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      await dock.getByRole("link").nth(0).click();
       const catalog = dock.getByRole("link", {
         name: copy.instantFitting.dockProduct,
         exact: true,
@@ -90,13 +97,29 @@ for (const [locale, market, copy] of markets) {
       const productHref = await catalog.getAttribute("href");
       expect(productHref).toContain(`/m/${market}/p/`);
       await expect(page.locator(".storefront-cart-toggle")).toBeVisible();
+      const buy = page.locator(".shop-product-submit .shop-add-button");
+      await buy.scrollIntoViewIfNeeded();
+      const purchaseBox = await buy.boundingBox();
+      const dockBox = await dock.boundingBox();
+      expect(purchaseBox).not.toBeNull();
+      expect(dockBox).not.toBeNull();
+      expect(purchaseBox!.y + purchaseBox!.height).toBeLessThanOrEqual(
+        dockBox!.y,
+      );
       await catalog.focus();
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Shift+Tab");
       await expect(catalog).toBeFocused();
       expect(
         await catalog.evaluate((el) => getComputedStyle(el).outlineStyle),
       ).not.toBe("none");
       await page.keyboard.press("Enter");
-      await expect(page).toHaveURL((url) => url.pathname === pdpPath);
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === pdpPath &&
+          url.searchParams.get("color") ===
+            new URL(productHref!, page.url()).searchParams.get("color"),
+      );
       await dock.getByRole("link").nth(0).click();
       await expect(page).toHaveURL(new RegExp(home + "$"));
       await expect(catalog).toHaveAttribute(
@@ -131,6 +154,25 @@ for (const [locale, market, copy] of markets) {
       await expect(
         dock.getByRole("link", { name: copy.instantFitting[key], exact: true }),
       ).toHaveAttribute("href", `/${locale}/${path}?market=${market}`);
+    await dock
+      .getByRole("link", { name: copy.instantFitting.dockLogin, exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === `/${locale}/account/login`,
+    );
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await dock
+      .getByRole("link", { name: copy.instantFitting.dockProfile, exact: true })
+      .click();
+    await expect(page).toHaveURL((url) =>
+      url.pathname.startsWith(`/${locale}/account`),
+    );
+    await dock
+      .getByRole("link", { name: copy.instantFitting.dockFitting, exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      (url) => url.pathname === `/${locale}/fitting-room`,
+    );
     await page.goto(`/${locale}/m/${market}/p/definitely-not-a-product`);
     await expect(product).toHaveAttribute(
       "href",

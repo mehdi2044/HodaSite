@@ -21,7 +21,7 @@
   right: auto;
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   padding: 5px;
-  width: max-content;
+  width: auto;
   height: auto;
   min-height: 0;
   border: 0;
@@ -157,7 +157,7 @@ body:has(dialog[open]) .storefront-floating-nav {
       > .moda-carousel-hero {
       grid-row: 1;
       height: auto;
-      min-height: 0;
+      min-height: max(560px, 50vw);
       align-self: stretch;
     }
     .storefront-app[data-floating-navigation="on"]
