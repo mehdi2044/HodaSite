@@ -109,7 +109,8 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/content/homepage");
   const field = page.locator('[data-hero-framing="mobile"]').first();
-  await field.locator("xpath=ancestor::details[1]/summary").click();
+  if (!(await field.isVisible()))
+    await field.locator("xpath=ancestor::details[1]/summary").click();
   const enabled = field.locator('input[type="checkbox"]');
   await expect(enabled).not.toBeChecked();
   await enabled.check();
@@ -140,7 +141,8 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
     page.getByRole("status").filter({ hasText: "ذخیره" }),
   ).toBeVisible();
   await page.reload();
-  await field.locator("xpath=ancestor::details[1]/summary").click();
+  if (!(await field.isVisible()))
+    await field.locator("xpath=ancestor::details[1]/summary").click();
   await expect(enabled).toBeChecked();
   await expect(field.locator('input[type="number"]').nth(0)).toHaveValue(
     "0.63",
