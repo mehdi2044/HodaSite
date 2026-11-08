@@ -15,6 +15,16 @@
 .moda-carousel-hero:has(.m4-slide) {
   margin-top: 0;
 }
+@media (min-width: 1100px), (min-width: 761px) and (orientation: landscape) {
+  .moda-carousel-hero:has(.m4-slide) {
+    /* Keep the original bottom edge/controls in the desktop fold after
+       returning the header to its own row. */
+    height: calc(
+      max(600px, 50vw, min(92vh, 940px)) - var(--moda-header-height, 72px)
+    );
+    min-height: 0;
+  }
+}
 
 .m4-slide {
   position: absolute;

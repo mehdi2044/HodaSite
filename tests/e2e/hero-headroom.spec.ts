@@ -136,6 +136,31 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
         ),
     )
     .toBe("1.15");
+  const widthControl = page.getByLabel("عرض پیش‌نمایش (پیکسل)", {
+    exact: true,
+  });
+  for (const otherWidth of ["360", "430"]) {
+    await widthControl.selectOption(otherWidth);
+    await expect
+      .poll(() =>
+        preview
+          .locator("[data-moda4=hero-slide]")
+          .first()
+          .evaluate((el) =>
+            getComputedStyle(el).getPropertyValue("--camera-x").trim(),
+          ),
+      )
+      .toBe("");
+  }
+  await widthControl.selectOption("390");
+  await expect
+    .poll(() =>
+      preview
+        .locator("[data-moda4=hero-slide]")
+        .first()
+        .evaluate((el) => getComputedStyle(el).getPropertyValue("--fx").trim()),
+    )
+    .toBe("0.63");
   await page.locator('button[name="intent"][value="DRAFT"]').click();
   await expect(
     page.getByRole("status").filter({ hasText: "ذخیره" }),
