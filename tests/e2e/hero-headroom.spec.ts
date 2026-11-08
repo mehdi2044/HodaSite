@@ -180,29 +180,37 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
   ).toBeVisible();
 });
 
-for (const width of [300, 360, 390, 430]) {
-  test(`Hero short viewport ${width}: retain photo space instead of compressing copy onto the face`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width, height: 640 });
-    await page.goto("/fa/m/IR");
-    const hero = page.locator("[data-moda4=hero]");
-    const tabs = hero.locator(".moda-carousel-tabs > button");
-    for (let index = 0; index < 4; index++) {
-      await tabs.nth(index).click();
-      await page.keyboard.press("Control+Home");
-      const slide = hero.locator("[data-moda4=hero-slide]:visible");
-      const bounds = await slide.boundingBox();
-      const header = await page.locator("[data-moda4=header]").boundingBox();
-      expect(bounds!.height).toBeGreaterThanOrEqual(640);
-      expect(bounds!.y).toBeGreaterThanOrEqual(header!.y + header!.height - 1);
-      const copy = await slide.locator(".m4-copy").boundingBox();
-      expect(copy!.y - bounds!.y).toBeGreaterThan(180);
-      await slide.locator(".m4-strip button").first().tap();
-      await expect(
-        slide.locator("details.moda-scene-purchase"),
-      ).toHaveAttribute("open", "");
-      await slide.locator("summary").press("Enter");
-    }
-  });
+for (const [locale, market] of [
+  ["fa", "IR"],
+  ["tr", "TR"],
+  ["en", "CA"],
+] as const) {
+  for (const width of [300, 360, 390, 430]) {
+    test(`Hero short viewport ${locale} ${width}: retain photo space instead of compressing copy onto the face`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 640 });
+      await page.goto(`/${locale}/m/${market}`);
+      const hero = page.locator("[data-moda4=hero]");
+      const tabs = hero.locator(".moda-carousel-tabs > button");
+      for (let index = 0; index < 4; index++) {
+        await tabs.nth(index).click();
+        await page.keyboard.press("Control+Home");
+        const slide = hero.locator("[data-moda4=hero-slide]:visible");
+        const bounds = await slide.boundingBox();
+        const header = await page.locator("[data-moda4=header]").boundingBox();
+        expect(bounds!.height).toBeGreaterThanOrEqual(640);
+        expect(bounds!.y).toBeGreaterThanOrEqual(
+          header!.y + header!.height - 1,
+        );
+        const copy = await slide.locator(".m4-copy").boundingBox();
+        expect(copy!.y - bounds!.y).toBeGreaterThan(180);
+        await slide.locator(".m4-strip button").first().tap();
+        await expect(
+          slide.locator("details.moda-scene-purchase"),
+        ).toHaveAttribute("open", "");
+        await slide.locator("summary").press("Enter");
+      }
+    });
+  }
 }
