@@ -632,6 +632,7 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       > .moda-carousel-hero {
       grid-row: 1;
       height: auto;
+      min-height: 0;
       align-self: stretch;
     }
     #storefront-content
