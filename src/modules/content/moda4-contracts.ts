@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { localizedTextSchema } from "./validation";
 import { shoppableSceneSchema, sceneImageSchema } from "./scenes/contracts";
+import { heroFramingSchema } from "./hero-framing";
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 export const contentTargetSchema = z
   .object({
@@ -47,6 +48,7 @@ export const modaHeroSlideSchema = z
     layout: z
       .object({
         copySide: z.enum(["left", "right"]),
+        framing: heroFramingSchema.optional(),
         subject: z
           .object({
             x0: z.number().min(0).max(1),

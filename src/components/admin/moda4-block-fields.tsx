@@ -6,6 +6,7 @@ import type { Moda4Block } from "@/modules/content/moda4-contracts";
 import type { ShoppableScene } from "@/modules/content/scenes/contracts";
 import { sceneConfirmationKey } from "@/modules/content/scenes/contracts";
 import { SCENE_ASPECTS } from "@/modules/content/scenes/geometry";
+import { HERO_FRAME_PROFILES } from "@/modules/content/hero-framing";
 import type { ContentTarget } from "@/modules/content/moda4-targets";
 import type { ScenePreviewProof } from "./scene-preview-proof";
 import {
@@ -951,6 +952,98 @@ export function Moda4BlockFields({
               return (
                 <fieldset className="grid gap-2">
                   <legend>{t("copySide")}</legend>
+                  <p>{t("heroFramingHelp")}</p>
+                  {HERO_FRAME_PROFILES.map((profile) => {
+                    const frame = layout.framing?.[profile];
+                    const update = (next: typeof frame) =>
+                      setLayout({
+                        ...layout,
+                        framing: { ...layout.framing, [profile]: next },
+                      });
+                    return (
+                      <fieldset
+                        key={profile}
+                        data-hero-framing={profile}
+                        className="grid gap-2 rounded border p-3"
+                      >
+                        <legend>{t(`heroFrame_${profile}`)}</legend>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(frame)}
+                            onChange={(event) =>
+                              update(
+                                event.target.checked
+                                  ? {
+                                      focal: {
+                                        ...(profile === "tablet" ||
+                                        profile === "desktop"
+                                          ? slide.scene.desktop.focal
+                                          : slide.scene.mobile.focal),
+                                      },
+                                      zoom: 1,
+                                    }
+                                  : undefined,
+                              )
+                            }
+                          />
+                          {t("heroFrameOverride")}
+                        </label>
+                        {frame && (
+                          <>
+                            {(["x", "y"] as const).map((axis) => (
+                              <label key={axis}>
+                                {t(axis === "x" ? "heroFrameX" : "heroFrameY")}
+                                <input
+                                  className="input"
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={frame.focal[axis]}
+                                  onChange={(event) =>
+                                    update({
+                                      ...frame,
+                                      focal: {
+                                        ...frame.focal,
+                                        [axis]: Math.min(
+                                          1,
+                                          Math.max(
+                                            0,
+                                            Number(event.target.value),
+                                          ),
+                                        ),
+                                      },
+                                    })
+                                  }
+                                />
+                              </label>
+                            ))}
+                            <label>
+                              {t("heroFrameZoom")}
+                              <input
+                                className="input"
+                                type="number"
+                                min={1}
+                                max={2}
+                                step={0.05}
+                                value={frame.zoom}
+                                onChange={(event) =>
+                                  update({
+                                    ...frame,
+                                    zoom: Math.min(
+                                      2,
+                                      Math.max(1, Number(event.target.value)),
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                          </>
+                        )}
+                      </fieldset>
+                    );
+                  })}
                   <div className="flex gap-4">
                     {(["left", "right"] as const).map((side) => (
                       <label key={side} className="flex items-center gap-2">

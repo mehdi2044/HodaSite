@@ -9,15 +9,26 @@
   inset: 0;
 } /* inactive slides stay [hidden] (not focusable) */
 
+/* Owner headroom rule: keep the photograph below the real header row.
+   Normal flow and the existing subgrid budget reserve this space at SSR;
+   no hydrated measurement, image mirroring or copy translation is involved. */
+.moda-carousel-hero:has(.m4-slide) {
+  margin-top: 0;
+}
+
 .m4-slide {
   position: absolute;
   inset: 0;
   container-type: size;
   --ar: var(--ar-d);
-  --fx: var(--fx-d);
-  --fy: var(--fy-d, 0);
-  --rw: var(--rw-d, max(100cqw, 100cqh * var(--ar)));
-  --rh: var(--rh-d, max(100cqh, 100cqw / var(--ar)));
+  --fx: var(--camera-x, var(--fx-d));
+  --fy: var(--camera-y, var(--fy-d, 0));
+  --rw: calc(
+    var(--camera-zoom, 1) * var(--rw-d, max(100cqw, 100cqh * var(--ar)))
+  );
+  --rh: calc(
+    var(--camera-zoom, 1) * var(--rh-d, max(100cqh, 100cqw / var(--ar)))
+  );
   --oy: var(--oy-d, calc((100cqh - var(--rh)) * var(--fy)));
 }
 .m4-media {
@@ -322,10 +333,14 @@ html[dir="ltr"] .m4-title {
   (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
   .m4-slide {
     --ar: var(--ar-m);
-    --fx: var(--fx-m);
-    --fy: var(--fy-m, 0);
-    --rw: var(--rw-m, max(100cqw, 100cqh * var(--ar)));
-    --rh: var(--rh-m, max(100cqh, 100cqw / var(--ar)));
+    --fx: var(--camera-x, var(--fx-m));
+    --fy: var(--camera-y, var(--fy-m, 0));
+    --rw: calc(
+      var(--camera-zoom, 1) * var(--rw-m, max(100cqw, 100cqh * var(--ar)))
+    );
+    --rh: calc(
+      var(--camera-zoom, 1) * var(--rh-m, max(100cqh, 100cqw / var(--ar)))
+    );
     --oy: var(--oy-m, calc((100cqh - var(--rh)) * var(--fy)));
   }
   .m4-pin {
@@ -575,7 +590,9 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: max-content max-content max-content 1fr auto auto;
-      --m4-fold-budget: calc(100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px));
+      --m4-fold-budget: calc(
+        100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)
+      );
     }
     .storefront-app:has(.shop-homepage[data-m4-leading-hero])::before {
       content: "";
@@ -584,18 +601,21 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       pointer-events: none;
       block-size: var(--m4-fold-budget);
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-announcement {
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+      > .moda-announcement {
       grid-area: 1 / 1;
     }
     .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-header {
       grid-area: 2 / 1;
       align-self: start;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > [data-moda4="geo-suggestion"] {
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+      > [data-moda4="geo-suggestion"] {
       grid-area: 3 / 1;
     }
     #storefront-content:has(.shop-homepage[data-m4-leading-hero]),
-    #storefront-content > .moda-live-homepage:has(.shop-homepage[data-m4-leading-hero]),
+    #storefront-content
+      > .moda-live-homepage:has(.shop-homepage[data-m4-leading-hero]),
     #storefront-content .shop-homepage[data-m4-leading-hero] {
       grid-column: 1;
       grid-row: span 2;
@@ -603,15 +623,20 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       grid-template-rows: subgrid;
       min-width: 0;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > #storefront-content {
+    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+      > #storefront-content {
       grid-row: 4 / 6;
     }
-    #storefront-content .shop-homepage[data-m4-leading-hero] > .moda-carousel-hero {
+    #storefront-content
+      .shop-homepage[data-m4-leading-hero]
+      > .moda-carousel-hero {
       grid-row: 1;
       height: auto;
       align-self: stretch;
     }
-    #storefront-content .shop-homepage[data-m4-leading-hero] > .m4-home-remainder {
+    #storefront-content
+      .shop-homepage[data-m4-leading-hero]
+      > .m4-home-remainder {
       display: flow-root;
       grid-row: 2;
       min-width: 0;
@@ -623,13 +648,19 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
 }
 @media (min-width: 761px) and (max-width: 1099px) and (orientation: portrait) {
   .moda-carousel-hero {
-    height: min(88svh, 1000px, calc(100svh - 52px - var(--storefront-nav-height, 0px)));
+    height: min(
+      88svh,
+      1000px,
+      calc(100svh - 52px - var(--storefront-nav-height, 0px))
+    );
   }
   /* Retain the portrait tablet height cap. The standard tablet
      announcement occupies 52px and the hero overlaps the 72px header. */
   .storefront-app:has(.shop-homepage[data-m4-leading-hero]) {
     --m4-fold-budget: min(
-      calc(100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)),
+      calc(
+        100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)
+      ),
       calc(min(88svh, 1000px) + 52px)
     );
   }
@@ -649,4 +680,44 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
   padding: 8px;
   background: var(--background);
   color: var(--text);
+}
+
+@media (max-width: 375px) {
+  .m4-slide {
+    --camera-x: var(--camera-compact-x);
+    --camera-y: var(--camera-compact-y);
+    --camera-zoom: var(--camera-compact-zoom);
+  }
+}
+
+@media (min-width: 376px) and (max-width: 413px) {
+  .m4-slide {
+    --camera-x: var(--camera-mobile-x);
+    --camera-y: var(--camera-mobile-y);
+    --camera-zoom: var(--camera-mobile-zoom);
+  }
+}
+
+@media (min-width: 414px) and (max-width: 760px) {
+  .m4-slide {
+    --camera-x: var(--camera-wideMobile-x);
+    --camera-y: var(--camera-wideMobile-y);
+    --camera-zoom: var(--camera-wideMobile-zoom);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1279px) {
+  .m4-slide {
+    --camera-x: var(--camera-tablet-x);
+    --camera-y: var(--camera-tablet-y);
+    --camera-zoom: var(--camera-tablet-zoom);
+  }
+}
+
+@media (min-width: 1280px) {
+  .m4-slide {
+    --camera-x: var(--camera-desktop-x);
+    --camera-y: var(--camera-desktop-y);
+    --camera-zoom: var(--camera-desktop-zoom);
+  }
 }

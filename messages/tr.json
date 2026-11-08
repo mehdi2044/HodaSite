@@ -2742,6 +2742,16 @@
     "resumeShort": "Sürdür"
   },
   "modaAdmin": {
+    "heroFramingHelp": "Her slaytın kadrajını ekran boyutuna göre ayarlayın. Görsel aynalanmaz; baş ve yüz üstbilginin altında, metin görselin boş alanında kalmalıdır. Gerçek önizlemeyi kontrol edin.",
+    "heroFrame_compact": "Küçük mobil (375 piksele kadar)",
+    "heroFrame_mobile": "Mobil (376–413 piksel)",
+    "heroFrame_wideMobile": "Büyük mobil (414–760 piksel)",
+    "heroFrame_tablet": "Tablet (761–1279 piksel)",
+    "heroFrame_desktop": "Masaüstü (1280 piksel ve üzeri)",
+    "heroFrameOverride": "Bu boyuta özel kadraj",
+    "heroFrameX": "Yatay konum / X odak noktası (0–1)",
+    "heroFrameY": "Dikey konum / Y odak noktası (0–1)",
+    "heroFrameZoom": "Görsel yakınlaştırma (1–2)",
     "help": "Blokları, görselleri ve gerçek fiyatları yönetin. Özel önizleme kaydedilmemiş değişiklikleri gösterir.",
     "publicationHistory": "Yayın, planlama ve geçmiş",
     "historicalReadonly": "Bu geçmiş sürüm salt okunurdur.",

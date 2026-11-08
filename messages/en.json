@@ -2742,6 +2742,16 @@
     "resumeShort": "Resume"
   },
   "modaAdmin": {
+    "heroFramingHelp": "Adjust each slide’s framing for each screen size. Images are never mirrored; keep the head and face below the header and copy on empty image space. Check the actual preview.",
+    "heroFrame_compact": "Small mobile (up to 375px)",
+    "heroFrame_mobile": "Mobile (376–413px)",
+    "heroFrame_wideMobile": "Large mobile (414–760px)",
+    "heroFrame_tablet": "Tablet (761–1279px)",
+    "heroFrame_desktop": "Desktop (1280px and above)",
+    "heroFrameOverride": "Custom framing for this size",
+    "heroFrameX": "Horizontal position / focal X (0–1)",
+    "heroFrameY": "Vertical position / focal Y (0–1)",
+    "heroFrameZoom": "Image zoom (1–2)",
     "help": "Manage blocks, imagery and live catalog prices. The private preview shows unsaved changes.",
     "publicationHistory": "Publication, scheduling and history",
     "historicalReadonly": "This historical revision is read-only.",

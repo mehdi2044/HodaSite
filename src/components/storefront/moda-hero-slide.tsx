@@ -29,6 +29,7 @@ import type { SceneView } from "@/modules/content/scenes/resolve";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
 import { useHeroLayoutGuard } from "./use-hero-layout-guard";
+import { heroFramingStyle } from "@/modules/content/hero-framing";
 import {
   displayTitleText,
   splitDisplayTitle,
@@ -194,6 +195,7 @@ export function ModaHeroSlide({
     "--x1": layout.subject.x1,
     ...modelFrame(view.desktop, "d"),
     ...modelFrame(view.mobile, "m"),
+    ...heroFramingStyle(layout.framing),
   } as CSSProperties;
   return (
     <div
