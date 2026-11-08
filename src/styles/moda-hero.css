@@ -682,12 +682,12 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
 
 /* A short phone/embedded viewport must scroll rather than compress the
    image's empty lower area until the copy covers the face. This is the
-   existing mobile minimum, applied before hydration. */
+   existing mobile minimum plus header/spacing headroom, applied before hydration. */
 @media (max-width: 760px) and (max-height: 760px) {
   #storefront-content
     .shop-homepage[data-m4-leading-hero]
     > .moda-carousel-hero {
-    min-height: 640px;
+    min-height: 720px;
   }
 }
 
