@@ -185,13 +185,13 @@ test("admin can disable and restore the shared dock through authorized theme set
 }) => {
   await page.goto("/admin/login");
   await page
-    .getByLabel("Ø§ÛŒÙ…ÛŒÙ„")
+    .getByLabel("ایمیل")
     .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
   await page
-    .getByLabel("Ø±Ù…Ø² Ø¹Ø¨ÙˆØ±")
+    .getByLabel("رمز عبور")
     .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
   await fillAdminMfa(page);
-  await page.getByRole("button", { name: "ÙˆØ±ÙˆØ¯ Ø§Ù…Ù†" }).click();
+  await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
   await page.goto("/admin/settings/theme");
@@ -202,7 +202,7 @@ test("admin can disable and restore the shared dock through authorized theme set
   await expect(toggle).toBeChecked();
   try {
     await toggle.uncheck();
-    await page.getByRole("button", { name: "Ø°Ø®ÛŒØ±Ù‡", exact: true }).click();
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
     await expect(page.locator("p[role=status]")).toBeVisible();
     await page.goto("/fa/m/IR");
     await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
@@ -210,7 +210,7 @@ test("admin can disable and restore the shared dock through authorized theme set
   } finally {
     await page.goto("/admin/settings/theme");
     await toggle.check();
-    await page.getByRole("button", { name: "Ø°Ø®ÛŒØ±Ù‡", exact: true }).click();
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
     await expect(page.locator("p[role=status]")).toBeVisible();
   }
   await page.goto("/fa/m/IR");
