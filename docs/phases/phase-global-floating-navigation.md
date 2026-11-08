@@ -12,3 +12,6 @@ Acceptance: FA/TR/EN at 360/390/430/768/1440, six readable 44px targets, one doc
 
 
 Desktop preservation follow-up: retain the original visible Hero height, photo projection and copy geometry. Do not shrink that frame to create a dock band: visual comparison showed that doing so could change the existing garment/price collision guard. Only the desktop controller row excludes the dock's horizontal footprint, using CSS anchor sizing with a conservative fallback. Verify the original height and absence of overlap for every slide in FA/TR/EN at desktop sizes, in addition to the existing headroom/hydration gates.
+
+
+Owner-approved narrow label follow-up: prevent mid-word breaks for the six public mobile destinations in FA/TR/EN at 360/390/430. Retain the existing black/orange dock, 76px height, 84px reserved budget and 44px targets. Use the actual translated label's minimum word width rather than six strictly equal columns. Do not change labels, routes, Hero sizing/controls, fitting layout, data, schema or money. Deliver actual screenshots and related regression evidence locally; no push, PR or merge.
