@@ -216,3 +216,43 @@ test("admin can disable and restore the shared dock through authorized theme set
   await page.goto("/fa/m/IR");
   await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
 });
+
+test("desktop dock preserves the original Hero frame and excludes all visible purchase/control targets", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const [locale, market] of markets) {
+    for (const [width, height] of [
+      [1440, 900],
+      [1440, 1050],
+      [1024, 768],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.goto(`/${locale}/m/${market}`);
+      const hero = page.locator("[data-moda4=hero]");
+      const dock = page.getByTestId("mobile-bottom-navigation");
+      const expected =
+        Math.max(600, width / 2, Math.min(height * 0.92, 940)) - 72;
+      expect((await hero.boundingBox())!.height).toBeCloseTo(expected, 0);
+      const tabs = hero.locator(".moda-carousel-tabs > button");
+      for (let slide = 0; slide < 4; slide++) {
+        await tabs.nth(slide).click();
+        await page.evaluate(() => scrollTo(0, 0));
+        const n = await dock.boundingBox();
+        const targets = hero.locator(
+          '[data-moda4="hero-slide"]:visible button:visible, .moda-carousel-controls button:visible, [data-moda4="hero-slide"]:visible a:visible',
+        );
+        for (const target of await targets.all()) {
+          const t = await target.boundingBox();
+          if (!t) continue;
+          expect(
+            t.x < n!.x + n!.width &&
+              t.x + t.width > n!.x &&
+              t.y < n!.y + n!.height &&
+              t.y + t.height > n!.y,
+          ).toBe(false);
+        }
+      }
+    }
+  }
+});
