@@ -1817,6 +1817,8 @@
     "history": "Kaydedilen kanıt geçmişi"
   },
   "themeEditor": {
+    "floatingNavigation": "Mağazanın siyah yüzen menüsü",
+    "floatingNavigationHelp": "Mobil ve masaüstünde görünür; ödeme adımlarında gizlenir. Değişiklik kaydedildikten sonra mağazaya uygulanır.",
     "primary": "Ana renk",
     "background": "Arka plan",
     "surface": "Yüzey",

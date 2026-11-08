@@ -1,3 +1,4 @@
+import { StorefrontProductTarget } from "@/components/storefront/storefront-product-context";
 import { hasNewArrival } from "@/modules/catalog/merchandising";
 import { WishlistHeart } from "@/components/engagement/wishlist";
 import { resolveContentTarget } from "@/modules/content/moda4-targets";
@@ -239,6 +240,21 @@ export default async function ProductPage({
           __html: jsonLdText(jsonLd),
         }}
       />
+      {!previewRequested && (
+        <StorefrontProductTarget
+          href={
+            seoPath(
+              safe,
+              market.code,
+              "p",
+              catalogText(product.slugI18n, safe),
+            ) +
+            (selectedVariant
+              ? "?color=" + encodeURIComponent(selectedVariant.colorId)
+              : "")
+          }
+        />
+      )}
       <Link
         className="shop-back-link"
         href={seoPath(

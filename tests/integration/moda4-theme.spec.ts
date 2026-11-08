@@ -82,6 +82,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         light: MODA4_LIGHT,
         dark: MODA4_DARK,
         opacity: { line: 0.12 },
+        navigation: { floatingEnabled: true },
       });
       const audits = await db.auditLog.count({
         where: { userId: actor.id, action: "settings.theme.update" },
@@ -106,6 +107,45 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { userId: actor.id, action: "settings.theme.update" },
         }),
       ).toBe(audits);
+    });
+    it("audits a strict floating-navigation boolean and preserves it for legacy payloads", async () => {
+      const disabled = form();
+      disabled.set("floatingNavigationEnabled", "false");
+      expect((await saveTheme(null, disabled)).ok).toBe(true);
+      expect(
+        (await db.themeSettings.findUniqueOrThrow({ where: { id: "default" } }))
+          .colors,
+      ).toHaveProperty("navigation.floatingEnabled", false);
+      expect((await saveTheme(null, form())).ok).toBe(true);
+      const saved = await db.themeSettings.findUniqueOrThrow({
+        where: { id: "default" },
+      });
+      expect(saved.colors).toHaveProperty("navigation.floatingEnabled", false);
+      const audit = await db.auditLog.findFirstOrThrow({
+        where: { userId: actor.id, action: "settings.theme.update" },
+        orderBy: { createdAt: "desc" },
+      });
+      expect(audit.after).toHaveProperty(
+        "colors.navigation.floatingEnabled",
+        false,
+      );
+      const invalid = form();
+      invalid.set("floatingNavigationEnabled", "no");
+      expect((await saveTheme(null, invalid)).ok).toBe(false);
+      expect(
+        await db.themeSettings.findUniqueOrThrow({ where: { id: "default" } }),
+      ).toEqual(saved);
+      const enabled = form();
+      enabled.set("floatingNavigationEnabled", "true");
+      expect((await saveTheme(null, enabled)).ok).toBe(true);
+      const previous = actor.id;
+      actor.id = "";
+      expect((await saveTheme(null, disabled)).ok).toBe(false);
+      actor.id = previous;
+      expect(
+        (await db.themeSettings.findUniqueOrThrow({ where: { id: "default" } }))
+          .colors,
+      ).toHaveProperty("navigation.floatingEnabled", true);
     });
     it("does not replace existing seed media or merchant theme/brand on repeated brand imports", async () => {
       const media = await db.media.findMany({

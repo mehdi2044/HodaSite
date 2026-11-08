@@ -1,0 +1,182 @@
+import { expect, test } from "@playwright/test";
+import { fillAdminMfa } from "./helpers/admin-mfa";
+import en from "../../messages/en.json";
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+
+const markets = [
+  ["fa", "IR", fa],
+  ["tr", "TR", tr],
+  ["en", "CA", en],
+] as const;
+test.use({ hasTouch: true });
+for (const [locale, market, copy] of markets) {
+  for (const width of [360, 390, 430, 768, 1440]) {
+    test(`shared dock ${locale} ${width}: direct home and real public routes`, async ({
+      page,
+    }, info) => {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.setViewportSize({ width, height: width >= 768 ? 1050 : 844 });
+      const home = `/${locale}/m/${market}`;
+      await page.goto(home);
+      await page.evaluate(() => document.fonts.ready);
+      const dock = page.getByTestId("mobile-bottom-navigation");
+      await expect(dock).toBeVisible();
+      await expect(dock.getByRole("link")).toHaveCount(6);
+      await expect(page.locator(".storefront-app")).toHaveAttribute(
+        "dir",
+        locale === "fa" ? "rtl" : "ltr",
+      );
+      const metrics = await dock.evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          color: getComputedStyle(el).backgroundColor,
+          bottom: innerHeight - rect.bottom,
+          overflow: document.documentElement.scrollWidth > innerWidth,
+          links: [...el.querySelectorAll("a")].map((a) => {
+            const r = a.getBoundingClientRect(),
+              text = document.createRange();
+            text.selectNodeContents(a);
+            return {
+              width: r.width,
+              height: r.height,
+              href: a.getAttribute("href"),
+              readable: [...text.getClientRects()].every(
+                (t) =>
+                  t.left >= r.left - 1 &&
+                  t.right <= r.right + 1 &&
+                  t.top >= r.top - 1 &&
+                  t.bottom <= r.bottom + 1,
+              ),
+            };
+          }),
+        };
+      });
+      expect(metrics.overflow).toBe(false);
+      expect(metrics.color).toMatch(/(?:20, 18, 16|23, 21, 18)/);
+      expect(metrics.bottom).toBeGreaterThanOrEqual(8);
+      for (const link of metrics.links) {
+        expect(link.width).toBeGreaterThanOrEqual(44);
+        expect(link.height).toBeGreaterThanOrEqual(44);
+        expect(link.readable).toBe(true);
+        expect(link.href).not.toMatch(/fittingNav|^#|undefined/);
+      }
+      await expect(dock.getByRole("link").nth(0)).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      await page.screenshot({
+        path: info.outputPath(`home-${locale}-${width}.png`),
+      });
+      const catalog = dock.getByRole("link", {
+        name: copy.instantFitting.dockProduct,
+        exact: true,
+      });
+      await expect(catalog).toHaveAttribute(
+        "href",
+        `/${locale}/search?market=${market}`,
+      );
+      await catalog.tap();
+      await expect(page).toHaveURL(
+        new RegExp(`/${locale}/search\\?market=${market}`),
+      );
+      await expect(dock).toBeVisible();
+      const firstProduct = page.locator(".shop-product-link").first();
+      await expect(firstProduct).toBeVisible();
+      await firstProduct.click();
+      await expect(page).toHaveURL(/\/p\//);
+      const pdpPath = new URL(page.url()).pathname;
+      await expect(catalog).toHaveAttribute("href", new RegExp(pdpPath));
+      const productHref = await catalog.getAttribute("href");
+      expect(productHref).toContain(`/m/${market}/p/`);
+      await expect(page.locator(".storefront-cart-toggle")).toBeVisible();
+      await catalog.focus();
+      await expect(catalog).toBeFocused();
+      expect(
+        await catalog.evaluate((el) => getComputedStyle(el).outlineStyle),
+      ).not.toBe("none");
+      await page.keyboard.press("Enter");
+      await expect(page).toHaveURL((url) => url.pathname === pdpPath);
+      await dock.getByRole("link").nth(0).click();
+      await expect(page).toHaveURL(new RegExp(home + "$"));
+      await expect(catalog).toHaveAttribute(
+        "href",
+        `/${locale}/search?market=${market}`,
+      );
+      await page.goto(`/${locale}/checkout?market=${market}`);
+      await expect(dock).toHaveCount(0);
+      await expect(page.locator(".storefront-app")).toHaveAttribute(
+        "data-floating-navigation",
+        "off",
+      );
+      await page.goto(`/${locale}/cart?market=${market}`);
+      await expect(dock).toBeVisible();
+      await page.locator(".storefront-cart-toggle").click();
+      await expect(page.locator("dialog.moda-cart-drawer")).toBeVisible();
+      await expect(dock).toBeHidden();
+      await page.keyboard.press("Escape");
+      await expect(dock).toBeVisible();
+    });
+  }
+  test(`shared dock ${locale}: fitting selection and account links remain valid`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/${locale}/fitting-room?market=${market}`);
+    const dock = page.getByTestId("mobile-bottom-navigation");
+    await expect(dock.getByRole("link")).toHaveCount(7);
+    const product = dock.getByRole("link", {
+      name: copy.instantFitting.dockProduct,
+      exact: true,
+    });
+    await expect(product).toHaveAttribute("href", /#instant-gallery$/);
+    for (const [key, path] of [
+      ["dockLogin", "account/login"],
+      ["dockProfile", "account"],
+    ] as const)
+      await expect(
+        dock.getByRole("link", { name: copy.instantFitting[key], exact: true }),
+      ).toHaveAttribute("href", `/${locale}/${path}?market=${market}`);
+    await page.goto(`/${locale}/m/${market}/p/definitely-not-a-product`);
+    await expect(product).toHaveAttribute(
+      "href",
+      `/${locale}/search?market=${market}`,
+    );
+  });
+}
+test("admin can disable and restore the shared dock through authorized theme settings", async ({
+  page,
+}) => {
+  await page.goto("/admin/login");
+  await page
+    .getByLabel("ایمیل")
+    .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
+  await page
+    .getByLabel("رمز عبور")
+    .fill(process.env.ADMIN_PASSWORD ?? "ChangeMe123!");
+  await fillAdminMfa(page);
+  await page.getByRole("button", { name: "ورود امن" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
+  await page.goto("/admin/settings/theme");
+  const toggle = page.getByRole("checkbox", {
+    name: fa.themeEditor.floatingNavigation,
+    exact: true,
+  });
+  await expect(toggle).toBeChecked();
+  try {
+    await toggle.uncheck();
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator("p[role=status]")).toBeVisible();
+    await page.goto("/fa/m/IR");
+    await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
+    await expect(page.locator(".storefront-cart-toggle")).toBeVisible();
+  } finally {
+    await page.goto("/admin/settings/theme");
+    await toggle.check();
+    await page.getByRole("button", { name: "ذخیره", exact: true }).click();
+    await expect(page.locator("p[role=status]")).toBeVisible();
+  }
+  await page.goto("/fa/m/IR");
+  await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
+});

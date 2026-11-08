@@ -22,9 +22,11 @@ import {
   FONT_PRICE_FAMILIES,
   BUTTON_STYLES,
   lineOpacity,
+  safeFloatingNavigation,
 } from "@/lib/theme-validation";
 
 const shape: Record<string, z.ZodTypeAny> = {
+  floatingNavigationEnabled: z.enum(["true", "false"]).optional(),
   radius: cssLength,
   darkMode: z.enum(["off", "on", "system"]),
   headerStyle: z.enum(["minimal", "centered", "editorial"]),
@@ -79,7 +81,7 @@ export async function saveTheme(
     const dark = Object.fromEntries(
       COLOR_KEYS.map((k) => [k, parsed[`dark_${k}`]]),
     );
-    const colors = {
+    const palette = {
       light,
       dark,
       opacity: { line: Number(parsed.lineOpacity) },
@@ -102,9 +104,19 @@ export async function saveTheme(
       await db.$transaction(async (tx) => {
         await lockMediaReferences(tx, [accountMediaId], { readyImages: true });
         await assertCan(userId, "settings.theme.edit");
+        await tx.$queryRaw`SELECT id FROM "ThemeSettings" WHERE id = ${"default"} FOR UPDATE`;
         const current = await tx.themeSettings.findUniqueOrThrow({
           where: { id: "default" },
         });
+        const colors = {
+          ...palette,
+          navigation: {
+            floatingEnabled:
+              parsed.floatingNavigationEnabled === undefined
+                ? safeFloatingNavigation(current.colors)
+                : parsed.floatingNavigationEnabled === "true",
+          },
+        };
         await tx.themeSettings.update({
           where: { id: "default" },
           data: {

@@ -3,7 +3,7 @@ import { formatCartAmount } from "@/modules/catalog/format";
 import { seoPath } from "@/lib/seo-urls";
 import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
-import { MobileNavigation } from "./mobile-navigation";
+import { StorefrontNavigation } from "./storefront-navigation";
 import { StorefrontIcon } from "./storefront-icon";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -30,6 +30,7 @@ export async function Header({
   logoMediaId,
   headerStyle,
   logoWidth = 160,
+  floatingNavigationEnabled = true,
 }: {
   locale: string;
   market: Market;
@@ -38,6 +39,7 @@ export async function Header({
   logoMediaId?: string | null;
   headerStyle: string;
   logoWidth?: number;
+  floatingNavigationEnabled?: boolean;
 }) {
   const safe = locale as "fa" | "tr" | "en";
   const [logo, desktopMenu, mobileMenu, t, departments, cart] =
@@ -256,7 +258,8 @@ export async function Header({
         </div>
       </HeaderFrame>
       <Suspense>
-        <MobileNavigation
+        <StorefrontNavigation
+          enabled={floatingNavigationEnabled}
           fittingLinks={{
             home: seoPath(safe, market.code),
             category:

@@ -1,0 +1,178 @@
+/* D77's viewer dock, shared by the public storefront and fitting room.
+   Reserve the layout budget in server HTML; measurement never resizes Hero. */
+.storefront-app[data-floating-navigation="on"] {
+  --storefront-nav-height: 84px;
+  padding-block-end: calc(
+    var(--storefront-nav-offset, var(--storefront-nav-height)) +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+.storefront-app[data-floating-navigation="off"] {
+  --storefront-nav-height: 0px;
+  --storefront-nav-offset: 0px;
+  padding-block-end: 0;
+}
+.storefront-floating-nav {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  gap: 2px;
+  left: 18px;
+  right: auto;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding: 5px;
+  width: max-content;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 18, 16, 0.94);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  color: var(--paper, #faf7f0);
+}
+.storefront-floating-nav a {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  color: inherit;
+  font-size: 12.5px;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+  text-align: center;
+}
+.storefront-floating-nav a[aria-current="page"] {
+  color: var(--ink, #171512);
+  background: var(--primary);
+}
+.storefront-floating-nav a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+}
+body:has(dialog[open]) .storefront-floating-nav {
+  visibility: hidden;
+}
+@media (max-width: 1023px) {
+  .storefront-app[data-floating-navigation="on"][data-navigation-context="fitting"] {
+    --storefront-nav-height: 109px;
+  }
+  .storefront-floating-nav:not(.moda-fr31-dock) {
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    width: auto;
+    height: 76px;
+    border-radius: 24px;
+    background: #171512;
+  }
+  .storefront-floating-nav:not(.moda-fr31-dock) a {
+    min-width: 0;
+    padding: 4px 2px;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    border-radius: 16px;
+  }
+}
+@media (min-width: 1024px) {
+  .storefront-app[data-floating-navigation="on"] {
+    --storefront-nav-height: 88px;
+  }
+  .storefront-floating-nav {
+    display: flex;
+  }
+}
+
+/* Desktop's new chrome gets its own band. The approved Hero source, camera,
+   header clearance and hydration contract remain unchanged. */
+@media (min-width: 1100px), (min-width: 761px) and (orientation: landscape) {
+  @supports (grid-template-rows: subgrid) {
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      ) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: max-content max-content max-content 1fr auto auto;
+      --m4-fold-budget: calc(
+        100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)
+      );
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )::before {
+      content: "";
+      grid-area: 1 / 1 / 5 / 2;
+      visibility: hidden;
+      pointer-events: none;
+      block-size: var(--m4-fold-budget);
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )
+      > .moda-announcement {
+      grid-area: 1 / 1;
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )
+      > .moda-header {
+      grid-area: 2 / 1;
+      align-self: start;
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )
+      > [data-moda4="geo-suggestion"] {
+      grid-area: 3 / 1;
+    }
+    .storefront-app[data-floating-navigation="on"]
+      #storefront-content:has(.shop-homepage[data-m4-leading-hero]),
+    .storefront-app[data-floating-navigation="on"]
+      #storefront-content
+      > .moda-live-homepage:has(.shop-homepage[data-m4-leading-hero]),
+    .storefront-app[data-floating-navigation="on"]
+      #storefront-content
+      .shop-homepage[data-m4-leading-hero] {
+      grid-column: 1;
+      grid-row: span 2;
+      display: grid;
+      grid-template-rows: subgrid;
+      min-width: 0;
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )
+      > #storefront-content {
+      grid-row: 4 / 6;
+    }
+    .storefront-app[data-floating-navigation="on"]
+      #storefront-content
+      .shop-homepage[data-m4-leading-hero]
+      > .moda-carousel-hero {
+      grid-row: 1;
+      height: auto;
+      min-height: 0;
+      align-self: stretch;
+    }
+    .storefront-app[data-floating-navigation="on"]
+      #storefront-content
+      .shop-homepage[data-m4-leading-hero]
+      > .m4-home-remainder {
+      display: flow-root;
+      grid-row: 2;
+      min-width: 0;
+    }
+    .storefront-app[data-floating-navigation="on"]:has(
+        .shop-homepage[data-m4-leading-hero]
+      )
+      > .moda-footer {
+      grid-area: 6 / 1;
+    }
+  }
+}

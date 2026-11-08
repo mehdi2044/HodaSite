@@ -10,6 +10,7 @@ import { useUnsavedForm } from "@/components/admin/unsaved-form";
 import { MediaPicker } from "@/components/admin/media-picker";
 
 export type ThemeDraft = {
+  floatingNavigationEnabled?: boolean;
   light: Record<string, string>;
   dark: Record<string, string>;
   radius: string;
@@ -113,6 +114,28 @@ export function ThemeEditor({
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
       <form ref={formRef} action={formAction} className="grid gap-6">
+        <Card>
+          <input
+            type="hidden"
+            name="floatingNavigationEnabled"
+            value={String(draft.floatingNavigationEnabled ?? true)}
+          />
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={draft.floatingNavigationEnabled ?? true}
+              onChange={(event) =>
+                setDraft((value) => ({
+                  ...value,
+                  floatingNavigationEnabled: event.target.checked,
+                }))
+              }
+            />
+            {t("floatingNavigation")}
+          </label>
+          <p className="text-sm text-muted">{t("floatingNavigationHelp")}</p>
+        </Card>
+
         <Card>
           <MediaPicker
             name="accountMediaId"

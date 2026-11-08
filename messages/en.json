@@ -1817,6 +1817,8 @@
     "history": "Recorded evidence history"
   },
   "themeEditor": {
+    "floatingNavigation": "Black floating storefront navigation",
+    "floatingNavigationHelp": "Shown on mobile and desktop, hidden during payment steps. Changes apply to the storefront after saving.",
     "primary": "Primary",
     "background": "Background",
     "surface": "Surface",
