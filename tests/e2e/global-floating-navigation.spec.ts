@@ -237,7 +237,7 @@ test("desktop dock preserves the original Hero frame and excludes all visible pu
       const tabs = hero.locator(".moda-carousel-tabs > button");
       for (let slide = 0; slide < 4; slide++) {
         await tabs.nth(slide).click();
-        await page.evaluate(() => scrollTo(0, 0));
+        expect(await page.evaluate(() => scrollY)).toBe(0);
         await expect(
           hero.locator('[data-moda4="hero-slide"]:visible'),
         ).toHaveAttribute("data-slide", String(slide));

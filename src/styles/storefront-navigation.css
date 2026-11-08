@@ -117,3 +117,15 @@ html:has(.storefront-app[data-floating-navigation="on"]) {
     var(--storefront-nav-offset, 84px) + env(safe-area-inset-bottom, 0px) + 16px
   );
 }
+
+/* The desktop controls sit beside the dock. Reserving its full width in the
+   viewport's scroll padding would unnecessarily scroll an already reachable
+   Hero control to the page centre. Mobile and product pages keep their budget. */
+@media (min-width: 1024px) {
+  html:has(
+    .storefront-app[data-floating-navigation="on"]
+      .shop-homepage[data-m4-leading-hero]
+  ) {
+    scroll-padding-block-end: 0;
+  }
+}
