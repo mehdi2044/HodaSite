@@ -123,6 +123,8 @@ test("short mobile fitting controls and footer can be reached beside the dock", 
   const login = dock.locator('a[href*="account/login"]');
   await dock.locator("a").first().focus();
   await expect(dock.locator("a").first()).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(dock.locator("a").nth(1)).toBeFocused();
   expect((await login.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await reachesCenter(page.locator(".moda-instant-stage"));
   await reachesCenter(page.locator(".moda-footer-links nav a").last());
@@ -233,7 +235,7 @@ test.describe("short desktop Hero", () => {
           await centerIsExposed(button);
         }
         for (const pin of await slide
-          .locator(".m4-pin:visible .m4-dot")
+          .locator(".m4-pin .m4-dot:visible")
           .all()) {
           expect(
             await pin.evaluate((el) => {
