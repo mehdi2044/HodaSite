@@ -4,14 +4,23 @@ import fa from "../../messages/fa.json";
 
 const locales = ["fa", "tr", "en"] as const;
 const markets = ["IR", "TR", "CA"] as const;
+const configuredLocales: Record<(typeof markets)[number], readonly string[]> = {
+  IR: ["fa"],
+  TR: ["tr", "en"],
+  CA: ["en", "fa", "tr"],
+};
 
-for (const locale of locales) {
+for (const requestedLocale of locales) {
   for (const market of markets) {
-    test(`${locale}/${market} header, profile, cart and fitting preserve the explicit context`, async ({
+    test(`${requestedLocale}/${market} preserves the market and respects enabled languages`, async ({
       page,
     }) => {
+      const enabled = configuredLocales[market];
+      const locale = enabled.includes(requestedLocale)
+        ? requestedLocale
+        : enabled[0];
       await page.setViewportSize({ width: 1280, height: 800 });
-      await page.goto(`/${locale}/fitting-room?market=${market}`);
+      await page.goto(`/${requestedLocale}/fitting-room?market=${market}`);
       const header = page.locator(".moda-header");
       const select = page.locator(".moda-context-controls select");
       await expect(select).toHaveValue(market);
@@ -82,19 +91,22 @@ test("explicit market and language switches on login keep the fitting return usa
     .locator('a[href*="account/login"]')
     .click();
   await expect(page).toHaveURL(/\/fa\/account\/login\?/);
-  await page.locator(".moda-context-controls select").selectOption("TR");
-  await expect(page).toHaveURL(/\/fa\/account\/login\?.*market=TR/);
   const english = page.locator(
     '.moda-context-controls a[aria-label="English"]',
   );
   await expect(english).toHaveAttribute(
     "href",
-    /\/en\/account\/login\?market=TR/,
+    /\/en\/account\/login\?market=CA/,
   );
   await english.click();
+  await expect(page).toHaveURL(/\/en\/account\/login\?market=CA/);
+  await page.locator(".moda-context-controls select").selectOption("TR");
   await expect(page).toHaveURL(/\/en\/account\/login\?market=TR/);
+  const turkish = page.locator('.moda-context-controls a[aria-label="Türkçe"]');
+  await turkish.click();
+  await expect(page).toHaveURL(/\/tr\/account\/login\?market=TR/);
   expect(new URL(page.url()).searchParams.get("next")).toBe(
-    "/en/fitting-room?market=TR",
+    "/tr/fitting-room?market=TR",
   );
 });
 
