@@ -9,9 +9,7 @@ import {
   normalizeHeroLayout,
 } from "@/modules/content/hero-layout";
 import { resolveHeroFloat } from "@/modules/content/moda4-hero";
-import { ModaKidsRing } from "./moda-kids-ring";
-import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
-import { catalogText } from "@/modules/catalog";
+import { ModaKidsWorld } from "./moda-kids-world";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -378,103 +376,41 @@ export async function ModaHomepageBlock({
       </div>
     );
   }
-  if (block.type === "NewIn" || block.type === "KidsWorld") {
+  if (block.type === "KidsWorld")
+    return <ModaKidsWorld block={block} market={market} locale={locale} />;
+  if (block.type === "NewIn") {
     const products = await moda4Products(market.id, locale, block.source);
     const [prices, variantPrices] = await Promise.all([
       getDisplayPrices(products, market),
       getVariantDisplayPrices(products, market),
     ]);
     const href = await resolveContentTarget(block.target, market.id, locale);
-    const kidsItems =
-      block.type === "KidsWorld"
-        ? await Promise.all(
-            products.map(async (product) => {
-              const cutout = product.variants[0]
-                ? await publicCatalogCutout(product.variants[0].id, market.id)
-                : null;
-              const image = cutout?.media ?? product.media[0]?.media;
-              return (
-                <figure>
-                  {image && (
-                    <ResponsiveImage
-                      media={{
-                        ...image,
-                        presentation: {
-                          fit: "contain",
-                          focalX: 0.5,
-                          focalY: 0.5,
-                        },
-                      }}
-                      locale={locale}
-                      sizes="200px"
-                      imgClassName="h-full w-full"
-                    />
-                  )}
-                  <figcaption>
-                    {catalogText(product.titleI18n, locale)}
-                    {!cutout && (
-                      <span className="block">{t("cutoutFallback")}</span>
-                    )}
-                  </figcaption>
-                </figure>
-              );
-            }),
-          )
-        : [];
     return (
-      <section
-        data-moda4={block.type === "KidsWorld" ? "kids-world" : "new-in"}
-        className={`moda-product-rail ${block.type === "KidsWorld" ? "moda-kids-world" : ""}`}
-        style={
-          block.type === "KidsWorld"
-            ? ({
-                "--kids-world-tone": `var(--${block.tone})`,
-              } as React.CSSProperties)
-            : undefined
-        }
-      >
+      <section data-moda4="new-in" className="moda-product-rail">
         <div className="moda-section-head">
-          <h2
-            data-moda4-kids-display={
-              block.type === "KidsWorld" ? "" : undefined
-            }
-            lang={block.type === "KidsWorld" ? "en" : undefined}
-          >
-            {text(block.title)}
-          </h2>
+          <h2>{text(block.title)}</h2>
           {href && (
             <Link className="button button-outline" href={href}>
               {text(block.ctaLabel)}
             </Link>
           )}
         </div>
-        {block.type === "KidsWorld" && <p>{text(block.body)}</p>}
-        {block.type === "KidsWorld" && kidsItems.length > 0 && (
-          <ModaKidsRing
-            items={kidsItems}
-            labels={products.map((product) =>
-              catalogText(product.titleI18n, locale),
-            )}
-          />
-        )}
-        {block.type === "NewIn" && (
-          <div className="moda-snap-products">
-            {await Promise.all(
-              products.map((product) =>
-                ProductCard({
-                  product: {
-                    ...product,
-                    displayPrice: prices.get(product.id)!,
-                  },
-                  variantPrices,
-                  locale,
-                  market,
-                  readOnly: preview,
-                }),
-              ),
-            )}
-          </div>
-        )}
+        <div className="moda-snap-products">
+          {await Promise.all(
+            products.map((product) =>
+              ProductCard({
+                product: {
+                  ...product,
+                  displayPrice: prices.get(product.id)!,
+                },
+                variantPrices,
+                locale,
+                market,
+                readOnly: preview,
+              }),
+            ),
+          )}
+        </div>
         {products.length === 0 && <p>{t("noProducts")}</p>}
       </section>
     );

@@ -2698,6 +2698,17 @@
     }
   },
   "modaHomepage": {
+    "kidsTitle": "Little Wanderers",
+    "kidsDemoImage": "تصویر نمایشی",
+    "kidsLegacyBody": "برای روزهای بازی",
+    "kidsLegacyCta": "مشاهده",
+    "kidsEyebrow": "MODA4 KIDS — PASTEL WORLD",
+    "kidsSubtitle": "دنیای پاستیلی کوچولوها",
+    "kidsBody": "بافت‌های نرم، نخ‌های لطیف و رنگ‌های آرام پاستیلی؛ برای بدوبدوهای پاییزی و قصه‌های شب.",
+    "kidsShop": "دیدن بچگانه",
+    "kidsFitting": "پرو لباس بچگانه",
+    "kidsTapPiece": "روی هر لباس بزن · ✦ · دیدن محصول",
+    "kidsPriceUnavailable": "قیمت در دسترس نیست",
     "carousel": "نمایش چرخشی",
     "previous": "قبلی",
     "next": "بعدی",

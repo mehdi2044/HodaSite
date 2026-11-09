@@ -61,7 +61,7 @@ export const modaHeroSlideSchema = z
       })
       .strict()
       .optional(),
-    /** M4-01: optional decorative cutout beside the person (desktop ≥1280 only). Price from catalog. */
+    /** M4-01: optional decorative cutout beside the person (desktop â‰¥1280 only). Price from catalog. */
     float: z.object({ productId: id, colorId: id }).strict().optional(),
     ctaLabel: localizedTextSchema,
     target: contentTargetSchema,
@@ -155,6 +155,10 @@ export const moda4BlockSchemas = [
       type: z.literal("KidsWorld"),
       title: localizedTextSchema,
       body: localizedTextSchema,
+      eyebrow: localizedTextSchema.optional(),
+      subtitle: localizedTextSchema.optional(),
+      secondaryLabel: localizedTextSchema.optional(),
+      secondaryTarget: contentTargetSchema.optional(),
       source: modaSourceSchema,
       tone: z
         .enum([

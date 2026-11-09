@@ -1509,34 +1509,58 @@ export function Moda4BlockFields({
         {common}
         {sourceField(block.source, (source) => change({ ...block, source }))}
         {block.type === "KidsWorld" && (
-          <label>
-            {t("tone")}
-            <select
-              className="input"
-              value={block.tone}
-              onChange={(event) =>
-                change({
-                  ...block,
-                  tone: event.target.value as typeof block.tone,
-                })
+          <>
+            <LocalizedField
+              label={t("eyebrow")}
+              value={block.eyebrow ?? blank()}
+              change={(eyebrow) => change({ ...block, eyebrow })}
+            />
+            <LocalizedField
+              label={t("subtitle")}
+              value={block.subtitle ?? blank()}
+              change={(subtitle) => change({ ...block, subtitle })}
+            />
+            <LocalizedField
+              label={t("secondaryLabel")}
+              value={block.secondaryLabel ?? blank()}
+              change={(secondaryLabel) => change({ ...block, secondaryLabel })}
+            />
+            <ModaTargetField
+              value={block.secondaryTarget ?? { kind: "fitting" }}
+              change={(secondaryTarget) =>
+                change({ ...block, secondaryTarget })
               }
-            >
-              {(
-                [
-                  "kidsPink",
-                  "kidsMint",
-                  "kidsSky",
-                  "kidsButter",
-                  "kidsLilac",
-                  "kidsPeach",
-                ] as const
-              ).map((tone) => (
-                <option key={tone} value={tone}>
-                  {t(`tone_${tone}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={options}
+            />
+            <label>
+              {t("tone")}
+              <select
+                className="input"
+                value={block.tone}
+                onChange={(event) =>
+                  change({
+                    ...block,
+                    tone: event.target.value as typeof block.tone,
+                  })
+                }
+              >
+                {(
+                  [
+                    "kidsPink",
+                    "kidsMint",
+                    "kidsSky",
+                    "kidsButter",
+                    "kidsLilac",
+                    "kidsPeach",
+                  ] as const
+                ).map((tone) => (
+                  <option key={tone} value={tone}>
+                    {t(`tone_${tone}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
         )}
       </div>
     );
