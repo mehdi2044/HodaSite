@@ -1,4 +1,6 @@
 import { expect, test, type Locator } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import fa from "../../messages/fa.json";
 
 const locales = ["fa", "tr", "en"] as const;
 const markets = ["IR", "TR", "CA"] as const;
@@ -113,6 +115,60 @@ test("short mobile fitting controls and footer can be reached beside the dock", 
   ).toBeLessThanOrEqual(390);
 });
 
+test("customer OTP returns from Persian sign-in to the Canadian fitting room", async ({
+  page,
+}) => {
+  const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
+  const email = `moda4-${randomUUID()}@example.com`;
+  await page.goto("/fa/fitting-room?market=CA");
+  await page
+    .getByTestId("mobile-bottom-navigation")
+    .locator('a[href*="account/login"]')
+    .click();
+  const input = page.locator('main input[name="email"]');
+  await input.fill(email);
+  await input
+    .locator("xpath=ancestor::form")
+    .locator('button:not([type="button"])')
+    .last()
+    .click();
+  const otp = page.getByTestId("otp-code");
+  await expect(otp).toBeVisible();
+  let code = "";
+  await expect
+    .poll(
+      async () => {
+        await page.request.post("/api/cron/tick", {
+          headers: {
+            Authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron"}`,
+          },
+        });
+        const query = new URLSearchParams({ query: `to:${email}` });
+        const response = await page.request.get(
+          `${mailpit}/api/v1/search?${query}`,
+        );
+        const messages = (await response.json()) as {
+          messages?: { ID: string }[];
+        };
+        const message = messages.messages?.[0];
+        if (!message) return false;
+        const mail = (await (
+          await page.request.get(`${mailpit}/api/v1/message/${message.ID}`)
+        ).json()) as { Text: string };
+        code = mail.Text.match(/\b\d{6}\b/)?.[0] ?? "";
+        return code.length === 6;
+      },
+      { timeout: 45000, intervals: [500, 1000, 2000] },
+    )
+    .toBe(true);
+  await otp.fill(code);
+  await page
+    .getByRole("button", { name: fa.commerce.login, exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/fa\/fitting-room\?market=CA$/);
+  await expect(page.locator(".moda-context-controls select")).toHaveValue("CA");
+});
+
 test("all four Hero images keep the top edge and buy controls reachable at short desktop sizes", async ({
   page,
 }) => {
@@ -125,8 +181,9 @@ test("all four Hero images keep the top edge and buy controls reachable at short
   for (const width of [1267, 1280, 1440]) {
     await page.setViewportSize({ width, height: 630 });
     for (let index = 0; index < 4; index++) {
-      await tabs.nth(index).click();
       await page.evaluate(() => scrollTo(0, 0));
+      await tabs.nth(index).click();
+      expect(await page.evaluate(() => scrollY)).toBeLessThanOrEqual(1);
       const slide = hero.locator('[data-moda4="hero-slide"]:visible');
       const image = slide.locator(".m4-media:visible img");
       await expect(image).toBeVisible();
