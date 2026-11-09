@@ -22,6 +22,13 @@ type MeasuredCard = {
   artwork: Rect[];
   label: Rect | undefined;
 };
+type OrbitLayout = {
+  width: number;
+  height: number;
+  depth: number;
+  radius: number;
+  cards: MeasuredCard[];
+};
 
 function measureCard(element: HTMLElement): MeasuredCard {
   const piece = element.firstElementChild as HTMLElement;
@@ -55,17 +62,38 @@ function overlaps(a: Rect, b: Rect, gap = 0) {
   );
 }
 
-function drawOrbit(
-  stage: HTMLElement,
-  cards: MeasuredCard[],
+function measureOrbit(
   width: number,
   height: number,
+  cards: MeasuredCard[],
+): OrbitLayout {
+  const depth = Math.min(205, width * 0.26);
+  const artworkHalf = Math.max(
+    0,
+    ...cards.flatMap((card) =>
+      card.artwork.map(({ left, right }) =>
+        Math.max(card.width / 2 - left, right - card.width / 2),
+      ),
+    ),
+  );
+  const edge = width / 2 - 3;
+  const sideRoom = edge - artworkHalf * 0.82;
+  const nearReach = (edge * depth) / perspective + artworkHalf * 0.18;
+  // Bound the orbit's reach across all angles, including the extra width
+  // projected on approach to the front. Keep the garment scale unchanged.
+  const safeRadius =
+    sideRoom > nearReach ? Math.sqrt(sideRoom ** 2 - nearReach ** 2) : 0;
+  const radius = Math.min(270, width * 0.38, safeRadius);
+  return { width, height, depth, radius, cards };
+}
+
+function drawOrbit(
+  stage: HTMLElement,
+  { cards, width, height, depth, radius }: OrbitLayout,
   angle: number,
 ) {
   if (!width) return;
   stage.style.setProperty("--kids-ring-angle", `${angle}deg`);
-  const radius = Math.min(270, width * 0.38);
-  const depth = Math.min(205, width * 0.26);
   const projected = cards.map(
     ({ element: card, width: cardWidth, top, artwork, label }, index) => {
       const theta = (angle + (index * 360) / cards.length) * radians;
@@ -133,15 +161,7 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
   const orbit = useRef<HTMLDivElement>(null);
   const turn = useRef(0);
   const step = useRef<{ frame: number; target: number } | null>(null);
-  const layout = useRef<{
-    width: number;
-    height: number;
-    cards: MeasuredCard[];
-  }>({
-    width: 0,
-    height: 0,
-    cards: [],
-  });
+  const layout = useRef<OrbitLayout | null>(null);
   const drag = useRef<{ x: number; start: number; moved: boolean } | null>(
     null,
   );
@@ -150,14 +170,8 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
 
   const paint = useCallback((angle: number) => {
     turn.current = angle;
-    if (stage.current)
-      drawOrbit(
-        stage.current,
-        layout.current.cards,
-        layout.current.width,
-        layout.current.height,
-        angle,
-      );
+    if (stage.current && layout.current)
+      drawOrbit(stage.current, layout.current, angle);
   }, []);
 
   const stopStep = useCallback(() => {
@@ -197,11 +211,11 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
         "--kids-layout-height",
         `${Math.ceil(maxCard * 1.2 + 48)}px`,
       );
-      layout.current = {
-        width: root.clientWidth,
-        height: root.clientHeight,
-        cards: cards.map(measureCard),
-      };
+      layout.current = measureOrbit(
+        root.clientWidth,
+        root.clientHeight,
+        cards.map(measureCard),
+      );
       paint(turn.current);
     };
     resize();

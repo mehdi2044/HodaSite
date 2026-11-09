@@ -49,6 +49,12 @@ test("Kids World preserves all garment proportions and only suppresses occluded 
         if (base.height <= 8 || label.top <= base.bottom)
           issues.push("base/label outside its space");
         if (
+          [art.getBoundingClientRect(), base].some(
+            (box) => box.left < frame.left - 1 || box.right > frame.right + 1,
+          )
+        )
+          issues.push("cropped garment or podium");
+        if (
           [card, art, podium].some(
             (element) => Number(getComputedStyle(element).opacity) < 0.83,
           )
