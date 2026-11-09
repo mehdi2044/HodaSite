@@ -133,6 +133,24 @@ test("short mobile fitting controls and footer can be reached beside the dock", 
   ).toBeLessThanOrEqual(390);
 });
 
+test("short mobile product keeps its price and purchase button separately visible", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 630 });
+  await page.goto("/fa/m/CA/p/" + encodeURIComponent("محصول-1"));
+  const bar = page.locator(".shop-product-submit");
+  const buy = bar.locator(".shop-add-button");
+  const price = bar.locator(".moda-mobile-buy-price bdi");
+  await expect(bar).toHaveCSS("position", "static");
+  await expect(buy).toHaveCSS("position", "relative");
+  await expect(price).toContainText(/CA\$|CAD/);
+  await reachesCenter(buy);
+  await centerIsExposed(price);
+  await expect(buy).toBeEnabled();
+  await buy.tap();
+  await expect(page.locator("dialog[open]")).toBeVisible();
+});
+
 test("customer OTP returns from Persian sign-in to the Canadian fitting room", async ({
   page,
 }) => {

@@ -89,6 +89,13 @@ body:has(dialog[open]) .storefront-floating-nav {
   visibility: hidden;
 }
 @media (max-width: 1023px) {
+  /* Anchor the button's painted background to the button, even when the
+     purchase bar participates in normal document flow. */
+  .storefront-app[data-floating-navigation="on"]
+    .shop-product-submit
+    .shop-add-button {
+    position: relative;
+  }
   .storefront-app[data-floating-navigation="on"][data-navigation-context="fitting"] {
     --storefront-nav-height: 109px;
   }
