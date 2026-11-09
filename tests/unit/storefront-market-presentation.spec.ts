@@ -37,6 +37,9 @@ describe("storefront navigation context", () => {
     expect(customerReturnPath("/fa/checkout?market=IR", "fa", "CA")).toBe(
       "/fa/checkout?market=CA",
     );
+    expect(customerReturnPath("/fa/m/IR/p/item", "fa", "CA")).toBe(
+      "/fa/m/CA/p/item",
+    );
     expect(
       customerReturnPath(
         "/fa/fitting-room?market=CA&next=//example.net",

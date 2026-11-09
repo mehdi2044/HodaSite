@@ -71,6 +71,31 @@ async function reachesCenter(target: Locator) {
     .toBe(true);
 }
 
+test("explicit market and language switches on login keep the fitting return usable", async ({
+  page,
+}) => {
+  await page.goto("/fa/fitting-room?market=CA");
+  await page
+    .getByTestId("mobile-bottom-navigation")
+    .locator('a[href*="account/login"]')
+    .click();
+  await expect(page).toHaveURL(/\/fa\/account\/login\?/);
+  await page.locator(".moda-context-controls select").selectOption("TR");
+  await expect(page).toHaveURL(/\/fa\/account\/login\?.*market=TR/);
+  const english = page.locator(
+    '.moda-context-controls a[aria-label="English"]',
+  );
+  await expect(english).toHaveAttribute(
+    "href",
+    /\/en\/account\/login\?market=TR/,
+  );
+  await english.click();
+  await expect(page).toHaveURL(/\/en\/account\/login\?market=TR/);
+  expect(new URL(page.url()).searchParams.get("next")).toBe(
+    "/en/fitting-room?market=TR",
+  );
+});
+
 test("short mobile fitting controls and footer can be reached beside the dock", async ({
   page,
 }) => {

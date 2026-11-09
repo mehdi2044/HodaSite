@@ -28,10 +28,14 @@ export function customerReturnPath(
     return fallback;
   try {
     const url = new URL(value, "https://app.invalid");
-    return url.origin === "https://app.invalid" &&
-      url.pathname + url.hash === value
-      ? value
-      : fallback;
+    if (
+      url.origin !== "https://app.invalid" ||
+      url.pathname + url.hash !== value
+    )
+      return fallback;
+    return market && marketCodePattern.test(market)
+      ? value.replace(/^\/(fa|tr|en)\/m\/[^/]+/, `/$1/m/${market}`)
+      : value;
   } catch {
     return fallback;
   }

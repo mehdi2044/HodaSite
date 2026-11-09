@@ -2,6 +2,12 @@ import { parseSeoPath, seoPath } from "./seo-urls";
 
 export const marketCodePattern = /^[A-Za-z0-9_-]{1,40}$/;
 
+export function isMarketContextPath(pathname: string) {
+  return /^\/(fa|tr|en)\/(?:search|cart|checkout|fitting-room(?:\/coins)?|account(?:\/(?:login|wishlist|preferences))?)\/?$/.test(
+    pathname,
+  );
+}
+
 export function storefrontPath(
   locale: string,
   market: string | undefined,

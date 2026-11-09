@@ -2,6 +2,7 @@ import NextAuth, { type NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { parseSeoPath, privateSeoPath } from "@/lib/seo-urls";
+import { isMarketContextPath } from "@/lib/storefront-path";
 import createIntlMiddleware from "next-intl/middleware";
 import { adminRedirectUrl } from "@/modules/auth/redirects";
 import authConfig from "@/modules/auth/config";
@@ -342,9 +343,7 @@ async function applicationMiddleware(req: NextAuthRequest) {
         explicit &&
         (["GET", "HEAD"].includes(req.method) ||
           (req.method === "POST" && req.headers.has("next-action"))) &&
-        /^\/(fa|tr|en)\/(?:search|cart|checkout|fitting-room(?:\/coins)?|account(?:\/(?:login|wishlist|preferences))?)\/?$/.test(
-          pathname,
-        )
+        isMarketContextPath(pathname)
           ? explicit
           : undefined;
       const market = resolveMarket(
