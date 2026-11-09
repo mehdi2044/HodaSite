@@ -185,72 +185,78 @@ test("customer OTP returns from Persian sign-in to the Canadian fitting room", a
   await expect(page.locator(".moda-context-controls select")).toHaveValue("CA");
 });
 
-test("all four Hero images keep the top edge and buy controls reachable at short desktop sizes", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.setViewportSize({ width: 1267, height: 630 });
-  await page.goto("/fa/m/IR");
-  const hero = page.locator('[data-moda4="hero"]').first();
-  const tabs = hero.locator('[data-moda4="hero-progress"] > button');
-  await expect(tabs).toHaveCount(4);
-  for (const [width, height] of [
-    [1267, 540],
-    [1267, 630],
-    [1280, 630],
-    [1440, 630],
-  ]) {
-    await page.setViewportSize({ width, height });
-    for (let index = 0; index < 4; index++) {
-      await page.evaluate(() => scrollTo(0, 0));
-      await tabs.nth(index).click();
-      expect(await page.evaluate(() => scrollY)).toBeLessThanOrEqual(1);
-      const slide = hero.locator('[data-moda4="hero-slide"]:visible');
-      await expect(slide).toHaveAttribute("data-mode", /[CD]/);
-      const image = slide.locator(".m4-media:visible img");
-      await expect(image).toBeVisible();
-      const frame = await image.evaluate(async (el: HTMLImageElement) => {
-        await el.decode();
-        const style = getComputedStyle(el);
-        return {
-          image: el.getBoundingClientRect().top,
-          header: document
-            .querySelector(".moda-header")!
-            .getBoundingClientRect().bottom,
-          position: style.objectPosition,
-          fit: style.objectFit,
-        };
-      });
-      expect(frame.image).toBeGreaterThanOrEqual(frame.header - 1);
-      expect(frame.position).toMatch(/ 0%$/);
-      expect(frame.fit).toBe("cover");
-      for (const button of await slide
-        .locator(".m4-acts a, .m4-acts button")
-        .all()) {
-        await centerIsExposed(button);
+test.describe("short desktop Hero", () => {
+  test.use({ isMobile: false, hasTouch: false, deviceScaleFactor: 1 });
+
+  test("all four Hero images keep the top edge and buy controls reachable at short desktop sizes", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.setViewportSize({ width: 1267, height: 630 });
+    await page.goto("/fa/m/IR");
+    const hero = page.locator('[data-moda4="hero"]').first();
+    const tabs = hero.locator('[data-moda4="hero-progress"] > button');
+    await expect(tabs).toHaveCount(4);
+    for (const [width, height] of [
+      [1267, 540],
+      [1267, 630],
+      [1280, 630],
+      [1440, 630],
+    ]) {
+      await page.setViewportSize({ width, height });
+      for (let index = 0; index < 4; index++) {
+        await page.evaluate(() => scrollTo(0, 0));
+        await tabs.nth(index).click();
+        expect(await page.evaluate(() => scrollY)).toBeLessThanOrEqual(1);
+        const slide = hero.locator('[data-moda4="hero-slide"]:visible');
+        await expect(slide).toHaveAttribute("data-mode", /[CD]/);
+        const image = slide.locator(".m4-media:visible img");
+        await expect(image).toBeVisible();
+        const frame = await image.evaluate(async (el: HTMLImageElement) => {
+          await el.decode();
+          const style = getComputedStyle(el);
+          return {
+            image: el.getBoundingClientRect().top,
+            header: document
+              .querySelector(".moda-header")!
+              .getBoundingClientRect().bottom,
+            position: style.objectPosition,
+            fit: style.objectFit,
+          };
+        });
+        expect(frame.image).toBeGreaterThanOrEqual(frame.header - 1);
+        expect(frame.position).toMatch(/ 0%$/);
+        expect(frame.fit).toBe("cover");
+        for (const button of await slide
+          .locator(".m4-acts a, .m4-acts button")
+          .all()) {
+          await centerIsExposed(button);
+        }
+        for (const pin of await slide
+          .locator(".m4-pin:visible .m4-dot")
+          .all()) {
+          expect(
+            await pin.evaluate((el) => {
+              const box = el.getBoundingClientRect();
+              const hit = document.elementFromPoint(
+                box.x + box.width / 2,
+                box.y + box.height / 2,
+              );
+              return hit?.closest(".m4-pin") === el.closest(".m4-pin");
+            }),
+          ).toBe(true);
+        }
+        for (const price of await slide
+          .locator(".m4-strip:visible button")
+          .all()) {
+          await centerIsExposed(price);
+        }
+        const acts = await slide.locator(".m4-acts").boundingBox();
+        const controls = await hero
+          .locator(".moda-carousel-controls")
+          .boundingBox();
+        expect(acts!.y + acts!.height).toBeLessThanOrEqual(controls!.y);
       }
-      for (const pin of await slide.locator(".m4-pin:visible .m4-dot").all()) {
-        expect(
-          await pin.evaluate((el) => {
-            const box = el.getBoundingClientRect();
-            const hit = document.elementFromPoint(
-              box.x + box.width / 2,
-              box.y + box.height / 2,
-            );
-            return hit?.closest(".m4-pin") === el.closest(".m4-pin");
-          }),
-        ).toBe(true);
-      }
-      for (const price of await slide
-        .locator(".m4-strip:visible button")
-        .all()) {
-        await centerIsExposed(price);
-      }
-      const acts = await slide.locator(".m4-acts").boundingBox();
-      const controls = await hero
-        .locator(".moda-carousel-controls")
-        .boundingBox();
-      expect(acts!.y + acts!.height).toBeLessThanOrEqual(controls!.y);
     }
-  }
+  });
 });
