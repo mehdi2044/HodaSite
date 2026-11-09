@@ -14,54 +14,116 @@ const perspective = 1300;
 const radians = Math.PI / 180;
 
 type Card = { id: string; content: ReactNode };
-type MeasuredCard = { element: HTMLElement; width: number };
+type Rect = { left: number; right: number; top: number; bottom: number };
+type MeasuredCard = {
+  element: HTMLElement;
+  top: number;
+  width: number;
+  artwork: Rect[];
+  label: Rect | undefined;
+};
+
+function measureCard(element: HTMLElement): MeasuredCard {
+  const piece = element.firstElementChild as HTMLElement;
+  // Read untransformed layout only on resize, not on every animation frame.
+  const measure = (node: HTMLElement): Rect => ({
+    left: piece.offsetLeft + node.offsetLeft,
+    right: piece.offsetLeft + node.offsetLeft + node.offsetWidth,
+    top: piece.offsetTop + node.offsetTop,
+    bottom: piece.offsetTop + node.offsetTop + node.offsetHeight,
+  });
+  const label = piece.querySelector<HTMLElement>(".moda-kids-label");
+  return {
+    element,
+    top: element.offsetTop,
+    width: element.offsetWidth,
+    artwork: [
+      ...piece.querySelectorAll<HTMLElement>(
+        ".moda-kids-visual, .moda-kids-base",
+      ),
+    ].map(measure),
+    label: label ? measure(label) : undefined,
+  };
+}
+
+function overlaps(a: Rect, b: Rect, gap = 0) {
+  return (
+    a.left < b.right + gap &&
+    a.right > b.left - gap &&
+    a.top < b.bottom + gap &&
+    a.bottom > b.top - gap
+  );
+}
 
 function drawOrbit(
   stage: HTMLElement,
   cards: MeasuredCard[],
   width: number,
+  height: number,
   angle: number,
 ) {
   if (!width) return;
   stage.style.setProperty("--kids-ring-angle", `${angle}deg`);
   const radius = Math.min(270, width * 0.38);
   const depth = Math.min(205, width * 0.26);
-  const projected = cards.map(({ element: card, width: cardWidth }, index) => {
-    const theta = (angle + (index * 360) / cards.length) * radians;
-    const frontness = Math.cos(theta);
-    const x = Math.sin(theta) * radius;
-    const z = frontness * depth;
-    const scale = 0.82 + frontness * 0.18;
-    const projection = perspective / (perspective - z);
-    const center = width / 2 + x * projection;
-    const half = (cardWidth * scale * projection) / 2;
-    return {
-      card,
-      x,
-      z,
-      scale,
-      frontness,
-      left: center - half,
-      right: center + half,
-    };
-  });
-  const occupied: { left: number; right: number }[] = [];
-  for (const { card, x, z, scale, frontness, left, right } of projected.sort(
-    (a, b) => b.frontness - a.frontness,
-  )) {
-    // The front card wins. Pieces that pass behind another take their turn
-    // instead of obscuring a readable price or becoming hidden click targets.
-    const visible =
-      left >= 3 &&
-      right <= width - 3 &&
-      !occupied.some(
-        (other) => left < other.right + 10 && right > other.left - 10,
-      );
-    if (visible) occupied.push({ left, right });
-    card.style.transform = `translate3d(${x}px, ${frontness * 12}px, ${z}px) translateX(-50%) scale(${scale})`;
-    card.style.zIndex = String(Math.round(frontness * 100) + 100);
-    card.dataset.kidsVisible = String(visible);
-    card.dataset.kidsRear = String(frontness < -0.16);
+  const projected = cards.map(
+    ({ element: card, width: cardWidth, top, artwork, label }, index) => {
+      const theta = (angle + (index * 360) / cards.length) * radians;
+      const frontness = Math.cos(theta);
+      const x = Math.sin(theta) * radius;
+      const z = frontness * depth;
+      const scale = 0.82 + frontness * 0.18;
+      const projection = perspective / (perspective - z);
+      const center = width / 2 + x * projection;
+      const originY = height * 0.2;
+      const y = frontness * 12;
+      const visualTop = originY + (top + y - originY) * projection;
+      const factor = scale * projection;
+      const project = (rect: Rect): Rect => ({
+        left: center + (rect.left - cardWidth / 2) * factor,
+        right: center + (rect.right - cardWidth / 2) * factor,
+        top: visualTop + rect.top * factor,
+        bottom: visualTop + rect.bottom * factor,
+      });
+      return {
+        card,
+        x,
+        y,
+        z,
+        scale,
+        frontness,
+        artwork: artwork.map(project),
+        label: label && project(label),
+      };
+    },
+  );
+  const occupied: Rect[] = [];
+  const ordered = projected.sort((a, b) => b.frontness - a.frontness);
+  for (const [
+    index,
+    { card, x, y, z, scale, frontness, artwork, label },
+  ] of ordered.entries()) {
+    // Occlusion of garments is handled by the browser's depth order. Only
+    // suppress a label that would be clipped or cross a nearer piece/label.
+    const labelVisible = Boolean(
+      label &&
+      label.left >= 3 &&
+      label.right <= width - 3 &&
+      label.top >= 0 &&
+      label.bottom <= height &&
+      !occupied.some((other) => overlaps(label, other, 4)),
+    );
+    if (labelVisible && label) occupied.push(label);
+    occupied.push(...artwork);
+    card.style.transform = `translate3d(${x}px, ${y}px, ${z}px) translateX(-50%) scale(${scale})`;
+    card.style.zIndex = String(ordered.length - index);
+    card.style.setProperty(
+      "--kids-depth-opacity",
+      String(1 - 0.16 * Math.max(0, -frontness)),
+    );
+    const state = String(labelVisible);
+    if (card.dataset.kidsLabelVisible !== state)
+      card.dataset.kidsLabelVisible = state;
   }
 }
 
@@ -70,8 +132,14 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
   const stage = useRef<HTMLDivElement>(null);
   const orbit = useRef<HTMLDivElement>(null);
   const turn = useRef(0);
-  const layout = useRef<{ width: number; cards: MeasuredCard[] }>({
+  const step = useRef<{ frame: number; target: number } | null>(null);
+  const layout = useRef<{
+    width: number;
+    height: number;
+    cards: MeasuredCard[];
+  }>({
     width: 0,
+    height: 0,
     cards: [],
   });
   const drag = useRef<{ x: number; start: number; moved: boolean } | null>(
@@ -87,33 +155,63 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
         stage.current,
         layout.current.cards,
         layout.current.width,
+        layout.current.height,
         angle,
       );
   }, []);
+
+  const stopStep = useCallback(() => {
+    if (step.current) cancelAnimationFrame(step.current.frame);
+    step.current = null;
+  }, []);
+
+  const rotate = (direction: number) => {
+    const start = turn.current;
+    const target =
+      (step.current?.target ?? start) + (direction * 360) / items.length;
+    stopStep();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      paint(target);
+      return;
+    }
+    const started = performance.now();
+    const tick = (time: number) => {
+      const progress = Math.min(1, (time - started) / 420);
+      const eased = progress * progress * (3 - 2 * progress);
+      paint(start + (target - start) * eased);
+      step.current =
+        progress < 1 ? { frame: requestAnimationFrame(tick), target } : null;
+    };
+    step.current = { frame: requestAnimationFrame(tick), target };
+  };
+
+  useEffect(() => stopStep, [stopStep]);
 
   useLayoutEffect(() => {
     const root = stage.current;
     if (!root || !orbit.current) return;
     const cards = [...orbit.current.children] as HTMLElement[];
     const resize = () => {
-      layout.current = {
-        width: root.clientWidth,
-        cards: cards.map((element) => ({
-          element,
-          width: element.offsetWidth,
-        })),
-      };
       const maxCard = Math.max(0, ...cards.map((card) => card.offsetHeight));
       root.style.setProperty(
         "--kids-layout-height",
         `${Math.ceil(maxCard * 1.2 + 48)}px`,
       );
+      layout.current = {
+        width: root.clientWidth,
+        height: root.clientHeight,
+        cards: cards.map(measureCard),
+      };
       paint(turn.current);
     };
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(root);
-    cards.forEach((card) => observer.observe(card));
+    cards.forEach((card) => {
+      observer.observe(card);
+      const label = card.querySelector(".moda-kids-label");
+      if (label) observer.observe(label);
+    });
     return () => observer.disconnect();
   }, [items, paint]);
 
@@ -147,7 +245,7 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
       }
       const delta = previous ? Math.min(100, time - previous) : 0;
       previous = time;
-      paint(turn.current + delta * 0.007);
+      if (!step.current) paint(turn.current + delta * 0.007);
       frame = requestAnimationFrame(tick);
     };
     const observer = new IntersectionObserver((entries) => {
@@ -195,11 +293,13 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
         onFocusCapture={(event) => {
           const target = event.target.closest<HTMLElement>("[data-kids-index]");
           if (target && event.target.matches(":focus-visible")) {
+            stopStep();
             paint((-Number(target.dataset.kidsIndex) * 360) / items.length);
           }
         }}
         onPointerDown={(event) => {
           if (!event.isPrimary || event.button !== 0) return;
+          stopStep();
           moved.current = false;
           drag.current = {
             x: event.clientX,
@@ -245,7 +345,7 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
               className="moda-kids-podium"
               data-moda4="kids-turntable-item"
               data-kids-index={index}
-              data-kids-visible={index === 0}
+              data-kids-label-visible={index === 0}
             >
               {content}
             </div>
@@ -259,7 +359,7 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
             type="button"
             className="button button-outline"
             aria-label={t("previous")}
-            onClick={() => paint(turn.current - 360 / items.length)}
+            onClick={() => rotate(-1)}
           >
             ←
           </button>
@@ -275,7 +375,7 @@ export function ModaKidsRing({ items }: { items: Card[] }) {
             type="button"
             className="button button-outline"
             aria-label={t("next")}
-            onClick={() => paint(turn.current + 360 / items.length)}
+            onClick={() => rotate(1)}
           >
             →
           </button>

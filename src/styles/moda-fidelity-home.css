@@ -432,17 +432,18 @@ html[data-button-style="crayon"] .moda-kids-cta .button { background-color: tran
   inline-size: clamp(104px, 27cqi, 198px);
   transform: translateX(-50%);
   transform-origin: center top;
+  pointer-events: none;
 }
-.moda-kids-world .moda-kids-podium[data-kids-visible="false"] {
+.moda-kids-world .moda-kids-podium[data-kids-label-visible="false"] .moda-kids-label {
   opacity: 0;
   pointer-events: none;
 }
-.moda-kids-world .moda-kids-podium[data-kids-rear="true"] {
-  filter: saturate(.78);
-  opacity: .83;
+.moda-kids-world .moda-kids-visual,
+.moda-kids-world .moda-kids-base {
+  opacity: var(--kids-depth-opacity, 1);
 }
-.moda-kids-world .moda-kids-podium[data-kids-visible="false"][data-kids-rear="true"] { opacity: 0; }
 .moda-kids-piece { display: flex; flex-direction: column; align-items: center; position: relative; text-decoration: none; color: inherit; }
+.moda-kids-visual, .moda-kids-base, .moda-kids-label { pointer-events: auto; }
 .moda-kids-piece:focus-visible { outline: 2px solid #5b4a6b; outline-offset: 3px; border-radius: 12px; }
 .moda-kids-visual {
   position: relative;
@@ -502,8 +503,7 @@ html[data-button-style="crayon"] .moda-kids-cta .button { background-color: tran
   overflow-wrap: anywhere;
 }
 .moda-kids-label bdi { font-size: 12px; font-weight: 600; white-space: nowrap; }
-.moda-kids-world .moda-kids-hint { margin: 0 0 6px; font-size: 13px; color: #6b5e73; text-align: center; }
-.moda-kids-world .moda-kids-ring-section .moda-carousel-controls { margin-block-start: 6px; }
+.moda-kids-world .moda-kids-hint { margin: 0; font-size: 13px; color: #6b5e73; text-align: center; }
 @media (prefers-reduced-motion: reduce) {
   .moda-kids-decor > * { animation: none !important; }
 }
@@ -767,13 +767,22 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
   max-width: 200px;
 }
 .moda-kids-ring-section {
-  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 12px;
 }
 .moda-kids-ring-section > .moda-carousel-controls {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
   margin: 0;
+  gap: 8px 12px;
+}
+.moda-kids-ring-section > .moda-carousel-controls button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+@media (min-width: 1024px) {
+  .moda-kids-ring-section > .moda-carousel-controls button {
+    scroll-margin-block-end: calc(var(--storefront-nav-offset, 0px) + 16px);
+  }
 }
 [data-moda4="shop-the-look"] {
   min-height: max(46vw, 620px);

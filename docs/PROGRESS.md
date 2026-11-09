@@ -3,6 +3,7 @@
 - [Scope and acceptance](phases/phase-moda4-kids-d77.md). Kids World uses the D77 arrangement, undistorted catalog artwork, and a 3D ring whose clickable labels remain clear.
 - In the homepage editor choose a manual product source to control order; update images in Catalog or Cutouts. The new copy and secondary target are optional. Catalog availability and market pricing still apply.
 - Review the seven-width capture set and local test report before visual approval.
+- Orbit follow-up: inspect a full turn in each direction. Garments and podiums stay painted at every depth; only obstructed price labels are suppressed. The hint and controls are separate rows.
 
 ## MODA4 stabilization — local review, 2026-11-09
 
