@@ -158,7 +158,11 @@ export async function verifyOtpAction(locale: string, form: FormData) {
     });
     const next = String(form.get("next") ?? "");
     return {
-      url: customerReturnPath(next, l),
+      url: customerReturnPath(
+        next,
+        l,
+        (await headers()).get("x-hoda-seo-market") ?? undefined,
+      ),
     };
   });
 }

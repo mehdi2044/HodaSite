@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useFittingDockProduct } from "./fitting-dock-context";
 import { storefrontNavigationRoute } from "@/lib/storefront-navigation";
 import { useStorefrontProductHref } from "./storefront-product-context";
+import { storefrontLoginPath, storefrontPath } from "@/lib/storefront-path";
 export function StorefrontNavigation({
   enabled = true,
   locale,
@@ -60,8 +61,7 @@ export function StorefrontNavigation({
     };
   }, [inFitting, enabled, route.suppressed]);
   const fittingActive = route.active;
-  const local = (path: string) =>
-    `/${locale}/${path}?market=${encodeURIComponent(marketCode ?? "")}`;
+  const local = (path: string) => storefrontPath(locale, marketCode, path);
   const fittingItems = [
     { key: "home", href: fittingLinks.home },
     { key: "category", href: fittingLinks.category },
@@ -74,7 +74,13 @@ export function StorefrontNavigation({
           : local("search")),
     },
     { key: "fitting", href: local("fitting-room") },
-    { key: "login", href: local("account/login") },
+    {
+      key: "login",
+      href:
+        inFitting && marketCode
+          ? storefrontLoginPath(locale, marketCode, local("fitting-room"))
+          : local("account/login"),
+    },
     { key: "profile", href: local("account") },
   ] as const;
   if (!enabled || route.suppressed) return null;

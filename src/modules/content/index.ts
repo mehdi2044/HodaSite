@@ -8,6 +8,7 @@ import {
 } from "./validation";
 import { menuPresentation } from "./menu-presentation";
 import { seoPath } from "@/lib/seo-urls";
+import { storefrontMenuHref, storefrontPath } from "@/lib/storefront-path";
 import type { Media } from "@prisma/client";
 
 export * from "./validation";
@@ -166,14 +167,16 @@ export async function getMenu(
     const href =
       item.linkType === "url"
         ? item.url && isSafeLink(item.url)
-          ? item.url
+          ? storefrontMenuHref(item.url, locale, marketCode)
           : undefined
         : item.linkType === "page" && pageVisible
           ? seoPath(locale, marketCode, "pages", localizedSlug)
           : item.linkType === "category" && categorySlug
             ? seoPath(locale, marketCode, "c", categorySlug)
             : item.linkType === "collection" && collection
-              ? `/${locale}/search?${new URLSearchParams({ collectionId: collection.id })}`
+              ? storefrontPath(locale, marketCode, "search", {
+                  collectionId: collection.id,
+                })
               : undefined;
     return {
       id: item.id,

@@ -10,6 +10,10 @@ import { getMenu, type PublicMenuItem } from "@/modules/content";
 import { db } from "@/lib/db";
 import { ResponsiveImage } from "./responsive-image";
 import { Newsletter } from "./newsletter";
+import {
+  storefrontContact,
+  storefrontSocialLink,
+} from "@/lib/storefront-contact";
 
 export type Contact = {
   email?: string;
@@ -45,11 +49,18 @@ export async function Footer({
     getTranslations("footer"),
     getTranslations("contentNavigation"),
   ]);
-  const phone = contact.phones?.[market.code];
-  const marketSocial = social[market.code as MarketCode] ?? {};
-  const socialLinks = SOCIAL_KEYS.filter((key) => marketSocial[key]).map(
-    (key) => [key, marketSocial[key] as string] as const,
+  const { email, phone, address } = storefrontContact(
+    market.supportChannels,
+    contact,
+    market.code,
+    locale,
   );
+  const code = market.code as MarketCode;
+  const marketSocial = social[code] ?? {};
+  const socialLinks = SOCIAL_KEYS.flatMap((key) => {
+    const url = storefrontSocialLink(marketSocial[key], code, key);
+    return url ? [[key, url] as const] : [];
+  });
   const footerLine = legal.footerLine?.[locale];
   const menu = await getMenu(
     "footer",
@@ -75,22 +86,22 @@ export async function Footer({
         {await Newsletter({ locale, marketId: market.id })}
       </div>
       <div className="moda-footer-links shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        <div className="grid gap-1">
-          <strong>{t("contactTitle")}</strong>
-          {contact.email && (
-            <bdi dir="ltr">
-              <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            </bdi>
-          )}
-          {phone && (
-            <bdi dir="ltr">
-              <a href={`tel:${phone}`}>{phone}</a>
-            </bdi>
-          )}
-          {contact.address?.[locale] && (
-            <p className="opacity-70">{contact.address[locale]}</p>
-          )}
-        </div>
+        {(email || phone || address) && (
+          <div className="grid gap-1">
+            <strong>{t("contactTitle")}</strong>
+            {email && (
+              <bdi dir="ltr">
+                <a href={`mailto:${email}`}>{email}</a>
+              </bdi>
+            )}
+            {phone && (
+              <bdi dir="ltr">
+                <a href={`tel:${phone}`}>{phone}</a>
+              </bdi>
+            )}
+            {address && <p className="opacity-70">{address}</p>}
+          </div>
+        )}
         {socialLinks.length > 0 && (
           <div className="grid gap-1">
             <strong>{t("socialTitle")}</strong>

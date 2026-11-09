@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { seoPath } from "@/lib/seo-urls";
+import { storefrontLoginPath, storefrontPath } from "@/lib/storefront-path";
 import { useFittingDockProduct } from "./fitting-dock-context";
 import Decimal from "decimal.js";
 import { ResponsiveImage } from "./responsive-image";
@@ -42,6 +43,7 @@ type Saved = {
 export function InstantFitting({
   locale,
   marketId,
+  marketCode,
   currency,
   customerId,
   models,
@@ -53,6 +55,7 @@ export function InstantFitting({
 }: {
   locale: "fa" | "tr" | "en";
   marketId: string;
+  marketCode: string;
   currency: "IRT" | "TRY" | "CAD";
   customerId: string | null;
   models: {
@@ -811,7 +814,11 @@ export function InstantFitting({
               ) : (
                 <Link
                   className="button-outline"
-                  href={`/${locale}/account/login?next=/${locale}/fitting-room`}
+                  href={storefrontLoginPath(
+                    locale,
+                    marketCode,
+                    storefrontPath(locale, marketCode, "fitting-room"),
+                  )}
                 >
                   {t("loginSave")}
                 </Link>

@@ -52,6 +52,39 @@
   outline: 2px solid #fff;
   outline-offset: -3px;
 }
+
+/* These controls can be taller than the available space between the sticky
+   header and dock. Let the document scroll the entire control into view. */
+@media (max-width: 1023px) and (max-height: 690px) {
+  .storefront-app[data-floating-navigation="on"] .shop-product-submit {
+    position: static;
+  }
+}
+@media (min-width: 761px) and (max-height: 900px) {
+  .storefront-app[data-floating-navigation="on"]
+    .moda-instant-workspace
+    > div:first-child {
+    position: static;
+  }
+}
+
+/* The tall-screen purchase bar also occupies a band above the dock. */
+@media (max-width: 1023px) and (min-height: 691px) {
+  .storefront-app[data-floating-navigation="on"]:has(.shop-product-submit) {
+    padding-block-end: calc(
+      var(--storefront-nav-offset, var(--storefront-nav-height)) +
+        env(safe-area-inset-bottom, 0px) + 90px
+    );
+  }
+  html:has(
+    .storefront-app[data-floating-navigation="on"] .shop-product-submit
+  ) {
+    scroll-padding-block-end: calc(
+      var(--storefront-nav-offset, 84px) + env(safe-area-inset-bottom, 0px) +
+        106px
+    );
+  }
+}
 body:has(dialog[open]) .storefront-floating-nav {
   visibility: hidden;
 }

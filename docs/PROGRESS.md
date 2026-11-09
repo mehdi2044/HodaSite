@@ -1,3 +1,10 @@
+## MODA4 stabilization — local review, 2026-11-09
+
+- [Scope and acceptance](phases/phase-moda4-stabilization.md). Stabilization branches from the accepted Global Navigation Labels preview code.
+- Check `/fa/fitting-room?market=CA` through the header, cart and sign-in links. Review short desktop Hero and short-screen purchase and fitting controls beside the existing dock.
+- Markets settings owns localized market addresses and scoped support channels. The storefront hides unconfigured or known sample contacts. No migration is required.
+- Separate local evidence records test results and visual review status under D70.
+
 ## FR3.1 D77 fitting room — local review
 
 - [Phase scope](phases/phase-fr3-1.md) and [FR3.2 design only](phases/phase-fr3-2-design-fa.md).

@@ -743,3 +743,17 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
     --camera-zoom: var(--camera-desktop-zoom);
   }
 }
+
+/* In a short desktop window, width-based height pushes the controls below
+   the fold. Anchor the top of the photo while the shorter box crops its feet. */
+@media (min-width: 1024px) and (max-height: 740px) and (orientation: landscape) {
+  .moda-carousel-hero:has(.m4-slide) {
+    height: max(490px, calc(100svh - 52px - var(--moda-header-height, 72px)));
+  }
+  .m4-slide {
+    --fy: 0;
+  }
+  .m4-demo {
+    bottom: 98px;
+  }
+}

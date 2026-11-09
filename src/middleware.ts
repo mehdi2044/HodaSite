@@ -342,7 +342,9 @@ async function applicationMiddleware(req: NextAuthRequest) {
         explicit &&
         (["GET", "HEAD"].includes(req.method) ||
           (req.method === "POST" && req.headers.has("next-action"))) &&
-        /^\/(fa|tr|en)\/(search|fitting-room|cart|checkout)\/?$/.test(pathname)
+        /^\/(fa|tr|en)\/(?:search|cart|checkout|fitting-room(?:\/coins)?|account(?:\/(?:login|wishlist|preferences))?)\/?$/.test(
+          pathname,
+        )
           ? explicit
           : undefined;
       const market = resolveMarket(

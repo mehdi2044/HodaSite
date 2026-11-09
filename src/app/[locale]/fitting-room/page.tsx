@@ -13,6 +13,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { currentCustomer } from "@/modules/customers";
 import { getRequestContext } from "@/lib/request-context";
+import { storefrontLoginPath, storefrontPath } from "@/lib/storefront-path";
+import { seoPath } from "@/lib/seo-urls";
 import { fittingConfig, fittingProducts, savedLooks } from "@/modules/fitting";
 import { db } from "@/lib/db";
 import { FittingRoom } from "@/components/storefront/fitting-room";
@@ -35,19 +37,25 @@ async function PaidPage({
     t = await getTranslations("fitting"),
     config = await fittingConfig(),
     c = await currentCustomer();
+  const { market } = await getRequestContext(locale);
   if (!config.enabled && (!c || c.isGuest))
     return (
       <section className="shell shop-page py-10">
         <h1>{t("title")}</h1>
         <p className="my-6">{t("disabled")}</p>
-        <Link className="button" href={`/${locale}`}>
+        <Link className="button" href={seoPath(locale, market.code)}>
           {t("back")}
         </Link>
       </section>
     );
   if (!c || c.isGuest)
-    redirect(`/${locale}/account/login?next=/${locale}/fitting-room`);
-  const { market } = await getRequestContext(locale);
+    redirect(
+      storefrontLoginPath(
+        locale,
+        market.code,
+        storefrontPath(locale, market.code, "fitting-room"),
+      ),
+    );
   const q = (await searchParams).q?.slice(0, 100) ?? "";
   const [wallet, products, owned, saved, media] = await Promise.all([
     db.$transaction(
@@ -204,6 +212,7 @@ export default async function Page(props: {
           key={`${customer?.id ?? "guest"}:${market.id}:${locale}`}
           locale={locale}
           marketId={market.id}
+          marketCode={market.code}
           currency={market.currency as "IRT" | "TRY" | "CAD"}
           customerId={customer && !customer.isGuest ? customer.id : null}
           models={models.map((m) => ({

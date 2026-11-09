@@ -14,6 +14,9 @@ export const marketInputSchema = z
     whatsapp: z.string().optional().default(""),
     telegram: z.string().optional().default(""),
     email: z.string().optional().default(""),
+    addressFa: z.string().trim().max(500).optional(),
+    addressTr: z.string().trim().max(500).optional(),
+    addressEn: z.string().trim().max(500).optional(),
     announcementEnabled: z.enum(["on"]).optional(),
     announcementLink: z
       .union([z.literal(""), safeLinkSchema])

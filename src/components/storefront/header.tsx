@@ -1,6 +1,7 @@
 import { variantImages } from "@/modules/catalog/variant-images";
 import { formatCartAmount } from "@/modules/catalog/format";
 import { seoPath } from "@/lib/seo-urls";
+import { storefrontPath } from "@/lib/storefront-path";
 import { localizedValue } from "@/modules/content/homepage";
 import { MobileMenu } from "./mobile-menu";
 import { StorefrontNavigation } from "./storefront-navigation";
@@ -192,14 +193,14 @@ export async function Header({
               marketCode={market.code}
             />
             <Link
-              href={`/${locale}/account/wishlist`}
+              href={storefrontPath(locale, market.code, "account/wishlist")}
               className="moda-tool"
               aria-label={t("engagement.wishlist")}
             >
               <span aria-hidden="true">♡</span>
             </Link>
             <Link
-              href={`/${locale}/account`}
+              href={storefrontPath(locale, market.code, "account")}
               className="moda-tool moda-account-tool"
               aria-label={t("commerce.account")}
             >
@@ -264,7 +265,7 @@ export async function Header({
             home: seoPath(safe, market.code),
             category:
               departmentItems[0]?.href ??
-              `/${locale}/search?market=${encodeURIComponent(market.code)}`,
+              storefrontPath(locale, market.code, "search"),
           }}
           locale={locale}
           marketCode={market.code}
