@@ -146,9 +146,26 @@ test("short mobile product keeps its price and purchase button separately visibl
   await expect(price).toContainText(/CA\$|CAD/);
   await reachesCenter(buy);
   await centerIsExposed(price);
+  const purchaseBounds = (await bar.boundingBox())!;
+  const buttonBounds = (await buy.boundingBox())!;
+  expect(buttonBounds.y).toBeGreaterThanOrEqual(purchaseBounds.y);
+  expect(buttonBounds.y + buttonBounds.height).toBeLessThanOrEqual(
+    purchaseBounds.y + purchaseBounds.height,
+  );
   await expect(buy).toBeEnabled();
+  const variant = await bar.locator('input[name="variantId"]').inputValue();
+  expect(variant).not.toBe("");
   await buy.tap();
-  await expect(page.locator("dialog[open]")).toBeVisible();
+  await expect(
+    bar.getByRole("status").filter({ hasText: fa.commerce.saved }),
+  ).toBeVisible();
+  await page.locator(".storefront-cart-toggle").click();
+  await expect(page.locator(".moda-cart-drawer")).toBeVisible();
+  await expect(
+    page
+      .locator(".moda-cart-drawer article")
+      .filter({ has: page.locator(`input[name="variantId"][value="${variant}"]`) }),
+  ).toHaveCount(1);
 });
 
 test("customer OTP returns from Persian sign-in to the Canadian fitting room", async ({

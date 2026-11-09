@@ -95,6 +95,7 @@ body:has(dialog[open]) .storefront-floating-nav {
     .shop-product-submit
     .shop-add-button {
     position: relative;
+    inset: auto;
   }
   .storefront-app[data-floating-navigation="on"][data-navigation-context="fitting"] {
     --storefront-nav-height: 109px;
