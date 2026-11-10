@@ -550,6 +550,8 @@ export function FittingAdMotion({
   cta: ReactNode;
 }) {
   const t = useTranslations("modaHomepage");
+  const ad = useRef<HTMLDivElement>(null);
+  const prefetched = useRef(new Set<string>());
   const [selection, setSelection] = useState(0);
   const [replay, setReplay] = useState(0);
   const [paused, setPaused] = useState(!autoplay);
@@ -573,6 +575,30 @@ export function FittingAdMotion({
   }, []);
   const active = looks[selection] ?? looks[0];
   const still = !motion || reduced;
+  useEffect(() => {
+    const element = ad.current;
+    if (!element || still || !autoplay || looks.length < 2) return;
+    const next = looks[(selection + 1) % looks.length];
+    const observe = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      const photo = compact ? next.photo?.mobile : next.photo?.desktop;
+      const files = [
+        next.model.url,
+        ...(photo ? [photo.url] : []),
+        ...(compact ? next.pieces.map((piece) => piece.media.url) : []),
+      ];
+      for (const url of files) {
+        if (prefetched.current.has(url)) continue;
+        prefetched.current.add(url);
+        const preload = new Image();
+        preload.fetchPriority = "low";
+        preload.src = url;
+      }
+      observe.disconnect();
+    });
+    observe.observe(element);
+    return () => observe.disconnect();
+  }, [autoplay, compact, looks, selection, still]);
   const select = (index: number, play = false) => {
     setSelection(index);
     setReplay((value) => value + 1);
@@ -582,6 +608,7 @@ export function FittingAdMotion({
   return (
     <div
       className="m4-fit"
+      ref={ad}
       data-moda4="fitting-ad"
       data-state={active ? "animated" : staticPhoto ? "static" : "copy-only"}
     >
