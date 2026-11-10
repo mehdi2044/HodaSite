@@ -1,3 +1,9 @@
+## MODA4 M4-02 — cinematic fitting ad (local review)
+
+- D77/D81 fitting-ad stages use one pausable clock; the rack only renders for approved playable catalog looks.
+- Final photos require matching product/color/variant identity and a valid photo confirmation. A dressed store model is the fallback result; no AI or money path is invoked.
+- Review the isolated storefront and the reference/before/after videos. Visual approval and D70 review remain outstanding.
+
 ## MODA4 Kids World — local fidelity review
 
 - [Scope and acceptance](phases/phase-moda4-kids-d77.md). Kids World uses the D77 arrangement, undistorted catalog artwork, and a 3D ring whose clickable labels remain clear.

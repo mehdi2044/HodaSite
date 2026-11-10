@@ -216,7 +216,12 @@ export async function compositeSceneFingerprint(
   const snapshots = await Promise.all(
     markets.map((marketId) => compositeSceneReferences(scene, marketId, tx)),
   );
-  const snapshot = snapshots[0];
+  return fingerprintCompositeSnapshot(snapshots[0]);
+}
+
+export function fingerprintCompositeSnapshot(
+  snapshot: Awaited<ReturnType<typeof compositeSceneReferences>>,
+) {
   return createHash("sha256")
     .update(
       JSON.stringify({

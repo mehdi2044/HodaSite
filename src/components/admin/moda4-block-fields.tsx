@@ -394,8 +394,10 @@ export function ModaSceneField({
   proof,
   approved,
   approve,
+  reorderPieces = false,
 }: {
   scene: ShoppableScene;
+  reorderPieces?: boolean;
   change: (scene: ShoppableScene) => void;
   options: ModaAdminOptions;
   urls: Record<string, string>;
@@ -540,6 +542,31 @@ export function ModaSceneField({
                 );
         return (
           <div key={piece.id} className="card grid gap-2">
+            {reorderPieces && (
+              <div className="flex flex-wrap gap-2">
+                {([-1, 1] as const).map((offset) => (
+                  <button
+                    key={offset}
+                    type="button"
+                    className="button button-outline"
+                    disabled={!scene.pieces[index + offset]}
+                    onClick={() => {
+                      const pieces = [...scene.pieces];
+                      const other = pieces[index + offset];
+                      if (!other) return;
+                      pieces[index] = other;
+                      pieces[index + offset] = piece;
+                      approve(scene.id, undefined);
+                      change({ ...scene, pieces, match: undefined });
+                    }}
+                  >
+                    {a(
+                      offset < 0 ? "fittingPieceEarlier" : "fittingPieceLater",
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
             <label>
               {t("product")}
               <select
@@ -743,9 +770,11 @@ export function Moda4BlockFields({
   const sceneField = (
     scene: ShoppableScene,
     update: (scene: ShoppableScene) => void,
+    reorderPieces = false,
   ) => (
     <ModaSceneField
       scene={scene}
+      reorderPieces={reorderPieces}
       change={update}
       options={options}
       urls={urls}
@@ -1568,9 +1597,56 @@ export function Moda4BlockFields({
     return (
       <div className="grid gap-3">
         {common}
+        <LocalizedField
+          label={t("fittingSubtitleAdmin")}
+          value={block.subtitle ?? { fa: "", tr: "", en: "" }}
+          change={(subtitle) => change({ ...block, subtitle })}
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={block.motion !== false}
+            onChange={(event) =>
+              change({ ...block, motion: event.target.checked })
+            }
+          />{" "}
+          {t("fittingMotion")}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={block.autoplay !== false}
+            onChange={(event) =>
+              change({ ...block, autoplay: event.target.checked })
+            }
+          />{" "}
+          {t("fittingAutoplay")}
+        </label>
         {block.looks.map((look, index) => (
           <fieldset key={look.id} className="card grid gap-2">
             <legend>{t("look", { number: index + 1 })}</legend>
+            <div className="flex flex-wrap gap-2">
+              {([-1, 1] as const).map((offset) => (
+                <button
+                  key={offset}
+                  type="button"
+                  className="button button-outline"
+                  disabled={
+                    index + offset < 0 || index + offset >= block.looks.length
+                  }
+                  onClick={() => {
+                    const looks = [...block.looks];
+                    const other = looks[index + offset];
+                    if (!other) return;
+                    looks[index] = other;
+                    looks[index + offset] = look;
+                    change({ ...block, looks });
+                  }}
+                >
+                  {t(offset < 0 ? "fittingEarlier" : "fittingLater")}
+                </button>
+              ))}
+            </div>
             <LocalizedField
               label={t("lookLabel")}
               value={look.label}
@@ -1583,13 +1659,16 @@ export function Moda4BlockFields({
                 })
               }
             />
-            {sceneField(look.scene, (scene) =>
-              change({
-                ...block,
-                looks: block.looks.map((item, n) =>
-                  n === index ? { ...item, scene } : item,
-                ),
-              }),
+            {sceneField(
+              look.scene,
+              (scene) =>
+                change({
+                  ...block,
+                  looks: block.looks.map((item, n) =>
+                    n === index ? { ...item, scene } : item,
+                  ),
+                }),
+              true,
             )}
             <label>
               <input

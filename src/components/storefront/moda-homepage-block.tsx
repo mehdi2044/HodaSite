@@ -1,4 +1,5 @@
 import { FittingAdMotion } from "./fitting-ad-motion";
+import { resolveFittingAdLooks } from "@/modules/content/scenes/fitting-ad";
 import { ModaHeroSlide } from "./moda-hero-slide";
 import { ShoppableScene } from "./shoppable-scene";
 import { isDemoFashionMedia } from "./responsive-image";
@@ -299,79 +300,99 @@ export async function ModaHomepageBlock({
       </div>
     );
   }
-  if (block.type === "Lookbook" || block.type === "FittingAd") {
-    const scenes =
-      block.type === "Lookbook"
-        ? block.scenes
-        : block.looks.map((look) => look.finalPhoto ?? look.scene);
-    const views = await Promise.all(
-      scenes.map((scene) =>
-        resolveShoppableScene(scene, market, locale, { adminPreview: preview }),
-      ),
+  if (block.type === "FittingAd") {
+    const { animated, staticPhoto, diagnostics } = await resolveFittingAdLooks(
+      block.looks,
+      market.id,
+      locale,
     );
-    const items =
-      block.type === "FittingAd"
-        ? await Promise.all(
-            block.looks.map(async (look) => {
-              const staged = await resolveShoppableScene(
-                look.scene,
-                market,
-                locale,
-                { adminPreview: preview },
-              );
-              return (
-                <FittingAdMotion
-                  key={look.id}
-                  view={staged}
-                  locale={locale}
-                  final={null}
-                />
-              );
-            }),
-          )
-        : views.map((view) => (
-            <Link
-              key={view.id}
-              href={view.pieces[0]?.href ?? `/${locale}/search`}
-            >
-              {view.title}
-            </Link>
-          ));
+    const raw = text(block.title);
+    const english =
+      /\p{Script=Latin}/u.test(raw) && !/\p{Script=Arabic}/u.test(raw);
+    const parts = raw.includes("|")
+      ? raw.split("|", 2)
+      : english
+        ? (raw.match(/^(.*)\s(\S+\s\S+)$/)?.slice(1) ?? [raw])
+        : [raw];
     return (
-      <div
-        data-moda4={block.type === "FittingAd" ? "fitting-ad" : "lookbook"}
-        className={
-          block.type === "FittingAd" ? "moda-fitting-ad" : "moda-lookbook"
-        }
-      >
-        {block.type === "FittingAd" && (
-          <div className="moda-fitting-copy">
-            <h2 data-moda4-display="" lang="en" dir="ltr">
-              {text(block.title)}
-            </h2>
-            <p>{text(block.body)}</p>
+      <>
+        <FittingAdMotion
+          looks={animated}
+          staticPhoto={staticPhoto}
+          locale={locale}
+          autoplay={block.autoplay !== false}
+          motion={block.motion !== false}
+          cta={
             <Link
               data-moda4-cta=""
-              className="button"
-              href={`/${locale}/fitting-room?market=${market.code}`}
+              className="button m4-cta"
+              href={"/" + locale + "/fitting-room?market=" + market.code}
             >
               {text(block.ctaLabel)}
             </Link>
-          </div>
-        )}
-        <ModaCarousel
-          art={
-            block.type === "Lookbook"
-              ? views.map((view) => (
-                  <SceneArt key={view.id} view={view} locale={locale} />
-                ))
-              : undefined
           }
-          kind={block.type === "Lookbook" ? "lookbook" : "fitting"}
-          title={block.type === "Lookbook" ? text(block.title) : undefined}
-          items={items}
+        >
+          <span className="m4-fit-eyebrow">{t("fittingEyebrow")}</span>
+          <h2
+            data-moda4-display=""
+            lang={english ? "en" : locale}
+            dir={english ? "ltr" : undefined}
+            style={
+              english && locale === "fa" ? { textAlign: "right" } : undefined
+            }
+          >
+            {parts[0]}
+            {parts[1] && (
+              <>
+                {" "}
+                <em>{parts[1]}</em>
+              </>
+            )}
+          </h2>
+          <div className="m4-fit-sub">
+            {block.subtitle ? text(block.subtitle) : t("fittingSubtitle")}
+          </div>
+          <p>{text(block.body)}</p>
+        </FittingAdMotion>
+        {preview && diagnostics.length > 0 && (
+          <ul className="m4-fit-diagnostics" data-m4-diagnostics="">
+            {diagnostics.map(({ id, label, reason }, index) => (
+              <li key={id + ":" + reason + ":" + index} data-m4-reason={reason}>
+                {t("fittingLookHidden", {
+                  look: label,
+                  reason: t("fittingReason_" + reason),
+                })}
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    );
+  }
+  if (block.type === "Lookbook") {
+    const views = await Promise.all(
+      block.scenes.map((scene) =>
+        resolveShoppableScene(scene, market, locale, { adminPreview: preview }),
+      ),
+    );
+    return (
+      <div data-moda4="lookbook" className="moda-lookbook">
+        <ModaCarousel
+          art={views.map((view) => (
+            <SceneArt key={view.id} view={view} locale={locale} />
+          ))}
+          kind="lookbook"
+          title={text(block.title)}
+          items={views.map((view) => (
+            <Link
+              key={view.id}
+              href={view.pieces[0]?.href ?? "/" + locale + "/search"}
+            >
+              {view.title}
+            </Link>
+          ))}
           labels={views.map((view) => view.title)}
-          seconds={block.type === "Lookbook" ? block.autoplaySeconds : 8}
+          seconds={block.autoplaySeconds}
         />
       </div>
     );

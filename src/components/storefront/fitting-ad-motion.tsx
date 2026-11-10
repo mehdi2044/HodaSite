@@ -1,252 +1,660 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useTranslations } from "next-intl";
+import "@/styles/moda-fitting-ad.css";
 import { ResponsiveImage } from "./responsive-image";
-import { SceneArt } from "./scene-art";
-import type { SceneView } from "@/modules/content/scenes/resolve";
-export function FittingAdMotion({
-  view,
+import type {
+  FittingAdLook,
+  FittingAdPiece,
+  FittingSlot,
+} from "@/modules/content/scenes/fitting-ad";
+import {
+  FITTING_FLIGHT_MS,
+  fittingDeparture,
+  fittingPhase,
+  fittingTiming,
+} from "./fitting-ad-timeline";
+
+type Locale = "fa" | "tr" | "en";
+const rackWidths: Record<FittingSlot, number> = {
+  TOP: 118,
+  BOTTOM: 70,
+  LAYER: 84,
+  ACCESSORY: 90,
+  ONE_PIECE: 110,
+  SHOES: 70,
+};
+const layerDepth: Record<FittingSlot, number> = {
+  BOTTOM: 5,
+  SHOES: 5,
+  ONE_PIECE: 6,
+  TOP: 6,
+  LAYER: 7,
+  ACCESSORY: 8,
+};
+const phaseKeys = {
+  pick: "fittingPick",
+  dress: "fittingDress",
+  style: "fittingStyle",
+  look: "fittingYourLook",
+} as const;
+const ease = "cubic-bezier(.45,.05,.2,1)";
+const styleOf = (piece: FittingAdPiece): CSSProperties => ({
+  clipPath: piece.clip,
+  left: piece.target.x * 100 + "%",
+  top: piece.target.y * 100 + "%",
+  width: piece.target.width * 100 + "%",
+  height: piece.target.height * 100 + "%",
+  zIndex:
+    layerDepth[piece.slot] * 10 + Math.max(0, Math.min(9, piece.target.zIndex)),
+  transform: "translate(-50%, -50%) rotate(" + piece.target.rotation + "deg)",
+});
+function Hanger() {
+  return (
+    <svg
+      className="m4-hanger"
+      viewBox="0 0 64 44"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M32 14a5 5 0 1 1 5-5c0 3-5 4-5 8L5 36h54L32 17" />
+    </svg>
+  );
+}
+
+function Stage({
+  look,
+  all,
   locale,
-  final,
+  compact,
+  still,
+  paused,
+  complete,
 }: {
-  view: SceneView;
-  locale: "fa" | "tr" | "en";
-  final: ReactNode;
+  look: FittingAdLook;
+  all: FittingAdLook[];
+  locale: Locale;
+  compact: boolean;
+  still: boolean;
+  paused: boolean;
+  complete: () => void;
 }) {
-  const t = useTranslations("modaHomepage"),
-    root = useRef<HTMLDivElement>(null);
-  const [paused, setPaused] = useState(false),
-    [active, setActive] = useState(false),
-    [replay, setReplay] = useState(0);
+  const t = useTranslations("modaHomepage");
+  const box = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const rack = useRef(new Map<string, HTMLDivElement>());
+  const flights = useRef(new Map<string, HTMLDivElement>());
+  const layers = useRef(new Map<string, HTMLDivElement>());
+  const model = useRef<HTMLDivElement>(null);
+  const scan = useRef<HTMLDivElement>(null);
+  const reveal = useRef<HTMLDivElement>(null);
+  const ready = useRef<HTMLDivElement>(null);
+  const elapsed = useRef(0);
+  const syncClock = useRef<() => void>(() => {});
+  const playing = useRef(!paused);
+  const onComplete = useRef(complete);
+  const [currentStep, setStep] = useState(fittingPhase(0, look.pieces.length));
+  const width = compact ? 720 : 1100;
+  const railWidth = compact ? 296 : 560;
+  const garments = [
+    ...new Map(
+      (compact ? [look] : all)
+        .flatMap((l) => [...l.pieces].sort((a, b) => a.rackOrder - b.rackOrder))
+        .map((p) => [p.rackKey, p]),
+    ).values(),
+  ];
+  const shownStep = still
+    ? fittingPhase(fittingTiming(look.pieces.length).end, look.pieces.length)
+    : currentStep;
+
   useEffect(() => {
-    const media = matchMedia("(prefers-reduced-motion: reduce)");
-    let visible = false,
-      focus = false;
-    const update = () =>
-      setActive(
-        visible && !focus && !document.hidden && !media.matches && !paused,
-      );
-    const observer = new IntersectionObserver((entries) => {
-      visible = entries.some((entry) => entry.isIntersecting);
-      update();
-    });
-    if (root.current) observer.observe(root.current);
-    const enter = () => {
-        focus = true;
-        update();
-      },
-      leave = () => {
-        focus = Boolean(root.current?.contains(document.activeElement));
-        update();
-      };
-    const element = root.current;
-    element?.addEventListener("mouseenter", enter);
-    element?.addEventListener("mouseleave", leave);
-    element?.addEventListener("focusin", enter);
-    element?.addEventListener("focusout", leave);
-    document.addEventListener("visibilitychange", update);
-    media.addEventListener("change", update);
-    return () => {
-      observer.disconnect();
-      element?.removeEventListener("mouseenter", enter);
-      element?.removeEventListener("mouseleave", leave);
-      element?.removeEventListener("focusin", enter);
-      element?.removeEventListener("focusout", leave);
-      document.removeEventListener("visibilitychange", update);
-      media.removeEventListener("change", update);
-    };
-  }, [paused]);
-  const flightIdentity = JSON.stringify([
-    view.id,
-    view.desktop.media,
-    view.mobile.media,
-    view.pieces.map((piece) => [piece.id, piece.layer]),
-  ]);
-  useEffect(() => {
-    const element = root.current,
-      stage = element?.querySelector<HTMLElement>(".moda-fitting-stage");
-    if (!active || !stage) return;
-    const animations: Animation[] = [],
-      nodes: HTMLElement[] = [];
-    let timer: ReturnType<typeof setTimeout> | undefined,
+    playing.current = !paused;
+    onComplete.current = complete;
+    syncClock.current();
+  }, [paused, complete]);
+
+  useLayoutEffect(() => {
+    const outer = box.current,
+      scene = stage.current;
+    if (!outer || !scene) return;
+    const timing = fittingTiming(look.pieces.length);
+    let animations: Animation[] = [],
+      previous = 0,
       frame = 0,
-      cancelled = false;
+      observedWidth = -1,
+      visible = false;
+    let readyToPlay = false,
+      decoded = false,
+      disposed = false;
+    const shouldRun = () =>
+      !still &&
+      readyToPlay &&
+      decoded &&
+      playing.current &&
+      visible &&
+      !document.hidden &&
+      elapsed.current < timing.end;
+    let lastStep = "";
+    const paint = (time: number) => {
+      for (const animation of animations) animation.currentTime = time;
+      const next = fittingPhase(time, look.pieces.length);
+      const key = next.phase + next.number;
+      if (key !== lastStep) {
+        lastStep = key;
+        setStep(next);
+      }
+      scene.style.setProperty("--m4-time", String(Math.round(time)));
+    };
+    const tick = (timestamp: number) => {
+      frame = 0;
+      if (!shouldRun()) return sync();
+      elapsed.current = Math.min(
+        timing.end,
+        elapsed.current + (previous ? timestamp - previous : 0),
+      );
+      previous = timestamp;
+      paint(elapsed.current);
+      if (elapsed.current === timing.end) {
+        sync();
+        onComplete.current();
+      } else frame = requestAnimationFrame(tick);
+    };
+    const sync = () => {
+      const running = shouldRun();
+      scene.dataset.running = String(running);
+      if (!running) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        previous = 0;
+      } else if (!frame) frame = requestAnimationFrame(tick);
+    };
+    syncClock.current = sync;
     const animate = (
-      element: Element | null,
+      node: Element | null,
       frames: Keyframe[],
       options: KeyframeAnimationOptions,
     ) => {
-      if (element?.animate)
-        animations.push(element.animate(frames, { fill: "both", ...options }));
+      if (!node) return;
+      const animation = node.animate(frames, { fill: "both", ...options });
+      animation.pause();
+      animations.push(animation);
     };
-    const clear = () => {
-      animations.splice(0).forEach((animation) => animation.cancel());
-      nodes.splice(0).forEach((node) => node.remove());
+    const cancelAnimations = () => {
+      for (const animation of animations) animation.cancel();
+      animations = [];
     };
-    const run = () => {
-      clear();
-      if (cancelled) return;
-      const bounds = stage.getBoundingClientRect();
-      if (!bounds.width || !bounds.height) return;
-      let latest = 0;
-      for (const source of stage.querySelectorAll<HTMLElement>(
-        "[data-fitting-piece-source]",
-      )) {
-        const id = source.dataset.fittingPieceSource;
-        const target = [
-          ...stage.querySelectorAll<HTMLElement>("[data-fitting-piece-target]"),
-        ].find((target) => target.dataset.fittingPieceTarget === id);
-        const picture = source.querySelector("picture");
-        if (!target || !picture) continue;
-        const from = source.getBoundingClientRect(),
-          to = target.getBoundingClientRect(),
-          begin = 300 + nodes.length * 850;
-        if (!from.width || !from.height || !to.width || !to.height) continue;
-        const flight = document.createElement("div");
-        flight.className = "moda-fitting-flight";
-        flight.setAttribute("aria-hidden", "true");
+    const build = () => {
+      const w = outer.clientWidth;
+      if (!w || w === observedWidth) return;
+      observedWidth = w;
+      const scale = w / width;
+      outer.style.setProperty("--m4-scale", String(scale));
+      cancelAnimations();
+      if (still) return;
+      const base = scene.getBoundingClientRect();
+      const toScene = (node: Element) => {
+        const r = node.getBoundingClientRect();
+        return {
+          x: (r.left + r.width / 2 - base.left) / scale,
+          y: (r.top + r.height / 2 - base.top) / scale,
+          w: r.width / scale,
+        };
+      };
+      // Measure the undisturbed rail first; neither animation nor resize can
+      // move the stored origins until the entire new frame is ready.
+      const origins = new Map<string, ReturnType<typeof toScene>>();
+      rack.current.forEach((node, id) => {
+        const image = node.querySelector(".m4-rack-image");
+        if (image) origins.set(id, toScene(image));
+      });
+      rack.current.forEach((node, id) => {
+        const index = [...origins.keys()].indexOf(id);
+        animate(
+          node,
+          [
+            { transform: "rotateY(-26deg) rotateZ(-.8deg)" },
+            { transform: "rotateY(-20deg) rotateZ(.8deg)" },
+            { transform: "rotateY(-26deg) rotateZ(-.8deg)" },
+          ],
+          {
+            duration: 4000,
+            iterations: Infinity,
+            delay: -index * 420,
+            easing: "ease-in-out",
+          },
+        );
+      });
+      look.pieces.forEach((piece, i) => {
+        const source = rack.current.get(piece.rackKey);
+        const from = origins.get(piece.rackKey);
+        const flight = flights.current.get(piece.id);
+        const target = layers.current.get(piece.id);
+        if (!source || !from || !from.w || !flight || !target) return;
+        const x = (compact ? 300 : 660) + piece.target.x * 420;
+        const y = 40 + piece.target.y * 560;
+        const mediaRatio = (piece.media.width ?? 1) / (piece.media.height ?? 1);
+        const toWidth = Math.min(
+          piece.target.width * 420,
+          piece.target.height * 560 * mediaRatio,
+        );
+        const k = toWidth / from.w;
         Object.assign(flight.style, {
-          left: `${from.left - bounds.left}px`,
-          top: `${from.top - bounds.top}px`,
-          width: `${from.width}px`,
-          height: `${from.height}px`,
+          left: from.x + "px",
+          top: from.y + "px",
+          width: from.w + "px",
+          height: from.w / mediaRatio + "px",
         });
-        flight.appendChild(picture.cloneNode(true));
-        stage.appendChild(flight);
-        nodes.push(flight);
-        const targetStyle = getComputedStyle(target);
-        const dx = to.left + to.width / 2 - from.left - from.width / 2,
-          dy = to.top + to.height / 2 - from.top - from.height / 2,
-          sx = parseFloat(targetStyle.width) / from.width,
-          sy = parseFloat(targetStyle.height) / from.height;
-        const rotation = Number(target.dataset.fittingRotation ?? 0);
+        const dx = x - from.x,
+          dy = y - from.y;
+        const start = fittingDeparture(i),
+          land = start + FITTING_FLIGHT_MS;
+        const translate = (a: number, b: number, transform: string) =>
+          "translate(-50%, -50%) translate(" +
+          a +
+          "px," +
+          b +
+          "px) " +
+          transform;
+        const finish = translate(
+          dx,
+          dy,
+          "rotateY(360deg) rotateZ(" +
+            piece.target.rotation +
+            "deg) scale(" +
+            k +
+            ")",
+        );
         animate(
           flight,
           [
-            { opacity: 0, transform: "none" },
-            { opacity: 1, transform: "none", offset: 0.02 },
+            { opacity: 0, transform: translate(0, 0, "rotateY(-24deg)") },
             {
               opacity: 1,
-              transform: `translate3d(${dx * 0.5}px,${dy * 0.5 - 30}px,80px) rotateY(180deg) scale(${(1 + sx) / 2},${(1 + sy) / 2})`,
-              offset: 0.5,
+              transform: translate(0, -2, "rotateY(-23deg)"),
+              offset: 0.025,
             },
             {
               opacity: 1,
-              transform: `translate3d(${dx}px,${dy}px,0) rotateY(360deg) rotateZ(${rotation}deg) scale(${sx},${sy})`,
-              offset: 0.98,
+              transform: translate(0, -70, "rotateY(0deg) scale(1.08)"),
+              offset: 0.22,
             },
             {
-              opacity: 0,
-              transform: `translate3d(${dx}px,${dy}px,0) rotateY(360deg) rotateZ(${rotation}deg) scale(${sx},${sy})`,
+              opacity: 1,
+              transform: translate(
+                dx * 0.55,
+                dy - (compact ? 115 : 160),
+                "rotateY(200deg) rotateZ(-6deg) scale(" + (1 + k) / 2 + ")",
+              ),
+              offset: 0.62,
             },
+            { opacity: 1, transform: finish, offset: 0.97 },
+            { opacity: 0, transform: finish },
           ],
-          { duration: 1000, delay: begin, easing: "ease-in-out" },
+          { delay: start, duration: FITTING_FLIGHT_MS, easing: ease },
         );
-        animate(source, [{ opacity: 1 }, { opacity: 0 }], {
-          duration: 250,
-          delay: begin,
-        });
+        animate(
+          source.querySelector(".m4-rack-image"),
+          [{ opacity: 1 }, { opacity: 0 }],
+          { delay: start, duration: 45 },
+        );
+        animate(
+          source.querySelector(".m4-hanger"),
+          [{ opacity: 1 }, { opacity: 0 }],
+          { delay: start + 500, duration: 500 },
+        );
         animate(target, [{ opacity: 0 }, { opacity: 1 }], {
-          duration: 1,
-          delay: begin + 980,
+          delay: land - 30,
+          duration: 30,
         });
-        latest = begin + 1000;
-      }
-      if (!latest) return;
-      const base = stage.querySelector(".moda-scene-base"),
-        sketch = stage.querySelector(".moda-fitting-sketch");
+        if (look.photo)
+          animate(target, [{ opacity: 1 }, { opacity: 0 }], {
+            delay: timing.reveal,
+            duration: 500,
+            fill: "forwards",
+          });
+      });
       animate(
-        base,
-        [{ opacity: 0 }, { opacity: 0, offset: 0.85 }, { opacity: 1 }],
-        { duration: latest + 1700 },
-      );
-      animate(
-        sketch,
-        [{ opacity: 1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }],
-        { duration: latest + 1700 },
-      );
-      animate(
-        stage.querySelector(".moda-fitting-scan"),
+        scan.current,
         [
-          { opacity: 0, top: "5%" },
-          { opacity: 0.7, top: "5%", offset: 0.1 },
-          { opacity: 0.7, top: "85%", offset: 0.9 },
-          { opacity: 0, top: "85%" },
+          { opacity: 0, top: "30px" },
+          { opacity: 1, top: "65px", offset: 0.08 },
+          { opacity: 1, top: "435px", offset: 0.92 },
+          { opacity: 0, top: "470px" },
         ],
-        { delay: latest, duration: 1000 },
+        { delay: timing.scan, duration: 1200, easing: "ease-in-out" },
       );
-      timer = setTimeout(run, latest + 2900);
+      if (look.photo) {
+        animate(model.current, [{ opacity: 1 }, { opacity: 0 }], {
+          delay: timing.reveal,
+          duration: 600,
+        });
+        animate(
+          reveal.current,
+          [
+            { opacity: 0, transform: "scale(.92)" },
+            { opacity: 1, transform: "scale(1)" },
+          ],
+          { delay: timing.reveal, duration: 900, easing: "ease-out" },
+        );
+      }
+      animate(ready.current, [{ opacity: 0 }, { opacity: 1 }], {
+        delay: timing.reveal + 400,
+        duration: 600,
+      });
+      paint(elapsed.current);
+      readyToPlay = origins.size > 0;
+      sync();
     };
-    frame = requestAnimationFrame(run);
-    const resize = () => {
-      if (timer) clearTimeout(timer);
-      cancelAnimationFrame(frame);
-      clear();
-      frame = requestAnimationFrame(run);
-    };
-    window.addEventListener("resize", resize);
+    build();
+    Promise.allSettled(
+      [...scene.querySelectorAll("img")].map((image) => image.decode()),
+    ).then(() => {
+      if (disposed) return;
+      decoded = true;
+      sync();
+    });
+    const resize = new ResizeObserver(build);
+    resize.observe(outer);
+    const intersection = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(
+          entry?.isIntersecting && entry.intersectionRatio >= 0.35,
+        );
+        sync();
+      },
+      { threshold: 0.35 },
+    );
+    intersection.observe(outer);
+    document.addEventListener("visibilitychange", sync);
     return () => {
-      cancelled = true;
+      disposed = true;
+      resize.disconnect();
+      intersection.disconnect();
+      document.removeEventListener("visibilitychange", sync);
       cancelAnimationFrame(frame);
-      if (timer) clearTimeout(timer);
-      window.removeEventListener("resize", resize);
-      clear();
+      cancelAnimations();
+      syncClock.current = () => {};
     };
-  }, [active, replay, flightIdentity]);
+  }, [compact, look, still, width]);
+
   return (
-    <div ref={root} className="moda-fitting-motion" data-running={active}>
-      <div className="moda-fitting-stage" aria-hidden="true">
-        <div className="moda-clothes-rack" data-moda4="fitting-ad-rack">
-          {view.pieces.map((piece, index) => (
-            <div
-              className="moda-hanging-garment"
-              key={piece.id}
-              data-fitting-piece-source={piece.id}
-              style={
-                { "--garment-delay": `${index * 1.3}s` } as React.CSSProperties
-              }
-            >
-              <span className="moda-hanger" />
-              {piece.layer ? (
-                <ResponsiveImage
-                  media={{
-                    ...piece.layer.media,
-                    presentation: { fit: "contain", focalX: 0.5, focalY: 0.5 },
+    <div
+      className="m4-scene-box"
+      ref={box}
+      data-scene={compact ? "compact" : "wide"}
+      data-still={still}
+      data-photo={Boolean(look.photo)}
+    >
+      <div
+        className="m4-scene"
+        ref={stage}
+        data-m4-stage=""
+        data-step={shownStep.phase}
+        aria-hidden="true"
+      >
+        <div className="m4-step" data-m4-step="">
+          {String(shownStep.number).padStart(2, "0")} —{" "}
+          {t(phaseKeys[shownStep.phase])}
+        </div>
+        <div className="m4-floor" />
+        {!still && (
+          <div className="m4-rack" data-moda4="fitting-ad-rack">
+            <span className="m4-leg a" />
+            <span className="m4-leg b" />
+            <span className="m4-base a" />
+            <span className="m4-base b" />
+            <span className="m4-rail" />
+            {garments.map((piece, i) => {
+              const garmentWidth = rackWidths[piece.slot];
+              const inset = compact ? 36 : 58;
+              const center =
+                inset +
+                (i * (railWidth - 2 * inset)) /
+                  Math.max(1, garments.length - 1);
+              return (
+                <div
+                  className="m4-garment"
+                  data-m4-rack-piece={piece.slot}
+                  key={piece.rackKey}
+                  ref={(node) => {
+                    if (node) rack.current.set(piece.rackKey, node);
+                    else rack.current.delete(piece.rackKey);
                   }}
-                  locale={locale}
-                  sizes="160px"
-                  imgClassName="h-full w-full"
-                />
-              ) : (
-                <span className="moda-rack-label">{piece.title}</span>
-              )}
+                  style={{
+                    left: center - garmentWidth / 2,
+                    width: garmentWidth,
+                  }}
+                >
+                  <Hanger />
+                  <div className="m4-rack-image">
+                    <ResponsiveImage
+                      media={piece.media}
+                      locale={locale}
+                      sizes="140px"
+                      priority
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="m4-model" ref={model} data-moda4="fitting-ad-mannequin">
+          <ResponsiveImage
+            media={look.model}
+            locale={locale}
+            sizes="420px"
+            priority
+          />
+        </div>
+        <div className="m4-dressed">
+          {look.pieces.map((piece) => (
+            <div
+              className="m4-layer"
+              data-m4-layer={piece.slot}
+              key={piece.id}
+              style={styleOf(piece)}
+              ref={(node) => {
+                if (node) layers.current.set(piece.id, node);
+                else layers.current.delete(piece.id);
+              }}
+            >
+              <ResponsiveImage
+                media={piece.media}
+                locale={locale}
+                sizes="220px"
+                priority
+              />
             </div>
           ))}
         </div>
-        <div className="moda-fitting-model" data-moda4="fitting-ad-mannequin">
-          <SceneArt view={view} locale={locale} sketch />
-          <div className="moda-fitting-scan" />
+        {!still &&
+          look.pieces.map((piece) => (
+            <div
+              className="m4-fly"
+              data-m4-flight={piece.slot}
+              key={piece.id}
+              ref={(node) => {
+                if (node) flights.current.set(piece.id, node);
+                else flights.current.delete(piece.id);
+              }}
+              style={{
+                zIndex:
+                  layerDepth[piece.slot] * 10 +
+                  Math.max(0, Math.min(9, piece.target.zIndex)),
+              }}
+            >
+              <ResponsiveImage
+                media={piece.media}
+                locale={locale}
+                sizes="220px"
+                priority
+              />
+            </div>
+          ))}
+        {!still && <div className="m4-scan" ref={scan} />}
+        {look.photo && (
+          <div className="m4-reveal" ref={reveal}>
+            <ResponsiveImage
+              media={compact ? look.photo.mobile : look.photo.desktop}
+              locale={locale}
+              sizes="330px"
+              priority
+            />
+          </div>
+        )}
+        <div className="m4-ready" ref={ready}>
+          {t("fittingReady")}
         </div>
       </div>
-      <div className="moda-fitting-utilities">
-        <p>{t("stylingDemonstration")}</p>
-        <button
-          className="button button-outline"
-          type="button"
-          aria-pressed={paused}
-          onClick={() => setPaused((value) => !value)}
-        >
-          {paused ? t("resume") : t("pause")}
-        </button>
-        <button
-          className="button button-outline"
-          type="button"
-          onClick={() => setReplay((value) => value + 1)}
-        >
-          {t("replay")}
-        </button>
+    </div>
+  );
+}
+
+export function FittingAdMotion({
+  looks,
+  locale,
+  autoplay,
+  motion,
+  children,
+  staticPhoto,
+  cta,
+}: {
+  looks: FittingAdLook[];
+  locale: Locale;
+  autoplay: boolean;
+  motion: boolean;
+  children: ReactNode;
+  staticPhoto: FittingAdLook["photo"];
+  cta: ReactNode;
+}) {
+  const t = useTranslations("modaHomepage");
+  const [selection, setSelection] = useState(0);
+  const [replay, setReplay] = useState(0);
+  const [paused, setPaused] = useState(!autoplay);
+  const [ended, setEnded] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  useLayoutEffect(() => {
+    const narrow = matchMedia("(max-width: 760px)");
+    const preference = matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      setCompact(narrow.matches);
+      setReduced(preference.matches);
+    };
+    update();
+    narrow.addEventListener("change", update);
+    preference.addEventListener("change", update);
+    return () => {
+      narrow.removeEventListener("change", update);
+      preference.removeEventListener("change", update);
+    };
+  }, []);
+  const active = looks[selection] ?? looks[0];
+  const still = !motion || reduced;
+  const select = (index: number, play = false) => {
+    setSelection(index);
+    setReplay((value) => value + 1);
+    setEnded(false);
+    if (play) setPaused(false);
+  };
+  return (
+    <div
+      className="m4-fit"
+      data-moda4="fitting-ad"
+      data-state={active ? "animated" : staticPhoto ? "static" : "copy-only"}
+    >
+      <div className="m4-fit-wrap">
+        <div className="m4-fit-copy">
+          {children}
+          {active && (looks.length > 1 || !still) && (
+            <div
+              className="m4-fit-sets"
+              role="group"
+              aria-label={t("fittingSelect")}
+            >
+              {looks.map((look, index) => (
+                <button
+                  key={look.id}
+                  type="button"
+                  className="m4-chip"
+                  aria-pressed={look.id === active.id}
+                  data-m4-look={look.id}
+                  onClick={() => select(index)}
+                >
+                  {look.label}
+                </button>
+              ))}
+              {!still && (
+                <>
+                  <button
+                    type="button"
+                    className="m4-chip m4-motion-control"
+                    data-m4-replay=""
+                    onClick={() => select(selection, true)}
+                  >
+                    {t("replay")}
+                  </button>
+                  <button
+                    type="button"
+                    className="m4-chip m4-motion-control m4-pause"
+                    data-m4-pause=""
+                    aria-label={paused ? t("resume") : t("pause")}
+                    aria-pressed={paused}
+                    onClick={() =>
+                      ended
+                        ? select(selection, true)
+                        : setPaused((value) => !value)
+                    }
+                  >
+                    <span aria-hidden="true">{paused ? "▶" : "Ⅱ"}</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {cta}
+        </div>
+        {active ? (
+          <Stage
+            key={active.id + ":" + replay}
+            look={active}
+            all={looks}
+            locale={locale}
+            compact={compact}
+            still={still}
+            paused={paused}
+            complete={() =>
+              autoplay
+                ? select((selection + 1) % looks.length)
+                : (setEnded(true), setPaused(true))
+            }
+          />
+        ) : (
+          staticPhoto && (
+            <figure className="m4-static">
+              <ResponsiveImage
+                media={compact ? staticPhoto.mobile : staticPhoto.desktop}
+                locale={locale}
+                sizes="420px"
+              />
+              <figcaption>{t("stylingDemonstration")}</figcaption>
+            </figure>
+          )
+        )}
       </div>
-      {final && <div className="moda-fitting-final">{final}</div>}
     </div>
   );
 }

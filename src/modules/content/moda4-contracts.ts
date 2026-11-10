@@ -121,6 +121,9 @@ export const moda4BlockSchemas = [
     .object({
       ...base,
       type: z.literal("FittingAd"),
+      autoplay: z.boolean().optional(),
+      motion: z.boolean().optional(),
+      subtitle: localizedTextSchema.optional(),
       title: localizedTextSchema,
       body: localizedTextSchema,
       looks: z

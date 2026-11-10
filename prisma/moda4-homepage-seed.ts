@@ -127,6 +127,14 @@ export async function seedFreshModa4Homepage(
     string,
     { mediaId: string; productId: string; colorId: string }
   >();
+  const fittingProfiles = new Map<
+    string,
+    {
+      profile: Awaited<ReturnType<typeof db.catalogCutout.create>>;
+      media: Media;
+      variants: string[];
+    }
+  >();
   for (const [key, [top, width, x, zIndex]] of Object.entries(geometry)) {
     const product = products.find(
       (product) => product.id === `seed-style-v2-${key}`,
@@ -225,7 +233,7 @@ export async function seedFreshModa4Homepage(
             ? model.kind === "MAN"
             : ["GIRL", "BOY"].includes(model.kind)),
     );
-    await db.catalogCutout.create({
+    const profile = await db.catalogCutout.create({
       data: {
         id: `seed-moda4-profile-${key}`,
         productId,
@@ -290,6 +298,14 @@ export async function seedFreshModa4Homepage(
           })),
         },
       },
+    });
+    fittingProfiles.set(key, {
+      profile,
+      media,
+      variants: product.variants
+        .filter((item) => item.isActive && item.colorId === variant.colorId)
+        .map((item) => "seed-moda4-" + item.id)
+        .sort(),
     });
     profiles.set(key, {
       mediaId: media.id,
@@ -382,6 +398,72 @@ export async function seedFreshModa4Homepage(
         true,
       ),
     );
+  // A clean demo has curated, validated assets. Stamp only its fitting ad;
+  // existing merchant Homepages never enter seedFreshModa4Homepage.
+  const fittingLooks = outfits.map((row, n) => {
+    const keys =
+      n === 0
+        ? ["women-knit", "women-trousers", "accessories-bag"]
+        : n === 1
+          ? ["men-shirt", "men-chino", "accessories-scarf"]
+          : [...row[1]];
+    const look = scene("seed-moda4-fitting-scene-" + n, row[0], keys, row[2]);
+    const model = modelImages.find((item) => item.id === row[0]);
+    if (!model) throw Error("Missing curated fitting model");
+    const pieces = look.pieces.map((piece, index) => {
+      const seed = fittingProfiles.get(keys[index]);
+      const geometry = (
+        seed?.profile.geometry as
+          | {
+              models?: {
+                modelId: string;
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+                scale: number;
+                rotation: number;
+                zIndex: number;
+              }[];
+            }
+          | undefined
+      )?.models?.find((entry) => entry.modelId === model.id);
+      if (!seed || !geometry || !seed.variants.length)
+        throw Error("Missing curated fitting cutout");
+      const { x, y, width, height, scale, rotation, zIndex, modelId } =
+        geometry;
+      return {
+        id: piece.id,
+        variants: seed.variants.map((variantId) => ({
+          variantId,
+          profileId: seed.profile.id,
+          version: seed.profile.version,
+          media: {
+            mediaId: seed.media.id,
+            url: seed.media.url,
+            width: seed.media.width,
+            height: seed.media.height,
+            variants: seed.media.variants,
+          },
+          // Preserve the canonical order emitted by placementSchema.
+          geometry: { x, y, width, height, scale, rotation, zIndex, modelId },
+          slot: seed.profile.slot,
+          anchor: seed.profile.anchor,
+        })),
+      };
+    });
+    return {
+      id: "seed-moda4-fitting-look-" + n,
+      label: row[2],
+      scene: {
+        ...look,
+        match: {
+          fingerprint: hash({ model: model.fingerprint, pieces }),
+          confirmedAt: new Date().toISOString(),
+        },
+      },
+    };
+  });
   const blocks = [
     {
       ...common("seed-moda4-hero", "HeroSlider"),
@@ -578,17 +660,13 @@ export async function seedFreshModa4Homepage(
         "From the rail to you.",
       ),
       body: text(
-        "نمایش لایه‌ای، بدون درخواست هوش مصنوعی",
-        "Katmanlı görünüm; yapay zekâ isteği yok",
-        "Layered styling, with no AI request",
+        "حرکت لباس‌ها را از رگال تا مانکن ببین. بعد استایل خودت را در اتاق پرو بساز و به کمد یا سبد ببر.",
+        "Parçaların askıdan mankene geçişini izle. Sonra prova odasında kendi kombinini oluştur.",
+        "Watch the pieces move from the rail to the mannequin. Then build your own look in the fitting room.",
       ),
-      looks: outfits.map((row, n) => ({
-        id: `seed-moda4-fitting-look-${n}`,
-        label: row[2],
-        scene: makeScene(`seed-moda4-fitting-scene-${n}`, n),
-      })),
-      ctaLabel: explore,
-      target: catalog,
+      looks: fittingLooks,
+      ctaLabel: text("خودت امتحان کن", "Kendin dene", "Try it yourself"),
+      target: { kind: "fitting" },
     },
     {
       ...common("seed-moda4-look", "ShopLook"),
