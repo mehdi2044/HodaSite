@@ -95,6 +95,7 @@ function Stage({
   const box = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const rack = useRef(new Map<string, HTMLDivElement>());
+  const rail = useRef<HTMLDivElement>(null);
   const flights = useRef(new Map<string, HTMLDivElement>());
   const layers = useRef(new Map<string, HTMLDivElement>());
   const model = useRef<HTMLDivElement>(null);
@@ -325,6 +326,14 @@ function Stage({
             fill: "forwards",
           });
       });
+      // The compact scene has no spare clothes. Fade its rail with the last
+      // departing hanger instead of displaying a bare rack in the result.
+      if (origins.size === look.pieces.length) {
+        animate(rail.current, [{ opacity: 1 }, { opacity: 0 }], {
+          delay: fittingDeparture(look.pieces.length - 1),
+          duration: 540,
+        });
+      }
       animate(
         scan.current,
         [
@@ -410,7 +419,7 @@ function Stage({
         </div>
         <div className="m4-floor" />
         {!still && (
-          <div className="m4-rack" data-moda4="fitting-ad-rack">
+          <div className="m4-rack" data-moda4="fitting-ad-rack" ref={rail}>
             <span className="m4-leg a" />
             <span className="m4-leg b" />
             <span className="m4-base a" />
