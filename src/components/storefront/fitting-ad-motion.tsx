@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import "@/styles/moda-fitting-ad.css";
 import { ResponsiveImage } from "./responsive-image";
+import { fittingFlight } from "./fitting-ad-flight";
 import type {
   FittingAdLook,
   FittingAdPiece,
@@ -131,6 +132,7 @@ function Stage({
       scene = stage.current;
     if (!outer || !scene) return;
     const timing = fittingTiming(look.pieces.length);
+    let paintFlights: ((time: number) => void)[] = [];
     let animations: Animation[] = [],
       previous = 0,
       frame = 0,
@@ -150,6 +152,7 @@ function Stage({
     let lastStep = "";
     const paint = (time: number) => {
       for (const animation of animations) animation.currentTime = time;
+      for (const paintFlight of paintFlights) paintFlight(time);
       const next = fittingPhase(time, look.pieces.length);
       const key = next.phase + next.number;
       if (key !== lastStep) {
@@ -191,10 +194,12 @@ function Stage({
       const animation = node.animate(frames, { fill: "both", ...options });
       animation.pause();
       animations.push(animation);
+      return animation;
     };
     const cancelAnimations = () => {
       for (const animation of animations) animation.cancel();
       animations = [];
+      paintFlights = [];
     };
     const build = () => {
       const w = outer.clientWidth;
@@ -205,6 +210,16 @@ function Stage({
       cancelAnimations();
       if (still) return;
       const base = scene.getBoundingClientRect();
+      const style = getComputedStyle(scene);
+      const [originX, originY] = style.perspectiveOrigin
+        .split(" ")
+        .map(parseFloat);
+      const flightFrame = {
+        width,
+        height: scene.clientHeight,
+        perspective: parseFloat(style.perspective),
+        origin: { x: originX, y: originY },
+      };
       const toScene = (node: Element) => {
         const r = node.getBoundingClientRect();
         return {
@@ -250,61 +265,39 @@ function Stage({
           piece.target.width * 420,
           piece.target.height * 560 * mediaRatio,
         );
-        const k = toWidth / from.w;
+        const image = { width: from.w, height: from.w / mediaRatio };
         Object.assign(flight.style, {
           left: from.x + "px",
           top: from.y + "px",
-          width: from.w + "px",
-          height: from.w / mediaRatio + "px",
+          width: image.width + "px",
+          height: image.height + "px",
         });
-        const dx = x - from.x,
-          dy = y - from.y;
         const start = fittingDeparture(i),
           land = start + FITTING_FLIGHT_MS;
-        const translate = (a: number, b: number, transform: string) =>
-          "translate(-50%, -50%) translate(" +
-          a +
-          "px," +
-          b +
-          "px) " +
-          transform;
-        const finish = translate(
-          dx,
-          dy,
-          "rotateY(360deg) rotateZ(" +
-            piece.target.rotation +
-            "deg) scale(" +
-            k +
-            ")",
+        const poseAt = fittingFlight(
+          from,
+          { x, y, rotation: piece.target.rotation, scale: toWidth / from.w },
+          image,
+          flightFrame,
+          compact,
         );
-        animate(
+        const opacity = animate(
           flight,
           [
-            { opacity: 0, transform: translate(0, 0, "rotateY(-24deg)") },
-            {
-              opacity: 1,
-              transform: translate(0, -2, "rotateY(-23deg)"),
-              offset: 0.025,
-            },
-            {
-              opacity: 1,
-              transform: translate(0, -70, "rotateY(0deg) scale(1.08)"),
-              offset: 0.22,
-            },
-            {
-              opacity: 1,
-              transform: translate(
-                dx * 0.55,
-                dy - (compact ? 115 : 160),
-                "rotateY(200deg) rotateZ(-6deg) scale(" + (1 + k) / 2 + ")",
-              ),
-              offset: 0.62,
-            },
-            { opacity: 1, transform: finish, offset: 0.97 },
-            { opacity: 0, transform: finish },
+            { opacity: 0 },
+            { opacity: 1, offset: 0.025 },
+            { opacity: 1, offset: 0.97 },
+            { opacity: 0 },
           ],
           { delay: start, duration: FITTING_FLIGHT_MS, easing: ease },
         );
+        paintFlights.push((time) => {
+          if (time < start || time > land) return;
+          const progress = opacity?.effect?.getComputedTiming().progress;
+          if (progress == null) return;
+          const pose = poseAt(progress);
+          flight.style.transform = `translate(-50%, -50%) translate(${pose.x - from.x}px, ${pose.y - from.y}px) rotateY(${pose.turn}deg) rotateZ(${pose.tilt}deg) scale(${pose.scale})`;
+        });
         animate(
           source.querySelector(".m4-rack-image"),
           [{ opacity: 1 }, { opacity: 0 }],
