@@ -301,11 +301,11 @@ export async function ModaHomepageBlock({
     );
   }
   if (block.type === "FittingAd") {
-    const { animated, staticPhoto, diagnostics } = await resolveFittingAdLooks(
-      block.looks,
-      market.id,
-      locale,
-    );
+    const { animated, staticPhoto, diagnostics, photoPreviews } =
+      await resolveFittingAdLooks(block.looks, market.id, locale, {
+        adminPreview: preview,
+      });
+    const scenes = preview ? await getTranslations("scenes") : null;
     const raw = text(block.title);
     const english =
       /\p{Script=Latin}/u.test(raw) && !/\p{Script=Arabic}/u.test(raw);
@@ -354,6 +354,47 @@ export async function ModaHomepageBlock({
           </div>
           <p>{text(block.body)}</p>
         </FittingAdMotion>
+        {scenes &&
+          photoPreviews.map((photo) => (
+            <section
+              key={photo.id}
+              data-scene-id={photo.id}
+              data-scene-confirmation={photo.fingerprint}
+              data-scene-confirmation-key={photo.key}
+              className="grid gap-3 rounded-token border p-3"
+            >
+              <h3>{photo.label}</h3>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  {
+                    id: "desktop",
+                    label: scenes("desktopImage"),
+                    image: photo.desktop,
+                  },
+                  {
+                    id: "mobile",
+                    label: scenes("mobileImage"),
+                    image: photo.mobile,
+                  },
+                  ...photo.references.map(({ id, image }, index) => ({
+                    id,
+                    label: `${scenes("referenceImage")} · ${index + 1}`,
+                    image,
+                  })),
+                ].map(({ id, label, image }) => (
+                  <figure key={id} className="grid w-32 gap-1">
+                    <ResponsiveImage
+                      media={image}
+                      locale={locale}
+                      sizes="128px"
+                      imgClassName="h-40 w-full object-contain"
+                    />
+                    <figcaption>{label}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          ))}
         {preview && diagnostics.length > 0 && (
           <ul className="m4-fit-diagnostics" data-m4-diagnostics="">
             {diagnostics.map(({ id, label, reason }, index) => (

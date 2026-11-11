@@ -12,7 +12,7 @@ import {
   fingerprintCompositeSnapshot,
 } from "./composite";
 import { sceneReferenceSnapshot } from "./references";
-import type { ShoppableScene } from "./contracts";
+import { matchingFittingPhoto, sceneConfirmationKey } from "./contracts";
 
 type Look = Extract<Moda4Block, { type: "FittingAd" }>["looks"][number];
 export type FittingSlot = Awaited<
@@ -37,6 +37,15 @@ export type FittingAdLook = {
 type FittingAdPhoto = {
   desktop: ResponsiveImageMedia;
   mobile: ResponsiveImageMedia;
+};
+type PhotoPreview = {
+  id: string;
+  label: string;
+  key: string;
+  fingerprint: string;
+  desktop: ResponsiveImageMedia;
+  mobile: ResponsiveImageMedia;
+  references: { id: string; image: ResponsiveImageMedia }[];
 };
 type Diagnostic = {
   id: string;
@@ -63,20 +72,6 @@ const order: Record<FittingSlot, number> = {
   ACCESSORY: 5,
 };
 
-export function matchingFittingPhoto(
-  scene: ShoppableScene,
-  photo: ShoppableScene,
-) {
-  const identity = (value: ShoppableScene) =>
-    value.pieces
-      .map((p) =>
-        JSON.stringify([p.productId, p.colorId, p.preferredVariantId ?? null]),
-      )
-      .sort()
-      .join("\n");
-  return photo.mode === "PHOTO" && identity(scene) === identity(photo);
-}
-
 function media(image: ResponsiveImageMedia): ResponsiveImageMedia {
   const { url, variants, width, height, blurDataUrl, altI18n } = image;
   return { url, variants, width, height, blurDataUrl, altI18n };
@@ -86,6 +81,7 @@ export async function resolveFittingAdLooks(
   looks: Look[],
   marketId: string,
   locale: CatalogLocale,
+  options: { adminPreview?: boolean } = {},
 ) {
   const models = await storeCutoutModels();
   const resolved = await Promise.all(
@@ -99,6 +95,7 @@ export async function resolveFittingAdLooks(
       const photoScene =
         look.finalPhoto ?? (look.scene.mode === "PHOTO" ? look.scene : null);
       let photo: FittingAdPhoto | null = null;
+      let photoPreview: PhotoPreview | null = null;
       if (photoScene) {
         if (!matchingFittingPhoto(look.scene, photoScene))
           fail("PHOTO_MISMATCH");
@@ -112,13 +109,29 @@ export async function resolveFittingAdLooks(
           const mobile = snapshot?.images.find(
             (item) => item.id === photoScene.mobile.mediaId,
           );
-          if (
-            desktop &&
-            mobile &&
-            snapshot?.fingerprint === photoScene.match?.fingerprint
-          )
-            photo = { desktop: media(desktop), mobile: media(mobile) };
-          else fail(snapshot ? "MATCH_REQUIRED" : "INVALID_REFERENCE");
+          if (snapshot && desktop && mobile) {
+            const images = { desktop: media(desktop), mobile: media(mobile) };
+            if (options.adminPreview) {
+              const references = photoScene.pieces.flatMap((piece) => {
+                const image = snapshot.images.find(
+                  (item) => item.id === piece.referenceMediaId,
+                );
+                return image ? [{ id: piece.id, image: media(image) }] : [];
+              });
+              if (references.length === photoScene.pieces.length)
+                photoPreview = {
+                  id: photoScene.id,
+                  label,
+                  key: sceneConfirmationKey(photoScene),
+                  fingerprint: snapshot.fingerprint,
+                  ...images,
+                  references,
+                };
+            }
+            if (snapshot.fingerprint === photoScene.match?.fingerprint)
+              photo = images;
+            else fail("MATCH_REQUIRED");
+          } else fail("INVALID_REFERENCE");
         }
       }
 
@@ -188,12 +201,15 @@ export async function resolveFittingAdLooks(
         );
         return { id: look.id, label, photo, model: media(image), pieces };
       };
-      return { animated: await assemble(), photo, diagnostics };
+      return { animated: await assemble(), photo, photoPreview, diagnostics };
     }),
   );
   return {
     animated: resolved.flatMap(({ animated }) => (animated ? [animated] : [])),
     staticPhoto: resolved.find(({ photo }) => photo)?.photo ?? null,
     diagnostics: resolved.flatMap(({ diagnostics }) => diagnostics),
+    photoPreviews: resolved.flatMap(({ photoPreview }) =>
+      photoPreview ? [photoPreview] : [],
+    ),
   };
 }

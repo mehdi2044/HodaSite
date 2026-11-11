@@ -81,6 +81,20 @@ export const shoppableSceneSchema = z
       ctx.addIssue({ code: "custom", message: "Duplicate scene product" });
   });
 export type ShoppableScene = z.infer<typeof shoppableSceneSchema>;
+export function matchingFittingPhoto(
+  scene: ShoppableScene,
+  photo: ShoppableScene,
+) {
+  const identity = (value: ShoppableScene) =>
+    value.pieces
+      .map((p) =>
+        JSON.stringify([p.productId, p.colorId, p.preferredVariantId ?? null]),
+      )
+      .sort()
+      .join("\n");
+  return photo.mode === "PHOTO" && identity(scene) === identity(photo);
+}
+
 export function sceneMediaIds(scene: ShoppableScene) {
   return [
     ...new Set([

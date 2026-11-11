@@ -4,7 +4,10 @@ import { SceneAnchorCanvas } from "./scene-editor";
 import { MediaPicker } from "./media-picker";
 import type { Moda4Block } from "@/modules/content/moda4-contracts";
 import type { ShoppableScene } from "@/modules/content/scenes/contracts";
-import { sceneConfirmationKey } from "@/modules/content/scenes/contracts";
+import {
+  matchingFittingPhoto,
+  sceneConfirmationKey,
+} from "@/modules/content/scenes/contracts";
 import { SCENE_ASPECTS } from "@/modules/content/scenes/geometry";
 import { HERO_FRAME_PROFILES } from "@/modules/content/hero-framing";
 import type { ContentTarget } from "@/modules/content/moda4-targets";
@@ -771,6 +774,7 @@ export function Moda4BlockFields({
     scene: ShoppableScene,
     update: (scene: ShoppableScene) => void,
     reorderPieces = false,
+    allowConfirmation = true,
   ) => (
     <ModaSceneField
       scene={scene}
@@ -779,7 +783,7 @@ export function Moda4BlockFields({
       options={options}
       urls={urls}
       onMedia={onMedia}
-      proof={proofs[scene.id]}
+      proof={allowConfirmation ? proofs[scene.id] : undefined}
       approved={approvals[scene.id]}
       approve={approve}
     />
@@ -1661,13 +1665,19 @@ export function Moda4BlockFields({
             />
             {sceneField(
               look.scene,
-              (scene) =>
+              (scene) => {
+                if (
+                  look.finalPhoto &&
+                  !matchingFittingPhoto(scene, look.finalPhoto)
+                )
+                  approve(look.finalPhoto.id, undefined);
                 change({
                   ...block,
                   looks: block.looks.map((item, n) =>
                     n === index ? { ...item, scene } : item,
                   ),
-                }),
+                });
+              },
               true,
             )}
             <label>
@@ -1693,13 +1703,23 @@ export function Moda4BlockFields({
               {t("finalPhoto")}
             </label>
             {look.finalPhoto &&
-              sceneField(look.finalPhoto, (finalPhoto) =>
-                change({
-                  ...block,
-                  looks: block.looks.map((item, n) =>
-                    n === index ? { ...item, finalPhoto } : item,
-                  ),
-                }),
+              sceneField(
+                look.finalPhoto,
+                (finalPhoto) => {
+                  if (
+                    sceneConfirmationKey(finalPhoto) !==
+                    sceneConfirmationKey(look.finalPhoto!)
+                  )
+                    approve(finalPhoto.id, undefined);
+                  change({
+                    ...block,
+                    looks: block.looks.map((item, n) =>
+                      n === index ? { ...item, finalPhoto } : item,
+                    ),
+                  });
+                },
+                false,
+                matchingFittingPhoto(look.scene, look.finalPhoto),
               )}
             <button
               type="button"

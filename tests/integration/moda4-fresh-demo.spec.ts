@@ -75,6 +75,81 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           }
         }
     }, 30000);
+    it("previews the exact unconfirmed fitting photo privately and rejects stale or mismatched approval", async () => {
+      const home = await db.homepage.findUniqueOrThrow({
+        where: { id: "seed-homepage-global" },
+      });
+      const blocks = homepageBlocksSchema.parse(home.blocks);
+      const ad = blocks.find((block) => block.type === "FittingAd");
+      const city = ad?.looks[0];
+      if (!city) throw Error("Missing seeded fitting look");
+      const portrait = "seed-fashion-v2-look-women-knit";
+      const source = blockScenes(blocks).find(
+        (scene) => scene.mode === "PHOTO" && scene.mobile.mediaId === portrait,
+      );
+      if (!source) throw Error("Missing Soft Forms photo");
+      const ir = await db.market.findUniqueOrThrow({ where: { code: "IR" } });
+      const photo = {
+        ...source,
+        id: "test-city-final-photo",
+        desktop: { ...source.desktop, mediaId: portrait },
+        match: undefined,
+      };
+      const resolve = (finalPhoto: typeof source, adminPreview = true) =>
+        resolveFittingAdLooks([{ ...city, finalPhoto }], ir.id, "fa", {
+          adminPreview,
+        });
+      const initial = await resolve(photo);
+      expect(initial.photoPreviews).toEqual([
+        expect.objectContaining({
+          id: photo.id,
+          references: expect.arrayContaining(
+            photo.pieces.map((piece) =>
+              expect.objectContaining({ id: piece.id }),
+            ),
+          ),
+        }),
+      ]);
+      expect(initial.animated[0].photo).toBeNull();
+      expect((await resolve(photo, false)).photoPreviews).toEqual([]);
+      const confirmed = {
+        ...photo,
+        match: {
+          fingerprint: initial.photoPreviews[0].fingerprint,
+          confirmedAt: new Date().toISOString(),
+        },
+      };
+      expect(
+        (await resolve(confirmed, false)).animated[0].photo,
+      ).not.toBeNull();
+      const switched = await resolve({ ...confirmed, desktop: source.desktop });
+      expect(switched.animated[0].photo).toBeNull();
+      expect(switched.photoPreviews[0].fingerprint).not.toBe(
+        confirmed.match.fingerprint,
+      );
+      const piece = photo.pieces[0];
+      const variant = await db.variant.findFirstOrThrow({
+        where: {
+          productId: piece.productId,
+          colorId: piece.colorId,
+          isActive: true,
+        },
+      });
+      const changed = {
+        ...confirmed,
+        pieces: [
+          { ...piece, preferredVariantId: variant.id },
+          ...photo.pieces.slice(1),
+        ],
+      };
+      const mismatch = await resolve(changed);
+      expect(mismatch.animated[0].photo).toBeNull();
+      expect(mismatch.photoPreviews).toEqual([]);
+      expect(mismatch.diagnostics[0].reason).toBe("PHOTO_MISMATCH");
+      expect(
+        (await sceneReferenceSnapshot(changed, [ir.id])).fingerprint,
+      ).not.toBe(confirmed.match.fingerprint);
+    }, 30000);
     it("binds every seeded fitting look to its live geometry and isolates invalid looks or final photos", async () => {
       const home = await db.homepage.findUniqueOrThrow({
         where: { id: "seed-homepage-global" },

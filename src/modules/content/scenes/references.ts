@@ -106,6 +106,8 @@ export async function sceneReferenceSnapshot(
           productId: p.productId,
           colorId: p.colorId,
           referenceMediaId: p.referenceMediaId,
+          // Undefined keeps existing size-neutral stamps valid.
+          preferredVariantId: p.preferredVariantId,
           color: products
             .find((product) => product.id === p.productId)
             ?.variants.find((v) => v.colorId === p.colorId)?.color.hex,

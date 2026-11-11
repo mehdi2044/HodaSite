@@ -4,6 +4,7 @@ import type { HomepageBlock } from "./homepage";
 import { isModa4Block } from "./moda4-contracts";
 import type { ContentTarget } from "./moda4-targets";
 import { promotionRevisionSchema } from "@/modules/promotions/contracts";
+import { matchingFittingPhoto } from "./scenes/contracts";
 export function moda4ReferenceProducts(blocks: HomepageBlock[]) {
   const ids: string[] = [];
   walk(blocks, (row) => {
@@ -77,15 +78,7 @@ export async function validateModa4References(
     if (block.type === "FittingAd")
       for (const look of block.looks) {
         if (!look.finalPhoto) continue;
-        const identity = (items: typeof look.scene.pieces) =>
-          items
-            .map((item) => `${item.productId}:${item.colorId}`)
-            .sort()
-            .join("|");
-        if (
-          look.finalPhoto.mode !== "PHOTO" ||
-          identity(look.scene.pieces) !== identity(look.finalPhoto.pieces)
-        )
+        if (!matchingFittingPhoto(look.scene, look.finalPhoto))
           throw new z.ZodError([]);
       }
   }
