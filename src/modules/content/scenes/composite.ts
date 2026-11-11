@@ -3,7 +3,10 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { validCompositionSlots } from "@/modules/catalog/cutouts/contracts";
-import { resolveCutoutPlacement } from "@/modules/catalog/cutouts/resolve";
+import {
+  resolveCutoutPlacements,
+  type resolveCutoutPlacement,
+} from "@/modules/catalog/cutouts/resolve";
 import { storeCutoutModels } from "@/modules/catalog/cutouts/models";
 import type { ShoppableScene } from "./contracts";
 import { sceneMediaIds } from "./contracts";
@@ -149,49 +152,42 @@ export async function compositeSceneReferences(
       })),
     },
     orderBy: { id: "asc" },
-    select: { id: true, productId: true, colorId: true },
+    select: {
+      id: true,
+      productId: true,
+      colorId: true,
+      product: { select: { fittingSlot: true } },
+    },
   });
-  const pieces = await Promise.all(
-    scene.pieces.map(async (piece) => {
-      const choices = variants.filter(
-        (variant) =>
-          variant.productId === piece.productId &&
-          variant.colorId === piece.colorId,
-      );
-      const placements = await Promise.all(
-        choices.map(async (variant) => ({
-          variantId: variant.id,
-          placement: await resolveCutoutPlacement(
-            variant.id,
-            marketId,
-            scene.modelId!,
-            tx,
-          ),
-        })),
-      );
-      const valid = placements.filter(
-        (item): item is { variantId: string; placement: ScenePlacement } =>
-          item.placement !== null,
-      );
-      const display = (
-        piece.preferredVariantId
-          ? valid.find((item) => item.variantId === piece.preferredVariantId)
-          : valid[0]
-      )?.placement;
-      if (!display) throw new z.ZodError([]);
-      if (display.mediaId !== piece.referenceMediaId) throw new z.ZodError([]);
-      // A size override may change pixels/geometry, but must preserve the configured slot/anchor.
+  const placements = await resolveCutoutPlacements(variants, model, tx);
+  const pieces = scene.pieces.map((piece) => {
+    const valid = variants.flatMap((variant) => {
       if (
-        valid.some(
-          (item) =>
-            item.placement.slot !== display.slot ||
-            item.placement.anchor !== display.anchor,
-        )
+        variant.productId !== piece.productId ||
+        variant.colorId !== piece.colorId
       )
-        throw new z.ZodError([]);
-      return { id: piece.id, display, variants: valid };
-    }),
-  );
+        return [];
+      const placement = placements.get(variant.id);
+      return placement ? [{ variantId: variant.id, placement }] : [];
+    });
+    const display = (
+      piece.preferredVariantId
+        ? valid.find((item) => item.variantId === piece.preferredVariantId)
+        : valid[0]
+    )?.placement;
+    if (!display || display.mediaId !== piece.referenceMediaId)
+      throw new z.ZodError([]);
+    // A size override may change pixels/geometry, but must preserve the configured slot/anchor.
+    if (
+      valid.some(
+        (item) =>
+          item.placement.slot !== display.slot ||
+          item.placement.anchor !== display.anchor,
+      )
+    )
+      throw new z.ZodError([]);
+    return { id: piece.id, display, variants: valid };
+  });
   if (!validCompositionSlots(pieces.map((piece) => piece.display)))
     throw new z.ZodError([]);
   return { model, pieces };

@@ -3,6 +3,7 @@
 - D77/D81 fitting-ad stages use one pausable clock; the rack only renders for approved playable catalog looks.
 - Final photos require matching product/color/variant identity and a valid photo confirmation. A dressed store model is the fallback result; no AI or money path is invoked.
 - Review the isolated storefront and the reference/before/after videos. Visual approval and D70 review remain outstanding.
+- Homepage editor follow-up (D31/D77): the Windows preview hit Prisma P2028 while validating the full composition in a five-second interactive transaction. Composite scenes now batch variant cutout lookups and homepage draft, publication and scheduling use a bounded 30-second transaction. Catalog locks and photo/composite fingerprints still gate publication. To verify locally, save the existing layout, publish a compatible cutout swap from the editor, then restore the original composition from the editor.
 
 ## MODA4 Kids World — local fidelity review
 

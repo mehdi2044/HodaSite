@@ -432,6 +432,43 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).not.toBeNull();
     });
+    it("saves an unchanged composition after a wait beyond the default Prisma timeout", async () => {
+      const before = await db.homepage.findUniqueOrThrow({
+        where: { id: homeId },
+      });
+      const barrier = transactionBarrier(
+        db,
+        "homepage",
+        "findUniqueOrThrow",
+        (raw) => (raw as { where?: { id?: string } }).where?.id === homeId,
+      );
+      const saving = saveHomepageDraft(ownerId, {
+        marketId: market.id,
+        expectedVersion: before.version,
+        blocks: blocks(),
+      });
+      try {
+        expect(
+          await Promise.race([
+            barrier.entered.then(() => true),
+            saving.then(() => false),
+          ]),
+        ).toBe(true);
+        await new Promise((resolve) => setTimeout(resolve, 5_250));
+        barrier.release();
+        const saved = await saving;
+        const after = await db.homepage.findUniqueOrThrow({
+          where: { id: homeId },
+        });
+        expect(saved.version).toBe(before.version + 1);
+        expect(after.draftRevisionId).toBe(saved.revisionId);
+        expect(after.publishedRevisionId).toBe(before.publishedRevisionId);
+      } finally {
+        barrier.release();
+        barrier.restore();
+        await Promise.allSettled([saving]);
+      }
+    });
     it("revalidates model pixels after a real Media lock wait and never persists a stale draft", async () => {
       const model = models.find((model) => model.kind === "WOMAN")!;
       const before = await db.homepage.findUniqueOrThrow({
