@@ -2,10 +2,10 @@
 
 - D77/D81 fitting-ad stages use one pausable clock; the rack only renders for approved playable catalog looks.
 - Final photos require matching product/color/variant identity and a valid photo confirmation. A dressed store model is the fallback result; no AI or money path is invoked.
-- Review the isolated storefront and the reference/before/after videos. Visual approval and D70 review remain outstanding.
+- Mehdi visually approved the four looks on 2026-11-13. The accepted local baseline is Standalone build `2943bece0288948f95b0ff1fb70ab250a5b3eca7` with published homepage content version 32. [Review evidence and recovery results](design/moda4-redesign/m4-01-02/M4-02-HANDOFF-FA.md).
 - Homepage editor follow-up (D31/D77): the Windows preview hit Prisma P2028 while validating the full composition in a five-second interactive transaction. Composite scenes now batch variant cutout lookups and homepage draft, publication and scheduling use a bounded 30-second transaction. Catalog locks and photo/composite fingerprints still gate publication. To verify locally, save the existing layout, publish a compatible cutout swap from the editor, then restore the original composition from the editor.
 - Flight follow-up (D77/D81): the lift and arc fit the projected garment corners within the stage, including during the spin and scale transitions. The rack origin, mannequin placement and shared timeline still determine the flight. Verify in the Iran storefront at 1440 and 390 px with the navy cap in the first look, then restore the honey bag from the homepage editor.
-- Final-photo follow-up (D77/D81): the private fitting preview displays both photo sources and their catalog references for the existing decoded-image confirmation. A different photo or explicit variant invalidates the prior approval; mismatched look identity keeps the mannequin. Lint, typecheck, Windows Standalone build and focused database tests passed. Live editor publication and viewport capture remain pending browser access.
+- Final-photo follow-up (D77/D81): the private fitting preview displays both photo sources and their catalog references for the existing decoded-image confirmation. A different photo or explicit variant invalidates the prior approval; mismatched look identity keeps the mannequin. All four final photos were confirmed and published in the local CMS. D70 review remains pending.
 
 ## MODA4 Kids World — local fidelity review
 

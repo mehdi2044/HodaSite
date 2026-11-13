@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
-const customer = vi.hoisted(() => ({ signIn: vi.fn() }));
+const customer = vi.hoisted(() => ({ signIn: vi.fn(), headers: vi.fn() }));
 vi.mock("@/modules/customers", () => ({
   customerSignIn: customer.signIn,
   currentCustomer: async () => null,
@@ -7,8 +7,12 @@ vi.mock("@/modules/customers", () => ({
   requestCustomerOtp: vi.fn(),
 }));
 vi.mock("next-auth", () => ({ AuthError: class AuthError extends Error {} }));
+vi.mock("next/headers", () => ({ headers: customer.headers }));
 import { verifyOtpAction } from "@/app/[locale]/commerce-actions";
-beforeEach(() => customer.signIn.mockReset());
+beforeEach(() => {
+  customer.signIn.mockReset();
+  customer.headers.mockReset().mockResolvedValue(new Headers());
+});
 it("omits missing credentials so Auth.js URLSearchParams cannot turn them into 'undefined'", async () => {
   const data = new FormData();
   data.set("challengeId", "challenge");
@@ -38,5 +42,16 @@ it("returns to the authenticated wishlist flow", async () => {
   form.set("next", "/en/account/wishlist");
   expect(await verifyOtpAction("en", form)).toEqual({
     url: "/en/account/wishlist",
+  });
+});
+
+it("uses the request market for the return after OTP", async () => {
+  customer.headers.mockResolvedValue(new Headers({ "x-hoda-seo-market": "TR" }));
+  const form = new FormData();
+  form.set("challengeId", "challenge");
+  form.set("code", "012345");
+  form.set("next", "/en/checkout?market=CA");
+  expect(await verifyOtpAction("en", form)).toEqual({
+    url: "/en/checkout?market=TR",
   });
 });
