@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { seal, signValue } from "../../../src/lib/secure-tokens";
 const db = new PrismaClient();
 /** Test fixture only: persist an enabled authenticator and mint a unique recovery
@@ -34,5 +34,14 @@ export async function fillAdminMfa(page: Page) {
       codeHash: signValue(`admin-recovery:${user.id}:${code}`),
     },
   });
-  await page.locator('[name="token"]').fill(code);
+  const token = page.locator('input[name="token"]');
+  // WebKit may deliver a synthetic fill to the previously focused input
+  // when switching fields. Focus and verify the DOM without logging the code.
+  await token.focus();
+  await expect(token).toBeFocused();
+  await token.fill(code);
+  if ((await token.inputValue()) !== code)
+    throw new Error("Admin recovery code did not reach its input");
+  if ((await page.locator('input[name="email"]').inputValue()) !== email)
+    throw new Error("Admin email changed while entering the recovery code");
 }
