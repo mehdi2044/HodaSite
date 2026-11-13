@@ -37,8 +37,11 @@ export async function fillAdminMfa(page: Page) {
   const token = page.locator('input[name="token"]');
   // WebKit may deliver a synthetic fill to the previously focused input
   // when switching fields. Focus and verify the DOM without logging the code.
-  await token.focus();
-  await expect(token).toBeFocused();
+  await expect(token).toBeEditable();
+  await expect(async () => {
+    await token.focus();
+    await expect(token).toBeFocused({ timeout: 500 });
+  }).toPass({ timeout: 5000 });
   await token.fill(code);
   if ((await token.inputValue()) !== code)
     throw new Error("Admin recovery code did not reach its input");

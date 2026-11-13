@@ -1,3 +1,15 @@
+## Backup verification for empty catalogs (D23, D36, D41)
+
+- An initialized shop may have no products or variants. Backup verification now requires table data entries in the dump and checks the restored schema, migration set, relationships, checksums and media. Partial or corrupt archives still fail verification.
+- CI browser follow-up: the MFA fixture and the short mobile dock test reacquire focus within the existing five-second assertion budget when an element changes during initial render. The MFA input value, unchanged email, authenticated navigation and keyboard Tab assertions remain in the tests.
+- Run `bash scripts/backup/tests/run.sh` for the verifier regression cases. Deploy the updated ops image and retain existing archives. No database migration or archive conversion is required. To roll back, restore the previous ops image and keep the existing data and volumes. That image can still reject a valid empty catalog.
+
+## Canonical market links in Docker (D64)
+
+- Preserve the Next.js listener origin for internal storefront rewrites when Auth.js sets a different public origin. Direct canonical links keep their language and market even when the browser has a cookie for another market.
+- To reproduce, open the Persian Iran storefront and then enter the Turkish or English canonical home URL in the same browser. Check that the URL and rendered locale remain Turkish or English and that the market cookie updates. Test the reverse switch to Persian as well.
+- No schema migration is required for the routing change. Rehearse any upgrade of a legacy PostgreSQL database on a restored copy before enabling its ops worker.
+
 ## MODA4 M4-02 — cinematic fitting ad (local review)
 
 - PR87 CI follow-up: browser tests use a newly migrated and seeded database separate from coverage fixtures, including FR3. OTP completion redirects from the server after authentication so a cookie refresh cannot discard the form's return navigation. Cart display assertions use currency rounding while the checkout quote and order snapshot retain four-decimal precision. See the PR for current-head browser and D70 status.

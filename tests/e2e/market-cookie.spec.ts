@@ -7,6 +7,34 @@ import { tokenHash } from "../../src/lib/secure-tokens";
 const db = new PrismaClient();
 test.afterAll(() => db.$disconnect());
 
+for (const [locale, market, previousMarket, dir] of [
+  ["fa", "IR", "TR", "rtl"],
+  ["tr", "TR", "IR", "ltr"],
+  ["en", "CA", "IR", "ltr"],
+] as const) {
+  test(`a direct ${locale}/${market} link takes precedence over a ${previousMarket} cookie`, async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await ensureMaintenanceOff(page.request);
+    await context.addCookies([
+      { name: "market", value: previousMarket, url: baseURL! },
+    ]);
+    const path = `/${locale}/m/${market}`;
+    const response = await page.goto(path);
+    expect(response?.status()).toBe(200);
+    expect(response?.request().redirectedFrom()).toBeNull();
+    await expect(page).toHaveURL(new URL(path, baseURL).href);
+    await expect(page.locator("html")).toHaveAttribute("lang", locale);
+    await expect(page.locator("html")).toHaveAttribute("dir", dir);
+    expect(
+      (await context.cookies()).find((cookie) => cookie.name === "market")
+        ?.value,
+    ).toBe(market);
+  });
+}
+
 test("canonical RSC prefetch preserves an explicit market even when Flight headers are stripped", async ({
   page,
   context,

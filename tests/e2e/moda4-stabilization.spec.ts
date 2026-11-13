@@ -137,8 +137,13 @@ test("short mobile fitting controls and footer can be reached beside the dock", 
   await page.goto("/fa/fitting-room?market=CA");
   const dock = page.getByTestId("mobile-bottom-navigation");
   const login = dock.locator('a[href*="account/login"]');
-  await dock.locator("a").first().focus();
-  await expect(dock.locator("a").first()).toBeFocused();
+  const firstLink = dock.locator("a").first();
+  // Initial hydration can replace the link between focus and the assertion.
+  await expect(firstLink).toBeVisible();
+  await expect(async () => {
+    await firstLink.focus();
+    await expect(firstLink).toBeFocused({ timeout: 500 });
+  }).toPass({ timeout: 5000 });
   await page.keyboard.press("Tab");
   await expect(dock.locator("a").nth(1)).toBeFocused();
   expect((await login.boundingBox())!.height).toBeGreaterThanOrEqual(44);

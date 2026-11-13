@@ -1,6 +1,6 @@
 import NextAuth, { type NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { parseSeoPath, privateSeoPath } from "@/lib/seo-urls";
 import { isMarketContextPath } from "@/lib/storefront-path";
 import createIntlMiddleware from "next-intl/middleware";
@@ -179,7 +179,7 @@ function isMaintenanceExempt(pathname: string): boolean {
   );
 }
 
-async function applicationMiddleware(req: NextAuthRequest) {
+async function applicationMiddleware(req: NextAuthRequest, serverUrl: string) {
   const { pathname, search } = req.nextUrl;
   req.headers.delete("x-hoda-seo-market");
   // Crawling documents are global endpoints, outside locale negotiation.
@@ -298,10 +298,10 @@ async function applicationMiddleware(req: NextAuthRequest) {
         market.code,
       );
       if (historical) return historical;
-      // NextURL normalizes 127.0.0.1 to localhost even when URL normalization
-      // is disabled. A rewrite to that other origin becomes a second request,
-      // losing our trusted market header and rerunning cookie-based routing.
-      const target = new URL(req.url);
+      // Next resolves internal rewrites against its listener URL. Auth.js may
+      // replace the request origin with AUTH_URL, turning the rewrite into a
+      // second request that reruns middleware with the old market cookie.
+      const target = new URL(serverUrl);
       target.pathname = canonical.target;
       target.searchParams.delete("market");
       const requestHeaders = new Headers(req.headers);
@@ -395,16 +395,24 @@ async function applicationMiddleware(req: NextAuthRequest) {
   return intlMiddleware(req);
 }
 
-export default auth(async (request) => {
-  const response = await applicationMiddleware(request);
-  if (
-    response &&
-    (privateSeoPath(request.nextUrl.pathname) ||
-      request.nextUrl.searchParams.has("preview"))
-  )
-    response.headers.set("X-Robots-Tag", "noindex, nofollow");
-  return response;
-});
+export default function middleware(
+  request: NextRequest,
+  event: NextFetchEvent,
+) {
+  return auth(async (authenticatedRequest, _event: NextFetchEvent) => {
+    const response = await applicationMiddleware(
+      authenticatedRequest,
+      request.url,
+    );
+    if (
+      response &&
+      (privateSeoPath(authenticatedRequest.nextUrl.pathname) ||
+        authenticatedRequest.nextUrl.searchParams.has("preview"))
+    )
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  })(request, event);
+}
 
 export const config = {
   // Run on everything except Next internals, static assets and /media/*
