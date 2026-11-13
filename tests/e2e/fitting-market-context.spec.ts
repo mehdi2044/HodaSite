@@ -181,7 +181,8 @@ test("two tabs, a delayed response, and country/language switches preserve their
     choose(page, "tr"),
     choose(other, "en"),
   ]);
-  await expect(cardTR.locator(":scope > bdi")).toHaveText("₺1.120,00");
+  // The seeded hoodie is USD 32 at the seeded TRY/USD rate of 40.
+  await expect(cardTR.locator(":scope > bdi")).toHaveText("₺1.280,00");
   await expect(cardCA.locator(":scope > bdi")).not.toContainText("₺");
   await expect(cardCA.locator(":scope > bdi")).toContainText("CA$");
   expect(delayed).toBe(true);
@@ -189,7 +190,7 @@ test("two tabs, a delayed response, and country/language switches preserve their
   await page.locator('a[aria-label="English"]:visible').first().click();
   await expect(page).toHaveURL(/\/en\/fitting-room\?market=TR$/);
   await expect((await choose(page, "en")).locator(":scope > bdi")).toHaveText(
-    "₺1,120.00",
+    "₺1,280.00",
   );
   await Promise.all([
     page.waitForURL(/\/en\/fitting-room\?market=CA$/, { waitUntil: "load" }),
@@ -222,13 +223,14 @@ test("rejects a catalog response whose currency does not match the page", async 
       injected = true;
       body = body
         .replaceAll('"currency":"TRY"', '"currency":"IRT"')
-        .replaceAll('"amount":"1120"', '"amount":"1920000"');
+        .replaceAll(/"amount":"[0-9.]+"/g, '"amount":"1920000"');
+      expect(body).toContain('"amount":"1920000"');
     }
     await route.fulfill({ response, body });
   });
   const card = await search(page, "tr");
   expect(injected).toBe(true);
-  await expect(card.locator(":scope > bdi")).toHaveText("₺1.120,00");
+  await expect(card.locator(":scope > bdi")).toHaveText("₺1.280,00");
   await expect(page.getByTestId("instant-fitting")).not.toContainText(
     "1.920.000",
   );

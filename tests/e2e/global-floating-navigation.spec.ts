@@ -88,7 +88,20 @@ for (const [locale, market, copy] of markets) {
         new RegExp(`/${locale}/search\\?market=${market}`),
       );
       await expect(dock).toBeVisible();
-      const firstProduct = page.locator(".shop-product-link").first();
+      // Integration fixtures can precede demo products and have only an
+      // English slug. Exercise a known public product in all three locales.
+      const title = { fa: "بافت نارون", tr: "Narvan triko", en: "Narvan knit" }[
+        locale
+      ];
+      const search = page
+        .locator("main form")
+        .filter({ has: page.locator('input[name="q"]') });
+      await search.locator('input[name="q"]').fill(title);
+      await search.locator("button").click();
+      const firstProduct = page
+        .locator(".shop-product-link")
+        .filter({ hasText: title })
+        .first();
       await expect(firstProduct).toBeVisible();
       await firstProduct.click();
       await expect(page).toHaveURL(/\/p\//);
@@ -153,7 +166,12 @@ for (const [locale, market, copy] of markets) {
     ] as const)
       await expect(
         dock.getByRole("link", { name: copy.instantFitting[key], exact: true }),
-      ).toHaveAttribute("href", `/${locale}/${path}?market=${market}`);
+      ).toHaveAttribute(
+        "href",
+        key === "dockLogin"
+          ? `/${locale}/${path}?next=${encodeURIComponent(`/${locale}/fitting-room?market=${market}`)}&market=${market}`
+          : `/${locale}/${path}?market=${market}`,
+      );
     await dock
       .getByRole("link", { name: copy.instantFitting.dockLogin, exact: true })
       .click();

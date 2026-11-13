@@ -1,4 +1,7 @@
-import { formatStorefrontAmount } from "../../src/modules/catalog/format";
+import {
+  formatCartAmount,
+  formatStorefrontAmount,
+} from "../../src/modules/catalog/format";
 import { randomUUID, createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { expect, test } from "@playwright/test";
@@ -186,7 +189,7 @@ for (const [locale, marketCode, province, city, postalCode] of [
         .locator('[name="expectedTotal"]')
         .inputValue();
       expect(cartTotal).toBe(
-        formatStorefrontAmount(expectedTotal, market.currency, locale),
+        formatCartAmount(expectedTotal, market.currency, locale),
       );
       // Returning to the cart must retain the selected delivery discount and total.
       await page.goto(`/${locale}/cart`);

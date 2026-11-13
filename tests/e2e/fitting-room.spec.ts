@@ -99,7 +99,10 @@ for (const locale of ["fa", "tr", "en"] as const) {
       }, market.code);
       await page.goto(`/${locale}/fitting-room?q=${marker}`);
       await expect(page).toHaveURL(
-        new RegExp(`/${locale}/fitting-room\\?q=${marker}$`),
+        (url) =>
+          url.pathname === `/${locale}/fitting-room` &&
+          url.searchParams.get("q") === marker &&
+          url.searchParams.get("market") === market.code,
       );
       const room = page.getByTestId("fitting-room"),
         card = room.locator(".fitting-product").filter({

@@ -142,7 +142,7 @@ for (const [locale, market, labels] of [
     const nav = page.getByTestId("mobile-bottom-navigation");
     await expect(nav.locator('[aria-current="page"]')).toHaveAttribute(
       "href",
-      `/${locale}`,
+      `/${locale}/m/${market}`,
     );
     // Integration suites also create legitimate imageless products. Exercise
     // the gallery through a real illustrated category card, without changing
