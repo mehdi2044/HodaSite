@@ -1,3 +1,8 @@
+## Backup verification for empty catalogs (D23, D36, D41)
+
+- An initialized shop may have no products or variants. Backup verification now requires table data entries in the dump and checks the restored schema, migration set, relationships, checksums and media. Partial or corrupt archives still fail verification.
+- Run `bash scripts/backup/tests/run.sh` for the verifier regression cases. Deploy the updated ops image and retain existing archives. No database migration or archive conversion is required. To roll back, restore the previous ops image and keep the existing data and volumes. That image can still reject a valid empty catalog.
+
 ## Canonical market links in Docker (D64)
 
 - Preserve the Next.js listener origin for internal storefront rewrites when Auth.js sets a different public origin. Direct canonical links keep their language and market even when the browser has a cookie for another market.
