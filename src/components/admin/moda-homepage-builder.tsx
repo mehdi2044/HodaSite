@@ -150,14 +150,14 @@ export function ModaHomepageBuilder(props: {
     approve({});
     setRemoved([]);
     setSavedVersion(null);
-    router.refresh();
+    // The save action already revalidates this route. A second refresh can
+    // interrupt the action response before its success status is rendered.
   }, [
     savedVersion,
     props.versions,
     props.compositions,
     props.fallbackBlocks,
     scope,
-    router,
   ]);
   const update = (index: number, block: HomepageBlock) =>
     setBlocks((all) => all.map((item, n) => (n === index ? block : item)));

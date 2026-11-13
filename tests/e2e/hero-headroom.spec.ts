@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 
 test.use({ hasTouch: true });
@@ -94,111 +95,112 @@ for (const [locale, market] of [
   }
 }
 
-test.describe("Hero framing persistence", () => {
-  let restoreFraming = false;
-  test.afterEach(async ({ page }) => {
-    if (!restoreFraming) return;
-    restoreFraming = false;
-    const field = page.locator('[data-hero-framing="mobile"]').first();
-    if (!(await field.isVisible()))
-      await field.locator("xpath=ancestor::details[1]/summary").click();
-    const enabled = field.locator('input[type="checkbox"]');
-    if (!(await enabled.isChecked())) return;
+test("Hero admin focal and zoom survive draft save/reload and drive the actual private preview", async ({
+  page,
+}) => {
+  const database = process.env.DATABASE_URL;
+  if (!database || !new URL(database).pathname.endsWith("_test"))
+    throw new Error("Hero browser fixture requires an isolated test database");
+  await page.goto("/admin/login");
+  await page.locator('[name="email"]').fill(process.env.ADMIN_EMAIL!);
+  await page.locator('[name="password"]').fill(process.env.ADMIN_PASSWORD!);
+  await fillAdminMfa(page);
+  await page.getByRole("button", { name: "ورود امن" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.goto("/admin/content/homepage");
+  const field = page.locator('[data-hero-framing="mobile"]').first();
+  if (!(await field.isVisible()))
+    await field.locator("xpath=ancestor::details[1]/summary").click();
+  const enabled = field.locator('input[type="checkbox"]');
+  await expect(enabled).not.toBeChecked();
+  await enabled.check();
+  await field.locator('input[type="number"]').nth(0).fill("0.63");
+  await field.locator('input[type="number"]').nth(1).fill("0.1");
+  await field.locator('input[type="number"]').nth(2).fill("1.15");
+  const preview = page.frameLocator('[data-testid="homepage-unsaved-preview"]');
+  await expect
+    .poll(() =>
+      preview
+        .locator("[data-moda4=hero-slide]")
+        .first()
+        .evaluate((el) => getComputedStyle(el).getPropertyValue("--fx").trim()),
+    )
+    .toBe("0.63");
+  await expect
+    .poll(() =>
+      preview
+        .locator("[data-moda4=hero-slide]")
+        .first()
+        .evaluate((el) =>
+          getComputedStyle(el).getPropertyValue("--camera-zoom").trim(),
+        ),
+    )
+    .toBe("1.15");
+  const widthControl = page.getByRole("combobox", {
+    name: "عرض پیش‌نمایش (پیکسل)",
+    exact: true,
+  });
+  for (const otherWidth of ["360", "430"]) {
+    await widthControl.selectOption(otherWidth);
+    await expect
+      .poll(() =>
+        preview
+          .locator("[data-moda4=hero-slide]")
+          .first()
+          .evaluate((el) =>
+            getComputedStyle(el).getPropertyValue("--camera-x").trim(),
+          ),
+      )
+      .toBe("");
+  }
+  await widthControl.selectOption("390");
+  await expect
+    .poll(() =>
+      preview
+        .locator("[data-moda4=hero-slide]")
+        .first()
+        .evaluate((el) => getComputedStyle(el).getPropertyValue("--fx").trim()),
+    )
+    .toBe("0.63");
+  await page.locator('button[name="intent"][value="DRAFT"]').click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "پیش‌نویس ذخیره شد." }),
+  ).toBeVisible();
+  await page.reload();
+  if (!(await field.isVisible()))
+    await field.locator("xpath=ancestor::details[1]/summary").click();
+  await expect(enabled).toBeChecked();
+  await expect(field.locator('input[type="number"]').nth(0)).toHaveValue(
+    "0.63",
+  );
+  await expect(field.locator('input[type="number"]').nth(1)).toHaveValue("0.1");
+  await expect(field.locator('input[type="number"]').nth(2)).toHaveValue(
+    "1.15",
+  );
+  const db = new PrismaClient();
+  try {
+    const getHomepage = () =>
+      db.homepage.findUniqueOrThrow({ where: { id: "seed-homepage-global" } });
+    const before = await getHomepage();
     await enabled.uncheck();
     await page.locator('button[name="intent"][value="DRAFT"]').click();
     await expect(
-      page.getByRole("status").filter({ hasText: "ذخیره" }),
+      page.getByRole("status").filter({ hasText: "پیش‌نویس ذخیره شد." }),
     ).toBeVisible();
-  });
-  test("Hero admin focal and zoom survive draft save/reload and drive the actual private preview", async ({
-    page,
-  }) => {
-    await page.goto("/admin/login");
-    await page.locator('[name="email"]').fill(process.env.ADMIN_EMAIL!);
-    await page.locator('[name="password"]').fill(process.env.ADMIN_PASSWORD!);
-    await fillAdminMfa(page);
-    await page.getByRole("button", { name: "ورود امن" }).click();
-    await expect(page).toHaveURL(/\/admin$/);
-    await page.goto("/admin/content/homepage");
-    const field = page.locator('[data-hero-framing="mobile"]').first();
+    // Verify the second save actually restored the fixture without publishing.
+    await expect
+      .poll(async () => (await getHomepage()).version)
+      .toBe(before.version + 1);
+    await page.reload({ waitUntil: "domcontentloaded" });
     if (!(await field.isVisible()))
       await field.locator("xpath=ancestor::details[1]/summary").click();
-    const enabled = field.locator('input[type="checkbox"]');
     await expect(enabled).not.toBeChecked();
-    await enabled.check();
-    await field.locator('input[type="number"]').nth(0).fill("0.63");
-    await field.locator('input[type="number"]').nth(1).fill("0.1");
-    await field.locator('input[type="number"]').nth(2).fill("1.15");
-    const preview = page.frameLocator(
-      '[data-testid="homepage-unsaved-preview"]',
-    );
-    await expect
-      .poll(() =>
-        preview
-          .locator("[data-moda4=hero-slide]")
-          .first()
-          .evaluate((el) =>
-            getComputedStyle(el).getPropertyValue("--fx").trim(),
-          ),
-      )
-      .toBe("0.63");
-    await expect
-      .poll(() =>
-        preview
-          .locator("[data-moda4=hero-slide]")
-          .first()
-          .evaluate((el) =>
-            getComputedStyle(el).getPropertyValue("--camera-zoom").trim(),
-          ),
-      )
-      .toBe("1.15");
-    const widthControl = page.getByRole("combobox", {
-      name: "عرض پیش‌نمایش (پیکسل)",
-      exact: true,
-    });
-    for (const otherWidth of ["360", "430"]) {
-      await widthControl.selectOption(otherWidth);
-      await expect
-        .poll(() =>
-          preview
-            .locator("[data-moda4=hero-slide]")
-            .first()
-            .evaluate((el) =>
-              getComputedStyle(el).getPropertyValue("--camera-x").trim(),
-            ),
-        )
-        .toBe("");
-    }
-    await widthControl.selectOption("390");
-    await expect
-      .poll(() =>
-        preview
-          .locator("[data-moda4=hero-slide]")
-          .first()
-          .evaluate((el) =>
-            getComputedStyle(el).getPropertyValue("--fx").trim(),
-          ),
-      )
-      .toBe("0.63");
-    await page.locator('button[name="intent"][value="DRAFT"]').click();
-    restoreFraming = true;
-    await expect(
-      page.getByRole("status").filter({ hasText: "ذخیره" }),
-    ).toBeVisible();
-    await page.reload();
-    if (!(await field.isVisible()))
-      await field.locator("xpath=ancestor::details[1]/summary").click();
-    await expect(enabled).toBeChecked();
-    await expect(field.locator('input[type="number"]').nth(0)).toHaveValue(
-      "0.63",
-    );
-    await expect(field.locator('input[type="number"]').nth(1)).toHaveValue(
-      "0.1",
-    );
-    await expect(field.locator('input[type="number"]').nth(2)).toHaveValue(
-      "1.15",
-    );
-  });
+    const restored = await getHomepage();
+    expect(restored.publishedRevisionId).toBe(before.publishedRevisionId);
+    expect(restored.blocks).toEqual(before.blocks);
+  } finally {
+    await db.$disconnect();
+  }
 });
 
 for (const [locale, market] of [
