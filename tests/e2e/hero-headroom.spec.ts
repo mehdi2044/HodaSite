@@ -104,6 +104,12 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await page.goto("/admin/content/homepage");
+  // Integration tests leave additional active fixture markets. The demo
+  // garments are sold in IR/TR/CA, so validate this framing edit for IR;
+  // a global save correctly rejects references unavailable in other markets.
+  await page
+    .getByRole("combobox", { name: "دامنهٔ بازار", exact: true })
+    .selectOption({ label: "IR" });
   const field = page.locator('[data-hero-framing="mobile"]').first();
   if (!(await field.isVisible()))
     await field.locator("xpath=ancestor::details[1]/summary").click();
@@ -163,6 +169,9 @@ test("Hero admin focal and zoom survive draft save/reload and drive the actual p
     page.getByRole("status").filter({ hasText: "ذخیره" }),
   ).toBeVisible();
   await page.reload();
+  await page
+    .getByRole("combobox", { name: "دامنهٔ بازار", exact: true })
+    .selectOption({ label: "IR" });
   if (!(await field.isVisible()))
     await field.locator("xpath=ancestor::details[1]/summary").click();
   await expect(enabled).toBeChecked();

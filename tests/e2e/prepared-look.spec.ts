@@ -136,7 +136,9 @@ for (const [locale, market] of [
       await page.goto(`/${locale}/cart`);
       await expect(page.locator(".shop-cart-item")).toHaveCount(3);
       await expect(page.locator(".shop-order-summary dd").first()).toHaveText(
-        expectedSubtotal,
+        // Cart cash display rounds only presentation; the exact four-decimal
+        // subtotal remains asserted above and again in checkout below.
+        { fa: "۷٬۲۷۰٬۰۰۱ تومان", tr: "₺73,00", en: "CA$73.00" }[locale],
       );
       await shoppingProof(page, info, `prepared-cart-${locale}`);
       await page.goto(`/${locale}/checkout`);
