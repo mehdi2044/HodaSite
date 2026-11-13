@@ -76,10 +76,7 @@ export function CustomerLogin({ locale }: { locale: string }) {
       </h1>
       {challenge ? (
         <>
-          <CommerceForm
-            navigation="document"
-            action={verifyOtpAction.bind(null, locale)}
-          >
+          <CommerceForm action={verifyOtpAction.bind(null, locale)}>
             <input type="hidden" name="next" value={next} />
             <input type="hidden" name="challengeId" value={challenge} />
             {token ? (

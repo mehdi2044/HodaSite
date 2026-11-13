@@ -57,6 +57,9 @@ const publishInput = z
   })
   .strict();
 export const REVISION_FORMAT = "homepage-revision-v1";
+// Whole-page validation holds catalog and media locks while checking every
+// applicable market. Allow bounded lock waits beyond Prisma's 5 s default.
+const homepageTransaction = { timeout: 30_000 };
 type Tx = Prisma.TransactionClient;
 const scope = (marketId: string | null) =>
   marketId ? { marketId } : undefined;
@@ -300,7 +303,7 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
         },
       });
       return { id: row.id, version: nextVersion, revisionId: revision.id };
-    }),
+    }, homepageTransaction),
   );
 }
 export async function publishHomepageRevision(actorId: string, raw: unknown) {
@@ -385,7 +388,7 @@ export async function publishHomepageRevision(actorId: string, raw: unknown) {
         },
       });
       return { id: row.id, version: nextVersion, replay: false };
-    }),
+    }, homepageTransaction),
   );
 }
 export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
@@ -468,7 +471,7 @@ export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
         },
       });
       return { id: row.id, version: nextVersion, jobId: job.id };
-    }),
+    }, homepageTransaction),
   );
 }
 export async function homepageRevisionHistory(

@@ -37,5 +37,9 @@ export function LiveHomepage({
       document.removeEventListener("visibilitychange", update);
     };
   }, [preview, router]);
-  return <div ref={root}>{children}</div>;
+  return (
+    <div ref={root} className="moda-live-homepage">
+      {children}
+    </div>
+  );
 }

@@ -1,4 +1,6 @@
 import { seoPath } from "@/lib/seo";
+import { getRequestContext } from "@/lib/request-context";
+import { storefrontLoginPath, storefrontPath } from "@/lib/storefront-path";
 import { variantImages } from "@/modules/catalog/variant-images";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { ResponsiveImage } from "@/components/storefront/responsive-image";
@@ -29,7 +31,11 @@ export default async function CheckoutPage({
     t = await getTranslations("commerce"),
     cart = await readCart(),
     customer = await currentCustomer();
-  if (!cart?.items.length) redirect(`/${locale}/cart`);
+  const { market } = await getRequestContext(locale);
+  const checkout = storefrontPath(locale, market.code, "checkout");
+  const login = storefrontLoginPath(locale, market.code, checkout);
+  if (!cart?.items.length)
+    redirect(storefrontPath(locale, market.code, "cart"));
   const settings = await db.siteSettings.findUniqueOrThrow({
     where: { id: "default" },
   });
@@ -37,7 +43,7 @@ export default async function CheckoutPage({
     !customer &&
     (settings.checkout as { guestCheckout?: boolean }).guestCheckout === false
   )
-    redirect(`/${locale}/account/login?next=/${locale}/checkout`);
+    redirect(login);
   const terms = await db.page.findFirst({
     where: {
       id:
@@ -57,7 +63,7 @@ export default async function CheckoutPage({
   const step = Math.min(3, Math.max(1, Number((await searchParams).step) || 1)),
     draft = cart.checkout as Record<string, string>;
   const parsed = addressSchema.safeParse(draft);
-  if (step > 1 && !parsed.success) redirect(`/${locale}/checkout`);
+  if (step > 1 && !parsed.success) redirect(checkout);
   const images = await variantImages(cart.items.map((item) => item.variant));
   const shopping = await getTranslations("shopping");
   return (
@@ -90,10 +96,7 @@ export default async function CheckoutPage({
                 {customer ? (
                   <Iso>{customer.email}</Iso>
                 ) : (
-                  <Link
-                    className="underline"
-                    href={`/${locale}/account/login?next=/${locale}/checkout`}
-                  >
+                  <Link className="underline" href={login}>
                     {t("guestOrLogin")}
                   </Link>
                 )}

@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { parseSeoPath, switchedMarketPath } from "@/lib/seo-urls";
+import { isMarketContextPath } from "@/lib/storefront-path";
 
 const YEAR = 60 * 60 * 24 * 365;
 
@@ -52,6 +53,11 @@ export function MarketSwitcher({
     if (path) {
       url.pathname = path;
       url.searchParams.delete("market");
+      window.location.assign(url);
+      return;
+    }
+    if (isMarketContextPath(url.pathname)) {
+      url.searchParams.set("market", code);
       window.location.assign(url);
       return;
     }

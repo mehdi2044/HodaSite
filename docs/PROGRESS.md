@@ -1,3 +1,90 @@
+## MODA4 M4-02 — cinematic fitting ad (local review)
+
+- PR87 CI follow-up: browser tests use a newly migrated and seeded database separate from coverage fixtures, including FR3. OTP completion redirects from the server after authentication so a cookie refresh cannot discard the form's return navigation. Cart display assertions use currency rounding while the checkout quote and order snapshot retain four-decimal precision. See the PR for current-head browser and D70 status.
+- D77/D81 fitting-ad stages use one pausable clock; the rack only renders for approved playable catalog looks.
+- Final photos require matching product/color/variant identity and a valid photo confirmation. A dressed store model is the fallback result; no AI or money path is invoked.
+- Mehdi visually approved the four looks on 2026-11-13. The accepted local baseline is Standalone build `2943bece0288948f95b0ff1fb70ab250a5b3eca7` with published homepage content version 32. [Review evidence and recovery results](design/moda4-redesign/m4-01-02/M4-02-HANDOFF-FA.md).
+- Homepage editor follow-up (D31/D77): the Windows preview hit Prisma P2028 while validating the full composition in a five-second interactive transaction. Composite scenes now batch variant cutout lookups and homepage draft, publication and scheduling use a bounded 30-second transaction. Catalog locks and photo/composite fingerprints still gate publication. To verify locally, save the existing layout, publish a compatible cutout swap from the editor, then restore the original composition from the editor.
+- Flight follow-up (D77/D81): the lift and arc fit the projected garment corners within the stage, including during the spin and scale transitions. The rack origin, mannequin placement and shared timeline still determine the flight. Verify in the Iran storefront at 1440 and 390 px with the navy cap in the first look, then restore the honey bag from the homepage editor.
+- Final-photo follow-up (D77/D81): the private fitting preview displays both photo sources and their catalog references for the existing decoded-image confirmation. A different photo or explicit variant invalidates the prior approval; mismatched look identity keeps the mannequin. All four final photos were confirmed and published in the local CMS. D70 review remains pending.
+
+## MODA4 Kids World — local fidelity review
+
+- [Scope and acceptance](phases/phase-moda4-kids-d77.md). Kids World uses the D77 arrangement, undistorted catalog artwork, and a 3D ring whose clickable labels remain clear.
+- In the homepage editor choose a manual product source to control order; update images in Catalog or Cutouts. The new copy and secondary target are optional. Catalog availability and market pricing still apply.
+- Review the seven-width capture set and local test report before visual approval.
+- Orbit follow-up: inspect a full turn in each direction. Garments and podiums stay painted at every depth; only obstructed price labels are suppressed. The hint and controls are separate rows.
+
+## MODA4 stabilization — local review, 2026-11-09
+
+- [Scope and acceptance](phases/phase-moda4-stabilization.md). Stabilization branches from the accepted Global Navigation Labels preview code.
+- Check `/fa/fitting-room?market=CA` through the header, cart and sign-in links. Review short desktop Hero and short-screen purchase and fitting controls beside the existing dock.
+- Markets settings owns localized market addresses and scoped support channels. The storefront hides unconfigured or known sample contacts. No migration is required.
+- Separate local evidence records test results and visual review status under D70.
+
+## FR3.1 D77 fitting room — local review
+
+- [Phase scope](phases/phase-fr3-1.md) and [FR3.2 design only](phases/phase-fr3-2-design-fa.md).
+- Per-model attachment calibration, view-specific Cutout geometry and masks,
+  the fitting navigation dock, and the selection receipt are in local review.
+- Real view is disabled in the receipt pending the separate service decision.
+
+## FR3 D77 follow-up — color proof and Hero diagnosis
+
+- Browser evidence uses the existing Rayan hoodie variants at size 6Y. The
+  repository's sage garment is validated and saved through the authorized
+  cutout editor in an independent local catalog. Commercial data is unchanged.
+- The opt-in browser spec checks the two rendered images, stable price and
+  draft restoration. Fixture preparation, screenshots and logs are in the
+  private handoff.
+- The Hero touch issue predates FR3. On mobile, the first layout pass replaces
+  the server-rendered height defaults. In the reproduced race, the resulting
+  shift places the category CTA under the old price-button coordinate.
+- Local evidence is pending independent review. FR4 stays separate.
+
+
+## FR3 D77 fitting gallery — local review
+
+- Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D80, D81.
+- [Scope and acceptance](phases/phase-fr3.md). The gallery uses real catalog,
+  variant, slot and cutout data. Search, pagination, selection, restoration and
+  four model flows are available in the independent local preview.
+- FR4 composition, subtotal and final action presentation remain separate.
+  The private handoff records the exact revision, tests and comparison evidence
+  for Vee and owner review.
+
+## 2026-11-02 — بازبینی S0، تفکیک snapshot CAD و نمایش مبلغ سبد
+
+
+## FR0–FR2 D77 fitting presentation — local review in progress
+
+- Implemented against docs v1.2 / D-numbers touched: D26/D31/D70/D77/D80/D81.
+- Owner-authorized scope and immutable reference hash: `phases/phase-fr0-fr2-d77.md`.
+  Base is `742dea84262c9115590231fdd0eaf665290c1b93`; previous previews/data/WIP are preserved.
+- FR0 freezes provenance and calibrates the 220×560 rig around the existing
+  420×560 source frame. FR1 ports the local shell/type/layout. FR2 adds the real
+  four-model stage, cumulative drag, buttons/keyboard, entry/exit and Reduced Motion.
+- Existing variant, stock, cutout validation, Market Context, price, cart and owner
+  services remain authoritative. No schema, seed, financial or provider changes.
+- Verify the three isolated Windows previews, FA/TR/EN at mobile/desktop, four
+  models and zero/one/four real pieces. Run all existing browser and fidelity
+  assertions plus `tests/e2e/fr12-d77.spec.ts`; private handoff records exact results.
+- Gallery cropping/restored pickers, new subtotal/wardrobe/coin settings and paid
+  presentation remain deferred to FR3–FR6. Their future security/ownership/coin
+  concurrency acceptance additions are in `design/moda4-redesign/FITTING_FUTURE_ACCEPTANCE.md`.
+- No PR, push, merge or release. Stop for Vee/owner review after FR2; local technical
+  verification is not visual or release approval.
+
+Implemented against docs v1.2 / D-numbers touched: D04, D08, D09, D31, D70.
+
+تأیید نهایی S0/طراحی صادر نشده است. بررسی read-only در DB آزمایشی قبلی نشان داد cron آزمون ورود، نرخ CA را از seed1.4 به Frankfurter1.3982 با AUTO_ACCEPT تغییر داده؛ همین Variant از44.80 به44.74 رسیده و گزارش قبلی snapshot را درست تفکیک نکرده بود. نمایش سبد و drawer با helper مجزای Decimal به دو اعشار CAD اصلاح شد؛ quote دقیق74.1354 و سایر محاسبات/ذخیره‌سازی دست‌نخورده‌اند. [علت، دامنه و روش آزمون](reviews/S0_REVIEW_FIXES_FA.md). محیط تازهٔ بازبینی جداست؛ نتیجهٔ۳۳ آزمون در یک اجرای کامل و سایر شواهد در بستهٔ تحویل ثبت می‌شود. بازطراحی اتاق پرو فقط بررسی/برنامه است و تا تأیید مالک اجرا نمی‌شود. هیچ PR/push/merge یا تغییر محیط‌های حفاظت‌شده مجاز نیست.
+
+## 2026-11-02 — S0، اصلاح مستقل Market Context؛ تحویل برای بازبینی مستقل
+
+Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D64, D70, D78.
+
+بر پایهٔ صریح PR86 در fa36ad1 و worktree مستقل؛ R-F02 با همان Variant پیش از اصلاح روی seed تازه بازتولید شد. بازار URL در GET و Server Action یکسان و پاسخ‌های قیمت/preview به context صفحه مقید شدند؛ مقصد کنترل کشور/زبان و سبد بازار را حفظ می‌کند. قیمت و stock/permission/quote از مسیرهای قبلی‌اند؛ هیچ تغییر طراحی، migration، WIP Hero یا دادهٔ preview قبلی انجام نشد. 9304 Unit/PG و تکرار4177 Unit، lint/TS و backup guards پاس‌اند؛ همهٔ۳۳ سناریوی مرورگر پس از اصلاح الگوی URL تست قدیمی موفق‌اند؛ build اولیه production پاس است و مشخصات artifact نهایی و تکرار آزمون‌های آن در بستهٔ تحویل ثبت می‌شوند. [گزارش و راه بررسی](reviews/S0_PRICE_CONTEXT_FA.md). هیچ PR/push/merge؛ پس از تحویل S0، انتظار بازبینی وی‌بانو، بدون شروع S1.
+
 ## 2026-11-01 — M4-01، قبول محلی و Draft برای بازبینی مستقل
 
 Implemented against docs v1.2 / D-numbers touched: D04, D09, D10, D25, D31, D70, D77, D78, D81.
@@ -1397,3 +1484,40 @@ R4 Draft PR71 head0eb1ddd8c460d1647f677bf640ded4c9840b11b1 has all four required
 R3b on this green base is **IN_PROGRESS**, not a completed MODA4/CMS delivery. Current local code adds nested typed blocks/editable fields, actual private RSC unsaved-preview snapshots with scoped owner/expiry/monotonic ordering, real COMPOSITE model/cutout/size overrides and atomic existing cart, decoded-preview-bound PHOTO consent with same-ID media revalidation, actual program clock/capacity/conditional offer projection, common live market policy source, and bounded existing-pipeline video registration. Existing blocks/data stay compatible. Nullable Market.servicePolicy and new ephemeral HomepagePreview were documented before code and migrated only into owned isolated hoda_moda_r3b_core_test; SQL changes only the new objects and nullable field, never historical migrations or retained owner rows. Ephemeral cleanup runs in the authenticated cron's existing maintenance/drain gate.
 
 Local focused38 tests /10files PASS for core/image/model/media-lock/variant-price/cart/preview ownership/scope/sequence/expiry/capacity/service-rule/time/targets; actual role/scope server-read matrix864 PASS. The concurrent preview test exposed and fixed pool exhaustion from an extra authorization connection inside held transactions; the recheck uses the same transaction and the existing evaluateAccess contract. These are partial development evidence, not full-suite/build/browser/restore acceptance for R3b. Body motion/framing/admin publication/rollout/native screenshots/measurement and final review remain to verify; no R3b ready URL or owner execution is claimed. R5/R6/R7a/R7b remain authorized next, R7c budget/ADR blocked. Main/PR60/#48/#49 and owner visual/physical acceptance remain separate.
+
+### FR3.1b — local fitting room review
+
+Independent branch from FR3.1. The mobile dock follows the selected product, the Cutout editor offers semantic model attachment suggestions, and receipt rows change real color/size variants before purchase. See [phase scope and checks](phases/phase-fr3-1b.md). Visual approval remains pending. FR3.2 remains a design document.
+
+### Hero hydration stability — FR3.1b acceptance follow-up
+
+The stacked leading Hero uses a CSS viewport budget from first paint. See [scope and checks](phases/phase-hero-hydration-stability.md). To verify manually, load the homepage in a narrow viewport under network throttling and use the first price chip; the same target should open the in-Hero purchase sheet. FR3.2 remains untouched and owner acceptance is pending.
+
+Local verification completed: unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 10 new hydration/input cases, three repeated original Turkish Hero flows, and 25 Fidelity browser cases (146 criteria) passed. The initial PostgreSQL run had three failures; the unchanged corresponding base files passed 413 cases on a fresh database, and the fresh isolated full run passed all 9,321 cases. Initial logs and the environment/timing investigation remain in the local review bundle. Lint, typecheck, build and isolated restore/seed passed. No push, PR or merge; owner and independent review remain pending.
+### Hero headroom — visual acceptance follow-up
+
+Hero photographs start below the real header row in normal CSS flow, avoiding logo/face overlap while retaining the first-paint viewport budget. Per-slide optional focal/zoom settings support three mobile widths, tablet and desktop; existing content retains its source framing. See [scope and acceptance](phases/phase-hero-headroom.md). Owner visual review remains pending; no FR3.2, paid API or publication.
+
+Local completion evidence: 25 new headroom/admin/short-viewport browser cases, 10 hydration/input cases, unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 25 Fidelity cases / 146 criteria, and the fresh isolated full 9,328-test / 181-file Unit/PostgreSQL run passed. Lint, typecheck and production build passed. The final browser queue used a fresh database and ran sequentially. Initial test setup/SSR-stream synchronization failures and an expired draft-audit transaction during an overlapping QA attempt remain in the local report; no assertion or transaction timeout was weakened. Physical phones and independent owner visual acceptance remain open. No push, PR or merge.
+
+
+### Shared D77 floating storefront navigation — local review handoff
+
+Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D81.
+
+One shared black dock now replaces the white mobile menu and appears on direct public storefront entry on desktop. Six real market-aware destinations use a validated current PDP, a real fitting selection, or the catalog/gallery fallback. No temporary navigation query or arbitrary product identity is required. Fitting's mobile cart shortcut and header cart remain. Checkout/payment/order detail routes suppress the dock; dialogs hide it without changing its layout budget.
+
+An optional boolean in the existing theme JSON is editable through the authorized/audited theme action. Missing legacy settings default to enabled; legacy form payloads preserve an existing disabled value. No schema, migration, money, inventory, payment, wallet or AI-provider change was made. See [scope and acceptance](phases/phase-global-floating-navigation.md) and the Persian setup guide.
+
+Local verification: 30 navigation/mobile browser cases, unchanged 33 storefront regressions, 12 fitting/Cutout cases, 25 headroom cases, 10 hydration/native-input cases, and 25 Fidelity cases / 146 criteria passed. A fresh isolated full Unit/PostgreSQL run passed 9,349 cases in 182 files after migration/seed. Lint, typecheck, production build, backup guards and isolated backup/restore passed. The original Hero frame/photo/copy remains intact; only its desktop controller row excludes the dock footprint. A dedicated four-slide/three-language geometry case also verifies no unintended scrolling or target overlap.
+
+Earlier visibility-only test locators, mobile fitting width inheritance, over-constrained desktop Hero sizing, full-width scroll padding, and a test-selector encoding error were diagnosed rather than hidden by looser criteria or longer timeouts. Initial logs and the actual before/after matrix stay in the private local review bundle. Owned runtime revision metadata was corrected without changing the image or Build ID. Protected previews and the 358-file WIP hash baseline were retained; the pre-existing Ops restart loop remains outside this change.
+
+Owner visual acceptance and independent review remain pending. Chromium viewport emulation is not physical-device/WebKit acceptance. No push, PR, merge, public release or FR3.2 work.
+
+
+### Floating navigation — narrow mobile label follow-up
+
+Mobile tracks now respect each translated word's minimum width, with normal word boundaries instead of arbitrary character wrapping. The existing 13px text, 76px dock height, 84px layout budget, black/orange treatment and minimum 44px targets remain. No labels, routes, Hero/fitting layout, data, schema or money code changed.
+
+Local verification: 9 new whole-word/geometry/touch/focus cases (FA/TR/EN at 360/390/430), 65 existing navigation/mobile/headroom/hydration cases, and the fresh full 9,349-case / 182-file Unit/PostgreSQL suite passed. Lint, typecheck and production build passed. Nine final images and paired before/after views remain in the private review bundle. The previous delivery branch, running services, 358-file WIP baseline and original D77 hash were retained. Owner visual review remains pending; no push, PR, merge or public release.

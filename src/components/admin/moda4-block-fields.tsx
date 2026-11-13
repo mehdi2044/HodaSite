@@ -4,8 +4,12 @@ import { SceneAnchorCanvas } from "./scene-editor";
 import { MediaPicker } from "./media-picker";
 import type { Moda4Block } from "@/modules/content/moda4-contracts";
 import type { ShoppableScene } from "@/modules/content/scenes/contracts";
-import { sceneConfirmationKey } from "@/modules/content/scenes/contracts";
+import {
+  matchingFittingPhoto,
+  sceneConfirmationKey,
+} from "@/modules/content/scenes/contracts";
 import { SCENE_ASPECTS } from "@/modules/content/scenes/geometry";
+import { HERO_FRAME_PROFILES } from "@/modules/content/hero-framing";
 import type { ContentTarget } from "@/modules/content/moda4-targets";
 import type { ScenePreviewProof } from "./scene-preview-proof";
 import {
@@ -393,8 +397,10 @@ export function ModaSceneField({
   proof,
   approved,
   approve,
+  reorderPieces = false,
 }: {
   scene: ShoppableScene;
+  reorderPieces?: boolean;
   change: (scene: ShoppableScene) => void;
   options: ModaAdminOptions;
   urls: Record<string, string>;
@@ -539,6 +545,31 @@ export function ModaSceneField({
                 );
         return (
           <div key={piece.id} className="card grid gap-2">
+            {reorderPieces && (
+              <div className="flex flex-wrap gap-2">
+                {([-1, 1] as const).map((offset) => (
+                  <button
+                    key={offset}
+                    type="button"
+                    className="button button-outline"
+                    disabled={!scene.pieces[index + offset]}
+                    onClick={() => {
+                      const pieces = [...scene.pieces];
+                      const other = pieces[index + offset];
+                      if (!other) return;
+                      pieces[index] = other;
+                      pieces[index + offset] = piece;
+                      approve(scene.id, undefined);
+                      change({ ...scene, pieces, match: undefined });
+                    }}
+                  >
+                    {a(
+                      offset < 0 ? "fittingPieceEarlier" : "fittingPieceLater",
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
             <label>
               {t("product")}
               <select
@@ -742,14 +773,17 @@ export function Moda4BlockFields({
   const sceneField = (
     scene: ShoppableScene,
     update: (scene: ShoppableScene) => void,
+    reorderPieces = false,
+    allowConfirmation = true,
   ) => (
     <ModaSceneField
       scene={scene}
+      reorderPieces={reorderPieces}
       change={update}
       options={options}
       urls={urls}
       onMedia={onMedia}
-      proof={proofs[scene.id]}
+      proof={allowConfirmation ? proofs[scene.id] : undefined}
       approved={approvals[scene.id]}
       approve={approve}
     />
@@ -951,6 +985,98 @@ export function Moda4BlockFields({
               return (
                 <fieldset className="grid gap-2">
                   <legend>{t("copySide")}</legend>
+                  <p>{t("heroFramingHelp")}</p>
+                  {HERO_FRAME_PROFILES.map((profile) => {
+                    const frame = layout.framing?.[profile];
+                    const update = (next: typeof frame) =>
+                      setLayout({
+                        ...layout,
+                        framing: { ...layout.framing, [profile]: next },
+                      });
+                    return (
+                      <fieldset
+                        key={profile}
+                        data-hero-framing={profile}
+                        className="grid gap-2 rounded border p-3"
+                      >
+                        <legend>{t(`heroFrame_${profile}`)}</legend>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(frame)}
+                            onChange={(event) =>
+                              update(
+                                event.target.checked
+                                  ? {
+                                      focal: {
+                                        ...(profile === "tablet" ||
+                                        profile === "desktop"
+                                          ? slide.scene.desktop.focal
+                                          : slide.scene.mobile.focal),
+                                      },
+                                      zoom: 1,
+                                    }
+                                  : undefined,
+                              )
+                            }
+                          />
+                          {t("heroFrameOverride")}
+                        </label>
+                        {frame && (
+                          <>
+                            {(["x", "y"] as const).map((axis) => (
+                              <label key={axis}>
+                                {t(axis === "x" ? "heroFrameX" : "heroFrameY")}
+                                <input
+                                  className="input"
+                                  type="number"
+                                  min={0}
+                                  max={1}
+                                  step={0.01}
+                                  value={frame.focal[axis]}
+                                  onChange={(event) =>
+                                    update({
+                                      ...frame,
+                                      focal: {
+                                        ...frame.focal,
+                                        [axis]: Math.min(
+                                          1,
+                                          Math.max(
+                                            0,
+                                            Number(event.target.value),
+                                          ),
+                                        ),
+                                      },
+                                    })
+                                  }
+                                />
+                              </label>
+                            ))}
+                            <label>
+                              {t("heroFrameZoom")}
+                              <input
+                                className="input"
+                                type="number"
+                                min={1}
+                                max={2}
+                                step={0.05}
+                                value={frame.zoom}
+                                onChange={(event) =>
+                                  update({
+                                    ...frame,
+                                    zoom: Math.min(
+                                      2,
+                                      Math.max(1, Number(event.target.value)),
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                          </>
+                        )}
+                      </fieldset>
+                    );
+                  })}
                   <div className="flex gap-4">
                     {(["left", "right"] as const).map((side) => (
                       <label key={side} className="flex items-center gap-2">
@@ -1416,34 +1542,58 @@ export function Moda4BlockFields({
         {common}
         {sourceField(block.source, (source) => change({ ...block, source }))}
         {block.type === "KidsWorld" && (
-          <label>
-            {t("tone")}
-            <select
-              className="input"
-              value={block.tone}
-              onChange={(event) =>
-                change({
-                  ...block,
-                  tone: event.target.value as typeof block.tone,
-                })
+          <>
+            <LocalizedField
+              label={t("eyebrow")}
+              value={block.eyebrow ?? blank()}
+              change={(eyebrow) => change({ ...block, eyebrow })}
+            />
+            <LocalizedField
+              label={t("subtitle")}
+              value={block.subtitle ?? blank()}
+              change={(subtitle) => change({ ...block, subtitle })}
+            />
+            <LocalizedField
+              label={t("secondaryLabel")}
+              value={block.secondaryLabel ?? blank()}
+              change={(secondaryLabel) => change({ ...block, secondaryLabel })}
+            />
+            <ModaTargetField
+              value={block.secondaryTarget ?? { kind: "fitting" }}
+              change={(secondaryTarget) =>
+                change({ ...block, secondaryTarget })
               }
-            >
-              {(
-                [
-                  "kidsPink",
-                  "kidsMint",
-                  "kidsSky",
-                  "kidsButter",
-                  "kidsLilac",
-                  "kidsPeach",
-                ] as const
-              ).map((tone) => (
-                <option key={tone} value={tone}>
-                  {t(`tone_${tone}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={options}
+            />
+            <label>
+              {t("tone")}
+              <select
+                className="input"
+                value={block.tone}
+                onChange={(event) =>
+                  change({
+                    ...block,
+                    tone: event.target.value as typeof block.tone,
+                  })
+                }
+              >
+                {(
+                  [
+                    "kidsPink",
+                    "kidsMint",
+                    "kidsSky",
+                    "kidsButter",
+                    "kidsLilac",
+                    "kidsPeach",
+                  ] as const
+                ).map((tone) => (
+                  <option key={tone} value={tone}>
+                    {t(`tone_${tone}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
         )}
       </div>
     );
@@ -1451,9 +1601,56 @@ export function Moda4BlockFields({
     return (
       <div className="grid gap-3">
         {common}
+        <LocalizedField
+          label={t("fittingSubtitleAdmin")}
+          value={block.subtitle ?? { fa: "", tr: "", en: "" }}
+          change={(subtitle) => change({ ...block, subtitle })}
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={block.motion !== false}
+            onChange={(event) =>
+              change({ ...block, motion: event.target.checked })
+            }
+          />{" "}
+          {t("fittingMotion")}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={block.autoplay !== false}
+            onChange={(event) =>
+              change({ ...block, autoplay: event.target.checked })
+            }
+          />{" "}
+          {t("fittingAutoplay")}
+        </label>
         {block.looks.map((look, index) => (
           <fieldset key={look.id} className="card grid gap-2">
             <legend>{t("look", { number: index + 1 })}</legend>
+            <div className="flex flex-wrap gap-2">
+              {([-1, 1] as const).map((offset) => (
+                <button
+                  key={offset}
+                  type="button"
+                  className="button button-outline"
+                  disabled={
+                    index + offset < 0 || index + offset >= block.looks.length
+                  }
+                  onClick={() => {
+                    const looks = [...block.looks];
+                    const other = looks[index + offset];
+                    if (!other) return;
+                    looks[index] = other;
+                    looks[index + offset] = look;
+                    change({ ...block, looks });
+                  }}
+                >
+                  {t(offset < 0 ? "fittingEarlier" : "fittingLater")}
+                </button>
+              ))}
+            </div>
             <LocalizedField
               label={t("lookLabel")}
               value={look.label}
@@ -1466,13 +1663,22 @@ export function Moda4BlockFields({
                 })
               }
             />
-            {sceneField(look.scene, (scene) =>
-              change({
-                ...block,
-                looks: block.looks.map((item, n) =>
-                  n === index ? { ...item, scene } : item,
-                ),
-              }),
+            {sceneField(
+              look.scene,
+              (scene) => {
+                if (
+                  look.finalPhoto &&
+                  !matchingFittingPhoto(scene, look.finalPhoto)
+                )
+                  approve(look.finalPhoto.id, undefined);
+                change({
+                  ...block,
+                  looks: block.looks.map((item, n) =>
+                    n === index ? { ...item, scene } : item,
+                  ),
+                });
+              },
+              true,
             )}
             <label>
               <input
@@ -1497,13 +1703,23 @@ export function Moda4BlockFields({
               {t("finalPhoto")}
             </label>
             {look.finalPhoto &&
-              sceneField(look.finalPhoto, (finalPhoto) =>
-                change({
-                  ...block,
-                  looks: block.looks.map((item, n) =>
-                    n === index ? { ...item, finalPhoto } : item,
-                  ),
-                }),
+              sceneField(
+                look.finalPhoto,
+                (finalPhoto) => {
+                  if (
+                    sceneConfirmationKey(finalPhoto) !==
+                    sceneConfirmationKey(look.finalPhoto!)
+                  )
+                    approve(finalPhoto.id, undefined);
+                  change({
+                    ...block,
+                    looks: block.looks.map((item, n) =>
+                      n === index ? { ...item, finalPhoto } : item,
+                    ),
+                  });
+                },
+                false,
+                matchingFittingPhoto(look.scene, look.finalPhoto),
               )}
             <button
               type="button"

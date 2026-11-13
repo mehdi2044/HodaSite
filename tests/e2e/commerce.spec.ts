@@ -106,6 +106,7 @@ for (const [locale, slug, province, city, postal] of [
     await expect(page).toHaveURL(
       new URL(`/${locale}/checkout`, info.project.use.baseURL).href,
     );
+    await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
     const headerCart = page.locator("header .storefront-cart-toggle");
     await expect(headerCart).toBeVisible();
     await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);

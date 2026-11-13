@@ -1,4 +1,5 @@
 import { FittingAdMotion } from "./fitting-ad-motion";
+import { resolveFittingAdLooks } from "@/modules/content/scenes/fitting-ad";
 import { ModaHeroSlide } from "./moda-hero-slide";
 import { ShoppableScene } from "./shoppable-scene";
 import { isDemoFashionMedia } from "./responsive-image";
@@ -9,9 +10,7 @@ import {
   normalizeHeroLayout,
 } from "@/modules/content/hero-layout";
 import { resolveHeroFloat } from "@/modules/content/moda4-hero";
-import { ModaKidsRing } from "./moda-kids-ring";
-import { publicCatalogCutout } from "@/modules/catalog/cutouts/resolve";
-import { catalogText } from "@/modules/catalog";
+import { ModaKidsWorld } from "./moda-kids-world";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -301,180 +300,179 @@ export async function ModaHomepageBlock({
       </div>
     );
   }
-  if (block.type === "Lookbook" || block.type === "FittingAd") {
-    const scenes =
-      block.type === "Lookbook"
-        ? block.scenes
-        : block.looks.map((look) => look.finalPhoto ?? look.scene);
-    const views = await Promise.all(
-      scenes.map((scene) =>
-        resolveShoppableScene(scene, market, locale, { adminPreview: preview }),
-      ),
-    );
-    const items =
-      block.type === "FittingAd"
-        ? await Promise.all(
-            block.looks.map(async (look) => {
-              const staged = await resolveShoppableScene(
-                look.scene,
-                market,
-                locale,
-                { adminPreview: preview },
-              );
-              return (
-                <FittingAdMotion
-                  key={look.id}
-                  view={staged}
-                  locale={locale}
-                  final={null}
-                />
-              );
-            }),
-          )
-        : views.map((view) => (
-            <Link
-              key={view.id}
-              href={view.pieces[0]?.href ?? `/${locale}/search`}
-            >
-              {view.title}
-            </Link>
-          ));
+  if (block.type === "FittingAd") {
+    const { animated, staticPhoto, diagnostics, photoPreviews } =
+      await resolveFittingAdLooks(block.looks, market.id, locale, {
+        adminPreview: preview,
+      });
+    const scenes = preview ? await getTranslations("scenes") : null;
+    const raw = text(block.title);
+    const english =
+      /\p{Script=Latin}/u.test(raw) && !/\p{Script=Arabic}/u.test(raw);
+    const parts = raw.includes("|")
+      ? raw.split("|", 2)
+      : english
+        ? (raw.match(/^(.*)\s(\S+\s\S+)$/)?.slice(1) ?? [raw])
+        : [raw];
     return (
-      <div
-        data-moda4={block.type === "FittingAd" ? "fitting-ad" : "lookbook"}
-        className={
-          block.type === "FittingAd" ? "moda-fitting-ad" : "moda-lookbook"
-        }
-      >
-        {block.type === "FittingAd" && (
-          <div className="moda-fitting-copy">
-            <h2 data-moda4-display="" lang="en" dir="ltr">
-              {text(block.title)}
-            </h2>
-            <p>{text(block.body)}</p>
+      <>
+        <FittingAdMotion
+          looks={animated}
+          staticPhoto={staticPhoto}
+          locale={locale}
+          autoplay={block.autoplay !== false}
+          motion={block.motion !== false}
+          cta={
             <Link
               data-moda4-cta=""
-              className="button"
-              href={`/${locale}/fitting-room?market=${market.code}`}
+              className="button m4-cta"
+              href={"/" + locale + "/fitting-room?market=" + market.code}
             >
               {text(block.ctaLabel)}
             </Link>
-          </div>
-        )}
-        <ModaCarousel
-          art={
-            block.type === "Lookbook"
-              ? views.map((view) => (
-                  <SceneArt key={view.id} view={view} locale={locale} />
-                ))
-              : undefined
           }
-          kind={block.type === "Lookbook" ? "lookbook" : "fitting"}
-          title={block.type === "Lookbook" ? text(block.title) : undefined}
-          items={items}
+        >
+          <span className="m4-fit-eyebrow">{t("fittingEyebrow")}</span>
+          <h2
+            data-moda4-display=""
+            lang={english ? "en" : locale}
+            dir={english ? "ltr" : undefined}
+            style={
+              english && locale === "fa" ? { textAlign: "right" } : undefined
+            }
+          >
+            {parts[0]}
+            {parts[1] && (
+              <>
+                {" "}
+                <em>{parts[1]}</em>
+              </>
+            )}
+          </h2>
+          <div className="m4-fit-sub">
+            {block.subtitle ? text(block.subtitle) : t("fittingSubtitle")}
+          </div>
+          <p>{text(block.body)}</p>
+        </FittingAdMotion>
+        {scenes &&
+          photoPreviews.map((photo) => (
+            <section
+              key={photo.id}
+              data-scene-id={photo.id}
+              data-scene-confirmation={photo.fingerprint}
+              data-scene-confirmation-key={photo.key}
+              className="grid gap-3 rounded-token border p-3"
+            >
+              <h3>{photo.label}</h3>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  {
+                    id: "desktop",
+                    label: scenes("desktopImage"),
+                    image: photo.desktop,
+                  },
+                  {
+                    id: "mobile",
+                    label: scenes("mobileImage"),
+                    image: photo.mobile,
+                  },
+                  ...photo.references.map(({ id, image }, index) => ({
+                    id,
+                    label: `${scenes("referenceImage")} · ${index + 1}`,
+                    image,
+                  })),
+                ].map(({ id, label, image }) => (
+                  <figure key={id} className="grid w-32 gap-1">
+                    <ResponsiveImage
+                      media={image}
+                      locale={locale}
+                      sizes="128px"
+                      imgClassName="h-40 w-full object-contain"
+                    />
+                    <figcaption>{label}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          ))}
+        {preview && diagnostics.length > 0 && (
+          <ul className="m4-fit-diagnostics" data-m4-diagnostics="">
+            {diagnostics.map(({ id, label, reason }, index) => (
+              <li key={id + ":" + reason + ":" + index} data-m4-reason={reason}>
+                {t("fittingLookHidden", {
+                  look: label,
+                  reason: t("fittingReason_" + reason),
+                })}
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    );
+  }
+  if (block.type === "Lookbook") {
+    const views = await Promise.all(
+      block.scenes.map((scene) =>
+        resolveShoppableScene(scene, market, locale, { adminPreview: preview }),
+      ),
+    );
+    return (
+      <div data-moda4="lookbook" className="moda-lookbook">
+        <ModaCarousel
+          art={views.map((view) => (
+            <SceneArt key={view.id} view={view} locale={locale} />
+          ))}
+          kind="lookbook"
+          title={text(block.title)}
+          items={views.map((view) => (
+            <Link
+              key={view.id}
+              href={view.pieces[0]?.href ?? "/" + locale + "/search"}
+            >
+              {view.title}
+            </Link>
+          ))}
           labels={views.map((view) => view.title)}
-          seconds={block.type === "Lookbook" ? block.autoplaySeconds : 8}
+          seconds={block.autoplaySeconds}
         />
       </div>
     );
   }
-  if (block.type === "NewIn" || block.type === "KidsWorld") {
+  if (block.type === "KidsWorld")
+    return <ModaKidsWorld block={block} market={market} locale={locale} />;
+  if (block.type === "NewIn") {
     const products = await moda4Products(market.id, locale, block.source);
     const [prices, variantPrices] = await Promise.all([
       getDisplayPrices(products, market),
       getVariantDisplayPrices(products, market),
     ]);
     const href = await resolveContentTarget(block.target, market.id, locale);
-    const kidsItems =
-      block.type === "KidsWorld"
-        ? await Promise.all(
-            products.map(async (product) => {
-              const cutout = product.variants[0]
-                ? await publicCatalogCutout(product.variants[0].id, market.id)
-                : null;
-              const image = cutout?.media ?? product.media[0]?.media;
-              return (
-                <figure>
-                  {image && (
-                    <ResponsiveImage
-                      media={{
-                        ...image,
-                        presentation: {
-                          fit: "contain",
-                          focalX: 0.5,
-                          focalY: 0.5,
-                        },
-                      }}
-                      locale={locale}
-                      sizes="200px"
-                      imgClassName="h-full w-full"
-                    />
-                  )}
-                  <figcaption>
-                    {catalogText(product.titleI18n, locale)}
-                    {!cutout && (
-                      <span className="block">{t("cutoutFallback")}</span>
-                    )}
-                  </figcaption>
-                </figure>
-              );
-            }),
-          )
-        : [];
     return (
-      <section
-        data-moda4={block.type === "KidsWorld" ? "kids-world" : "new-in"}
-        className={`moda-product-rail ${block.type === "KidsWorld" ? "moda-kids-world" : ""}`}
-        style={
-          block.type === "KidsWorld"
-            ? ({
-                "--kids-world-tone": `var(--${block.tone})`,
-              } as React.CSSProperties)
-            : undefined
-        }
-      >
+      <section data-moda4="new-in" className="moda-product-rail">
         <div className="moda-section-head">
-          <h2
-            data-moda4-kids-display={
-              block.type === "KidsWorld" ? "" : undefined
-            }
-            lang={block.type === "KidsWorld" ? "en" : undefined}
-          >
-            {text(block.title)}
-          </h2>
+          <h2>{text(block.title)}</h2>
           {href && (
             <Link className="button button-outline" href={href}>
               {text(block.ctaLabel)}
             </Link>
           )}
         </div>
-        {block.type === "KidsWorld" && <p>{text(block.body)}</p>}
-        {block.type === "KidsWorld" && kidsItems.length > 0 && (
-          <ModaKidsRing
-            items={kidsItems}
-            labels={products.map((product) =>
-              catalogText(product.titleI18n, locale),
-            )}
-          />
-        )}
-        {block.type === "NewIn" && (
-          <div className="moda-snap-products">
-            {await Promise.all(
-              products.map((product) =>
-                ProductCard({
-                  product: {
-                    ...product,
-                    displayPrice: prices.get(product.id)!,
-                  },
-                  variantPrices,
-                  locale,
-                  market,
-                  readOnly: preview,
-                }),
-              ),
-            )}
-          </div>
-        )}
+        <div className="moda-snap-products">
+          {await Promise.all(
+            products.map((product) =>
+              ProductCard({
+                product: {
+                  ...product,
+                  displayPrice: prices.get(product.id)!,
+                },
+                variantPrices,
+                locale,
+                market,
+                readOnly: preview,
+              }),
+            ),
+          )}
+        </div>
         {products.length === 0 && <p>{t("noProducts")}</p>}
       </section>
     );

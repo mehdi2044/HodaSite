@@ -1,7 +1,7 @@
 import { ServicePolicySummary } from "@/components/storefront/service-policy";
 import { seoPath } from "@/lib/seo-urls";
 import Decimal from "decimal.js";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
+import { formatCartAmount } from "@/modules/catalog/format";
 import { currentCustomer } from "@/modules/customers";
 import { DiscountLines } from "@/components/storefront/discount-lines";
 import { CouponForm } from "@/components/storefront/coupon-form";
@@ -119,7 +119,7 @@ export default async function CartPage({
                 ) && (
                   <p className="my-3 font-semibold">
                     <Iso>
-                      {formatStorefrontAmount(
+                      {formatCartAmount(
                         new Decimal(
                           quote.items.find(
                             (line) => line.variantId === item.variantId,
@@ -178,11 +178,7 @@ export default async function CartPage({
                   <dt>{t("subtotal")}</dt>
                   <dd>
                     <Iso>
-                      {formatStorefrontAmount(
-                        quote.subtotal,
-                        cart.currency,
-                        locale,
-                      )}
+                      {formatCartAmount(quote.subtotal, cart.currency, locale)}
                     </Iso>
                   </dd>
                 </div>
@@ -191,7 +187,7 @@ export default async function CartPage({
                     <dt>{line.label}</dt>
                     <dd>
                       <Iso>
-                        {formatStorefrontAmount(
+                        {formatCartAmount(
                           line.chargedAmount,
                           cart.currency,
                           locale,
@@ -201,6 +197,7 @@ export default async function CartPage({
                   </div>
                 ))}
                 <DiscountLines
+                  cartDisplay
                   lines={quote.discountLines}
                   currency={cart.currency}
                   locale={locale}
@@ -209,11 +206,7 @@ export default async function CartPage({
                   <dt>{t("total")}</dt>
                   <dd>
                     <Iso>
-                      {formatStorefrontAmount(
-                        quote.total,
-                        cart.currency,
-                        locale,
-                      )}
+                      {formatCartAmount(quote.total, cart.currency, locale)}
                     </Iso>
                   </dd>
                 </div>
@@ -227,7 +220,7 @@ export default async function CartPage({
               {!mismatch && (
                 <Link
                   className="button block text-center"
-                  href={`/${locale}/checkout`}
+                  href={`/${locale}/checkout?market=${encodeURIComponent(market.code)}`}
                 >
                   {t("checkout")}
                 </Link>
@@ -239,7 +232,7 @@ export default async function CartPage({
               {!mismatch && (
                 <Link
                   className="button mt-4 block text-center"
-                  href={`/${locale}/checkout?step=2`}
+                  href={`/${locale}/checkout?step=2&market=${encodeURIComponent(market.code)}`}
                 >
                   {t("checkout")}
                 </Link>

@@ -1,5 +1,7 @@
 "use server";
 import { z } from "zod";
+import { CUTOUT_SLOTS } from "@/modules/catalog/cutouts/contracts";
+import { INSTANT_COMPOSITION_CAPACITY } from "@/modules/fitting/instant-contract";
 import { revalidatePath } from "next/cache";
 import { getRequestContext } from "@/lib/request-context";
 import { MaintenanceError } from "@/lib/mutation-gate";
@@ -34,7 +36,10 @@ export async function previewInstant(locale: string, input: unknown) {
   return safe(async () => {
     const l = localeSchema.parse(locale),
       { market } = await getRequestContext(l);
-    return resolveInstantSelection(market.id, input);
+    return {
+      context: { marketId: market.id, currency: market.currency, locale: l },
+      selection: await resolveInstantSelection(market.id, input),
+    };
   });
 }
 export async function loadInstantCatalog(locale: string, input: unknown) {
@@ -44,18 +49,22 @@ export async function loadInstantCatalog(locale: string, input: unknown) {
     const v = z
       .object({
         query: z.string().max(100).default(""),
+        slot: z.enum(CUTOUT_SLOTS).optional(),
         productId: z.string().min(1).max(100).optional(),
         after: z.string().min(1).max(100).optional(),
         afterProduct: z.string().min(1).max(100).optional(),
         variantIds: z
           .array(z.string().min(1).max(100))
           .min(1)
-          .max(4)
+          .max(INSTANT_COMPOSITION_CAPACITY)
           .optional(),
       })
       .strict()
       .parse(input);
-    return instantCatalog(market.id, l, v.query, v);
+    return {
+      context: { marketId: market.id, currency: market.currency, locale: l },
+      products: await instantCatalog(market.id, l, v.query, v),
+    };
   });
 }
 export async function saveInstant(locale: string, input: unknown) {

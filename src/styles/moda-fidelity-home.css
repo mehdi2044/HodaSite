@@ -339,62 +339,189 @@
 .moda-lookbook .moda-orbit-selected {
   text-align: center;
 }
+/* D77 Kids World. All geometry, color and motion stay inside this block. */
 .moda-kids-world {
   position: relative;
-  max-width: none;
+  isolation: isolate;
+  overflow: clip;
   border-radius: 0;
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--kidsPink) 60%, white) 0%,
-    color-mix(in srgb, var(--kidsButter) 70%, white) 45%,
-    color-mix(in srgb, var(--kids-world-tone, var(--kidsMint)) 70%, white) 100%
-  );
-  margin-top: 110px;
-  padding: 100px 48px 90px;
+  margin-block-start: 110px;
+  background: linear-gradient(160deg, #fde7ee 0%, #fff6d6 45%, var(--kids-world-tone, #ddf3e8) 100%);
+  color: var(--kidsInk, #5b4a6b);
+}
+.moda-kids-wrap {
+  position: relative;
+  z-index: 1;
+  max-inline-size: 1440px;
+  margin-inline: auto;
+  padding: 100px 32px 90px;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr);
   gap: 30px;
   align-items: center;
 }
-.moda-kids-world .moda-section-head {
-  display: block;
+.moda-kids-copy { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.moda-kids-copy p { margin: 0; }
+.moda-kids-copy .moda-kids-eyebrow {
+  color: #6b5e73;
+  font-family: var(--font-price-latin, Inter), sans-serif;
+  font-size: 11.5px;
+  letter-spacing: .2em;
+}
+.moda-kids-copy h2 {
   margin: 0;
-}
-.moda-kids-world .moda-section-head h2 {
-  font-family: var(--font-heading-latin, Manrope), sans-serif !important;
-  font-size: clamp(52px, 6vw, 96px);
+  font-family: var(--font-heading-latin, Manrope), var(--font-fa, Vazirmatn), sans-serif !important;
+  font-size: clamp(48px, 6vw, 96px);
   font-weight: 600;
-  line-height: 0.95;
-  color: var(--kidsInk);
+  line-height: .95;
+  color: #5b4a6b;
+  text-align: match-parent;
+  overflow-wrap: normal;
 }
-.moda-kids-world > p {
-  grid-column: 1;
-  color: var(--kidsInk);
+.moda-kids-copy h2 span {
+  color: #f28ba8;
+  font-weight: 400;
+  display: block;
 }
-.moda-kids-world .moda-kids-ring-section {
-  grid-column: 2;
-  grid-row: 1 / span 2;
+.moda-kids-copy .moda-kids-subtitle { font-size: 22px; font-weight: 500; }
+.moda-kids-copy .moda-kids-body { color: #6b5e73; font-size: 15.5px; line-height: 1.95; }
+.moda-kids-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.moda-kids-cta .moda-kids-shop { --button-fill: #f6a9be; color: #3e2f48; background-color: #f6a9be; }
+.moda-kids-cta .moda-kids-fitting { --button-fill: #9fd9be; color: #24443a; background-color: #9fd9be; }
+html[data-button-style="crayon"] .moda-kids-cta .button { background-color: transparent; }
+.moda-kids-decor { position: absolute; inset: 0; pointer-events: none; }
+.moda-kids-decor > span {
+  position: absolute;
+  border-radius: 50%;
+  opacity: .75;
+  animation: moda-kids-bob 7s ease-in-out infinite;
 }
-.moda-kids-ring-stage {
-  height: 540px;
+.moda-kids-decor > span:nth-child(1) { width: 90px; height: 90px; right: 6%; top: 12%; background: #f8d7e3; }
+.moda-kids-decor > span:nth-child(2) { width: 46px; height: 46px; right: 42%; top: 70%; background: #cfe4f8; animation-delay: -2s; }
+.moda-kids-decor > span:nth-child(3) { width: 130px; height: 130px; left: 8%; bottom: -30px; background: #fff0b3; animation-delay: -4s; }
+.moda-kids-decor > span:nth-child(4) { width: 60px; height: 60px; left: 38%; top: 20%; background: #e4daf7; animation-delay: -1s; }
+.moda-kids-cloud, .moda-kids-star { position: absolute; }
+.moda-kids-cloud { width: 220px; top: 8%; left: 64%; opacity: .9; animation: moda-kids-cloud-drift 40s linear infinite; }
+.moda-kids-cloud + .moda-kids-cloud { width: 160px; left: 100%; top: 58%; animation-duration: 55s; animation-delay: -9s; }
+.moda-kids-star { width: 26px; top: 16%; left: 20%; animation: moda-kids-twinkle 3s ease-in-out infinite; }
+.moda-kids-star + .moda-kids-star { width: 20px; top: auto; left: auto; bottom: 20%; right: 30%; animation-delay: -1.4s; }
+@keyframes moda-kids-bob { 50% { transform: translateY(-26px) rotate(8deg); } }
+@keyframes moda-kids-cloud-drift { to { transform: translateX(-115vw); } }
+@keyframes moda-kids-twinkle { 50% { transform: scale(.6) rotate(20deg); opacity: .5; } }
+.moda-kids-world .moda-kids-ring-stage {
+  display: block;
+  position: relative;
+  height: auto;
+  min-block-size: max(450px, var(--kids-layout-height, 0px));
+  overflow: clip;
   perspective: 1300px;
+  perspective-origin: 50% 20%;
+  container-type: inline-size;
 }
-.moda-kids-billboard {
-  background: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
+.moda-kids-world .moda-kids-ring {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  transform: none;
+  transform-style: preserve-3d;
 }
-.moda-kids-billboard picture {
-  height: 250px;
+.moda-kids-world .moda-kids-podium {
+  position: absolute;
+  inset: 30px auto auto 50%;
+  inline-size: clamp(104px, 27cqi, 198px);
+  transform: translateX(-50%);
+  transform-origin: center top;
+  pointer-events: none;
+}
+.moda-kids-world .moda-kids-podium[data-kids-label-visible="false"] .moda-kids-label {
+  opacity: 0;
+  pointer-events: none;
+}
+.moda-kids-world .moda-kids-visual,
+.moda-kids-world .moda-kids-base {
+  opacity: var(--kids-depth-opacity, 1);
+}
+.moda-kids-piece { display: flex; flex-direction: column; align-items: center; position: relative; text-decoration: none; color: inherit; }
+.moda-kids-visual, .moda-kids-base, .moda-kids-label { pointer-events: auto; }
+.moda-kids-piece:focus-visible { outline: 2px solid #5b4a6b; outline-offset: 3px; border-radius: 12px; }
+.moda-kids-visual {
+  position: relative;
+  z-index: 1;
+  display: block;
+  inline-size: 100%;
+  block-size: clamp(145px, 49cqi, 234px);
   filter: drop-shadow(0 18px 14px #5b4a6b2e);
 }
-.moda-kids-billboard figcaption {
-  margin-top: 24px;
-  border-radius: 999px;
-  padding: 6px 14px;
-  background: #ffffffd9;
-  color: var(--kidsInk);
+.moda-kids-piece[data-kids-fit="long"] .moda-kids-visual { block-size: clamp(166px, 55cqi, 270px); }
+.moda-kids-piece[data-kids-fit="bottom"] .moda-kids-visual { block-size: clamp(142px, 47cqi, 225px); inline-size: 79%; }
+.moda-kids-piece[data-kids-fit="small"] .moda-kids-visual { block-size: clamp(100px, 36cqi, 174px); inline-size: 76%; }
+.moda-kids-visual picture { display: block; width: 100%; height: 100%; }
+.moda-kids-world .moda-kids-garment {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.moda-kids-image-note {
+  display: block;
+  position: absolute;
+  inset: auto 0 10px;
+  margin-inline: auto;
+  width: fit-content;
+  padding: 2px 6px;
+  background: #ffffffe8;
+  border-radius: 8px;
+  font-size: 10px;
+  text-align: center;
+}
+.moda-kids-base {
+  width: 88%;
+  height: clamp(26px, 9cqi, 44px);
+  margin-block-start: -12px;
+  border-radius: 50%;
+  background: var(--kids-podium, #cfeedf);
+  box-shadow: 0 10px 0 -1px color-mix(in srgb, var(--kids-podium, #cfeedf) 78%, #5b4a6b), 0 26px 24px -11px #5b4a6b4d;
+}
+.moda-kids-label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 3px 8px;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-block-size: 26px;
+  margin-block-start: 23px;
+  background: #ffffffeb;
+  padding: 6px 11px;
+  border-radius: 18px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.moda-kids-label bdi { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.moda-kids-world .moda-kids-hint { margin: 0; font-size: 13px; color: #6b5e73; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .moda-kids-decor > * { animation: none !important; }
+}
+@media (max-width: 1100px) {
+  .moda-kids-wrap { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .moda-kids-world { margin-block-start: 78px; }
+  .moda-kids-wrap { padding: 64px 16px 50px; gap: 24px; }
+  .moda-kids-copy { gap: 18px; }
+  .moda-kids-copy h2 { font-size: clamp(40px, 13vw, 57px); }
+  .moda-kids-copy .moda-kids-subtitle { font-size: 20px; }
+  .moda-kids-cta .button { padding-inline: 17px; }
+  .moda-kids-world .moda-kids-ring-stage { min-block-size: max(355px, var(--kids-layout-height, 0px)); }
+  .moda-kids-world .moda-kids-podium { inset-block-start: 22px; }
+  .moda-kids-cloud { width: 170px; left: 3%; }
+  .moda-kids-label { font-size: 12px; padding-inline: 6px; }
+  .moda-kids-label bdi { font-size: 11px; }
 }
 .moda-services {
   max-width: 1440px;
@@ -426,13 +553,6 @@
 @media (max-width: 1100px) {
   .moda-worlds-layout {
     grid-template-columns: 1fr;
-  }
-  .moda-kids-world {
-    grid-template-columns: 1fr;
-  }
-  .moda-kids-world .moda-kids-ring-section {
-    grid-column: 1;
-    grid-row: auto;
   }
   .moda-fitting-ad {
     grid-template-columns: 1fr;
@@ -506,11 +626,6 @@
   }
   .moda-lookbook .moda-section-heading {
     padding-inline: 20px;
-  }
-  .moda-kids-world {
-    margin-top: 64px;
-    padding: 64px 20px 40px;
-    gap: 20px;
   }
   .moda-services {
     margin-block: 64px;
@@ -615,9 +730,6 @@
   font-size: 30px;
   font-weight: 400;
 }
-.moda-kids-world .moda-section-head h2 {
-  font-weight: 700;
-}
 .moda-fitting-copy h2 {
   font-weight: 700;
 }
@@ -655,13 +767,22 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
   max-width: 200px;
 }
 .moda-kids-ring-section {
-  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 12px;
 }
 .moda-kids-ring-section > .moda-carousel-controls {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
   margin: 0;
+  gap: 8px 12px;
+}
+.moda-kids-ring-section > .moda-carousel-controls button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+@media (min-width: 1024px) {
+  .moda-kids-ring-section > .moda-carousel-controls button {
+    scroll-margin-block-end: calc(var(--storefront-nav-offset, 0px) + 16px);
+  }
 }
 [data-moda4="shop-the-look"] {
   min-height: max(46vw, 620px);

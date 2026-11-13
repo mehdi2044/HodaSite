@@ -1,3 +1,7 @@
+import { StorefrontNavigationFrame } from "@/components/storefront/storefront-navigation-frame";
+import { StorefrontProductProvider } from "@/components/storefront/storefront-product-context";
+import { safeFloatingNavigation } from "@/lib/theme-validation";
+import { FittingDockProvider } from "@/components/storefront/fitting-dock-context";
 import { jsonLdText } from "@/modules/seo/structured";
 import { Consent } from "@/components/engagement/consent";
 import { EngagementProvider } from "@/components/engagement/wishlist";
@@ -122,60 +126,70 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <EngagementProvider context={{ marketId: market.id, locale }}>
-        <div
-          className="storefront-app"
-          lang={locale}
-          dir={locale === "fa" ? "rtl" : "ltr"}
-        >
-          <a className="storefront-skip-link" href="#storefront-content">
-            {t("skipContent")}
-          </a>
-          {normalizeSeo(site?.seo).origin && (
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: jsonLdText({
-                  "@context": "https://schema.org",
-                  "@type": "Organization",
-                  name: siteName,
-                  url: normalizeSeo(site?.seo).origin,
-                }),
-              }}
-            />
-          )}
-          <AnnouncementBar market={market} markets={markets} locale={locale} />
-          <Header
-            locale={locale}
-            market={market}
-            markets={markets}
-            siteName={siteName}
-            logoMediaId={theme?.logoMediaId}
-            headerStyle={theme?.headerStyle ?? "minimal"}
-            logoWidth={brandLogoWidth(site?.brand)}
-          />
-          <GeoSuggestionBanner
-            currentMarketCode={market.code}
-            markets={markets}
-          />
-          <div id="storefront-content" tabIndex={-1}>
-            {children}
-          </div>
-          <Footer
-            locale={locale}
-            market={market}
-            contact={(site?.contact ?? {}) as Contact}
-            social={normalizeSocial(site?.social)}
-            legal={(site?.legal ?? {}) as Legal}
-            siteName={siteName}
-            logoMediaId={theme?.logoMediaId}
-          >
-            <PwaControls />
-            <Consent
-              marketId={market.id}
-              ids={normalizeSeo(site?.seo).analytics}
-            />
-          </Footer>
-        </div>
+        <FittingDockProvider key={market.id + ":" + locale}>
+          <StorefrontProductProvider>
+            <StorefrontNavigationFrame
+              locale={locale}
+              enabled={safeFloatingNavigation(theme?.colors)}
+            >
+              <a className="storefront-skip-link" href="#storefront-content">
+                {t("skipContent")}
+              </a>
+              {normalizeSeo(site?.seo).origin && (
+                <script
+                  type="application/ld+json"
+                  dangerouslySetInnerHTML={{
+                    __html: jsonLdText({
+                      "@context": "https://schema.org",
+                      "@type": "Organization",
+                      name: siteName,
+                      url: normalizeSeo(site?.seo).origin,
+                    }),
+                  }}
+                />
+              )}
+              <AnnouncementBar
+                market={market}
+                markets={markets}
+                locale={locale}
+              />
+              <Header
+                locale={locale}
+                market={market}
+                markets={markets}
+                siteName={siteName}
+                logoMediaId={theme?.logoMediaId}
+                headerStyle={theme?.headerStyle ?? "minimal"}
+                floatingNavigationEnabled={safeFloatingNavigation(
+                  theme?.colors,
+                )}
+                logoWidth={brandLogoWidth(site?.brand)}
+              />
+              <GeoSuggestionBanner
+                currentMarketCode={market.code}
+                markets={markets}
+              />
+              <div id="storefront-content" tabIndex={-1}>
+                {children}
+              </div>
+              <Footer
+                locale={locale}
+                market={market}
+                contact={(site?.contact ?? {}) as Contact}
+                social={normalizeSocial(site?.social)}
+                legal={(site?.legal ?? {}) as Legal}
+                siteName={siteName}
+                logoMediaId={theme?.logoMediaId}
+              >
+                <PwaControls />
+                <Consent
+                  marketId={market.id}
+                  ids={normalizeSeo(site?.seo).analytics}
+                />
+              </Footer>
+            </StorefrontNavigationFrame>
+          </StorefrontProductProvider>
+        </FittingDockProvider>
       </EngagementProvider>
     </NextIntlClientProvider>
   );

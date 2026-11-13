@@ -32,8 +32,8 @@ for (const locale of ["fa", "tr", "en"] as const)
       );
       const nav = page.getByTestId("mobile-bottom-navigation");
       await expect(nav).toBeVisible();
-      await expect(nav.getByRole("link")).toHaveCount(4);
-      await expect(nav.locator(`a[href="/${locale}"]`)).toHaveAttribute(
+      await expect(nav.getByRole("link")).toHaveCount(6);
+      await expect(nav.getByRole("link").nth(0)).toHaveAttribute(
         "aria-current",
         "page",
       );
@@ -95,14 +95,17 @@ for (const locale of ["fa", "tr", "en"] as const)
           url.searchParams.get("market") ===
             { fa: "IR", tr: "TR", en: "CA" }[locale],
       );
-      await expect(nav.locator(`a[href="/${locale}/search"]`)).toHaveAttribute(
+      await expect(nav.getByRole("link").nth(1)).toHaveAttribute(
         "aria-current",
         "page",
       );
-      await nav.locator(`a[href="/${locale}/cart"]`).click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}/cart$`));
-      await nav.locator(`a[href="/${locale}"]`).click();
-      await expect(page).toHaveURL(new RegExp(`/${locale}$`));
+      await page.locator(".storefront-cart-toggle").click();
+      const cart = page.locator("dialog.moda-cart-drawer");
+      await expect(cart).toBeVisible();
+      await cart.locator('a[href*="/cart"]').click();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/cart\\?market=`));
+      await nav.getByRole("link").nth(0).click();
+      await expect(page).toHaveURL(new RegExp(`/${locale}/m/`));
     });
   }
 test("large text and desktop keep navigation/content reachable", async ({
@@ -119,7 +122,7 @@ test("large text and desktop keep navigation/content reachable", async ({
   await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("/en");
-  await expect(page.getByTestId("mobile-bottom-navigation")).not.toBeVisible();
+  await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

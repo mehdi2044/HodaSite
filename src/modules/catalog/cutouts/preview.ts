@@ -101,6 +101,7 @@ export async function previewCatalogCutout(raw: unknown) {
     models: models.map((m) => ({
       id: m.id,
       kind: m.kind,
+      mediaId: m.mediaId,
       label: catalogText(m.label, input.locale),
       image: cutoutPublicImage(m.image),
       fingerprint: m.fingerprint,

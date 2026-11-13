@@ -6,7 +6,9 @@ import { measureHeroSlide } from "@/modules/content/hero-dom";
 import { layoutHeroSlide } from "@/components/storefront/use-hero-layout-guard";
 
 const sizes = [
+  [360, 800],
   [390, 844],
+  [430, 932],
   [768, 1024],
   [1024, 768],
   [1440, 900],

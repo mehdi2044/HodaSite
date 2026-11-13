@@ -141,6 +141,7 @@ export async function fittingProducts(
     after?: string;
     variantIds?: string[];
     afterProduct?: string;
+    slot?: (typeof import("@/modules/catalog/cutouts/contracts").CUTOUT_SLOTS)[number];
   } = {},
 ) {
   const ownedIds = owned
@@ -189,7 +190,7 @@ export async function fittingProducts(
           deletedAt: null,
           status: "ACTIVE",
           coinPackCoins: null,
-          fittingSlot: { not: null },
+          fittingSlot: page.slot ?? { not: null },
           marketIds: { has: marketId },
           category: { deletedAt: null },
           variants: { some: eligibleVariant },
@@ -259,6 +260,10 @@ export async function fittingProducts(
         variantId: v.id,
         productId: v.productId,
         title: catalogText(v.product.titleI18n, locale),
+        productSlug: catalogText(v.product.slugI18n, locale),
+        marketCode: market.code,
+        colorId: v.colorId,
+        sizeId: v.sizeId,
         color: catalogText(v.color.nameI18n, locale),
         hex: v.color.hex,
         size: v.size.value,

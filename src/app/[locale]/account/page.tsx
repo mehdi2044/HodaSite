@@ -15,6 +15,7 @@ import {
 } from "@/modules/customers/presentation-contract";
 import { catalogText } from "@/modules/catalog";
 import { getRequestContext } from "@/lib/request-context";
+import { storefrontPath } from "@/lib/storefront-path";
 import { AccountProgress } from "@/components/storefront/account-progress";
 import {
   profileAction,
@@ -24,15 +25,24 @@ import {
 export const dynamic = "force-dynamic";
 export default async function AccountPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ market?: string }>;
 }) {
   const { locale } = await params,
     t = await getTranslations("commerce"),
     customer = await currentCustomer();
-  if (!customer || customer.isGuest) redirect(`/${locale}/account/login`);
-  const preferences = readStylePreferences(customer.stylePreferences);
   const { market: requestMarket } = await getRequestContext(locale);
+  if (!customer || customer.isGuest)
+    redirect(
+      storefrontPath(
+        locale,
+        (await searchParams).market ? requestMarket.code : undefined,
+        "account/login",
+      ),
+    );
+  const preferences = readStylePreferences(customer.stylePreferences);
   const [orders, addresses, markets, sizes, categories] = await Promise.all([
     db.order.findMany({
       where: { customerId: customer.id },

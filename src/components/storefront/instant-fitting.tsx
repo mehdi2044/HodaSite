@@ -1,14 +1,27 @@
 "use client";
 import Link from "next/link";
+import { seoPath } from "@/lib/seo-urls";
+import { storefrontLoginPath, storefrontPath } from "@/lib/storefront-path";
+import { useFittingDockProduct } from "./fitting-dock-context";
+import Decimal from "decimal.js";
+import { ResponsiveImage } from "./responsive-image";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
-import { SceneLayerImage } from "./scene-layer";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
+import type { ResponsiveImageMedia } from "./responsive-image";
+import { InstantFittingGallery } from "./instant-fitting-gallery";
+import { ReceiptVariant } from "./receipt-variant";
+import { InstantFittingStage } from "./instant-fitting-stage";
 import {
+  formatCartAmount,
+  formatStorefrontAmount,
+} from "@/modules/catalog/format";
+import {
+  INSTANT_COMPOSITION_CAPACITY,
   instantSelectionSchema,
   instantSnapshotSchema,
 } from "@/modules/fitting/instant-contract";
+import { validCompositionSlots } from "@/modules/catalog/cutouts/contracts";
+import { sameFittingMarket } from "@/modules/fitting/market-context";
 import type { FittingProduct } from "./fitting-room";
 import type { resolveInstantSelection } from "@/modules/fitting/instant";
 import {
@@ -30,6 +43,7 @@ type Saved = {
 export function InstantFitting({
   locale,
   marketId,
+  marketCode,
   currency,
   customerId,
   models,
@@ -37,9 +51,11 @@ export function InstantFitting({
   saved,
   archived,
   primaryHeading = true,
+  paidAvailable = false,
 }: {
   locale: "fa" | "tr" | "en";
   marketId: string;
+  marketCode: string;
   currency: "IRT" | "TRY" | "CAD";
   customerId: string | null;
   models: {
@@ -52,21 +68,19 @@ export function InstantFitting({
   saved: Saved[];
   archived: Saved[];
   primaryHeading?: boolean;
+  paidAvailable?: boolean;
 }) {
   const t = useTranslations("instantFitting"),
     Heading = primaryHeading ? "h1" : "h2";
   const [modelId, setModel] = useState(models[0]?.id ?? ""),
     [catalog, setCatalog] = useState(products),
-    [productCursor, setProductCursor] = useState(
-      products[0]?.nextProductCursor ?? null,
-    ),
     [moreSaved, setMoreSaved] = useState(saved.length === 100),
     [moreArchived, setMoreArchived] = useState(archived.length === 100),
-    [query, setQuery] = useState(""),
-    [onlyReady, setOnlyReady] = useState(true),
     [view, setView] = useState<View | null>(null),
     [localLayers, setLocalLayers] = useState<View["layers"] | null>(null),
     [ids, setIds] = useState<string[]>([]),
+    [dockVariant, setDockVariant] = useState<string>(),
+    [draftReady, setDraftReady] = useState(false),
     [name, setName] = useState(""),
     [message, setMessage] = useState(""),
     [pending, start] = useTransition(),
@@ -76,16 +90,51 @@ export function InstantFitting({
       null,
     ),
     [review, setReview] = useState(false),
-    [confirmed, setConfirmed] = useState(false),
-    [angle, setAngle] = useState(0);
+    [confirmed, setConfirmed] = useState(false);
   const sequence = useRef(0),
-    ready = useRef(false),
     requestKey = useRef(""),
-    root = useRef<HTMLElement>(null),
-    stage = useRef<HTMLDivElement>(null),
-    drag = useRef<number | null>(null);
+    root = useRef<HTMLElement>(null);
+  async function loadCatalog(input: Parameters<typeof loadInstantCatalog>[1]) {
+    const result = await loadInstantCatalog(locale, input);
+    if (!result.ok) return result;
+    if (
+      !sameFittingMarket({ marketId, currency, locale }, result.value.context)
+    )
+      return { ok: false as const, error: "INVALID_SELECTION" };
+    return { ok: true as const, value: result.value.products };
+  }
+  async function preview(input: Parameters<typeof previewInstant>[1]) {
+    const result = await previewInstant(locale, input);
+    if (!result.ok) return result;
+    if (
+      !sameFittingMarket({ marketId, currency, locale }, result.value.context)
+    )
+      return { ok: false as const, error: "INVALID_SELECTION" };
+    return { ok: true as const, value: result.value.selection };
+  }
   const draftKey = `hoda.instant:${marketId}:${customerId ?? "guest"}`;
   const model = models.find((m) => m.id === modelId);
+  const receiptRows = ids.map((id) => ({
+    id,
+    product: catalog.find((item) => item.variantId === id),
+  }));
+  const selectDockProduct = useFittingDockProduct()?.select;
+  const dockProduct =
+    receiptRows.find((row) => row.id === dockVariant)?.product ??
+    receiptRows.at(-1)?.product;
+  const dockHref =
+    dockProduct?.productSlug && dockProduct.marketCode
+      ? seoPath(locale, dockProduct.marketCode, "p", dockProduct.productSlug)
+      : null;
+  useEffect(() => {
+    if (draftReady) selectDockProduct?.(dockHref);
+  }, [dockHref, draftReady, selectDockProduct]);
+  const subtotal = receiptRows.every(({ product }) => product?.amount != null)
+    ? receiptRows.reduce(
+        (sum, { product }) => sum.plus(product!.amount!),
+        new Decimal(0),
+      )
+    : null;
   useEffect(() => {
     if (!view || !ids.length || pending) return;
     let active = true,
@@ -104,8 +153,8 @@ export function InstantFitting({
       const seq = sequence.current;
       try {
         const [next, current] = await Promise.all([
-          previewInstant(locale, { modelId, variantIds: ids }),
-          loadInstantCatalog(locale, { variantIds: ids }),
+          preview({ modelId, variantIds: ids }),
+          loadCatalog({ variantIds: ids }),
         ]);
         if (!active || seq !== sequence.current) return;
         if (current.ok)
@@ -114,11 +163,25 @@ export function InstantFitting({
               ids.includes(item.variantId)
                 ? (current.value.find(
                     (v) => v.variantId === item.variantId,
-                  ) ?? { ...item, amount: null, available: false })
+                  ) ?? {
+                    ...item,
+                    amount: null,
+                    available: false,
+                    placements: [],
+                  })
                 : item,
             ),
           );
         if (!next.ok) {
+          const layers = current.ok
+            ? current.value.flatMap(
+                (item) =>
+                  item.placements?.filter(
+                    (layer) => layer.model.id === modelId,
+                  ) ?? [],
+              )
+            : [];
+          setLocalLayers(validCompositionSlots(layers) ? layers : []);
           setView(null);
           setReview(true);
           setConfirmed(false);
@@ -161,11 +224,47 @@ export function InstantFitting({
   function error(code: string) {
     setMessage(t.has(`error_${code}`) ? t(`error_${code}`) : t("error"));
   }
-  function mergeCatalog(next: FittingProduct[]) {
-    setCatalog((old) => [
-      ...old.filter((v) => !next.some((n) => n.variantId === v.variantId)),
-      ...next,
-    ]);
+  function mergeCatalog(
+    next: FittingProduct[],
+    {
+      refreshedIds = [],
+      replaceVariantPages = false,
+    }: {
+      refreshedIds?: string[];
+      replaceVariantPages?: boolean;
+    } = {},
+  ) {
+    setCatalog((old) => {
+      const merged = new Map(old.map((item) => [item.variantId, item]));
+      const returned = new Set(next.map((item) => item.variantId));
+      const pages = replaceVariantPages
+        ? new Map(next.map((item) => [item.productId, item.nextCursor]))
+        : new Map<string, string | null | undefined>();
+      for (const item of old) {
+        if (returned.has(item.variantId)) continue;
+        if (refreshedIds.includes(item.variantId)) {
+          merged.set(item.variantId, {
+            ...item,
+            amount: null,
+            available: false,
+            placements: [],
+          });
+        } else if (pages.has(item.productId)) {
+          // A new first page replaces cached options. Keep the exact selected
+          // variant while it may still be on a later page.
+          if (!ids.includes(item.variantId)) merged.delete(item.variantId);
+          else if (!pages.get(item.productId))
+            merged.set(item.variantId, {
+              ...item,
+              amount: null,
+              available: false,
+              placements: [],
+            });
+        }
+      }
+      for (const item of next) merged.set(item.variantId, item);
+      return [...merged.values()];
+    });
   }
   async function resolve(
     nextModel: string,
@@ -178,27 +277,32 @@ export function InstantFitting({
     if (!nextIds.length) {
       setIds([]);
       setView(null);
-      setLocalLayers(null);
+      setLocalLayers([]);
       setReview(false);
       return;
     }
-    const result = await previewInstant(locale, {
-      modelId: nextModel,
-      variantIds: nextIds,
-    });
+    const [result, current] = await Promise.all([
+      preview({ modelId: nextModel, variantIds: nextIds }),
+      loadCatalog({ variantIds: nextIds }),
+    ]);
     if (seq !== sequence.current) return;
+    if (current.ok) mergeCatalog(current.value, { refreshedIds: nextIds });
+    setIds(nextIds);
     if (!result.ok) {
-      setLocalLayers(null);
+      const validLayers = current.ok
+        ? current.value.flatMap(
+            (item) =>
+              item.placements?.filter(
+                (layer) => layer.model.id === nextModel,
+              ) ?? [],
+          )
+        : [];
+      setLocalLayers(validCompositionSlots(validLayers) ? validLayers : []);
       setView(null);
-      setIds(nextIds);
       setReview(true);
       error(result.error);
       return;
     }
-    const current = await loadInstantCatalog(locale, { variantIds: nextIds });
-    if (seq !== sequence.current) return;
-    if (current.ok) mergeCatalog(current.value);
-    setIds(nextIds);
     setView(result.value);
     setLocalLayers(null);
     setReview(
@@ -220,21 +324,33 @@ export function InstantFitting({
           models.some((m) => m.id === parsed.data.modelId)
         ) {
           setModel(parsed.data.modelId);
-          start(() => resolve(parsed.data.modelId, parsed.data.variantIds));
+          start(async () => {
+            try {
+              await resolve(parsed.data.modelId, parsed.data.variantIds);
+            } catch {
+              error("REQUEST_UNKNOWN");
+            } finally {
+              setDraftReady(true);
+            }
+          });
+          if (customerId) sessionStorage.removeItem(guestKey);
+          return () => {
+            sequence.current++;
+          };
         }
       }
       if (customerId) sessionStorage.removeItem(guestKey);
     } catch {
       /* Storage is optional; no login or mutation depends on it. */
     }
-    ready.current = true;
+    setDraftReady(true);
     return () => {
       sequence.current++;
     };
     // Component is keyed by verified owner/market/locale on the server.
   }, []);
   useEffect(() => {
-    if (!ready.current) return;
+    if (!draftReady) return;
     try {
       if (ids.length)
         sessionStorage.setItem(
@@ -243,34 +359,17 @@ export function InstantFitting({
         );
       else sessionStorage.removeItem(draftKey);
     } catch {}
-  }, [draftKey, modelId, ids]);
-  useEffect(() => {
-    const reset = () => {
-      setAngle(0);
-      drag.current = null;
-    };
-    const hidden = () => {
-      if (document.hidden) reset();
-    };
-    document.addEventListener("visibilitychange", hidden);
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries[0]?.isIntersecting) reset();
-    });
-    if (stage.current) observer.observe(stage.current);
-    const media = matchMedia("(prefers-reduced-motion: reduce)");
-    media.addEventListener("change", reset);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", hidden);
-      media.removeEventListener("change", reset);
-    };
-  }, []);
-  const grouped = new Map<string, FittingProduct[]>();
-  for (const p of catalog) {
-    const list = grouped.get(p.productId) ?? [];
-    list.push(p);
-    grouped.set(p.productId, list);
+  }, [draftKey, draftReady, modelId, ids]);
+  function remove(variantId: string) {
+    requestKey.current = crypto.randomUUID();
+    start(() =>
+      resolve(
+        modelId,
+        ids.filter((id) => id !== variantId),
+      ),
+    );
   }
+
   async function choose(variantId: string) {
     requestKey.current = crypto.randomUUID();
     // Geometry was validated server-side for this exact public variant/model.
@@ -279,7 +378,7 @@ export function InstantFitting({
       .find((p) => p.variantId === variantId)
       ?.placements?.find((p) => p.model.id === modelId);
     if (!next) {
-      const single = await previewInstant(locale, {
+      const single = await preview({
         modelId,
         variantIds: [variantId],
       });
@@ -297,12 +396,13 @@ export function InstantFitting({
         !(["TOP", "BOTTOM"].includes(next.slot) && v.slot === "ONE_PIECE"),
     );
     const keep = keepLayers.map((v) => v.variantId);
-    if (keep.length >= 4) {
+    if (keep.length >= INSTANT_COMPOSITION_CAPACITY) {
       error("INVALID_COMBINATION");
       return;
     }
     setLocalLayers([...keepLayers, next]);
     setIds([...keep, variantId]);
+    setDockVariant(variantId);
     setView(null);
     start(async () => {
       try {
@@ -312,6 +412,58 @@ export function InstantFitting({
         setView(null);
         setReview(true);
         error("REQUEST_UNKNOWN");
+      }
+    });
+  }
+  async function loadReceiptOptions(productId: string, after?: string) {
+    const result = await loadCatalog({ productId, after });
+    if (!result.ok) throw new Error(result.error);
+    return result.value;
+  }
+  function replaceReceiptVariant(from: string, to: string) {
+    if (pending || !ids.includes(from) || from === to) return;
+    const productId = catalog.find((v) => v.variantId === from)?.productId;
+    if (!productId) return;
+    const nextIds = ids.map((id) => (id === from ? to : id));
+    const seq = ++sequence.current;
+    setMessage("");
+    start(async () => {
+      try {
+        const [selection, current] = await Promise.all([
+          preview({ modelId, variantIds: nextIds }),
+          loadCatalog({ variantIds: nextIds }),
+        ]);
+        if (seq !== sequence.current) return;
+        if (!selection.ok) {
+          error(selection.error);
+          return;
+        }
+        if (!current.ok) {
+          error(current.error);
+          return;
+        }
+        const target = current.value.find((v) => v.variantId === to);
+        if (
+          target?.productId !== productId ||
+          !nextIds.every((id) =>
+            current.value.some(
+              (v) => v.variantId === id && v.available && v.amount !== null,
+            ),
+          )
+        ) {
+          error("INVALID_SELECTION");
+          return;
+        }
+        mergeCatalog(current.value, { refreshedIds: nextIds });
+        requestKey.current = crypto.randomUUID();
+        setIds(nextIds);
+        setDockVariant(to);
+        setView(selection.value);
+        setLocalLayers(null);
+        setConfirmed(false);
+        setReview(false);
+      } catch {
+        if (seq === sequence.current) error("REQUEST_UNKNOWN");
       }
     });
   }
@@ -396,28 +548,36 @@ export function InstantFitting({
   return (
     <section
       ref={root}
-      className="moda-instant"
+      className="moda-instant moda-fr12"
       data-testid="instant-fitting"
       aria-busy={pending}
     >
-      <header>
-        <p className="eyebrow">{t("eyebrow")}</p>
-        <Heading
-          data-moda4-display=""
-          lang="en"
-          dir="ltr"
-          aria-label={t("title")}
-        >
-          {t("displayTitle")}
-        </Heading>
-        <p>{t("help")}</p>
-        <p>{t("free")}</p>
+      <header className="moda-fr-heading">
+        <div>
+          <p className="eyebrow">{t("displayEyebrow")}</p>
+          <Heading
+            data-moda4-display=""
+            lang="en"
+            dir="ltr"
+            aria-label={t("title")}
+          >
+            {t.rich("displayTitle", { em: (chunks) => <em>{chunks}</em> })}
+          </Heading>
+          <p className="moda-fr-subtitle">{t("displaySubtitle")}</p>
+        </div>
+        <div className="moda-fr-modes">
+          <span className="moda-fr-mode" title={t("free")}>
+            <span className="moda-fr-icon moda-fr-hanger" aria-hidden="true" />
+            {t("instantMode")}
+          </span>
+          {paidAvailable && <a href="#fitting-paid">{t("paidMode")}</a>}
+        </div>
       </header>
       {!models.length && <p>{t("noModels")}</p>}
       <ol className="moda-instant-howto">
         {["stepModel", "stepPick", "stepSave"].map((key, index) => (
           <li key={key}>
-            <b>{index + 1}</b>
+            <b>{new Intl.NumberFormat(locale).format(index + 1)}</b>
             {t(key)}
           </li>
         ))}
@@ -434,14 +594,20 @@ export function InstantFitting({
                   aria-pressed={modelId === m.id}
                   data-model-kind={m.kind}
                   onClick={() => {
-                    sequence.current++;
+                    if (m.id === modelId) return;
+                    const compatible = ids.filter((id) =>
+                      catalog
+                        .find((p) => p.variantId === id)
+                        ?.placements?.some((layer) => layer.model.id === m.id),
+                    );
+                    requestKey.current = crypto.randomUUID();
                     setModel(m.id);
-                    setIds([]);
+                    setIds(compatible);
                     setView(null);
                     setLocalLayers(null);
                     setReview(false);
                     setEditing(null);
-                    setAngle(0);
+                    start(() => resolve(m.id, compatible));
                   }}
                 >
                   {m.label[locale]}
@@ -450,179 +616,145 @@ export function InstantFitting({
             </div>
           </fieldset>
 
-          <div
-            ref={stage}
-            data-moda4="tryon-stage"
-            className="moda-instant-stage"
-            tabIndex={0}
-            role="group"
-            aria-label={t("rotateHelp")}
-            onKeyDown={(e) => {
-              if (["ArrowLeft", "ArrowRight", "Home"].includes(e.key)) {
-                e.preventDefault();
-                setAngle(
-                  e.key === "Home"
-                    ? 0
-                    : Math.max(
-                        -25,
-                        Math.min(25, angle + (e.key === "ArrowLeft" ? -5 : 5)),
-                      ),
-                );
-              }
-            }}
-            onPointerDown={(e) => {
-              if (e.pointerType === "mouse" && e.button !== 0) return;
-              drag.current = e.clientX;
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (
-                drag.current === null ||
-                matchMedia("(prefers-reduced-motion: reduce)").matches
-              )
-                return;
-              setAngle(
-                Math.max(-25, Math.min(25, (e.clientX - drag.current) / 5)),
-              );
-            }}
-            onPointerUp={() => {
-              drag.current = null;
-            }}
-            onPointerCancel={() => {
-              drag.current = null;
-              setAngle(0);
-            }}
-            onBlur={() => {
-              drag.current = null;
-              setAngle(0);
-            }}
-          >
-            <div
-              data-moda4="tryon-turntable"
-              className="moda-instant-turn"
-              style={{ transform: `perspective(900px) rotateY(${angle}deg)` }}
-            >
-              {model && (
-                <div
-                  className="moda-instant-mannequin"
-                  data-moda4="tryon-mannequin"
-                >
-                  <ResponsiveImage
-                    media={{ ...model.media, presentation: { fit: "contain" } }}
-                    locale={locale}
-                    role="catalog"
-                    sizes="(min-width:900px) 40vw,90vw"
-                    className="block h-full w-full"
-                    imgClassName="h-full w-full object-contain"
-                  />
-                </div>
-              )}
-              {(
-                localLayers ?? (view?.model.id === modelId ? view.layers : [])
-              ).map((layer) => (
-                <SceneLayerImage
-                  key={layer.variantId}
-                  instant
-                  pieceId={layer.variantId}
-                  layer={layer}
-                  model={model?.media ?? { width: 0, height: 0 }}
-                  locale={locale}
-                  frame={{
-                    mediaId: view?.snapshot.modelMediaId ?? modelId,
-                    fit: "contain",
-                    aspect: "3:4",
-                    focal: { x: 0.5, y: 0.5 },
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-          <p className="muted text-sm">{t("rotateHelp")}</p>
-          <ul className="moda-instant-pieces">
-            {ids.map((id) => {
-              const p = catalog.find((v) => v.variantId === id);
-              return (
-                <li key={id}>
-                  <span>
-                    {p
-                      ? `${p.title} · ${p.color} · ${p.size}`
-                      : t("unavailable")}
-                  </span>
-                  <bdi>
-                    {p?.amount
-                      ? formatStorefrontAmount(p.amount, currency, locale)
-                      : t("unavailable")}
-                  </bdi>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() =>
-                      start(() =>
-                        resolve(
-                          modelId,
-                          ids.filter((v) => v !== id),
-                        ),
-                      )
-                    }
-                  >
-                    {t("remove")}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-          {review && (
-            <div role="alert">
-              <p>{t("review")}</p>
-              {!editing && view && (
-                <>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                    />
-                    {t("confirm")}
-                  </label>
-                  <button
-                    type="button"
-                    disabled={pending || !confirmed}
-                    onClick={() => start(() => resolve(modelId, ids))}
-                  >
-                    {t("reviewCurrent")}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-          <p role="status">{message}</p>
-          <div className="moda-instant-actions">
-            <button
-              className="button"
-              type="button"
-              disabled={
-                pending ||
-                !view ||
-                review ||
-                ids.some(
-                  (id) => !catalog.find((v) => v.variantId === id)?.available,
-                )
-              }
-              onClick={() =>
-                start(async () => {
-                  if (!view) return;
-                  const r = await buyInstant(locale, {
-                    modelId,
-                    variantIds: ids,
-                    fingerprint: view.fingerprint,
+          <InstantFittingStage
+            key={modelId}
+            model={model}
+            layers={
+              localLayers ?? (view?.model.id === modelId ? view.layers : [])
+            }
+            frameMediaId={view?.snapshot.modelMediaId ?? modelId}
+            locale={locale}
+            canClear={!pending && ids.length > 0}
+            animateRemovals={!review && (localLayers !== null || view !== null)}
+            onClear={() => start(() => resolve(modelId, []))}
+          />
+        </div>
+        <div className="moda-instant-catalog">
+          <InstantFittingGallery
+            initial={products}
+            catalog={catalog}
+            locale={locale}
+            currency={currency}
+            modelId={modelId}
+            ids={ids}
+            disabled={pending || !model}
+            load={(input, onSuccess) =>
+              start(async () => {
+                try {
+                  const result = await loadCatalog(input);
+                  if (!result.ok) return error(result.error);
+                  mergeCatalog(result.value, {
+                    replaceVariantPages: !input.after,
                   });
-                  r.ok ? setMessage(t("added")) : error(r.error);
-                })
-              }
-            >
-              {t("addAll")}
-            </button>
-            {customerId ? (
+                  onSuccess(result.value);
+                } catch {
+                  error("REQUEST_UNKNOWN");
+                }
+              })
+            }
+            choose={(id) => void choose(id)}
+            remove={remove}
+          />
+          <section className="moda-fr31-receipt" aria-label={t("receiptTitle")}>
+            <h3>
+              {t("receiptTitle")}{" "}
+              <span>
+                {t("galleryCount", {
+                  count: ids.length,
+                  capacity: INSTANT_COMPOSITION_CAPACITY,
+                })}
+              </span>
+            </h3>
+            {!ids.length && (
+              <p className="moda-fr31-empty">{t("receiptEmpty")}</p>
+            )}
+            <ul className="moda-instant-pieces">
+              {receiptRows.map(({ id, product: p }) => {
+                return (
+                  <li key={p?.productId ?? id} data-receipt-variant={id}>
+                    {p && (
+                      <span className="moda-fr31-thumb">
+                        <ResponsiveImage
+                          media={
+                            p.placements?.find(
+                              (layer) => layer.model.id === modelId,
+                            )?.media ?? {
+                              url: p.url,
+                              width: null,
+                              height: null,
+                              variants: {},
+                              blurDataUrl: null,
+                              altI18n: {},
+                            }
+                          }
+                          locale={locale}
+                          sizes="38px"
+                          imgClassName="moda-fr31-thumb-img"
+                        />
+                      </span>
+                    )}
+                    <span className="moda-fr31-row-copy">
+                      <strong>{p?.title ?? t("unavailable")}</strong>
+                    </span>
+                    <bdi>
+                      {p?.amount
+                        ? formatStorefrontAmount(p.amount, currency, locale)
+                        : t("unavailable")}
+                    </bdi>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => remove(id)}
+                    >
+                      {t("remove")}
+                    </button>
+                    {p && (
+                      <ReceiptVariant
+                        product={p}
+                        modelId={modelId}
+                        disabled={pending || review}
+                        load={loadReceiptOptions}
+                        replace={replaceReceiptVariant}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            {review && (
+              <div role="alert">
+                <p>{t("review")}</p>
+                {!editing && view && (
+                  <>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={confirmed}
+                        onChange={(e) => setConfirmed(e.target.checked)}
+                      />
+                      {t("confirm")}
+                    </label>
+                    <button
+                      type="button"
+                      disabled={pending || !confirmed}
+                      onClick={() => start(() => resolve(modelId, ids))}
+                    >
+                      {t("reviewCurrent")}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            <div className="moda-fr31-total">
+              <span>{t("receiptTotal")}</span>
+              <bdi>
+                {subtotal === null
+                  ? t("unavailable")
+                  : formatCartAmount(subtotal, currency, locale)}
+              </bdi>
+            </div>
+            <p role="status">{message}</p>
+            {customerId && (
               <div className="moda-instant-save">
                 <label>
                   {t("name")}
@@ -633,120 +765,72 @@ export function InstantFitting({
                     onChange={(e) => setName(e.target.value)}
                   />
                 </label>
+              </div>
+            )}
+            <div className="moda-instant-actions">
+              <button
+                className="button"
+                type="button"
+                disabled={
+                  pending ||
+                  !view ||
+                  !ids.length ||
+                  review ||
+                  ids.some(
+                    (id) => !catalog.find((v) => v.variantId === id)?.available,
+                  )
+                }
+                onClick={() =>
+                  start(async () => {
+                    if (!view) return;
+                    const r = await buyInstant(locale, {
+                      modelId,
+                      variantIds: ids,
+                      fingerprint: view.fingerprint,
+                    });
+                    r.ok ? setMessage(t("added")) : error(r.error);
+                  })
+                }
+              >
+                {t("addAll")}
+              </button>
+              <button
+                type="button"
+                className="button moda-fr31-ai"
+                disabled
+                aria-describedby="instant-real-view-note"
+              >
+                {t("realView")}
+              </button>
+              {customerId ? (
                 <button
-                  className="button"
+                  className="button-outline"
                   type="button"
-                  disabled={pending || !view || !name.trim()}
+                  disabled={pending || !view || !ids.length || !name.trim()}
                   onClick={() => start(save)}
                 >
                   {editing ? t("update") : t("save")}
                 </button>
-              </div>
-            ) : (
-              <Link
-                className="button-outline"
-                href={`/${locale}/account/login?next=/${locale}/fitting-room`}
-              >
-                {t("loginSave")}
-              </Link>
-            )}
-          </div>
-        </div>
-        <div className="moda-instant-catalog">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              start(async () => {
-                const r = await loadInstantCatalog(locale, { query });
-                if (r.ok) {
-                  setProductCursor(r.value[0]?.nextProductCursor ?? null);
-                  setCatalog((old) => [
-                    ...old.filter((v) => ids.includes(v.variantId)),
-                    ...r.value.filter((v) => !ids.includes(v.variantId)),
-                  ]);
-                } else error(r.error);
-              });
-            }}
-          >
-            <label>
-              {t("search")}
-              <input
-                className="input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                maxLength={100}
-              />
-            </label>
-            <button className="button" disabled={pending}>
-              {t("search")}
-            </button>
-          </form>
-          <label className="moda-instant-ready">
-            <input
-              type="checkbox"
-              checked={onlyReady}
-              onChange={(e) => setOnlyReady(e.target.checked)}
-            />
-            {t("onlyCompatible")}
-          </label>
-          <div className="moda-instant-grid" data-moda4="tryon-grid">
-            {[...grouped]
-              .filter(
-                ([, variants]) =>
-                  !onlyReady ||
-                  variants.some((v) =>
-                    v.placements?.some((layer) => layer.model.id === modelId),
-                  ),
-              )
-              .map(([productId, variants]) => (
-                <InstantProduct
-                  key={`${productId}:${modelId}`}
-                  variants={variants}
-                  locale={locale}
-                  currency={currency}
-                  disabled={pending || !model}
-                  modelId={modelId}
-                  selectedIds={ids}
-                  choose={(id) => void choose(id)}
-                  more={() =>
-                    start(async () => {
-                      const after = variants.at(-1)?.nextCursor;
-                      if (!after) return;
-                      const r = await loadInstantCatalog(locale, {
-                        productId,
-                        after,
-                      });
-                      r.ok ? mergeCatalog(r.value) : error(r.error);
-                    })
-                  }
-                />
-              ))}
-          </div>
-          {!catalog.length && <p>{t("empty")}</p>}
-          {productCursor && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() =>
-                start(async () => {
-                  const afterProduct = productCursor;
-                  if (!afterProduct) return;
-                  const r = await loadInstantCatalog(locale, {
-                    query,
-                    afterProduct,
-                  });
-                  if (r.ok) {
-                    mergeCatalog(r.value);
-                    setProductCursor(r.value[0]?.nextProductCursor ?? null);
-                  } else error(r.error);
-                })
-              }
-            >
-              {t("moreProducts")}
-            </button>
-          )}
+              ) : (
+                <Link
+                  className="button-outline"
+                  href={storefrontLoginPath(
+                    locale,
+                    marketCode,
+                    storefrontPath(locale, marketCode, "fitting-room"),
+                  )}
+                >
+                  {t("loginSave")}
+                </Link>
+              )}
+            </div>
+            <p id="instant-real-view-note" className="moda-fr31-empty">
+              {t("realViewUnavailable")}
+            </p>
+          </section>
         </div>
       </div>
+      <p className="moda-fr-disclaimer">{t("help")}</p>
       {customerId && (
         <section className="moda-instant-wardrobe">
           <h2>{t("wardrobe")}</h2>
@@ -872,102 +956,5 @@ export function InstantFitting({
         </section>
       )}
     </section>
-  );
-}
-function InstantProduct({
-  variants,
-  locale,
-  currency,
-  disabled,
-  modelId,
-  selectedIds,
-  choose,
-  more,
-}: {
-  variants: FittingProduct[];
-  locale: "fa" | "tr" | "en";
-  currency: "IRT" | "TRY" | "CAD";
-  disabled: boolean;
-  modelId: string;
-  selectedIds: string[];
-  choose: (id: string) => void;
-  more: () => void;
-}) {
-  const t = useTranslations("instantFitting"),
-    [selected, setSelected] = useState(
-      variants.find(
-        (v) => v.available && v.placements?.some((p) => p.model.id === modelId),
-      )?.variantId ?? "",
-    ),
-    p = variants.find((v) => v.variantId === selected) ?? variants[0];
-  const placement = p.placements?.find((layer) => layer.model.id === modelId);
-  return (
-    <article className="moda-instant-product" data-product-id={p.productId}>
-      <button
-        type="button"
-        className="moda-instant-pick"
-        data-moda4={placement ? "tryon-item" : undefined}
-        aria-pressed={selectedIds.includes(p.variantId)}
-        aria-label={t("try")}
-        disabled={disabled || !selected || !p.available || p.amount === null}
-        onClick={() => choose(selected)}
-      >
-        <ResponsiveImage
-          media={
-            placement?.media ?? {
-              url: p.url,
-              width: null,
-              height: null,
-              variants: {},
-              blurDataUrl: null,
-              altI18n: { [locale]: p.title },
-              presentation: { fit: "contain" },
-            }
-          }
-          locale={locale}
-          role="catalog"
-          sizes="120px"
-          className="block w-full h-full"
-          imgClassName="h-full w-full object-contain"
-        />
-      </button>
-      <h3>{p.title}</h3>
-      <bdi>
-        {p.amount
-          ? formatStorefrontAmount(p.amount, currency, locale)
-          : t("unavailable")}
-      </bdi>
-      <details className="moda-instant-variant">
-        <summary>
-          {p.color} · {p.size}
-        </summary>
-        <label>
-          {t("variant")}
-          <select
-            className="input"
-            aria-label={t("variant")}
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-          >
-            <option value="">{t("chooseVariant")}</option>
-            {variants.map((v) => (
-              <option
-                key={v.variantId}
-                value={v.variantId}
-                disabled={!v.available || v.amount === null}
-              >
-                {v.color} · {v.size}
-                {!v.available ? ` · ${t("unavailable")}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        {variants.at(-1)?.nextCursor && (
-          <button type="button" disabled={disabled} onClick={more}>
-            {t("moreVariants")}
-          </button>
-        )}
-      </details>
-    </article>
   );
 }

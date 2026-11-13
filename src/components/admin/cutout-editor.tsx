@@ -12,6 +12,11 @@ import {
   type CutoutGeometry,
   type CutoutPlacement,
 } from "@/modules/catalog/cutouts/contracts";
+import {
+  cutoutClip,
+  cutoutPlacementForView,
+  suggestFittingPlacement,
+} from "@/modules/catalog/cutouts/fitting-rig";
 import { projectCutout } from "@/modules/catalog/cutouts/geometry";
 import type { CutoutPreview } from "@/modules/catalog/cutouts/preview";
 import type { ActionResult } from "@/lib/action-result";
@@ -37,6 +42,7 @@ type Props = {
     archived: boolean;
   } | null;
   initialGeometry: CutoutGeometry;
+  staleModelIds: string[];
   initialImage: (Image & { id: string; fingerprint: string }) | null;
   models: Model[];
   markets: { id: string; code: string; enabledLocales: string[] }[];
@@ -55,6 +61,7 @@ export function CutoutEditor(props: Props) {
   const [modelId, setModel] = useState(
     props.initialGeometry.models[0]?.modelId ?? props.models[0]?.id ?? "",
   );
+  const [angle, setAngle] = useState<"front" | "left" | "right">("front");
   const [marketId, setMarket] = useState(props.markets[0]?.id ?? "");
   const market = props.markets.find((m) => m.id === marketId);
   const [locale, setLocale] = useState<"fa" | "tr" | "en">(
@@ -158,7 +165,7 @@ export function CutoutEditor(props: Props) {
   const snapshotKey = JSON.stringify([
     mediaId,
     view?.imageFingerprint,
-    geometry.models.map((m) => m.modelId),
+    geometry,
     view?.models.map((m) => [m.id, m.fingerprint]),
   ]);
   useEffect(() => {
@@ -192,14 +199,52 @@ export function CutoutEditor(props: Props) {
   };
   const models = view?.models ?? props.models;
   const selected = models.find((m) => m.id === modelId);
-  const placement = geometry.models.find((m) => m.modelId === modelId);
-  const change = (patch: Partial<CutoutPlacement>) =>
+  const modelPlacement = geometry.models.find((m) => m.modelId === modelId);
+  const placement =
+    modelPlacement && cutoutPlacementForView(modelPlacement, angle);
+  const change = (patch: Partial<Omit<CutoutPlacement, "modelId" | "views">>) =>
     setGeometry((old) => ({
       ...old,
-      models: old.models.map((m) =>
-        m.modelId === modelId ? { ...m, ...patch } : m,
-      ),
+      models: old.models.map((m) => {
+        if (m.modelId !== modelId) return m;
+        if (angle === "front") return { ...m, ...patch };
+        const { modelId: _model, views, ...front } = m;
+        return {
+          ...m,
+          views: {
+            ...views,
+            [angle]: { ...(views?.[angle] ?? front), ...patch },
+          },
+        };
+      }),
     }));
+  const suggestionImage =
+    view?.image ??
+    (mediaId === props.initialImage?.id ? props.initialImage : null);
+  const slot = CUTOUT_SLOTS.find((value) => value === props.slot);
+  const suggestion =
+    selected && slot && suggestionImage
+      ? suggestFittingPlacement(
+          {
+            slot,
+            anchor: CUTOUT_ANCHORS.find((value) => value === anchor) ?? null,
+          },
+          {
+            id: selected.id,
+            mediaId: selected.mediaId,
+            width: selected.image.width,
+            height: selected.image.height,
+          },
+          suggestionImage,
+        )
+      : null;
+  function applySuggestion() {
+    if (!suggestion) return;
+    const { modelId: _model, views: _views, ...pose } = suggestion;
+    if (placement) change(pose);
+    else
+      setGeometry((old) => ({ ...old, models: [...old.models, suggestion] }));
+  }
   const navigate = (
     productId: string,
     colorId?: string,
@@ -324,6 +369,47 @@ export function CutoutEditor(props: Props) {
               </select>
             </label>
             <p className="text-muted">{t("modelHelp")}</p>
+            <label>
+              {t("placementView")}
+              <select
+                className="input"
+                value={angle}
+                onChange={(event) =>
+                  setAngle(event.target.value as typeof angle)
+                }
+              >
+                {(["front", "left", "right"] as const).map((view) => (
+                  <option key={view} value={view}>
+                    {t(`placementViews.${view}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {angle !== "front" &&
+              modelPlacement &&
+              !modelPlacement.views?.[angle] && (
+                <p>{t("placementInherited")}</p>
+              )}
+            {selected && props.staleModelIds.includes(selected.id) && (
+              <p role="alert">{t("placementStale")}</p>
+            )}
+            {selected && !placement && (
+              <p role="alert">{t("placementMissing")}</p>
+            )}
+            <div className="grid gap-2">
+              <p className="text-muted">
+                {t(suggestion ? "attachmentHelp" : "attachmentManual")}
+              </p>
+              {suggestion && (
+                <button
+                  type="button"
+                  className="button"
+                  onClick={applySuggestion}
+                >
+                  {t("attachmentSuggest")}
+                </button>
+              )}
+            </div>
             {!placement ? (
               <button
                 type="button"
@@ -370,7 +456,7 @@ export function CutoutEditor(props: Props) {
                         className="input"
                         type="number"
                         value={placement[field]}
-                        step={field === "zIndex" ? 1 : 0.01}
+                        step={field === "zIndex" ? 1 : "any"}
                         min={
                           field === "rotation"
                             ? -180
@@ -400,6 +486,51 @@ export function CutoutEditor(props: Props) {
                     </label>
                   ))}
                 </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(["top", "bottom"] as const).map((edge) => (
+                    <label key={edge}>
+                      {t(`mask.${edge}`)}
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        max={0.49}
+                        step="any"
+                        value={placement.mask?.[edge] ?? 0}
+                        onChange={(event) =>
+                          change({
+                            mask: {
+                              top: 0,
+                              bottom: 0,
+                              ...placement.mask,
+                              [edge]: event.target.valueAsNumber || 0,
+                            },
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+                {angle !== "front" && modelPlacement?.views?.[angle] && (
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={() => {
+                      setGeometry((old) => ({
+                        ...old,
+                        models: old.models.map((item) => {
+                          if (item.modelId !== modelId || !item.views)
+                            return item;
+                          const views = { ...item.views };
+                          delete views[angle];
+                          return { ...item, views };
+                        }),
+                      }));
+                    }}
+                  >
+                    {t("resetPlacementView")}
+                  </button>
+                )}
                 <button
                   type="button"
                   className="button"
@@ -625,6 +756,7 @@ function CutoutCanvas({
                 height: `${point.height * 100}%`,
                 transform: `translate(-50%,-50%) rotate(${point.rotation}deg)`,
                 zIndex: point.zIndex,
+                clipPath: cutoutClip(placement),
               }}
             >
               <ResponsiveImage

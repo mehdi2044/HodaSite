@@ -35,18 +35,6 @@ function rectOf(el: Element | null, base: DOMRect): Rect | null {
 
 export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
   const win = slide.ownerDocument.defaultView!;
-  const hero = slide.closest<HTMLElement>("[data-moda4=hero]");
-  if (hero) {
-    const top = Math.max(0, hero.getBoundingClientRect().top + win.scrollY);
-    const nav = slide.ownerDocument.querySelector(
-      "[data-testid=mobile-bottom-navigation]",
-    );
-    hero.style.setProperty("--m4-page-top", `${top}px`);
-    hero.style.setProperty(
-      "--m4-nav-height",
-      `${nav?.getBoundingClientRect().height ?? 0}px`,
-    );
-  }
   const base = slide.getBoundingClientRect(),
     W = base.width,
     H = base.height;
@@ -72,6 +60,16 @@ export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
       ?.querySelector("[data-moda4=hero-progress]")?.parentElement ?? null,
     base,
   );
+  const dock =
+    win
+      .getComputedStyle(slide)
+      .getPropertyValue("--m4-short-desktop")
+      .trim() === "1"
+      ? rectOf(
+          slide.ownerDocument.querySelector(".storefront-floating-nav"),
+          base,
+        )
+      : null;
   const side = slide.dataset.copySide === "left" ? "left" : "right";
   const away = side === "right" ? "left" : "right";
   let needStrip = stacked || stripRequired;
@@ -91,6 +89,7 @@ export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
       intersects(hit, copy) ||
       intersects(hit, headerRect) ||
       intersects(hit, controls) ||
+      intersects(hit, dock) ||
       placed.some((p) => intersects(hit, p)) ||
       !within(hit, W, H, HERO_GAP.edge) ||
       (stacked && hit.b > copyRaw.t - 12)
@@ -124,6 +123,7 @@ export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
         !intersects(box, copy) &&
         !intersects(box, headerRect) &&
         !intersects(box, controls) &&
+        !intersects(box, dock) &&
         within(box, W, H, HERO_GAP.edge) &&
         !placed.some((p) => intersects(box, p));
       if (ok) {
@@ -163,6 +163,7 @@ export function layoutHeroSlide(slide: HTMLElement, stripRequired = false) {
         clash =
           intersects(grow(f, HERO_GAP.float - HERO_GAP.copy), copy) ||
           intersects(f, controls) ||
+          intersects(f, dock) ||
           !within(f, W, H, HERO_GAP.edge) ||
           placed.some((p) => intersects(f, p));
         if (!clash) break;
@@ -197,6 +198,8 @@ export function useHeroLayoutGuard(
     observer.observe(slide);
     const copy = slide.querySelector("[data-moda4=hero-copy]");
     if (copy) observer.observe(copy);
+    const dock = document.querySelector(".storefront-floating-nav");
+    if (dock) observer.observe(dock);
     document.fonts?.ready.then(run);
     const images = [...slide.querySelectorAll("img")];
     images.forEach((img) => img.addEventListener("load", run));

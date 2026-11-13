@@ -33,7 +33,7 @@ async function openIrMarketEdit(page: Page) {
 // to enabledLocales for a *known* market context.
 async function setMarketCookie(context: BrowserContext, code: string) {
   await context.addCookies([
-    { name: "market", value: code, url: "http://127.0.0.1:3000" },
+    { name: "market", value: code, url: test.info().project.use.baseURL! },
   ]);
 }
 

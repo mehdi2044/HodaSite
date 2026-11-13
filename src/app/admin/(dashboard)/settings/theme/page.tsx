@@ -12,6 +12,7 @@ import {
   safeLineOpacity,
   safeColorMap,
   BUTTON_STYLES,
+  safeFloatingNavigation,
 } from "@/lib/theme-validation";
 
 export default async function Theme() {
@@ -24,6 +25,7 @@ export default async function Theme() {
   const fonts = normalizeThemeFonts(theme?.fonts);
 
   const initial: ThemeDraft = {
+    floatingNavigationEnabled: safeFloatingNavigation(theme?.colors),
     light: safeColorMap(colors.light, DEFAULT_LIGHT_COLORS),
     dark: safeColorMap(colors.dark, DEFAULT_DARK_COLORS),
     radius: theme?.radius ?? "12px",

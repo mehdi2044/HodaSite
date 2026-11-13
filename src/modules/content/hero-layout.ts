@@ -10,9 +10,11 @@
  * so what the admin previews, what the customer sees and what the tests
  * measure are one computation.
  */
+import type { HeroFraming } from "./hero-framing";
 export type HeroCopySide = "left" | "right";
 export type HeroLayout = {
   copySide: HeroCopySide;
+  framing?: HeroFraming;
   /** Horizontal extent of the person in the DESKTOP image, 0..1 of its width. */
   subject: { x0: number; x1: number };
 };
@@ -48,7 +50,11 @@ export function normalizeHeroLayout(slide: {
     s && s.x1 > s.x0 && s.x0 >= 0 && s.x1 <= 1
       ? { x0: s.x0, x1: s.x1 }
       : fallback;
-  return { copySide, subject };
+  return {
+    copySide,
+    subject,
+    ...(slide.layout?.framing ? { framing: slide.layout.framing } : {}),
+  };
 }
 
 /** Desktop object-position x that keeps the subject on its own half. */

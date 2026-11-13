@@ -1,4 +1,6 @@
 import { z } from "zod";
+export const INSTANT_COMPOSITION_CAPACITY = 4;
+
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/);
 export const instantSelectionSchema = z
   .object({
@@ -6,7 +8,7 @@ export const instantSelectionSchema = z
     variantIds: z
       .array(id)
       .min(1)
-      .max(4)
+      .max(INSTANT_COMPOSITION_CAPACITY)
       .refine((v) => new Set(v).size === v.length),
   })
   .strict();
@@ -46,7 +48,7 @@ export const instantSnapshotSchema = instantSelectionSchema
           .strict(),
       )
       .min(1)
-      .max(4),
+      .max(INSTANT_COMPOSITION_CAPACITY),
     modelMediaId: id,
   })
   .strict();

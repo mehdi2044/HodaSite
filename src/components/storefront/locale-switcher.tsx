@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { parseSeoPath, seoPath } from "@/lib/seo-urls";
+import { isMarketContextPath, marketCodePattern } from "@/lib/storefront-path";
+import { customerReturnPath } from "@/lib/customer-return-path";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const LABELS: Record<string, string> = {
@@ -35,38 +37,42 @@ export function LocaleSwitcher({
     path: string;
     links: Record<string, string>;
   }>({ path: "", links: {} });
-  const [search, setSearch] = useState("");
+  const query = new URLSearchParams(queryString);
+  const market = query.get("market");
+  const keep = new URLSearchParams();
+  // Catalog filters and the validated market are available before hydration.
+  // Sensitive query parameters must not travel through language links.
+  if (rest === "search") {
+    for (const key of [
+      "q",
+      "collectionId",
+      "categoryId",
+      "colorId",
+      "sizeId",
+      "brandId",
+      "material",
+      "available",
+      "after",
+      "sort",
+      "page",
+      "minPrice",
+      "maxPrice",
+    ])
+      for (const value of query.getAll(key)) keep.append(key, value);
+  }
+  if (
+    market &&
+    marketCodePattern.test(market) &&
+    isMarketContextPath(pathname)
+  ) {
+    keep.set("market", market);
+  }
+  if (/\/p\/[^/]+\/?$/.test(pathname)) {
+    const color = query.get("color");
+    if (color && /^[A-Za-z0-9_-]{1,100}$/.test(color)) keep.set("color", color);
+  }
   const localesKey = enabledLocales.join(",");
   useEffect(() => {
-    // Preserve catalog filters, never authentication/unsubscribe query tokens.
-    if (/^\/(fa|tr|en)\/search\/?$/.test(pathname)) {
-      const query = new URLSearchParams(queryString);
-      const kept = new URLSearchParams();
-      for (const key of [
-        "q",
-        "collectionId",
-        "categoryId",
-        "colorId",
-        "sizeId",
-        "brandId",
-        "material",
-        "available",
-        "after",
-        "sort",
-        "page",
-        "minPrice",
-        "maxPrice",
-      ])
-        for (const value of query.getAll(key)) kept.append(key, value);
-      setSearch(kept.size ? `?${kept}` : "");
-    } else if (/\/(?:p)\/[^/]+\/?$/.test(pathname)) {
-      const color = new URLSearchParams(queryString).get("color");
-      setSearch(
-        color && /^[A-Za-z0-9_-]{1,100}$/.test(color)
-          ? `?${new URLSearchParams({ color })}`
-          : "",
-      );
-    } else setSearch("");
     if (!entityPath) return;
     const controller = new AbortController();
     void Promise.all(
@@ -89,8 +95,25 @@ export function LocaleSwitcher({
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [pathname, entityPath, localesKey, queryString]);
+  }, [pathname, entityPath, localesKey]);
   const href = (locale: string) => {
+    const params = new URLSearchParams(keep);
+    const next = query.get("next");
+    if (rest === "account/login" && next && /^(fa|tr|en)$/.test(locale)) {
+      const localNext =
+        /^\/(fa|tr|en)\/(?:checkout|fitting-room|account)(?:[/?]|$)/.test(next)
+          ? next.replace(/^\/(fa|tr|en)/, `/${locale}`)
+          : next;
+      params.set(
+        "next",
+        customerReturnPath(
+          localNext,
+          locale as "fa" | "tr" | "en",
+          params.get("market") ?? undefined,
+        ),
+      );
+    }
+    const search = params.size ? `?${params}` : "";
     if (locale === current) return pathname + search;
     if (entityPath)
       return (

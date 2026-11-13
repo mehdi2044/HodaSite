@@ -7,7 +7,17 @@ import {
   CUTOUT_ANCHORS,
 } from "./contracts";
 import { imageFingerprint, storeCutoutModels } from "./models";
-import type { Media, Prisma } from "@prisma/client";
+import { instantPlacement } from "./fitting-rig";
+import type { CatalogCutout, Media, Prisma, Product } from "@prisma/client";
+
+type CutoutVariant = {
+  id: string;
+  productId: string;
+  colorId: string;
+  product: Pick<Product, "fittingSlot">;
+};
+type CutoutProfile = CatalogCutout & { media: Media };
+type CutoutModel = Awaited<ReturnType<typeof storeCutoutModels>>[number];
 export function cutoutPublicImage(media: Media) {
   return {
     url: media.url,
@@ -50,8 +60,15 @@ async function readCurrentCatalogCutout(
     },
     include: { media: true },
   });
+  return validatedCutout(variant, choices);
+}
+
+function validatedCutout<T extends CutoutVariant>(
+  variant: T,
+  choices: CutoutProfile[],
+) {
   const row =
-    choices.find((profile) => profile.variantId === variantId) ??
+    choices.find((profile) => profile.variantId === variant.id) ??
     choices.find((profile) => profile.variantId === null);
   if (!row) return null;
   const geometry = cutoutGeometrySchema.safeParse(row.geometry),
@@ -103,17 +120,55 @@ export async function resolveCutoutPlacement(
   marketId: string,
   modelId: string,
   client: Prisma.TransactionClient = db,
+  instant = false,
 ) {
   const current = await currentCatalogCutout(variantId, marketId, client);
   if (!current) return null;
   const model = (await storeCutoutModels(client)).find(
     (choice) => choice.id === modelId,
   );
-  return placementFor(current, model);
+  return placementFor(current, model, instant);
 }
+
+/** Resolve profiles together for variants already checked in the scene's market. */
+export async function resolveCutoutPlacements(
+  variants: CutoutVariant[],
+  model: CutoutModel,
+  client: Prisma.TransactionClient,
+) {
+  if (!variants.length)
+    return new Map<string, ReturnType<typeof placementFor>>();
+  const profiles = await client.catalogCutout.findMany({
+    where: {
+      productId: {
+        in: [...new Set(variants.map(({ productId }) => productId))],
+      },
+      colorId: { in: [...new Set(variants.map(({ colorId }) => colorId))] },
+      deletedAt: null,
+      OR: [
+        { variantId: { in: variants.map(({ id }) => id) } },
+        { variantId: null },
+      ],
+    },
+    include: { media: true },
+  });
+  return new Map(
+    variants.map((variant) => {
+      const choices = profiles.filter(
+        (profile) =>
+          profile.productId === variant.productId &&
+          profile.colorId === variant.colorId,
+      );
+      const current = validatedCutout(variant, choices);
+      return [variant.id, current ? placementFor(current, model) : null];
+    }),
+  );
+}
+
 function placementFor(
-  current: NonNullable<Awaited<ReturnType<typeof currentCatalogCutout>>>,
-  model: Awaited<ReturnType<typeof storeCutoutModels>>[number] | undefined,
+  current: NonNullable<ReturnType<typeof validatedCutout>>,
+  model: CutoutModel | undefined,
+  instant = false,
 ) {
   const modelId = model?.id;
   const placement = current.geometry.models.find(
@@ -138,7 +193,14 @@ function placementFor(
     slot: current.row.slot as (typeof CUTOUT_SLOTS)[number],
     anchor: current.row.anchor as (typeof CUTOUT_ANCHORS)[number] | null,
     media: cutoutPublicImage(current.row.media),
-    geometry: placement,
+    geometry: instant
+      ? instantPlacement(placement, current.row, {
+          id: model.id,
+          mediaId: model.mediaId,
+          width: model.image.width,
+          height: model.image.height,
+        })
+      : placement,
     model: {
       id: model.id,
       kind: model.kind,
@@ -158,7 +220,7 @@ export async function publicCutoutPlacements(
   const current = await currentCatalogCutout(variantId, marketId);
   if (!current) return [];
   return (await storeCutoutModels()).flatMap((model) => {
-    const layer = placementFor(current, model);
+    const layer = placementFor(current, model, true);
     return layer ? [layer] : [];
   });
 }

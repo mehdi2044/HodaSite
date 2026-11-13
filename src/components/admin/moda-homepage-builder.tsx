@@ -597,6 +597,20 @@ export function ModaHomepageBuilder(props: {
               >
                 {props.labels.desktop}
               </button>
+              <label>
+                {a("heroFramePreviewWidth")}
+                <select
+                  className="input"
+                  value={width}
+                  onChange={(event) => setWidth(Number(event.target.value))}
+                >
+                  {[360, 390, 430, 768, 1024, 1440].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             {blocks.some((block) => block.type === "HeroSlider") && (
               <HeroLayoutAudit

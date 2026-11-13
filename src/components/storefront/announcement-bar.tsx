@@ -2,6 +2,7 @@ import { currentServicePolicy } from "@/modules/content/service-policy";
 import { ServicePolicySummary } from "./service-policy";
 import type { Market } from "@/lib/request-context";
 import { isSafeLink } from "@/modules/content";
+import { storefrontMenuHref } from "@/lib/storefront-path";
 import { LocaleSwitcher } from "./locale-switcher";
 import { MarketSwitcher } from "./market-switcher";
 import { getTranslations } from "next-intl/server";
@@ -22,6 +23,10 @@ export async function AnnouncementBar({
   };
   const policy = await currentServicePolicy(market.id);
   const text = bar.text?.[locale];
+  const href =
+    bar.link && isSafeLink(bar.link)
+      ? storefrontMenuHref(bar.link, locale, market.code)
+      : undefined;
   const t = await getTranslations();
 
   return (
@@ -37,9 +42,9 @@ export async function AnnouncementBar({
         ) : (
           bar.enabled &&
           text &&
-          (bar.link && isSafeLink(bar.link) ? (
+          (href ? (
             <a
-              href={bar.link}
+              href={href}
               className="inline-flex min-h-11 items-center underline-offset-2 hover:underline"
             >
               {text}

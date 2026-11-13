@@ -1,3 +1,4 @@
+import { instantPlacement } from "@/modules/catalog/cutouts/fitting-rig";
 import { notFound, redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { auth } from "@/modules/auth";
@@ -8,7 +9,10 @@ import {
   storeCutoutModels,
   imageFingerprint,
 } from "@/modules/catalog/cutouts/models";
-import { cutoutGeometrySchema } from "@/modules/catalog/cutouts/contracts";
+import {
+  cutoutGeometrySchema,
+  cutoutValidationSchema,
+} from "@/modules/catalog/cutouts/contracts";
 import { cutoutPublicImage } from "@/modules/catalog/cutouts/resolve";
 import { CutoutEditor } from "@/components/admin/cutout-editor";
 import { saveCutoutAction, archiveCutoutAction } from "./actions";
@@ -88,6 +92,25 @@ export default async function CutoutsAdmin({
     ? await db.media.findUnique({ where: { id: row.mediaId } })
     : null;
   const geometry = cutoutGeometrySchema.safeParse(row?.geometry);
+  const approved = cutoutValidationSchema.safeParse(row?.validation);
+  const staleModelIds = geometry.success
+    ? geometry.data.models
+        .filter(
+          (p) =>
+            !approved.success ||
+            !media ||
+            approved.data.imageFingerprint !== imageFingerprint(media) ||
+            !approved.data.models.some(
+              (ref) =>
+                ref.modelId === p.modelId &&
+                models.some(
+                  (m) =>
+                    m.id === ref.modelId && m.fingerprint === ref.fingerprint,
+                ),
+            ),
+        )
+        .map((p) => p.modelId)
+    : [];
   const markets = await db.market.findMany({
     where: { id: { in: product.marketIds }, isActive: true },
     orderBy: { code: "asc" },
@@ -114,6 +137,7 @@ export default async function CutoutsAdmin({
         <button className="button">{t("search")}</button>
       </form>
       <CutoutEditor
+        staleModelIds={staleModelIds}
         productId={product.id}
         colorId={colorId}
         variantId={query.variant ?? null}
@@ -140,7 +164,24 @@ export default async function CutoutsAdmin({
             : null
         }
         initialGeometry={
-          geometry.success ? geometry.data : { version: 1, models: [] }
+          geometry.success && row
+            ? {
+                ...geometry.data,
+                models: geometry.data.models.map((placement) => {
+                  const model = models.find(
+                    (item) => item.id === placement.modelId,
+                  );
+                  return model
+                    ? instantPlacement(placement, row, {
+                        id: model.id,
+                        mediaId: model.mediaId,
+                        width: model.image.width,
+                        height: model.image.height,
+                      })
+                    : placement;
+                }),
+              }
+            : { version: 1, models: [] }
         }
         initialImage={
           media
@@ -154,6 +195,7 @@ export default async function CutoutsAdmin({
         models={models.map((m) => ({
           id: m.id,
           kind: m.kind,
+          mediaId: m.mediaId,
           label: name(m.label),
           image: cutoutPublicImage(m.image),
           fingerprint: m.fingerprint,

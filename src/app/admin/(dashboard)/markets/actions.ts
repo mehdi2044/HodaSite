@@ -59,7 +59,19 @@ export async function saveMarket(
         salesPaused: parsed.salesPaused === "on",
         defaultLocale: parsed.defaultLocale,
         enabledLocales: parsed.enabledLocales,
-        supportChannels,
+        supportChannels: {
+          ...(current.supportChannels as Record<string, string>),
+          ...supportChannels,
+          ...(parsed.addressFa !== undefined && {
+            addressFa: parsed.addressFa,
+          }),
+          ...(parsed.addressTr !== undefined && {
+            addressTr: parsed.addressTr,
+          }),
+          ...(parsed.addressEn !== undefined && {
+            addressEn: parsed.addressEn,
+          }),
+        },
         announcementBar,
         seo,
       };

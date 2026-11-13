@@ -26,11 +26,23 @@ for (const locale of ["fa", "tr", "en"] as const) {
     const add = page.locator(".shop-add-button");
     await expect(add).toBeVisible();
     await expect(add).toBeEnabled();
+    // The approved purchase panel is in document flow. Verify it remains
+    // reachable and unobscured by the shared dock after a customer scrolls.
+    await add.scrollIntoViewIfNeeded();
+    await expect(add).toBeInViewport({ ratio: 1 });
     const box = await add.boundingBox(),
       nav = await page.getByTestId("mobile-bottom-navigation").boundingBox();
     expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
+    expect(
+      await add.evaluate((button) => {
+        const r = button.getBoundingClientRect();
+        return button.contains(
+          document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2),
+        );
+      }),
+    ).toBe(true);
     await shoppingProof(page, info, `${locale}-webkit-product`);
     await page.locator(".shop-gallery-slide").first().click();
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();
@@ -43,11 +55,17 @@ for (const locale of ["fa", "tr", "en"] as const) {
     ).toBeVisible();
     // Follow the app navigation immediately after success, as a customer does.
     // A forced document goto races Next's in-flight refresh in WebKit.
+    const market = { fa: "IR", tr: "TR", en: "CA" }[locale];
+    await page.locator(".storefront-cart-toggle").click();
     await page
-      .getByTestId("mobile-bottom-navigation")
-      .locator(`a[href="/${locale}/cart"]`)
+      .locator("dialog.moda-cart-drawer")
+      .locator(`a[href="/${locale}/cart?market=${market}"]`)
       .click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/cart$`));
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === `/${locale}/cart` &&
+        url.searchParams.get("market") === market,
+    );
     await expect(
       page.locator('main input[type="number"][name="quantity"]'),
     ).toHaveValue("1");

@@ -140,6 +140,20 @@ export default async function EditMarket({
             />
           </label>
 
+          {(["fa", "tr", "en"] as const).map((locale) => {
+            const name = `address${locale[0].toUpperCase()}${locale.slice(1)}`;
+            return (
+              <label className="grid gap-1" key={name}>
+                {legacy("addressLocale", { locale })}
+                <Input
+                  name={name}
+                  maxLength={500}
+                  defaultValue={supportChannels[name]}
+                />
+              </label>
+            );
+          })}
+
           <CardTitle className="mt-2"> {legacy("announcement")} </CardTitle>
           <label className="flex items-center gap-2">
             <input

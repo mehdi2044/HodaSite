@@ -124,3 +124,16 @@ export function normalizeThemeColors(raw: unknown): ThemeColorsShape {
   // Legacy flat palette — the whole object IS the light palette.
   return { light: c as Record<string, string>, dark: {} };
 }
+
+/** Optional presentation metadata in the existing theme JSON (D31). */
+export function safeFloatingNavigation(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object") return true;
+  const navigation = (raw as Record<string, unknown>).navigation;
+  if (!navigation || typeof navigation !== "object") return true;
+  return (
+    z
+      .boolean()
+      .safeParse((navigation as Record<string, unknown>).floatingEnabled)
+      .data ?? true
+  );
+}

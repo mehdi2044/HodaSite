@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { localizedTextSchema } from "./validation";
 import { shoppableSceneSchema, sceneImageSchema } from "./scenes/contracts";
+import { heroFramingSchema } from "./hero-framing";
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 export const contentTargetSchema = z
   .object({
@@ -47,6 +48,7 @@ export const modaHeroSlideSchema = z
     layout: z
       .object({
         copySide: z.enum(["left", "right"]),
+        framing: heroFramingSchema.optional(),
         subject: z
           .object({
             x0: z.number().min(0).max(1),
@@ -59,7 +61,7 @@ export const modaHeroSlideSchema = z
       })
       .strict()
       .optional(),
-    /** M4-01: optional decorative cutout beside the person (desktop ≥1280 only). Price from catalog. */
+    /** M4-01: optional decorative cutout beside the person (desktop â‰¥1280 only). Price from catalog. */
     float: z.object({ productId: id, colorId: id }).strict().optional(),
     ctaLabel: localizedTextSchema,
     target: contentTargetSchema,
@@ -119,6 +121,9 @@ export const moda4BlockSchemas = [
     .object({
       ...base,
       type: z.literal("FittingAd"),
+      autoplay: z.boolean().optional(),
+      motion: z.boolean().optional(),
+      subtitle: localizedTextSchema.optional(),
       title: localizedTextSchema,
       body: localizedTextSchema,
       looks: z
@@ -153,6 +158,10 @@ export const moda4BlockSchemas = [
       type: z.literal("KidsWorld"),
       title: localizedTextSchema,
       body: localizedTextSchema,
+      eyebrow: localizedTextSchema.optional(),
+      subtitle: localizedTextSchema.optional(),
+      secondaryLabel: localizedTextSchema.optional(),
+      secondaryTarget: contentTargetSchema.optional(),
       source: modaSourceSchema,
       tone: z
         .enum([

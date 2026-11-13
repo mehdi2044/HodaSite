@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { storefrontPath } from "@/lib/storefront-path";
 import { CommerceForm } from "./commerce-form";
 import { updateCartAction } from "@/app/[locale]/commerce-actions";
 import { useEffect, useRef, useTransition } from "react";
@@ -10,6 +11,7 @@ import { StorefrontIcon } from "./storefront-icon";
 import { Iso } from "./iso";
 export function CartDrawer({
   locale,
+  marketCode,
   items,
   currency,
   subtotal,
@@ -18,6 +20,7 @@ export function CartDrawer({
   quoteUnavailable = false,
 }: {
   locale: string;
+  marketCode?: string;
   items: {
     id?: string;
     variantId?: string;
@@ -187,7 +190,7 @@ export function CartDrawer({
         )}
         <Link
           className="button"
-          href={`/${locale}/cart`}
+          href={storefrontPath(locale, marketCode, "cart")}
           onClick={() => dialog.current?.close()}
         >
           {t("viewCart")}
