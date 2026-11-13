@@ -99,9 +99,9 @@ for (const [locale, market, copy] of markets) {
       await search.locator('input[name="q"]').fill(title);
       await search.locator("button").click();
       const firstProduct = page
-        .locator(".shop-product-link")
-        .filter({ hasText: title })
-        .first();
+        .getByRole("heading", { name: title, exact: true })
+        .first()
+        .getByRole("link");
       await expect(firstProduct).toBeVisible();
       await firstProduct.click();
       await expect(page).toHaveURL(/\/p\//);
