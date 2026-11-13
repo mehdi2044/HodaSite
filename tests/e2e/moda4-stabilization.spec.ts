@@ -1,10 +1,17 @@
 import { expect, test, type Locator } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
+
+const copy = { fa, tr, en };
 
 const locales = ["fa", "tr", "en"] as const;
 const markets = ["IR", "TR", "CA"] as const;
-const configuredLocales: Record<(typeof markets)[number], readonly string[]> = {
+const configuredLocales: Record<
+  (typeof markets)[number],
+  readonly (typeof locales)[number][]
+> = {
   IR: ["fa"],
   TR: ["tr", "en"],
   CA: ["en", "fa", "tr"],
@@ -36,11 +43,20 @@ for (const requestedLocale of locales) {
         `/${locale}/fitting-room?market=${market}`,
       );
       await fitting.click();
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === `/${locale}/fitting-room` &&
+          url.searchParams.get("market") === market,
+      );
       await expect(select).toHaveValue(market);
       const dock = page.getByTestId("mobile-bottom-navigation");
-      const loginHref = await dock
-        .locator('a[href*="account/login"]')
-        .getAttribute("href");
+      // Next can retain the previous locale tree while the visible dock swaps.
+      const loginLink = dock.getByRole("link", {
+        name: copy[locale].instantFitting.dockLogin,
+        exact: true,
+      });
+      await expect(loginLink).toHaveCount(1);
+      const loginHref = await loginLink.getAttribute("href");
       const login = new URL(loginHref!, page.url());
       expect(login.searchParams.get("market")).toBe(market);
       expect(login.searchParams.get("next")).toBe(
@@ -164,7 +180,9 @@ test("short mobile product keeps its price and purchase button separately visibl
   await expect(
     page
       .locator(".moda-cart-drawer article")
-      .filter({ has: page.locator(`input[name="variantId"][value="${variant}"]`) }),
+      .filter({
+        has: page.locator(`input[name="variantId"][value="${variant}"]`),
+      }),
   ).toHaveCount(1);
 });
 
