@@ -1,3 +1,9 @@
+## Canonical market links in Docker (D64)
+
+- Preserve the Next.js listener origin for internal storefront rewrites when Auth.js sets a different public origin. Direct canonical links keep their language and market even when the browser has a cookie for another market.
+- To reproduce, open the Persian Iran storefront and then enter the Turkish or English canonical home URL in the same browser. Check that the URL and rendered locale remain Turkish or English and that the market cookie updates. Test the reverse switch to Persian as well.
+- No schema migration is required for the routing change. Rehearse any upgrade of a legacy PostgreSQL database on a restored copy before enabling its ops worker.
+
 ## MODA4 M4-02 — cinematic fitting ad (local review)
 
 - PR87 CI follow-up: browser tests use a newly migrated and seeded database separate from coverage fixtures, including FR3. OTP completion redirects from the server after authentication so a cookie refresh cannot discard the form's return navigation. Cart display assertions use currency rounding while the checkout quote and order snapshot retain four-decimal precision. See the PR for current-head browser and D70 status.
