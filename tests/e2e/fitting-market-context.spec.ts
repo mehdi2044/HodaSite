@@ -13,6 +13,24 @@ const messages = { fa, tr, en };
 type Locale = keyof typeof messages;
 test.afterAll(() => db.$disconnect());
 
+async function hoodiePrice(page: Page, locale: Locale, market: string) {
+  const product = await db.product.findUniqueOrThrow({
+    where: { id: productId },
+  });
+  const slug = (product.slugI18n as Record<string, string>)[locale];
+  await page.goto(
+    `/${locale}/m/${market}/p/${encodeURIComponent(slug)}?color=seed-color-rust`,
+  );
+  await expect(
+    page.locator('.shop-product-submit input[name="variantId"]'),
+  ).toHaveValue(variantId);
+  const price = (
+    await page.locator(".moda-mobile-buy-price bdi").innerText()
+  ).trim();
+  expect(price).not.toBe("");
+  return price;
+}
+
 async function cookie(page: Page, market: string) {
   await page
     .context()
@@ -164,8 +182,13 @@ test("two tabs, a delayed response, and country/language switches preserve their
 }) => {
   test.setTimeout(240000);
   await page.setViewportSize({ width: 1440, height: 900 });
+  // Other integration fixtures can change FX rates. Compare the exact same
+  // live variant against its PDP in each locale/market, not a historic rate.
+  const englishTR = await hoodiePrice(page, "en", "TR");
+  const expectedTR = await hoodiePrice(page, "tr", "TR");
   await page.goto("/tr/fitting-room?market=TR");
   const other = await context.newPage();
+  const expectedCA = await hoodiePrice(other, "en", "CA");
   await other.goto("/en/fitting-room?market=CA");
   await cookie(page, "IR");
   let delayed = false;
@@ -181,8 +204,8 @@ test("two tabs, a delayed response, and country/language switches preserve their
     choose(page, "tr"),
     choose(other, "en"),
   ]);
-  // The seeded hoodie is USD 32 at the seeded TRY/USD rate of 40.
-  await expect(cardTR.locator(":scope > bdi")).toHaveText("₺1.280,00");
+  await expect(cardTR.locator(":scope > bdi")).toHaveText(expectedTR);
+  await expect(cardCA.locator(":scope > bdi")).toHaveText(expectedCA);
   await expect(cardCA.locator(":scope > bdi")).not.toContainText("₺");
   await expect(cardCA.locator(":scope > bdi")).toContainText("CA$");
   expect(delayed).toBe(true);
@@ -190,7 +213,7 @@ test("two tabs, a delayed response, and country/language switches preserve their
   await page.locator('a[aria-label="English"]:visible').first().click();
   await expect(page).toHaveURL(/\/en\/fitting-room\?market=TR$/);
   await expect((await choose(page, "en")).locator(":scope > bdi")).toHaveText(
-    "₺1,280.00",
+    englishTR,
   );
   await Promise.all([
     page.waitForURL(/\/en\/fitting-room\?market=CA$/, { waitUntil: "load" }),
@@ -209,6 +232,8 @@ test("two tabs, a delayed response, and country/language switches preserve their
 test("rejects a catalog response whose currency does not match the page", async ({
   page,
 }) => {
+  const expectedTR = await hoodiePrice(page, "tr", "TR");
+  expect(expectedTR).toMatch(/^₺/);
   await page.goto("/tr/fitting-room?market=TR");
   await page
     .getByTestId("instant-fitting")
@@ -230,7 +255,7 @@ test("rejects a catalog response whose currency does not match the page", async 
   });
   const card = await search(page, "tr");
   expect(injected).toBe(true);
-  await expect(card.locator(":scope > bdi")).toHaveText("₺1.280,00");
+  await expect(card.locator(":scope > bdi")).toHaveText(expectedTR);
   await expect(page.getByTestId("instant-fitting")).not.toContainText(
     "1.920.000",
   );
