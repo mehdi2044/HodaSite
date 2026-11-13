@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 import { fillAdminMfa } from "./helpers/admin-mfa";
 import en from "../../messages/en.json";
 import fa from "../../messages/fa.json";
@@ -9,6 +10,8 @@ const markets = [
   ["tr", "TR", tr],
   ["en", "CA", en],
 ] as const;
+const db = new PrismaClient();
+test.afterAll(() => db.$disconnect());
 test.use({ hasTouch: true });
 for (const [locale, market, copy] of markets) {
   for (const width of [360, 390, 430, 768, 1440]) {
@@ -75,6 +78,7 @@ for (const [locale, market, copy] of markets) {
         "page",
       );
       await dock.getByRole("link").nth(0).click();
+      await expect(page).toHaveURL(home);
       const catalog = dock.getByRole("link", {
         name: copy.instantFitting.dockProduct,
         exact: true,
@@ -88,24 +92,40 @@ for (const [locale, market, copy] of markets) {
         new RegExp(`/${locale}/search\\?market=${market}`),
       );
       await expect(dock).toBeVisible();
-      // Integration fixtures can precede demo products and have only an
-      // English slug. Exercise a known public product in all three locales.
-      const title = { fa: "بافت نارون", tr: "Narvan triko", en: "Narvan knit" }[
-        locale
-      ];
-      const search = page
-        .locator("main form")
-        .filter({ has: page.locator('input[name="q"]') });
-      await search.locator('input[name="q"]').fill(title);
-      await search.locator("button").click();
-      const firstProduct = page
-        .locator(".shop-product-link")
-        .filter({ hasText: title })
-        .first();
-      await expect(firstProduct).toBeVisible();
-      await firstProduct.click();
-      await expect(page).toHaveURL(/\/p\//);
-      const pdpPath = new URL(page.url()).pathname;
+      const demo = await db.product.findUniqueOrThrow({
+        where: { id: "seed-moda4-style-women-knit" },
+      });
+      const title = (demo.titleI18n as Record<string, string>)[locale];
+      const slug = (demo.slugI18n as Record<string, string>)[locale];
+      const search = page.locator("main form").filter({
+        has: page.locator('input[name="q"]'),
+      });
+      const searchInput = search.locator('input[name="q"]');
+      await searchInput.fill(title);
+      await searchInput.press("Enter");
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === `/${locale}/search` &&
+          url.searchParams.get("market") === market &&
+          url.searchParams.get("q") === title,
+      );
+      const pdpPath = `/${locale}/m/${market}/p/${encodeURIComponent(slug)}`;
+      const seededProduct = page
+        .getByRole("link", { name: title, exact: true })
+        .and(
+          page.locator(
+            'main .shop-product-card h3 a[href="' +
+              pdpPath +
+              '"], main .shop-product-card h3 a[href^="' +
+              pdpPath +
+              '?"]',
+          ),
+        );
+      await expect(seededProduct).toBeVisible();
+      await seededProduct.click();
+      await expect(page).toHaveURL((url) => url.pathname === pdpPath);
+      await expect(page.locator(".shop-product-title")).toHaveText(title);
+      await expect(catalog).toHaveAttribute("aria-current", "page");
       await expect(catalog).toHaveAttribute("href", new RegExp(pdpPath));
       const productHref = await catalog.getAttribute("href");
       expect(productHref).toContain(`/m/${market}/p/`);

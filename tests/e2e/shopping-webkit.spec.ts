@@ -29,11 +29,20 @@ for (const locale of ["fa", "tr", "en"] as const) {
     // The approved purchase panel is in document flow. Verify it remains
     // reachable and unobscured by the shared dock after a customer scrolls.
     await add.scrollIntoViewIfNeeded();
+    await expect(add).toBeInViewport({ ratio: 1 });
     const box = await add.boundingBox(),
       nav = await page.getByTestId("mobile-bottom-navigation").boundingBox();
     expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
+    expect(
+      await add.evaluate((button) => {
+        const r = button.getBoundingClientRect();
+        return button.contains(
+          document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2),
+        );
+      }),
+    ).toBe(true);
     await shoppingProof(page, info, `${locale}-webkit-product`);
     await page.locator(".shop-gallery-slide").first().click();
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();

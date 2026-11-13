@@ -150,15 +150,19 @@ for (const [locale, market, labels] of [
     await departments
       .getByRole("link", { name: labels[3], exact: true })
       .click();
-    await page
+    const product = page
       .locator(".shop-product-card")
       .filter({ has: page.locator("img") })
       .first()
-      .getByRole("link")
-      .click();
+      .getByRole("link");
+    const productHref = await product.getAttribute("href");
+    expect(productHref).toContain(`/${locale}/m/${market}/p/`);
+    const productPath = new URL(productHref!, page.url()).pathname;
+    await product.click();
+    await expect(page).toHaveURL((url) => url.pathname === productPath);
     await expect(nav.locator('[aria-current="page"]')).toHaveAttribute(
       "href",
-      `/${locale}/search`,
+      new RegExp(`^${productPath}(?:\\?|$)`),
     );
     await page.locator(".shop-full-image").click();
     await expect(page.locator(".shop-gallery-zoom")).toBeVisible();

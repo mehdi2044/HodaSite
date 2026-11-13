@@ -10,17 +10,17 @@ jobs:
           {
             POSTGRES_USER: hoda,
             POSTGRES_PASSWORD: hoda,
-            POSTGRES_DB: moda4_fr3_browser_test,
+            POSTGRES_DB: hoda_test,
           }
         ports: ["5432:5432"]
-        options: --health-cmd "pg_isready -U hoda -d moda4_fr3_browser_test" --health-interval 5s --health-timeout 5s --health-retries 10
+        options: --health-cmd "pg_isready -U hoda -d hoda_test" --health-interval 5s --health-timeout 5s --health-retries 10
       mailpit:
         image: axllent/mailpit:v1.31.1
         ports: ["1025:1025", "8025:8025"]
     env:
       {
-        DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test",
-        TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test",
+        DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
+        TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/hoda_test",
         MEDIA_DIR: "/tmp/hoda-media",
         ADMIN_EMAIL: "owner@example.com",
         ADMIN_PASSWORD: "ChangeMe123!",
@@ -63,8 +63,22 @@ jobs:
           name: invoice-visual-proof
           path: test-results/invoice-proof/
           if-no-files-found: ignore
+      - name: Seed a fresh browser database
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
+          TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
+        run: |
+          psql "postgresql://hoda:hoda@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE moda4_fr3_browser_test'
+          pnpm prisma migrate deploy
+          pnpm prisma db seed
       - run: pnpm e2e
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
+          TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
       - name: Real authenticated preview propagation (isolated test DB)
+        env:
+          DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
+          TEST_DATABASE_URL: "postgresql://hoda:hoda@localhost:5432/moda4_fr3_browser_test"
         run: HODASITE_PREVIEW=1 pnpm e2e tests/e2e/preview-runtime.spec.ts tests/e2e/moda4-scenes.spec.ts tests/e2e/moda4-cutouts.spec.ts
       - name: Preserve mobile storefront proof
         if: always()

@@ -1,5 +1,6 @@
 ## MODA4 M4-02 — cinematic fitting ad (local review)
 
+- PR87 CI follow-up: browser tests use a newly migrated and seeded database separate from coverage fixtures, including FR3. OTP completion redirects from the server after authentication so a cookie refresh cannot discard the form's return navigation. Cart display assertions use currency rounding while the checkout quote and order snapshot retain four-decimal precision. See the PR for current-head browser and D70 status.
 - D77/D81 fitting-ad stages use one pausable clock; the rack only renders for approved playable catalog looks.
 - Final photos require matching product/color/variant identity and a valid photo confirmation. A dressed store model is the fallback result; no AI or money path is invoked.
 - Mehdi visually approved the four looks on 2026-11-13. The accepted local baseline is Standalone build `2943bece0288948f95b0ff1fb70ab250a5b3eca7` with published homepage content version 32. [Review evidence and recovery results](design/moda4-redesign/m4-01-02/M4-02-HANDOFF-FA.md).

@@ -142,7 +142,7 @@ export async function requestOtpAction(locale: string, form: FormData) {
   });
 }
 export async function verifyOtpAction(locale: string, form: FormData) {
-  return safe(async () => {
+  const result = await safe(async () => {
     const l = localeSchema.parse(locale);
     await customerSignIn("customer-otp", {
       challengeId: form.get("challengeId"),
@@ -165,6 +165,10 @@ export async function verifyOtpAction(locale: string, form: FormData) {
       ),
     };
   });
+  // Signing in mutates cookies and can replace the form before its effect runs.
+  // Redirect in the same server action after validating the return destination.
+  if (result.url) redirect(result.url);
+  return result;
 }
 export async function logoutCustomerAction(locale: string) {
   const jar = await cookies();
