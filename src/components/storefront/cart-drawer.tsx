@@ -3,12 +3,17 @@ import Link from "next/link";
 import { storefrontPath } from "@/lib/storefront-path";
 import { CommerceForm } from "./commerce-form";
 import { updateCartAction } from "@/app/[locale]/commerce-actions";
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useSyncExternalStore, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ResponsiveImage, type ResponsiveImageMedia } from "./responsive-image";
 import { useTranslations } from "next-intl";
 import { StorefrontIcon } from "./storefront-icon";
 import { Iso } from "./iso";
+
+const subscribeToHydration = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function CartDrawer({
   locale,
   marketCode,
@@ -42,6 +47,11 @@ export function CartDrawer({
   const dialog = useRef<HTMLDialogElement>(null),
     trigger = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
+  const interactive = useSyncExternalStore(
+    subscribeToHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const router = useRouter(),
     [refreshing, startRefresh] = useTransition();
   useEffect(() => {
@@ -61,6 +71,8 @@ export function CartDrawer({
         ref={trigger}
         type="button"
         className="moda-tool storefront-cart-toggle"
+        // A document navigation can paint the trigger before React can open it.
+        disabled={!interactive}
         aria-label={`${t("cart")} (${count})`}
         onClick={() => {
           dialog.current?.showModal();
