@@ -787,15 +787,6 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
 [data-moda4="shop-the-look"] {
   min-height: max(46vw, 620px);
 }
-.moda-footer-links nav {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-column: span 2;
-  gap: 4px 24px;
-}
-.moda-footer-links > div:last-child:not(:first-child) {
-  grid-column: 1/-1;
-}
 .moda-footer-utilities {
   display: flex;
   flex-wrap: wrap;
@@ -824,11 +815,7 @@ html[data-button-style="crayon"] .moda-fitting-utilities .button {
   [data-moda4="shop-the-look"] {
     min-height: 0;
   }
-  .moda-footer-links {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .moda-footer-utilities {
-    margin-block-start: 24px;
     display: grid;
   }
 }

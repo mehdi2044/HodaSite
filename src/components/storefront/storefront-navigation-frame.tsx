@@ -1,6 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { storefrontNavigationRoute } from "@/lib/storefront-navigation";
 
 export function StorefrontNavigationFrame({
@@ -21,7 +21,9 @@ export function StorefrontNavigationFrame({
       data-floating-navigation={enabled && !route.suppressed ? "on" : "off"}
       data-navigation-context={route.fitting ? "fitting" : "public"}
     >
-      {children}
+      {/* Give streamed Flight children a fiber of their own before React
+          claims the host wrapper during concurrent hydration. */}
+      <Fragment key="storefront-layout">{children}</Fragment>
     </div>
   );
 }

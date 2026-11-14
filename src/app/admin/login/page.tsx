@@ -2,12 +2,11 @@
 
 import { useTranslations } from "next-intl";
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 function LoginForm() {
   const t = useTranslations("security");
-  const router = useRouter();
   const params = useSearchParams();
   const candidate = params.get("next") ?? "/admin";
   const next =
@@ -33,13 +32,15 @@ function LoginForm() {
       });
       if (!res || res.error) {
         setError(t("loginError"));
+        setLoading(false);
         return;
       }
-      router.push(next);
-      router.refresh();
+      // Resolve the protected destination against the new session cookie in
+      // one document request. A client push can reuse a guest redirect.
+      window.location.replace(next);
+      return;
     } catch {
       setError(t("loginConnectionError"));
-    } finally {
       setLoading(false);
     }
   }

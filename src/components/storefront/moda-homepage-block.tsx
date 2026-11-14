@@ -12,6 +12,7 @@ import {
 import { resolveHeroFloat } from "@/modules/content/moda4-hero";
 import { ModaKidsWorld } from "./moda-kids-world";
 import Link from "next/link";
+import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { localizedValue } from "@/modules/content/homepage";
@@ -37,12 +38,14 @@ export async function ModaHomepageBlock({
   locale,
   first = false,
   preview = false,
+  anchor,
 }: {
   block: Moda4Block;
   market: Market;
   locale: Locale;
   first?: boolean;
   preview?: boolean;
+  anchor?: string;
 }) {
   const text = (value: Parameters<typeof localizedValue>[0]) =>
     localizedValue(value, locale);
@@ -417,7 +420,7 @@ export async function ModaHomepageBlock({
       ),
     );
     return (
-      <div data-moda4="lookbook" className="moda-lookbook">
+      <div id={anchor} data-moda4="lookbook" className="moda-lookbook">
         <ModaCarousel
           art={views.map((view) => (
             <SceneArt key={view.id} view={view} locale={locale} />
@@ -459,18 +462,20 @@ export async function ModaHomepageBlock({
         </div>
         <div className="moda-snap-products">
           {await Promise.all(
-            products.map((product) =>
-              ProductCard({
-                product: {
-                  ...product,
-                  displayPrice: prices.get(product.id)!,
-                },
-                variantPrices,
-                locale,
-                market,
-                readOnly: preview,
-              }),
-            ),
+            products.map(async (product) => (
+              <Fragment key={product.id}>
+                {await ProductCard({
+                  product: {
+                    ...product,
+                    displayPrice: prices.get(product.id)!,
+                  },
+                  variantPrices,
+                  locale,
+                  market,
+                  readOnly: preview,
+                })}
+              </Fragment>
+            )),
           )}
         </div>
         {products.length === 0 && <p>{t("noProducts")}</p>}

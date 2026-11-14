@@ -83,6 +83,7 @@ export async function HomepageBlocks({
     ),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
+  const firstLookbook = blocks.findIndex((block) => block.type === "Lookbook");
   const listingProducts = productRows.flatMap((rows) => rows?.items ?? []);
   const [prices, variantPrices] = await Promise.all([
     getDisplayPrices(listingProducts, market),
@@ -104,6 +105,7 @@ export async function HomepageBlocks({
                 market={market}
                 first={index === 0}
                 preview={preview}
+                anchor={index === firstLookbook ? "lookbook" : undefined}
               />
             );
           if (sceneViews[index] && block.type === "Banner")

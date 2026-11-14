@@ -29,6 +29,7 @@ export function ModaCarousel({
   const t = useTranslations("modaHomepage");
   const root = useRef<HTMLElement>(null),
     drag = useRef<{ x: number; id: number } | null>(null);
+  const suppressFaceClick = useRef(false);
   const [index, setIndex] = useState(0),
     [paused, setPaused] = useState(false),
     [engaged, setEngaged] = useState(false),
@@ -209,19 +210,29 @@ export function ModaCarousel({
       <div
         className="moda-carousel-stage"
         onPointerDown={(event) => {
-          if (
-            items.length < 2 ||
-            (event.target as Element).closest(
-              "a,button,input,select,textarea,summary",
-            )
-          )
+          if (items.length < 2 || !event.isPrimary || event.button !== 0)
             return;
+          suppressFaceClick.current = false;
+          const control = (event.target as Element).closest(
+            "a,button,input,select,textarea,summary",
+          );
+          // The pictured face is a link, but it must also accept a drag.
+          if (control && !(isPrism && control.closest(".moda-3d-face"))) return;
           drag.current = { x: event.clientX, id: event.pointerId };
-          event.currentTarget.setPointerCapture(event.pointerId);
+          if (!control) event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
-          if (drag.current?.id === event.pointerId)
-            setDragAngle((event.clientX - drag.current.x) / 3);
+          if (drag.current?.id !== event.pointerId) return;
+          const distance = event.clientX - drag.current.x;
+          if (
+            isPrism &&
+            Math.abs(distance) > 45 &&
+            !event.currentTarget.hasPointerCapture(event.pointerId)
+          ) {
+            suppressFaceClick.current = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }
+          if (!isPrism || !reduced) setDragAngle(distance / 3);
         }}
         onPointerUp={(event) => {
           const begin = drag.current;
@@ -230,12 +241,24 @@ export function ModaCarousel({
           if (
             begin?.id === event.pointerId &&
             Math.abs(event.clientX - begin.x) > 45
-          )
+          ) {
+            suppressFaceClick.current = isPrism;
             change(event.clientX < begin.x ? 1 : -1);
+          }
         }}
         onPointerCancel={() => {
           drag.current = null;
           setDragAngle(0);
+        }}
+        onClickCapture={(event) => {
+          if (suppressFaceClick.current && event.detail !== 0) {
+            suppressFaceClick.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+        onDragStart={(event) => {
+          if (isPrism) event.preventDefault();
         }}
       >
         {art && art.length > 1 ? (

@@ -10,6 +10,7 @@ import { normalizeThemeColors, safeColorMap } from "@/lib/theme-validation";
 import { DEFAULT_LIGHT_COLORS } from "@/lib/theme-defaults";
 import { PwaControls } from "@/components/pwa/controls";
 import type { Metadata, Viewport } from "next";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
@@ -170,7 +171,7 @@ export default async function LocaleLayout({
                 markets={markets}
               />
               <div id="storefront-content" tabIndex={-1}>
-                {children}
+                <Fragment key="storefront-page">{children}</Fragment>
               </div>
               <Footer
                 locale={locale}

@@ -199,13 +199,13 @@ export async function Header({
             >
               <span aria-hidden="true">♡</span>
             </Link>
-            <Link
+            <a
               href={storefrontPath(locale, market.code, "account")}
               className="moda-tool moda-account-tool"
               aria-label={t("commerce.account")}
             >
               <StorefrontIcon name="account" />
-            </Link>
+            </a>
             <CartDrawer
               locale={locale}
               marketCode={market.code}

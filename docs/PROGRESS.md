@@ -1,3 +1,10 @@
+## M1 — Storefront footer, hydration and Four Worlds (D31, D64, D77, D81)
+
+- The storefront layout puts streamed Route/Flight children behind keyed fragments so React can suspend before re-entering a claimed HTML wrapper. Verify a direct cart visit after adding a product, and reload checkout in each locale while watching the browser console.
+- The Footer menu in Content → Menus controls group names, links and ordering. Existing standalone policy links remain in the directory. A fresh demonstration store seeds Shop, Experience, Help and Account groups and all four worlds. To adopt the groups in a configured store, add parent and child entries in the existing footer menu. Use a category reference for each world and validate the storefront at 390, 768 and 1440 pixels. No migration or reseeding of an existing store is needed.
+- The prism accepts a drag starting on its linked artwork. A tap or click still opens the selected category. Cross the last-to-first seam twice in each direction and repeat with reduced motion. Local visual approval remains pending.
+- The account tool and post-MFA admin navigation use a fresh document request so the server resolves the current session. The existing credential, MFA, CSRF, return-path checks and stored sessions still apply. Rehearse guest and authenticated routing and invalid admin credentials on an isolated database.
+
 ## M1 — Four Worlds prism rotation (D77, D81)
 
 - Next, previous, swipe and autoplay keep the direction of rotation across the first and last faces. Direct face selection takes the shortest path, like the original MODA4 prototype.

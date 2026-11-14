@@ -194,6 +194,9 @@ test("short mobile product keeps its price and purchase button separately visibl
 test("customer OTP returns from Persian sign-in to the Canadian fitting room", async ({
   page,
 }) => {
+  // The delivery poll itself allows 45 seconds. Leave time for the login
+  // round trips on both sides of that poll.
+  test.setTimeout(65_000);
   const mailpit = process.env.MAILPIT_URL ?? "http://127.0.0.1:8025";
   const email = `moda4-${randomUUID()}@example.com`;
   await page.goto("/fa/fitting-room?market=CA");
@@ -214,11 +217,12 @@ test("customer OTP returns from Persian sign-in to the Canadian fitting room", a
   await expect
     .poll(
       async () => {
-        await page.request.post("/api/cron/tick", {
+        const tick = await page.request.post("/api/cron/tick", {
           headers: {
             Authorization: `Bearer ${process.env.CRON_SECRET ?? "test-cron"}`,
           },
         });
+        if (!tick.ok()) throw new Error(`Cron tick failed (${tick.status()})`);
         const query = new URLSearchParams({ query: `to:${email}` });
         const response = await page.request.get(
           `${mailpit}/api/v1/search?${query}`,
@@ -238,6 +242,7 @@ test("customer OTP returns from Persian sign-in to the Canadian fitting room", a
     )
     .toBe(true);
   await otp.fill(code);
+  await expect(otp).toHaveValue(code);
   await page
     .getByRole("button", { name: fa.commerce.login, exact: true })
     .click();
