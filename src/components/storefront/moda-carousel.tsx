@@ -3,6 +3,11 @@ import { ModaWordmark } from "./moda-wordmark";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { useTranslations } from "next-intl";
+
+function wrapIndex(index: number, count: number) {
+  return ((index % count) + count) % count;
+}
+
 /** Common visibility/focus/hover/reduced-motion policy for the editable presentations. */
 export function ModaCarousel({
   items,
@@ -32,7 +37,12 @@ export function ModaCarousel({
     [reduced, setReduced] = useState(true),
     [hidden, setHidden] = useState(true),
     [dragAngle, setDragAngle] = useState(0);
-  const current = Math.min(index, Math.max(0, items.length - 1));
+  const isPrism = kind === "prism";
+  const count = Math.max(1, items.length);
+  // The prism keeps turning through the seam. Only the selected face wraps.
+  const current = isPrism
+    ? wrapIndex(index, count)
+    : Math.min(index, count - 1);
   // Explicit resume also starts while its control has focus. A fresh
   // hover/focus engagement pauses rotation again.
   const running =
@@ -63,7 +73,7 @@ export function ModaCarousel({
     const started = performance.now();
     const timer = setTimeout(() => {
       clock.current.remaining = seconds * 1000;
-      setIndex((old) => (old + 1) % items.length);
+      setIndex((old) => (isPrism ? old + 1 : (old + 1) % count));
     }, clock.current.remaining);
     return () => {
       clearTimeout(timer);
@@ -72,9 +82,18 @@ export function ModaCarousel({
         clock.current.remaining - (performance.now() - started),
       );
     };
-  }, [running, items.length, seconds, current]);
+  }, [running, items.length, seconds, current, isPrism, count]);
   const change = (delta: number) =>
-    setIndex((current + delta + items.length) % items.length);
+    setIndex((old) =>
+      isPrism ? old + delta : wrapIndex(current + delta, count),
+    );
+  const select = (face: number) => {
+    setIndex((old) => {
+      if (!isPrism) return face;
+      const forward = wrapIndex(face - old, count);
+      return old + (forward > count / 2 ? forward - count : forward);
+    });
+  };
   const controls = (
     <>
       {" "}
@@ -98,7 +117,7 @@ export function ModaCarousel({
                 type="button"
                 aria-label={label}
                 aria-pressed={n === current}
-                onClick={() => setIndex(n)}
+                onClick={() => select(n)}
               >
                 <span aria-hidden="true">
                   {kind === "prism" ? label : n + 1}
@@ -224,7 +243,7 @@ export function ModaCarousel({
             data-moda4={kind === "prism" ? "worlds-prism" : "lookbook-ring"}
             className="moda-3d-orbit"
             style={{
-              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${kind === "prism" ? -9 : 0}deg) rotateY(${-current * (360 / art.length) + dragAngle}deg)`,
+              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${isPrism ? -9 : 0}deg) rotateY(${-(isPrism ? index : current) * (360 / art.length) + dragAngle}deg)`,
             }}
           >
             {art.map((image, n) => (

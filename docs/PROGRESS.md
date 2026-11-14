@@ -1,3 +1,9 @@
+## M1 — Four Worlds prism rotation (D77, D81)
+
+- Next, previous, swipe and autoplay keep the direction of rotation across the first and last faces. Direct face selection takes the shortest path, like the original MODA4 prototype.
+- On the homepage, select Accessories, advance to Women, then go back. Check that each step turns one face and that Enter opens the selected category. With reduced motion enabled, the controls select the same faces without an animated transition.
+- Uses the existing homepage block, artwork and market-aware category targets. Local visual review is pending.
+
 ## Backup verification for empty catalogs (D23, D36, D41)
 
 - An initialized shop may have no products or variants. Backup verification now requires table data entries in the dump and checks the restored schema, migration set, relationships, checksums and media. Partial or corrupt archives still fail verification.
