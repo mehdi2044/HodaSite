@@ -9,6 +9,33 @@ const markets = [
   { locale: "en", market: "CA", product: "product-1", copy: en },
 ] as const;
 
+test("the cart button becomes usable after the storefront layout hydrates", async ({
+  page,
+}) => {
+  let releaseLayout!: () => void;
+  const pendingLayout = new Promise<void>((resolve) => {
+    releaseLayout = resolve;
+  });
+  await page.route(
+    /\/_next\/static\/chunks\/app\/(?:%5Blocale%5D|\[locale\])\/layout(?:-[^/]+)?\.js(?:\?.*)?$/i,
+    async (route) => {
+      await pendingLayout;
+      await route.continue();
+    },
+  );
+  try {
+    await page.goto("/tr/account/login?market=CA", { waitUntil: "commit" });
+    const toggle = page.locator(".storefront-cart-toggle");
+    await expect(toggle).toBeDisabled();
+  } finally {
+    releaseLayout();
+  }
+  await page.locator(".storefront-cart-toggle").click();
+  await expect(
+    page.locator('dialog[open] a[href="/tr/cart?market=CA"]'),
+  ).toBeVisible();
+});
+
 for (const { locale, market, product, copy } of markets) {
   test(`${locale} purchase preserves server markup across document hydration`, async ({
     page,
