@@ -167,7 +167,13 @@ export async function ModaHomepageBlock({
             title={view.title}
             subtitle={rest.length ? subtitle : undefined}
             body={rest.length ? rest.join("\n") : subtitle}
-            cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
+            cta={
+              slide.target.kind === "catalog" && slide.scene.pieces.length
+                ? { label: text(slide.ctaLabel) }
+                : href
+                  ? { href, label: text(slide.ctaLabel) }
+                  : undefined
+            }
             secondary={
               secondary && slide.secondaryLabel
                 ? { href: secondary, label: text(slide.secondaryLabel) }

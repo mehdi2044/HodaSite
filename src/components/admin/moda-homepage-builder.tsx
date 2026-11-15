@@ -420,6 +420,7 @@ export function ModaHomepageBuilder(props: {
                         block.scene && (
                           <ModaSceneField
                             scene={block.scene}
+                            reorderPieces={block.type === "ShopLook"}
                             change={(scene) =>
                               update(index, {
                                 ...block,

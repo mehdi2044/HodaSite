@@ -150,7 +150,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect((await cart()).revision).toBe(0);
       }
     });
-    it("serializes two complete scene additions through the existing fresh quote transaction", async () => {
+    it("serializes two deliveries of the same set without duplicating sizes", async () => {
       await Promise.all([
         addShoppableScene("tr", {
           sceneId: "scene-cart-proof",
@@ -163,8 +163,26 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ]);
       const actual = await cart();
       expect(actual.items).toHaveLength(2);
-      expect(actual.items.every((i) => i.quantity === 2)).toBe(true);
-      expect(actual.revision).toBe(2);
+      expect(actual.items.every((i) => i.quantity === 1)).toBe(true);
+      expect(actual.revision).toBe(1);
+    });
+    it("keeps any quantities the buyer already chose", async () => {
+      const current = await cart();
+      await db.cartItem.upsert({
+        where: { cartId_variantId: { cartId: current.id, variantId: ids[0] } },
+        create: { cartId: current.id, variantId: ids[0], quantity: 3 },
+        update: { quantity: 3 },
+      });
+      await addShoppableScene("tr", {
+        sceneId: "scene-cart-proof",
+        variantIds: ids,
+      });
+      expect((await cart()).items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ variantId: ids[0], quantity: 3 }),
+          expect.objectContaining({ variantId: ids[1], quantity: 1 }),
+        ]),
+      );
     });
     it("rejects the whole batch if stock or photographed references change after selection", async () => {
       const before = await cart();

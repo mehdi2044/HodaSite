@@ -71,7 +71,7 @@ export async function addSceneCartItems(
   return changeCartBatch(
     locale,
     variantIds.map((variantId) => ({ variantId, quantity: 1 })),
-    true,
+    false,
     validate,
   );
 }
@@ -148,14 +148,21 @@ async function changeCartBatch(
         }));
       const updates = changes.map(({ variantId, quantity }) => {
         const old = latest.items.find((item) => item.variantId === variantId);
-        const next = add ? (old?.quantity ?? 0) + quantity : quantity;
+        // A scene means one of each selected variant. Keep any quantity the
+        // customer already chose in the cart, including on a repeated request.
+        const next = validate
+          ? Math.max(old?.quantity ?? 0, quantity)
+          : add
+            ? (old?.quantity ?? 0) + quantity
+            : quantity;
         if (next > 100) throw new CommerceError("INVALID_QUANTITY");
         if (next) proposed.push({ variantId, quantity: next });
-        return { variantId, next };
+        return { variantId, next, unchanged: next === (old?.quantity ?? 0) };
       });
       if (proposed.length > 100) throw new CommerceError("CART_LIMIT");
       if (proposed.length)
         await quoteCart({ marketId: latest.marketId, locale, items: proposed });
+      if (validate && updates.every((update) => update.unchanged)) return;
       for (const { variantId, next } of updates) {
         if (next)
           await tx.cartItem.upsert({

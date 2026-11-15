@@ -1,3 +1,9 @@
+## M1 — Easy Days and the Kids card
+
+- Easy Days uses the existing Sam cotton tee in ivory, the Sepehr overshirt, and the Bardia chinos. Its photo, size selectors, live market prices and purchase action use the same scene. The CMS can reorder scene pieces. Existing merchant content still goes through draft, photo confirmation and publication.
+- The Kids rotation disclosure moves to the opposite image corner from the wishlist. The standalone Shop the Look panel sits beside the picture on desktop and below it on smaller screens.
+- Repeated submission of a complete scene leaves selected quantities already in the bag intact. Private homepage previews queue same-owner requests before acquiring a connection. Paid fitting rewards take the same advisory lock as fitting settings writers.
+
 ## M1 — Storefront footer, hydration and Four Worlds (D31, D64, D77, D81)
 
 - The storefront layout puts streamed Route/Flight children behind keyed fragments so React can suspend before re-entering a claimed HTML wrapper. Verify a direct cart visit after adding a product, and reload checkout in each locale while watching the browser console.
