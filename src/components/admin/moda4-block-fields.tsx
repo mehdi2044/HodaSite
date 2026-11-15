@@ -770,6 +770,7 @@ export function Moda4BlockFields({
   scope: string;
 }) {
   const t = useTranslations("modaAdmin");
+  const scenes = useTranslations("scenes");
   const sceneField = (
     scene: ShoppableScene,
     update: (scene: ShoppableScene) => void,
@@ -952,18 +953,37 @@ export function Moda4BlockFields({
                 })
               }
             />
-            <ModaTargetField
-              value={slide.target}
-              options={options}
-              change={(target) =>
-                change({
-                  ...block,
-                  slides: block.slides.map((item, n) =>
-                    n === index ? { ...item, target } : item,
-                  ),
-                })
-              }
-            />
+            <label>
+              <input
+                type="checkbox"
+                checked={slide.buyScene ?? false}
+                onChange={(event) =>
+                  change({
+                    ...block,
+                    slides: block.slides.map((item, n) =>
+                      n === index
+                        ? { ...item, buyScene: event.target.checked }
+                        : item,
+                    ),
+                  })
+                }
+              />{" "}
+              {scenes("addScene")}
+            </label>
+            {!slide.buyScene && (
+              <ModaTargetField
+                value={slide.target}
+                options={options}
+                change={(target) =>
+                  change({
+                    ...block,
+                    slides: block.slides.map((item, n) =>
+                      n === index ? { ...item, target } : item,
+                    ),
+                  })
+                }
+              />
+            )}
             {(() => {
               // M4-01: physical composition; legacy textSide is read through normalizeHeroLayout.
               const layout = normalizeHeroLayout(slide);

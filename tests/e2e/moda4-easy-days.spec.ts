@@ -9,7 +9,7 @@ const markets = [
   { locale: "en", market: "CA", copy: en, width: 1440 },
 ] as const;
 
-test.use({ reducedMotion: "reduce" });
+test.use({ contextOptions: { reducedMotion: "reduce" } });
 
 for (const { locale, market, copy, width } of markets) {
   test(`Easy Days opens the pictured set and adds it once in ${locale}`, async ({

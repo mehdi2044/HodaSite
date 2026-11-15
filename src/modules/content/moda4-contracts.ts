@@ -64,11 +64,16 @@ export const modaHeroSlideSchema = z
     /** M4-01: optional decorative cutout beside the person (desktop â‰¥1280 only). Price from catalog. */
     float: z.object({ productId: id, colorId: id }).strict().optional(),
     ctaLabel: localizedTextSchema,
+    buyScene: z.boolean().optional(),
     target: contentTargetSchema,
     secondaryLabel: localizedTextSchema.optional(),
     secondaryTarget: contentTargetSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((slide) => !slide.buyScene || slide.scene.pieces.length > 0, {
+    path: ["scene", "pieces"],
+    message: "The purchase button requires at least one scene piece",
+  });
 export const modaWorldFaceSchema = z
   .object({
     id,

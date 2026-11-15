@@ -139,7 +139,9 @@ export async function ModaHomepageBlock({
           resolveShoppableScene(slide.scene, market, locale, {
             adminPreview: preview,
           }),
-          resolveContentTarget(slide.target, market.id, locale),
+          slide.buyScene
+            ? null
+            : resolveContentTarget(slide.target, market.id, locale),
           slide.secondaryTarget
             ? resolveContentTarget(slide.secondaryTarget, market.id, locale)
             : null,
@@ -168,7 +170,7 @@ export async function ModaHomepageBlock({
             subtitle={rest.length ? subtitle : undefined}
             body={rest.length ? rest.join("\n") : subtitle}
             cta={
-              slide.target.kind === "catalog" && slide.scene.pieces.length
+              slide.buyScene
                 ? { label: text(slide.ctaLabel) }
                 : href
                   ? { href, label: text(slide.ctaLabel) }
