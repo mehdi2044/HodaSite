@@ -1,5 +1,6 @@
 import { randomUUID, createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import {
   prepareHomepagePreview,
@@ -188,9 +189,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         attempts.filter((result) => result.status === "fulfilled"),
       ).toHaveLength(20);
-      expect(
-        attempts.filter((result) => result.status === "rejected"),
-      ).toHaveLength(5);
+      const rejected = attempts.filter(
+        (result) => result.status === "rejected",
+      );
+      expect(rejected).toHaveLength(5);
+      for (const result of rejected)
+        expect(result.reason).toBeInstanceOf(ZodError);
       expect(
         await db.homepagePreview.count({ where: { ownerId: quotaUser } }),
       ).toBe(20);
