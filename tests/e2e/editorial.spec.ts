@@ -196,6 +196,38 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     .last()
     .evaluate((element) => element.scrollIntoView({ block: "center" }));
   await address.getByRole("button").last().click({ trial: true });
+  for (const [name, value] of Object.entries({
+    firstName: "Fixture",
+    lastName: "Buyer",
+    email: "fixture@example.com",
+    phone: "+1 555 000 0000",
+    province: "ON",
+    city: "Toronto",
+    line1: "10 Example Street",
+    postalCode: "M5V 1A1",
+  })) {
+    const field = address.locator(`input[name="${name}"]`);
+    await field.evaluate((element) =>
+      element.scrollIntoView({ block: "center" }),
+    );
+    await field.fill(value);
+  }
+  await clickInScrollPane(address.getByRole("button").last());
+  await expect(page).toHaveURL(/step=2/);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  await expect(page.locator(".shop-checkout-steps li").nth(1)).toHaveAttribute(
+    "aria-current",
+    "step",
+  );
+  await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
+  const shipping = page
+    .locator(".shop-checkout-layout section form button")
+    .last();
+  await shipping.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
+  await shipping.click({ trial: true });
   await page.screenshot({
     path: info.outputPath("checkout-dock-390.png"),
     fullPage: true,
