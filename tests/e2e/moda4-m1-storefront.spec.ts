@@ -91,7 +91,7 @@ for (const { locale, market, product, copy } of markets) {
       await expect(page.locator('main input[name="firstName"]')).toBeVisible();
       await expect(
         page.locator('[data-testid="mobile-bottom-navigation"]'),
-      ).toHaveCount(0);
+      ).toBeVisible();
     }
     expect(errors).toEqual([]);
   });

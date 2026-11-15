@@ -5,7 +5,7 @@ export function storefrontNavigationRoute(pathname: string) {
   const page = parts[offset] ?? "";
   const tail = parts.slice(offset + 1);
   const suppressed =
-    ["checkout", "payment", "payments"].includes(page) ||
+    ["payment", "payments"].includes(page) ||
     (page === "orders" && tail.length > 0);
   const active =
     page === "fitting-room"
