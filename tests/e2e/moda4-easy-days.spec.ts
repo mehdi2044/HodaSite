@@ -48,9 +48,6 @@ for (const { locale, market, copy, width } of markets) {
       .getByRole("status")
       .filter({ hasText: copy.commerce.saved });
     await expect(saved).toBeVisible();
-    await add.click();
-    await expect(saved).toBeVisible();
-
     const look = page.locator('[data-moda4="shop-the-look"]');
     const photo = look.locator(".scene-photo:visible");
     await expect(photo.locator(".scene-pin")).toHaveCount(3);
@@ -68,6 +65,14 @@ for (const { locale, market, copy, width } of markets) {
         panel!.x >= frame!.x + frame!.width ||
         panel!.x + panel!.width <= frame!.x,
     ).toBe(true);
+    const lookSizes = look.locator('select[name="variantId"]');
+    for (const [index, variantId] of chosen.entries())
+      await lookSizes.nth(index).selectOption(variantId);
+    const buyLook = look.getByRole("button", { name: copy.scenes.addScene });
+    await buyLook.click();
+    await expect(
+      look.getByRole("status").filter({ hasText: copy.commerce.saved }),
+    ).toBeVisible();
 
     await page.goto(`/${locale}/cart?market=${market}`);
     const cartSizes = page.locator('main input[name="variantId"]');
