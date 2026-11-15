@@ -9,6 +9,7 @@ import { CouponForm } from "@/components/storefront/coupon-form";
 import { Iso } from "@/components/storefront/iso";
 import { provinces } from "@/modules/checkout/regions";
 import Link from "next/link";
+import { Fragment } from "react";
 import { db } from "@/lib/db";
 import { AddressForm } from "@/components/storefront/address-form";
 import { redirect } from "next/navigation";
@@ -83,11 +84,13 @@ export default async function CheckoutPage({
           </li>
         ))}
       </ol>
-      <CouponForm
-        locale={locale}
-        revision={cart.revision}
-        codes={(cart.checkout as Record<string, unknown>).couponCodes}
-      />
+      <Fragment key="checkout-coupon">
+        <CouponForm
+          locale={locale}
+          revision={cart.revision}
+          codes={(cart.checkout as Record<string, unknown>).couponCodes}
+        />
+      </Fragment>
       <div className="shop-checkout-layout">
         <section className="rounded-token border border-black/10 bg-surface p-6">
           {step === 1 ? (
@@ -203,7 +206,7 @@ export default async function CheckoutPage({
               </AddressForm>
             </>
           ) : step === 2 ? (
-            <>
+            <Fragment key="checkout-review">
               <h2 className="mb-4 text-xl">{t("review")}</h2>
               <QuoteSummary
                 cart={cart}
@@ -216,7 +219,9 @@ export default async function CheckoutPage({
                 <bdi dir="auto">{draft.province}</bdi>
               </p>
               <div className="flex flex-wrap gap-3">
-                <ShippingSelection cart={cart} locale={locale} />
+                <Fragment key="checkout-shipping">
+                  <ShippingSelection cart={cart} locale={locale} />
+                </Fragment>
                 <Link
                   className="px-4 py-3 underline"
                   href={`/${locale}/checkout`}
@@ -224,17 +229,19 @@ export default async function CheckoutPage({
                   {t("edit")}
                 </Link>
               </div>
-            </>
+            </Fragment>
           ) : (
             <CommerceForm action={placeOrderAction.bind(null, locale)}>
               <h2 className="text-xl font-semibold">{t("bankTransfer")}</h2>
               <p>{t("paymentIntro")}</p>
-              <QuoteSummary
-                cart={cart}
-                address={parsed.data!}
-                locale={locale}
-                confirm
-              />
+              <Fragment key="checkout-confirmation-quote">
+                <QuoteSummary
+                  cart={cart}
+                  address={parsed.data!}
+                  locale={locale}
+                  confirm
+                />
+              </Fragment>
               <input
                 type="hidden"
                 name="address"

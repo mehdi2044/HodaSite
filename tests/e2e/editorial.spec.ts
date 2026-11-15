@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { seedEditorialFixtures } from "../fixtures/editorial";
 import { fillAdminMfa } from "./helpers/admin-mfa";
@@ -15,6 +15,26 @@ async function clickInScrollPane(locator: Locator) {
     element.scrollIntoView({ block: "center" }),
   );
   await locator.click();
+}
+
+async function controlClientChunks(page: Page) {
+  let clientChunks = Promise.resolve();
+  await page.route(
+    /\/_next\/static\/chunks\/.*\.js(?:\?|$)/,
+    async (request) => {
+      await clientChunks;
+      await request.continue();
+    },
+  );
+  return {
+    hold() {
+      let release = () => {};
+      clientChunks = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return release;
+    },
+  };
 }
 
 for (const { locale, market, width, name } of [
@@ -80,24 +100,14 @@ test("hydrates the server-rendered gallery results without replacing their wrapp
     if (/hydrati|Minified React error #41[89]/i.test(message.text()))
       failures.push(message.text());
   });
-  let clientChunks = Promise.resolve();
-  await page.route(
-    /\/_next\/static\/chunks\/.*\.js(?:\?|$)/,
-    async (request) => {
-      await clientChunks;
-      await request.continue();
-    },
-  );
+  const chunks = await controlClientChunks(page);
 
   for (const [route, count] of [
     ["/tr/m/TR/looks", 10],
     ["/tr/m/TR/looks?audience=MEN", 3],
     ["/tr/m/TR/looks?audience=GIRLS&max=1", 0],
   ] as const) {
-    let hydrate: () => void = () => {};
-    clientChunks = new Promise<void>((resolve) => {
-      hydrate = resolve;
-    });
+    const hydrate = chunks.hold();
     const wrapper = page.locator("#look-results");
     const serverNode = await (async () => {
       try {
@@ -121,6 +131,66 @@ test("hydrates the server-rendered gallery results without replacing their wrapp
     );
   }
   expect(failures).toEqual([]);
+});
+
+test("opens a Turkish filtered look as its scripts arrive, then restores history and switches language", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/hydrati|Minified React error #41[89]/i.test(message.text()))
+      errors.push(message.text());
+  });
+  await page.setViewportSize({ width: 768, height: 900 });
+  const chunks = await controlClientChunks(page);
+  await page.goto("/tr/m/TR/looks");
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  await clickInScrollPane(page.locator(".lookbook summary"));
+  await page.locator('select[name="audience"]').selectOption("MEN");
+  await page.locator('select[name="season"]').selectOption("SPRING");
+  const release = chunks.hold();
+  const filteredDocument = page.waitForResponse(
+    (response) =>
+      response.request().isNavigationRequest() &&
+      new URL(response.url()).searchParams.get("audience") === "MEN",
+  );
+  const result = page
+    .locator("#look-results h2")
+    .getByRole("link", { name: "Rahat günler", exact: true });
+  let lookPath: string | null = null;
+  try {
+    await clickInScrollPane(
+      page.locator(".lookbook .editorial-filters button"),
+    );
+    await expect(page).toHaveURL(/audience=MEN/);
+    await expect(page.locator("#look-results .look-card")).toHaveCount(3);
+    lookPath = await result.getAttribute("href");
+    // Keep JavaScript blocked until the document stream finishes. Clicking
+    // earlier also cancels the stream and exercises a separate Flight error.
+    expect(await (await filteredDocument).finished()).toBeNull();
+  } finally {
+    release();
+  }
+  expect(lookPath).toBeTruthy();
+  await clickInScrollPane(result);
+  await expect(page).toHaveURL(new URL(lookPath!, page.url()).pathname);
+  await expect(page.locator("main h1")).toHaveText("Rahat günler");
+  await page.waitForLoadState("load");
+
+  await page.goBack({ waitUntil: "commit" });
+  await expect(page).toHaveURL(/audience=MEN/);
+  await expect(page.locator("#look-results .look-card")).toHaveCount(3);
+  await page.waitForLoadState("load");
+  await page.goForward({ waitUntil: "commit" });
+  await expect(page.locator("main h1")).toHaveText("Rahat günler");
+  await page.waitForLoadState("load");
+  const english = page.locator('main a[lang="en"]');
+  await clickInScrollPane(english);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("main h1")).toHaveText("Easy Days");
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  expect(errors).toEqual([]);
 });
 
 test("story, color and sizes, idempotent set purchase, checkout and fitting preset", async ({
@@ -232,6 +302,45 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     path: info.outputPath("checkout-dock-390.png"),
     fullPage: true,
   });
+
+  // A fresh desktop review document can hydrate with the checkout quote already visible.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const chunks = await controlClientChunks(page);
+  const release = chunks.hold();
+  const quote = page.locator(".shop-checkout-layout section > dl");
+  const scrollFrame = page.locator(".storefront-scroll");
+  const [serverQuote, serverFrame] = await (async () => {
+    try {
+      await page.reload({ waitUntil: "commit" });
+      await expect(quote).toBeVisible();
+      return await Promise.all([
+        quote.elementHandle(),
+        scrollFrame.elementHandle(),
+      ]);
+    } finally {
+      release();
+    }
+  })();
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  expect(
+    await serverFrame.evaluate(
+      (node) => node === document.querySelector(".storefront-scroll"),
+    ),
+  ).toBe(true);
+  await serverFrame.dispose();
+  expect(
+    await serverQuote.evaluate(
+      (node) =>
+        node === document.querySelector(".shop-checkout-layout section > dl"),
+    ),
+  ).toBe(true);
+  await serverQuote.dispose();
+  await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
+  await shipping.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
+  await shipping.click({ trial: true });
+
   expect(fitting).toContain("variants=");
   await page.goto(fitting!, { waitUntil: "commit" });
   await expect(

@@ -1,5 +1,6 @@
 import { supportsLookFitting } from "@/modules/editorial/fitting";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getRequestContext } from "@/lib/request-context";
@@ -209,7 +210,10 @@ export default async function LooksPage({
           <Link href={href({ page: filters.page + 1 })}>{t("next")}</Link>
         )}
       </div>
-      <WeeklyEditorial locale={locale} market={market} compact gallery />
+      {/* Keep the async weekly section off the main element's hydration work unit. */}
+      <Fragment key="gallery-weekly">
+        <WeeklyEditorial locale={locale} market={market} compact gallery />
+      </Fragment>
     </main>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { storefrontNavigationRoute } from "@/lib/storefront-navigation";
 
 export function StorefrontNavigationFrame({
@@ -30,7 +30,9 @@ export function StorefrontNavigationFrame({
       data-navigation-context={route.fitting ? "fitting" : "public"}
     >
       <div className="storefront-scroll" ref={scroll}>
-        {children}
+        {/* Give streamed children a separate work unit so they cannot suspend
+            the already-claimed scroll div during hydration replay. */}
+        <Fragment key="storefront-scroll-content">{children}</Fragment>
       </div>
     </div>
   );
