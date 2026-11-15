@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
 import { seedEditorialFixtures } from "../fixtures/editorial";
 import {
@@ -10,7 +10,27 @@ import {
 import { publishedEntry } from "@/modules/editorial/queries";
 import { saveWeeklyLook } from "@/modules/editorial/weekly";
 import { editorialContent } from "@/modules/editorial/contracts";
-import { resolveLookCommerce } from "@/modules/editorial/commerce";
+import { tokenHash } from "@/lib/secure-tokens";
+import {
+  addCuratedLook,
+  resolveLookCommerce,
+} from "@/modules/editorial/commerce";
+
+const request = vi.hoisted(() => ({
+  market: { id: "", currency: "" },
+  token: "",
+}));
+vi.mock("@/modules/auth", () => ({ auth: async () => null }));
+vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
+vi.mock("@/lib/request-context", () => ({
+  getRequestContext: async () => ({ market: request.market }),
+}));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    get: () => ({ value: request.token }),
+    set: vi.fn(),
+  }),
+}));
 
 describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
   "editorial PostgreSQL workflow",
@@ -29,9 +49,6 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
     afterAll(async () => {
       const entries = { in: ids };
       await db.weeklyLookFeature.deleteMany({ where: { entryId: entries } });
-      await db.auditLog.deleteMany({
-        where: { entityType: "EditorialEntry", entityId: entries },
-      });
       await db.curatedLookItem.deleteMany({
         where: { revision: { entryId: entries } },
       });
@@ -159,6 +176,52 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
           endsAt: new Date("2091-01-15T00:00:00Z"),
         }),
       ).resolves.toBeUndefined();
+    });
+    it("inserts the entire cart selection once and rejects unrelated or stale variants", async () => {
+      const look = await publishedEntry(
+        "LOOK",
+        { id: "fixture-editorial-easy-days" },
+        market,
+      );
+      if (!look || look.body.kind !== "LOOK") throw new Error("Wrong fixture");
+      request.market = await db.market.findUniqueOrThrow({
+        where: { id: market },
+      });
+      request.token = randomUUID();
+      const cart = await db.cart.create({
+        data: {
+          tokenHash: tokenHash(request.token),
+          marketId: market,
+          locale: "fa",
+          currency: request.market.currency,
+          expiresAt: new Date(Date.now() + 60_000),
+        },
+      });
+      const variants = look.body.items.map((item) => item.variantId);
+      try {
+        await expect(
+          addCuratedLook("fa", look.id, look.revision.id, [
+            variants[0],
+            "forged-variant",
+          ]),
+        ).rejects.toThrow();
+        expect(await db.cartItem.count({ where: { cartId: cart.id } })).toBe(0);
+        await expect(
+          addCuratedLook("fa", look.id, "old-revision", variants),
+        ).rejects.toThrow();
+        await addCuratedLook("fa", look.id, look.revision.id, variants);
+        await addCuratedLook("fa", look.id, look.revision.id, variants);
+        const items = await db.cartItem.findMany({
+          where: { cartId: cart.id },
+        });
+        expect(items.map(({ variantId }) => variantId).sort()).toEqual(
+          variants.sort(),
+        );
+        expect(items.every(({ quantity }) => quantity === 1)).toBe(true);
+      } finally {
+        await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+        await db.cart.delete({ where: { id: cart.id } });
+      }
     });
     it("retains other buyable pieces after one product stops appearing in the market", async () => {
       const { body } = await draft();

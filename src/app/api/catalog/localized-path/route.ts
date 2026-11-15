@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getRequestContext } from "@/lib/request-context";
+import { marketCodePattern } from "@/lib/storefront-path";
 import { parseSeoPath } from "@/lib/seo-urls";
 import { localizedStorefrontPath } from "@/modules/catalog/navigation";
 
@@ -13,6 +14,7 @@ const input = z.object({
       /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:(?:p|c|pages)\/[^/?#]+|(?:looks|magazine)(?:\/[^/?#]+)?)\/?$/,
     ),
   target: z.enum(["fa", "tr", "en"]),
+  destination: z.string().regex(marketCodePattern).optional(),
 });
 export async function GET(request: Request) {
   const parsed = input.safeParse(
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
   };
   if (!parsed.success)
     return NextResponse.json({ href: null }, { status: 400, headers });
-  const { pathname, target } = parsed.data;
+  const { pathname, target, destination } = parsed.data;
   const source = pathname.split("/")[1];
   const context = await getRequestContext(source);
   const route = parseSeoPath(pathname);
@@ -36,8 +38,12 @@ export async function GET(request: Request) {
           m.enabledLocales.includes(source),
       )
     : context.market;
-  const href = market
-    ? await localizedStorefrontPath(pathname, target, market)
-    : null;
+  const selected = destination
+    ? context.markets.find((m) => m.code === destination && m.isActive)
+    : market;
+  const href =
+    market && selected
+      ? await localizedStorefrontPath(pathname, target, market, selected)
+      : null;
   return NextResponse.json({ href }, { headers });
 }

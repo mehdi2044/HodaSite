@@ -1,3 +1,11 @@
+## MODA4 — گالری استایل‌های منتخب و مجله
+
+- ناوبری Checkout در یک کامیت مستقل فعال شده است. مسیر پرداخت سفارش و امکان غیرفعال‌کردن نوار از تنظیمات تم به قرارداد موجود متکی است.
+- گالری، مقاله، استایل هفته و اتاق پرو از هویت پایدار استایل و نسخه‌های محتوایی استفاده می‌کنند. خرید به SKU، قیمت بازار، قیمت‌گذاری Decimal، موجودی و مسیر اتمیک فعلی سبد متصل است. پروی فوری فقط قطعاتی را نمایش می‌دهد که قرارداد cutout فعلی برای مدل تأیید می‌کند.
+- در پنل از بخش محتوا پیش‌نویس بسازید، تاریخچه را باز کنید و نسخه را در یک زبان و بازار پیش‌نمایش دهید. انتشار و زمان‌بندی مجوز انتشار موجود را می‌خواهند و AuditLog ثبت می‌شود.
+- در یک دیتابیس آزمایشی تازه ابتدا migrations و seed معمول را اجرا کنید. برای داده‌های گالری روی همان محیط `pnpm exec tsx scripts/seed-editorial-preview.ts <test_db>` را اجرا کنید. این fixture فقط برای داده‌های Seed است. مسیر CSV/Excel و برنامهٔ بازگشت در [قرارداد این مرحله](phases/phase-design-01-editorial.md) آمده است.
+- ادغام به پذیرش بصری مهدی و شروط D70 وابسته است.
+
 ## M1 — Easy Days and the Kids card
 
 - Easy Days uses the existing Sam cotton tee in ivory, the Sepehr overshirt, and the Bardia chinos. Its photo, size selectors, live market prices and purchase action use the same scene. The CMS can reorder scene pieces. Existing merchant content still goes through draft, photo confirmation and publication.

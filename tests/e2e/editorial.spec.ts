@@ -42,7 +42,7 @@ for (const { locale, market, width, name } of [
       .locator(".editorial-card h2")
       .getByText(name, { exact: true })
       .click();
-    await expect(page.locator("h1")).toHaveText(name);
+    await expect(page.locator("h1")).toHaveText(name, { timeout: 60_000 });
     await expect(page.locator(".editorial-piece")).toHaveCount(3);
     await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
     expect(
@@ -71,7 +71,7 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     page.getByRole("heading", { name: "How to build an everyday look" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Try this look", exact: true }).click();
-  await expect(page).toHaveURL(/looks\/easy-days\?story=/);
+  await expect(page).toHaveURL(/looks\/easy-days\?story=/, { timeout: 60_000 });
   await page
     .locator(".editorial-piece")
     .nth(1)

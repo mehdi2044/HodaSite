@@ -53,6 +53,8 @@ export function LocaleSwitcher({
       "color",
       "sort",
       "archive",
+      "min",
+      "max",
       "page",
     ])
       for (const value of query.getAll(key)) keep.append(key, value);

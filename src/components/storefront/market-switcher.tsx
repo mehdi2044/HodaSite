@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { parseSeoPath, switchedMarketPath } from "@/lib/seo-urls";
+import { parseSeoPath, seoPath, switchedMarketPath } from "@/lib/seo-urls";
 import { isMarketContextPath } from "@/lib/storefront-path";
 
 const YEAR = 60 * 60 * 24 * 365;
@@ -44,12 +44,41 @@ export function MarketSwitcher({
       if (route.market !== current) window.location.reload();
     }
   }, [pathname, markets, current]);
-  function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const code = e.target.value;
-    document.cookie = `market=${code}; path=/; max-age=${YEAR}`;
     const url = new URL(window.location.href);
     const market = markets.find((m) => m.code === code && m.isActive);
-    const path = market && switchedMarketPath(url.pathname, market);
+    if (!market) return;
+    const route = parseSeoPath(url.pathname);
+    const editorial = /^\/(fa|tr|en)\/(looks|magazine)(?:\/|$)/.exec(
+      route?.target ?? url.pathname,
+    );
+    if (editorial) {
+      const lang = market.enabledLocales.includes(editorial[1])
+        ? editorial[1]
+        : market.defaultLocale;
+      const kind = editorial[2] === "looks" ? "looks" : "magazine";
+      let path = seoPath(lang, code, kind);
+      try {
+        const query = new URLSearchParams({
+          pathname: url.pathname,
+          target: lang,
+          destination: code,
+        });
+        const result = await fetch(`/api/catalog/localized-path?${query}`);
+        const data: { href?: string } = result.ok ? await result.json() : {};
+        if (data.href?.startsWith(path)) path = data.href;
+      } catch {
+        // The destination listing remains reachable when the slug lookup fails.
+      }
+      url.pathname = path;
+      for (const key of ["min", "max", "market", "story"])
+        url.searchParams.delete(key);
+      window.location.assign(url);
+      return;
+    }
+    document.cookie = `market=${code}; path=/; max-age=${YEAR}`;
+    const path = switchedMarketPath(url.pathname, market);
     if (path) {
       url.pathname = path;
       url.searchParams.delete("market");

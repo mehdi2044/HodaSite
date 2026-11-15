@@ -72,15 +72,36 @@ export async function getSitemapPage(code: string, kind: string, part: string) {
   if (!market) return null;
   if (!config.indexingEnabled) return document("urlset", "");
   if (kind === "looks" || kind === "magazine") {
-    const entries = await publishedEntries(kind === "looks" ? "LOOK" : "ARTICLE", market.id);
-    const rows = [{ slugFa: "", slugTr: "", slugEn: "", updatedAt: site?.updatedAt ?? market.updatedAt },
+    const entries = await publishedEntries(
+      kind === "looks" ? "LOOK" : "ARTICLE",
+      market.id,
+    );
+    const rows = [
+      {
+        slugFa: "",
+        slugTr: "",
+        slugEn: "",
+        updatedAt: site?.updatedAt ?? market.updatedAt,
+      },
       ...entries.map((e) => ({ ...e, updatedAt: e.revision.updatedAt })),
     ].slice(page * SIZE, (page + 1) * SIZE);
-    return document("urlset", rows.flatMap((row) => SEO_LOCALES.filter((locale) => market.enabledLocales.includes(locale)).map((locale) => {
-      const slug = { fa: row.slugFa, tr: row.slugTr, en: row.slugEn }[locale];
-      const url = config.origin + seoPath(locale, market.code, kind, slug);
-      return `<url><loc>${xmlEscape(url)}</loc><lastmod>${row.updatedAt.toISOString()}</lastmod></url>`;
-    })).join(""));
+    return document(
+      "urlset",
+      rows
+        .flatMap((row) =>
+          SEO_LOCALES.filter((locale) =>
+            market.enabledLocales.includes(locale),
+          ).map((locale) => {
+            const slug = { fa: row.slugFa, tr: row.slugTr, en: row.slugEn }[
+              locale
+            ];
+            const url =
+              config.origin + seoPath(locale, market.code, kind, slug);
+            return `<url><loc>${xmlEscape(url)}</loc><lastmod>${row.updatedAt.toISOString()}</lastmod></url>`;
+          }),
+        )
+        .join(""),
+    );
   }
   const pagination = {
     orderBy: { id: "asc" as const },
