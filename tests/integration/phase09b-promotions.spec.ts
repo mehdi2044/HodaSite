@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  afterAll,
   afterEach,
   beforeAll,
   beforeEach,
@@ -290,6 +291,14 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: { in: taxonomyFixtures.collections.splice(0) } },
           data: { deletedAt: new Date() },
         });
+    });
+    afterAll(async () => {
+      // These markets must be live for promotion quotes, but should not become
+      // storefront fallback markets for the remaining integration suites.
+      await db.market.updateMany({
+        where: { id: { in: [marketId, otherMarket].filter(Boolean) } },
+        data: { isActive: false },
+      });
     });
 
     it.each(["denied", "inactive", "anonymous", "wrong-market"])(
