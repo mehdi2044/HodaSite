@@ -21,7 +21,7 @@ for (const { locale, market, width, name } of [
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width, height: 900 });
-    await page.goto(`/${locale}/m/${market}`);
+    await page.goto(`/${locale}/m/${market}`, { waitUntil: "commit" });
     const section = page.locator(".editorial-home");
     await expect(section.locator(".editorial-card h2")).toHaveText(name);
     await section.locator('a[href$="/looks"]').click();
@@ -66,7 +66,7 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     if (/hydrati|Minified React error #41[89]/i.test(m.text()))
       errors.push(m.text());
   });
-  await page.goto("/en/m/CA/magazine/everyday-look");
+  await page.goto("/en/m/CA/magazine/everyday-look", { waitUntil: "commit" });
   await expect(
     page.getByRole("heading", { name: "How to build an everyday look" }),
   ).toBeVisible();
@@ -101,12 +101,12 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
   const fitting = await page
     .getByRole("link", { name: "Try this look", exact: true })
     .getAttribute("href");
-  await page.goto("/en/cart?market=CA");
+  await page.goto("/en/cart?market=CA", { waitUntil: "commit" });
   const quantities = page.locator('main input[type="number"][name="quantity"]');
   await expect(quantities).toHaveCount(3);
   for (const quantity of await quantities.all())
     await expect(quantity).toHaveValue("1");
-  await page.goto("/en/checkout?market=CA");
+  await page.goto("/en/checkout?market=CA", { waitUntil: "commit" });
   await expect(page.locator(".shop-checkout-piece")).toHaveCount(3);
   await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
   const address = page
@@ -119,7 +119,7 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     fullPage: true,
   });
   expect(fitting).toContain("variants=");
-  await page.goto(fitting!);
+  await page.goto(fitting!, { waitUntil: "commit" });
   await expect(
     page.getByRole("link", { name: "Back to the article" }),
   ).toHaveAttribute("href", "/en/m/CA/magazine/everyday-look");
@@ -139,7 +139,7 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
 }) => {
   const slug = `qa-editorial-${randomUUID()}`;
   const name = "QA editorial look";
-  await page.goto("/admin/login");
+  await page.goto("/admin/login", { waitUntil: "commit" });
   await page
     .locator('[name="email"]')
     .fill(process.env.ADMIN_EMAIL ?? "owner@example.com");
@@ -149,7 +149,7 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
   await fillAdminMfa(page);
   await page.getByRole("button", { name: "ورود امن" }).click();
   await expect(page).toHaveURL(/\/admin$/);
-  await page.goto("/admin/content/editorial/new");
+  await page.goto("/admin/content/editorial/new", { waitUntil: "commit" });
   for (const language of ["fa", "tr", "en"])
     await page.locator(`[name="slug-${language}"]`).fill(slug);
   const editor = page
@@ -204,7 +204,7 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
       },
     }),
   ).toBe(2);
-  await page.goto("/admin/content/editorial/weekly");
+  await page.goto("/admin/content/editorial/weekly", { waitUntil: "commit" });
   await page.locator('select[name="id"]').selectOption(entry.id);
   await page.locator('select[name="slot"]').selectOption("WOMEN");
   const year = new Date().getUTCFullYear() + 2;
@@ -219,7 +219,9 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
       where: { entryId: entry.id, slot: "WOMEN" },
     }),
   ).toBe(1);
-  await page.goto(`/admin/content/editorial/${entry.id}`);
+  await page.goto(`/admin/content/editorial/${entry.id}`, {
+    waitUntil: "commit",
+  });
   await page.getByRole("button", { name: "بایگانی و پایان نمایش" }).click();
   await expect
     .poll(async () => (await request.get(publicUrl)).status(), {
