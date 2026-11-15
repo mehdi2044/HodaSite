@@ -13,7 +13,7 @@ import { quoteSavedCart } from "@/modules/fees";
 import { currentCustomer } from "@/modules/customers";
 import { CartDrawer } from "./cart-drawer";
 import { db } from "@/lib/db";
-import type { Market } from "@/lib/request-context";
+import { marketOptions, type Market } from "@/lib/request-context";
 import { LocaleSwitcher } from "./locale-switcher";
 import { MarketSwitcher } from "./market-switcher";
 import { ResponsiveImage } from "./responsive-image";
@@ -154,7 +154,7 @@ export async function Header({
                   {t("mobileStorefront.market")}
                   <MarketSwitcher
                     current={market.code}
-                    markets={markets}
+                    markets={marketOptions(markets)}
                     ariaLabel={t("mobileStorefront.market")}
                   />
                 </label>

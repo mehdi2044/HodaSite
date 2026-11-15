@@ -1,6 +1,6 @@
 import { currentServicePolicy } from "@/modules/content/service-policy";
 import { ServicePolicySummary } from "./service-policy";
-import type { Market } from "@/lib/request-context";
+import { marketOptions, type Market } from "@/lib/request-context";
 import { isSafeLink } from "@/modules/content";
 import { storefrontMenuHref } from "@/lib/storefront-path";
 import { LocaleSwitcher } from "./locale-switcher";
@@ -63,7 +63,7 @@ export async function AnnouncementBar({
         />
         <MarketSwitcher
           current={market.code}
-          markets={markets}
+          markets={marketOptions(markets)}
           ariaLabel={t("market.chooseMarket")}
         />
       </div>

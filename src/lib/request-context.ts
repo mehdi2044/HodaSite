@@ -3,6 +3,19 @@ import { getMarkets } from "@/modules/settings";
 
 export type Market = Awaited<ReturnType<typeof getMarkets>>[number];
 
+/** Public routing controls only need these fields across the RSC boundary. */
+export function marketOptions(markets: Market[]) {
+  return markets.map(
+    ({ code, name, isActive, enabledLocales, defaultLocale }) => ({
+      code,
+      name,
+      isActive,
+      enabledLocales,
+      defaultLocale,
+    }),
+  );
+}
+
 const DEFAULT_MARKET_BY_LOCALE: Record<string, string> = {
   fa: "IR",
   tr: "TR",
