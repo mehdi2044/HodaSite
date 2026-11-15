@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import { seedEditorialFixtures } from "../fixtures/editorial";
 import { fillAdminMfa } from "./helpers/admin-mfa";
@@ -9,6 +9,13 @@ test.beforeAll(async () => {
   await seedEditorialFixtures(db);
 });
 test.afterAll(async () => db.$disconnect());
+
+async function clickInScrollPane(locator: Locator) {
+  await locator.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
+  await locator.click();
+}
 
 for (const { locale, market, width, name } of [
   { locale: "fa", market: "IR", width: 390, name: "روزهای راحت" },
@@ -22,9 +29,14 @@ for (const { locale, market, width, name } of [
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`/${locale}/m/${market}`, { waitUntil: "commit" });
+    expect(
+      await page
+        .locator(".storefront-scroll")
+        .evaluate((pane) => pane.clientHeight),
+    ).toBeGreaterThan(600);
     const section = page.locator(".editorial-home");
     await expect(section.locator(".editorial-card h2")).toHaveText(name);
-    await section.locator('a[href$="/looks"]').click();
+    await clickInScrollPane(section.locator('a[href$="/looks"]'));
     await expect(page).toHaveURL(new RegExp(`/${locale}/m/${market}/looks$`), {
       timeout: 60_000,
     });
@@ -34,13 +46,17 @@ for (const { locale, market, width, name } of [
       path: info.outputPath(`gallery-${width}.png`),
       fullPage: true,
     });
-    await page.locator(".editorial-filter-panel summary").click();
+    await clickInScrollPane(page.locator(".editorial-filter-panel summary"));
     await page.locator('select[name="audience"]').selectOption("MEN");
     await page.locator('select[name="season"]').selectOption("SPRING");
-    await page.locator(".lookbook .editorial-filters button").click();
+    await clickInScrollPane(
+      page.locator(".lookbook .editorial-filters button"),
+    );
     await expect(page).toHaveURL(/audience=MEN/, { timeout: 60_000 });
     await expect(cards).toHaveCount(3);
-    await cards.locator("h2").getByText(name, { exact: true }).click();
+    await clickInScrollPane(
+      cards.locator("h2").getByText(name, { exact: true }),
+    );
     await expect(page.locator("h1")).toHaveText(name, { timeout: 60_000 });
     await expect(page.locator(".editorial-piece")).toHaveCount(3);
     await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
@@ -127,10 +143,11 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
       .locator(".article-shop")
       .getByRole("link", { name: "Try this look", exact: true }),
   ).toHaveAttribute("href", /fitting-room\?look=/);
-  await page
-    .locator(".article-shop")
-    .getByRole("link", { name: "View look", exact: true })
-    .click();
+  await clickInScrollPane(
+    page
+      .locator(".article-shop")
+      .getByRole("link", { name: "View look", exact: true }),
+  );
   await expect(page).toHaveURL(/looks\/easy-days\?story=/, { timeout: 60_000 });
   const pieces = page.locator(".editorial-piece");
   await expect(pieces).toHaveCount(3);
@@ -148,17 +165,16 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     ).toBeEnabled();
   }
   await expect(page.locator(".editorial-total bdi")).toContainText(/[0-9]/);
-  await page
-    .getByRole("button", { name: "Add piece", exact: true })
-    .first()
-    .click();
+  await clickInScrollPane(
+    page.getByRole("button", { name: "Add piece", exact: true }).first(),
+  );
   await expect(
     page.getByRole("status").filter({ hasText: "Added to your bag." }),
   ).toBeVisible();
   const add = page.getByRole("button", { name: "Add available pieces" });
-  await add.click();
+  await clickInScrollPane(add);
   await expect(add).toBeEnabled();
-  await add.click();
+  await clickInScrollPane(add);
   await expect(add).toBeEnabled();
   const fitting = await page
     .getByRole("link", { name: "Try this look", exact: true })
@@ -175,6 +191,10 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
     .locator("form")
     .filter({ has: page.locator('[name="firstName"]') });
   await expect(address.getByRole("button").last()).toBeVisible();
+  await address
+    .getByRole("button")
+    .last()
+    .evaluate((element) => element.scrollIntoView({ block: "center" }));
   await address.getByRole("button").last().click({ trial: true });
   await page.screenshot({
     path: info.outputPath("checkout-dock-390.png"),
