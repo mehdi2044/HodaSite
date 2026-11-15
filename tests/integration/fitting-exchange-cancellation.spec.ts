@@ -408,6 +408,12 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         barrier.release();
         await Promise.allSettled([saving, approving]);
         barrier.restore();
+        await db.$transaction([
+          db.integration.deleteMany({ where: { key: previous.key } }),
+          db.integration.create({
+            data: { ...previous, config: previous.config ?? {} },
+          }),
+        ]);
       }
     });
     it.each([false, true])(
