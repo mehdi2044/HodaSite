@@ -3045,6 +3045,17 @@
     "motionReduced": "Azaltılmış hareket; giysiler görünür kalır"
   },
   "editorial": {
+    "visualMode": "Kombin görseli",
+    "composition": "Parça düzeni",
+    "photoMatch": "Fotoğrafı ve tüm parça renklerini seçilen SKU'larla karşılaştırdım",
+    "relatedArticle": "İlgili yazı",
+    "filters": "Filtreler",
+    "toman": "tümen",
+    "featuredArticle": "Öne çıkan yazı",
+    "shopPieces": "Kombinin parçalarını incele",
+    "inStock": "Stokta",
+    "languages": "Yazı dilleri",
+    "replaceWeekly": "Bir planı değiştir",
     "gallery": "Seçkin kombinler",
     "magazine": "Moda ve stil dergisi",
     "weekly": "Haftanın kombini",

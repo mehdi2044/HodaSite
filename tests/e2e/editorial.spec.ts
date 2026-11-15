@@ -28,20 +28,19 @@ for (const { locale, market, width, name } of [
     await expect(page).toHaveURL(new RegExp(`/${locale}/m/${market}/looks$`), {
       timeout: 60_000,
     });
-    await expect(page.locator(".editorial-card")).toHaveCount(12);
+    const cards = page.locator(".lookbook > .editorial-grid .look-card");
+    await expect(cards).toHaveCount(10);
     await page.screenshot({
       path: info.outputPath(`gallery-${width}.png`),
       fullPage: true,
     });
+    await page.locator(".editorial-filter-panel summary").click();
     await page.locator('select[name="audience"]').selectOption("MEN");
     await page.locator('select[name="season"]').selectOption("SPRING");
-    await page.locator(".editorial-filters button").click();
+    await page.locator(".lookbook .editorial-filters button").click();
     await expect(page).toHaveURL(/audience=MEN/, { timeout: 60_000 });
-    await expect(page.locator(".editorial-card")).toHaveCount(3);
-    await page
-      .locator(".editorial-card h2")
-      .getByText(name, { exact: true })
-      .click();
+    await expect(cards).toHaveCount(3);
+    await cards.locator("h2").getByText(name, { exact: true }).click();
     await expect(page.locator("h1")).toHaveText(name, { timeout: 60_000 });
     await expect(page.locator(".editorial-piece")).toHaveCount(3);
     await expect(page.getByTestId("mobile-bottom-navigation")).toBeVisible();
@@ -55,6 +54,58 @@ for (const { locale, market, width, name } of [
     expect(errors).toEqual([]);
   });
 }
+
+test("hydrates the server-rendered gallery results without replacing their wrapper", async ({
+  page,
+}) => {
+  const failures: string[] = [];
+  page.on("pageerror", (error) => failures.push(error.message));
+  page.on("console", (message) => {
+    if (/hydrati|Minified React error #41[89]/i.test(message.text()))
+      failures.push(message.text());
+  });
+  let clientChunks = Promise.resolve();
+  await page.route(
+    /\/_next\/static\/chunks\/.*\.js(?:\?|$)/,
+    async (request) => {
+      await clientChunks;
+      await request.continue();
+    },
+  );
+
+  for (const [route, count] of [
+    ["/tr/m/TR/looks", 10],
+    ["/tr/m/TR/looks?audience=MEN", 3],
+    ["/tr/m/TR/looks?audience=GIRLS&max=1", 0],
+  ] as const) {
+    let hydrate: () => void = () => {};
+    clientChunks = new Promise<void>((resolve) => {
+      hydrate = resolve;
+    });
+    const wrapper = page.locator("#look-results");
+    const serverNode = await (async () => {
+      try {
+        await page.goto(route, { waitUntil: "commit" });
+        await expect(wrapper).toHaveCount(1);
+        await expect(wrapper.locator(".look-card")).toHaveCount(count);
+        return await wrapper.elementHandle();
+      } finally {
+        hydrate();
+      }
+    })();
+    await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+    expect(
+      await serverNode.evaluate(
+        (node) => node === document.getElementById("look-results"),
+      ),
+    ).toBe(true);
+    await serverNode.dispose();
+    await expect(page.locator("#look-results .editorial-empty")).toHaveCount(
+      count ? 0 : 1,
+    );
+  }
+  expect(failures).toEqual([]);
+});
 
 test("story, color and sizes, idempotent set purchase, checkout and fitting preset", async ({
   page,
@@ -70,7 +121,16 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
   await expect(
     page.getByRole("heading", { name: "How to build an everyday look" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Try this look", exact: true }).click();
+  await expect(page.locator(".article-skus li[data-sku]")).toHaveCount(3);
+  await expect(
+    page
+      .locator(".article-shop")
+      .getByRole("link", { name: "Try this look", exact: true }),
+  ).toHaveAttribute("href", /fitting-room\?look=/);
+  await page
+    .locator(".article-shop")
+    .getByRole("link", { name: "View look", exact: true })
+    .click();
   await expect(page).toHaveURL(/looks\/easy-days\?story=/, { timeout: 60_000 });
   const pieces = page.locator(".editorial-piece");
   await expect(pieces).toHaveCount(3);
@@ -169,11 +229,21 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
   await editor.getByRole("button", { name: "افزودن قطعه" }).click();
   const variant = editor.getByLabel("محصول و تنوع پیشنهادی");
   const real = await variant
+    .first()
     .locator("option")
     .filter({ hasText: /Bardia|بردیا/ })
     .first()
     .getAttribute("value");
-  await variant.selectOption(real!);
+  await variant.first().selectOption(real!);
+  await editor.getByRole("button", { name: "افزودن قطعه" }).click();
+  const second = await variant
+    .last()
+    .locator("option")
+    .filter({ hasText: /Sarv|سرو/ })
+    .first()
+    .getAttribute("value");
+  await variant.last().selectOption(second!);
+  await editor.getByRole("radio", { name: "چیدمان قطعات" }).check();
   await editor.getByRole("button", { name: "ذخیرهٔ پیش‌نویس" }).click();
   await expect(page).toHaveURL(/\/admin\/content\/editorial\/(?!new)[\w-]+$/);
   const publicUrl = `/fa/m/IR/looks/${slug}`;
@@ -207,7 +277,7 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
   await page.goto("/admin/content/editorial/weekly", { waitUntil: "commit" });
   await page.locator('select[name="id"]').selectOption(entry.id);
   await page.locator('select[name="slot"]').selectOption("WOMEN");
-  const year = new Date().getUTCFullYear() + 2;
+  const year = 2088;
   await page.locator('[name="start"]').fill(`${year}-01-03T10:00`);
   await page.locator('[name="end"]').fill(`${year}-01-10T10:00`);
   await page.getByRole("button", { name: "ثبت برنامه" }).click();
@@ -219,6 +289,22 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
       where: { entryId: entry.id, slot: "WOMEN" },
     }),
   ).toBe(1);
+  const assignment = await db.weeklyLookFeature.findFirstOrThrow({
+    where: { entryId: entry.id, slot: "WOMEN" },
+  });
+  await page.locator('select[name="id"]').selectOption(entry.id);
+  await page.locator('select[name="slot"]').selectOption("WOMEN");
+  await page.locator('select[name="replaceId"]').selectOption(assignment.id);
+  await page.locator('[name="start"]').fill(`${year}-01-04T10:00`);
+  await page.locator('[name="end"]').fill(`${year}-01-11T10:00`);
+  await page.getByRole("button", { name: "ثبت برنامه" }).click();
+  await expect
+    .poll(async () =>
+      (
+        await db.weeklyLookFeature.findUnique({ where: { id: assignment.id } })
+      )?.startsAt.toISOString(),
+    )
+    .toBe(`${year}-01-04T07:00:00.000Z`);
   await page.goto(`/admin/content/editorial/${entry.id}`, {
     waitUntil: "commit",
   });

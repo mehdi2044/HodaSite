@@ -16,6 +16,7 @@ import {
 } from "@/modules/editorial/queries";
 import { WeeklyEditorial } from "@/components/storefront/weekly-editorial";
 import { EditorialImage } from "@/components/storefront/editorial-image";
+import { LookComposition } from "@/components/storefront/look-visual";
 
 export async function generateMetadata({
   params,
@@ -102,6 +103,15 @@ export default async function MagazinePage({
     ]),
   );
   const path = seoPath(locale, market.code, "magazine");
+  const reference = featured?.body.blocks.find(
+    (block) => block.type === "LOOK",
+  );
+  const featureVisual =
+    reference?.type === "LOOK"
+      ? (await publishedEntries("LOOK", market.id)).find(
+          ({ id }) => id === reference.id,
+        )?.visual
+      : null;
   function article(entry: (typeof rows)[number], prominent = false) {
     const href = seoPath(
       locale,
@@ -116,21 +126,33 @@ export default async function MagazinePage({
         }
         key={entry.id}
       >
-        <Link href={href} aria-label={entry.body.title[locale]}>
-          <EditorialImage
-            desktop={images.find((image) => image.id === entry.body.mediaId)}
-            mobile={images.find(
-              (image) => image.id === entry.body.mobileMediaId,
-            )}
-            focal={entry.body.focal}
-            locale={locale}
-            priority={prominent}
-          />
+        <Link
+          className="magazine-artwork"
+          href={href}
+          aria-label={entry.body.title[locale]}
+        >
+          {prominent && featureVisual?.pieces.every(({ image }) => image) ? (
+            <LookComposition
+              visual={featureVisual}
+              locale={locale}
+              label={t("composition")}
+            />
+          ) : (
+            <EditorialImage
+              desktop={images.find((image) => image.id === entry.body.mediaId)}
+              mobile={images.find(
+                (image) => image.id === entry.body.mobileMediaId,
+              )}
+              focal={entry.body.focal}
+              locale={locale}
+              priority={prominent}
+            />
+          )}
         </Link>
         <div className="editorial-card-copy">
           <p className="editorial-kicker">
-            {t(`facet.${entry.body.category}`)} ·{" "}
-            {t(`facet.${entry.body.audience}`)}
+            {t(prominent ? "featuredArticle" : `facet.${entry.body.category}`)}{" "}
+            · {t(`facet.${entry.body.audience}`)}
           </p>
           <h2>
             <Link href={href}>{entry.body.title[locale]}</Link>
@@ -152,8 +174,8 @@ export default async function MagazinePage({
     return `${path}?${query}`;
   }
   return (
-    <main className="shell editorial-page">
-      <header className="editorial-heading">
+    <main className="shell editorial-page magazine-page">
+      <header className="editorial-mast">
         <Link href={seoPath(locale, market.code, "looks")}>{t("gallery")}</Link>
         <h1>{t("magazine")}</h1>
       </header>
@@ -161,61 +183,84 @@ export default async function MagazinePage({
         <WeeklyEditorial locale={locale} market={market} archive />
       ) : (
         <>
-          {featured && article(featured, true)}
-          {!filtered && <WeeklyEditorial locale={locale} market={market} />}
-          <nav className="editorial-link-row" aria-label={t("audience")}>
-            {audiences.map((value) => (
-              <Link href={`${path}?audience=${value}`} key={value}>
-                {t(`facet.${value}`)}
-              </Link>
-            ))}
-          </nav>
-          <form className="editorial-filters" action={path}>
-            <label>
-              {t("search")}
-              <input
-                className="input"
-                name="q"
-                defaultValue={term}
-                type="search"
+          {!filtered && offset === 0 && (
+            <div className="magazine-lead">
+              {featured && article(featured, true)}
+              <WeeklyEditorial
+                locale={locale}
+                market={market}
+                compact
+                magazine
               />
-            </label>
-            <label>
-              {t("category")}
-              <select
-                className="input"
-                name="category"
-                defaultValue={categoryFilter ?? ""}
-              >
-                <option value="">{t("all")}</option>
-                {articleCategories.map((value) => (
-                  <option key={value} value={value}>
-                    {t(`facet.${value}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              {t("audience")}
-              <select
-                className="input"
-                name="audience"
-                defaultValue={audienceFilter ?? ""}
-              >
-                <option value="">{t("all")}</option>
-                {audiences.map((value) => (
-                  <option key={value} value={value}>
-                    {t(`facet.${value}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button">{t("filter")}</button>
-          </form>
+            </div>
+          )}
+          <nav className="editorial-tabs" aria-label={t("category")}>
+            <Link href={path} aria-current={!filtered ? "page" : undefined}>
+              {t("all")}
+            </Link>
+            {articleCategories
+              .filter((value) =>
+                rows.some(({ body }) => body.category === value),
+              )
+              .map((value) => (
+                <Link
+                  href={`${path}?category=${value}`}
+                  key={value}
+                  aria-current={value === categoryFilter ? "page" : undefined}
+                >
+                  {t(`facet.${value}`)}
+                </Link>
+              ))}
+          </nav>
+          <details className="editorial-filter-panel magazine-filter">
+            <summary>{t("filters")}</summary>
+            <form className="editorial-filters" action={path}>
+              <label>
+                {t("search")}
+                <input
+                  className="input"
+                  name="q"
+                  defaultValue={term}
+                  type="search"
+                />
+              </label>
+              <label>
+                {t("category")}
+                <select
+                  className="input"
+                  name="category"
+                  defaultValue={categoryFilter ?? ""}
+                >
+                  <option value="">{t("all")}</option>
+                  {articleCategories.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`facet.${value}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {t("audience")}
+                <select
+                  className="input"
+                  name="audience"
+                  defaultValue={audienceFilter ?? ""}
+                >
+                  <option value="">{t("all")}</option>
+                  {audiences.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`facet.${value}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="button">{t("filter")}</button>
+            </form>
+          </details>
           <section className="editorial-section">
             <h2>{t(archive ? "archiveTitle" : "latest")}</h2>
             {latest.length > 0 ? (
-              <div className="editorial-grid">
+              <div className="editorial-grid magazine-stories">
                 {latest.map((entry) => article(entry))}
               </div>
             ) : (

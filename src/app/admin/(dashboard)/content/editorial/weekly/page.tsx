@@ -32,7 +32,18 @@ export default async function WeeklyAdmin() {
   return (
     <section className="grid gap-4">
       <h1 className="text-2xl font-semibold">{t("weekly")}</h1>
-      {editable && <WeeklyEditor action={scheduleWeekly} looks={entries} />}
+      {editable && (
+        <WeeklyEditor
+          action={scheduleWeekly}
+          looks={entries}
+          assignments={assignments
+            .filter(({ endsAt }) => endsAt > new Date())
+            .map((row) => ({
+              id: row.id,
+              label: `${row.entry.slugEn} · ${t(`facet.${row.slot}`)} · ${time.formatRange(row.startsAt, row.endsAt)}`,
+            }))}
+        />
+      )}
       {assignments.length ? (
         <ul>
           {assignments.map((assignment) => (

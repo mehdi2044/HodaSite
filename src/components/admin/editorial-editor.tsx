@@ -16,7 +16,12 @@ import {
   type LookContent,
 } from "@/modules/editorial/contracts";
 
-type VariantOption = { productId: string; variantId: string; label: string };
+type VariantOption = {
+  productId: string;
+  variantId: string;
+  colorId: string;
+  label: string;
+};
 export function EditorialEditor({
   initial,
   identity,
@@ -167,7 +172,21 @@ export function EditorialEditor({
   }
   function items(look: LookContent) {
     const updateItems = (items: LookContent["items"]) =>
-      update({ ...look, items });
+      update({
+        ...look,
+        items,
+        visual:
+          look.visual?.mode === "PHOTO" &&
+          (items.length !== look.items.length ||
+            items.some(
+              (item) =>
+                !look.items.some(
+                  ({ variantId }) => variantId === item.variantId,
+                ),
+            ))
+            ? undefined
+            : look.visual,
+      });
     return (
       <fieldset className="grid gap-3">
         <legend>{t("pieces")}</legend>
@@ -379,12 +398,24 @@ export function EditorialEditor({
       )}
       {image(
         body.mediaId,
-        (mediaId) => update({ ...body, mediaId }),
+        (mediaId) =>
+          update(
+            body.kind === "LOOK" && body.visual?.mode === "PHOTO"
+              ? { ...body, mediaId, visual: undefined }
+              : { ...body, mediaId },
+          ),
         t("image"),
       )}
       {image(
         body.mobileMediaId,
-        (value) => update({ ...body, mobileMediaId: value || undefined }),
+        (value) => {
+          const mobileMediaId = value || undefined;
+          update(
+            body.kind === "LOOK" && body.visual?.mode === "PHOTO"
+              ? { ...body, mobileMediaId, visual: undefined }
+              : { ...body, mobileMediaId },
+          );
+        },
         t("mobileImage"),
       )}
       {coordinates(body.focal, t("focal"), (focal) =>
@@ -454,6 +485,57 @@ export function EditorialEditor({
             update({ ...body, color }),
           )}
           {items(body)}
+          <fieldset className="grid gap-2">
+            <legend>{t("visualMode")}</legend>
+            <label>
+              <input
+                type="radio"
+                name="visual-mode"
+                checked={body.visual?.mode === "COMPOSITE"}
+                onChange={() =>
+                  update({ ...body, visual: { mode: "COMPOSITE" } })
+                }
+              />{" "}
+              {t("composition")}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={body.visual?.mode === "PHOTO"}
+                disabled={
+                  !body.mediaId ||
+                  body.items.length < 2 ||
+                  body.items.some(
+                    ({ variantId }) =>
+                      !variants.some(
+                        (variant) => variant.variantId === variantId,
+                      ),
+                  )
+                }
+                onChange={(event) =>
+                  update({
+                    ...body,
+                    visual: event.target.checked
+                      ? {
+                          mode: "PHOTO",
+                          mediaId: body.mediaId,
+                          mobileMediaId: body.mobileMediaId,
+                          pieces: body.items.flatMap(({ variantId }) => {
+                            const variant = variants.find(
+                              (option) => option.variantId === variantId,
+                            );
+                            return variant
+                              ? [{ variantId, colorId: variant.colorId }]
+                              : [];
+                          }),
+                        }
+                      : undefined,
+                  })
+                }
+              />{" "}
+              {t("photoMatch")}
+            </label>
+          </fieldset>
         </>
       ) : (
         <>

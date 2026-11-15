@@ -5,6 +5,7 @@ import { withMutation } from "@/lib/mutation-gate";
 import { RevisionConflictError } from "@/lib/revision-conflict";
 import { assertCan } from "@/modules/access";
 import { lockMediaReferences } from "@/modules/media/reference-lock";
+import { resolveLookVisuals } from "./visual";
 import {
   editorialContent,
   entrySlugs,
@@ -77,6 +78,25 @@ async function validateReferences(
   )
     throw new z.ZodError([]);
   if (content.kind === "LOOK") {
+    if (publish) {
+      const [visual] = await resolveLookVisuals(
+        [content],
+        markets.map(({ id }) => id),
+        tx,
+      );
+      if (!visual) throw new z.ZodError([]);
+      if (visual.mode === "COMPOSITE") {
+        await lockMediaReferences(
+          tx,
+          [
+            ...new Set(
+              visual.pieces.flatMap(({ image }) => (image ? [image.id] : [])),
+            ),
+          ],
+          { readyImages: true },
+        );
+      }
+    }
     const variants = await tx.variant.findMany({
       where: {
         id: { in: content.items.map((item) => item.variantId) },

@@ -5,22 +5,29 @@ import { z } from "zod";
 import { audiences, colors, occasions, seasons, styles } from "./contracts";
 import { publishedEntries } from "./queries";
 
+const galleryAmount = z
+  .string()
+  .max(40)
+  .transform((value) =>
+    value
+      .trim()
+      .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
+      .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+      .replace(/٬/g, "")
+      .replace("٫", "."),
+  )
+  .pipe(z.string().regex(/^\d{1,14}(?:\.\d{1,4})?$/))
+  .optional()
+  .catch(undefined);
+
 export const galleryFilters = z.object({
   audience: z.enum(audiences).optional().catch(undefined),
   season: z.enum(seasons).optional().catch(undefined),
   occasion: z.enum(occasions).optional().catch(undefined),
   style: z.enum(styles).optional().catch(undefined),
   color: z.enum(colors).optional().catch(undefined),
-  min: z
-    .string()
-    .regex(/^\d{1,14}(?:\.\d{1,4})?$/)
-    .optional()
-    .catch(undefined),
-  max: z
-    .string()
-    .regex(/^\d{1,14}(?:\.\d{1,4})?$/)
-    .optional()
-    .catch(undefined),
+  min: galleryAmount,
+  max: galleryAmount,
   sort: z.enum(["newest", "popular", "featured"]).catch("newest"),
   page: z.coerce.number().int().min(1).max(100000).catch(1),
 });

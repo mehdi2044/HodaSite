@@ -84,6 +84,26 @@ export const editorialContent = z.discriminatedUnion("kind", [
       occasion: z.enum(occasions),
       style: z.enum(styles),
       color: z.enum(colors),
+      visual: z
+        .discriminatedUnion("mode", [
+          z.object({ mode: z.literal("COMPOSITE") }).strict(),
+          z
+            .object({
+              mode: z.literal("PHOTO"),
+              mediaId: editorialId,
+              mobileMediaId: editorialId.optional(),
+              pieces: z
+                .array(
+                  z
+                    .object({ variantId: editorialId, colorId: editorialId })
+                    .strict(),
+                )
+                .min(2)
+                .max(12),
+            })
+            .strict(),
+        ])
+        .optional(),
       items: z
         .array(lookItem)
         .min(1)

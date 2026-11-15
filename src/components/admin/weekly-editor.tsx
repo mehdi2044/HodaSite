@@ -7,8 +7,10 @@ import { slots } from "@/modules/editorial/contracts";
 export function WeeklyEditor({
   looks,
   action,
+  assignments,
 }: {
   looks: { id: string; slugEn: string }[];
+  assignments: { id: string; label: string }[];
   action: (
     previous: ActionResult | null,
     data: FormData,
@@ -39,6 +41,19 @@ export function WeeklyEditor({
           ))}
         </select>
       </label>
+      {assignments.length > 0 && (
+        <label className="grid">
+          {t("replaceWeekly")}
+          <select className="input" name="replaceId">
+            <option value="">{t("new")}</option>
+            {assignments.map(({ id, label }) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="grid">
         {t("from")}
         <input className="input" type="datetime-local" name="start" required />

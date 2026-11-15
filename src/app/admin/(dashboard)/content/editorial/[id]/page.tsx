@@ -96,7 +96,7 @@ export default async function EditEditorial({
                 color: { deletedAt: null },
                 size: { deletedAt: null },
               },
-              select: { id: true, sku: true },
+              select: { id: true, sku: true, colorId: true },
             },
           },
           orderBy: { id: "asc" },
@@ -203,6 +203,7 @@ export default async function EditEditorial({
             p.variants.map((v) => ({
               productId: p.id,
               variantId: v.id,
+              colorId: v.colorId,
               label: `${catalogText(p.titleI18n, locale)} · ${v.sku}`,
             })),
           )}

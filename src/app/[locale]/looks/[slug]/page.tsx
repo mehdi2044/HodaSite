@@ -99,6 +99,7 @@ export default async function LookPage({
         market={market}
         id={look.id}
         revisionId={look.revision.id}
+        visual={look.visual}
         story={
           typeof story === "string" && story.length <= 96 ? story : undefined
         }

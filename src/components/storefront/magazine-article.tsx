@@ -15,7 +15,10 @@ import {
 } from "@/modules/editorial/queries";
 import { resolveLookCommerce } from "@/modules/editorial/commerce";
 import { EditorialImage } from "./editorial-image";
-import { CuratedCard } from "./curated-card";
+import { ResponsiveImage } from "./responsive-image";
+import { formatStorefrontAmount } from "@/modules/catalog/format";
+import { storefrontPath } from "@/lib/storefront-path";
+import { supportsLookFitting } from "@/modules/editorial/fitting";
 
 export async function MagazineArticle({
   body,
@@ -60,7 +63,7 @@ export async function MagazineArticle({
       ? [{ ...entry, body: entry.body }]
       : [],
   );
-  const [commerce, images] = await Promise.all([
+  const [commerce, images, fitting] = await Promise.all([
     resolveLookCommerce(
       looks.map((look) => look.body),
       market,
@@ -70,47 +73,52 @@ export async function MagazineArticle({
       body.mediaId,
       body.mobileMediaId ?? body.mediaId,
       ...body.blocks.flatMap((b) => (b.type === "IMAGE" ? [b.mediaId] : [])),
-      ...looks.flatMap((look) => [
-        look.body.mediaId,
-        look.body.mobileMediaId ?? look.body.mediaId,
-      ]),
     ]),
+    preview
+      ? []
+      : Promise.all(looks.map(({ body }) => supportsLookFitting(body))),
   ]);
   const media = (id?: string) => images.find((image) => image.id === id);
   return (
     <article className="editorial-article">
-      <header className="editorial-heading">
-        {!preview && (
-          <Link href={seoPath(locale, market.code, "magazine")}>
-            {t("magazine")}
-          </Link>
-        )}
-        <p className="editorial-kicker">{t(`facet.${body.category}`)}</p>
-        <h1>{body.title[locale]}</h1>
-        <p>{body.summary[locale]}</p>
-        <p>
-          {body.author}
-          {visibleFrom && (
-            <>
-              {" "}
-              ·{" "}
-              <time dateTime={visibleFrom.toISOString()}>
-                {new Intl.DateTimeFormat(locale, {
-                  dateStyle: "long",
-                  timeZone: "Europe/Istanbul",
-                }).format(visibleFrom)}
-              </time>
-            </>
+      <div className="article-lead">
+        <header className="editorial-heading article-heading">
+          {!preview && (
+            <Link href={seoPath(locale, market.code, "magazine")}>
+              {t("magazine")}
+            </Link>
           )}
-        </p>
-      </header>
-      <EditorialImage
-        desktop={media(body.mediaId)}
-        mobile={media(body.mobileMediaId)}
-        locale={locale}
-        focal={body.focal}
-        priority
-      />
+          <p className="editorial-kicker">{t(`facet.${body.category}`)}</p>
+          {preview && <span className="editorial-draft">{t("draft")}</span>}
+          <h1>{body.title[locale]}</h1>
+          <p>{body.summary[locale]}</p>
+          <div className="article-byline">
+            <span>
+              {t("author")} <bdi>{body.author}</bdi>
+            </span>
+            {visibleFrom && (
+              <span>
+                <time dateTime={visibleFrom.toISOString()}>
+                  {new Intl.DateTimeFormat(
+                    locale === "fa" ? "fa-IR-u-ca-persian" : locale,
+                    {
+                      dateStyle: "long",
+                      timeZone: "Europe/Istanbul",
+                    },
+                  ).format(visibleFrom)}
+                </time>
+              </span>
+            )}
+          </div>
+        </header>
+        <EditorialImage
+          desktop={media(body.mediaId)}
+          mobile={media(body.mobileMediaId)}
+          locale={locale}
+          focal={body.focal}
+          priority
+        />
+      </div>
       <div className="editorial-story">
         {body.blocks.map((block, index) => {
           switch (block.type) {
@@ -151,34 +159,117 @@ export async function MagazineArticle({
             }
             case "LOOK": {
               const i = looks.findIndex((look) => look.id === block.id);
-              return i >= 0 ? (
-                <div key={index}>
-                  <CuratedCard
-                    t={t}
-                    look={looks[i]}
-                    locale={locale}
-                    market={market}
-                    images={images}
-                    commerce={commerce[i]}
-                  />
-                  {!preview && (
-                    <Link
-                      href={
-                        seoPath(
-                          locale,
-                          market.code,
-                          "looks",
-                          editorialSlug(looks[i], locale),
-                        ) +
+              if (i < 0) return null;
+              const look = looks[i];
+              const quote = commerce[i];
+              const lookHref = seoPath(
+                locale,
+                market.code,
+                "looks",
+                editorialSlug(look, locale),
+              );
+              return (
+                <section
+                  className="article-shop"
+                  key={index}
+                  aria-label={t("shopPieces")}
+                >
+                  <div className="article-shop-heading">
+                    <div>
+                      <h2>{t("shopPieces")}</h2>
+                      <p>{look.body.title[locale]}</p>
+                    </div>
+                    {quote.amount !== null &&
+                      quote.available === quote.pieces.length && (
+                        <strong>
+                          {t("fromPrice", {
+                            amount: formatStorefrontAmount(
+                              quote.amount,
+                              market.currency,
+                              locale,
+                            ),
+                          })}
+                        </strong>
+                      )}
+                  </div>
+                  <ul className="article-skus">
+                    {quote.pieces.map((piece) => {
+                      const variant = piece.variants.find(
+                        ({ id }) => id === piece.variantId,
+                      );
+                      const visual = look.visual?.pieces.find(
+                        ({ variantId }) => variantId === piece.variantId,
+                      );
+                      if (!variant || !piece.href || !visual) return null;
+                      const productLink =
+                        piece.href +
                         "?" +
-                        new URLSearchParams({ story: slug })
-                      }
-                    >
-                      {t("tryLook")}
-                    </Link>
+                        new URLSearchParams({ color: variant.colorId });
+                      return (
+                        <li key={visual.sku} data-sku={visual.sku}>
+                          {visual.image && (
+                            <ResponsiveImage
+                              media={visual.image}
+                              locale={locale}
+                              sizes="64px"
+                              imgClassName="h-full w-full object-contain"
+                            />
+                          )}
+                          <div>
+                            <Link href={productLink}>{piece.title}</Link>
+                            <p>
+                              {variant.color} · <bdi>{variant.size}</bdi>
+                            </p>
+                            <small>
+                              {t(
+                                variant.available > 0 && variant.amount !== null
+                                  ? "inStock"
+                                  : "unavailable",
+                              )}
+                            </small>
+                          </div>
+                          <div className="article-piece-price">
+                            {variant.amount !== null && (
+                              <strong>
+                                {formatStorefrontAmount(
+                                  variant.amount,
+                                  market.currency,
+                                  locale,
+                                )}
+                              </strong>
+                            )}
+                            <Link href={productLink}>{t("chooseSize")}</Link>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {!preview && (
+                    <div className="look-actions">
+                      {fitting[i] && (
+                        <Link
+                          className="button look-primary"
+                          href={storefrontPath(
+                            locale,
+                            market.code,
+                            "fitting-room",
+                            { look: look.id, story: slug },
+                          )}
+                        >
+                          {t("tryLook")}
+                        </Link>
+                      )}
+                      <Link
+                        href={
+                          lookHref + "?" + new URLSearchParams({ story: slug })
+                        }
+                      >
+                        {t("viewLook")}
+                      </Link>
+                    </div>
                   )}
-                </div>
-              ) : null;
+                </section>
+              );
             }
           }
         })}

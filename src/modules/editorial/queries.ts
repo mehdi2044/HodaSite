@@ -6,6 +6,25 @@ import {
   type EditorialKind,
   type EditorialLocale,
 } from "./contracts";
+import { resolveLookVisuals } from "./visual";
+
+type Entry = NonNullable<ReturnType<typeof parsePublicEntry>>;
+
+async function withValidVisuals(
+  entries: Entry[],
+  marketId: string,
+  client: Prisma.TransactionClient,
+) {
+  const looks = entries.flatMap(({ body }) =>
+    body.kind === "LOOK" ? [body] : [],
+  );
+  const visuals = await resolveLookVisuals(looks, [marketId], client);
+  let index = 0;
+  return entries.flatMap((entry) => {
+    const visual = entry.body.kind === "LOOK" ? visuals[index++] : null;
+    return entry.body.kind === "LOOK" && !visual ? [] : [{ ...entry, visual }];
+  });
+}
 
 export const revisionQuery = (now: Date) => ({
   where: { visibleFrom: { lte: now } },
@@ -32,7 +51,10 @@ export async function publishedEntry(
     where: { ...where, kind, deletedAt: null },
     include: { revisions: revisionQuery(now) },
   });
-  return entry ? parsePublicEntry(entry, marketId) : null;
+  const parsed = entry && parsePublicEntry(entry, marketId);
+  if (!parsed) return null;
+  const [result] = await withValidVisuals([parsed], marketId, client);
+  return result ?? null;
 }
 
 function parsePublicEntry(
@@ -78,10 +100,11 @@ export async function publishedEntries(kind: EditorialKind, marketId: string) {
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: { revisions: revisionQuery(now) },
   });
-  return entries.flatMap((entry) => {
+  const parsed = entries.flatMap((entry) => {
     const parsed = parsePublicEntry(entry, marketId);
     return parsed ? [parsed] : [];
   });
+  return withValidVisuals(parsed, marketId, db);
 }
 
 export function readyImages(ids: string[]) {

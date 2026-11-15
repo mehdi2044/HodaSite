@@ -23,6 +23,9 @@ export async function scheduleWeekly(
       slot: z.enum(slots).parse(form.get("slot")),
       startsAt: istanbulTime.parse(form.get("start")),
       endsAt: istanbulTime.parse(form.get("end")),
+      replaceId: form.get("replaceId")
+        ? editorialId.parse(form.get("replaceId"))
+        : undefined,
     });
     revalidatePath("/admin/content/editorial/weekly");
   });

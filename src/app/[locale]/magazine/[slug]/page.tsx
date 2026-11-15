@@ -61,7 +61,7 @@ export default async function ArticlePage({
     )
     .slice(0, 4);
   return (
-    <main className="shell editorial-page">
+    <main className="shell editorial-page article-page">
       {origin && (
         <script
           type="application/ld+json"
@@ -81,7 +81,8 @@ export default async function ArticlePage({
           }}
         />
       )}
-      <div className="editorial-link-row">
+      <nav className="article-languages" aria-label={t("languages")}>
+        <span aria-current="page">{t(`locale.${locale}`)}</span>
         {locales
           .filter((language) => language !== locale)
           .map((language) => {
@@ -112,7 +113,7 @@ export default async function ArticlePage({
               </a>
             );
           })}
-      </div>
+      </nav>
       <MagazineArticle
         body={body}
         market={market}

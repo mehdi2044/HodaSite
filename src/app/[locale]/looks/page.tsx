@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { supportsLookFitting } from "@/modules/editorial/fitting";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -20,8 +19,8 @@ import {
   withinPrice,
 } from "@/modules/editorial/gallery";
 import { resolveLookCommerce } from "@/modules/editorial/commerce";
-import { readyImages } from "@/modules/editorial/queries";
 import { CuratedCard } from "@/components/storefront/curated-card";
+import { WeeklyEditorial } from "@/components/storefront/weekly-editorial";
 
 export async function generateMetadata({
   params,
@@ -70,12 +69,18 @@ export default async function LooksPage({
   );
   const rows = priceFilter ? filtered.slice(offset, offset + limit) : filtered;
   const total = priceFilter ? filtered.length : all.length;
-  const images = await readyImages(
-    rows.flatMap(({ look }) => [
-      look.body.mediaId,
-      look.body.mobileMediaId ?? look.body.mediaId,
-    ]),
-  );
+  const hero =
+    !filters.audience &&
+    !filters.season &&
+    !filters.occasion &&
+    !filters.style &&
+    !filters.color &&
+    !priceFilter &&
+    filters.page === 1
+      ? rows.find(
+          ({ look }) => look.body.featured && look.visual?.mode === "PHOTO",
+        )
+      : undefined;
   const fitting = await Promise.all(
     rows.map(({ look }) => supportsLookFitting(look.body)),
   );
@@ -87,67 +92,99 @@ export default async function LooksPage({
     ["style", styles],
     ["color", colors],
   ] as const;
-  function pageHref(page: number) {
+  function href(overrides: Partial<typeof filters>) {
     const query = new URLSearchParams(
-      Object.entries(filters).flatMap(([k, v]) =>
-        k === "page" || v === undefined ? [] : [[k, String(v)]],
+      Object.entries({ ...filters, ...overrides }).flatMap(([k, v]) =>
+        v === undefined ||
+        (k === "page" && v === 1) ||
+        (k === "sort" && v === "newest")
+          ? []
+          : [[k, String(v)]],
       ),
     );
-    query.set("page", String(page));
-    return `${path}?${query}`;
+    return query.size ? `${path}?${query}` : path;
   }
   return (
-    <main className="shell editorial-page">
-      <header className="editorial-heading">
+    <main className="shell editorial-page lookbook">
+      <header className="editorial-mast">
         <Link href={seoPath(locale, market.code, "magazine")}>
           {t("magazine")}
         </Link>
-        <h1>{t("gallery")}</h1>
+        {!hero && <h1>{t("gallery")}</h1>}
       </header>
-      <form className="editorial-filters" action={path}>
-        {facets.map(([facet, options]) => (
-          <label key={facet}>
-            {t(facet === "color" ? "palette" : facet)}
-            <select
-              className="input"
-              name={facet}
-              defaultValue={filters[facet] ?? ""}
+      {hero && (
+        <CuratedCard
+          t={t}
+          look={hero.look}
+          commerce={hero.commerce}
+          locale={locale}
+          market={market}
+          hero
+          fitting={fitting[rows.indexOf(hero)]}
+        />
+      )}
+      <div className="editorial-merch">
+        <nav className="editorial-tabs" aria-label={t("audience")}>
+          {[undefined, ...audiences].map((audience) => (
+            <Link
+              key={audience ?? "all"}
+              href={href({ audience, page: 1 })}
+              aria-current={filters.audience === audience ? "page" : undefined}
             >
-              <option value="">{t("all")}</option>
-              {options.map((option) => (
-                <option value={option} key={option}>
-                  {t(`facet.${option}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-        {(["min", "max"] as const).map((key) => (
-          <label key={key}>
-            {t(key)} ({market.currency})
-            <input
-              className="input"
-              inputMode="decimal"
-              name={key}
-              defaultValue={filters[key]}
-            />
-          </label>
-        ))}
-        <label>
-          {t("sort")}
-          <select className="input" name="sort" defaultValue={filters.sort}>
-            {(["newest", "popular", "featured"] as const).map((value) => (
-              <option value={value} key={value}>
-                {t(value)}
-              </option>
+              {audience ? t(`facet.${audience}`) : t("all")}
+            </Link>
+          ))}
+        </nav>
+        <details className="editorial-filter-panel">
+          <summary>{t("filters")}</summary>
+          <form className="editorial-filters" action={path}>
+            {facets.map(([facet, options]) => (
+              <label key={facet}>
+                {t(facet === "color" ? "palette" : facet)}
+                <select
+                  className="input"
+                  name={facet}
+                  defaultValue={filters[facet] ?? ""}
+                >
+                  <option value="">{t("all")}</option>
+                  {options.map((option) => (
+                    <option value={option} key={option}>
+                      {t(`facet.${option}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
             ))}
-          </select>
-        </label>
-        <button className="button">{t("filter")}</button>
-      </form>
-      {rows.length ? (
-        <Fragment key="editorial-gallery-results">
-          <div className="editorial-grid">
+            {(["min", "max"] as const).map((key) => (
+              <label key={key}>
+                {t(key)} (
+                {market.currency === "IRT" ? t("toman") : market.currency})
+                <input
+                  className="input"
+                  inputMode="decimal"
+                  name={key}
+                  defaultValue={filters[key]}
+                />
+              </label>
+            ))}
+            <label>
+              {t("sort")}
+              <select className="input" name="sort" defaultValue={filters.sort}>
+                {(["newest", "popular", "featured"] as const).map((value) => (
+                  <option value={value} key={value}>
+                    {t(value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button className="button">{t("filter")}</button>
+          </form>
+        </details>
+      </div>
+      {hero && <h2 className="editorial-collection-title">{t("gallery")}</h2>}
+      <div className="editorial-grid" id="look-results">
+        {rows.length ? (
+          <>
             {rows.map(({ look, commerce }, index) => (
               <CuratedCard
                 key={look.id}
@@ -157,22 +194,22 @@ export default async function LooksPage({
                 commerce={commerce}
                 locale={locale}
                 market={market}
-                images={images}
               />
             ))}
-          </div>
-        </Fragment>
-      ) : (
-        <p className="editorial-empty">{t("empty")}</p>
-      )}
-      <div className="editorial-link-row">
-        {filters.page > 1 && (
-          <Link href={pageHref(filters.page - 1)}>{t("previous")}</Link>
-        )}
-        {offset + limit < total && (
-          <Link href={pageHref(filters.page + 1)}>{t("next")}</Link>
+          </>
+        ) : (
+          <p className="editorial-empty">{t("empty")}</p>
         )}
       </div>
+      <div className="editorial-link-row">
+        {filters.page > 1 && (
+          <Link href={href({ page: filters.page - 1 })}>{t("previous")}</Link>
+        )}
+        {offset + limit < total && (
+          <Link href={href({ page: filters.page + 1 })}>{t("next")}</Link>
+        )}
+      </div>
+      <WeeklyEditorial locale={locale} market={market} compact gallery />
     </main>
   );
 }

@@ -13,6 +13,11 @@ import type {
 } from "@/modules/editorial/contracts";
 import { CuratedPurchase } from "./curated-purchase";
 import { EditorialImage } from "./editorial-image";
+import { LookArtwork } from "./look-visual";
+import {
+  resolveLookVisuals,
+  type LookVisual,
+} from "@/modules/editorial/visual";
 
 export async function CuratedDetail({
   body,
@@ -22,6 +27,7 @@ export async function CuratedDetail({
   revisionId,
   preview,
   story,
+  visual,
 }: {
   body: LookContent;
   locale: EditorialLocale;
@@ -30,13 +36,18 @@ export async function CuratedDetail({
   revisionId: string;
   preview?: boolean;
   story?: string;
+  visual?: LookVisual | null;
 }) {
-  const [t, [commerce], images, fitting] = await Promise.all([
+  const [t, [commerce], images, fitting, [resolvedVisual]] = await Promise.all([
     getTranslations({ locale, namespace: "editorial" }),
     resolveLookCommerce([body], market, locale),
-    readyImages([body.mediaId, body.mobileMediaId ?? body.mediaId]),
+    visual
+      ? []
+      : readyImages([body.mediaId, body.mobileMediaId ?? body.mediaId]),
     preview ? false : supportsLookFitting(body),
+    preview ? resolveLookVisuals([body], [market.id]) : [],
   ]);
+  const artwork = visual ?? resolvedVisual;
   return (
     <>
       <header className="editorial-heading">
@@ -54,14 +65,24 @@ export async function CuratedDetail({
       </header>
       <div className="editorial-look-layout">
         <figure className="editorial-look-figure">
-          <EditorialImage
-            desktop={images.find((i) => i.id === body.mediaId)}
-            mobile={images.find((i) => i.id === body.mobileMediaId)}
-            focal={body.focal}
-            locale={locale}
-            priority
-          />
-          {images.length > 0 &&
+          {artwork ? (
+            <LookArtwork
+              body={body}
+              visual={artwork}
+              locale={locale}
+              label={t("composition")}
+              priority
+            />
+          ) : (
+            <EditorialImage
+              desktop={images.find((i) => i.id === body.mediaId)}
+              mobile={images.find((i) => i.id === body.mobileMediaId)}
+              focal={body.focal}
+              locale={locale}
+              priority
+            />
+          )}
+          {artwork?.mode === "PHOTO" &&
             commerce.pieces.map(
               (piece, index) =>
                 (piece.desktop || piece.mobile) &&

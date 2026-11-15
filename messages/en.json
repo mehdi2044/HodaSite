@@ -3045,6 +3045,17 @@
     "motionReduced": "Reduced motion; selected clothes remain visible"
   },
   "editorial": {
+    "visualMode": "Look artwork",
+    "composition": "Piece composition",
+    "photoMatch": "I checked the photo and colours against the selected SKUs",
+    "relatedArticle": "Related article",
+    "filters": "Filters",
+    "toman": "toman",
+    "featuredArticle": "Featured article",
+    "shopPieces": "Shop this look",
+    "inStock": "In stock",
+    "languages": "Article languages",
+    "replaceWeekly": "Replace an assignment",
     "gallery": "Curated looks",
     "magazine": "The style journal",
     "weekly": "Look of the week",

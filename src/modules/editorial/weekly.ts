@@ -4,10 +4,18 @@ import type { WeeklyLookSlot } from "@prisma/client";
 import { z } from "zod";
 import { assertCan } from "@/modules/access";
 import { publishedEntry } from "./queries";
+import { editorialContent } from "./contracts";
+import { resolveLookVisuals } from "./visual";
 
 export async function saveWeeklyLook(
   userId: string,
-  input: { id: string; slot: WeeklyLookSlot; startsAt: Date; endsAt: Date },
+  input: {
+    id: string;
+    slot: WeeklyLookSlot;
+    startsAt: Date;
+    endsAt: Date;
+    replaceId?: string;
+  },
 ) {
   await assertCan(userId, "content.page.publish");
   if (input.startsAt >= input.endsAt || input.endsAt <= new Date())
@@ -15,48 +23,80 @@ export async function saveWeeklyLook(
   return withMutation(() =>
     db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"editorial.weekly." + input.slot}))`;
+      const now = new Date();
+      const previous = input.replaceId
+        ? await tx.weeklyLookFeature.findFirst({
+            where: {
+              id: input.replaceId,
+              slot: input.slot,
+              endsAt: { gt: now },
+            },
+          })
+        : undefined;
+      if (input.replaceId && !previous) throw new z.ZodError([]);
+      const startsAt =
+        previous && previous.startsAt <= now && input.startsAt < now
+          ? now
+          : input.startsAt;
       await tx.$queryRaw`SELECT id FROM "EditorialEntry" WHERE id = ${input.id} FOR SHARE`;
       const target = await tx.editorialEntry.findFirst({
         where: { id: input.id, kind: "LOOK", deletedAt: null },
         include: {
           revisions: {
-            where: { visibleFrom: { lte: input.startsAt } },
+            where: { visibleFrom: { lte: startsAt } },
             orderBy: { number: "desc" },
             take: 1,
           },
         },
       });
       const active = target?.revisions[0];
-      const body = active?.body;
+      const body = editorialContent.safeParse(active?.body);
       if (
         !target ||
         !active ||
         active.number < target.minVisibleVersion ||
-        !body ||
-        typeof body !== "object" ||
-        Array.isArray(body) ||
-        (input.slot !== "MAIN" && body.audience !== input.slot)
+        !body.success ||
+        body.data.kind !== "LOOK" ||
+        (input.slot !== "MAIN" && body.data.audience !== input.slot)
       )
         throw new z.ZodError([]);
+      const [visual] = await resolveLookVisuals(
+        [body.data],
+        body.data.marketIds,
+        tx,
+      );
+      if (!visual) throw new z.ZodError([]);
       if (
         await tx.weeklyLookFeature.count({
           where: {
+            id: previous ? { not: previous.id } : undefined,
             slot: input.slot,
             startsAt: { lt: input.endsAt },
-            endsAt: { gt: input.startsAt },
+            endsAt: { gt: startsAt },
           },
         })
       )
         throw new z.ZodError([]);
-      const row = await tx.weeklyLookFeature.create({
-        data: {
-          entryId: input.id,
-          slot: input.slot,
-          startsAt: input.startsAt,
-          endsAt: input.endsAt,
-          authorId: userId,
-        },
-      });
+      const data = {
+        entryId: input.id,
+        slot: input.slot,
+        startsAt,
+        endsAt: input.endsAt,
+        authorId: userId,
+      };
+      const replaceScheduled = previous && previous.startsAt > now;
+      if (previous && !replaceScheduled && previous.endsAt > startsAt) {
+        await tx.weeklyLookFeature.update({
+          where: { id: previous.id },
+          data: { endsAt: startsAt },
+        });
+      }
+      const row = replaceScheduled
+        ? await tx.weeklyLookFeature.update({
+            where: { id: previous.id },
+            data,
+          })
+        : await tx.weeklyLookFeature.create({ data });
       await tx.auditLog.create({
         data: {
           userId,
@@ -64,6 +104,7 @@ export async function saveWeeklyLook(
           entityType: "WeeklyLookFeature",
           entityId: row.id,
           after: {
+            ...(previous ? { replaces: previous.id } : {}),
             entryId: input.id,
             slot: row.slot,
             startsAt: row.startsAt.toISOString(),

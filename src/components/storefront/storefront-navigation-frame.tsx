@@ -1,6 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { Fragment, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { storefrontNavigationRoute } from "@/lib/storefront-navigation";
 
 export function StorefrontNavigationFrame({
@@ -12,7 +12,15 @@ export function StorefrontNavigationFrame({
   locale: string;
   children: ReactNode;
 }) {
-  const route = storefrontNavigationRoute(usePathname());
+  const pathname = usePathname();
+  const route = storefrontNavigationRoute(pathname);
+  const scroll = useRef<HTMLDivElement>(null);
+  const previousPath = useRef(pathname);
+  useEffect(() => {
+    if (previousPath.current === pathname) return;
+    previousPath.current = pathname;
+    if (!window.location.hash) scroll.current?.scrollTo({ top: 0 });
+  }, [pathname]);
   return (
     <div
       className="storefront-app"
@@ -21,9 +29,9 @@ export function StorefrontNavigationFrame({
       data-floating-navigation={enabled && !route.suppressed ? "on" : "off"}
       data-navigation-context={route.fitting ? "fitting" : "public"}
     >
-      {/* Give streamed Flight children a fiber of their own before React
-          claims the host wrapper during concurrent hydration. */}
-      <Fragment key="storefront-layout">{children}</Fragment>
+      <div className="storefront-scroll" ref={scroll}>
+        {children}
+      </div>
     </div>
   );
 }

@@ -3045,6 +3045,17 @@
     "motionReduced": "حرکت کاهش‌یافته؛ لباس‌ها همچنان دیده می‌شوند"
   },
   "editorial": {
+    "visualMode": "شیوهٔ نمایش استایل",
+    "composition": "چیدمان قطعات",
+    "photoMatch": "عکس و رنگ تمام قطعات را با SKUهای انتخاب‌شده تطبیق دادم",
+    "relatedArticle": "مقالهٔ مرتبط",
+    "filters": "فیلترها",
+    "toman": "تومان",
+    "featuredArticle": "مقالهٔ برجسته",
+    "shopPieces": "خرید قطعات این استایل",
+    "inStock": "موجود",
+    "languages": "زبان مقاله",
+    "replaceWeekly": "تعویض زمان‌بندی موجود",
     "gallery": "استایل‌های منتخب",
     "magazine": "مجلهٔ مد و استایل",
     "weekly": "استایل هفته",

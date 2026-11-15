@@ -164,6 +164,46 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
         await db.editorialRevision.count({ where: { entryId: entry.id } }),
       ).toBe(1);
     });
+    it("withholds a one-piece draft and a photograph with stale colour evidence", async () => {
+      const { entry, body } = await draft();
+      if (body.kind !== "LOOK" || body.visual?.mode !== "PHOTO")
+        throw new Error("Expected photo fixture");
+      for (const candidate of [
+        { ...body, items: body.items.slice(0, 1) },
+        {
+          ...body,
+          visual: {
+            ...body.visual,
+            pieces: body.visual.pieces.map((piece) => ({
+              ...piece,
+              colorId: "stale-color",
+            })),
+          },
+        },
+      ]) {
+        const before = await db.editorialEntry.findUniqueOrThrow({
+          where: { id: entry.id },
+        });
+        const written = await saveEditorialDraft(owner, {
+          id: entry.id,
+          version: before.version,
+          body: candidate,
+        });
+        const revision = await db.editorialRevision.findFirstOrThrow({
+          where: { entryId: entry.id, number: written.version },
+        });
+        await expect(
+          publishEditorial(owner, {
+            id: entry.id,
+            version: written.version,
+            revisionId: revision.id,
+          }),
+        ).rejects.toThrow();
+        expect(
+          await publishedEntry("LOOK", { id: entry.id }, market),
+        ).toBeNull();
+      }
+    });
     it("serializes overlapping weekly assignments and accepts adjacent times", async () => {
       const { entry, revision } = await draft();
       await publishEditorial(owner, {

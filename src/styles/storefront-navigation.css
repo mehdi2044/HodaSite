@@ -161,6 +161,49 @@ html:has(.storefront-app[data-floating-navigation="on"]) {
   );
 }
 
+/* Keep the dock in a separate viewport band, including during Checkout. */
+.storefront-app[data-floating-navigation="on"] {
+  height: 100dvh;
+  overflow: clip;
+  padding: 0;
+  padding-block-end: calc(
+    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
+  );
+}
+.storefront-app[data-floating-navigation="on"] > .storefront-scroll {
+  block-size: 100%;
+  overflow: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: var(--storefront-header-height, 80px) 14px;
+  padding-inline: max(
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
+  --storefront-nav-offset: 0px;
+}
+.storefront-app[data-floating-navigation="on"]:has(.shop-product-submit) {
+  padding-block-end: calc(
+    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
+  );
+}
+.storefront-app[data-floating-navigation="on"]
+  .storefront-scroll
+  .storefront-purchase,
+.storefront-app[data-floating-navigation="on"]
+  .storefront-scroll
+  .shop-product-submit {
+  bottom: 0;
+}
+html:has(.storefront-app[data-floating-navigation="on"]) {
+  overflow: hidden;
+}
+@media (pointer: coarse) {
+  .storefront-app[data-floating-navigation="on"] > .storefront-scroll {
+    scrollbar-gutter: auto;
+  }
+}
+
 /* The desktop controls sit beside the dock. Reserving its full width in the
    viewport's scroll padding would unnecessarily scroll an already reachable
    Hero control to the page centre. Mobile and product pages keep their budget. */

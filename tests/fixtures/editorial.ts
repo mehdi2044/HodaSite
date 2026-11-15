@@ -1,5 +1,8 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
-import { editorialContent } from "../../src/modules/editorial/contracts";
+import {
+  editorialContent,
+  type LookContent,
+} from "../../src/modules/editorial/contracts";
 
 const samples = [
   [
@@ -115,6 +118,59 @@ const summary = {
   en: "Pieces from the demo catalogue make up this preview look. Explore the colours and sizes of each piece.",
 };
 
+const outfitCopy = {
+  "city-layers": {
+    fa: "بارانی شنی و کیف عسلی برای یک روز در شهر.",
+    en: "A sand trench and a cognac tote for a day in the city.",
+    tr: "Şehirde bir gün için kum rengi trençkot ve konyak rengi çanta.",
+  },
+  "easy-days": {
+    fa: "اورشرت سرمه‌ای، تی‌شرت شیری و چینوی شنی.",
+    en: "A navy overshirt, an ivory tee and sand chinos.",
+    tr: "Lacivert üst gömlek, ekru tişört ve kum rengi chino.",
+  },
+};
+
+export const storyIntroduction = {
+  fa: "با تی‌شرت شیری، چینوی شنی و اورشرت سرمه‌ای، یک استایل روزمره بسازید.",
+  en: "Build an everyday outfit with an ivory tee, sand chinos and a navy overshirt.",
+  tr: "Ekru tişört, kum rengi chino ve lacivert üst gömlekle günlük bir kombin oluşturun.",
+};
+
+export function reviewedFixtureLook(
+  slug: string,
+  look: LookContent,
+  variants: { id: string; colorId: string }[],
+): LookContent {
+  const draft = slug === "little-worlds" || slug === "soft-weekend";
+  const pieces = look.items.map(({ variantId }) => {
+    const selected = variants.find(({ id }) => id === variantId);
+    if (!selected) throw new Error("Missing SKU for " + slug);
+    return { variantId, colorId: selected.colorId };
+  });
+  const photo = [
+    "city-layers",
+    "soft-forms",
+    "easy-days",
+    "play-date",
+  ].includes(slug);
+  return {
+    ...look,
+    featured: slug === "city-layers",
+    summary: outfitCopy[slug as keyof typeof outfitCopy] ?? look.summary,
+    visual: draft
+      ? undefined
+      : photo
+        ? {
+            mode: "PHOTO",
+            mediaId: look.mediaId,
+            mobileMediaId: look.mobileMediaId,
+            pieces,
+          }
+        : { mode: "COMPOSITE" },
+  };
+}
+
 export async function seedEditorialFixtures(db: PrismaClient) {
   const owner = await db.user.findFirstOrThrow({
     where: { isActive: true, roles: { some: { role: { key: "owner" } } } },
@@ -173,7 +229,7 @@ export async function seedEditorialFixtures(db: PrismaClient) {
         const mobileMediaId = images.find(
           (image) => image.id === "seed-fashion-v2-" + photo,
         )?.id;
-        const body = editorialContent.parse({
+        const draftBody = editorialContent.parse({
           kind: "LOOK",
           audience,
           title: { fa, tr, en },
@@ -198,6 +254,12 @@ export async function seedEditorialFixtures(db: PrismaClient) {
               : {}),
           })),
         });
+        if (draftBody.kind !== "LOOK") throw new Error("Invalid fixture");
+        const body = reviewedFixtureLook(
+          slug,
+          draftBody,
+          selected.flatMap((product) => product?.variants.slice(0, 1) ?? []),
+        );
         const id = "fixture-editorial-" + slug;
         await tx.editorialEntry.upsert({
           where: { id },
@@ -213,8 +275,7 @@ export async function seedEditorialFixtures(db: PrismaClient) {
                 number: 1,
                 body: body as Prisma.InputJsonObject,
                 authorId: owner.id,
-                approvedBy: owner.id,
-                visibleFrom,
+                ...(body.visual ? { approvedBy: owner.id, visibleFrom } : {}),
                 items: {
                   create: (body.kind === "LOOK" ? body.items : []).map(
                     ({ productId }, position) => ({ productId, position }),
@@ -236,7 +297,7 @@ export async function seedEditorialFixtures(db: PrismaClient) {
           tr: "Günlük bir kombin nasıl kurulur?",
           en: "How to build an everyday look",
         },
-        summary,
+        summary: storyIntroduction,
         mediaId:
           images.find((image) => image.id === "seed-moda4-wide-look-men")?.id ??
           products.find((product) => product.id.endsWith("men-shirt"))?.media[0]

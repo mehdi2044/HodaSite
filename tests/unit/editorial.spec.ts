@@ -136,6 +136,9 @@ describe("editorial contracts", () => {
       false,
     );
     expect(withinPrice(null, { min: "0" })).toBe(false);
+    expect(galleryFilters.parse({ min: "۱٬۰۰۰", max: "٢٥٠٠٫٣" })).toMatchObject(
+      { min: "1000", max: "2500.3" },
+    );
     expect(istanbulTime.parse("2028-03-01T00:01").toISOString()).toBe(
       "2028-02-29T21:01:00.000Z",
     );
