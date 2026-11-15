@@ -83,6 +83,9 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
       .getAttribute("value");
     if (!option) throw new Error("Fixture has no in-stock variant");
     await control.selectOption(option);
+    await expect(
+      piece.getByRole("button", { name: "Add piece", exact: true }),
+    ).toBeEnabled();
   }
   await expect(page.locator(".editorial-total bdi")).toContainText(/[0-9]/);
   await page

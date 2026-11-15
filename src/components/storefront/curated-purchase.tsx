@@ -1,11 +1,15 @@
 "use client";
 
 import Decimal from "decimal.js";
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import type { EditorialLocale } from "@/modules/editorial/contracts";
 import type { LookCommerce } from "@/modules/editorial/commerce";
+
+const subscribeToHydration = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 type PurchaseAction = (
   ids: string[],
@@ -33,6 +37,11 @@ export function CuratedPurchase({
     error: boolean;
   }>();
   const [pending, start] = useTransition();
+  const interactive = useSyncExternalStore(
+    subscribeToHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const purchasable = pieces.filter((piece) =>
     piece.variants.some((v) => v.available > 0 && v.amount !== null),
   );
@@ -114,12 +123,14 @@ export function CuratedPurchase({
                 <select
                   className="input"
                   value={color}
-                  onChange={(event) =>
-                    setSelection({
-                      ...selection,
-                      [piece.productId]: { color: event.target.value },
-                    })
-                  }
+                  disabled={!interactive || pending}
+                  onChange={(event) => {
+                    const colorId = event.currentTarget.value;
+                    setSelection((current) => ({
+                      ...current,
+                      [piece.productId]: { color: colorId },
+                    }));
+                  }}
                 >
                   {colors.map(([id, name]) => (
                     <option key={id} value={id}>
@@ -135,12 +146,14 @@ export function CuratedPurchase({
                 <select
                   className="input"
                   value={selected?.id ?? ""}
-                  onChange={(event) =>
-                    setSelection({
-                      ...selection,
-                      [piece.productId]: { color, variant: event.target.value },
-                    })
-                  }
+                  disabled={!interactive || pending}
+                  onChange={(event) => {
+                    const variant = event.currentTarget.value;
+                    setSelection((current) => ({
+                      ...current,
+                      [piece.productId]: { color, variant },
+                    }));
+                  }}
                 >
                   <option value="">{t("chooseSize")}</option>
                   {sizes.map((v) => (
