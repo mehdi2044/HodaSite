@@ -143,6 +143,9 @@ export async function purgeOne(
           blocks, '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
           OR jsonb_path_exists("draftBlocks", '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))
           OR jsonb_path_exists("draftBlocks", '$.**.referenceMediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
+        OR EXISTS (SELECT 1 FROM "EditorialRevision" WHERE
+          body->>'mediaId' = ${current.id} OR body->>'mobileMediaId' = ${current.id} OR body->>'ogMediaId' = ${current.id}
+          OR jsonb_path_exists(body, '$.blocks[*].mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text)))
         OR EXISTS (SELECT 1 FROM "AuditLog" WHERE "entityType"='Homepage'
           AND after->>'format'='homepage-revision-v1'
           AND (jsonb_path_exists(after, '$.**.mediaId ? (@ == $id)', jsonb_build_object('id', ${current.id}::text))

@@ -878,6 +878,7 @@ model Size {
 }
 
 model Product {
+  editorialItems CuratedLookItem[]
   cutouts CatalogCutout[]
 
   wishlists Wishlist[]
@@ -2497,4 +2498,83 @@ model HomepagePreview {
 
   @@index([ownerId, expiresAt])
   @@index([expiresAt])
+}
+enum EditorialKind {
+  LOOK
+  ARTICLE
+}
+
+enum WeeklyLookSlot {
+  MAIN
+  WOMEN
+  MEN
+  GIRLS
+  BOYS
+}
+
+model EditorialEntry {
+  id          String              @id @default(cuid())
+  kind        EditorialKind
+  slugFa      String
+  slugTr      String
+  slugEn      String
+  version     Int                 @default(1)
+  minVisibleVersion Int           @default(1)
+  deletedAt   DateTime?           @db.Timestamptz(3)
+  createdAt   DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @db.Timestamptz(3)
+  revisions   EditorialRevision[]
+  weekly      WeeklyLookFeature[]
+
+  @@unique([kind, slugFa])
+  @@unique([kind, slugTr])
+  @@unique([kind, slugEn])
+  @@index([kind, deletedAt, id])
+}
+
+model EditorialRevision {
+  id           String             @id @default(cuid())
+  entryId      String
+  entry        EditorialEntry     @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  number       Int
+  body         Json
+  authorId     String
+  approvedBy   String?
+  visibleFrom  DateTime?          @db.Timestamptz(3)
+  createdAt    DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime           @updatedAt @db.Timestamptz(3)
+  items        CuratedLookItem[]
+
+  @@unique([entryId, number])
+  @@index([entryId, visibleFrom])
+}
+
+model CuratedLookItem {
+  id         String            @id @default(cuid())
+  revisionId String
+  revision   EditorialRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  productId  String
+  product    Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  position   Int
+  createdAt  DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@unique([revisionId, position])
+  @@unique([revisionId, productId])
+  @@index([productId])
+}
+
+model WeeklyLookFeature {
+  id         String          @id @default(cuid())
+  entryId    String
+  entry      EditorialEntry  @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  slot       WeeklyLookSlot
+  startsAt   DateTime        @db.Timestamptz(3)
+  endsAt     DateTime        @db.Timestamptz(3)
+  authorId   String
+  createdAt  DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@index([entryId])
+  @@index([slot, startsAt, endsAt])
 }
