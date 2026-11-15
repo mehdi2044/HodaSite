@@ -363,6 +363,53 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }
       },
     );
+    it("orders the first reward configuration before an overlapping paid sale", async () => {
+      const f = await actualPackSale({ approve: false, pack: false });
+      const previous = await db.integration.delete({
+        where: { key: "fitting-room" },
+      });
+      const config = configSchema.parse(previous.config);
+      const barrier = transactionBarrier(db, "integration", "upsert", (raw) => {
+        const input = raw as { where?: { key?: string } };
+        return input.where?.key === "fitting-room";
+      });
+      const saving = saveFittingSettings({
+        config: {
+          ...config,
+          rewards: [{ marketId, spendAmount: "100", coins: "10" }],
+        },
+        version: null,
+        confirm: true,
+      });
+      let approving: ReturnType<typeof approvePayment> | undefined;
+      try {
+        await Promise.race([
+          barrier.entered,
+          saving.then(() => {
+            throw Error("settings write missed barrier");
+          }),
+        ]);
+        approving = approvePayment(f.order.id, ownerId);
+        await vi.waitFor(async () => {
+          const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+            SELECT EXISTS (
+              SELECT 1 FROM pg_stat_activity
+              WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))
+            ) AS blocked
+          `;
+          expect(row.blocked).toBe(true);
+        });
+        barrier.release();
+        await Promise.all([saving, approving]);
+        expect((await walletView(f.customer.id)).balance).toBe("10");
+        await approvePayment(f.order.id, ownerId);
+        expect((await walletView(f.customer.id)).balance).toBe("10");
+      } finally {
+        barrier.release();
+        await Promise.allSettled([saving, approving]);
+        barrier.restore();
+      }
+    });
     it.each([false, true])(
       "actual checkout/payment and repeated manual cancellation; spent=%s",
       async (spent) => {
