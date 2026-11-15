@@ -329,7 +329,9 @@ async function applicationMiddleware(req: NextAuthRequest, serverUrl: string) {
       if (
         explicit &&
         ["GET", "HEAD"].includes(req.method) &&
-        /^\/(fa|tr|en)(?:\/(p|c|pages)\/[^/]+)?\/?$/.test(pathname)
+        /^\/(fa|tr|en)(?:\/(?:(?:p|c|pages)\/[^/]+|(?:looks|magazine)(?:\/[^/]+)?))?\/?$/.test(
+          pathname,
+        )
       ) {
         const url = new URL(req.url);
         url.pathname = `/${urlLocale}/m/${encodeURIComponent(explicit.code)}${pathname.slice(urlLocale.length + 1).replace(/\/$/, "")}`;

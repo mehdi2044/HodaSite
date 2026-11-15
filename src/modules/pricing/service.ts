@@ -89,12 +89,18 @@ export async function findEffectiveRate(
     : null;
 }
 
+export class MissingActiveFxError extends Error {
+  constructor(marketCode: string) {
+    super(`No active FX rate for market ${marketCode}`);
+  }
+}
+
 export async function getActiveRate(
   market: { id: string; code: string },
   at = new Date(),
 ) {
   const active = await findEffectiveRate(market.id, at);
-  if (!active) throw new Error(`No active FX rate for market ${market.code}`);
+  if (!active) throw new MissingActiveFxError(market.code);
   return active;
 }
 

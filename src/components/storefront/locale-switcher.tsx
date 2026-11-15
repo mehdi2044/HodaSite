@@ -30,7 +30,7 @@ export function LocaleSwitcher({
   const rest = pathname.split("/").slice(2).join("/");
   const canonical = parseSeoPath(pathname);
   const entityPath =
-    /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:p|c|pages)\/[^/]+\/?$/.test(
+    /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:(?:p|c|pages)\/[^/]+|(?:looks|magazine)(?:\/[^/]+)?)\/?$/.test(
       pathname,
     );
   const [resolved, setResolved] = useState<{
@@ -42,6 +42,21 @@ export function LocaleSwitcher({
   const keep = new URLSearchParams();
   // Catalog filters and the validated market are available before hydration.
   // Sensitive query parameters must not travel through language links.
+  if (/\/(looks|magazine)\/?$/.test(pathname)) {
+    for (const key of [
+      "q",
+      "audience",
+      "category",
+      "season",
+      "occasion",
+      "style",
+      "color",
+      "sort",
+      "archive",
+      "page",
+    ])
+      for (const value of query.getAll(key)) keep.append(key, value);
+  }
   if (rest === "search") {
     for (const key of [
       "q",

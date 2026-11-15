@@ -52,7 +52,9 @@ export function storefrontMenuHref(
   ) {
     url.pathname = `/${locale}${path}`;
     url.searchParams.set("market", market);
-  } else if (/^\/(p|c|pages)\/[^/]+\/?$/.test(path)) {
+  } else if (
+    /^\/(?:(?:p|c|pages)\/[^/]+|(?:looks|magazine)(?:\/[^/]+)?)\/?$/.test(path)
+  ) {
     const slugLocale = /^\/(fa|tr|en)\//.exec(url.pathname)?.[1] ?? locale;
     url.pathname = seoPath(slugLocale, market) + path.replace(/\/$/, "");
     url.searchParams.delete("market");

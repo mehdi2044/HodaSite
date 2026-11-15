@@ -10,7 +10,7 @@ const input = z.object({
     .string()
     .max(1024)
     .regex(
-      /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:p|c|pages)\/[^/?#]+\/?$/,
+      /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:(?:p|c|pages)\/[^/?#]+|(?:looks|magazine)(?:\/[^/?#]+)?)\/?$/,
     ),
   target: z.enum(["fa", "tr", "en"]),
 });
