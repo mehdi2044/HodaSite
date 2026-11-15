@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   editorialContent,
+  slugPattern,
   type EditorialKind,
   type EditorialLocale,
 } from "./contracts";
@@ -56,7 +57,14 @@ export async function publishedBySlug(
   slug: string,
   marketId: string,
 ) {
-  return publishedEntry(kind, { [slugKeys[locale]]: slug }, marketId);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(slug).normalize("NFC");
+  } catch {
+    return null;
+  }
+  if (decoded.length > 96 || !slugPattern.test(decoded)) return null;
+  return publishedEntry(kind, { [slugKeys[locale]]: decoded }, marketId);
 }
 
 export async function publishedEntries(kind: EditorialKind, marketId: string) {

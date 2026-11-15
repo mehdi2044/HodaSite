@@ -7,7 +7,7 @@ import {
   publishEditorial,
   saveEditorialDraft,
 } from "@/modules/editorial/publication";
-import { publishedEntry } from "@/modules/editorial/queries";
+import { publishedBySlug, publishedEntry } from "@/modules/editorial/queries";
 import { saveWeeklyLook } from "@/modules/editorial/weekly";
 import { editorialContent } from "@/modules/editorial/contracts";
 import { tokenHash } from "@/lib/secure-tokens";
@@ -74,6 +74,24 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
       });
       return { entry, revision, body };
     }
+    it("resolves percent-encoded Persian slugs from canonical rewrites", async () => {
+      const look = await publishedBySlug(
+        "LOOK",
+        "fa",
+        encodeURIComponent("روزهای-راحت"),
+        market,
+      );
+      const article = await publishedBySlug(
+        "ARTICLE",
+        "fa",
+        encodeURIComponent("استایل-روزمره"),
+        market,
+      );
+      expect(look?.id).toBe("fixture-editorial-easy-days");
+      expect(article?.id).toBe("fixture-editorial-easy-days-story");
+      expect(await publishedBySlug("LOOK", "fa", "%GG", market)).toBeNull();
+    });
+
     it("separates drafts from public revisions, schedules in the future, and archives", async () => {
       const { entry, revision, body } = await draft();
       expect(await publishedEntry("LOOK", { id: entry.id }, market)).toBeNull();

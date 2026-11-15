@@ -50,7 +50,8 @@ export default async function ArticlePage({
     readyImages([body.ogMediaId ?? body.mediaId]),
   ]);
   const origin = normalizeSeo(settings?.seo).origin;
-  const canonical = seoPath(locale, market.code, "magazine", slug);
+  const canonicalSlug = editorialSlug(article, locale);
+  const canonical = seoPath(locale, market.code, "magazine", canonicalSlug);
   const links = related
     .filter(
       ({ id, body: item }) =>
@@ -116,7 +117,7 @@ export default async function ArticlePage({
         body={body}
         market={market}
         locale={locale}
-        slug={slug}
+        slug={canonicalSlug}
         visibleFrom={article.revision.visibleFrom}
       />
       {links.length > 0 && (
