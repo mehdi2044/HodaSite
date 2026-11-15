@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import type { getTranslations } from "next-intl/server";
 import { storefrontPath } from "@/lib/storefront-path";
-import { supportsLookFitting } from "@/modules/editorial/fitting";
 import { seoPath } from "@/lib/seo-urls";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { editorialSlug } from "@/modules/editorial/queries";
@@ -12,14 +11,15 @@ import type { PublicLook } from "@/modules/editorial/gallery";
 import type { ResponsiveImageMedia } from "./responsive-image";
 import { EditorialImage } from "./editorial-image";
 
-export async function CuratedCard({
+export function CuratedCard({
   look,
   locale,
   market,
   commerce,
   images,
   weekly = false,
-  allowFitting = true,
+  fitting = false,
+  t,
 }: {
   look: PublicLook;
   locale: EditorialLocale;
@@ -27,12 +27,9 @@ export async function CuratedCard({
   commerce: LookCommerce;
   images: (ResponsiveImageMedia & { id: string })[];
   weekly?: boolean;
-  allowFitting?: boolean;
+  fitting?: boolean;
+  t: Awaited<ReturnType<typeof getTranslations<"editorial">>>;
 }) {
-  const [t, fitting] = await Promise.all([
-    getTranslations({ locale, namespace: "editorial" }),
-    allowFitting && supportsLookFitting(look.body),
-  ]);
   const href = seoPath(
     locale,
     market.code,

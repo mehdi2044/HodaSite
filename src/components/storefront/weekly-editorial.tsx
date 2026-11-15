@@ -6,6 +6,7 @@ import type { EditorialLocale } from "@/modules/editorial/contracts";
 import { weeklyLooks } from "@/modules/editorial/weekly";
 import { readyImages } from "@/modules/editorial/queries";
 import { resolveLookCommerce } from "@/modules/editorial/commerce";
+import { supportsLookFitting } from "@/modules/editorial/fitting";
 import { CuratedCard } from "./curated-card";
 
 export async function WeeklyEditorial({
@@ -23,7 +24,7 @@ export async function WeeklyEditorial({
   const rows = (await weeklyLooks(market.id, archive)).filter(
     ({ row }) => !compact || row.slot === "MAIN",
   );
-  const [commerce, images] = await Promise.all([
+  const [commerce, images, fitting] = await Promise.all([
     resolveLookCommerce(
       rows.map(({ look }) => look.body),
       market,
@@ -35,6 +36,7 @@ export async function WeeklyEditorial({
         look.body.mobileMediaId ?? look.body.mediaId,
       ]),
     ),
+    Promise.all(rows.map(({ look }) => supportsLookFitting(look.body))),
   ]);
   return (
     <section className="editorial-section">
@@ -44,6 +46,8 @@ export async function WeeklyEditorial({
           {rows.map(({ row, look }, index) => (
             <CuratedCard
               key={row.id}
+              fitting={fitting[index]}
+              t={t}
               look={look}
               locale={locale}
               market={market}

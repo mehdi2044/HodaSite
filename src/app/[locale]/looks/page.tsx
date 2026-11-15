@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { supportsLookFitting } from "@/modules/editorial/fitting";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -74,6 +76,9 @@ export default async function LooksPage({
       look.body.mobileMediaId ?? look.body.mediaId,
     ]),
   );
+  const fitting = await Promise.all(
+    rows.map(({ look }) => supportsLookFitting(look.body)),
+  );
   const path = seoPath(locale, market.code, "looks");
   const facets = [
     ["audience", audiences],
@@ -141,18 +146,22 @@ export default async function LooksPage({
         <button className="button">{t("filter")}</button>
       </form>
       {rows.length ? (
-        <div className="editorial-grid">
-          {rows.map(({ look, commerce }) => (
-            <CuratedCard
-              key={look.id}
-              look={look}
-              commerce={commerce}
-              locale={locale}
-              market={market}
-              images={images}
-            />
-          ))}
-        </div>
+        <Fragment key="editorial-gallery-results">
+          <div className="editorial-grid">
+            {rows.map(({ look, commerce }, index) => (
+              <CuratedCard
+                key={look.id}
+                t={t}
+                fitting={fitting[index]}
+                look={look}
+                commerce={commerce}
+                locale={locale}
+                market={market}
+                images={images}
+              />
+            ))}
+          </div>
+        </Fragment>
       ) : (
         <p className="editorial-empty">{t("empty")}</p>
       )}

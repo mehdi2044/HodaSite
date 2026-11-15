@@ -154,7 +154,7 @@ export async function MagazineArticle({
               return i >= 0 ? (
                 <div key={index}>
                   <CuratedCard
-                    allowFitting={false}
+                    t={t}
                     look={looks[i]}
                     locale={locale}
                     market={market}
