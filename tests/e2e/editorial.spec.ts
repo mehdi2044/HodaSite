@@ -72,12 +72,11 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
   ).toBeVisible();
   await page.getByRole("link", { name: "Try this look", exact: true }).click();
   await expect(page).toHaveURL(/looks\/easy-days\?story=/, { timeout: 60_000 });
-  await page
-    .locator(".editorial-piece")
-    .nth(1)
-    .getByLabel("Color", { exact: true })
-    .selectOption({ index: 1 });
-  for (const control of await page.getByLabel("Size", { exact: true }).all()) {
+  const pieces = page.locator(".editorial-piece");
+  await expect(pieces).toHaveCount(3);
+  await pieces.nth(1).getByRole("combobox").first().selectOption({ index: 1 });
+  for (const piece of await pieces.all()) {
+    const control = piece.getByRole("combobox").last();
     const option = await control
       .locator("option[value]:not([value='']):not([disabled])")
       .first()
@@ -112,8 +111,8 @@ test("story, color and sizes, idempotent set purchase, checkout and fitting pres
   const address = page
     .locator("form")
     .filter({ has: page.locator('[name="firstName"]') });
-  await expect(address.locator("button[type=submit]")).toBeVisible();
-  await address.locator("button[type=submit]").click({ trial: true });
+  await expect(address.getByRole("button").last()).toBeVisible();
+  await address.getByRole("button").last().click({ trial: true });
   await page.screenshot({
     path: info.outputPath("checkout-dock-390.png"),
     fullPage: true,
@@ -163,9 +162,7 @@ test("authorized admin creates a draft, keeps preview private, publishes it, and
     await input.fill(name);
   for (const input of await editor.locator("textarea").all())
     await input.fill("QA stage");
-  await editor
-    .getByLabel("تصویر شاخص", { exact: true })
-    .selectOption({ index: 1 });
+  await editor.getByRole("combobox").first().selectOption({ index: 1 });
   await editor.getByRole("button", { name: "افزودن قطعه" }).click();
   const variant = editor.getByLabel("محصول و تنوع پیشنهادی");
   const real = await variant
