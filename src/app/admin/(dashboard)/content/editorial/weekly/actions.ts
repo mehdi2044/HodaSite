@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
-import { UnauthorizedError } from "@/modules/access";
+import { assertCan, UnauthorizedError } from "@/modules/access";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import {
   editorialId,
@@ -18,6 +18,7 @@ export async function scheduleWeekly(
   return runAction(async () => {
     const session = await auth();
     if (!session?.user?.id) throw new UnauthorizedError();
+    await assertCan(session.user.id, "content.page.publish");
     await saveWeeklyLook(session.user.id, {
       id: editorialId.parse(form.get("id")),
       slot: z.enum(slots).parse(form.get("slot")),

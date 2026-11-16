@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
+import {
+  changeEditorial,
+  writeEditorial,
+} from "@/app/admin/(dashboard)/content/editorial/actions";
+import { scheduleWeekly } from "@/app/admin/(dashboard)/content/editorial/weekly/actions";
 import { seedEditorialFixtures } from "../fixtures/editorial";
 import {
   archiveEditorial,
@@ -19,8 +24,29 @@ import {
 const request = vi.hoisted(() => ({
   market: { id: "", currency: "" },
   token: "",
+  actorId: "",
 }));
-vi.mock("@/modules/auth", () => ({ auth: async () => null }));
+vi.mock("@/modules/auth", () => ({
+  auth: async () =>
+    request.actorId ? { user: { id: request.actorId } } : null,
+}));
+vi.mock("@/lib/db", async (importOriginal) => {
+  const isolated = process.env.EDITORIAL_TEST_DATABASE_URL;
+  if (!isolated) return importOriginal<typeof import("@/lib/db")>();
+
+  const editorial = new URL(isolated);
+  const shared = process.env.TEST_DATABASE_URL;
+  if (
+    !shared ||
+    !editorial.pathname.endsWith("_test") ||
+    editorial.pathname === new URL(shared).pathname
+  )
+    throw new Error(
+      "Editorial requires a differently named dedicated _test database",
+    );
+  const { PrismaClient } = await import("@prisma/client");
+  return { db: new PrismaClient({ datasources: { db: { url: isolated } } }) };
+});
 vi.mock("@/modules/customers", () => ({ currentCustomer: async () => null }));
 vi.mock("@/lib/request-context", () => ({
   getRequestContext: async () => ({ market: request.market }),
@@ -54,6 +80,7 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
       });
       await db.editorialRevision.deleteMany({ where: { entryId: entries } });
       await db.editorialEntry.deleteMany({ where: { id: entries } });
+      if (process.env.EDITORIAL_TEST_DATABASE_URL) await db.$disconnect();
     });
     async function draft() {
       const source = await publishedEntry(
@@ -61,7 +88,10 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
         { id: "fixture-editorial-easy-days" },
         market,
       );
-      const body = editorialContent.parse(source?.body);
+      const body = editorialContent.parse({
+        ...editorialContent.parse(source?.body),
+        marketIds: [market],
+      });
       const slug = `integration-${randomUUID()}`;
       const entry = await saveEditorialDraft(owner, {
         body,
@@ -90,6 +120,92 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
       expect(look?.id).toBe("fixture-editorial-easy-days");
       expect(article?.id).toBe("fixture-editorial-easy-days-story");
       expect(await publishedBySlug("LOOK", "fa", "%GG", market)).toBeNull();
+    });
+
+    it("enforces draft and publication permissions through the real admin actions", async () => {
+      const { entry, revision, body } = await draft();
+      const actor = await db.user.create({
+        data: {
+          email: "editorial-test-" + randomUUID() + "@example.com",
+          name: "Editorial test editor",
+          passwordHash: "unused-test-fixture",
+        },
+      });
+      const draftForm = new FormData();
+      draftForm.set("id", entry.id);
+      draftForm.set("version", String(entry.version));
+      draftForm.set("body", JSON.stringify(body));
+      const publicationForm = new FormData();
+      publicationForm.set("id", entry.id);
+      publicationForm.set("version", String(entry.version));
+      publicationForm.set("revisionId", revision.id);
+      const weeklyForm = new FormData();
+      weeklyForm.set("id", entry.id);
+      weeklyForm.set("slot", "MEN");
+      const year = new Date().getUTCFullYear() + 2;
+      weeklyForm.set("start", year + "-01-03T10:00");
+      weeklyForm.set("end", year + "-01-10T10:00");
+
+      try {
+        await expect(writeEditorial(null, draftForm)).resolves.toMatchObject({
+          code: "UNAUTHORIZED",
+        });
+        await expect(scheduleWeekly(null, weeklyForm)).resolves.toMatchObject({
+          code: "UNAUTHORIZED",
+        });
+        request.actorId = actor.id;
+        await expect(writeEditorial(null, draftForm)).resolves.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        await db.userPermissionOverride.create({
+          data: {
+            userId: actor.id,
+            permission: "content.page.write",
+            allow: true,
+          },
+        });
+        await expect(
+          changeEditorial(null, publicationForm),
+        ).resolves.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        publicationForm.set("operation", "archive");
+        await expect(
+          changeEditorial(null, publicationForm),
+        ).resolves.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        request.actorId = owner;
+        publicationForm.delete("operation");
+        await expect(changeEditorial(null, publicationForm)).resolves.toEqual({
+          ok: true,
+        });
+        request.actorId = actor.id;
+        await expect(scheduleWeekly(null, weeklyForm)).resolves.toMatchObject({
+          code: "FORBIDDEN",
+        });
+        expect(
+          await db.editorialRevision.count({ where: { entryId: entry.id } }),
+        ).toBe(1);
+        expect(
+          await db.weeklyLookFeature.count({ where: { entryId: entry.id } }),
+        ).toBe(0);
+        expect(
+          await db.auditLog.count({
+            where: { entityId: entry.id, userId: actor.id },
+          }),
+        ).toBe(0);
+        request.actorId = owner;
+        await expect(scheduleWeekly(null, weeklyForm)).resolves.toEqual({
+          ok: true,
+        });
+        expect(
+          await db.weeklyLookFeature.count({ where: { entryId: entry.id } }),
+        ).toBe(1);
+      } finally {
+        request.actorId = "";
+        await db.user.delete({ where: { id: actor.id } });
+      }
     });
 
     it("separates drafts from public revisions, schedules in the future, and archives", async () => {

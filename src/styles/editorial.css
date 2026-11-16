@@ -426,6 +426,28 @@
   border-radius: 0.6rem;
   box-shadow: 0 12px 32px #211b1629;
 }
+@media (max-width: 1023px) {
+  .editorial-filter-panel[open] {
+    flex-basis: 100%;
+  }
+  .editorial-filter-panel summary {
+    inline-size: fit-content;
+    margin-inline-start: auto;
+  }
+  .editorial-filter-panel[open] .editorial-filters {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    inline-size: 100%;
+    max-block-size: none;
+    margin-block: 0.45rem;
+    overflow: visible;
+    padding: 0.75rem;
+  }
+  .editorial-filter-panel .editorial-filters :is(.input, button) {
+    min-block-size: 44px;
+    font-size: max(1rem, 16px);
+  }
+}
 .editorial-collection-title {
   font-size: clamp(1.45rem, 2.65vw, 2.2rem);
   line-height: 1.25;

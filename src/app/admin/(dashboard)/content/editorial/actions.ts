@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/modules/auth";
-import { UnauthorizedError } from "@/modules/access";
+import { assertCan, UnauthorizedError } from "@/modules/access";
 import { runAction, type ActionResult } from "@/lib/action-result";
 import {
   editorialId,
@@ -31,8 +31,10 @@ export async function writeEditorial(
 ) {
   let href: string | undefined;
   const result = await runAction(async () => {
+    const user = await userId();
+    await assertCan(user, "content.page.write");
     const id = editorialId.optional().parse(form.get("id") || undefined);
-    const entry = await saveEditorialDraft(await userId(), {
+    const entry = await saveEditorialDraft(user, {
       id,
       version: version.parse(form.get("version")),
       slugs: {
@@ -57,6 +59,7 @@ export async function changeEditorial(
 ) {
   return runAction(async () => {
     const user = await userId();
+    await assertCan(user, "content.page.publish");
     const id = editorialId.parse(form.get("id"));
     const expectedVersion = version.parse(form.get("version"));
     if (form.get("operation") === "archive") {

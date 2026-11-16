@@ -60,6 +60,30 @@ import { returnFixture } from "../helpers/returns";
 import { saveFittingSettings } from "@/modules/fitting/settings";
 import { transactionBarrier } from "../helpers/transaction-barrier";
 
+// Observe the exact lock and blocker before releasing the winning transaction.
+async function expectFittingRewardWait(
+  blockerPid: number,
+  waitingMode: "ShareLock" | "ExclusiveLock",
+) {
+  await expect
+    .poll(
+      async () => {
+        const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+        SELECT EXISTS (
+          SELECT 1 FROM pg_locks
+          WHERE locktype = 'advisory' AND classid = 0
+            AND objid = 75105 AND objsubid = 1
+            AND NOT granted AND mode = ${waitingMode}
+            AND ${blockerPid} = ANY(pg_blocking_pids(pid))
+        ) AS blocked
+      `;
+        return row.blocked;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+}
+
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "cancelled exchange coin entitlement: PostgreSQL",
   () => {
@@ -303,6 +327,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             const input = raw as { where?: { key?: string } };
             return input.where?.key === "fitting-room";
           },
+          20_000,
         );
         let saving: ReturnType<typeof save> | undefined,
           approving: ReturnType<typeof approvePayment> | undefined;
@@ -318,12 +343,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           if (first === "settings")
             approving = approvePayment(f.order.id, ownerId);
           else saving = save();
-          await vi.waitFor(async () => {
-            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
-              SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked
-            `;
-            expect(row.blocked).toBe(true);
-          });
+          await expectFittingRewardWait(
+            barrier.pid,
+            first === "settings" ? "ShareLock" : "ExclusiveLock",
+          );
           barrier.release();
           await Promise.all([saving, approving]);
           const expected =
@@ -362,6 +385,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           barrier.restore();
         }
       },
+      30_000,
     );
     it("orders the first reward configuration before an overlapping paid sale", async () => {
       const f = await actualPackSale({ approve: false, pack: false });
@@ -369,10 +393,16 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         where: { key: "fitting-room" },
       });
       const config = configSchema.parse(previous.config);
-      const barrier = transactionBarrier(db, "integration", "upsert", (raw) => {
-        const input = raw as { where?: { key?: string } };
-        return input.where?.key === "fitting-room";
-      });
+      const barrier = transactionBarrier(
+        db,
+        "integration",
+        "upsert",
+        (raw) => {
+          const input = raw as { where?: { key?: string } };
+          return input.where?.key === "fitting-room";
+        },
+        20_000,
+      );
       const saving = saveFittingSettings({
         config: {
           ...config,
@@ -390,15 +420,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           }),
         ]);
         approving = approvePayment(f.order.id, ownerId);
-        await vi.waitFor(async () => {
-          const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
-            SELECT EXISTS (
-              SELECT 1 FROM pg_stat_activity
-              WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))
-            ) AS blocked
-          `;
-          expect(row.blocked).toBe(true);
-        });
+        await expectFittingRewardWait(barrier.pid, "ShareLock");
         barrier.release();
         await Promise.all([saving, approving]);
         expect((await walletView(f.customer.id)).balance).toBe("10");
@@ -415,7 +437,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           }),
         ]);
       }
-    });
+    }, 30_000);
     it.each([false, true])(
       "actual checkout/payment and repeated manual cancellation; spent=%s",
       async (spent) => {

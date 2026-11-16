@@ -193,6 +193,14 @@
   margin: 0;
 }
 
+@media (max-width: 680px) {
+  .living-rail-heading h1,
+  .living-rail-heading h2 {
+    font-size: clamp(1.5rem, 6vw, 1.85rem);
+    overflow-wrap: anywhere;
+  }
+}
+
 .living-rail-heading > span {
   font-size: 0.75rem;
   color: #67503e;
