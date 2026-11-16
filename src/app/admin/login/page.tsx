@@ -1,9 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+
+const subscribeToHydration = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 function LoginForm() {
   const t = useTranslations("security");
@@ -15,6 +19,11 @@ function LoginForm() {
       : "/admin";
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const interactive = useSyncExternalStore(
+    subscribeToHydration,
+    clientReady,
+    serverReady,
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -46,7 +55,7 @@ function LoginForm() {
   }
 
   return (
-    <form className="grid admin-login-form" onSubmit={onSubmit}>
+    <form method="post" className="grid admin-login-form" onSubmit={onSubmit}>
       <label>
         {t("email")}
         <input
@@ -111,8 +120,12 @@ function LoginForm() {
           {error}
         </p>
       ) : null}
-      <button className="button" type="submit" disabled={loading}>
-        {loading ? t("loading") : t("login")}
+      <button
+        className="button"
+        type="submit"
+        disabled={!interactive || loading}
+      >
+        {!interactive || loading ? t("loading") : t("login")}
       </button>
     </form>
   );
