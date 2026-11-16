@@ -13,6 +13,9 @@ import {
 } from "@/modules/editorial/contracts";
 import { CuratedDetail } from "@/components/storefront/curated-detail";
 import { MagazineArticle } from "@/components/storefront/magazine-article";
+import { LivingRail } from "@/components/storefront/living-rail";
+import { resolveLookCommerce } from "@/modules/editorial/commerce";
+import { resolveLookVisuals } from "@/modules/editorial/visual";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -44,6 +47,13 @@ export default async function Preview({
     locales.find((language) => language === query.locale) ?? "fa";
   if (!revision || !market) notFound();
   const body = editorialContent.parse(revision.body);
+  const rail =
+    body.kind === "LOOK" && body.livingRail && body.visual?.mode === "PHOTO"
+      ? await Promise.all([
+          resolveLookVisuals([body], [market.id]),
+          resolveLookCommerce([body], market, locale),
+        ])
+      : null;
   const [messages, t] = await Promise.all([
     getMessages({ locale }),
     getTranslations({ locale, namespace: "editorial" }),
@@ -60,6 +70,20 @@ export default async function Preview({
           {t(query.view === "mobile" ? "mobile" : "desktop")} ·{" "}
           <bdi>{market.code}</bdi>
         </p>
+        {body.kind === "LOOK" && rail?.[0][0] && rail[1][0] && (
+          <LivingRail
+            id={id}
+            revisionId={revision.id}
+            slug=""
+            body={body}
+            visual={rail[0][0]}
+            commerce={rail[1][0]}
+            market={market}
+            locale={locale}
+            weekly={body.livingRail?.layout === "RACK"}
+            preview
+          />
+        )}
         {body.kind === "LOOK" ? (
           <CuratedDetail
             id={id}

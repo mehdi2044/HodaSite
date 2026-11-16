@@ -48,6 +48,7 @@ export function EditorialEditor({
   action: (state: ActionResult | null, data: FormData) => Promise<ActionResult>;
 }) {
   const t = useTranslations("editorial");
+  const rail = useTranslations("livingRail");
   const [body, update] = useState(initial);
   const [state, submit, pending] = useActionState(action, null);
   const copy = (
@@ -234,6 +235,27 @@ export function EditorialEditor({
               {coordinates(item.mobile, t("mobileHotspot"), (mobile) =>
                 change({ ...item, mobile }),
               )}
+              <label className="grid">
+                {rail("role")}
+                <select
+                  className="input"
+                  value={item.railRole ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    change({
+                      ...item,
+                      railRole:
+                        value === "MAIN" || value === "SUGGESTED"
+                          ? value
+                          : undefined,
+                    });
+                  }}
+                >
+                  <option value="">{rail("none")}</option>
+                  <option value="MAIN">{rail("main")}</option>
+                  <option value="SUGGESTED">{rail("suggested")}</option>
+                </select>
+              </label>
               <div className="flex gap-2">
                 <button
                   className="button"
@@ -485,6 +507,82 @@ export function EditorialEditor({
             update({ ...body, color }),
           )}
           {items(body)}
+          <fieldset className="grid gap-2">
+            <legend>{rail("name")}</legend>
+            <p>{rail("photoOnly")}</p>
+            <label className="grid">
+              {rail("layout")}
+              <select
+                className="input"
+                value={body.livingRail?.layout ?? ""}
+                onChange={(event) => {
+                  const layout = event.target.value;
+                  update({
+                    ...body,
+                    livingRail:
+                      layout === "CARDS" || layout === "RACK"
+                        ? {
+                            freeSide: layout === "CARDS" ? "RIGHT" : "LEFT",
+                            motion: false,
+                            ...body.livingRail,
+                            layout,
+                          }
+                        : undefined,
+                  });
+                }}
+              >
+                <option value="">{rail("none")}</option>
+                <option value="CARDS">{rail("cards")}</option>
+                <option value="RACK">{rail("rack")}</option>
+              </select>
+            </label>
+            {body.livingRail &&
+              (() => {
+                const livingRail = body.livingRail;
+                return (
+                  <>
+                    <label className="grid">
+                      {rail("emptySide")}
+                      <select
+                        className="input"
+                        value={livingRail.freeSide}
+                        onChange={(event) =>
+                          update({
+                            ...body,
+                            livingRail: {
+                              ...livingRail,
+                              freeSide:
+                                event.target.value === "LEFT"
+                                  ? "LEFT"
+                                  : "RIGHT",
+                            },
+                          })
+                        }
+                      >
+                        <option value="LEFT">{rail("left")}</option>
+                        <option value="RIGHT">{rail("right")}</option>
+                      </select>
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={livingRail.motion}
+                        onChange={(event) =>
+                          update({
+                            ...body,
+                            livingRail: {
+                              ...livingRail,
+                              motion: event.target.checked,
+                            },
+                          })
+                        }
+                      />{" "}
+                      {rail("motion")}
+                    </label>
+                  </>
+                );
+              })()}
+          </fieldset>
           <fieldset className="grid gap-2">
             <legend>{t("visualMode")}</legend>
             <label>

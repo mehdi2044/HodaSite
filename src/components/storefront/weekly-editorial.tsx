@@ -16,6 +16,7 @@ export async function WeeklyEditorial({
   compact = false,
   gallery = false,
   magazine = false,
+  Card = CuratedCard,
 }: {
   locale: EditorialLocale;
   market: Market;
@@ -23,6 +24,7 @@ export async function WeeklyEditorial({
   compact?: boolean;
   gallery?: boolean;
   magazine?: boolean;
+  Card?: typeof CuratedCard;
 }) {
   const t = await getTranslations({ locale, namespace: "editorial" });
   const rows = (await weeklyLooks(market.id, archive)).filter(
@@ -54,7 +56,7 @@ export async function WeeklyEditorial({
                 ),
             );
             return (
-              <CuratedCard
+              <Card
                 key={row.id}
                 fitting={fitting[index]}
                 t={t}

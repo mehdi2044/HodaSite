@@ -43,6 +43,7 @@ export function ResponsiveImage({
   role,
   className,
   imgClassName = "h-full w-full object-cover",
+  mobile,
 }: {
   media: ResponsiveImageMedia;
   locale: "fa" | "tr" | "en";
@@ -53,6 +54,7 @@ export function ResponsiveImage({
   /** Defaults to filling the wrapper (grid tiles); pass e.g.
    *  "h-8 w-auto object-contain" for intrinsic-sized logos. */
   imgClassName?: string;
+  mobile?: { media: ResponsiveImageMedia; query: string };
 }) {
   const variants = (media.variants as MediaVariants | null) ?? {};
   const alt =
@@ -64,6 +66,8 @@ export function ResponsiveImage({
     ([a], [b]) => Number(a) - Number(b),
   );
   const largestWebp = webpEntries.at(-1)?.[1]?.url ?? media.url;
+  const mobileVariants = mobile?.media.variants as
+    MediaVariants | null | undefined;
 
   return (
     <picture
@@ -77,6 +81,15 @@ export function ResponsiveImage({
       }
       className={className}
     >
+      {mobile && (
+        <source
+          media={mobile.query}
+          srcSet={srcSet(mobileVariants?.webp) || mobile.media.url}
+          sizes={sizes}
+          width={mobile.media.width ?? undefined}
+          height={mobile.media.height ?? undefined}
+        />
+      )}
       {variants.avif && (
         <source
           type="image/avif"

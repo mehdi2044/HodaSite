@@ -72,6 +72,7 @@ export async function resolveLookCommerce(
         variants:
           product?.variants.map((v) => ({
             id: v.id,
+            sku: v.sku,
             amount: market.salesPaused
               ? null
               : (amounts?.get(v.id)?.amount ?? null),

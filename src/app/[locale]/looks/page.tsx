@@ -22,6 +22,7 @@ import {
 import { resolveLookCommerce } from "@/modules/editorial/commerce";
 import { CuratedCard } from "@/components/storefront/curated-card";
 import { WeeklyEditorial } from "@/components/storefront/weekly-editorial";
+import { GalleryEntrance } from "@/components/storefront/living-rail";
 
 export async function generateMetadata({
   params,
@@ -70,18 +71,19 @@ export default async function LooksPage({
   );
   const rows = priceFilter ? filtered.slice(offset, offset + limit) : filtered;
   const total = priceFilter ? filtered.length : all.length;
-  const hero =
+  const showEntrances =
     !filters.audience &&
     !filters.season &&
     !filters.occasion &&
     !filters.style &&
     !filters.color &&
     !priceFilter &&
-    filters.page === 1
-      ? rows.find(
-          ({ look }) => look.body.featured && look.visual?.mode === "PHOTO",
-        )
-      : undefined;
+    filters.page === 1;
+  const hero = showEntrances
+    ? rows.find(
+        ({ look }) => look.body.featured && look.visual?.mode === "PHOTO",
+      )
+    : undefined;
   const fitting = await Promise.all(
     rows.map(({ look }) => supportsLookFitting(look.body)),
   );
@@ -114,7 +116,7 @@ export default async function LooksPage({
         {!hero && <h1>{t("gallery")}</h1>}
       </header>
       {hero && (
-        <CuratedCard
+        <GalleryEntrance
           t={t}
           look={hero.look}
           commerce={hero.commerce}
@@ -212,7 +214,13 @@ export default async function LooksPage({
       </div>
       {/* Keep the async weekly section off the main element's hydration work unit. */}
       <Fragment key="gallery-weekly">
-        <WeeklyEditorial locale={locale} market={market} compact gallery />
+        <WeeklyEditorial
+          locale={locale}
+          market={market}
+          compact
+          gallery
+          Card={showEntrances ? GalleryEntrance : undefined}
+        />
       </Fragment>
     </main>
   );

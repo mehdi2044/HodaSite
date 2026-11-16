@@ -41,6 +41,7 @@ export const lookItem = z
     variantId: editorialId,
     desktop: point.optional(),
     mobile: point.optional(),
+    railRole: z.enum(["MAIN", "SUGGESTED"]).optional(),
   })
   .strict();
 
@@ -84,6 +85,14 @@ export const editorialContent = z.discriminatedUnion("kind", [
       occasion: z.enum(occasions),
       style: z.enum(styles),
       color: z.enum(colors),
+      livingRail: z
+        .object({
+          layout: z.enum(["CARDS", "RACK"]),
+          freeSide: z.enum(["LEFT", "RIGHT"]),
+          motion: z.boolean(),
+        })
+        .strict()
+        .optional(),
       visual: z
         .discriminatedUnion("mode", [
           z.object({ mode: z.literal("COMPOSITE") }).strict(),
