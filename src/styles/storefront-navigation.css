@@ -1,11 +1,11 @@
 /* D77's viewer dock, shared by the public storefront and fitting room.
    Reserve the layout budget in server HTML; measurement never resizes Hero. */
 .storefront-app[data-floating-navigation="on"] {
-  --storefront-nav-height: 84px;
-  padding-block-end: calc(
-    var(--storefront-nav-offset, var(--storefront-nav-height)) +
-      env(safe-area-inset-bottom, 0px)
-  );
+  --storefront-dock-gap: 8px;
+  --storefront-dock-height: 76px;
+  --storefront-nav-height: calc(var(--storefront-dock-height) + var(--storefront-dock-gap));
+  --storefront-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --storefront-dock-end: calc(var(--storefront-nav-height) + var(--storefront-safe-area-bottom));
 }
 .storefront-app[data-floating-navigation="off"] {
   --storefront-nav-height: 0px;
@@ -71,18 +71,12 @@
 /* The tall-screen purchase bar also occupies a band above the dock. */
 @media (max-width: 1023px) and (min-height: 691px) {
   .storefront-app[data-floating-navigation="on"]:has(.shop-product-submit) {
-    padding-block-end: calc(
-      var(--storefront-nav-offset, var(--storefront-nav-height)) +
-        env(safe-area-inset-bottom, 0px) + 90px
-    );
+    --storefront-purchase-clearance: 8rem;
   }
-  html:has(
-    .storefront-app[data-floating-navigation="on"] .shop-product-submit
-  ) {
-    scroll-padding-block-end: calc(
-      var(--storefront-nav-offset, 84px) + env(safe-area-inset-bottom, 0px) +
-        106px
-    );
+  .storefront-app[data-floating-navigation="on"]
+    .storefront-scroll
+    .shop-product-submit {
+    inset-block-end: var(--storefront-dock-end);
   }
 }
 body:has(dialog[open]) .storefront-floating-nav {
@@ -101,23 +95,25 @@ body:has(dialog[open]) .storefront-floating-nav {
     --storefront-nav-height: 109px;
   }
   .storefront-floating-nav:not(.moda-fr31-dock) {
-    left: 8px;
-    right: 8px;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    inset-inline: var(--storefront-dock-gap, 8px);
+    inset-block-end: calc(
+      var(--storefront-dock-gap, 8px) +
+        var(--storefront-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+    );
     display: grid;
-    grid-template-columns: repeat(6, minmax(min-content, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     width: auto;
-    height: 76px;
+    height: var(--storefront-dock-height, 76px);
     border-radius: 24px;
     background: #171512;
   }
   .storefront-floating-nav:not(.moda-fr31-dock) a {
-    min-inline-size: 44px;
+    min-inline-size: 0;
     padding: 4px 2px;
     font-size: 13px;
     line-height: 1.2;
     white-space: normal;
-    overflow-wrap: normal;
+    overflow-wrap: anywhere;
     word-break: normal;
     hyphens: none;
     border-radius: 16px;
@@ -166,33 +162,24 @@ html:has(.storefront-app[data-floating-navigation="on"]) {
   height: 100dvh;
   overflow: clip;
   padding: 0;
-  padding-block-end: calc(
-    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
-  );
+  padding-block-end: var(--storefront-dock-end);
 }
 .storefront-app[data-floating-navigation="on"] > .storefront-scroll {
   block-size: 100%;
   overflow: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
-  scroll-padding-block: var(--storefront-header-height, 80px) 14px;
+  scroll-padding-block: var(--storefront-header-height, 80px)
+    calc(14px + var(--storefront-purchase-clearance, 0px));
   padding-inline: max(
     env(safe-area-inset-left, 0px),
     env(safe-area-inset-right, 0px)
   );
   --storefront-nav-offset: 0px;
 }
-.storefront-app[data-floating-navigation="on"]:has(.shop-product-submit) {
-  padding-block-end: calc(
-    var(--storefront-nav-height) + env(safe-area-inset-bottom, 0px)
-  );
-}
 .storefront-app[data-floating-navigation="on"]
   .storefront-scroll
-  .storefront-purchase,
-.storefront-app[data-floating-navigation="on"]
-  .storefront-scroll
-  .shop-product-submit {
+  .storefront-purchase {
   bottom: 0;
 }
 html:has(.storefront-app[data-floating-navigation="on"]) {

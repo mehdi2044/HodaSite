@@ -1,3 +1,7 @@
+## MODA4 — Mobile purchase and early storefront navigation
+
+- The mobile dock and the fixed product purchase bar share a CSS offset that includes the safe area. Short viewports keep the purchase form in the scroller. Product, cart and Checkout controls are checked with pointer hit testing before an actual cart add.
+- The storefront head intercepts ordinary, same-origin link clicks while the HTML parser is active. It starts the chosen navigation after parsing, so the inline Flight payload can finish. Normal hydrated links, new tabs, downloads and same-page fragment links keep their browser behavior. This change has no database migration.
 
 ## MODA4 — Next.js 16 candidate with Living Rail
 

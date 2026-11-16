@@ -166,8 +166,7 @@ test("opens a Turkish filtered look as its scripts arrive, then restores history
     await expect(page).toHaveURL(/audience=MEN/);
     await expect(page.locator("#look-results .look-card")).toHaveCount(3);
     lookPath = await result.getAttribute("href");
-    // Keep JavaScript blocked until the document stream finishes. Clicking
-    // earlier also cancels the stream and exercises a separate Flight error.
+    // This test exercises the normal transition with a finished document.
     expect(await (await filteredDocument).finished()).toBeNull();
   } finally {
     release();
@@ -219,6 +218,77 @@ test("opens the article look before the client bundles once the document stream 
 
   await expect(page.locator("main h1")).toHaveText("Easy Days");
   await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
+test("waits for the parser before following an early article link", async ({
+  page,
+}) => {
+  const article = "/en/m/CA/magazine/everyday-look";
+  const errors: string[] = [];
+  const lookRequests: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/Connection closed|React error #412/.test(message.text()))
+      errors.push(message.text());
+  });
+  page.on("request", (request) => {
+    if (
+      request.isNavigationRequest() &&
+      request.url().includes("/looks/easy-days")
+    )
+      lookRequests.push(request.url());
+  });
+
+  let releaseParser = () => {};
+  const parserGate = new Promise<void>((resolve) => {
+    releaseParser = resolve;
+  });
+  await page.route("**/__qa_parser_gate.js", async (route) => {
+    await parserGate;
+    await route.fulfill({ contentType: "application/javascript", body: "" });
+  });
+  await page.route((url) => url.pathname === article, async (route) => {
+    const response = await route.fetch();
+    const html = await response.text();
+    const section = html.indexOf('class="article-shop"');
+    const closing = html.indexOf("</section>", section);
+    expect(section).toBeGreaterThan(-1);
+    expect(closing).toBeGreaterThan(section);
+    const end = closing + "</section>".length;
+    const headers = response.headers();
+    delete headers["content-length"];
+    delete headers["content-encoding"];
+    await route.fulfill({
+      response,
+      headers,
+      body:
+        html.slice(0, end) +
+        '<script src="/__qa_parser_gate.js"></script>' +
+        html.slice(end),
+    });
+  });
+  const chunks = await controlClientChunks(page);
+  const releaseChunks = chunks.hold();
+  const link = page.locator('.article-shop a[href*="/looks/easy-days"]').first();
+  try {
+    await page.goto(article, { waitUntil: "commit" });
+    await expect(link).toBeVisible();
+    expect(await page.evaluate(() => document.readyState)).toBe("loading");
+    await link.evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await link.click({ noWaitAfter: true });
+    expect(await page.evaluate(() => document.readyState)).toBe("loading");
+    await expect(page).toHaveURL(new URL(article, page.url()).href);
+    expect(lookRequests).toEqual([]);
+    releaseParser();
+    await expect(page).toHaveURL(/looks\/easy-days\?story=/);
+    expect(lookRequests).toHaveLength(1);
+  } finally {
+    releaseParser();
+    releaseChunks();
+  }
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  await expect(page.locator("main h1")).toHaveText("Easy Days");
   expect(errors).toEqual([]);
 });
 
