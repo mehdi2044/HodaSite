@@ -193,6 +193,35 @@ test("opens a Turkish filtered look as its scripts arrive, then restores history
   expect(errors).toEqual([]);
 });
 
+test("opens the article look before the client bundles once the document stream is complete", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const chunks = await controlClientChunks(page);
+  const release = chunks.hold();
+  const articlePath = "/en/m/CA/magazine/everyday-look";
+  const look = page.locator('.article-shop a[href*="/looks/"]').first();
+
+  try {
+    const response = await page.goto(articlePath, { waitUntil: "commit" });
+    expect(response?.status()).toBe(200);
+    await expect(look).toBeVisible();
+    expect(await response?.finished()).toBeNull();
+    await look.evaluate((element) =>
+      element.scrollIntoView({ block: "center" }),
+    );
+    await look.click({ noWaitAfter: true });
+    await expect(page).toHaveURL(/looks\/easy-days\?story=/);
+  } finally {
+    release();
+  }
+
+  await expect(page.locator("main h1")).toHaveText("Easy Days");
+  await expect(page.locator(".storefront-cart-toggle")).toBeEnabled();
+  expect(errors).toEqual([]);
+});
+
 test("story, color and sizes, idempotent set purchase, checkout and fitting preset", async ({
   page,
 }, info) => {
