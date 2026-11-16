@@ -615,8 +615,8 @@ function suffixLocalized(value: unknown, suffix: string) {
   };
 }
 function revalidateCatalog(...slugs: unknown[]) {
-  revalidateTag("catalog");
-  revalidateTag("homepage");
+  revalidateTag("catalog", { expire: 0 });
+  revalidateTag("homepage", { expire: 0 });
   revalidatePath("/admin/catalog/products");
   for (const locale of ["fa", "tr", "en"] as const) {
     revalidatePath(`/${locale}`);

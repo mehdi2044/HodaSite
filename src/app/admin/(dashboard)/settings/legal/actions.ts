@@ -57,6 +57,6 @@ export async function saveLegal(
       ]);
     });
 
-    revalidateTag("site-settings");
+    revalidateTag("site-settings", { expire: 0 });
   });
 }

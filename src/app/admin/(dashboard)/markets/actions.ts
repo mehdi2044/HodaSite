@@ -98,6 +98,6 @@ export async function saveMarket(
       ]);
     });
 
-    revalidateTag("markets");
+    revalidateTag("markets", { expire: 0 });
   });
 }

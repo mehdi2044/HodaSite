@@ -1,4 +1,8 @@
 
+## MODA4 — Next.js 16 candidate with Living Rail
+
+- The isolated candidate includes the approved Living Rail lineage, the admin login hydration guard and the tested framework pins. The [compatibility notes](phases/next16-acceptance-candidate.md) describe the cache contract and legacy Edge middleware.
+
 ## MODA4 — ایمنی ارسال فرم ورود مدیر
 
 - فرم ورود با روش POST رندر می‌شود و تا اتصال کنترل‌کنندهٔ مرورگر، ارسال غیرفعال است. آزمون مرورگر با JavaScript دیررس، ارسال با Enter، نبود پارامترهای ورود در URL و ورود موفق به‌وسیلهٔ TOTP بعد از hydration را می‌سنجد.

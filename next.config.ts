@@ -18,10 +18,10 @@ const config: NextConfig = {
   output: "standalone",
   // Preserve our canonical redirect origin. Next otherwise rewrites loopback
   // hosts (127.0.0.1 -> localhost), dropping host-bound admin cookies.
-  skipMiddlewareUrlNormalize: true,
+  skipProxyUrlNormalize: true,
   // Route uploads accept bounded 30MB original videos plus multipart overhead.
   experimental: {
-    middlewareClientMaxBodySize: "32mb",
+    proxyClientMaxBodySize: "32mb",
     serverActions: { bodySizeLimit: "6mb" },
   },
   // sharp ships a native binary; Next's standalone output-file-tracing can

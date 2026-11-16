@@ -1,0 +1,10 @@
+# Next.js 16 acceptance candidate
+
+Implemented against docs v1.2 / D-numbers touched D02, D44, D70, D77, D82.
+
+- Living Rail `ba5a1d5` is already an ancestor of the tested application base `6087ba3`. This branch adds the candidate framework changes on that history.
+- Pin Next.js, its analyzer and its ESLint configuration to `16.4.6`. Pin React and React DOM to `19.3.1` in the lockfile. The Docker build and dev commands explicitly select Webpack because the analyzer composes a Webpack configuration. Run ESLint independently because Next.js 16 removed automatic build-time lint.
+- Each existing one-argument cache invalidation now passes `{ expire: 0 }`. That retains immediate expiration on the next lookup for server actions and route handlers. The `"max"` profile would allow stale results while revalidating. `updateTag` is restricted to Server Actions, while this repository also invalidates from Route Handlers. Revalidation paths and cache tag names stay in place. [revalidateTag](https://nextjs.org/docs/app/api-reference/functions/revalidateTag) · [updateTag](https://nextjs.org/docs/app/api-reference/functions/updateTag)
+- The configuration uses `skipProxyUrlNormalize` and `experimental.proxyClientMaxBodySize`. The existing Edge middleware entry point is retained for the compatibility experiment. Next.js 16 reports that convention as deprecated. Moving it to `proxy.ts` would also move execution to Node and needs its own runtime verification. [Next.js 16 upgrade guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
+- The container uses Node 20.20.2, above the candidate's 20.9 minimum. Keep the existing async request APIs and standalone output. The application schema and migrations are the same as the source base. The isolated preview and destructive test flows use separate synthetic databases and media copies.
+

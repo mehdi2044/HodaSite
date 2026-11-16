@@ -172,7 +172,7 @@ export async function saveOverride(
         },
       });
     });
-    revalidateTag("pricing");
+    revalidateTag("pricing", { expire: 0 });
     revalidatePath("/admin/pricing/fx");
   });
 }
@@ -237,7 +237,7 @@ export async function saveMarketPricing(
         },
       });
     });
-    revalidateTag("pricing");
+    revalidateTag("pricing", { expire: 0 });
     revalidatePath("/admin/pricing/fx");
   });
 }
@@ -286,7 +286,7 @@ export async function saveMarketPrice(
         },
       });
     });
-    revalidateTag("pricing");
+    revalidateTag("pricing", { expire: 0 });
   });
 }
 
@@ -311,7 +311,7 @@ export async function endMarketPrice(
         },
       });
     });
-    revalidateTag("pricing");
+    revalidateTag("pricing", { expire: 0 });
     revalidatePath("/admin/pricing/fx");
   });
 }

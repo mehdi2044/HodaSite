@@ -49,7 +49,7 @@ export async function POST(r: Request) {
   // tag "site-settings"); without this, a cache warmed while maintenance was
   // off kept reporting effective:false while a restore was actually running
   // (D23, PR #4 review, P1).
-  revalidateTag("site-settings");
+  revalidateTag("site-settings", { expire: 0 });
   return NextResponse.json({
     state: on ? "on" : "off",
     inFlight: inFlightCount(),

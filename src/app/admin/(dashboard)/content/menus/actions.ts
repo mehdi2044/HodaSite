@@ -48,7 +48,7 @@ export async function createMenuOverride(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -98,7 +98,7 @@ export async function saveMenuItem(
     });
 
     await writeMenuItem(session.user.id, input);
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -140,7 +140,7 @@ export async function deleteMenuItem(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -221,7 +221,7 @@ export async function reorderMenuItems(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }

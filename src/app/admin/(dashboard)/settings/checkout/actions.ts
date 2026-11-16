@@ -50,7 +50,7 @@ export async function checkoutPolicyAction(form: FormData) {
         });
       }),
     );
-    revalidateTag("markets");
+    revalidateTag("markets", { expire: 0 });
     revalidatePath("/admin/settings/checkout");
     return { ok: true };
   } catch {

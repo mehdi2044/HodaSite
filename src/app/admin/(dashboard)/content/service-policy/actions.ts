@@ -47,7 +47,7 @@ export async function savePolicy(_: ActionResult | null, form: FormData) {
         ...copy,
       },
     });
-    revalidateTag("markets");
+    revalidateTag("markets", { expire: 0 });
     revalidatePath("/admin/content/service-policy");
   });
 }

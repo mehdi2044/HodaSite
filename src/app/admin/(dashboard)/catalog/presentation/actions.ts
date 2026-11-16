@@ -21,8 +21,8 @@ export async function savePresentationAction(
           ? null
           : { version: 1, kind, tone: form.get("tone") },
     });
-    revalidateTag("catalog");
-    revalidateTag("homepage");
+    revalidateTag("catalog", { expire: 0 });
+    revalidateTag("homepage", { expire: 0 });
     revalidatePath("/admin/catalog/presentation");
   });
 }

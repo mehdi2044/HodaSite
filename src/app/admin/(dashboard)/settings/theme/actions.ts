@@ -167,6 +167,6 @@ export async function saveTheme(
       });
     });
 
-    revalidateTag("theme");
+    revalidateTag("theme", { expire: 0 });
   });
 }

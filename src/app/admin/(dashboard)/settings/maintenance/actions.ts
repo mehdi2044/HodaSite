@@ -74,6 +74,6 @@ export async function saveMaintenance(
     // Synchronous, same-process (D22 single-container) — keeps the
     // restore-safety write-gate flag consistent with what was just saved.
     setMaintenanceFlag(parsed.state === "on");
-    revalidateTag("site-settings");
+    revalidateTag("site-settings", { expire: 0 });
   });
 }

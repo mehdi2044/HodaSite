@@ -219,7 +219,7 @@ async function activateQuote(
       },
     });
   });
-  revalidateTag("pricing");
+  revalidateTag("pricing", { expire: 0 });
 }
 
 export async function acceptFxQuote(id: string, acceptedById?: string) {

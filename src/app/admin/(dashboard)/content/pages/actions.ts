@@ -109,8 +109,8 @@ export async function savePage(
         return page;
       }),
     );
-    revalidateTag("pages");
-    revalidateTag("menus");
+    revalidateTag("pages", { expire: 0 });
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/pages");
     revalidatePath(`/admin/content/pages/${saved.id}`);
     revalidateLocalizedPagePaths(saved.slugI18n);
@@ -160,7 +160,7 @@ export async function duplicatePage(
         });
       }),
     );
-    revalidateTag("pages");
+    revalidateTag("pages", { expire: 0 });
     revalidatePath("/admin/content/pages");
   });
 }
@@ -220,8 +220,8 @@ export async function setPageDeleted(
         }),
       ]),
     );
-    revalidateTag("pages");
-    revalidateTag("menus");
+    revalidateTag("pages", { expire: 0 });
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/pages");
   });
 }
