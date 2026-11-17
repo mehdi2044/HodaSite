@@ -210,6 +210,8 @@ for (const [locale, market, copy] of markets) {
       (url) => url.pathname === `/${locale}/account/login`,
     );
     await expect(page.locator('input[type="email"]')).toBeVisible();
+    const more = dock.locator("summary");
+    await more.click();
     await dock
       .getByRole("link", { name: copy.instantFitting.dockProfile, exact: true })
       .click();
@@ -223,6 +225,7 @@ for (const [locale, market, copy] of markets) {
       (url) => url.pathname === `/${locale}/fitting-room`,
     );
     await page.goto(`/${locale}/m/${market}/p/definitely-not-a-product`);
+    await more.click();
     await expect(product).toHaveAttribute(
       "href",
       `/${locale}/search?market=${market}`,
