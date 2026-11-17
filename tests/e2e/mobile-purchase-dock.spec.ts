@@ -37,7 +37,7 @@ for (const { locale, market, slug, direction } of markets) {
         "dir",
         direction,
       );
-      await expect(dock.getByRole("link")).toHaveCount(6);
+      await expect(dock.getByRole("link")).toHaveCount(4);
       await expect(buy).toBeEnabled();
       const productOptions = page
         .locator('[data-moda4="pdp-sizes"] button:not(:disabled)')
@@ -65,7 +65,12 @@ for (const { locale, market, slug, direction } of markets) {
       await buy.click();
       await expect(page.locator(".storefront-cart-toggle bdi")).toHaveText("1");
 
-      await page.goto(`/${locale}/cart?market=${market}`);
+      await dock.getByRole("link").last().click();
+      await expect(page).toHaveURL(/\/cart(?:\?|$)/);
+      await expect(dock.getByRole("link").last()).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
       await expect(
         page.locator('main input[name="quantity"][type="number"]'),
       ).toHaveValue("1");

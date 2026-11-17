@@ -83,6 +83,10 @@
     inset-block-end: var(--storefront-dock-end);
   }
 }
+.storefront-dock-compact {
+  display: none;
+}
+
 body:has(dialog[open]) .storefront-floating-nav {
   visibility: hidden;
 }
@@ -105,30 +109,84 @@ body:has(dialog[open]) .storefront-floating-nav {
         var(--storefront-safe-area-bottom, env(safe-area-inset-bottom, 0px))
     );
     display: grid;
-    grid-template-columns: repeat(6, minmax(min-content, 1fr));
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
+    align-items: stretch;
+    padding: 6px;
     width: auto;
     height: var(--storefront-dock-height, 76px);
     border-radius: 24px;
     background: #171512;
   }
-  .storefront-floating-nav:not(.moda-fr31-dock) a {
+  .storefront-floating-nav:not(.moda-fr31-dock) > .storefront-dock-original {
+    display: none;
+  }
+  .storefront-floating-nav .storefront-dock-compact {
+    display: contents;
+  }
+  .storefront-floating-nav .storefront-dock-target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
     min-inline-size: 44px;
+    min-block-size: 44px;
     padding: 4px 2px;
-    font-size: 13px;
+    border-radius: 17px;
+    font-size: clamp(10.5px, 3.1vw, 13px);
+    font-weight: 600;
     line-height: 1.2;
+    white-space: nowrap;
+  }
+  .storefront-dock-target svg {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+  .storefront-dock-more > summary svg {
+    stroke-width: 2.7;
+  }
+  .storefront-dock-more > summary {
+    block-size: 100%;
+    cursor: pointer;
+    list-style: none;
+  }
+  .storefront-dock-more > summary::-webkit-details-marker {
+    display: none;
+  }
+  .storefront-dock-more[open] > summary,
+  .storefront-dock-more[data-current="true"] > summary {
+    background: var(--primary);
+    color: var(--ink, #171512);
+  }
+  .storefront-dock-more > summary:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -3px;
+  }
+  .storefront-dock-more:not([open]) > .storefront-dock-menu {
+    display: none;
+  }
+  .storefront-dock-menu {
+    position: absolute;
+    inset-block-end: calc(100% + 8px);
+    inset-inline-end: 0;
+    inline-size: min(240px, 100%);
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 18px;
+    background: #171512;
+    box-shadow: 0 14px 30px rgb(0 0 0 / 28%);
+  }
+  .storefront-floating-nav .storefront-dock-menu-link {
+    place-items: center start;
+    padding: 8px 12px;
+    border-radius: 12px;
+    text-align: start;
     white-space: normal;
-    overflow-wrap: normal;
-    word-break: normal;
-    hyphens: none;
-    border-radius: 16px;
   }
 }
-@media (max-width: 359px) {
-  .storefront-floating-nav:not(.moda-fr31-dock) a {
-    padding-inline: 1px;
-    font-size: 11px;
-  }
-}
+
 @media (min-width: 1024px) {
   .storefront-app[data-floating-navigation="on"] {
     --storefront-nav-height: 88px;

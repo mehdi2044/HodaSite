@@ -1597,3 +1597,7 @@ Owner visual acceptance and independent review remain pending. Chromium viewport
 Mobile tracks now respect each translated word's minimum width, with normal word boundaries instead of arbitrary character wrapping. The existing 13px text, 76px dock height, 84px layout budget, black/orange treatment and minimum 44px targets remain. No labels, routes, Hero/fitting layout, data, schema or money code changed.
 
 Local verification: 9 new whole-word/geometry/touch/focus cases (FA/TR/EN at 360/390/430), 65 existing navigation/mobile/headroom/hydration cases, and the fresh full 9,349-case / 182-file Unit/PostgreSQL suite passed. Lint, typecheck and production build passed. Nine final images and paired before/after views remain in the private review bundle. The previous delivery branch, running services, 358-file WIP baseline and original D77 hash were retained. Owner visual review remains pending; no push, PR, merge or public release.
+
+### D70 mobile dock review candidate
+
+The isolated design branch keeps Home, Category, Fitting Room and Cart directly reachable on public mobile screens. More opens Product, sign-in and profile links in the current market. The existing desktop dock and fitting workspace retain their established navigation. Test on a product at 320, 390 and 768 px in Persian, English and Turkish, including touch, keyboard, safe-area clearance and the path to Checkout. Catalogue artwork disclosures still identify demo media. Replace these assets on intended release routes and audit the published content before release.

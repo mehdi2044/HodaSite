@@ -272,9 +272,9 @@ export async function Header({
           labels={{
             navigation: t("mobileStorefront.navigation"),
             home: t("mobileStorefront.home"),
-            search: t("catalog.search"),
+            more: t("mobileStorefront.more"),
+            shortFitting: t("mobileStorefront.fitting"),
             cart: t("commerce.cart"),
-            account: t("commerce.account"),
             category: t("instantFitting.dockCategory"),
             product: t("instantFitting.dockProduct"),
             fitting: t("instantFitting.dockFitting"),

@@ -108,7 +108,7 @@ for (const [locale, slug, province, city, postal] of [
     );
     const dock = page.getByTestId("mobile-bottom-navigation");
     await expect(dock).toBeVisible();
-    await expect(dock.getByRole("link")).toHaveCount(6);
+    await expect(dock.getByRole("link")).toHaveCount(4);
     const headerCart = page.locator("header .storefront-cart-toggle");
     await expect(headerCart).toBeVisible();
     await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);
