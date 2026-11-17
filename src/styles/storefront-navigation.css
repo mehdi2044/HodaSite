@@ -3,9 +3,13 @@
 .storefront-app[data-floating-navigation="on"] {
   --storefront-dock-gap: 8px;
   --storefront-dock-height: 76px;
-  --storefront-nav-height: calc(var(--storefront-dock-height) + var(--storefront-dock-gap));
+  --storefront-nav-height: calc(
+    var(--storefront-dock-height) + var(--storefront-dock-gap)
+  );
   --storefront-safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --storefront-dock-end: calc(var(--storefront-nav-height) + var(--storefront-safe-area-bottom));
+  --storefront-dock-end: calc(
+    var(--storefront-nav-height) + var(--storefront-safe-area-bottom)
+  );
 }
 .storefront-app[data-floating-navigation="off"] {
   --storefront-nav-height: 0px;
@@ -101,22 +105,28 @@ body:has(dialog[open]) .storefront-floating-nav {
         var(--storefront-safe-area-bottom, env(safe-area-inset-bottom, 0px))
     );
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(min-content, 1fr));
     width: auto;
     height: var(--storefront-dock-height, 76px);
     border-radius: 24px;
     background: #171512;
   }
   .storefront-floating-nav:not(.moda-fr31-dock) a {
-    min-inline-size: 0;
+    min-inline-size: 44px;
     padding: 4px 2px;
     font-size: 13px;
     line-height: 1.2;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     word-break: normal;
     hyphens: none;
     border-radius: 16px;
+  }
+}
+@media (max-width: 359px) {
+  .storefront-floating-nav:not(.moda-fr31-dock) a {
+    padding-inline: 1px;
+    font-size: 11px;
   }
 }
 @media (min-width: 1024px) {

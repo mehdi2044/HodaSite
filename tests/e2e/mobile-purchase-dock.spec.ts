@@ -50,6 +50,15 @@ for (const { locale, market, slug, direction } of markets) {
       expect(buyBox).not.toBeNull();
       expect(buyBox!.y + buyBox!.height).toBeLessThanOrEqual(dockBox!.y);
       expect(dockBox!.x + dockBox!.width).toBeLessThanOrEqual(width);
+      for (const link of await dock.getByRole("link").all()) {
+        const box = await link.boundingBox();
+        expect(box?.width).toBeGreaterThanOrEqual(44);
+        expect(box?.height).toBeGreaterThanOrEqual(44);
+        expect(box!.x).toBeGreaterThanOrEqual(dockBox!.x);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(
+          dockBox!.x + dockBox!.width,
+        );
+      }
       await page.screenshot({
         path: info.outputPath("product-before-add.png"),
       });

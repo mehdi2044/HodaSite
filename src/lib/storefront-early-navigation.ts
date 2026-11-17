@@ -9,7 +9,6 @@ export const storefrontEarlyNavigation = String.raw`(() => {
   function onClick(event) {
     if (
       document.readyState !== "loading" ||
-      event.defaultPrevented ||
       event.button !== 0 ||
       event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
       !(event.target instanceof Element)
@@ -22,6 +21,11 @@ export const storefrontEarlyNavigation = String.raw`(() => {
     const url = new URL(link.href, location.href);
     if (url.origin !== location.origin || !/^\/(fa|tr|en)(\/|$)/.test(url.pathname)) return;
     if (url.hash && url.pathname === location.pathname && url.search === location.search) return;
+    // A later click handled by Next Link takes precedence over a queued link.
+    if (event.defaultPrevented) {
+      destination = undefined;
+      return;
+    }
 
     event.preventDefault();
     destination = url.href;
