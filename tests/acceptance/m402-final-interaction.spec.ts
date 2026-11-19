@@ -190,6 +190,8 @@ for (const { locale, market, journal, copy } of contexts) {
       .first();
     await expect(article).toBeVisible();
     await hit(article);
+    await expect(page.locator(".editorial-article")).toBeVisible();
+    await expect(page).toHaveURL(/\/magazine\/[^/?]+/);
     const articleUrl = page.url();
     await expect(page.locator(".article-skus li[data-sku]")).toHaveCount(3);
     const lookTitle = await page
@@ -306,10 +308,10 @@ for (const { locale, market, journal, copy } of contexts) {
       lastName: "Buyer",
       email: "fixture@example.invalid",
       phone: "0000000000",
-      province: "QA",
+      province: market === "CA" ? "ON" : "QA",
       city: "Fixture City",
       line1: "Fixture address",
-      postalCode: "00000",
+      postalCode: market === "CA" ? "A1A 1A1" : "00000",
     })) {
       await address.locator(`input[name="${name}"]`).fill(value);
     }
