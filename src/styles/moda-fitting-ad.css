@@ -80,6 +80,15 @@
   outline: 2px solid #5c331e;
   outline-offset: 3px;
 }
+.m4-chip:disabled {
+  cursor: progress;
+  opacity: 0.55;
+}
+.m4-fit-loading {
+  flex-basis: 100%;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .m4-pause {
   padding-inline: 0;
 }

@@ -1,3 +1,9 @@
+## M4-02 final interaction and journal acceptance (D31, D64, D70, D81, D82)
+
+- A separate checkout and database copy preserve the v32 recovery reference. The fitting selector, Replay and Pause controls show a genuine disabled/loading state in server HTML and enable on the client commit. Native links and the parser/Flight guard remain available. The animation and approved geometry/photo data are unchanged.
+- Journal links use the existing editable header/mobile menu records and permission-checked, audited writer. Current journal/article links receive active decoration after commit so rewrites do not alter hydration markup. No CMS or migration is added; the five-item dock remains unchanged.
+- Scope, opt-in fixture and rollback are in [the acceptance contract](phases/phase-m402-final-acceptance.md). Issue #41 records final source/build provenance, measured early-interaction timing, visual/technical results and remaining limitations. Owner visual approval and all D70 release/merge gates remain pending; no Push, PR or publication is authorized.
+
 ## M4-02 v32 recovery acceptance candidate (D23, D70, D77, D81, D82)
 
 - The owner authorized a new isolated restoration of the approved v32 database and media. Existing previews and data are retained. The candidate keeps the Next.js 16 pins and five-destination mobile navigation.

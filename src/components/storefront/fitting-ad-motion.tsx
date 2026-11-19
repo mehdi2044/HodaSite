@@ -551,6 +551,9 @@ export function FittingAdMotion({
   const [ended, setEnded] = useState(false);
   const [compact, setCompact] = useState(false);
   const [reduced, setReduced] = useState(false);
+  // Server HTML must not advertise working JS-only controls before their
+  // handlers exist. Match the first client render, then enable on commit.
+  const [interactive, setInteractive] = useState(false);
   useLayoutEffect(() => {
     const narrow = matchMedia("(max-width: 760px)");
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
@@ -559,6 +562,7 @@ export function FittingAdMotion({
       setReduced(preference.matches);
     };
     update();
+    setInteractive(true);
     narrow.addEventListener("change", update);
     preference.addEventListener("change", update);
     return () => {
@@ -604,6 +608,7 @@ export function FittingAdMotion({
       ref={ad}
       data-moda4="fitting-ad"
       data-state={active ? "animated" : staticPhoto ? "static" : "copy-only"}
+      data-interactive={interactive}
     >
       <div className="m4-fit-wrap">
         <div className="m4-fit-copy">
@@ -613,6 +618,7 @@ export function FittingAdMotion({
               className="m4-fit-sets"
               role="group"
               aria-label={t("fittingSelect")}
+              aria-busy={!interactive}
             >
               {looks.map((look, index) => (
                 <button
@@ -621,6 +627,7 @@ export function FittingAdMotion({
                   className="m4-chip"
                   aria-pressed={look.id === active.id}
                   data-m4-look={look.id}
+                  disabled={!interactive}
                   onClick={() => select(index)}
                 >
                   {look.label}
@@ -632,6 +639,7 @@ export function FittingAdMotion({
                     type="button"
                     className="m4-chip m4-motion-control"
                     data-m4-replay=""
+                    disabled={!interactive}
                     onClick={() => select(selection, true)}
                   >
                     {t("replay")}
@@ -640,6 +648,7 @@ export function FittingAdMotion({
                     type="button"
                     className="m4-chip m4-motion-control m4-pause"
                     data-m4-pause=""
+                    disabled={!interactive}
                     aria-label={paused ? t("resume") : t("pause")}
                     aria-pressed={paused}
                     onClick={() =>
@@ -652,6 +661,13 @@ export function FittingAdMotion({
                   </button>
                 </>
               )}
+              <span
+                className="m4-fit-loading"
+                role="status"
+                hidden={interactive}
+              >
+                {t("fittingLoading")}
+              </span>
             </div>
           )}
           {cta}

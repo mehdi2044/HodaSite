@@ -26,6 +26,19 @@
 .moda-desktop-navigation:hover {
   overflow: visible;
 }
+.moda-menu-root > a[aria-current="page"] {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+@media (min-width: 1101px) and (max-width: 1350px) {
+  .moda-header-grid {
+    padding-inline: 28px;
+  }
+  .moda-desktop-navigation .moda-menu-root {
+    padding-inline: 5px;
+    font-size: 12px;
+  }
+}
 .moda-footer {
   position: relative;
   margin-block-start: 0;
