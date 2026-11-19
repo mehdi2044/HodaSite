@@ -38,6 +38,10 @@ for (const [locale, market] of locales) {
       });
       await page.evaluate(() => document.fonts.ready);
       const ad = page.locator(adSelector);
+      await expect(ad.locator(".m4-scene-box")).toHaveAttribute(
+        "data-still",
+        "true",
+      );
       const editorial = page.locator("#storefront-content > .editorial-home");
       if (process.env.M402_REQUIRE_EDITORIAL === "1")
         await expect(editorial).toHaveCount(1);
@@ -129,6 +133,9 @@ for (const [locale, market] of locales) {
         await page.evaluate(() => document.fonts.ready);
         const ad = page.locator(adSelector),
           stage = ad.locator("[data-m4-stage]");
+        // SSR buttons can precede hydration. Exercise the real handlers only
+        // after the Stage effect has published its client-only clock state.
+        await expect(stage).toHaveAttribute("data-running", /^(true|false)$/);
         const choice = ad.locator(`[data-m4-look="${look.id}"]`);
         await hit(choice);
         await choice.click();
