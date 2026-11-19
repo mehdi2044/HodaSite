@@ -32,7 +32,7 @@ export function MobileMenu({
           ?.querySelectorAll<HTMLDetailsElement>("details[open]") ?? [])
           if (other !== event.currentTarget) other.open = false;
       }}
-      className="storefront-mobile-menu lg:hidden"
+      className="storefront-mobile-menu"
       onClick={(event) => {
         if (
           event.target instanceof Element &&

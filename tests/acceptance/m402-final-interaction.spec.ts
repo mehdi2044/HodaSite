@@ -1,9 +1,12 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import fa from "../../messages/fa.json";
+import tr from "../../messages/tr.json";
+import en from "../../messages/en.json";
 
 const contexts = [
-  { locale: "fa", market: "IR", journal: "مجله مد و استایل" },
-  { locale: "tr", market: "TR", journal: "Moda ve Stil Dergisi" },
-  { locale: "en", market: "CA", journal: "Style Journal" },
+  { locale: "fa", market: "IR", journal: "مجله مد و استایل", copy: fa },
+  { locale: "tr", market: "TR", journal: "Moda ve Stil Dergisi", copy: tr },
+  { locale: "en", market: "CA", journal: "Style Journal", copy: en },
 ] as const;
 
 async function hit(control: Locator) {
@@ -21,10 +24,10 @@ function errorsOn(page: Page) {
   return errors;
 }
 
-for (const { locale, market, journal } of contexts) {
+for (const { locale, market, journal, copy } of contexts) {
   const home = `/${locale}/m/${market}`;
   const magazine = home + "/magazine";
-  for (const width of [320, 390, 768, 1024, 1440]) {
+  for (const width of [320, 390, 768, 1024, 1120, 1280, 1440]) {
     test(`${locale} journal header and hamburger at ${width}`, async ({
       page,
     }, info) => {
@@ -189,6 +192,10 @@ for (const { locale, market, journal } of contexts) {
     await hit(article);
     const articleUrl = page.url();
     await expect(page.locator(".article-skus li[data-sku]")).toHaveCount(3);
+    const lookTitle = await page
+      .locator(".article-shop-heading p")
+      .first()
+      .innerText();
     const fitting = page
       .locator('.article-shop a[href*="fitting-room"]')
       .first();
@@ -205,7 +212,25 @@ for (const { locale, market, journal } of contexts) {
     await expect(
       page.locator('.moda-instant-models [data-model-kind="MAN"]'),
     ).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator(".moda-instant-pieces > li")).toHaveCount(3);
+    await expect(page.locator(".editorial-section h2")).toHaveText(lookTitle);
+    // Restored profiles independently audited: shirt=TOP, tee=TOP, chinos=BOTTOM.
+    // The existing slot contract rejects two TOPs. Verify exact compatible SKUs
+    // AND explicit fallback feedback, never silently accept a generic room.
+    await expect(page.locator(".editorial-section")).toContainText(
+      copy.editorial.fittingFallback,
+    );
+    const receipt = page.locator(
+      ".moda-instant-pieces > li[data-receipt-variant]",
+    );
+    await expect(receipt).toHaveCount(2);
+    expect(
+      await receipt.evaluateAll((rows) =>
+        rows.map((row) => row.getAttribute("data-receipt-variant")).sort(),
+      ),
+    ).toEqual([
+      "seed-moda4-seed-style-v2-men-chino-l",
+      "seed-moda4-seed-style-v2-men-shirt-l",
+    ]);
     await page.screenshot({
       path: info.outputPath("article-preset.png"),
       fullPage: true,
@@ -227,7 +252,9 @@ for (const { locale, market, journal } of contexts) {
     page,
   }, info) => {
     const errors = errorsOn(page);
-    await page.goto(home + "/looks/easy-days");
+    await page.goto(magazine);
+    await hit(page.locator(".magazine-page .editorial-feature h2 a").first());
+    await hit(page.locator('.article-shop a[href*="/looks/"]').first());
     const pieces = page.locator(".editorial-piece");
     await expect(pieces).toHaveCount(3);
     for (const piece of await pieces.all()) {
@@ -248,7 +275,9 @@ for (const { locale, market, journal } of contexts) {
     for (const width of [320, 390, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/${locale}/cart?market=${market}`);
-      const quantities = page.locator('main input[name="quantity"]');
+      const quantities = page.locator(
+        'main input[type="number"][name="quantity"]',
+      );
       await expect(quantities).toHaveCount(3);
       for (const quantity of await quantities.all())
         await expect(quantity).toHaveValue("1");
