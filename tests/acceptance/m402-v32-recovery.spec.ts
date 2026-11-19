@@ -113,7 +113,6 @@ for (const [locale, market] of locales) {
     for (const look of reference.looks) {
       test(`${locale} ${width} ${look.modelId}: v32 flight, scan, final photo and Replay`, async ({
         page,
-        request,
       }, info) => {
         await page.setViewportSize({
           width,
@@ -162,11 +161,17 @@ for (const [locale, market] of locales) {
           for (const key of ["x", "y", "width", "height"] as const)
             expect(actual[key]).toBeCloseTo(piece.target[key], 6);
         }
-        const original = await request.get("/media/" + look.photoStorageKey);
-        expect(original.status()).toBe(200);
+        // Keep the independent original-byte check outside Playwright's API
+        // trace context; the browser trace still captures the rendered image.
+        const baseURL = info.project.use.baseURL;
+        if (!baseURL) throw new Error("Acceptance base URL is required");
+        const original = await fetch(
+          new URL("/media/" + look.photoStorageKey, baseURL),
+        );
+        expect(original.status).toBe(200);
         expect(
           createHash("sha256")
-            .update(await original.body())
+            .update(Buffer.from(await original.arrayBuffer()))
             .digest("hex"),
         ).toBe(look.photoSha256);
         const pause = ad.locator("[data-m4-pause]");
