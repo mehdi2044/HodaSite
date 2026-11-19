@@ -599,7 +599,7 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
     .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: max-content max-content max-content 1fr auto auto;
+      grid-template-rows: max-content max-content max-content 1fr auto auto auto;
       --m4-fold-budget: calc(
         100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)
       );
@@ -635,7 +635,13 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
     }
     .storefront-scroll:has(.shop-homepage[data-m4-leading-hero])
       > #storefront-content {
-      grid-row: 4 / 6;
+      grid-row: 4 / 7;
+    }
+    /* Editorial is a sibling of the two-row homepage, not part of its
+       remainder. Reserve its own track; an absent section leaves it empty. */
+    #storefront-content > .editorial-home {
+      grid-column: 1;
+      grid-row: 3;
     }
     #storefront-content
       .shop-homepage[data-m4-leading-hero]
@@ -653,7 +659,7 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       min-width: 0;
     }
     .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) > .moda-footer {
-      grid-area: 6 / 1;
+      grid-area: 7 / 1;
     }
   }
 }

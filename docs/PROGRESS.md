@@ -1,3 +1,10 @@
+## M4-02 v32 recovery acceptance candidate (D23, D70, D77, D81, D82)
+
+- The owner authorized a new isolated restoration of the approved v32 database and media. Existing previews and data are retained. The candidate keeps the Next.js 16 pins and five-destination mobile navigation.
+- The mobile homepage grid reserves a separate third content track for EditorialHome. The hero and homepage remainder retain their existing two tracks; an absent Editorial section leaves the additional track empty.
+- Run `M402_APP_URL=<isolated-preview> pnpm exec playwright test -c playwright.m402-recovery.config.ts`. This opt-in suite requires the approved v32 CMS/media, validates all four final-photo bytes and projected garment targets, and covers flight, scan, pause and Replay in three languages at 390/1440. Run again with `M402_REQUIRE_EDITORIAL=1` against the separate editorial fixture copy to verify the sibling-layout regression. Ordinary seeded e2e fixtures are not a substitute for this acceptance data.
+- Restore destination guards, full table/media comparison, migration results, build provenance and paired reference/current evidence are recorded in Issue41. Visual acceptance by Mehdi and Vee remains pending; no push, PR, merge or public release is authorized.
+
 ## MODA4 — Mobile purchase and early storefront navigation
 
 - The mobile dock and the fixed product purchase bar share a CSS offset that includes the safe area. Short viewports keep the purchase form in the scroller. Product, cart and Checkout controls are checked with pointer hit testing before an actual cart add.
