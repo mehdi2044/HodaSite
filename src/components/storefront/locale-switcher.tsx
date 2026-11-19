@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { parseSeoPath, seoPath } from "@/lib/seo-urls";
 import { isMarketContextPath, marketCodePattern } from "@/lib/storefront-path";
@@ -29,6 +28,9 @@ export function LocaleSwitcher({
   const queryString = useSearchParams().toString();
   const rest = pathname.split("/").slice(2).join("/");
   const canonical = parseSeoPath(pathname);
+  const editorialIndex = /^\/(?:fa|tr|en)\/(looks|magazine)\/?$/.exec(
+    canonical?.target ?? "",
+  )?.[1];
   const entityPath =
     /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:(?:p|c|pages)\/[^/]+|(?:looks|magazine)(?:\/[^/]+)?)\/?$/.test(
       pathname,
@@ -90,7 +92,7 @@ export function LocaleSwitcher({
   }
   const localesKey = enabledLocales.join(",");
   useEffect(() => {
-    if (!entityPath) return;
+    if (!entityPath || editorialIndex) return;
     const controller = new AbortController();
     void Promise.all(
       localesKey.split(",").map(async (target) => {
@@ -112,7 +114,7 @@ export function LocaleSwitcher({
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [pathname, entityPath, localesKey]);
+  }, [pathname, entityPath, localesKey, editorialIndex]);
   const href = (locale: string) => {
     const params = new URLSearchParams(keep);
     const next = query.get("next");
@@ -132,6 +134,11 @@ export function LocaleSwitcher({
     }
     const search = params.size ? `?${params}` : "";
     if (locale === current) return pathname + search;
+    if (
+      canonical &&
+      (editorialIndex === "looks" || editorialIndex === "magazine")
+    )
+      return seoPath(locale, canonical.market, editorialIndex) + search;
     if (entityPath)
       return (
         ((resolved.path === pathname && resolved.links[locale]) ||
@@ -153,7 +160,7 @@ export function LocaleSwitcher({
       }
     >
       {enabledLocales.map((locale) => (
-        <Link
+        <a
           key={locale}
           href={href(locale)}
           aria-current={locale === current ? "true" : undefined}
@@ -165,7 +172,7 @@ export function LocaleSwitcher({
           }
         >
           {compact ? locale.toUpperCase() : (LABELS[locale] ?? locale)}
-        </Link>
+        </a>
       ))}
     </nav>
   );
