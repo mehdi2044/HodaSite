@@ -24,7 +24,7 @@ export default defineConfig({
     ...devices["Pixel 7"],
     baseURL: process.env.M402_APP_URL,
     deviceScaleFactor: 1,
-    reducedMotion: "no-preference",
+    contextOptions: { reducedMotion: "no-preference" },
     serviceWorkers: "block",
     trace: "on",
     launchOptions: process.env.M402_CHROMIUM
