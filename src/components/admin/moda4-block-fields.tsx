@@ -21,6 +21,8 @@ type Localized = { fa: string; tr: string; en: string };
 export type ModaAdminOptions = {
   categories: { id: string; title: string }[];
   curatedLooks?: { id: string; title: string }[];
+  curatedModelLooks?: { id: string; title: string }[];
+  articles?: { id: string; title: string }[];
   collections: { id: string; title: string }[];
   pages: { id: string; title: string }[];
   programs: { id: string; marketId: string; title: string; state: string }[];
@@ -165,6 +167,8 @@ export function freshModaBlock(type: Moda4Block["type"]): Moda4Block {
         ctaLabel,
         target: target(),
       };
+    case "EditorialSpotlight":
+      return { ...base, type, title };
     case "Services":
       return {
         ...base,
@@ -1599,6 +1603,38 @@ export function Moda4BlockFields({
         >
           {t("addLook")}
         </button>
+      </div>
+    );
+  if (block.type === "EditorialSpotlight")
+    return (
+      <div className="grid gap-3">
+        {title}
+        <label>
+          {t("featuredArticle")}
+          <select
+            className="input"
+            value={block.articleId ?? ""}
+            onChange={(event) =>
+              change({ ...block, articleId: event.target.value || undefined })
+            }
+          >
+            <option value="">{t("featuredArticleAutomatic")}</option>
+            {block.articleId &&
+              !(options.articles ?? []).some(
+                (article) => article.id === block.articleId,
+              ) && (
+                <option value={block.articleId}>{t("missingSource")}</option>
+              )}
+            {(options.articles ?? []).map((article) => (
+              <option key={article.id} value={article.id}>
+                {article.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p>{t("featuredArticleHelp")}</p>
+        <a href="/admin/content/editorial/weekly">{t("manageWeekly")}</a>
+        <a href="/admin/content/editorial">{t("manageArticles")}</a>
       </div>
     );
   if (block.type === "Services")

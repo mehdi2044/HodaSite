@@ -1,3 +1,4 @@
+import { HomeEditorialSpotlight } from "./home-editorial-spotlight";
 import { HomeCuratedLookbook } from "./home-curated-lookbook";
 import { FittingAdMotion } from "./fitting-ad-motion";
 import { resolveFittingAdLooks } from "@/modules/content/scenes/fitting-ad";
@@ -43,6 +44,9 @@ export async function ModaHomepageBlock({
   preview = false,
   anchor,
   excludedLookIds = [],
+  excludedLookMediaIds = [],
+  spotlightExcludedTopicIds = [],
+  spotlightExcludedPhotoIds = [],
 }: {
   block: Moda4Block;
   market: Market;
@@ -51,6 +55,9 @@ export async function ModaHomepageBlock({
   preview?: boolean;
   anchor?: string;
   excludedLookIds?: string[];
+  excludedLookMediaIds?: string[];
+  spotlightExcludedTopicIds?: string[];
+  spotlightExcludedPhotoIds?: string[];
 }) {
   const text = (value: Parameters<typeof localizedValue>[0]) =>
     localizedValue(value, locale);
@@ -360,6 +367,16 @@ export async function ModaHomepageBlock({
       </div>
     );
   }
+  if (block.type === "EditorialSpotlight")
+    return (
+      <HomeEditorialSpotlight
+        block={block}
+        locale={locale}
+        marketCode={market.code}
+        excludedTopicLookIds={spotlightExcludedTopicIds}
+        excludedPhotoIds={spotlightExcludedPhotoIds}
+      />
+    );
   if (block.type === "FittingAd") {
     const { animated, staticPhoto, diagnostics, photoPreviews } =
       await resolveFittingAdLooks(block.looks, market.id, locale, {
@@ -475,6 +492,7 @@ export async function ModaHomepageBlock({
       <HomeCuratedLookbook
         ids={block.curatedLookIds}
         excludedIds={excludedLookIds}
+        excludedMediaIds={excludedLookMediaIds}
         locale={locale}
         market={market}
         title={text(block.title)}

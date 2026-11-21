@@ -9,10 +9,12 @@ import {
 } from "@/modules/editorial/home-selection";
 import { LookArtwork } from "./look-visual";
 import { ModaCarousel } from "./moda-carousel";
+import { currentCatalogCutout } from "@/modules/catalog/cutouts/resolve";
 
 export async function HomeCuratedLookbook({
   ids,
   excludedIds,
+  excludedMediaIds = [],
   locale,
   market,
   title,
@@ -21,6 +23,7 @@ export async function HomeCuratedLookbook({
 }: {
   ids: string[];
   excludedIds: string[];
+  excludedMediaIds?: string[];
   locale: "fa" | "tr" | "en";
   market: { id: string; code: string };
   title: string;
@@ -29,7 +32,46 @@ export async function HomeCuratedLookbook({
 }) {
   const t = await getTranslations({ locale, namespace: "editorial" });
   const published = await homepagePublishedLooks(market.id);
-  const looks = selectHomepageLooks(ids, published, excludedIds);
+  const candidates = selectHomepageLooks(
+    ids,
+    published,
+    excludedIds,
+    excludedMediaIds,
+  );
+  const references = [
+    ...new Map(
+      [
+        ...candidates,
+        ...published.filter((look) => excludedIds.includes(look.id)),
+      ].map((look) => [look.id, look]),
+    ).values(),
+  ];
+  const prepared = await Promise.all(
+    references.map(async (look) => {
+      if (look.visual.mode !== "COMPOSITE") return look;
+      const pieces = await Promise.all(
+        look.visual.pieces.map(async (piece) => {
+          const approved = await currentCatalogCutout(
+            piece.variantId,
+            market.id,
+          );
+          const image = approved?.row.media ?? piece.image;
+          // Alpha cutouts must not retain photographic blur behind transparent pixels.
+          return {
+            ...piece,
+            image: image ? { ...image, blurDataUrl: null } : undefined,
+          };
+        }),
+      );
+      return { ...look, visual: { ...look.visual, pieces } };
+    }),
+  );
+  const looks = selectHomepageLooks(
+    candidates.map((look) => look.id),
+    prepared,
+    excludedIds,
+    excludedMediaIds,
+  );
   const href = (look: (typeof looks)[number]) =>
     seoPath(locale, market.code, "looks", editorialSlug(look, locale));
   return (

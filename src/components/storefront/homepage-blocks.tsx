@@ -1,3 +1,13 @@
+import {
+  selectHomepageLooks,
+  homepageLookPhotoIds,
+  chooseHomepageArticle,
+} from "@/modules/editorial/home-selection";
+import {
+  homepageWeeklyLooks,
+  homepagePublishedLooks,
+  homepagePublishedArticles,
+} from "@/modules/editorial/homepage-queries";
 import { HomeCuratedShop } from "./home-curated-shop";
 import type { ReactNode } from "react";
 import { SceneArt } from "./scene-art";
@@ -86,9 +96,52 @@ export async function HomepageBlocks({
     ),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
-  const shopLookIds = blocks.flatMap((block) =>
+  const spotlight = blocks.find((block) => block.type === "EditorialSpotlight");
+  const [publishedLooks, weeklyRows, publishedArticles] = await Promise.all([
+    blocks.some(
+      (block) =>
+        block.type === "ShopLook" ||
+        block.type === "Lookbook" ||
+        block.type === "EditorialSpotlight",
+    )
+      ? homepagePublishedLooks(market.id)
+      : [],
+    spotlight ? homepageWeeklyLooks(market.id) : [],
+    spotlight ? homepagePublishedArticles(market.id) : [],
+  ]);
+  const weekly = weeklyRows
+    .filter(({ row }) => row.slot === "MAIN")
+    .map(({ look }) => look);
+  const weeklyLookIds = weekly.map((look) => look.id);
+  const requestedShopIds = blocks.flatMap((block) =>
     block.type === "ShopLook" ? (block.curatedLookIds ?? []) : [],
   );
+  const shopLooks = selectHomepageLooks(
+    requestedShopIds,
+    publishedLooks.filter((look) => look.visual.mode === "PHOTO"),
+    weeklyLookIds,
+  );
+  const shopLookIds = shopLooks.map((look) => look.id);
+  const editorialPhotoIds = [...shopLooks, ...weekly].flatMap(
+    homepageLookPhotoIds,
+  );
+  const selectedArticle =
+    spotlight?.type === "EditorialSpotlight"
+      ? chooseHomepageArticle(
+          publishedArticles,
+          spotlight.articleId,
+          shopLookIds,
+          editorialPhotoIds,
+        )
+      : undefined;
+  const bookExcludedPhotos = selectedArticle
+    ? [
+        selectedArticle.body.mediaId,
+        ...(selectedArticle.body.mobileMediaId
+          ? [selectedArticle.body.mobileMediaId]
+          : []),
+      ]
+    : [];
   const firstLookbook = blocks.findIndex((block) => block.type === "Lookbook");
   const listingProducts = productRows.flatMap((rows) => rows?.items ?? []);
   const [prices, variantPrices] = await Promise.all([
@@ -112,17 +165,26 @@ export async function HomepageBlocks({
                 first={index === 0}
                 preview={preview}
                 anchor={index === firstLookbook ? "lookbook" : undefined}
-                excludedLookIds={shopLookIds}
+                excludedLookIds={[...weeklyLookIds, ...shopLookIds]}
+                excludedLookMediaIds={bookExcludedPhotos}
+                spotlightExcludedTopicIds={shopLookIds}
+                spotlightExcludedPhotoIds={editorialPhotoIds}
               />
             );
           if (block.type === "ShopLook" && block.curatedLookIds !== undefined)
             return (
               <HomeCuratedShop
                 key={block.id ?? index}
-                block={block}
+                block={{
+                  ...block,
+                  curatedLookIds: block.curatedLookIds.filter((id) =>
+                    shopLookIds.includes(id),
+                  ),
+                }}
                 locale={locale}
                 marketCode={market.code}
                 preview={preview}
+                excludedIds={weeklyLookIds}
               />
             );
           if (sceneViews[index] && block.type === "Banner")

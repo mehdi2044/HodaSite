@@ -416,7 +416,11 @@ export function ModaHomepageBuilder(props: {
                           {block.curatedLookIds !== undefined && (
                             <CuratedLookOrder
                               value={block.curatedLookIds}
-                              choices={options.curatedLooks ?? []}
+                              choices={
+                                options.curatedModelLooks ??
+                                options.curatedLooks ??
+                                []
+                              }
                               change={(curatedLookIds) =>
                                 update(index, { ...block, curatedLookIds })
                               }

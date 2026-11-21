@@ -31,6 +31,7 @@ export function selectHomepageLooks<T extends LookReference>(
   ids: readonly string[],
   entries: readonly T[],
   excludedIds: readonly string[] = [],
+  excludedMediaIds: readonly string[] = [],
 ) {
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   const usedIds = new Set(excludedIds);
@@ -44,12 +45,13 @@ export function selectHomepageLooks<T extends LookReference>(
       return identity ? [identity] : [];
     }),
   );
-  const usedMedia = new Set(
-    excludedIds.flatMap((id) => {
+  const usedMedia = new Set([
+    ...excludedMediaIds,
+    ...excludedIds.flatMap((id) => {
       const entry = byId.get(id);
       return entry ? homepageLookPhotoIds(entry) : [];
     }),
-  );
+  ]);
   return ids.flatMap((id) => {
     const entry = byId.get(id);
     if (!entry || usedIds.has(id)) return [];
@@ -65,4 +67,38 @@ export function selectHomepageLooks<T extends LookReference>(
     media.forEach((id) => usedMedia.add(id));
     return [entry];
   });
+}
+
+type ArticleReference = {
+  id: string;
+  body: {
+    mediaId: string;
+    mobileMediaId?: string;
+    featured: boolean;
+    blocks: readonly { type: string; id?: string }[];
+  };
+};
+/** A missing/duplicate explicit selection stays empty; automatic mode chooses a real eligible story. */
+export function chooseHomepageArticle<T extends ArticleReference>(
+  entries: readonly T[],
+  requestedId: string | undefined,
+  excludedTopicLookIds: readonly string[],
+  excludedPhotoIds: readonly string[],
+) {
+  const topics = new Set(excludedTopicLookIds),
+    photos = new Set(excludedPhotoIds);
+  const eligible = entries.filter((entry) => {
+    const primaryLook = entry.body.blocks.find(
+      (block) => block.type === "LOOK",
+    )?.id;
+    return (
+      !(primaryLook && topics.has(primaryLook)) &&
+      ![entry.body.mediaId, entry.body.mobileMediaId].some(
+        (id) => id && photos.has(id),
+      )
+    );
+  });
+  return requestedId
+    ? eligible.find((entry) => entry.id === requestedId)
+    : (eligible.find((entry) => entry.body.featured) ?? eligible[0]);
 }

@@ -21,6 +21,8 @@ export function CuratedCard({
   articleHref,
   fitting = false,
   t,
+  heading = "h2",
+  showSummary = false,
 }: {
   look: PublicLook;
   locale: EditorialLocale;
@@ -31,6 +33,8 @@ export function CuratedCard({
   wide?: boolean;
   articleHref?: string;
   fitting?: boolean;
+  heading?: "h2" | "h3";
+  showSummary?: boolean;
   t: Awaited<ReturnType<typeof getTranslations<"editorial">>>;
 }) {
   const href = seoPath(
@@ -41,7 +45,7 @@ export function CuratedCard({
   );
   const { body } = look;
   if (!look.visual) return null;
-  const Title = hero ? "h1" : "h2";
+  const Title = hero ? "h1" : heading;
   return (
     <article
       className={`editorial-card look-card${hero ? " look-hero" : ""}${weekly ? " look-weekly" : ""}`}
@@ -67,7 +71,7 @@ export function CuratedCard({
         <Title>
           <Link href={href}>{body.title[locale]}</Link>
         </Title>
-        {(hero || (weekly && articleHref)) && (
+        {(hero || showSummary || (weekly && articleHref)) && (
           <p className="look-summary">{body.summary[locale]}</p>
         )}
         <div className="look-meta">

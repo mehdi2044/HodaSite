@@ -2769,7 +2769,9 @@
     "demoImage": "Örnek görsel",
     "heroPrices": "Bu görseldeki parçaların fiyatları",
     "pauseShort": "Duraklat",
-    "resumeShort": "Sürdür"
+    "resumeShort": "Sürdür",
+    "spotlightEmpty": "Bu alan için ayrı bir yayımlanmış yazı henüz yok.",
+    "spotlightImagePending": "Bu yazının görseli henüz hazır değil."
   },
   "modaAdmin": {
     "ribbonSpeedMode": "Döngü süresi yerine sabit şerit hızı",
@@ -2915,7 +2917,13 @@
     "editCuratedLooks": "Stilleri ve ürünlerini yönet",
     "missingSource": "Kaynak yok; yeniden seçin",
     "moveUp": "Yukarı taşı",
-    "moveDown": "Aşağı taşı"
+    "moveDown": "Aşağı taşı",
+    "block_EditorialSpotlight": "Editoryal seçki",
+    "featuredArticle": "Öne çıkan yazı",
+    "featuredArticleAutomatic": "Yayımlanmış öne çıkan yazı (otomatik)",
+    "manageWeekly": "Haftanın stil takvimini yönet",
+    "manageArticles": "Yazıları ve ürün bağlantılarını yönet",
+    "featuredArticleHelp": "Ana stili veya fotoğrafı Kombini Satın Al alanını tekrarlayan yazılar burada gösterilmez. Yazı bağlantısı ilgili stilde kalır."
   },
   "accountDesign": {
     "appearance": "Profil görünümünüz",

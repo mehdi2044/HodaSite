@@ -90,6 +90,14 @@ export const moda4BlockSchemas = [
   z
     .object({
       ...base,
+      type: z.literal("EditorialSpotlight"),
+      title: localizedTextSchema,
+      articleId: id.optional(),
+    })
+    .strict(),
+  z
+    .object({
+      ...base,
       type: z.literal("HeroSlider"),
       slides: z.array(modaHeroSlideSchema).min(1).max(8),
       autoplaySeconds: z.number().min(5).max(30).default(7),
@@ -250,6 +258,7 @@ export const moda4BlockSchemas = [
 ] as const;
 export type Moda4Block = z.infer<(typeof moda4BlockSchemas)[number]>;
 export const MODA4_TYPES = [
+  "EditorialSpotlight",
   "HeroSlider",
   "Bands",
   "WorldsPrism",

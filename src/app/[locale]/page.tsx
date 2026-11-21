@@ -48,7 +48,9 @@ export default async function Home({
         locale={safeLocale}
         market={market}
       />
-      <EditorialHome locale={safeLocale} market={market} />
+      {!homepage.blocks.some(
+        (block) => block.type === "EditorialSpotlight",
+      ) && <EditorialHome locale={safeLocale} market={market} />}
     </>
   );
 }

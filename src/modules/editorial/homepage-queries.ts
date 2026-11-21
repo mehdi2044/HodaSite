@@ -13,3 +13,9 @@ export const homepagePublishedLooks = cache(async (marketId: string) =>
 export const homepageWeeklyLooks = cache((marketId: string) =>
   weeklyLooks(marketId),
 );
+
+export const homepagePublishedArticles = cache(async (marketId: string) =>
+  (await publishedEntries("ARTICLE", marketId)).flatMap((entry) =>
+    entry.body.kind === "ARTICLE" ? [{ ...entry, body: entry.body }] : [],
+  ),
+);

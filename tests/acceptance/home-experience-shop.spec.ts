@@ -1,4 +1,17 @@
+import Decimal from "decimal.js";
 import { test, expect, type Page } from "@playwright/test";
+
+function money(text: string, locale: string) {
+  const parts = new Intl.NumberFormat(locale).formatToParts(1000.5);
+  const group = parts.find((part) => part.type === "group")?.value;
+  const decimal = parts.find((part) => part.type === "decimal")?.value;
+  let value = text
+    .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
+    .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660));
+  if (group) value = value.split(group).join("");
+  if (decimal) value = value.split(decimal).join(".");
+  return new Decimal(value.replace(/[^0-9.-]/g, ""));
+}
 
 async function openShop(
   page: Page,
@@ -31,6 +44,9 @@ for (const [locale, market] of [
         await tabs.nth(index).click();
         const look = shop.locator(".home-look-studio:visible");
         ids.push((await look.getAttribute("data-look-id"))!);
+        await expect(
+          look.locator(".home-look-model .look-composition"),
+        ).toHaveCount(0);
         const count = [3, 3, 2, 2][index];
         await expect(look.locator(".editorial-piece")).toHaveCount(count);
         await expect(look.locator(".editorial-piece picture")).toHaveCount(
@@ -85,6 +101,10 @@ for (const [locale, market] of [
         ids.push(id);
         await size.selectOption(id);
       }
+      const selectedTotal = money(
+        await look.locator(".editorial-total bdi").innerText(),
+        locale,
+      );
       let requests = 0;
       page.on("request", (request) => {
         if (request.method() === "POST" && request.postData()?.includes(ids[0]))
@@ -119,6 +139,18 @@ for (const [locale, market] of [
       await page.goto(`/${locale}/cart?market=${market}`);
       const quantities = page.locator('input[type="number"][name="quantity"]');
       await expect(quantities).toHaveCount(3);
+      const linePrices = await page
+        .locator(".shop-cart-item-body > p.my-3.font-semibold")
+        .allTextContents();
+      expect(linePrices).toHaveLength(3);
+      expect(
+        linePrices
+          .reduce(
+            (sum, price) => sum.plus(money(price, locale)),
+            new Decimal(0),
+          )
+          .toFixed(2),
+      ).toBe(selectedTotal.toFixed(2));
       for (const input of await quantities.all())
         await expect(input).toHaveValue("1");
       await page.goto(`/${locale}/m/${market}/looks`);

@@ -113,3 +113,42 @@ describe("lookbook empty and identity contracts", () => {
     ).toBe(false);
   });
 });
+
+describe("editorial spotlight in the existing CMS", () => {
+  const block = {
+    id: "spotlight",
+    version: 1,
+    type: "EditorialSpotlight",
+    title: text,
+  };
+  it("supports an automatically selected published article without a new data model", () => {
+    expect(homepageBlocksSchema.safeParse([block]).success).toBe(true);
+  });
+  it("preserves an explicit article identity and normal block visibility", () => {
+    const [parsed] = homepageBlocksSchema.parse([
+      { ...block, articleId: "real-article", enabled: false },
+    ]);
+    expect(parsed).toMatchObject({ articleId: "real-article", enabled: false });
+  });
+  it("rejects an unsafe article identity", () => {
+    expect(
+      homepageBlocksSchema.safeParse([{ ...block, articleId: "../private" }])
+        .success,
+    ).toBe(false);
+  });
+  it("rejects a duplicated curated identity across two commercial blocks", () => {
+    const shop = {
+      type: "ShopLook",
+      title: text,
+      body: text,
+      looks: [],
+      curatedLookIds: ["same"],
+    };
+    expect(
+      homepageBlocksSchema.safeParse([
+        { ...shop, id: "one" },
+        { ...shop, id: "two" },
+      ]).success,
+    ).toBe(false);
+  });
+});

@@ -2769,7 +2769,9 @@
     "demoImage": "Demo image",
     "heroPrices": "Prices of the pieces in this image",
     "pauseShort": "Pause",
-    "resumeShort": "Resume"
+    "resumeShort": "Resume",
+    "spotlightEmpty": "No separate published story is available for this placement yet.",
+    "spotlightImagePending": "The image for this article is not ready yet."
   },
   "modaAdmin": {
     "ribbonSpeedMode": "Constant ribbon speed instead of cycle duration",
@@ -2915,7 +2917,13 @@
     "editCuratedLooks": "Manage looks and their products",
     "missingSource": "Source unavailable; choose again",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "block_EditorialSpotlight": "Editorial Spotlight",
+    "featuredArticle": "Featured article",
+    "featuredArticleAutomatic": "Published featured article (automatic)",
+    "manageWeekly": "Manage the weekly look schedule",
+    "manageArticles": "Manage articles and product links",
+    "featuredArticleHelp": "Stories whose main look or photography repeats Shop the Look are omitted here. Their story link stays with the look."
   },
   "accountDesign": {
     "appearance": "Your profile style",

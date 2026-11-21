@@ -2769,7 +2769,9 @@
     "demoImage": "تصویر نمایشی",
     "heroPrices": "قیمت لباس‌های این تصویر",
     "pauseShort": "توقف",
-    "resumeShort": "ادامه"
+    "resumeShort": "ادامه",
+    "spotlightEmpty": "هنوز مقالهٔ مستقلی برای این جایگاه در دسترس نیست.",
+    "spotlightImagePending": "تصویر این مقاله هنوز آماده نیست."
   },
   "modaAdmin": {
     "ribbonSpeedMode": "سرعت ثابت نوارها؛ به‌جای مدت دور",
@@ -2915,7 +2917,13 @@
     "editCuratedLooks": "مدیریت استایل‌ها و محصولاتشان",
     "missingSource": "منبع در دسترس نیست؛ دوباره انتخاب کنید",
     "moveUp": "انتقال به بالا",
-    "moveDown": "انتقال به پایین"
+    "moveDown": "انتقال به پایین",
+    "block_EditorialSpotlight": "استایل هفته و مجله",
+    "featuredArticle": "مقاله منتخب",
+    "featuredArticleAutomatic": "مقاله شاخص منتشرشده (خودکار)",
+    "manageWeekly": "مدیریت زمان‌بندی استایل هفته",
+    "manageArticles": "مدیریت مقاله‌ها و پیوند محصولات",
+    "featuredArticleHelp": "مقاله‌ای که موضوع اصلی یا عکس آن با خرید ست تکرار دارد، در این جایگاه نمایش داده نمی‌شود. لینک داستان کنار همان ست باقی می‌ماند."
   },
   "accountDesign": {
     "appearance": "ظاهر پروفایل شما",

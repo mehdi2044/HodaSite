@@ -1,7 +1,9 @@
-import { homepagePublishedLooks } from "@/modules/editorial/homepage-queries";
+import {
+  homepagePublishedLooks,
+  homepagePublishedArticles,
+} from "@/modules/editorial/homepage-queries";
 import { selectHomepageLooks } from "@/modules/editorial/home-selection";
 import Link from "next/link";
-import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { getTranslations } from "next-intl/server";
 import { getMarketByCode } from "@/modules/settings";
 import { editorialSlug } from "@/modules/editorial/queries";
@@ -36,10 +38,13 @@ export async function HomeCuratedShop({
   if (!market) return null;
   const t = await getTranslations({ locale, namespace: "editorial" });
   const shopping = await getTranslations({ locale, namespace: "shopping" });
-  const published = await homepagePublishedLooks(market.id);
+  const [published, articles] = await Promise.all([
+    homepagePublishedLooks(market.id),
+    homepagePublishedArticles(market.id),
+  ]);
   const looks = selectHomepageLooks(
     block.curatedLookIds ?? [],
-    published,
+    published.filter((look) => look.visual.mode === "PHOTO"),
     excludedIds,
   );
   const [commerce, fitting] = await Promise.all([
@@ -96,6 +101,11 @@ export async function HomeCuratedShop({
                   : [],
               };
             });
+            const story = articles.find(
+              (article) =>
+                article.body.blocks.find((block) => block.type === "LOOK")
+                  ?.id === look.id,
+            );
             return (
               <article
                 className="home-look-studio"
@@ -126,49 +136,53 @@ export async function HomeCuratedShop({
                       {t("pieceCount", { count: look.body.items.length })}
                     </p>
                     <h3>{look.body.title[locale]}</h3>
-                    <p>
-                      {commerce[index].amount !== null &&
-                      commerce[index].available === look.body.items.length
-                        ? t("fromPrice", {
-                            amount: formatStorefrontAmount(
-                              commerce[index].amount!,
-                              market.currency,
-                              locale,
-                            ),
-                          })
-                        : t("stockCount", { count: commerce[index].available })}
-                    </p>
                     {isDemoFashionMedia(
                       look.visual.mobile ?? look.visual.desktop,
                     ) && <small>{shopping("demoImage")}</small>}
                   </div>
                 </div>
-                <CuratedPurchase
-                  key={`${look.revision.id}:${market.id}`}
-                  pieces={pieces}
-                  locale={locale}
-                  currency={market.currency}
-                  compact
-                  idPrefix={`home-${look.id}`}
-                  imageByColor={images}
-                  action={
-                    preview
-                      ? undefined
-                      : addCuratedLookAction.bind(
-                          null,
+                <div className="home-look-commerce">
+                  <CuratedPurchase
+                    key={`${look.revision.id}:${market.id}`}
+                    pieces={pieces}
+                    locale={locale}
+                    currency={market.currency}
+                    compact
+                    idPrefix={`home-${look.id}`}
+                    imageByColor={images}
+                    action={
+                      preview
+                        ? undefined
+                        : addCuratedLookAction.bind(
+                            null,
+                            locale,
+                            look.id,
+                            look.revision.id,
+                          )
+                    }
+                    fittingHref={
+                      !preview && fitting[index]
+                        ? storefrontPath(locale, market.code, "fitting-room", {
+                            look: look.id,
+                          })
+                        : undefined
+                    }
+                  />
+                  {story && (
+                    <p className="home-look-story">
+                      <Link
+                        href={seoPath(
                           locale,
-                          look.id,
-                          look.revision.id,
-                        )
-                  }
-                  fittingHref={
-                    !preview && fitting[index]
-                      ? storefrontPath(locale, market.code, "fitting-room", {
-                          look: look.id,
-                        })
-                      : undefined
-                  }
-                />
+                          market.code,
+                          "magazine",
+                          editorialSlug(story, locale),
+                        )}
+                      >
+                        {t("readArticle")} · {story.body.title[locale]} ↗
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </article>
             );
           })}

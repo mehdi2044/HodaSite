@@ -119,8 +119,31 @@ export async function adminHomepageOptions(
       scopedMarkets.map((market) => publishedEntries("LOOK", market.id)),
     )
   ).flat();
+  const publishedArticles = (
+    await Promise.all(
+      scopedMarkets.map((market) => publishedEntries("ARTICLE", market.id)),
+    )
+  ).flat();
   const text = (value: unknown) => catalogText(value, locale);
   return {
+    curatedModelLooks: [
+      ...new Map(
+        publishedLooks
+          .filter((look) => look.visual?.mode === "PHOTO")
+          .map((look) => [
+            look.id,
+            { id: look.id, title: look.body.title[locale] },
+          ]),
+      ).values(),
+    ],
+    articles: [
+      ...new Map(
+        publishedArticles.map((article) => [
+          article.id,
+          { id: article.id, title: article.body.title[locale] },
+        ]),
+      ).values(),
+    ],
     curatedLooks: [
       ...new Map(
         publishedLooks.map((look) => [

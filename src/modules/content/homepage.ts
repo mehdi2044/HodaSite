@@ -119,7 +119,12 @@ export const homepageBlocksSchema = z
     if (new Set(identities).size !== identities.length)
       ctx.addIssue({ code: "custom", message: "Duplicate block identity" });
     const ids = blocks.flatMap((block) =>
-      block.type === "ShopLook" ? block.looks.map((look) => look.id) : [],
+      block.type === "ShopLook"
+        ? [
+            ...block.looks.map((look) => look.id),
+            ...(block.curatedLookIds ?? []),
+          ]
+        : [],
     );
     if (new Set(ids).size !== ids.length)
       ctx.addIssue({ code: "custom", message: "Duplicate outfit identity" });

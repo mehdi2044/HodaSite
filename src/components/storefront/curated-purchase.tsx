@@ -184,31 +184,42 @@ export function CuratedPurchase({
                         ),
                       })}
               </p>
-              {colors.length > 0 && (
-                <label>
-                  {t("color")}
-                  <select
-                    className="input"
-                    value={color}
-                    disabled={!interactive || pending}
-                    onChange={(event) => {
-                      const colorId = event.currentTarget.value;
-                      setSelection((current) => ({
-                        ...current,
-                        [piece.productId]: { color: colorId },
-                      }));
-                    }}
+              {compact && colors.length === 1 ? (
+                <span className="home-look-color">
+                  <small>{t("color")}</small>
+                  <strong>{colors[0][1]}</strong>
+                </span>
+              ) : (
+                colors.length > 0 && (
+                  <label
+                    className={compact ? "home-look-color-select" : undefined}
                   >
-                    {colors.map(([id, name]) => (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {t("color")}
+                    <select
+                      className="input"
+                      value={color}
+                      disabled={!interactive || pending}
+                      onChange={(event) => {
+                        const colorId = event.currentTarget.value;
+                        setSelection((current) => ({
+                          ...current,
+                          [piece.productId]: { color: colorId },
+                        }));
+                      }}
+                    >
+                      {colors.map(([id, name]) => (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )
               )}
               {available && (
-                <label>
+                <label
+                  className={compact ? "home-look-size-select" : undefined}
+                >
                   {t("size")}
                   <select
                     className="input"
@@ -265,13 +276,13 @@ export function CuratedPurchase({
             }
             onClick={() => buy(chosen.map((variant) => variant.id))}
           >
-            {t(
-              purchasable.length < pieces.length
-                ? "addAvailableLook"
-                : compact
-                  ? "addWholeLook"
-                  : "addLook",
-            )}
+            {compact
+              ? t(
+                  purchasable.length < pieces.length
+                    ? "addAvailableLook"
+                    : "addWholeLook",
+                )
+              : t("addLook")}
           </button>
         )}
         {fittingHref && (

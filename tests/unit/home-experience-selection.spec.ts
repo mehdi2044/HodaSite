@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   selectHomepageLooks,
   homepageVisualIdentity,
+  chooseHomepageArticle,
 } from "@/modules/editorial/home-selection";
 const photo = (id: string, wide: string, portrait = wide) => ({
   id,
@@ -80,5 +81,55 @@ describe("complete composition identities", () => {
       composite("copy", ["knit", "trousers"]),
     ];
     expect(selectHomepageLooks(["copy"], entries, ["weekly"])).toEqual([]);
+  });
+});
+
+describe("article reservations", () => {
+  const story = (
+    id: string,
+    primaryLook: string,
+    mediaId: string,
+    featured = true,
+  ) => ({
+    id,
+    body: { mediaId, featured, blocks: [{ type: "LOOK", id: primaryLook }] },
+  });
+  const entries = [
+    story("easy-story", "easy", "men-wide"),
+    story("other-story", "city", "article-photo", false),
+  ];
+  it("chooses a real independent story after omitting the commercial topic", () => {
+    expect(chooseHomepageArticle(entries, undefined, ["easy"], [])?.id).toBe(
+      "other-story",
+    );
+  });
+  it("keeps an explicit duplicated selection empty rather than substituting another article", () => {
+    expect(
+      chooseHomepageArticle(entries, "easy-story", ["easy"], []),
+    ).toBeUndefined();
+  });
+  it("does not repeat allocated photography under a different article identity", () => {
+    expect(
+      chooseHomepageArticle(
+        [story("other", "different", "men-wide")],
+        undefined,
+        [],
+        ["men-wide"],
+      ),
+    ).toBeUndefined();
+  });
+  it("never fabricates missing content", () => {
+    expect(chooseHomepageArticle([], undefined, [], [])).toBeUndefined();
+    expect(chooseHomepageArticle(entries, "missing", [], [])).toBeUndefined();
+  });
+  it("reserves either photo size before allocating the lookbook", () => {
+    expect(
+      selectHomepageLooks(
+        ["a"],
+        [photo("a", "wide", "portrait")],
+        [],
+        ["portrait"],
+      ),
+    ).toEqual([]);
   });
 });
