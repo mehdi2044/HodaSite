@@ -1,5 +1,6 @@
 // Explicit, opt-in configuration of this task's new database only. No seed/deploy hook.
 import { db } from "../src/lib/db";
+import { saveWeeklyLook } from "../src/modules/editorial/weekly";
 import {
   saveHomepageDraft,
   publishHomepageRevision,
@@ -199,6 +200,30 @@ async function main() {
         ].map((slug) => `fixture-editorial-${slug}`);
   }
   if (process.argv[3] === "slice4") {
+    // Keep the existing scheduled history; allocate a distinct published weekly look
+    // through the same permission-checked writer used by the admin panel.
+    const now = new Date();
+    const active = await db.weeklyLookFeature.findFirst({
+      where: { slot: "MAIN", startsAt: { lte: now }, endsAt: { gt: now } },
+    });
+    if (
+      !active ||
+      ![
+        "fixture-editorial-easy-days",
+        "fixture-editorial-city-layers",
+      ].includes(active.entryId)
+    )
+      throw new Error(
+        "Unexpected isolated weekly allocation; manual review required",
+      );
+    if (active.entryId !== "fixture-editorial-city-layers")
+      await saveWeeklyLook(owner.id, {
+        id: "fixture-editorial-city-layers",
+        slot: "MAIN",
+        startsAt: now,
+        endsAt: active.endsAt,
+        replaceId: active.id,
+      });
     if (!blocks.some((block) => block.type === "EditorialSpotlight"))
       blocks.push({
         id: "home-editorial-spotlight",
