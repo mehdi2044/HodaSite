@@ -103,12 +103,18 @@ for (const [locale, market] of [
         await page.goBack();
         await expect(shop).toBeAttached();
         await page.goto(`/${locale}/cart?market=${market}`);
-        await expect(page.locator('input[name="quantity"]')).toHaveCount(1);
-        await expect(page.locator('input[name="quantity"]')).toHaveValue("1");
+        await expect(
+          page.locator('input[type="number"][name="quantity"]'),
+        ).toHaveCount(1);
+        await expect(
+          page.locator('input[type="number"][name="quantity"]'),
+        ).toHaveValue("1");
         await page.goto(`/${locale}/checkout?market=${market}`);
         await expect(page.locator('[name="firstName"]')).toBeVisible();
         await page.goBack();
-        await expect(page.locator('input[name="quantity"]')).toHaveValue("1");
+        await expect(
+          page.locator('input[type="number"][name="quantity"]'),
+        ).toHaveValue("1");
         await page.goForward();
         await page.reload();
         await expect(page.locator(".shop-checkout-piece")).toHaveCount(1);
