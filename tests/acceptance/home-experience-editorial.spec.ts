@@ -63,6 +63,14 @@ for (const [locale, market] of [
       }));
       expect(Math.abs(frame.imageHeight - frame.frameHeight)).toBeLessThan(1);
       expect(frame.placeholder).toBe("none");
+      const photoFrame = await weekly.locator(".look-artwork").boundingBox();
+      if (width === 1440) {
+        expect(photoFrame!.height).toBeGreaterThanOrEqual(480);
+        expect(photoFrame!.height).toBeLessThanOrEqual(520);
+      } else {
+        expect(photoFrame!.width / photoFrame!.height).toBeCloseTo(3 / 4, 2);
+      }
+
       // The only published article is Easy Days: keep it with its shop look, not twice on the home.
       await expect(spotlight.locator(".home-spotlight-article")).toHaveCount(0);
       await expect(spotlight.locator(".home-spotlight-empty")).toBeVisible();

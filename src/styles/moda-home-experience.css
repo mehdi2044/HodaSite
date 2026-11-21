@@ -714,6 +714,11 @@ html[dir="rtl"]
   gap: 24px;
   align-items: stretch;
 }
+/* A real complementary article sets the row height; the single-card state stays compact. */
+.home-spotlight-grid[data-has-article="true"][data-has-weekly="true"] {
+  --weekly-frame-height: 100%;
+  --weekly-frame-min: 500px;
+}
 .home-spotlight-weekly {
   min-inline-size: 0;
 }
@@ -729,8 +734,8 @@ html[dir="rtl"]
 }
 .home-spotlight-weekly .look-artwork {
   display: block;
-  block-size: 100%;
-  min-block-size: 500px;
+  block-size: var(--weekly-frame-height, 500px);
+  min-block-size: var(--weekly-frame-min, 0px);
   aspect-ratio: auto;
   background: var(--editorial-paper);
 }
