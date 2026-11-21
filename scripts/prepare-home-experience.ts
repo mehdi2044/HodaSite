@@ -173,7 +173,7 @@ async function main() {
         block.curatedLookIds = [
           "soft-forms",
           "easy-days",
-          "sunday-colour",
+          "little-worlds",
           "play-date",
         ].map((slug) => `fixture-editorial-${slug}`);
         block.title = {
