@@ -47,10 +47,21 @@ const legacyBlockSchemas = [
       title: localizedTextSchema,
       body: localizedTextSchema,
       looks: z.array(preparedLookSchema).max(8),
+      curatedLookIds: z
+        .array(mediaId)
+        .max(12)
+        .refine((ids) => new Set(ids).size === ids.length)
+        .optional(),
     })
-    .refine((block) => Boolean(block.scene) || block.looks.length > 0, {
-      message: "ShopLook requires a shared scene or retained prepared looks",
-    }),
+    .refine(
+      (block) =>
+        block.curatedLookIds !== undefined ||
+        Boolean(block.scene) ||
+        block.looks.length > 0,
+      {
+        message: "ShopLook requires a shared scene or retained prepared looks",
+      },
+    ),
   z.object({
     ...optionalMetadata,
     type: z.literal("Hero"),

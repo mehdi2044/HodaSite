@@ -65,3 +65,26 @@ describe("backward-compatible homepage presentation", () => {
     },
   );
 });
+
+describe("curated homepage references", () => {
+  const shop = { type: "ShopLook", title: text, body: text, looks: [] };
+  it("allows an explicit empty curated selection without inventing prepared products", () => {
+    const [block] = homepageBlocksSchema.parse([
+      { ...shop, curatedLookIds: [] },
+    ]);
+    expect(block.type).toBe("ShopLook");
+    if (block.type !== "ShopLook") throw new Error("Wrong block");
+    expect(block.curatedLookIds).toEqual([]);
+    expect(block.looks).toEqual([]);
+  });
+  it("still rejects an empty legacy shop", () => {
+    expect(homepageBlocksSchema.safeParse([shop]).success).toBe(false);
+  });
+  it("rejects duplicate curated identities at the existing CMS boundary", () => {
+    expect(
+      homepageBlocksSchema.safeParse([
+        { ...shop, curatedLookIds: ["same", "same"] },
+      ]).success,
+    ).toBe(false);
+  });
+});

@@ -1,3 +1,4 @@
+import { publishedEntries } from "@/modules/editorial";
 import { db } from "@/lib/db";
 import { catalogText } from "@/modules/catalog";
 import { storeCutoutModels } from "@/modules/catalog/cutouts/models";
@@ -109,8 +110,25 @@ export async function adminHomepageOptions(
         orderBy: { id: "asc" },
       }),
     ]);
+  const scopedMarkets = await db.market.findMany({
+    where: globalRead ? {} : { id: { in: marketIds } },
+    select: { id: true },
+  });
+  const publishedLooks = (
+    await Promise.all(
+      scopedMarkets.map((market) => publishedEntries("LOOK", market.id)),
+    )
+  ).flat();
   const text = (value: unknown) => catalogText(value, locale);
   return {
+    curatedLooks: [
+      ...new Map(
+        publishedLooks.map((look) => [
+          look.id,
+          { id: look.id, title: look.body.title[locale] },
+        ]),
+      ).values(),
+    ],
     categories: categories.map((row) => ({
       id: row.id,
       title: text(row.titleI18n),

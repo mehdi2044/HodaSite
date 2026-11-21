@@ -1,11 +1,36 @@
 "use client";
+import {
+  ResponsiveImage,
+  isDemoFashionMedia,
+  type ResponsiveImageMedia,
+} from "./responsive-image";
 
 import Decimal from "decimal.js";
-import { useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useTranslations } from "next-intl";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import type { EditorialLocale } from "@/modules/editorial/contracts";
 import type { LookCommerce } from "@/modules/editorial/commerce";
+
+function PieceList({
+  compact,
+  children,
+}: {
+  compact: boolean;
+  children: ReactNode;
+}) {
+  return compact ? (
+    <div className="editorial-piece-list">{children}</div>
+  ) : (
+    <>{children}</>
+  );
+}
 
 const subscribeToHydration = () => () => {};
 const getClientSnapshot = () => true;
@@ -21,14 +46,21 @@ export function CuratedPurchase({
   currency,
   action,
   fittingHref,
+  compact = false,
+  idPrefix = "look",
+  imageByColor = {},
 }: {
   pieces: LookCommerce["pieces"];
   locale: EditorialLocale;
   currency: string;
   action?: PurchaseAction;
   fittingHref?: string;
+  compact?: boolean;
+  idPrefix?: string;
+  imageByColor?: Record<string, ResponsiveImageMedia>;
 }) {
   const t = useTranslations("editorial");
+  const shopping = useTranslations("shopping");
   const [selection, setSelection] = useState<
     Record<string, { color?: string; variant?: string }>
   >({});
@@ -37,6 +69,8 @@ export function CuratedPurchase({
     error: boolean;
   }>();
   const [pending, start] = useTransition();
+  const inFlight = useRef(false);
+  const Heading = compact ? "h4" : "h2";
   const interactive = useSyncExternalStore(
     subscribeToHydration,
     getClientSnapshot,
@@ -59,127 +93,161 @@ export function CuratedPurchase({
     new Decimal(0),
   );
   function buy(ids: string[]) {
-    if (!action) return;
+    if (!action || inFlight.current) return;
+    inFlight.current = true;
     start(async () => {
-      const result = await action(ids);
-      setFeedback({
-        error: !result.ok,
-        message: result.ok ? t("added") : result.message,
-      });
+      try {
+        const result = await action(ids);
+        setFeedback({
+          error: !result.ok,
+          message: result.ok ? t("added") : result.message,
+        });
+      } finally {
+        inFlight.current = false;
+      }
     });
   }
   return (
-    <section className="editorial-pieces" aria-label={t("pieces")}>
-      {pieces.map((piece, index) => {
-        const current = selection[piece.productId];
-        const colors = [
-          ...new Map(piece.variants.map((v) => [v.colorId, v.color])).entries(),
-        ];
-        const color =
-          current?.color ??
-          piece.variants.find((v) => v.id === piece.variantId)?.colorId ??
-          colors[0]?.[0];
-        const sizes = piece.variants.filter((v) => v.colorId === color);
-        const selected = sizes.find(
-          (v) =>
-            v.id === current?.variant && v.available > 0 && v.amount !== null,
-        );
-        const available = piece.variants.some(
-          (v) => v.available > 0 && v.amount !== null,
-        );
-        const priceable = sizes.filter(
-          (v) => v.available > 0 && v.amount !== null,
-        );
-        const amount =
-          selected?.amount ??
-          (priceable.length
-            ? Decimal.min(...priceable.map((v) => v.amount!)).toFixed()
-            : null);
-        return (
-          <div
-            className="editorial-piece"
-            id={`look-piece-${index + 1}`}
-            key={piece.productId}
-          >
-            <h2>
-              {piece.href ? (
-                <a href={piece.href}>{piece.title}</a>
-              ) : (
-                t("unavailable")
+    <section
+      className={`editorial-pieces${compact ? " home-look-pieces" : ""}`}
+      aria-label={t("pieces")}
+      aria-busy={pending}
+    >
+      <PieceList compact={compact}>
+        {pieces.map((piece, index) => {
+          const current = selection[piece.productId];
+          const colors = [
+            ...new Map(
+              piece.variants.map((v) => [v.colorId, v.color]),
+            ).entries(),
+          ];
+          const color =
+            current?.color ??
+            piece.variants.find((v) => v.id === piece.variantId)?.colorId ??
+            colors[0]?.[0];
+          const sizes = piece.variants.filter((v) => v.colorId === color);
+          const selected = sizes.find(
+            (v) =>
+              v.id === current?.variant && v.available > 0 && v.amount !== null,
+          );
+          const available = piece.variants.some(
+            (v) => v.available > 0 && v.amount !== null,
+          );
+          const priceable = sizes.filter(
+            (v) => v.available > 0 && v.amount !== null,
+          );
+          const amount =
+            selected?.amount ??
+            (priceable.length
+              ? Decimal.min(...priceable.map((v) => v.amount!)).toFixed()
+              : null);
+          return (
+            <div
+              className="editorial-piece"
+              id={`${idPrefix}-piece-${index + 1}`}
+              data-product-id={piece.productId}
+              key={piece.productId}
+            >
+              {imageByColor[`${piece.productId}:${color}`] && (
+                <ResponsiveImage
+                  media={imageByColor[`${piece.productId}:${color}`]}
+                  locale={locale}
+                  sizes="(max-width: 900px) 150px, 100px"
+                  imgClassName="h-full w-full object-contain"
+                />
               )}
-            </h2>
-            <p>
-              {amount === null
-                ? t("unavailable")
-                : selected
-                  ? formatStorefrontAmount(amount, currency, locale)
-                  : t("fromPrice", {
-                      amount: formatStorefrontAmount(amount, currency, locale),
-                    })}
-            </p>
-            {colors.length > 0 && (
-              <label>
-                {t("color")}
-                <select
-                  className="input"
-                  value={color}
-                  disabled={!interactive || pending}
-                  onChange={(event) => {
-                    const colorId = event.currentTarget.value;
-                    setSelection((current) => ({
-                      ...current,
-                      [piece.productId]: { color: colorId },
-                    }));
-                  }}
+              {compact &&
+                isDemoFashionMedia(
+                  imageByColor[`${piece.productId}:${color}`],
+                ) && (
+                  <small className="home-look-demo-note">
+                    {shopping("demoImage")}
+                  </small>
+                )}
+              <Heading>
+                {piece.href ? (
+                  <a href={piece.href}>{piece.title}</a>
+                ) : (
+                  t("unavailable")
+                )}
+              </Heading>
+              <p>
+                {amount === null
+                  ? t("unavailable")
+                  : selected
+                    ? formatStorefrontAmount(amount, currency, locale)
+                    : t("fromPrice", {
+                        amount: formatStorefrontAmount(
+                          amount,
+                          currency,
+                          locale,
+                        ),
+                      })}
+              </p>
+              {colors.length > 0 && (
+                <label>
+                  {t("color")}
+                  <select
+                    className="input"
+                    value={color}
+                    disabled={!interactive || pending}
+                    onChange={(event) => {
+                      const colorId = event.currentTarget.value;
+                      setSelection((current) => ({
+                        ...current,
+                        [piece.productId]: { color: colorId },
+                      }));
+                    }}
+                  >
+                    {colors.map(([id, name]) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {available && (
+                <label>
+                  {t("size")}
+                  <select
+                    className="input"
+                    value={selected?.id ?? ""}
+                    disabled={!interactive || pending}
+                    onChange={(event) => {
+                      const variant = event.currentTarget.value;
+                      setSelection((current) => ({
+                        ...current,
+                        [piece.productId]: { color, variant },
+                      }));
+                    }}
+                  >
+                    <option value="">{t("chooseSize")}</option>
+                    {sizes.map((v) => (
+                      <option
+                        key={v.id}
+                        value={v.id}
+                        disabled={v.available <= 0 || v.amount === null}
+                      >
+                        {v.size}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {action && (
+                <button
+                  className="button"
+                  disabled={pending || !selected}
+                  onClick={() => selected && buy([selected.id])}
                 >
-                  {colors.map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {available && (
-              <label>
-                {t("size")}
-                <select
-                  className="input"
-                  value={selected?.id ?? ""}
-                  disabled={!interactive || pending}
-                  onChange={(event) => {
-                    const variant = event.currentTarget.value;
-                    setSelection((current) => ({
-                      ...current,
-                      [piece.productId]: { color, variant },
-                    }));
-                  }}
-                >
-                  <option value="">{t("chooseSize")}</option>
-                  {sizes.map((v) => (
-                    <option
-                      key={v.id}
-                      value={v.id}
-                      disabled={v.available <= 0 || v.amount === null}
-                    >
-                      {v.size}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {action && (
-              <button
-                className="button"
-                disabled={pending || !selected}
-                onClick={() => selected && buy([selected.id])}
-              >
-                {t("addPiece")}
-              </button>
-            )}
-          </div>
-        );
-      })}
+                  {t("addPiece")}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </PieceList>
       <div className="editorial-total">
         <p>
           {t("total")}{" "}
@@ -197,7 +265,13 @@ export function CuratedPurchase({
             }
             onClick={() => buy(chosen.map((variant) => variant.id))}
           >
-            {t("addLook")}
+            {t(
+              purchasable.length < pieces.length
+                ? "addAvailableLook"
+                : compact
+                  ? "addWholeLook"
+                  : "addLook",
+            )}
           </button>
         )}
         {fittingHref && (

@@ -415,6 +415,13 @@ export function BlockFields({
         />
       </label>
     ));
+  if (block.type === "ShopLook" && block.curatedLookIds !== undefined)
+    return (
+      <>
+        {localized("title")}
+        {localized("body")}
+      </>
+    );
   if (block.type === "ShopLook") {
     const changeLook = (
       lookIndex: number,

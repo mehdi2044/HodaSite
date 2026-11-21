@@ -2908,7 +2908,14 @@
     "heroAuditRunning": "Checking hero layout…",
     "heroAuditPassed": "No H-01–H-07 violations in the current preview.",
     "heroAuditFailed": "Layout check unavailable. Try again after the preview loads.",
-    "heroAuditLocaleUnavailable": "Language {locale} is disabled in the authorized market. This part of the matrix was not checked."
+    "heroAuditLocaleUnavailable": "Language {locale} is disabled in the authorized market. This part of the matrix was not checked.",
+    "useCuratedLooks": "Use published curated looks",
+    "curatedSelection": "Selected looks, in display order",
+    "curatedSelectionHelp": "References use the existing look revisions, photography and live catalogue. Unpublished or unavailable entries are omitted.",
+    "editCuratedLooks": "Manage looks and their products",
+    "missingSource": "Source unavailable; choose again",
+    "moveUp": "Move up",
+    "moveDown": "Move down"
   },
   "accountDesign": {
     "appearance": "Your profile style",
@@ -3220,6 +3227,8 @@
       "fa": "فارسی",
       "tr": "Türkçe",
       "en": "English"
-    }
+    },
+    "addAvailableLook": "Add available pieces",
+    "addWholeLook": "Add this look"
   }
 }

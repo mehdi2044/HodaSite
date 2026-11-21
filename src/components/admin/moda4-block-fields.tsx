@@ -19,6 +19,7 @@ import {
 type Localized = { fa: string; tr: string; en: string };
 export type ModaAdminOptions = {
   categories: { id: string; title: string }[];
+  curatedLooks?: { id: string; title: string }[];
   collections: { id: string; title: string }[];
   pages: { id: string; title: string }[];
   programs: { id: string; marketId: string; title: string; state: string }[];

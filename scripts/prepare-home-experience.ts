@@ -4,6 +4,13 @@ import {
   saveHomepageDraft,
   publishHomepageRevision,
 } from "../src/modules/content/publication";
+import {
+  saveEditorialDraft,
+  publishEditorial,
+} from "../src/modules/editorial/publication";
+import { editorialContent } from "../src/modules/editorial/contracts";
+import { matchingFittingPhoto } from "../src/modules/content/scenes/contracts";
+import { sceneReferenceSnapshot } from "../src/modules/content/scenes/references";
 import { homepageBlocksSchema } from "../src/modules/content/homepage";
 
 async function main() {
@@ -11,7 +18,7 @@ async function main() {
   if (
     database !== "moda4_home_experience" ||
     process.argv[2] !== database ||
-    process.argv[3] !== "slice1"
+    !["slice1", "slice2"].includes(process.argv[3])
   )
     throw new Error("Exact new homepage database and explicit slice required");
   const owner = await db.user.findFirstOrThrow({
@@ -65,6 +72,119 @@ async function main() {
         description: descriptions[index],
       }));
     }
+  if (process.argv[3] === "slice2") {
+    // Reuse the approved girl photograph and exactly its photographed products.
+    // This is an isolated CMS content revision, not a new image/price/product.
+    const fitting = blocks.find((block) => block.type === "FittingAd");
+    const girl =
+      fitting?.type === "FittingAd"
+        ? fitting.looks.find((look) => look.scene.modelId === "girl")
+        : undefined;
+    const photo = girl?.finalPhoto;
+    if (!girl || !photo || !matchingFittingPhoto(girl.scene, photo))
+      throw new Error("Approved girl photo identity missing");
+    const markets = await db.market.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    });
+    for (const market of markets) {
+      const snapshot = await sceneReferenceSnapshot(photo, [market.id]);
+      if (snapshot.fingerprint !== photo.match?.fingerprint)
+        throw new Error("Approved girl photo fingerprint mismatch");
+    }
+    const entry = await db.editorialEntry.findUniqueOrThrow({
+      where: { id: "fixture-editorial-little-worlds" },
+      include: { revisions: { orderBy: { number: "desc" }, take: 1 } },
+    });
+    const old = editorialContent.parse(entry.revisions[0]?.body);
+    if (old.kind !== "LOOK" || old.audience !== "GIRLS")
+      throw new Error("Unexpected girl content identity");
+    const selected = await Promise.all(
+      girl.scene.pieces.map(async (piece) => {
+        const variant = await db.variant.findFirstOrThrow({
+          where: {
+            productId: piece.productId,
+            colorId: piece.colorId,
+            isActive: true,
+            color: { deletedAt: null },
+            size: { deletedAt: null },
+          },
+          orderBy: { id: "asc" },
+          select: { id: true, colorId: true },
+        });
+        return {
+          productId: piece.productId,
+          variantId: variant.id,
+          colorId: variant.colorId,
+        };
+      }),
+    );
+    const body = editorialContent.parse({
+      ...old,
+      mediaId: photo.desktop.mediaId,
+      mobileMediaId: photo.mobile.mediaId,
+      items: selected.map(({ productId, variantId }) => ({
+        productId,
+        variantId,
+      })),
+      visual: {
+        mode: "PHOTO",
+        mediaId: photo.desktop.mediaId,
+        mobileMediaId: photo.mobile.mediaId,
+        pieces: selected.map(({ variantId, colorId }) => ({
+          variantId,
+          colorId,
+        })),
+      },
+    });
+    if (JSON.stringify(old) !== JSON.stringify(body)) {
+      if (entry.version !== 1)
+        throw new Error(
+          "Refuse to replace an unexpected later editorial revision",
+        );
+      const saved = await saveEditorialDraft(owner.id, {
+        id: entry.id,
+        version: entry.version,
+        body,
+      });
+      const revision = await db.editorialRevision.findFirstOrThrow({
+        where: { entryId: saved.id, number: saved.version },
+      });
+      await publishEditorial(owner.id, {
+        id: saved.id,
+        version: saved.version,
+        revisionId: revision.id,
+      });
+      console.log(
+        JSON.stringify({
+          isolatedGirlRevision: true,
+          reusedApprovedMediaId: photo.desktop.mediaId,
+          fingerprintVerified: true,
+          productsCreated: 0,
+        }),
+      );
+    }
+
+    for (const block of blocks)
+      if (block.type === "ShopLook") {
+        block.curatedLookIds = [
+          "soft-forms",
+          "easy-days",
+          "sunday-colour",
+          "play-date",
+        ].map((slug) => `fixture-editorial-${slug}`);
+        block.title = {
+          fa: "خرید ست کامل",
+          tr: "Kombini satın al",
+          en: "Shop the Look",
+        };
+        block.body = {
+          fa: "استایل را انتخاب کن؛ قطعات و سایزهای دلخواهت را با قیمت روز به سبد ببر.",
+          tr: "Stilini seç; parçaları ve bedenleri güncel fiyatlarıyla sepetine ekle.",
+          en: "Choose a look. Find your size, explore each piece and make it yours.",
+        };
+      }
+  }
   const saved = await saveHomepageDraft(owner.id, {
     marketId: null,
     expectedVersion: home.version,
@@ -77,7 +197,7 @@ async function main() {
   });
   console.log(
     JSON.stringify({
-      configured: "slice1",
+      configured: process.argv[3],
       authorizedWriter: true,
       existingReferencesPreserved: true,
     }),

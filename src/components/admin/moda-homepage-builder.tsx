@@ -1,4 +1,5 @@
 "use client";
+import { CuratedLookOrder } from "./curated-look-order";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -395,29 +396,65 @@ export function ModaHomepageBuilder(props: {
                     />
                   ) : (
                     <div className="grid gap-3">
-                      {(block.type === "ShopLook" ||
-                        block.type === "Hero" ||
-                        block.type === "Banner") && (
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={Boolean(block.scene)}
-                            onChange={(event) =>
-                              update(index, {
-                                ...block,
-                                scene: event.target.checked
-                                  ? emptyModaScene()
-                                  : undefined,
-                              })
-                            }
-                          />
-                          {a("sharedScene")}
-                        </label>
+                      {block.type === "ShopLook" && (
+                        <>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={block.curatedLookIds !== undefined}
+                              onChange={(event) =>
+                                update(index, {
+                                  ...block,
+                                  curatedLookIds: event.target.checked
+                                    ? []
+                                    : undefined,
+                                })
+                              }
+                            />
+                            {a("useCuratedLooks")}
+                          </label>
+                          {block.curatedLookIds !== undefined && (
+                            <CuratedLookOrder
+                              value={block.curatedLookIds}
+                              choices={options.curatedLooks ?? []}
+                              change={(curatedLookIds) =>
+                                update(index, { ...block, curatedLookIds })
+                              }
+                            />
+                          )}
+                        </>
                       )}
                       {(block.type === "ShopLook" ||
                         block.type === "Hero" ||
                         block.type === "Banner") &&
-                        block.scene && (
+                        !(
+                          block.type === "ShopLook" &&
+                          block.curatedLookIds !== undefined
+                        ) && (
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(block.scene)}
+                              onChange={(event) =>
+                                update(index, {
+                                  ...block,
+                                  scene: event.target.checked
+                                    ? emptyModaScene()
+                                    : undefined,
+                                })
+                              }
+                            />
+                            {a("sharedScene")}
+                          </label>
+                        )}
+                      {(block.type === "ShopLook" ||
+                        block.type === "Hero" ||
+                        block.type === "Banner") &&
+                        block.scene &&
+                        !(
+                          block.type === "ShopLook" &&
+                          block.curatedLookIds !== undefined
+                        ) && (
                           <ModaSceneField
                             scene={block.scene}
                             reorderPieces={block.type === "ShopLook"}
@@ -499,7 +536,7 @@ export function ModaHomepageBuilder(props: {
                       : {
                           ...fresh(newType),
                           ...(newType === "ShopLook"
-                            ? { scene: emptyModaScene() }
+                            ? { curatedLookIds: [] }
                             : {}),
                           id: crypto.randomUUID(),
                           version: 1,

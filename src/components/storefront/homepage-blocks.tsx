@@ -1,3 +1,4 @@
+import { HomeCuratedShop } from "./home-curated-shop";
 import type { ReactNode } from "react";
 import { SceneArt } from "./scene-art";
 import { LiveHomepage } from "./live-homepage";
@@ -74,7 +75,9 @@ export async function HomepageBlocks({
     }),
     Promise.all(
       blocks.map((block) =>
-        "scene" in block && block.scene
+        "scene" in block &&
+        block.scene &&
+        !(block.type === "ShopLook" && block.curatedLookIds !== undefined)
           ? resolveShoppableScene(block.scene, market, locale, {
               adminPreview: preview,
             })
@@ -106,6 +109,16 @@ export async function HomepageBlocks({
                 first={index === 0}
                 preview={preview}
                 anchor={index === firstLookbook ? "lookbook" : undefined}
+              />
+            );
+          if (block.type === "ShopLook" && block.curatedLookIds !== undefined)
+            return (
+              <HomeCuratedShop
+                key={block.id ?? index}
+                block={block}
+                locale={locale}
+                marketCode={market.code}
+                preview={preview}
               />
             );
           if (sceneViews[index] && block.type === "Banner")
