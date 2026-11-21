@@ -729,7 +729,8 @@ html[dir="rtl"]
 }
 .home-spotlight-weekly .look-artwork {
   display: block;
-  block-size: 500px;
+  block-size: 100%;
+  min-block-size: 500px;
   aspect-ratio: auto;
   background: var(--editorial-paper);
 }
@@ -889,6 +890,7 @@ html[dir="rtl"]
   }
   .home-spotlight-weekly .look-artwork {
     block-size: auto;
+    min-block-size: 0;
     aspect-ratio: 3 / 4;
   }
   .home-spotlight-weekly .editorial-card-copy {
