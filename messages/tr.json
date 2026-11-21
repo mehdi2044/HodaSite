@@ -2772,6 +2772,9 @@
     "resumeShort": "Sürdür"
   },
   "modaAdmin": {
+    "ribbonSpeedMode": "Döngü süresi yerine sabit şerit hızı",
+    "ribbonSpeedFirst": "İlk şerit hızı (piksel/saniye)",
+    "ribbonSpeedSecond": "İkinci şerit hızı (piksel/saniye)",
     "heroFramePreviewWidth": "Önizleme genişliği (piksel)",
     "heroFramingHelp": "Her slaytın kadrajını ekran boyutuna göre ayarlayın. Görsel aynalanmaz; baş ve yüz üstbilginin altında, metin görselin boş alanında kalmalıdır. Gerçek önizlemeyi kontrol edin.",
     "heroFrame_compact": "Küçük mobil (375 piksele kadar)",

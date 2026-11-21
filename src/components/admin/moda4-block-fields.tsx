@@ -1280,6 +1280,49 @@ export function Moda4BlockFields({
           10,
           120,
         )}
+        <label>
+          <input
+            type="checkbox"
+            checked={Boolean(block.speed)}
+            onChange={(event) =>
+              change({
+                ...block,
+                speed: event.target.checked
+                  ? { first: 7.9, second: 5.6 }
+                  : undefined,
+              })
+            }
+          />
+          {t("ribbonSpeedMode")}
+        </label>
+        {block.speed && (
+          <>
+            {number(
+              "ribbonSpeedFirst",
+              block.speed.first,
+              (first) =>
+                change({
+                  ...block,
+                  speed: { first, second: block.speed!.second },
+                }),
+              4,
+              120,
+              0.1,
+            )}
+            {number(
+              "ribbonSpeedSecond",
+              block.speed.second,
+              (second) =>
+                change({
+                  ...block,
+                  speed: { first: block.speed!.first, second },
+                }),
+              4,
+              120,
+              0.1,
+            )}
+          </>
+        )}
         {(["first", "second"] as const).map((row) => (
           <fieldset key={row}>
             <legend>{t(row)}</legend>
@@ -1392,6 +1435,18 @@ export function Moda4BlockFields({
                   ...block,
                   faces: block.faces.map((item, n) =>
                     n === index ? { ...item, subtitle } : item,
+                  ),
+                })
+              }
+            />
+            <LocalizedField
+              label={t("body")}
+              value={face.description ?? { fa: "", tr: "", en: "" }}
+              change={(description) =>
+                change({
+                  ...block,
+                  faces: block.faces.map((item, n) =>
+                    n === index ? { ...item, description } : item,
                   ),
                 })
               }

@@ -80,6 +80,7 @@ export const modaWorldFaceSchema = z
     categoryId: id,
     title: localizedTextSchema,
     subtitle: localizedTextSchema,
+    description: localizedTextSchema.optional(),
     desktop: sceneImageSchema,
     mobile: sceneImageSchema,
     scene: shoppableSceneSchema.optional(),
@@ -101,6 +102,13 @@ export const moda4BlockSchemas = [
       first: z.array(localizedTextSchema).min(1).max(12),
       second: z.array(localizedTextSchema).min(1).max(12),
       durationSeconds: z.number().min(10).max(120).default(30),
+      speed: z
+        .object({
+          first: z.number().min(4).max(120),
+          second: z.number().min(4).max(120),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   z

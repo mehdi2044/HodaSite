@@ -1,3 +1,11 @@
+## MODA4 homepage experience — Slice 1 local candidate
+
+Implemented against docs v1.2 / D23, D31, D64, D70, D77, D81, D82. The new isolated copy retains the protected v32 reference and the previous final-acceptance preview. Two equal ribbon units form a seamless CSS loop, with an independent pause row and optional CMS-configured pixel speeds. The old duration-only JSON still parses unchanged. Per-world editable descriptions are separate from the picture captions; the existing physical four-face prism now pairs its active category with three real catalogue thumbnails and a single category CTA. Direct selectors, accessible pause, keyboard, RTL-aware horizontal drag/touch, vertical-scroll intent and reduced motion remain available.
+
+Local focused evidence: seven contract tests and 15 initial browser cases passed in Persian, Turkish and English at 390/1440, including actual emulated touch. Lint/typecheck passed. The measured Persian ribbon baseline was 6.04/4.29 px/s; configured 7.90/5.60 px/s is approximately 30% faster and stays constant across the two widths. Development cold-compilation timeouts, an interrupted overbroad test glob and the initial stale dev reader are retained in the private evidence; they are not successful production checks. Stronger five-second image-readiness assertions then found four delayed thumbnails; bounded preload reduced these to one. World thumbnails now request eagerly without high fetch priority and without a blur background behind contained images; the latest browser run and production verification remain pending. Failed traces are retained. Source copying into the task-owned container avoids reliance on Windows bind-mount change notifications.
+
+See [the scope and rollback contract](phases/phase-moda4-home-experience.md). Slices 2–4, final production provenance, full regression and owner visual acceptance remain pending. No push, PR, merge, original-database change or public release.
+
 ## M4-02 final interaction and journal acceptance (D31, D64, D70, D81, D82)
 
 - A separate checkout and database copy preserve the v32 recovery reference. The fitting selector, Replay and Pause controls show a genuine disabled/loading state in server HTML and enable on the client commit. Native links and the parser/Flight guard remain available. The animation and approved geometry/photo data are unchanged.
@@ -132,7 +140,6 @@
   shift places the category CTA under the old price-button coordinate.
 - Local evidence is pending independent review. FR4 stays separate.
 
-
 ## FR3 D77 fitting gallery — local review
 
 - Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D80, D81.
@@ -144,7 +151,6 @@
   for Vee and owner review.
 
 ## 2026-11-02 — بازبینی S0، تفکیک snapshot CAD و نمایش مبلغ سبد
-
 
 ## FR0–FR2 D77 fitting presentation — local review in progress
 
@@ -249,19 +255,19 @@ R5 / PR73 — IN_PROGRESS، Draft: مسیر واقعی دسته/جست‌وجو/
 
 Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 
-| مرحله | وضعیت واقعی | مبنا/وابستگی و خروج |
-|---|---|---|
-| R0 | آنلاین BLOCKED_ENV؛ راهنمای Windows آماده، اجرای مالک NOT_VERIFIED | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش. |
-| R1 | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند. |
-| R2 | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI. |
-| R3a | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی. |
-| R4 | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق. |
-| R3b | چهار CI همان head موفق؛ پذیرش مالک باز | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، `b1f806a`؛ ۹٬۲۵۶ unit/PG، ۱۸۰ browser و۳ propagation واقعی، Local+S3 restore. راهنمای Windows همان نسخه در Issue62/comment6181257061؛ آنلاین BLOCKED_ENV. |
-| R5 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR73](https://github.com/mehdi2044/HodaSite/pull/73)، از PR72؛ فیلتر/variant/قیمت/گالری/سبد واقعی و checkbox پنل؛ [شواهد مرورگر و WCAG](design/moda4-redesign/evidence/r5/README.md). بدون migration یا تغییر موتور مالی؛ پذیرش مالک باز. |
-| R6 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR75](https://github.com/mehdi2044/HodaSite/pull/75)، از PR73؛ OTP/تم مستقیم/ترجیحات واقعی/پاک‌کردن و export/تصویر ورود پنل و آمار واقعی؛ [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md) و [شواهد](design/moda4-redesign/evidence/r6/README.md). پنج browser و۱۰ PG/media موفق، migration افزایشی و restore fixture؛ full-account deletion همچنان reviewed/manual. |
-| R7a | IN_PROGRESS، Draft؛ CI نهایی باز | [PR76](https://github.com/mehdi2044/HodaSite/pull/76)، از PR75؛ [راهنما و مشاهدهٔ محلی](design/moda4-redesign/R7A_GUIDE_FA.md)؛ کمد مستقل/پروی رایگان و قیمت/مرجع زنده. [شواهد](design/moda4-redesign/evidence/r7a/README.md). |
-| R7b | چهار CI همان head موفق؛ علت محیط مالک UNVERIFIED | [PR74](https://github.com/mehdi2044/HodaSite/pull/74)، شاخهٔ مستقل از PR72، `79bca4d`؛ health واقعی فقط‌خواندنی و مجوز سراسری؛ ۹٬۲۵۸ unit/PG،۱۸۲ browser،۳ propagation و Local+S3 restore. دسترسی queue/cron/logs مالک موجود نیست؛ no paid probe. |
-| R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
+| مرحله | وضعیت واقعی                                                        | مبنا/وابستگی و خروج                                                                                                                                                                                                                                                                                                                                                       |
+| ----- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0    | آنلاین BLOCKED_ENV؛ راهنمای Windows آماده، اجرای مالک NOT_VERIFIED | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش.                                                                                                                                  |
+| R1    | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل      | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند.                                                                                                                                              |
+| R2    | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI.                                                                                                                                                                                                         |
+| R3a   | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی.                                                                                                                                                              |
+| R4    | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز                         | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق.                                                                                                                                                                    |
+| R3b   | چهار CI همان head موفق؛ پذیرش مالک باز                             | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، `b1f806a`؛ ۹٬۲۵۶ unit/PG، ۱۸۰ browser و۳ propagation واقعی، Local+S3 restore. راهنمای Windows همان نسخه در Issue62/comment6181257061؛ آنلاین BLOCKED_ENV.                                                                                                                                                          |
+| R5    | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR73](https://github.com/mehdi2044/HodaSite/pull/73)، از PR72؛ فیلتر/variant/قیمت/گالری/سبد واقعی و checkbox پنل؛ [شواهد مرورگر و WCAG](design/moda4-redesign/evidence/r5/README.md). بدون migration یا تغییر موتور مالی؛ پذیرش مالک باز.                                                                                                                                |
+| R6    | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR75](https://github.com/mehdi2044/HodaSite/pull/75)، از PR73؛ OTP/تم مستقیم/ترجیحات واقعی/پاک‌کردن و export/تصویر ورود پنل و آمار واقعی؛ [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md) و [شواهد](design/moda4-redesign/evidence/r6/README.md). پنج browser و۱۰ PG/media موفق، migration افزایشی و restore fixture؛ full-account deletion همچنان reviewed/manual. |
+| R7a   | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR76](https://github.com/mehdi2044/HodaSite/pull/76)، از PR75؛ [راهنما و مشاهدهٔ محلی](design/moda4-redesign/R7A_GUIDE_FA.md)؛ کمد مستقل/پروی رایگان و قیمت/مرجع زنده. [شواهد](design/moda4-redesign/evidence/r7a/README.md).                                                                                                                                            |
+| R7b   | چهار CI همان head موفق؛ علت محیط مالک UNVERIFIED                   | [PR74](https://github.com/mehdi2044/HodaSite/pull/74)، شاخهٔ مستقل از PR72، `79bca4d`؛ health واقعی فقط‌خواندنی و مجوز سراسری؛ ۹٬۲۵۸ unit/PG،۱۸۲ browser،۳ propagation و Local+S3 restore. دسترسی queue/cron/logs مالک موجود نیست؛ no paid probe.                                                                                                                         |
+| R7c   | BLOCKED_DECISION                                                   | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست.                                                                                                                                                                                                                                                                                              |
 
 - ادامهٔ دستور مالک: cloud به Windows او دسترسی ندارد؛ VPN/TCP grant مقصدی تنظیم نشده است. [فرمان آمادهٔ Codex محلی با حفظ داده](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) و [ثبت نسخهٔ دقیق و چهار CI در Issue62](https://github.com/mehdi2044/HodaSite/issues/62#issuecomment-6177274472). ورود/اجرای Windows، گوشی واقعی، پذیرش بصری و review مستقل هنوز تأیید نشده‌اند. هیچ merge/main push/force-push/paid call انجام نشده است.
 - R3b checkpoint: کوکی زبان آزمون اصلاح شد؛ actual private unsaved preview → clone/disable/remove/restore → save/reload → publish/open-storefront و fa/tr/en بدون overflow موفق. ماتریس واقعی نوشتن با ۱٬۹۴۴ حالت global/بازار مجاز/بازار دیگر و forged actor + ۴۴ guard مجوز موفق. همهٔ اهداف آزمون، دادهٔ اولیه را پس از پایان برمی‌گردانند؛ هیچ DB مالک reset/seed نمی‌شود. نتیجهٔ کامل/CI head تازه پس از پایان جدا ثبت خواهد شد.
@@ -1584,12 +1590,12 @@ Independent branch from FR3.1. The mobile dock follows the selected product, the
 The stacked leading Hero uses a CSS viewport budget from first paint. See [scope and checks](phases/phase-hero-hydration-stability.md). To verify manually, load the homepage in a narrow viewport under network throttling and use the first price chip; the same target should open the in-Hero purchase sheet. FR3.2 remains untouched and owner acceptance is pending.
 
 Local verification completed: unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 10 new hydration/input cases, three repeated original Turkish Hero flows, and 25 Fidelity browser cases (146 criteria) passed. The initial PostgreSQL run had three failures; the unchanged corresponding base files passed 413 cases on a fresh database, and the fresh isolated full run passed all 9,321 cases. Initial logs and the environment/timing investigation remain in the local review bundle. Lint, typecheck, build and isolated restore/seed passed. No push, PR or merge; owner and independent review remain pending.
+
 ### Hero headroom — visual acceptance follow-up
 
 Hero photographs start below the real header row in normal CSS flow, avoiding logo/face overlap while retaining the first-paint viewport budget. Per-slide optional focal/zoom settings support three mobile widths, tablet and desktop; existing content retains its source framing. See [scope and acceptance](phases/phase-hero-headroom.md). Owner visual review remains pending; no FR3.2, paid API or publication.
 
 Local completion evidence: 25 new headroom/admin/short-viewport browser cases, 10 hydration/input cases, unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 25 Fidelity cases / 146 criteria, and the fresh isolated full 9,328-test / 181-file Unit/PostgreSQL run passed. Lint, typecheck and production build passed. The final browser queue used a fresh database and ran sequentially. Initial test setup/SSR-stream synchronization failures and an expired draft-audit transaction during an overlapping QA attempt remain in the local report; no assertion or transaction timeout was weakened. Physical phones and independent owner visual acceptance remain open. No push, PR or merge.
-
 
 ### Shared D77 floating storefront navigation — local review handoff
 
@@ -1604,7 +1610,6 @@ Local verification: 30 navigation/mobile browser cases, unchanged 33 storefront 
 Earlier visibility-only test locators, mobile fitting width inheritance, over-constrained desktop Hero sizing, full-width scroll padding, and a test-selector encoding error were diagnosed rather than hidden by looser criteria or longer timeouts. Initial logs and the actual before/after matrix stay in the private local review bundle. Owned runtime revision metadata was corrected without changing the image or Build ID. Protected previews and the 358-file WIP hash baseline were retained; the pre-existing Ops restart loop remains outside this change.
 
 Owner visual acceptance and independent review remain pending. Chromium viewport emulation is not physical-device/WebKit acceptance. No push, PR, merge, public release or FR3.2 work.
-
 
 ### Floating navigation — narrow mobile label follow-up
 

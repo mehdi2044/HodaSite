@@ -40,6 +40,7 @@ export function ResponsiveImage({
   locale,
   sizes,
   priority,
+  loading,
   role,
   className,
   imgClassName = "h-full w-full object-cover",
@@ -49,6 +50,7 @@ export function ResponsiveImage({
   locale: "fa" | "tr" | "en";
   sizes: string;
   priority?: boolean;
+  loading?: "eager" | "lazy";
   role?: MediaRole;
   className?: string;
   /** Defaults to filling the wrapper (grid tiles); pass e.g.
@@ -109,7 +111,7 @@ export function ResponsiveImage({
         alt={alt}
         width={media.width ?? undefined}
         height={media.height ?? undefined}
-        loading={priority ? "eager" : "lazy"}
+        loading={priority ? "eager" : (loading ?? "lazy")}
         decoding="async"
         fetchPriority={priority ? "high" : undefined}
         className={imgClassName}

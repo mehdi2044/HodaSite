@@ -2772,6 +2772,9 @@
     "resumeShort": "Resume"
   },
   "modaAdmin": {
+    "ribbonSpeedMode": "Constant ribbon speed instead of cycle duration",
+    "ribbonSpeedFirst": "First ribbon speed (pixels per second)",
+    "ribbonSpeedSecond": "Second ribbon speed (pixels per second)",
     "heroFramePreviewWidth": "Preview width (pixels)",
     "heroFramingHelp": "Adjust each slide’s framing for each screen size. Images are never mirrored; keep the head and face below the header and copy on empty image space. Check the actual preview.",
     "heroFrame_compact": "Small mobile (up to 375px)",

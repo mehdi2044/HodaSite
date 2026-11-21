@@ -28,9 +28,15 @@ export function ModaCarousel({
 }) {
   const t = useTranslations("modaHomepage");
   const root = useRef<HTMLElement>(null),
-    drag = useRef<{ x: number; id: number } | null>(null);
+    drag = useRef<{
+      x: number;
+      y: number;
+      id: number;
+      axis: "x" | "y" | null;
+    } | null>(null);
   const suppressFaceClick = useRef(false);
   const [index, setIndex] = useState(0),
+    [interactive, setInteractive] = useState(false),
     [paused, setPaused] = useState(false),
     [engaged, setEngaged] = useState(false),
     [resumeEngaged, setResumeEngaged] = useState(false),
@@ -39,6 +45,24 @@ export function ModaCarousel({
     [hidden, setHidden] = useState(true),
     [dragAngle, setDragAngle] = useState(0);
   const isPrism = kind === "prism";
+  useEffect(() => {
+    if (!isPrism || !root.current) return;
+    const section = root.current;
+    // Warm this bounded four-face presentation as it approaches the viewport.
+    // Motion still uses the separate, actual-visibility observer below.
+    const preload = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        section.querySelectorAll("img").forEach((image) => {
+          image.loading = "eager";
+        });
+        preload.disconnect();
+      },
+      { rootMargin: "320px" },
+    );
+    preload.observe(section);
+    return () => preload.disconnect();
+  }, [isPrism, art]);
   const count = Math.max(1, items.length);
   // The prism keeps turning through the seam. Only the selected face wraps.
   const current = isPrism
@@ -50,6 +74,7 @@ export function ModaCarousel({
     !paused && (!engaged || resumeEngaged) && !reduced && !hidden && visible;
   const clock = useRef({ index: current, seconds, remaining: seconds * 1000 });
   useEffect(() => {
+    setInteractive(true);
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const motion = () => setReduced(media.matches),
       visibility = () => setHidden(document.hidden);
@@ -104,6 +129,7 @@ export function ModaCarousel({
             type="button"
             className="button button-outline"
             aria-label={t("previous")}
+            disabled={!interactive}
             onClick={() => change(-1)}
           >
             ←
@@ -118,6 +144,7 @@ export function ModaCarousel({
                 type="button"
                 aria-label={label}
                 aria-pressed={n === current}
+                disabled={!interactive}
                 onClick={() => select(n)}
               >
                 <span aria-hidden="true">
@@ -137,6 +164,7 @@ export function ModaCarousel({
             type="button"
             className="button button-outline"
             aria-label={t("next")}
+            disabled={!interactive}
             onClick={() => change(1)}
           >
             →
@@ -145,17 +173,17 @@ export function ModaCarousel({
             type="button"
             className="button button-outline"
             aria-pressed={paused || reduced}
+            aria-label={t(paused || reduced ? "resume" : "pause")}
+            title={t(paused || reduced ? "resume" : "pause")}
             onClick={() => {
               setResumeEngaged(paused);
               setPaused(!paused);
             }}
-            disabled={reduced}
+            disabled={!interactive || reduced}
           >
             {kind === "hero"
               ? t(paused || reduced ? "resumeShort" : "pauseShort")
-              : paused || reduced
-                ? t("resume")
-                : t("pause")}
+              : t(paused || reduced ? "resumeShort" : "pauseShort")}
           </button>
         </div>
       )}
@@ -209,6 +237,16 @@ export function ModaCarousel({
       )}
       <div
         className="moda-carousel-stage"
+        tabIndex={art ? 0 : undefined}
+        aria-label={art ? title : undefined}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget || !art) return;
+          if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            event.preventDefault();
+            const rtl = document.documentElement.dir === "rtl";
+            change((event.key === "ArrowRight") !== rtl ? 1 : -1);
+          }
+        }}
         onPointerDown={(event) => {
           if (items.length < 2 || !event.isPrimary || event.button !== 0)
             return;
@@ -218,14 +256,28 @@ export function ModaCarousel({
           );
           // The pictured face is a link, but it must also accept a drag.
           if (control && !(isPrism && control.closest(".moda-3d-face"))) return;
-          drag.current = { x: event.clientX, id: event.pointerId };
-          if (!control) event.currentTarget.setPointerCapture(event.pointerId);
+          setEngaged(true);
+          setResumeEngaged(false);
+          drag.current = {
+            x: event.clientX,
+            y: event.clientY,
+            id: event.pointerId,
+            axis: null,
+          };
         }}
         onPointerMove={(event) => {
           if (drag.current?.id !== event.pointerId) return;
           const distance = event.clientX - drag.current.x;
+          const vertical = event.clientY - drag.current.y;
           if (
-            isPrism &&
+            !drag.current.axis &&
+            Math.max(Math.abs(distance), Math.abs(vertical)) > 8
+          )
+            drag.current.axis =
+              Math.abs(distance) > Math.abs(vertical) * 1.2 ? "x" : "y";
+          if (drag.current.axis !== "x") return;
+          if (
+            Boolean(art) &&
             Math.abs(distance) > 45 &&
             !event.currentTarget.hasPointerCapture(event.pointerId)
           ) {
@@ -238,12 +290,22 @@ export function ModaCarousel({
           const begin = drag.current;
           drag.current = null;
           setDragAngle(0);
+          setEngaged(
+            Boolean(root.current?.contains(document.activeElement)) ||
+              Boolean(root.current?.matches(":hover")),
+          );
           if (
             begin?.id === event.pointerId &&
+            begin.axis === "x" &&
             Math.abs(event.clientX - begin.x) > 45
           ) {
-            suppressFaceClick.current = isPrism;
-            change(event.clientX < begin.x ? 1 : -1);
+            suppressFaceClick.current = Boolean(art);
+            change(
+              event.clientX < begin.x !==
+                (document.documentElement.dir === "rtl")
+                ? 1
+                : -1,
+            );
           }
         }}
         onPointerCancel={() => {
@@ -258,7 +320,7 @@ export function ModaCarousel({
           }
         }}
         onDragStart={(event) => {
-          if (isPrism) event.preventDefault();
+          if (art) event.preventDefault();
         }}
       >
         {art && art.length > 1 ? (

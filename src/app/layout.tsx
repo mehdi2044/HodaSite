@@ -10,6 +10,7 @@ import "@/styles/moda-fidelity-account.css";
 import "@/styles/storefront-navigation.css";
 import "@/styles/editorial.css";
 import "@/styles/living-rail.css";
+import "@/styles/moda-home-experience.css";
 import { AdminHistoryTracking } from "@/components/admin/unsaved-history";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
@@ -102,7 +103,9 @@ export default async function RootLayout({
     >
       <head>
         {/* Static source. Install the click handler before any storefront HTML is parsed. */}
-        <script dangerouslySetInnerHTML={{ __html: storefrontEarlyNavigation }} />
+        <script
+          dangerouslySetInnerHTML={{ __html: storefrontEarlyNavigation }}
+        />
         {/* Server-generated CSS vars from admin-controlled ThemeSettings, not user input. */}
         <style dangerouslySetInnerHTML={{ __html: css }} />
         {customCss && (

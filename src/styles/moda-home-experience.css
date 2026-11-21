@@ -1,0 +1,239 @@
+/* Owner-authorized homepage slices; approved fitting geometry is untouched. */
+.moda-crossing-bands {
+  height: 148px;
+  display: grid;
+  grid-template-rows: 104px 44px;
+  padding: 0;
+  isolation: isolate;
+}
+.moda-ribbons {
+  position: relative;
+  overflow: hidden;
+}
+.moda-crossing-bands .moda-band {
+  inset-inline: -4%;
+  padding-block: 9px;
+  transform: translateY(-75%) rotate(-1.8deg);
+}
+.moda-crossing-bands .moda-band + .moda-band {
+  transform: translateY(10%) rotate(1.4deg);
+}
+.moda-crossing-bands .moda-band-track {
+  display: flex;
+  gap: 0;
+  width: max-content;
+  direction: ltr;
+  animation: moda-ribbon-loop
+    var(--ribbon-duration, calc(var(--band-duration) / 1.3)) linear infinite;
+}
+.moda-crossing-bands .moda-band + .moda-band .moda-band-track {
+  animation-direction: reverse;
+}
+.moda-band-unit {
+  display: flex;
+  flex-shrink: 0;
+  gap: 40px;
+  align-items: center;
+  justify-content: space-around;
+  min-width: 100vw;
+  padding-inline-end: 40px;
+}
+.moda-crossing-bands .moda-band span {
+  font-size: clamp(20px, 2vw, 27px);
+  line-height: 1.2;
+}
+.moda-crossing-bands .moda-band + .moda-band span {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+}
+.moda-crossing-bands > button {
+  z-index: 2;
+  position: relative;
+  inset: auto;
+  justify-self: end;
+  margin-inline-end: 16px;
+  width: max-content;
+  min-width: 44px;
+  padding: 4px 12px;
+  background: var(--background);
+}
+html[dir="rtl"] .moda-band-unit {
+  direction: rtl;
+}
+html[dir="rtl"] .moda-crossing-bands .moda-band-track {
+  animation-direction: reverse;
+}
+html[dir="rtl"] .moda-crossing-bands .moda-band + .moda-band .moda-band-track {
+  animation-direction: normal;
+}
+@keyframes moda-ribbon-loop {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.moda-worlds-layout {
+  padding-block: 56px 40px;
+}
+.moda-carousel-prism {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-areas: "visual copy";
+  direction: ltr;
+  gap: clamp(24px, 4vw, 64px);
+}
+.moda-carousel-prism > .moda-carousel-stage {
+  grid-area: visual;
+  height: 550px;
+  touch-action: pan-y;
+}
+.moda-prism-copy {
+  grid-area: copy;
+  direction: ltr;
+  gap: 18px;
+  min-width: 0;
+}
+html[dir="rtl"] .moda-prism-copy {
+  direction: rtl;
+}
+html[dir="rtl"] .moda-carousel-prism > .moda-carousel-stage {
+  direction: rtl;
+}
+.moda-prism-copy .moda-worlds-copy h2 {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  opacity: 0.65;
+}
+.moda-prism-copy .moda-worlds-copy > p {
+  display: none;
+}
+.moda-prism-links {
+  order: 1;
+}
+.moda-world-face h3 {
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 400;
+  margin: 0;
+}
+.moda-world-face > p {
+  margin-block: 16px 24px;
+  line-height: 1.8;
+}
+.moda-world-products {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-block-end: 28px;
+}
+.moda-world-products a {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+.moda-world-products picture {
+  display: block;
+  height: 112px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px;
+  margin-block-end: 8px;
+}
+.moda-world-products img {
+  object-fit: contain !important;
+}
+.moda-prism-copy .moda-carousel-controls {
+  order: 2;
+  gap: 4px;
+}
+.moda-prism-copy .moda-carousel-tabs {
+  flex-basis: auto;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.moda-prism-copy .moda-carousel-tabs > button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.moda-prism-copy .moda-carousel-tabs > button[aria-pressed="true"] {
+  background: transparent;
+  color: var(--text);
+  border-bottom-color: var(--primary);
+}
+.moda-prism-copy .moda-carousel-controls > .button {
+  padding: 4px 8px;
+  min-width: 44px;
+  font-size: 11px;
+}
+.moda-prism-copy .moda-carousel-controls > .button[aria-label] {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.moda-carousel-prism:hover .moda-carousel-controls > .button[aria-label],
+.moda-carousel-prism:focus-within
+  .moda-carousel-controls
+  > .button[aria-label] {
+  opacity: 1;
+}
+.moda-carousel-stage:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+@media (max-width: 900px) {
+  .moda-crossing-bands {
+    height: 124px;
+    grid-template-rows: 80px 44px;
+  }
+  .moda-worlds-layout {
+    padding: 32px 20px;
+  }
+  .moda-carousel-prism {
+    grid-template-columns: 1fr;
+    grid-template-areas: "visual" "copy";
+    gap: 8px;
+  }
+  .moda-carousel-prism > .moda-carousel-stage {
+    height: 430px;
+  }
+  .moda-carousel-prism {
+    --prism-depth: 130px;
+  }
+  .moda-carousel-prism .moda-3d-orbit {
+    width: 260px;
+    height: 346.6667px;
+  }
+  .moda-carousel-prism .moda-prism-cap {
+    top: 43.3333px;
+    width: 260px;
+    height: 260px;
+    transform: rotateX(90deg) translateZ(173.3333px);
+  }
+  .moda-prism-copy {
+    gap: 12px;
+  }
+  .moda-world-face > p {
+    margin-block: 10px 18px;
+  }
+  .moda-world-products picture {
+    height: 100px;
+  }
+  .moda-prism-copy .moda-carousel-controls > .button[aria-label] {
+    opacity: 1;
+  }
+  .moda-prism-copy .moda-carousel-controls > .button:not([aria-pressed]) {
+    display: none;
+  }
+}
+html[dir="rtl"]
+  .moda-carousel-prism
+  .moda-carousel-controls
+  > .button:not([aria-pressed]) {
+  transform: scaleX(-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .moda-crossing-bands .moda-band-track {
+    animation: none !important;
+  }
+}

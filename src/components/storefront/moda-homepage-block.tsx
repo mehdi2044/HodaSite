@@ -30,6 +30,8 @@ import { ModaCampaign } from "./moda-campaign";
 import { ModaVideo } from "./moda-video";
 import { SceneArt } from "./scene-art";
 import { ServicePolicySummary } from "./service-policy";
+import { catalogText } from "@/modules/catalog";
+import { seoPath } from "@/lib/seo-urls";
 type Market = Parameters<typeof getVariantDisplayPrices>[1];
 type Locale = "fa" | "tr" | "en";
 export async function ModaHomepageBlock({
@@ -110,6 +112,7 @@ export async function ModaHomepageBlock({
         first={block.first.map(text)}
         second={block.second.map(text)}
         seconds={block.durationSeconds}
+        speed={block.speed}
       />
     );
   if (block.type === "HeroSlider") {
@@ -234,13 +237,52 @@ export async function ModaHomepageBlock({
   if (block.type === "WorldsPrism") {
     const items = await Promise.all(
       block.faces.map(async (face) => {
-        const href = await resolveContentTarget(
-          { kind: "category", id: face.categoryId },
-          market.id,
-          locale,
-        );
+        const [href, products] = await Promise.all([
+          resolveContentTarget(
+            { kind: "category", id: face.categoryId },
+            market.id,
+            locale,
+          ),
+          moda4Products(market.id, locale, {
+            mode: "category",
+            referenceId: face.categoryId,
+            productIds: [],
+            limit: 3,
+          }),
+        ]);
         return (
-          <article className="moda-world-face">
+          <article className="moda-world-face" key={face.id}>
+            <h3>{text(face.title)}</h3>
+            <p>
+              {face.description ? text(face.description) : t("worldsIntro")}
+            </p>
+            <div className="moda-world-products">
+              {products.map((product) => {
+                const image =
+                  product.media[0]?.media ??
+                  product.variants[0]?.media[0]?.media;
+                return image ? (
+                  <Link
+                    key={product.id}
+                    href={seoPath(
+                      locale,
+                      market.code,
+                      "p",
+                      catalogText(product.slugI18n, locale),
+                    )}
+                  >
+                    <ResponsiveImage
+                      media={{ ...image, blurDataUrl: null }}
+                      loading="eager"
+                      locale={locale}
+                      sizes="110px"
+                      imgClassName="h-full w-full object-contain"
+                    />
+                    <span>{catalogText(product.titleI18n, locale)}</span>
+                  </Link>
+                ) : null;
+              })}
+            </div>
             {href && (
               <Link className="button" href={href}>
                 {t("worldEnter", { title: text(face.title) })}
@@ -258,7 +300,11 @@ export async function ModaHomepageBlock({
           locale,
         );
         return (
-          <Link className="moda-world-art" href={href ?? `/${locale}/search`}>
+          <Link
+            key={face.id}
+            className="moda-world-art"
+            href={href ?? `/${locale}/search`}
+          >
             {await photo(face.desktop, face.mobile, text(face.title))}
             <span className="moda-world-number">
               {String(index + 1).padStart(2, "0")}
