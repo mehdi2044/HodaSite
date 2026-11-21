@@ -18,7 +18,7 @@ async function main() {
   if (
     database !== "moda4_home_experience" ||
     process.argv[2] !== database ||
-    !["slice1", "slice2"].includes(process.argv[3])
+    !["slice1", "slice2", "slice3"].includes(process.argv[3])
   )
     throw new Error("Exact new homepage database and explicit slice required");
   const owner = await db.user.findFirstOrThrow({
@@ -184,6 +184,17 @@ async function main() {
           en: "Choose a look. Find your size, explore each piece and make it yours.",
         };
       }
+  }
+  if (process.argv[3] === "slice3") {
+    for (const block of blocks)
+      if (block.type === "Lookbook")
+        block.curatedLookIds = [
+          "evening-line",
+          "slow-morning",
+          "off-duty",
+          "ready-to-play",
+          "after-school",
+        ].map((slug) => `fixture-editorial-${slug}`);
   }
   const saved = await saveHomepageDraft(owner.id, {
     marketId: null,

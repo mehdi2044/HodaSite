@@ -1,3 +1,4 @@
+import { HomeCuratedLookbook } from "./home-curated-lookbook";
 import { FittingAdMotion } from "./fitting-ad-motion";
 import { resolveFittingAdLooks } from "@/modules/content/scenes/fitting-ad";
 import { ModaHeroSlide } from "./moda-hero-slide";
@@ -41,6 +42,7 @@ export async function ModaHomepageBlock({
   first = false,
   preview = false,
   anchor,
+  excludedLookIds = [],
 }: {
   block: Moda4Block;
   market: Market;
@@ -48,6 +50,7 @@ export async function ModaHomepageBlock({
   first?: boolean;
   preview?: boolean;
   anchor?: string;
+  excludedLookIds?: string[];
 }) {
   const text = (value: Parameters<typeof localizedValue>[0]) =>
     localizedValue(value, locale);
@@ -467,6 +470,18 @@ export async function ModaHomepageBlock({
       </>
     );
   }
+  if (block.type === "Lookbook" && block.curatedLookIds !== undefined)
+    return (
+      <HomeCuratedLookbook
+        ids={block.curatedLookIds}
+        excludedIds={excludedLookIds}
+        locale={locale}
+        market={market}
+        title={text(block.title)}
+        seconds={block.autoplaySeconds}
+        anchor={anchor}
+      />
+    );
   if (block.type === "Lookbook") {
     const views = await Promise.all(
       block.scenes.map((scene) =>

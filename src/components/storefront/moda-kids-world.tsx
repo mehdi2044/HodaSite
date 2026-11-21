@@ -14,7 +14,7 @@ import { ModaKidsRing } from "./moda-kids-ring";
 import { isDemoFashionMedia, ResponsiveImage } from "./responsive-image";
 
 const cloud =
-  "M30 70h140a28 28 0 0 0-8-55 40 40 0 0 0-74-6 30 30 0 0 0-52 25A24 24 0 0 0 30 70z";
+  "M18 65C2 61 4 43 18 39C16 23 31 13 45 19C51 2 80 1 91 19C105 11 122 18 126 31C148 26 168 36 165 50C187 48 199 64 185 71C163 80 128 72 101 75C73 78 36 77 18 65Z";
 const star = "M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6Z";
 const podiumTones = [
   "kidsLilac",
@@ -153,21 +153,52 @@ export async function ModaKidsWorld({
       style={{ "--kids-world-tone": `var(--${block.tone})` } as CSSProperties}
     >
       <div className="moda-kids-decor" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-        <svg className="moda-kids-cloud" viewBox="0 0 200 80">
-          <path fill="white" d={cloud} />
+        <svg className="moda-kids-sun" viewBox="0 0 100 100">
+          <circle
+            cx="50"
+            cy="50"
+            r="34"
+            fill="var(--kidsButter)"
+            opacity=".5"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="25"
+            fill="var(--kidsButter)"
+            opacity=".7"
+          />
+        </svg>
+        <svg className="moda-kids-moon" viewBox="0 0 100 100">
+          <path
+            d="M70 13C31 6 8 53 35 80C57 102 91 83 93 60C70 76 44 60 45 39C45 25 55 17 70 13Z"
+            fill="var(--kidsLilac)"
+            opacity=".8"
+          />
         </svg>
         <svg className="moda-kids-cloud" viewBox="0 0 200 80">
-          <path fill="white" d={cloud} />
+          <path
+            fill="var(--kidsSky)"
+            opacity=".3"
+            d={cloud}
+            transform="translate(3 6) scale(.96)"
+          />
+          <path fill="var(--surface)" opacity=".85" d={cloud} />
+        </svg>
+        <svg className="moda-kids-cloud" viewBox="0 0 200 80">
+          <path
+            fill="var(--kidsSky)"
+            opacity=".3"
+            d={cloud}
+            transform="translate(3 6) scale(.96)"
+          />
+          <path fill="var(--surface)" opacity=".85" d={cloud} />
         </svg>
         <svg className="moda-kids-star" viewBox="0 0 24 24">
-          <path fill="#F6A9BE" d={star} />
+          <path fill="var(--kidsPink)" d={star} />
         </svg>
         <svg className="moda-kids-star" viewBox="0 0 24 24">
-          <path fill="#9FD9BE" d={star} />
+          <path fill="var(--kidsMint)" d={star} />
         </svg>
       </div>
       <div className="moda-kids-wrap">

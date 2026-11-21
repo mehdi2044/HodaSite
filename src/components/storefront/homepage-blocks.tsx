@@ -86,6 +86,9 @@ export async function HomepageBlocks({
     ),
   ]);
   const mediaById = new Map(media.map((item) => [item.id, item]));
+  const shopLookIds = blocks.flatMap((block) =>
+    block.type === "ShopLook" ? (block.curatedLookIds ?? []) : [],
+  );
   const firstLookbook = blocks.findIndex((block) => block.type === "Lookbook");
   const listingProducts = productRows.flatMap((rows) => rows?.items ?? []);
   const [prices, variantPrices] = await Promise.all([
@@ -109,6 +112,7 @@ export async function HomepageBlocks({
                 first={index === 0}
                 preview={preview}
                 anchor={index === firstLookbook ? "lookbook" : undefined}
+                excludedLookIds={shopLookIds}
               />
             );
           if (block.type === "ShopLook" && block.curatedLookIds !== undefined)

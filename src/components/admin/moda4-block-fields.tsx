@@ -1,4 +1,5 @@
 "use client";
+import { CuratedLookOrder } from "./curated-look-order";
 import { useTranslations } from "next-intl";
 import { SceneAnchorCanvas } from "./scene-editor";
 import { MediaPicker } from "./media-picker";
@@ -149,7 +150,8 @@ export function freshModaBlock(type: Moda4Block["type"]): Moda4Block {
         ...base,
         type,
         title,
-        scenes: [emptyModaScene()],
+        scenes: [],
+        curatedLookIds: [],
         autoplaySeconds: 4.8,
       };
     case "KidsWorld":
@@ -1509,6 +1511,39 @@ export function Moda4BlockFields({
         ))}
       </div>
     );
+  if (block.type === "Lookbook" && block.curatedLookIds !== undefined)
+    return (
+      <div className="grid gap-3">
+        {title}
+        <label>
+          <input
+            type="checkbox"
+            checked
+            onChange={() =>
+              change({
+                ...block,
+                curatedLookIds: undefined,
+                scenes: block.scenes.length ? block.scenes : [emptyModaScene()],
+              })
+            }
+          />
+          {t("useCuratedLooks")}
+        </label>
+        {number(
+          "autoplaySeconds",
+          block.autoplaySeconds,
+          (autoplaySeconds) => change({ ...block, autoplaySeconds }),
+          3,
+          30,
+          0.1,
+        )}
+        <CuratedLookOrder
+          value={block.curatedLookIds}
+          choices={options.curatedLooks ?? []}
+          change={(curatedLookIds) => change({ ...block, curatedLookIds })}
+        />
+      </div>
+    );
   if (block.type === "Lookbook")
     return (
       <div className="grid gap-3">
@@ -1521,6 +1556,14 @@ export function Moda4BlockFields({
           30,
           0.1,
         )}
+        <label>
+          <input
+            type="checkbox"
+            checked={false}
+            onChange={() => change({ ...block, curatedLookIds: [] })}
+          />
+          {t("useCuratedLooks")}
+        </label>
         {block.scenes.map((scene, index) => (
           <div key={scene.id}>
             {sceneField(scene, (scene) =>

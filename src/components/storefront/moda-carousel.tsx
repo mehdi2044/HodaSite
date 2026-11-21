@@ -45,10 +45,11 @@ export function ModaCarousel({
     [hidden, setHidden] = useState(true),
     [dragAngle, setDragAngle] = useState(0);
   const isPrism = kind === "prism";
+  const isOrbit = isPrism || kind === "lookbook";
   useEffect(() => {
-    if (!isPrism || !root.current) return;
+    if (!isOrbit || !root.current) return;
     const section = root.current;
-    // Warm this bounded four-face presentation as it approaches the viewport.
+    // Warm the bounded photographic presentation as it approaches the viewport.
     // Motion still uses the separate, actual-visibility observer below.
     const preload = new IntersectionObserver(
       (entries) => {
@@ -62,10 +63,10 @@ export function ModaCarousel({
     );
     preload.observe(section);
     return () => preload.disconnect();
-  }, [isPrism, art]);
+  }, [isOrbit, art]);
   const count = Math.max(1, items.length);
   // The prism keeps turning through the seam. Only the selected face wraps.
-  const current = isPrism
+  const current = isOrbit
     ? wrapIndex(index, count)
     : Math.min(index, count - 1);
   // Explicit resume also starts while its control has focus. A fresh
@@ -99,7 +100,7 @@ export function ModaCarousel({
     const started = performance.now();
     const timer = setTimeout(() => {
       clock.current.remaining = seconds * 1000;
-      setIndex((old) => (isPrism ? old + 1 : (old + 1) % count));
+      setIndex((old) => (isOrbit ? old + 1 : (old + 1) % count));
     }, clock.current.remaining);
     return () => {
       clearTimeout(timer);
@@ -108,14 +109,14 @@ export function ModaCarousel({
         clock.current.remaining - (performance.now() - started),
       );
     };
-  }, [running, items.length, seconds, current, isPrism, count]);
+  }, [running, items.length, seconds, current, isOrbit, count]);
   const change = (delta: number) =>
     setIndex((old) =>
-      isPrism ? old + delta : wrapIndex(current + delta, count),
+      isOrbit ? old + delta : wrapIndex(current + delta, count),
     );
   const select = (face: number) => {
     setIndex((old) => {
-      if (!isPrism) return face;
+      if (!isOrbit) return face;
       const forward = wrapIndex(face - old, count);
       return old + (forward > count / 2 ? forward - count : forward);
     });
@@ -240,7 +241,8 @@ export function ModaCarousel({
         tabIndex={art ? 0 : undefined}
         aria-label={art ? title : undefined}
         onKeyDown={(event) => {
-          if (event.target !== event.currentTarget || !art) return;
+          if (event.target !== event.currentTarget || !art || items.length < 2)
+            return;
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
             event.preventDefault();
             const rtl = document.documentElement.dir === "rtl";
@@ -255,7 +257,7 @@ export function ModaCarousel({
             "a,button,input,select,textarea,summary",
           );
           // The pictured face is a link, but it must also accept a drag.
-          if (control && !(isPrism && control.closest(".moda-3d-face"))) return;
+          if (control && !(art && control.closest(".moda-3d-face"))) return;
           setEngaged(true);
           setResumeEngaged(false);
           drag.current = {
@@ -323,28 +325,60 @@ export function ModaCarousel({
           if (art) event.preventDefault();
         }}
       >
-        {art && art.length > 1 ? (
+        {art && art.length > 0 ? (
           <div
             data-moda4={kind === "prism" ? "worlds-prism" : "lookbook-ring"}
             className="moda-3d-orbit"
             style={{
-              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${isPrism ? -9 : 0}deg) rotateY(${-(isPrism ? index : current) * (360 / art.length) + dragAngle}deg)`,
+              transform: `${kind === "lookbook" ? "translateZ(calc(-1 * var(--look-radius))) " : ""}rotateX(${isPrism ? -9 : 0}deg) rotateY(${-index * (360 / art.length) + dragAngle}deg)`,
             }}
           >
-            {art.map((image, n) => (
-              <div
-                key={n}
-                data-moda4={kind === "prism" ? "worlds-face" : "lookbook-card"}
-                inert={n !== current}
-                aria-hidden={n !== current}
-                className={`moda-3d-face ${kind === "lookbook" ? "moda-arch-face" : ""}`}
-                style={{
-                  transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "var(--prism-depth)" : "var(--look-radius)"})`,
-                }}
-              >
-                {image}
-              </div>
-            ))}
+            {art.map((image, n) => {
+              const relative =
+                ((wrapIndex(n - current + count / 2, count) - count / 2) *
+                  360) /
+                count;
+              const hiddenFace = isPrism
+                ? n !== current
+                : Math.abs(relative) > 90;
+              return (
+                <div
+                  key={n}
+                  data-moda4={
+                    kind === "prism" ? "worlds-face" : "lookbook-card"
+                  }
+                  inert={hiddenFace}
+                  aria-hidden={hiddenFace}
+                  data-active={n === current}
+                  onFocusCapture={
+                    kind === "lookbook" ? () => select(n) : undefined
+                  }
+                  onClickCapture={
+                    kind === "lookbook" && n !== current
+                      ? (event) => {
+                          event.preventDefault();
+                          select(n);
+                        }
+                      : undefined
+                  }
+                  className={`moda-3d-face ${kind === "lookbook" ? "moda-arch-face" : ""}`}
+                  style={{
+                    transform: `rotateY(${(n * 360) / art.length}deg) translateZ(${kind === "prism" ? "var(--prism-depth)" : "var(--look-radius)"})`,
+                  }}
+                >
+                  {kind === "lookbook" ? (
+                    <div
+                      className="moda-lookbook-plane"
+                      style={{ transform: `rotateY(${-relative * 0.55}deg)` }}
+                    >
+                      {image}
+                    </div>
+                  ) : (
+                    image
+                  )}
+                </div>
+              );
+            })}
             {kind === "prism" && (
               <div className="moda-prism-cap" aria-hidden="true">
                 <ModaWordmark />

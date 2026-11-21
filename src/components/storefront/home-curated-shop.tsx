@@ -1,8 +1,10 @@
+import { homepagePublishedLooks } from "@/modules/editorial/homepage-queries";
+import { selectHomepageLooks } from "@/modules/editorial/home-selection";
 import Link from "next/link";
 import { formatStorefrontAmount } from "@/modules/catalog/format";
 import { getTranslations } from "next-intl/server";
 import { getMarketByCode } from "@/modules/settings";
-import { publishedEntries, editorialSlug } from "@/modules/editorial/queries";
+import { editorialSlug } from "@/modules/editorial/queries";
 import { resolveLookCommerce } from "@/modules/editorial/commerce";
 import { supportsLookFitting } from "@/modules/editorial/fitting";
 import { addCuratedLookAction } from "@/app/[locale]/looks/actions";
@@ -34,16 +36,12 @@ export async function HomeCuratedShop({
   if (!market) return null;
   const t = await getTranslations({ locale, namespace: "editorial" });
   const shopping = await getTranslations({ locale, namespace: "shopping" });
-  const published = (await publishedEntries("LOOK", market.id)).flatMap(
-    (entry) =>
-      entry.body.kind === "LOOK" && entry.visual
-        ? [{ ...entry, body: entry.body, visual: entry.visual }]
-        : [],
+  const published = await homepagePublishedLooks(market.id);
+  const looks = selectHomepageLooks(
+    block.curatedLookIds ?? [],
+    published,
+    excludedIds,
   );
-  const looks = (block.curatedLookIds ?? []).flatMap((id) => {
-    const entry = published.find((look) => look.id === id);
-    return entry && !excludedIds.includes(id) ? [entry] : [];
-  });
   const [commerce, fitting] = await Promise.all([
     resolveLookCommerce(
       looks.map((look) => look.body),

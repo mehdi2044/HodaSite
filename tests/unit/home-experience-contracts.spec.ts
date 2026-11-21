@@ -88,3 +88,28 @@ describe("curated homepage references", () => {
     ).toBe(false);
   });
 });
+
+describe("lookbook empty and identity contracts", () => {
+  const book = {
+    id: "book",
+    type: "Lookbook",
+    version: 1,
+    title: text,
+    scenes: [],
+  };
+  it("allows an explicit empty curated allocation without placeholder scene media", () => {
+    expect(
+      homepageBlocksSchema.safeParse([{ ...book, curatedLookIds: [] }]).success,
+    ).toBe(true);
+  });
+  it("keeps the legacy requirement for at least one scene", () => {
+    expect(homepageBlocksSchema.safeParse([book]).success).toBe(false);
+  });
+  it("rejects repeated LookIDs instead of creating filler cards", () => {
+    expect(
+      homepageBlocksSchema.safeParse([
+        { ...book, curatedLookIds: ["city", "city"] },
+      ]).success,
+    ).toBe(false);
+  });
+});

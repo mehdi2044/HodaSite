@@ -161,10 +161,18 @@ export const moda4BlockSchemas = [
       ...base,
       type: z.literal("Lookbook"),
       title: localizedTextSchema,
-      scenes: z.array(shoppableSceneSchema).min(1).max(12),
+      scenes: z.array(shoppableSceneSchema).max(12),
+      curatedLookIds: z
+        .array(id)
+        .max(12)
+        .refine((ids) => new Set(ids).size === ids.length)
+        .optional(),
       autoplaySeconds: z.number().min(3).max(30).default(4.8),
     })
-    .strict(),
+    .strict()
+    .refine(
+      (block) => block.curatedLookIds !== undefined || block.scenes.length > 0,
+    ),
   z
     .object({
       ...base,

@@ -467,3 +467,190 @@ html[dir="rtl"]
     grid-column: 1;
   }
 }
+/* Slice 3: keep the orbital ring; orient each photographic plane towards its viewer. */
+.home-curated-lookbook {
+  margin-block-start: 48px;
+  padding: 36px 24px;
+}
+.home-curated-lookbook .moda-section-heading {
+  font-size: clamp(30px, 3vw, 44px);
+  margin-block: 0 24px;
+}
+.home-curated-lookbook .moda-carousel-lookbook {
+  --look-radius: 360px;
+}
+.home-curated-lookbook .moda-carousel-stage {
+  height: 460px;
+}
+.home-curated-lookbook .moda-3d-face {
+  overflow: visible;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  backface-visibility: visible;
+}
+.home-curated-lookbook .moda-3d-face[aria-hidden="true"] {
+  visibility: hidden;
+}
+.moda-lookbook-plane {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+  border-radius: 48% 48% 8px 8px;
+  transition:
+    transform 0.8s ease,
+    filter 0.8s ease;
+  box-shadow: 0 20px 30px rgb(0 0 0 / 12%);
+}
+.home-curated-lookbook
+  .moda-3d-face:not([data-active="true"])
+  .moda-lookbook-plane {
+  filter: brightness(0.88) saturate(0.85);
+}
+.home-lookbook-art {
+  display: block;
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+}
+.home-lookbook-art .editorial-image,
+.home-lookbook-art picture,
+.home-lookbook-art img {
+  inline-size: 100%;
+  block-size: 100%;
+}
+.home-lookbook-caption {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 50px 18px 18px;
+  background: linear-gradient(transparent, rgb(0 0 0 / 75%));
+  color: white;
+  display: grid;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 13px;
+}
+.home-lookbook-caption strong {
+  font-size: 18px;
+}
+.home-lookbook-art:is(:hover, :focus-visible) .home-lookbook-caption {
+  opacity: 1;
+}
+.home-curated-lookbook .moda-orbit-selected {
+  margin-block: 12px;
+  font-size: 16px;
+}
+.home-curated-lookbook .moda-carousel-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: 0;
+}
+.home-curated-lookbook .moda-carousel-controls > button {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.home-curated-lookbook .moda-carousel-tabs {
+  gap: 4px;
+}
+.home-curated-lookbook .moda-carousel-tabs > button {
+  min-inline-size: 24px;
+  min-block-size: 44px;
+  padding: 4px;
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .home-curated-lookbook .moda-carousel-lookbook {
+    --look-radius: 200px;
+  }
+  .home-curated-lookbook .moda-carousel-stage {
+    height: 350px;
+  }
+  .home-curated-lookbook .moda-3d-orbit {
+    inline-size: 200px;
+    block-size: 267px;
+  }
+  .home-lookbook-caption {
+    opacity: 1;
+    padding: 38px 14px 14px;
+  }
+}
+/* Six ambient SVGs replace the previous eight shapes. Product/ring geometry is untouched. */
+.moda-kids-decor .moda-kids-sun,
+.moda-kids-decor .moda-kids-moon {
+  position: absolute;
+  inline-size: 92px;
+  opacity: 0.65;
+}
+.moda-kids-decor .moda-kids-sun {
+  inset-inline-start: 6%;
+  inset-block-start: 12%;
+}
+.moda-kids-decor .moda-kids-moon {
+  inset-inline-end: 36%;
+  inset-block-end: 10%;
+  inline-size: 68px;
+}
+.moda-kids-decor .moda-kids-cloud {
+  left: auto;
+  inset-inline-start: 12%;
+  top: 6%;
+  inline-size: 220px;
+  opacity: 0.85;
+  animation: home-cloud-near 44s ease-in-out infinite alternate;
+}
+.moda-kids-decor .moda-kids-cloud + .moda-kids-cloud {
+  left: auto;
+  inset-inline-start: auto;
+  inset-inline-end: 8%;
+  top: auto;
+  bottom: 9%;
+  inline-size: 170px;
+  animation: home-cloud-far 57s ease-in-out -11s infinite alternate;
+}
+.moda-kids-decor .moda-kids-star {
+  animation: home-star-light 12s ease-in-out infinite alternate;
+}
+.moda-kids-world:is(:hover, :focus-within) .moda-kids-decor svg {
+  animation-play-state: paused;
+}
+@keyframes home-cloud-near {
+  from {
+    transform: translate3d(-8px, 0, 0);
+  }
+  to {
+    transform: translate3d(8px, 3px, 0);
+  }
+}
+@keyframes home-cloud-far {
+  from {
+    transform: translate3d(6px, 2px, 0);
+  }
+  to {
+    transform: translate3d(-6px, -2px, 0);
+  }
+}
+@keyframes home-star-light {
+  from {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moda-kids-decor svg {
+    animation: none !important;
+    transform: none !important;
+  }
+  .moda-lookbook-plane,
+  .home-lookbook-caption {
+    transition: none;
+  }
+}
