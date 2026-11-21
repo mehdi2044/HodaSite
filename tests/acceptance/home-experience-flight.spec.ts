@@ -29,7 +29,7 @@ for (const [locale, market] of [
       });
       const started = Date.now();
       cdp.on("Network.requestWillBeSent", (e) => {
-        if (["Document", "Fetch"].includes(e.type))
+        if (e.type === undefined || e.type === "Document" || e.type === "Fetch")
           events.push({
             type: "request",
             id: e.requestId,
@@ -40,7 +40,7 @@ for (const [locale, market] of [
           });
       });
       cdp.on("Network.responseReceived", (e) => {
-        if (["Document", "Fetch"].includes(e.type))
+        if (e.type === undefined || e.type === "Document" || e.type === "Fetch")
           events.push({
             type: "response",
             id: e.requestId,
