@@ -130,6 +130,20 @@ describe("editorial spotlight in the existing CMS", () => {
     ]);
     expect(parsed).toMatchObject({ articleId: "real-article", enabled: false });
   });
+  it("rejects two visible spotlights to prevent repeated weekly and article promotion", () => {
+    expect(
+      homepageBlocksSchema.safeParse([block, { ...block, id: "second" }])
+        .success,
+    ).toBe(false);
+  });
+  it("retains a hidden alternate spotlight while only one is visible", () => {
+    expect(
+      homepageBlocksSchema.safeParse([
+        block,
+        { ...block, id: "hidden", enabled: false },
+      ]).success,
+    ).toBe(true);
+  });
   it("rejects an unsafe article identity", () => {
     expect(
       homepageBlocksSchema.safeParse([{ ...block, articleId: "../private" }])

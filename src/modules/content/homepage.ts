@@ -115,6 +115,16 @@ export const homepageBlocksSchema = z
   .array(homepageBlockSchema)
   .max(30)
   .superRefine((blocks, ctx) => {
+    if (
+      blocks.filter(
+        (block) =>
+          block.type === "EditorialSpotlight" && block.enabled !== false,
+      ).length > 1
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Only one visible editorial spotlight is allowed",
+      });
     const identities = blocks.flatMap((block) => (block.id ? [block.id] : []));
     if (new Set(identities).size !== identities.length)
       ctx.addIssue({ code: "custom", message: "Duplicate block identity" });
