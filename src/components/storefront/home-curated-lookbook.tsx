@@ -3,7 +3,10 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { seoPath } from "@/lib/seo-urls";
 import { editorialSlug } from "@/modules/editorial/queries";
-import { selectHomepageLooks } from "@/modules/editorial/home-selection";
+import {
+  selectHomepageLooks,
+  homepageVisualIdentity,
+} from "@/modules/editorial/home-selection";
 import { LookArtwork } from "./look-visual";
 import { ModaCarousel } from "./moda-carousel";
 
@@ -45,6 +48,7 @@ export async function HomeCuratedLookbook({
             <Link
               className="home-lookbook-art"
               data-look-id={look.id}
+              data-look-visual={homepageVisualIdentity(look)}
               data-look-photo={
                 look.visual.mobile?.id ?? look.visual.desktop?.id
               }

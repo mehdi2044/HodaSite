@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { selectHomepageLooks } from "@/modules/editorial/home-selection";
+import {
+  selectHomepageLooks,
+  homepageVisualIdentity,
+} from "@/modules/editorial/home-selection";
 const photo = (id: string, wide: string, portrait = wide) => ({
   id,
   visual: { mode: "PHOTO", desktop: { id: wide }, mobile: { id: portrait } },
@@ -42,5 +45,40 @@ describe("homepage editorial allocation", () => {
       { id: "b", visual: { mode: "COMPOSITE" } },
     ];
     expect(selectHomepageLooks(["a", "b"], entries)).toEqual(entries);
+  });
+});
+
+describe("complete composition identities", () => {
+  const composite = (id: string, mediaIds: string[]) => ({
+    id,
+    visual: {
+      mode: "COMPOSITE",
+      pieces: mediaIds.map((id) => ({ image: { id } })),
+    },
+  });
+  it("removes an identical full outfit even under another ID or reverse piece order", () => {
+    const entries = [
+      composite("a", ["knit", "trousers"]),
+      composite("copy", ["trousers", "knit"]),
+      composite("b", ["shirt", "trousers"]),
+    ];
+    expect(
+      selectHomepageLooks(["a", "copy", "b"], entries).map((entry) => entry.id),
+    ).toEqual(["a", "b"]);
+    expect(homepageVisualIdentity(entries[0])).toBe("COMPOSITE:knit,trousers");
+  });
+  it("keeps distinct complete looks that share just one garment", () => {
+    const entries = [
+      composite("a", ["knit", "trousers"]),
+      composite("b", ["shirt", "trousers"]),
+    ];
+    expect(selectHomepageLooks(["a", "b"], entries)).toEqual(entries);
+  });
+  it("reserves an entire composite allocation rather than just its LookID", () => {
+    const entries = [
+      composite("weekly", ["knit", "trousers"]),
+      composite("copy", ["knit", "trousers"]),
+    ];
+    expect(selectHomepageLooks(["copy"], entries, ["weekly"])).toEqual([]);
   });
 });

@@ -25,7 +25,9 @@ for (const [locale, market] of [
           '.moda-3d-face[data-active="true"] .home-lookbook-art',
         );
         ids.push((await card.getAttribute("data-look-id"))!);
-        photos.push((await card.getAttribute("data-look-photo"))!);
+        const visual = await card.getAttribute("data-look-visual");
+        expect(visual).toMatch(/^(PHOTO|COMPOSITE):.+/);
+        photos.push(visual!);
         await expect(card).toHaveAttribute(
           "href",
           new RegExp(`^/${locale}/m/${market}/looks/`),
@@ -46,6 +48,26 @@ for (const [locale, market] of [
           elements.map((el) => el.getAttribute("data-look-id")),
         );
       expect(ids.some((id) => shopIds.includes(id))).toBe(false);
+      await expect(book.locator(".moda-3d-face").first()).toHaveCSS(
+        "transform-style",
+        "preserve-3d",
+      );
+      for (const side of await book
+        .locator(
+          '.moda-3d-face[aria-hidden="false"][data-active="false"] .home-lookbook-art',
+        )
+        .all()) {
+        expect((await side.boundingBox())!.width).toBeGreaterThan(
+          width === 390 ? 90 : 120,
+        );
+      }
+      const composition = book.locator(
+        '.moda-3d-face[data-active="true"] .look-composition',
+      );
+      if (await composition.count())
+        expect((await composition.boundingBox())!.height).toBeGreaterThan(
+          width === 390 ? 240 : 325,
+        );
       const orbit = book.locator(".moda-3d-orbit");
       await expect(orbit).toHaveCSS("transform-style", "preserve-3d");
       const angle = async () =>

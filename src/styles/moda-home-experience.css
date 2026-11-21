@@ -654,3 +654,35 @@ html[dir="rtl"]
     transition: none;
   }
 }
+
+/* A counter-rotated child needs its parent's 3D context, not a flattened parent plane. */
+.home-curated-lookbook .moda-3d-face {
+  transform-style: preserve-3d;
+}
+.home-lookbook-art .look-composition {
+  block-size: 100%;
+  inline-size: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  background: var(--surface);
+}
+.home-lookbook-art .look-composition-pieces {
+  block-size: 100%;
+  min-block-size: 0;
+  align-items: stretch;
+}
+.home-lookbook-art .look-composition-pieces picture {
+  block-size: 100%;
+  background: var(--editorial-paper);
+}
+.home-lookbook-art .look-composition-pieces picture:nth-child(even) {
+  translate: none;
+  block-size: 100%;
+}
+.home-lookbook-art .look-composition figcaption {
+  background: var(--surface);
+  color: var(--muted);
+}
