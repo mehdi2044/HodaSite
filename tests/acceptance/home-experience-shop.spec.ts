@@ -106,6 +106,7 @@ for (const [locale, market] of [
         locale,
       );
       let requests = 0;
+      const mutationTimings: number[] = [];
       page.on("request", (request) => {
         if (request.method() === "POST" && request.postData()?.includes(ids[0]))
           requests++;
@@ -114,6 +115,7 @@ for (const [locale, market] of [
         button: ReturnType<typeof look.locator>,
         clickCount: number,
       ) {
+        const started = Date.now();
         const response = page.waitForResponse(
           (response) =>
             response.request().method() === "POST" &&
@@ -125,6 +127,11 @@ for (const [locale, market] of [
         await expect(look.locator('[role="status"]')).toBeVisible();
         await expect(look.locator('[role="alert"]')).toHaveCount(0);
         await expect(button).toBeEnabled();
+        await expect(look.locator(".home-look-pieces")).toHaveAttribute(
+          "aria-busy",
+          "false",
+        );
+        mutationTimings.push(Date.now() - started);
       }
       await buy(pieces.first().locator("button"), 2);
       const batch = look.locator(".editorial-total > button");
@@ -158,6 +165,15 @@ for (const [locale, market] of [
       await expect(quantities).toHaveCount(3);
       for (const input of await quantities.all())
         await expect(input).toHaveValue("1");
+      await test.info().attach("mutation-feedback-timings", {
+        body: JSON.stringify({
+          locale,
+          width,
+          milliseconds: mutationTimings,
+          requests,
+        }),
+        contentType: "application/json",
+      });
       expect(errors).toEqual([]);
     });
   }

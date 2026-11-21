@@ -69,6 +69,10 @@ export function CuratedPurchase({
     error: boolean;
   }>();
   const [pending, start] = useTransition();
+  const [mutationBusy, setMutationBusy] = useState(false);
+  // Homepage Flight refresh can remain pending after the committed action resolves.
+  // Keep its controls tied to the mutation; retain the legacy detail-page transition.
+  const busy = compact ? mutationBusy : pending;
   const inFlight = useRef(false);
   const Heading = compact ? "h4" : "h2";
   const interactive = useSyncExternalStore(
@@ -95,6 +99,10 @@ export function CuratedPurchase({
   function buy(ids: string[]) {
     if (!action || inFlight.current) return;
     inFlight.current = true;
+    if (compact) {
+      setMutationBusy(true);
+      setFeedback(undefined);
+    }
     start(async () => {
       try {
         const result = await action(ids);
@@ -104,6 +112,7 @@ export function CuratedPurchase({
         });
       } finally {
         inFlight.current = false;
+        if (compact) setMutationBusy(false);
       }
     });
   }
@@ -111,7 +120,7 @@ export function CuratedPurchase({
     <section
       className={`editorial-pieces${compact ? " home-look-pieces" : ""}`}
       aria-label={t("pieces")}
-      aria-busy={pending}
+      aria-busy={busy}
     >
       <PieceList compact={compact}>
         {pieces.map((piece, index) => {
@@ -198,7 +207,7 @@ export function CuratedPurchase({
                     <select
                       className="input"
                       value={color}
-                      disabled={!interactive || pending}
+                      disabled={!interactive || busy}
                       onChange={(event) => {
                         const colorId = event.currentTarget.value;
                         setSelection((current) => ({
@@ -224,7 +233,7 @@ export function CuratedPurchase({
                   <select
                     className="input"
                     value={selected?.id ?? ""}
-                    disabled={!interactive || pending}
+                    disabled={!interactive || busy}
                     onChange={(event) => {
                       const variant = event.currentTarget.value;
                       setSelection((current) => ({
@@ -249,7 +258,7 @@ export function CuratedPurchase({
               {action && (
                 <button
                   className="button"
-                  disabled={pending || !selected}
+                  disabled={busy || !selected}
                   onClick={() => selected && buy([selected.id])}
                 >
                   {t("addPiece")}
@@ -272,7 +281,7 @@ export function CuratedPurchase({
           <button
             className="button"
             disabled={
-              pending || !chosen.length || chosen.length !== purchasable.length
+              busy || !chosen.length || chosen.length !== purchasable.length
             }
             onClick={() => buy(chosen.map((variant) => variant.id))}
           >
