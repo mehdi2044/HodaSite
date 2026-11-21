@@ -100,4 +100,72 @@ for (const [locale, market] of [
         "none",
       );
     });
+    test(`${locale}/${width}: moving ribbon text stays visible in RTL and LTR`, async ({
+      page,
+    }, info) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await page.goto(`/${locale}/m/${market}`);
+      await page.evaluate(() => document.fonts.ready);
+      const ribbon = page.locator('[data-moda4="bands"]');
+      await page.mouse.move(0, 0);
+      await ribbon.scrollIntoViewIfNeeded();
+      await expect(ribbon).toHaveAttribute("data-paused", "false");
+      const frames = await ribbon.evaluate(async (root) => {
+        const frames: {
+          at: number;
+          bands: { visibleWords: number; x: number }[];
+        }[] = [];
+        const started = performance.now();
+        do {
+          const clip = root
+            .querySelector(".moda-ribbons")!
+            .getBoundingClientRect();
+          const bands = [...root.querySelectorAll(".moda-band")].map(
+            (band) => ({
+              visibleWords: [...band.querySelectorAll("span")].filter(
+                (span) => {
+                  const box = span.getBoundingClientRect();
+                  return (
+                    Math.min(box.right, clip.right, innerWidth) -
+                      Math.max(box.left, clip.left, 0) >
+                      2 &&
+                    Math.min(box.bottom, clip.bottom, innerHeight) -
+                      Math.max(box.top, clip.top, 0) >
+                      2
+                  );
+                },
+              ).length,
+              x: band.querySelector(".moda-band-track")!.getBoundingClientRect()
+                .x,
+            }),
+          );
+          frames.push({ at: performance.now() - started, bands });
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+        } while (performance.now() - started < 8000);
+        return frames;
+      });
+      await info.attach("real-moving-ribbon-visibility", {
+        body: JSON.stringify({ locale, width, frames }),
+        contentType: "application/json",
+      });
+      expect(frames.length).toBeGreaterThan(2);
+      expect(
+        frames.every(
+          (frame) =>
+            frame.bands.length === 2 &&
+            frame.bands.every((band) => band.visibleWords > 0),
+        ),
+      ).toBe(true);
+      for (const band of [0, 1])
+        expect(
+          Math.abs(frames.at(-1)!.bands[band].x - frames[0].bands[band].x),
+        ).toBeGreaterThan(1);
+      await ribbon.screenshot({
+        path: info.outputPath("moving-ribbon.png"),
+        animations: "allow",
+      });
+    });
   }

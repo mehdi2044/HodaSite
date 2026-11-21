@@ -1,3 +1,9 @@
+## MODA4 moving RTL ribbon — final visual regression follow-up, 2026-11-22
+
+Real no-preference video exposed a product defect hidden by the static reduced-motion captures: the RTL block layout anchored the oversized track at its right edge, then its negative translating transform moved the entire black ribbon's text outside the viewport. Read-only geometry on production 0f7f053 recorded zero visible black-ribbon words at both 390 and 1440; English/Turkish retained visible words. The fix gives only the ribbon's physical motion container LTR layout; the word units retain their explicit locale direction and the RTL animation direction remains unchanged. No business text, speed setting, autoplay, fitting geometry, media, database or navigation code changes.
+
+Six new real-motion browser scenarios sample both tracks' text/clip intersections and displacement for eight natural seconds in FA/TR/EN at 390/1440. They supplement the existing duplicate-unit, pause and reduced-motion checks. Preserve the failed-before production evidence and build a separately identified after artifact; rerun complete source-matched QA before reporting success. The preceding 0f7f053 ordinary checks passed (M4 67, Homepage 53, Vitest 9417), while its separate four-browser stress run failed 2 M4 and 8 Homepage navigation/deadline scenarios. Neither historical gallery latency nor stress stability is closed by a successful ordinary run. D70 and owner visual acceptance remain blocked; no push, PR, merge, main/original-data change or new feature phase.
+
 ## MODA4 final regression repair — local candidate, 2026-11-22
 
 Implemented against docs v1.2 / D-numbers touched: D23, D31, D64, D70, D81, D82.

@@ -11,6 +11,8 @@
   overflow: hidden;
 }
 .moda-crossing-bands .moda-band {
+  /* Anchor the translating track consistently; each word unit keeps its locale direction. */
+  direction: ltr;
   inset-inline: -4%;
   padding-block: 9px;
   transform: translateY(-75%) rotate(-1.8deg);
