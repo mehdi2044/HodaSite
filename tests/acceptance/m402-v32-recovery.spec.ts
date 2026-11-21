@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { expect, test, type Locator } from "@playwright/test";
 import reference from "../fixtures/m4-02-approved-v32.json";
+import { observeM402Cycle } from "../helpers/m402-cycle";
 
 // This acceptance suite requires approved CMS/media v32, not fresh seed data.
 // It is opt-in: ordinary e2e runs use a different fixture contract.
@@ -24,6 +25,46 @@ async function hit(control: Locator) {
     )
     .toBe(true);
   await control.click({ trial: true });
+}
+
+for (const [locale, market, model] of [
+  ["en", "CA", "girl"],
+  ["tr", "TR", "woman"],
+  ["tr", "TR", "girl"],
+] as const) {
+  test(`${locale} 390 ${model}: same-cycle identity and natural autoplay boundary`, async ({
+    page,
+  }, info) => {
+    const index = reference.looks.findIndex((look) => look.modelId === model);
+    const look = reference.looks[index];
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/${locale}/m/${market}`, {
+      waitUntil: "domcontentloaded",
+    });
+    const ad = page.locator(adSelector);
+    const stage = ad.locator("[data-m4-stage]");
+    await expect(stage).toHaveAttribute("data-running", /^(true|false)$/);
+    const capture = await observeM402Cycle(page, look.id, "choice");
+    try {
+      await ad.locator(`[data-m4-look="${look.id}"]`).click();
+      await stage.scrollIntoViewIfNeeded();
+      const cycle = await capture.ready();
+      expect(cycle.advanced).toBe(false);
+      expect(cycle.frames.every((frame) => frame.lookId === look.id)).toBe(
+        true,
+      );
+      expect(cycle.ready?.photoLoaded).toBe(true);
+      expect(cycle.ready?.photoSrc.includes(look.photoMediaId)).toBe(true);
+      // Do not pause or replay: prove the real next-look transition still runs.
+      const next = reference.looks[(index + 1) % reference.looks.length];
+      await expect(ad.locator(`[data-m4-look="${next.id}"]`)).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    } finally {
+      await capture.finish(info, "autoplay");
+    }
+  });
 }
 
 for (const [locale, market] of locales) {
@@ -175,80 +216,82 @@ for (const [locale, market] of locales) {
             .digest("hex"),
         ).toBe(look.photoSha256);
         const pause = ad.locator("[data-m4-pause]");
+        // External original-byte and geometry checks above do not consume the
+        // measured animation window. Each measured cycle starts at a trusted
+        // choice/Replay click and is sampled in the renderer on every frame.
         for (let cycle = 0; cycle < 2; cycle++) {
-          if (cycle) {
-            const replay = ad.locator("[data-m4-replay]");
-            await hit(replay);
-            await replay.click();
-          }
-          await stage.scrollIntoViewIfNeeded();
-          await expect(stage).toHaveAttribute("data-running", "true");
-          await expect(stage).toHaveAttribute("data-step", "dress");
-          await expect
-            .poll(() =>
-              stage
-                .locator("[data-m4-flight]")
-                .evaluateAll((nodes) =>
-                  nodes.some(
-                    (node) => Number(getComputedStyle(node).opacity) > 0.5,
+          const capture = await observeM402Cycle(
+            page,
+            look.id,
+            cycle ? "replay" : "choice",
+          );
+          try {
+            if (cycle) {
+              const replay = ad.locator("[data-m4-replay]");
+              await hit(replay);
+              await replay.click();
+            } else {
+              await choice.click();
+            }
+            await stage.scrollIntoViewIfNeeded();
+            const observed = await capture.ready();
+            // Pause through the real control before further RPCs can cross the
+            // natural autoplay boundary. No application clock is altered.
+            await pause.click();
+            expect(observed.click?.trusted).toBe(true);
+            expect(observed.click?.lookId).toBe(look.id);
+            expect(observed.advanced).toBe(false);
+            expect(
+              observed.frames.every((frame) => frame.lookId === look.id),
+            ).toBe(true);
+            expect(
+              observed.frames.some(
+                (frame) => frame.phase === "dress" && frame.flightOpaque,
+              ),
+            ).toBe(true);
+            expect(
+              observed.frames.some(
+                (frame) =>
+                  frame.phase === "style" &&
+                  frame.scanVisible &&
+                  frame.scanOpacity > 0.5,
+              ),
+            ).toBe(true);
+            expect(observed.ready?.phase).toBe("look");
+            expect(observed.ready?.revealOpacity).toBe(1);
+            expect(observed.ready?.photoLoaded).toBe(true);
+            const photoSrc = observed.ready?.photoSrc ?? "";
+            expect(
+              photoSrc.includes(look.photoStorageKey) ||
+                photoSrc.includes(look.photoMediaId),
+            ).toBe(true);
+            await expect(choice).toHaveAttribute("aria-pressed", "true");
+            await expect(pause).toHaveAttribute("aria-pressed", "true");
+            await stage.scrollIntoViewIfNeeded();
+            await expect(stage).toHaveAttribute("data-running", "false");
+            const clock = await stage.evaluate((el) =>
+              (el as HTMLElement).style.getPropertyValue("--m4-time"),
+            );
+            await page.evaluate(
+              () =>
+                new Promise<void>((resolve) =>
+                  requestAnimationFrame(() =>
+                    requestAnimationFrame(() => resolve()),
                   ),
                 ),
-            )
-            .toBe(true);
-          if (!cycle)
-            await stage.screenshot({
-              path: info.outputPath("flight.png"),
-              animations: "allow",
-            });
-          await expect(stage).toHaveAttribute("data-step", "style");
-          await expect
-            .poll(() =>
-              stage
-                .locator(".m4-scan")
-                .evaluate((el) => Number(getComputedStyle(el).opacity)),
-            )
-            .toBeGreaterThan(0.5);
-          if (!cycle)
-            await stage.screenshot({
-              path: info.outputPath("scan.png"),
-              animations: "allow",
-            });
-          await expect(stage).toHaveAttribute("data-step", "look");
-          await expect(stage.locator(".m4-reveal")).toHaveCSS("opacity", "1");
-          await expect(stage.locator(".m4-reveal img")).toHaveJSProperty(
-            "complete",
-            true,
-          );
-          const photoSrc =
-            (await stage.locator(".m4-reveal img").getAttribute("src")) ?? "";
-          expect(
-            photoSrc.includes(look.photoStorageKey) ||
-              photoSrc.includes(look.photoMediaId),
-          ).toBe(true);
-          await pause.click();
-          await expect(pause).toHaveAttribute("aria-pressed", "true");
-          await stage.scrollIntoViewIfNeeded();
-          await expect(stage).toHaveAttribute("data-running", "false");
-          const clock = await stage.evaluate((el) =>
-            (el as HTMLElement).style.getPropertyValue("--m4-time"),
-          );
-          await page.evaluate(
-            () =>
-              new Promise<void>((resolve) =>
-                requestAnimationFrame(() =>
-                  requestAnimationFrame(() => resolve()),
-                ),
+            );
+            expect(
+              await stage.evaluate((el) =>
+                (el as HTMLElement).style.getPropertyValue("--m4-time"),
               ),
-          );
-          expect(
-            await stage.evaluate((el) =>
-              (el as HTMLElement).style.getPropertyValue("--m4-time"),
-            ),
-          ).toBe(clock);
-          await stage.screenshot({
-            path: info.outputPath(cycle ? "replay-final.png" : "final.png"),
-            animations: "allow",
-          });
+            ).toBe(clock);
+            await stage.screenshot({
+              path: info.outputPath(cycle ? "replay-final.png" : "final.png"),
+              animations: "allow",
+            });
+          } finally {
+            await capture.finish(info, cycle ? "replay" : "initial");
+          }
         }
         expect(
           errors.filter((e) => /#418|hydration|Connection closed/i.test(e)),

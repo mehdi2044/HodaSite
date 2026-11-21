@@ -1,3 +1,13 @@
+## MODA4 final regression repair — local candidate, 2026-11-22
+
+Implemented against docs v1.2 / D-numbers touched: D23, D31, D64, D70, D81, D82.
+
+Owner follow-up preserves production 3315 at source 736e6d8 / Build EeIr84q4k7ssrgo5Ty2az and references 3283/3296. Read-only snapshots cover all 131 tables per environment. A separate proven-empty database, new volume/network and copied read-only media host the unchanged baseline for diagnosis; no original restore/reset or source-preview mutation is authorized.
+
+The three M4 failures involved separate remote reads crossing a short scan window or the natural next-look boundary. Renderer-frame observations record actual scan/final photo and active identity in normal and CPU-throttled scenarios, with correlated real compositor images. The regression sampler now binds those assertions to the trusted selection/Replay click and same cycle; original media hash, geometry, thresholds, decoded-image, real pause/frozen-clock and Replay assertions remain. Three additional natural-autoplay cases explicitly preserve automatic advancement. No fitting engine, approved imagery or application animation clock is changed.
+
+Gallery navigation now records Flight body chunks/completion and browser history commits as well as response headers and aborts. Bounded new observations have not reproduced the previous five-second failure; this is not a demonstrated performance fix or proof of its original cause. The unchanged navigation deadline, zero retries, full sequential checks and separate concurrent stress evidence remain required on the final source/build. Final acceptance, root-cause classification and D70 readiness must follow actual results, not these preliminary observations. Merchant editorial allocation and demo-content decisions remain with Mehdi/Vee; no new content is fabricated.
+
 ## MODA4 paired visual review follow-up
 
 Same-viewport before/after inspection found a tall single-weekly-card state: the row-height stretch intended for a real complementary article also applied when that article was absent. Scoped layout variables now stretch only the genuine two-card state; the single desktop photograph stays at 500px and mobile retains 3:4. The acceptance suite adds a desktop upper/lower frame bound and the mobile aspect assertion. A generic composition caption also overlapped the mobile lookbook CTA; it remains in the accessibility tree while the look name, piece count and real CTA provide the visible caption. No media, scene geometry, model profile, inventory or pricing contract changes.

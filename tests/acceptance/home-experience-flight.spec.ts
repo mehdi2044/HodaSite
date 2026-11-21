@@ -20,6 +20,47 @@ for (const [locale, market] of [
         if (message.type() === "error") errors.push(message.text());
       });
       const cdp = await page.context().newCDPSession(page);
+      await page.exposeFunction("__homeNavigationProof", (event: object) => {
+        events.push(event);
+      });
+      await page.addInitScript(() => {
+        const emit = (
+          window as Window & {
+            __homeNavigationProof?: (event: object) => Promise<void>;
+          }
+        ).__homeNavigationProof;
+        if (!emit) throw new Error("Navigation observation binding is missing");
+        document.addEventListener(
+          "click",
+          (event) => {
+            const link =
+              event.target instanceof Element
+                ? event.target.closest<HTMLAnchorElement>("a[href]")
+                : null;
+            if (link)
+              void emit({
+                type: "browser-link-click",
+                wallMs: Date.now(),
+                path: new URL(link.href).pathname,
+                trusted: event.isTrusted,
+              });
+          },
+          true,
+        );
+        for (const method of ["pushState", "replaceState"] as const) {
+          const original = history[method];
+          history[method] = function (...args) {
+            const result = Reflect.apply(original, this, args);
+            void emit({
+              type: "router-history-commit",
+              method,
+              wallMs: Date.now(),
+              path: location.pathname,
+            });
+            return result;
+          };
+        }
+      });
       await cdp.send("Network.enable");
       await cdp.send("Network.emulateNetworkConditions", {
         offline: false,
@@ -28,16 +69,25 @@ for (const [locale, market] of [
         uploadThroughput: 100000,
       });
       const started = Date.now();
+      const requests = new Set<string>();
       cdp.on("Network.requestWillBeSent", (e) => {
-        if (e.type === undefined || e.type === "Document" || e.type === "Fetch")
+        if (
+          e.type === undefined ||
+          e.type === "Document" ||
+          e.type === "Fetch"
+        ) {
+          requests.add(e.requestId);
           events.push({
             type: "request",
             id: e.requestId,
             at: Date.now() - started,
+            protocolTimestamp: e.timestamp,
+            wallMs: e.wallTime * 1000,
             method: e.request.method,
             path: new URL(e.request.url).pathname,
             flight: e.request.headers.RSC ?? e.request.headers.rsc ?? null,
           });
+        }
       });
       cdp.on("Network.responseReceived", (e) => {
         if (e.type === undefined || e.type === "Document" || e.type === "Fetch")
@@ -45,9 +95,28 @@ for (const [locale, market] of [
             type: "response",
             id: e.requestId,
             at: Date.now() - started,
+            protocolTimestamp: e.timestamp,
             status: e.response.status,
             mime: e.response.mimeType,
             path: new URL(e.response.url).pathname,
+          });
+      });
+      cdp.on("Network.dataReceived", (e) => {
+        if (requests.has(e.requestId))
+          events.push({
+            type: "body-chunk",
+            id: e.requestId,
+            protocolTimestamp: e.timestamp,
+            decodedBytes: e.dataLength,
+          });
+      });
+      cdp.on("Network.loadingFinished", (e) => {
+        if (requests.has(e.requestId))
+          events.push({
+            type: "body-complete",
+            id: e.requestId,
+            protocolTimestamp: e.timestamp,
+            encodedBytes: e.encodedDataLength,
           });
       });
       cdp.on("Network.loadingFailed", (e) =>
@@ -55,6 +124,7 @@ for (const [locale, market] of [
           type: "abort-or-failure",
           id: e.requestId,
           at: Date.now() - started,
+          protocolTimestamp: e.timestamp,
           canceled: e.canceled,
           error: e.errorText,
         }),
