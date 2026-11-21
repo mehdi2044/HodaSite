@@ -49,6 +49,20 @@ for (const [locale, market] of [
         "fixture-editorial-city-layers",
       );
       await expect(weekly.locator(".look-actions a")).toHaveCount(2);
+      const photo = weekly.locator(".look-artwork img:visible");
+      await photo.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          photo.evaluate((el) => (el as HTMLImageElement).naturalWidth),
+        )
+        .toBeGreaterThan(0);
+      const frame = await photo.evaluate((el) => ({
+        imageHeight: el.getBoundingClientRect().height,
+        frameHeight: el.closest("picture")!.getBoundingClientRect().height,
+        placeholder: getComputedStyle(el.closest("picture")!).backgroundImage,
+      }));
+      expect(Math.abs(frame.imageHeight - frame.frameHeight)).toBeLessThan(1);
+      expect(frame.placeholder).toBe("none");
       // The only published article is Easy Days: keep it with its shop look, not twice on the home.
       await expect(spotlight.locator(".home-spotlight-article")).toHaveCount(0);
       await expect(spotlight.locator(".home-spotlight-empty")).toBeVisible();

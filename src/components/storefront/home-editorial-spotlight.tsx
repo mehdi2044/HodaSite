@@ -53,6 +53,20 @@ export async function HomeEditorialSpotlight({
         ])
       : [],
   ]);
+  const weeklyCard = weekly?.visual
+    ? {
+        ...weekly,
+        visual: {
+          ...weekly.visual,
+          desktop: weekly.visual.desktop
+            ? { ...weekly.visual.desktop, blurDataUrl: null }
+            : undefined,
+          mobile: weekly.visual.mobile
+            ? { ...weekly.visual.mobile, blurDataUrl: null }
+            : undefined,
+        },
+      }
+    : weekly;
   const desktop =
     article && images.find((image) => image.id === article.body.mediaId);
   const mobile =
@@ -73,13 +87,13 @@ export async function HomeEditorialSpotlight({
         data-has-weekly={Boolean(weekly)}
         data-has-article={Boolean(article)}
       >
-        {weekly && commerce ? (
+        {weeklyCard && commerce ? (
           <div
             className="home-spotlight-weekly"
-            data-weekly-look-id={weekly.id}
+            data-weekly-look-id={weeklyCard.id}
           >
             <CuratedCard
-              look={weekly}
+              look={weeklyCard}
               locale={locale}
               market={market}
               commerce={commerce}

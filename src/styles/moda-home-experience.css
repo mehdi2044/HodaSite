@@ -738,6 +738,9 @@ html[dir="rtl"]
   block-size: 100%;
 }
 .home-spotlight-weekly .look-artwork img {
+  inline-size: 100%;
+  block-size: 100%;
+  aspect-ratio: auto;
   object-fit: contain;
 }
 .home-spotlight-weekly .editorial-card-copy {
