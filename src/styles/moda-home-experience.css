@@ -581,7 +581,7 @@ html[dir="rtl"]
     padding: 38px 14px 14px;
   }
 }
-/* Six ambient SVGs; product/ring geometry is untouched. Static fills, compositor-only motion. */
+/* Eight ambient SVGs; product/ring geometry is untouched. Static fills, compositor-only motion. */
 .moda-kids-decor .moda-kids-sun,
 .moda-kids-decor .moda-kids-moon {
   position: absolute;
@@ -626,8 +626,105 @@ html[dir="rtl"]
   animation-duration: 19s;
   animation-delay: -9s;
 }
-.moda-kids-world:is(:hover, :focus-within) .moda-kids-decor svg {
+.moda-kids-copy {
+  position: relative;
+}
+.moda-kids-decor .moda-kids-bird {
+  position: absolute;
+  inset-block-start: 5%;
+  inset-inline-end: 24%;
+  inline-size: 48px;
+  opacity: 0.48;
+  animation: home-bird-distance 36s ease-in-out -8s infinite alternate;
+}
+.moda-kids-bird-wings {
+  transform-origin: 36px 25px;
+  animation: home-bird-wings 5.4s ease-in-out -2s infinite alternate;
+}
+.moda-kids-butterfly {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  inline-size: 30px;
+  overflow: visible;
+  opacity: 0.88;
+  pointer-events: none;
+  z-index: 0;
+  animation: home-butterfly-hover 11s ease-in-out -3s infinite alternate;
+}
+.moda-kids-butterfly-wing {
+  transform-box: view-box;
+  transform-origin: 18px 23px;
+}
+.moda-kids-butterfly-wing-start {
+  animation: home-butterfly-wing-start 3.6s ease-in-out -0.8s infinite alternate;
+}
+.moda-kids-butterfly-wing-end {
+  animation: home-butterfly-wing-end 3.6s ease-in-out -0.8s infinite alternate;
+}
+.moda-kids-sun-halo {
+  animation: home-sun-light 30s ease-in-out -8s infinite alternate;
+}
+.moda-kids-world:is(:hover, :focus-within)
+  :is(
+    .moda-kids-decor svg,
+    .moda-kids-bird-wings,
+    .moda-kids-butterfly,
+    .moda-kids-butterfly-wing,
+    .moda-kids-sun-halo
+  ) {
   animation-play-state: paused;
+}
+@keyframes home-bird-distance {
+  0% {
+    transform: translate3d(-10px, 2px, 0) rotate(-2deg);
+  }
+  50% {
+    transform: translate3d(0, -2px, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(10px, 1px, 0) rotate(2deg);
+  }
+}
+@keyframes home-bird-wings {
+  from {
+    transform: scaleY(0.88);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes home-butterfly-hover {
+  from {
+    transform: translate3d(-2px, -1.5px, 0) rotate(-2deg);
+  }
+  to {
+    transform: translate3d(2px, 1.5px, 0) rotate(2deg);
+  }
+}
+@keyframes home-butterfly-wing-start {
+  from {
+    transform: rotate(-4deg) scaleX(0.78);
+  }
+  to {
+    transform: rotate(2deg) scaleX(1);
+  }
+}
+@keyframes home-butterfly-wing-end {
+  from {
+    transform: rotate(4deg) scaleX(0.78);
+  }
+  to {
+    transform: rotate(-2deg) scaleX(1);
+  }
+}
+@keyframes home-sun-light {
+  from {
+    opacity: 0.18;
+  }
+  to {
+    opacity: 0.26;
+  }
 }
 @keyframes home-cloud-near {
   from {
@@ -672,6 +769,14 @@ html[dir="rtl"]
   }
 }
 @media (max-width: 760px) {
+  .moda-kids-decor .moda-kids-bird {
+    inset-block-start: 20px;
+    inset-inline-end: 6%;
+    inline-size: 38px;
+  }
+  .moda-kids-butterfly {
+    inline-size: 26px;
+  }
   .moda-kids-decor .moda-kids-sun {
     inset-block-start: 12px;
     inline-size: 72px;
@@ -695,7 +800,11 @@ html[dir="rtl"]
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .moda-kids-decor svg {
+  .moda-kids-decor svg,
+  .moda-kids-bird-wings,
+  .moda-kids-butterfly,
+  .moda-kids-butterfly-wing,
+  .moda-kids-sun-halo {
     animation: none !important;
     transform: none !important;
   }

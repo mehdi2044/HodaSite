@@ -40,10 +40,16 @@ for (const locale of ["fa", "en", "tr"] as const) {
         "aria-hidden",
         "true",
       );
-      await expect(kids.locator(".moda-kids-decor svg")).toHaveCount(6);
+      await expect(kids.locator(".moda-kids-decor svg")).toHaveCount(7);
+      await expect(kids.locator(".moda-kids-butterfly")).toHaveCount(1);
       expect(
         await kids
           .locator(".moda-kids-decor")
+          .evaluate((el) => el.getAnimations({ subtree: true }).length),
+      ).toBe(0);
+      expect(
+        await kids
+          .locator(".moda-kids-butterfly")
           .evaluate((el) => el.getAnimations({ subtree: true }).length),
       ).toBe(0);
       for (const link of await kids.locator(".moda-kids-cta a").all())
