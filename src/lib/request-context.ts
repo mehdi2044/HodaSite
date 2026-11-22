@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { getMarkets } from "@/modules/settings";
+import type { Prisma } from "@prisma/client";
 
 export type Market = Awaited<ReturnType<typeof getMarkets>>[number];
 
@@ -29,12 +30,14 @@ const DEFAULT_MARKET_BY_LOCALE: Record<string, string> = {
  * The middleware has already redirected away any locale the resolved
  * market doesn't enable, so this never needs to redirect — just read.
  */
-export async function getRequestContext(locale: string): Promise<{
+export async function getRequestContext(locale: string, tx?: Prisma.TransactionClient): Promise<{
   market: Market;
   markets: Market[];
   locale: string;
 }> {
-  const markets = await getMarkets();
+  const markets = tx
+    ? await tx.market.findMany({ orderBy: { code: "asc" } })
+    : await getMarkets();
   const cookieStore = await cookies();
   const cookieCode = cookieStore.get("market")?.value;
   const routeCode = (await headers()).get("x-hoda-seo-market");

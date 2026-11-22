@@ -53,7 +53,7 @@ export function traceDatabase(client: PrismaClient): PrismaClient {
         };
         return Promise.resolve(Reflect.apply(value, target, args)).then(
           (result: unknown) => { pending.delete(id); timeline("transaction.commit", { id, totalMs: performance.now() - requested }); return result; },
-          (error: unknown) => { pending.delete(id); timeline("transaction.rollback", { id, totalMs: performance.now() - requested, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }); throw error; },
+          (error: unknown) => { pending.delete(id); timeline("transaction.rollback", { id, totalMs: performance.now() - requested, code: typeof error === "object" && error !== null && "code" in error ? error.code : undefined, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined }); throw error; },
         );
       };
       if (context.getStore()?.transaction && typeof key === "string" && !key.startsWith("$")) timeline("global-client-inside-transaction", { model: key });

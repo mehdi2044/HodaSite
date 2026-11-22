@@ -39,7 +39,8 @@ export async function quoteCart(
   transaction?: { tx: Prisma.TransactionClient; lockPromotions: boolean },
 ) {
   if (input.items.length === 0) throw new Error("Cart is empty");
-  const market = await db.market.findUniqueOrThrow({
+  const client = transaction?.tx ?? db;
+  const market = await client.market.findUniqueOrThrow({
     where: { id: input.marketId },
   });
   if (!market.isActive || market.salesPaused)
@@ -57,7 +58,7 @@ export async function quoteCart(
     variantId,
     quantity,
   }));
-  const variants = await db.variant.findMany({
+  const variants = await client.variant.findMany({
     where: {
       id: { in: items.map((item) => item.variantId) },
       isActive: true,
@@ -73,7 +74,7 @@ export async function quoteCart(
     throw new Error("One or more variants are unavailable");
   if (variants.some((v) => v.product.coinPackCoins)) {
     const { fittingConfig } = await import("@/modules/fitting");
-    const fitting = await fittingConfig();
+    const fitting = await fittingConfig(transaction?.tx);
     if (!fitting.enabled || !fitting.coinSalesEnabled)
       throw new Error("Coin pack sales are disabled");
   }
@@ -84,9 +85,9 @@ export async function quoteCart(
       const variant = variants.find(
         (candidate) => candidate.id === item.variantId,
       )!;
-      if ((await availableForVariant(variant.id)) < item.quantity)
+      if ((await availableForVariant(variant.id, client)) < item.quantity)
         throw new Error(`Insufficient stock for variant ${variant.id}`);
-      const price = await getDisplayPrice(variant.product, variant, market);
+      const price = await getDisplayPrice(variant.product, variant, market, transaction?.tx);
       const dimensions = variant.dimensions as {
         lengthCm?: string;
         widthCm?: string;
@@ -108,7 +109,7 @@ export async function quoteCart(
       };
     }),
   );
-  const rules = await db.feeRule.findMany({ where: { marketId: market.id } });
+  const rules = await client.feeRule.findMany({ where: { marketId: market.id } });
   const inputs = rules.map((rule) => ({
     ...rule,
     params: rule.params as Record<string, unknown>,

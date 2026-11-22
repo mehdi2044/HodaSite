@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@prisma/client";
 const actor = vi.hoisted(() => ({
   id: "",
@@ -37,6 +37,8 @@ vi.mock("@/lib/db", async (original) => {
   return { ...module, db: traceDatabase(module.db) };
 });
 import { phase, timeline, transactionWave } from "../helpers/database-timeline";
+import { FixtureLifecycle } from "../helpers/fixture-lifecycle";
+const lifecycle = new FixtureLifecycle();
 import { db } from "@/lib/db";
 import { tokenHash } from "@/lib/secure-tokens";
 import { placeOrder, addressSchema } from "@/modules/checkout";
@@ -58,6 +60,7 @@ import { queueInvoice } from "@/modules/orders/invoices/queue";
 import { saveProduct } from "@/app/admin/(dashboard)/catalog/products/actions";
 import { configSchema } from "@/modules/fitting/contracts";
 import { seedLedgerAccounts } from "../../prisma/ledger-seed";
+import * as notifications from "@/modules/notifications";
 import { promotionInput } from "../helpers/promotion-program";
 actor.requests = new AsyncLocalStorage();
 const programs: { raw: ReturnType<typeof promotionInput>; id: string }[] = [];
@@ -244,11 +247,16 @@ async function customFees(f: Fixture, zero = false) {
     feeIds.push(row.id);
   }
 }
-beforeEach(() => {
+beforeEach(async () => {
+  await lifecycle.ready();
   actor.cookies.clear();
   actor.customerId = null;
 });
-afterEach(async () => {
+afterAll(async () => {
+  await lifecycle.ready();
+  await db.$disconnect();
+});
+afterEach(() => lifecycle.finish(async () => {
   timeline("cleanup.start");
   for (const p of programs.splice(0)) {
     const current = await db.promotionProgram.findUniqueOrThrow({
@@ -269,13 +277,14 @@ afterEach(async () => {
     where: { enabled: true },
     data: { enabled: false },
   });
-});
+}));
+
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "09B real checkout integration",
   () => {
     it.each(["CHECKOUT_FIRST", "DISABLE_FIRST"] as const)(
       "serializes coin-sale disabling with %s",
-      async (mode) => {
+      lifecycle.track(async (mode) => {
         const f = await fixture();
         const old = await db.integration.findUnique({
           where: { key: "fitting-room" },
@@ -443,7 +452,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             data: { status: "ARCHIVED" },
           });
         }
-      },
+      }),
     );
     it.each([
       ["CHECKOUT_FIRST", false],
@@ -452,7 +461,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ["ADMIN_FIRST", true],
     ] as const)(
       "serializes %s with a coin-pack classification change (was pack: %s)",
-      async (mode, wasPack) => {
+      lifecycle.track(async (mode, wasPack) => {
         const f = await fixture();
         await customFees(f);
         const oldConfig = await db.integration.findUnique({
@@ -657,9 +666,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             data: { status: "ARCHIVED" },
           });
         }
-      },
+      }),
     );
-    it("persists coupon state through address saves, rejects stale revision and clears codes on market change", async () => {
+    it("persists coupon state through address saves, rejects stale revision and clears codes on market change", lifecycle.track(async () => {
       const f = await fixture(),
         p = await program(f);
       await saveCartCoupons([p.coupon.code.toLowerCase()], 0);
@@ -684,8 +693,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await db.cart.findUniqueOrThrow({ where: { id: f.cart.id } }))
           .checkout,
       ).toEqual({});
-    });
-    it("CA minimum-basket promotion does not cross market boundaries", async () => {
+    }));
+    it("CA minimum-basket promotion does not cross market boundaries", lifecycle.track(async () => {
       const f = await fixture("en", "CA");
       const base = promotionInput(f.market.id, f.product.id);
       const p = await program(f, {
@@ -713,8 +722,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           })
         ).discountTotal,
       ).toBe("0.0000");
-    });
-    it("uses the confirmed page locale after a shopper changes language", async () => {
+    }));
+    it("uses the confirmed page locale after a shopper changes language", lifecycle.track(async () => {
       const f = await fixture("tr");
       const raw = promotionInput(f.market.id, f.product.id);
       const p = await program(f, {
@@ -738,8 +747,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         where: { number: placed.number },
       });
       expect(order.discountAmount.toFixed(4)).toBe("10.0000");
-    });
-    it("commits net tax, immutable discounts and payment without changing unit price, and retries once", async () => {
+    }));
+    it("commits net tax, immutable discounts and payment without changing unit price, and retries once", lifecycle.track(async () => {
       const f = await fixture();
       await customFees(f);
       const p = await program(f),
@@ -767,8 +776,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { evaluationId: order.promotionEvaluation!.id },
         }),
       ).toBe(2);
-    });
-    it("quotes and stores tax without merchant-absorbed shipping", async () => {
+    }));
+    it("quotes and stores tax without merchant-absorbed shipping", lifecycle.track(async () => {
       const f = await fixture();
       await customFees(f);
       await db.feeRule.updateMany({
@@ -805,8 +814,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(order.totalAmount.toFixed(4)).toBe("99.0000");
       expect(order.items[0].unitPriceAmount.toFixed(4)).toBe("100.0000");
       expect(order.promotionEvaluation?.redemptions).toHaveLength(1);
-    });
-    it("rolls back stale total before creating order, usage, payment or reservation", async () => phase("stale-price", async () => {
+    }));
+    it("rolls back stale total before creating order, usage, payment or reservation", lifecycle.track(async () => phase("stale-price", async () => {
       const f = await phase("fixture", () => fixture()),
         p = await phase("program", () => program(f));
       await saveCartCoupons([p.coupon.code], 0);
@@ -831,8 +840,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } }))
           .reserved,
       ).toBe(0);
-    }));
-    it("two real checkouts cannot both redeem the last coupon; losing cart remains usable", async () => phase("last-coupon", async () => {
+    })));
+    it("two real checkouts cannot both redeem the last coupon; losing cart remains usable", lifecycle.track(async () => phase("last-coupon", async () => {
       const f = await phase("fixture", () => fixture()),
         p = await phase("program", () => program(f, { totalUsageCap: 1 }));
       const codes = [p.coupon.code];
@@ -885,8 +894,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: { in: [f.cart.id, second.id] }, completedAt: null },
         }),
       ).toBe(1);
-    }));
-    it("five admitted transaction quotes do not exhaust the five-connection pool", async () => {
+    })));
+    it("five admitted transaction quotes do not exhaust the five-connection pool", lifecycle.track(async () => {
       const f = await fixture();
       const results = await transactionWave(5, () => Promise.allSettled(Array.from({ length: 5 }, () =>
         phase("quote-wave", () => db.$transaction((tx) => quoteCart({
@@ -898,8 +907,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(5);
       expect(await db.order.count({ where: { cartId: f.cart.id } })).toBe(0);
       expect((await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } })).reserved).toBe(0);
-    });
-    it("five retries of one cart finish with one order and one reservation in a five-connection pool", async () => {
+    }));
+    it("five retries of one cart finish with one order and one reservation in a five-connection pool", lifecycle.track(async () => {
       const f = await fixture();
       const q = await quote(f);
       const results = await transactionWave(5, () => Promise.allSettled(Array.from({ length: 5 }, () =>
@@ -913,8 +922,49 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(orders[0].payments).toHaveLength(1);
       expect(orders[0].reservations).toHaveLength(1);
       expect((await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } })).reserved).toBe(1);
-    });
-    it("unpaid cancellation releases capacity once, allowing a new quote", async () => {
+    }));
+    it("rolls back order, payment, coupon, inventory and consumed customer credit after a final-step failure", lifecycle.track(async () => {
+      const f = await fixture(), p = await program(f);
+      await seedLedgerAccounts(db);
+      await db.financeConfig.upsert({
+        where: { id: f.market.id },
+        create: { id: f.market.id, enabled: true, enabledAt: new Date(Date.now() - 60000) },
+        update: { enabled: true, enabledAt: new Date(Date.now() - 60000) },
+      });
+      const customer = await db.customer.create({ data: { email: f.address.email, isGuest: false } });
+      actor.customerId = customer.id;
+      await saveCartCoupons([p.coupon.code], 0);
+      const q = await quote(f, [p.coupon.code]);
+      const credit = await db.storeCredit.create({ data: { customerId: customer.id, amount: q.total, balance: q.total, currency: f.market.currency } });
+      let faultOrderId: string | undefined;
+      let faultOrderNumber: string | undefined;
+      const queue = vi.spyOn(notifications, "queueEmail").mockImplementationOnce(async (tx) => {
+        const order = await tx.order.findUniqueOrThrow({ where: { cartId: f.cart.id }, include: { payments: true, reservations: true, promotionEvaluation: true } });
+        faultOrderId = order.id;
+        faultOrderNumber = order.number;
+        expect(order.status).toBe("PAID");
+        expect(order.payments.some((payment) => payment.method === "STORE_CREDIT")).toBe(true);
+        expect(order.promotionEvaluation).not.toBeNull();
+        expect(await tx.journalEntry.count({ where: { memo: order.number } })).toBeGreaterThan(0);
+        expect((await tx.storeCredit.findUniqueOrThrow({ where: { id: credit.id } })).balance.toString()).toBe("0");
+        timeline("fault.after-financial-writes", { orderCreated: true, couponEvaluated: true, creditConsumed: true });
+        throw new Error("INJECTED_FINAL_QUEUE_FAILURE");
+      });
+      try { await expect(placeOrder(f.address, true, 1, q.total, true)).rejects.toThrow("INJECTED_FINAL_QUEUE_FAILURE"); }
+      finally { queue.mockRestore(); }
+      expect(faultOrderId).toBeDefined();
+      expect(await db.order.count({ where: { cartId: f.cart.id } })).toBe(0);
+      expect(await db.payment.count({ where: { orderId: faultOrderId } })).toBe(0);
+      expect(await db.reservation.count({ where: { orderId: faultOrderId } })).toBe(0);
+      expect(await db.promotionRedemption.count({ where: { programId: p.saved.id } })).toBe(0);
+      expect(await db.creditUse.count({ where: { creditId: credit.id } })).toBe(0);
+      expect(await db.journalEntry.count({ where: { memo: faultOrderNumber } })).toBe(0);
+      expect(await db.stockMovement.count({ where: { refId: faultOrderId } })).toBe(0);
+      expect((await db.storeCredit.findUniqueOrThrow({ where: { id: credit.id } })).balance.toString()).toBe(new Decimal(q.total).toString());
+      expect(await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } })).toMatchObject({ onHand: 10, reserved: 0 });
+      expect((await db.lot.aggregate({ where: { variantId: f.variant.id }, _sum: { qtyRemaining: true } }))._sum.qtyRemaining).toBe(10);
+    }));
+    it("unpaid cancellation releases capacity once, allowing a new quote", lifecycle.track(async () => {
       const f = await fixture(),
         p = await program(f, { totalUsageCap: 1 });
       const { order } = await place(f, [p.coupon.code]);
@@ -927,8 +977,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).toBe(1);
       expect((await quote(f, [p.coupon.code])).discountTotal).toBe("10.0000");
-    });
-    it("authenticated first-market shopper qualifies; matching guest email cannot use customer-only coupon", async () => {
+    }));
+    it("authenticated first-market shopper qualifies; matching guest email cannot use customer-only coupon", lifecycle.track(async () => {
       const f = await fixture(),
         p = await program(f, { perCustomerCap: 1 });
       const c = await db.customer.create({
@@ -942,8 +992,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       const { order } = await place(f, [p.coupon.code]);
       expect(order.customerId).toBe(c.id);
       expect((await quote(f, [p.coupon.code])).discountTotal).toBe("0.0000");
-    });
-    it("refund budgets and balanced journals separate shipping discounts; paid usage remains consumed", async () => {
+    }));
+    it("refund budgets and balanced journals separate shipping discounts; paid usage remains consumed", lifecycle.track(async () => {
       const f = await fixture();
       await customFees(f);
       await seedLedgerAccounts(db);
@@ -1015,10 +1065,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { evaluationId: order.promotionEvaluation!.id },
         }),
       ).toBe(0);
-    });
+    }));
     it.each(["fa", "tr", "en"] as const)(
       "%s invoice keeps original translated discount after editing the program",
-      async (locale) => {
+      lifecycle.track(async (locale) => {
         const f = await fixture(locale),
           p = await program(f);
         const { order } = await place(f, [p.coupon.code]);
@@ -1045,9 +1095,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             amount: "10.0000",
           }),
         ]);
-      },
+      }),
     );
-    it("a fully discounted order reaches PAID with zero due and invoice, without negative sales", async () => {
+    it("a fully discounted order reaches PAID with zero due and invoice, without negative sales", lifecycle.track(async () => {
       const f = await fixture();
       await customFees(f, true);
       const raw = promotionInput(f.market.id, f.product.id);
@@ -1062,6 +1112,6 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(order.status).toBe("PAID");
       expect(order.payments).toHaveLength(0);
       expect(await db.invoice.count({ where: { orderId: order.id } })).toBe(1);
-    });
+    }));
   },
 );

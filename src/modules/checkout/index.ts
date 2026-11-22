@@ -130,7 +130,7 @@ export async function placeOrder(
         });
         if (!banks.length) throw new CommerceError("PAYMENT_UNAVAILABLE");
         const locale = requestedLocale ?? localeSchema.parse(cart.locale);
-        if ((await getRequestContext(locale)).market.id !== cart.marketId)
+        if ((await getRequestContext(locale, tx)).market.id !== cart.marketId)
           throw new CommerceError("MARKET_CHANGED");
         const quote = await quoteCart(
           {
@@ -166,7 +166,7 @@ export async function placeOrder(
         const tryRate =
           cart.market.currency === "TRY"
             ? marketRate
-            : (await getActiveRate(tryMarket)).rate;
+            : (await getActiveRate(tryMarket, undefined, tx)).rate;
         const now = new Date(),
           holdUntil = new Date(now.getTime() + cart.market.holdHours * 3600000),
           deadline = new Date(

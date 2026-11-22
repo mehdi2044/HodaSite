@@ -325,8 +325,8 @@ export async function expireReservations(now = new Date()): Promise<number> {
   });
 }
 
-export async function availableForVariant(variantId: string) {
-  const totals = await db.stockItem.aggregate({
+export async function availableForVariant(variantId: string, client: Pick<Prisma.TransactionClient, "stockItem"> = db) {
+  const totals = await client.stockItem.aggregate({
     where: { variantId },
     _sum: { onHand: true, reserved: true },
   });
