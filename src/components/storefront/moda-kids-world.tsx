@@ -14,7 +14,7 @@ import { ModaKidsRing } from "./moda-kids-ring";
 import { isDemoFashionMedia, ResponsiveImage } from "./responsive-image";
 
 const cloud =
-  "M18 65C2 61 4 43 18 39C16 23 31 13 45 19C51 2 80 1 91 19C105 11 122 18 126 31C148 26 168 36 165 50C187 48 199 64 185 71C163 80 128 72 101 75C73 78 36 77 18 65Z";
+  "M26 66C10 65 7 51 19 44C15 30 29 20 43 25C47 9 67 6 79 19C93 9 113 18 115 32C131 23 151 31 152 45C167 39 185 48 183 59C181 72 150 72 125 71C93 73 52 75 26 66Z";
 const star = "M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6Z";
 const podiumTones = [
   "kidsLilac",
@@ -145,6 +145,7 @@ export async function ModaKidsWorld({
   const titleStart = separator < 0 ? title : title.slice(0, separator);
   const titleEnd = separator < 0 ? "" : title.slice(separator + 1);
   const english = title === "Little Wanderers";
+  const sunGradient = `kids-sun-${block.id}`;
 
   return (
     <section
@@ -153,20 +154,30 @@ export async function ModaKidsWorld({
       style={{ "--kids-world-tone": `var(--${block.tone})` } as CSSProperties}
     >
       <div className="moda-kids-decor" aria-hidden="true">
-        <svg className="moda-kids-sun" viewBox="0 0 100 100">
+        <svg className="moda-kids-sun" viewBox="0 0 100 100" focusable="false">
+          <defs>
+            <radialGradient id={sunGradient} cx="35%" cy="28%" r="72%">
+              <stop offset="0" stopColor="var(--surface)" />
+              <stop offset=".45" stopColor="var(--kidsButter)" />
+              <stop offset="1" stopColor="var(--kidsPeach)" />
+            </radialGradient>
+          </defs>
           <circle
             cx="50"
             cy="50"
-            r="34"
+            r="42"
             fill="var(--kidsButter)"
-            opacity=".5"
+            opacity=".18"
           />
+          <circle cx="50" cy="50" r="29" fill={`url(#${sunGradient})`} />
           <circle
             cx="50"
             cy="50"
-            r="25"
-            fill="var(--kidsButter)"
-            opacity=".7"
+            r="35"
+            fill="none"
+            stroke="var(--kidsButter)"
+            strokeWidth=".8"
+            opacity=".6"
           />
         </svg>
         <svg className="moda-kids-moon" viewBox="0 0 100 100">
@@ -176,7 +187,7 @@ export async function ModaKidsWorld({
             opacity=".8"
           />
         </svg>
-        <svg className="moda-kids-cloud" viewBox="0 0 200 80">
+        <svg className="moda-kids-cloud" viewBox="0 0 200 80" focusable="false">
           <path
             fill="var(--kidsSky)"
             opacity=".3"
@@ -185,7 +196,7 @@ export async function ModaKidsWorld({
           />
           <path fill="var(--surface)" opacity=".85" d={cloud} />
         </svg>
-        <svg className="moda-kids-cloud" viewBox="0 0 200 80">
+        <svg className="moda-kids-cloud" viewBox="0 0 200 80" focusable="false">
           <path
             fill="var(--kidsSky)"
             opacity=".3"

@@ -581,21 +581,24 @@ html[dir="rtl"]
     padding: 38px 14px 14px;
   }
 }
-/* Six ambient SVGs replace the previous eight shapes. Product/ring geometry is untouched. */
+/* Six ambient SVGs; product/ring geometry is untouched. Static fills, compositor-only motion. */
 .moda-kids-decor .moda-kids-sun,
 .moda-kids-decor .moda-kids-moon {
   position: absolute;
   inline-size: 92px;
-  opacity: 0.65;
+  opacity: 0.82;
 }
 .moda-kids-decor .moda-kids-sun {
   inset-inline-start: 6%;
   inset-block-start: 12%;
+  animation: home-sun-breathe 28s ease-in-out -7s infinite alternate;
 }
 .moda-kids-decor .moda-kids-moon {
   inset-inline-end: 36%;
   inset-block-end: 10%;
   inline-size: 68px;
+  opacity: 0.58;
+  animation: home-moon-drift 36s ease-in-out -12s infinite alternate;
 }
 .moda-kids-decor .moda-kids-cloud {
   left: auto;
@@ -615,7 +618,13 @@ html[dir="rtl"]
   animation: home-cloud-far 57s ease-in-out -11s infinite alternate;
 }
 .moda-kids-decor .moda-kids-star {
-  animation: home-star-light 12s ease-in-out infinite alternate;
+  inline-size: 22px;
+  animation: home-star-light 14s ease-in-out -4s infinite alternate;
+}
+.moda-kids-decor .moda-kids-star + .moda-kids-star {
+  inline-size: 16px;
+  animation-duration: 19s;
+  animation-delay: -9s;
 }
 .moda-kids-world:is(:hover, :focus-within) .moda-kids-decor svg {
   animation-play-state: paused;
@@ -626,6 +635,22 @@ html[dir="rtl"]
   }
   to {
     transform: translate3d(8px, 3px, 0);
+  }
+}
+@keyframes home-sun-breathe {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.98);
+  }
+  to {
+    transform: translate3d(0, -3px, 0) scale(1.02);
+  }
+}
+@keyframes home-moon-drift {
+  from {
+    transform: translate3d(0, -2px, 0) rotate(-3deg);
+  }
+  to {
+    transform: translate3d(3px, 2px, 0) rotate(3deg);
   }
 }
 @keyframes home-cloud-far {
@@ -646,6 +671,29 @@ html[dir="rtl"]
     transform: scale(1.02);
   }
 }
+@media (max-width: 760px) {
+  .moda-kids-decor .moda-kids-sun {
+    inset-block-start: 12px;
+    inline-size: 72px;
+  }
+  .moda-kids-decor .moda-kids-cloud {
+    top: 0;
+    inset-inline-start: 34%;
+    inline-size: 170px;
+  }
+  .moda-kids-decor .moda-kids-cloud + .moda-kids-cloud {
+    bottom: 0;
+    inline-size: 120px;
+  }
+  .moda-kids-decor .moda-kids-star {
+    top: 48%;
+    left: auto;
+    inset-inline-start: 7%;
+  }
+  .moda-kids-decor .moda-kids-star + .moda-kids-star {
+    top: auto;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .moda-kids-decor svg {
     animation: none !important;
@@ -654,6 +702,271 @@ html[dir="rtl"]
   .moda-lookbook-plane,
   .home-lookbook-caption {
     transition: none;
+  }
+}
+
+/* Shared footer: CMS content and existing consent/install behavior, one visual system. */
+.moda-footer {
+  --footer-ink: var(--background);
+  --footer-muted: color-mix(in srgb, var(--background) 76%, transparent);
+  --footer-line: color-mix(in srgb, var(--background) 18%, transparent);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 48px clamp(20px, 4vw, 64px) 28px;
+}
+.moda-footer-main,
+.moda-footer-utilities,
+.moda-footer-legal {
+  inline-size: 100%;
+  max-inline-size: 1312px;
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+.moda-footer-main {
+  display: grid;
+  gap: 36px;
+  padding-block-end: 32px;
+}
+.moda-footer-brand {
+  min-inline-size: 0;
+}
+.moda-footer .moda-footer-wordmark {
+  inline-size: min(100%, 290px);
+  margin: 0 0 28px;
+  padding: 0;
+  line-height: 1;
+}
+.moda-footer-wordmark > svg {
+  inline-size: 100%;
+  margin: 0;
+}
+.moda-footer .moda-footer-top {
+  max-inline-size: 44ch;
+  padding: 0;
+}
+.moda-footer .moda-newsletter {
+  display: grid;
+  gap: 12px;
+}
+.moda-footer .moda-newsletter h2[data-moda4-display] {
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.12;
+  margin: 0;
+}
+.moda-footer .moda-newsletter p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.moda-footer .moda-newsletter .button {
+  justify-self: start;
+  margin-block-start: 4px;
+  background: var(--primary);
+  border: 0;
+  border-radius: 999px;
+  padding-inline: 22px;
+}
+html[data-button-style="crayon"] .moda-footer .button::before,
+html[data-button-style="crayon"] .moda-footer .button::after {
+  display: none;
+}
+html[data-button-style="crayon"] .moda-footer .button {
+  background: var(--primary);
+  border-radius: 999px;
+}
+.moda-footer-links {
+  display: grid;
+  align-content: start;
+  gap: 24px;
+}
+.moda-footer-groups,
+.moda-footer-directory {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 24px;
+}
+.moda-footer-group > ul {
+  margin-block-start: 6px;
+}
+.moda-footer-links a {
+  font-size: 14px;
+  line-height: 1.7;
+  padding-block: 8px;
+}
+.moda-footer-links a:hover {
+  color: var(--primary);
+  text-underline-offset: 5px;
+}
+.moda-footer .moda-footer-contact {
+  margin: 0;
+  gap: 20px;
+}
+.moda-footer-contact strong {
+  font-size: 13px;
+  color: var(--footer-muted);
+}
+.moda-footer .moda-footer-utilities {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+  padding-block: 8px;
+  border-block: 1px solid var(--footer-line);
+}
+.moda-footer-utilities > .pwa-install,
+.moda-footer-privacy {
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 8px 0;
+}
+.moda-footer-privacy {
+  border-block-start: 1px solid var(--footer-line);
+}
+.moda-footer .pwa-install-help {
+  border: 0;
+  padding: 0;
+}
+.moda-footer .pwa-install-help summary,
+.moda-footer .moda-privacy-settings {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  inline-size: 100%;
+  min-block-size: 52px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.65;
+  text-align: start;
+  cursor: pointer;
+  list-style: none;
+}
+.moda-footer .pwa-install-help summary::-webkit-details-marker {
+  display: none;
+}
+.moda-footer .pwa-install-help summary svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+.moda-footer .pwa-install-help summary::after {
+  content: "+";
+  margin-inline-start: auto;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--primary);
+}
+.moda-footer .pwa-install-help[open] summary::after {
+  content: "−";
+}
+.moda-footer .moda-privacy-settings::before {
+  content: "";
+  inline-size: 12px;
+  block-size: 16px;
+  flex: 0 0 auto;
+  border: 1.3px solid var(--primary);
+  border-radius: 6px 6px 8px 8px;
+  margin-inline: 4px;
+}
+.moda-footer .moda-consent-panel {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin: 0;
+  padding: 8px 0 16px;
+  color: var(--footer-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.moda-footer .moda-consent-panel h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.moda-footer .moda-consent-panel p,
+.moda-footer .pwa-install-help p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--footer-muted);
+}
+.moda-consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block-start: 16px;
+}
+.moda-consent-choice {
+  min-block-size: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--footer-line);
+  border-radius: 999px;
+  color: var(--footer-ink);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.moda-consent-choice:hover {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.moda-footer :is(a, button, summary, select):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+}
+.moda-footer .pwa-install-help h3 {
+  font-size: 13px;
+  margin-block: 16px 4px;
+}
+.moda-footer .pwa-install-help p {
+  margin-block: 6px 12px;
+}
+.moda-footer .pwa-install-prompt,
+.moda-footer .pwa-update {
+  margin-block: 8px 16px;
+  background: color-mix(in srgb, var(--background) 5%, transparent);
+  border: 1px solid var(--footer-line);
+  color: var(--footer-ink);
+  padding: 16px;
+  border-radius: 16px;
+}
+.moda-footer .pwa-install-prompt p {
+  color: var(--footer-muted);
+}
+.moda-footer .moda-footer-legal {
+  padding-block-start: 18px;
+  border: 0;
+  margin-block: 0;
+  font-size: 12px;
+  line-height: 1.8;
+}
+@media (min-width: 768px) {
+  .moda-footer-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 48px;
+    padding-block-end: 36px;
+  }
+  .moda-footer .moda-footer-utilities {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px;
+  }
+  .moda-footer-privacy {
+    border-block-start: 0;
+  }
+}
+@media (min-width: 1101px) {
+  .moda-footer {
+    padding-block-start: 56px;
+  }
+  .moda-footer-main {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: 96px;
+  }
+  .moda-footer-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .moda-footer-directory {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 32px;
   }
 }
 

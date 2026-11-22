@@ -165,7 +165,33 @@ export function PwaControls() {
             </div>
           )}
           <details className="pwa-install-help">
-            <summary>{t("installHelp")}</summary>
+            <summary>
+              <svg
+                width="20"
+                height="24"
+                viewBox="0 0 20 24"
+                fill="none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <rect
+                  x="3"
+                  y="1"
+                  width="14"
+                  height="22"
+                  rx="3"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                />
+                <path
+                  d="M8 4h4M8 20h4"
+                  stroke="currentColor"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span>{t("installHelp")}</span>
+            </summary>
             {!secure ? (
               <p>{t("httpsRequired")}</p>
             ) : (
