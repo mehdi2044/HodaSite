@@ -25,14 +25,15 @@ async function consent(page: Page) {
   );
 }
 
-for (const locale of ["fa", "en", "tr"]) {
+for (const locale of ["fa", "en", "tr"] as const) {
   for (const width of [320, 390, 768, 1024, 1440]) {
     test(`${locale}/${width}: footer, consent, installation and kids controls remain usable`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: "reduce" });
-      await page.goto(`/${locale}/m/IR`);
+      const market = { fa: "IR", en: "CA", tr: "TR" }[locale];
+      await page.goto(`/${locale}/m/${market}`);
       await page.evaluate(() => document.fonts.ready);
       const kids = page.locator('[data-moda4="kids-world"]');
       await expect(kids.locator(".moda-kids-decor")).toHaveAttribute(
