@@ -87,7 +87,12 @@ export async function quoteCart(
       )!;
       if ((await availableForVariant(variant.id, client)) < item.quantity)
         throw new Error(`Insufficient stock for variant ${variant.id}`);
-      const price = await getDisplayPrice(variant.product, variant, market, transaction?.tx);
+      const price = await getDisplayPrice(
+        variant.product,
+        variant,
+        market,
+        transaction?.tx,
+      );
       const dimensions = variant.dimensions as {
         lengthCm?: string;
         widthCm?: string;
@@ -109,7 +114,9 @@ export async function quoteCart(
       };
     }),
   );
-  const rules = await client.feeRule.findMany({ where: { marketId: market.id } });
+  const rules = await client.feeRule.findMany({
+    where: { marketId: market.id },
+  });
   const inputs = rules.map((rule) => ({
     ...rule,
     params: rule.params as Record<string, unknown>,

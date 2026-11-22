@@ -50,8 +50,8 @@ export async function placeOrder(
       async (tx) => {
         const hash = tokenHash(token);
         await tx.$queryRaw`SELECT id FROM "Cart" WHERE "tokenHash"=${hash} FOR UPDATE`;
-        // Quote providers may read through a separate connection. Hold product
-        // classification stable before loading snapshots and until order commit.
+        // Hold product classification stable against concurrent admin writes
+        // before loading quote snapshots and until order commit.
         await tx.$queryRaw`
           SELECT p.id FROM "Product" p
           JOIN "Variant" v ON v."productId"=p.id

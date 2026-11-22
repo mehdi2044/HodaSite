@@ -30,7 +30,10 @@ const DEFAULT_MARKET_BY_LOCALE: Record<string, string> = {
  * The middleware has already redirected away any locale the resolved
  * market doesn't enable, so this never needs to redirect — just read.
  */
-export async function getRequestContext(locale: string, tx?: Prisma.TransactionClient): Promise<{
+export async function getRequestContext(
+  locale: string,
+  tx?: Prisma.TransactionClient,
+): Promise<{
   market: Market;
   markets: Market[];
   locale: string;

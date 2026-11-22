@@ -30,13 +30,21 @@ export async function getFxConfiguration() {
   };
 }
 
-async function loadActiveQuote(client: Prisma.TransactionClient, marketId: string) {
+async function loadActiveQuote(
+  client: Prisma.TransactionClient,
+  marketId: string,
+) {
   const quote = await client.fxQuote.findFirst({
     where: { marketId, status: "ACTIVE" },
     orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
   });
-  return quote ? { rate: quote.rate.toString(), source: quote.provider,
-    at: (quote.acceptedAt ?? quote.fetchedAt).toISOString() } : null;
+  return quote
+    ? {
+        rate: quote.rate.toString(),
+        source: quote.provider,
+        at: (quote.acceptedAt ?? quote.fetchedAt).toISOString(),
+      }
+    : null;
 }
 const activeQuoteCached = unstable_cache(
   (marketId: string) => loadActiveQuote(db, marketId),
@@ -67,7 +75,9 @@ export async function findEffectiveRate(
       at: override.validFrom,
     };
   if (!historical) {
-    const active = tx ? await loadActiveQuote(tx, marketId) : await activeQuoteCached(marketId);
+    const active = tx
+      ? await loadActiveQuote(tx, marketId)
+      : await activeQuoteCached(marketId);
     return active ? { ...active, at: new Date(active.at) } : null;
   }
   const quote = await client.fxQuote.findFirst({

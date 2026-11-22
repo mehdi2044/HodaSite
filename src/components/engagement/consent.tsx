@@ -31,8 +31,10 @@ export function Consent({
     version = `1:${ids.ga4}:${ids.gtm}:${ids.meta}`;
   const [choice, setChoice] = useState<boolean | null>(null),
     [open, setOpen] = useState(false),
+    [readyFor, setReadyFor] = useState<string | null>(null),
     loaded = useRef(false),
     loadedFor = useRef("");
+  const ready = readyFor === key + version;
   useEffect(() => {
     if (loaded.current && loadedFor.current !== key + version) {
       window.location.reload();
@@ -44,6 +46,7 @@ export function Consent({
     } catch {
       setChoice(null);
     }
+    setReadyFor(key + version);
   }, [key, version]);
   useEffect(() => {
     if (loaded.current && !analyticsPublicPath(path)) {
@@ -175,6 +178,8 @@ export function Consent({
       <button
         type="button"
         className="moda-privacy-settings"
+        disabled={!ready}
+        aria-busy={!ready}
         onClick={() => setOpen(true)}
       >
         {t("settings")}
@@ -187,12 +192,14 @@ export function Consent({
             <button
               data-testid="consent-reject"
               className="moda-consent-choice"
+              disabled={!ready}
               onClick={() => choose(false)}
             >
               {t("reject")}
             </button>
             <button
               className="moda-consent-choice"
+              disabled={!ready}
               onClick={() => choose(true)}
             >
               {t("accept")}

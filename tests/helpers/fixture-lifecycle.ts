@@ -3,11 +3,16 @@ export class FixtureLifecycle {
   private readonly bodies = new Set<Promise<unknown>>();
   private cleanup: Promise<void> = Promise.resolve();
 
-  track<Args extends unknown[], Result>(body: (...args: Args) => Promise<Result>) {
+  track<Args extends unknown[], Result>(
+    body: (...args: Args) => Promise<Result>,
+  ) {
     return (...args: Args) => {
       const result = body(...args);
       this.bodies.add(result);
-      void result.then(() => this.bodies.delete(result), () => this.bodies.delete(result));
+      void result.then(
+        () => this.bodies.delete(result),
+        () => this.bodies.delete(result),
+      );
       return result;
     };
   }
