@@ -31,6 +31,12 @@ vi.mock("@/modules/customers", () => ({
       ? db.customer.findUnique({ where: { id: actor.customerId } })
       : null,
 }));
+vi.mock("@/lib/db", async (original) => {
+  const module = await original<typeof import("@/lib/db")>();
+  const { traceDatabase } = await import("../helpers/database-timeline");
+  return { ...module, db: traceDatabase(module.db) };
+});
+import { phase, timeline, transactionWave } from "../helpers/database-timeline";
 import { db } from "@/lib/db";
 import { tokenHash } from "@/lib/secure-tokens";
 import { placeOrder, addressSchema } from "@/modules/checkout";
@@ -243,10 +249,12 @@ beforeEach(() => {
   actor.customerId = null;
 });
 afterEach(async () => {
+  timeline("cleanup.start");
   for (const p of programs.splice(0)) {
     const current = await db.promotionProgram.findUniqueOrThrow({
       where: { id: p.id },
     });
+    timeline("cleanup.version", { program: p.id, observedVersion: current.version });
     await savePromotionProgram({
       ...p.raw,
       id: p.id,
@@ -798,11 +806,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(order.items[0].unitPriceAmount.toFixed(4)).toBe("100.0000");
       expect(order.promotionEvaluation?.redemptions).toHaveLength(1);
     });
-    it("rolls back stale total before creating order, usage, payment or reservation", async () => {
-      const f = await fixture(),
-        p = await program(f);
+    it("rolls back stale total before creating order, usage, payment or reservation", async () => phase("stale-price", async () => {
+      const f = await phase("fixture", () => fixture()),
+        p = await phase("program", () => program(f));
       await saveCartCoupons([p.coupon.code], 0);
-      const q = await quote(f, [p.coupon.code]);
+      const q = await phase("quote", () => quote(f, [p.coupon.code]));
       await savePromotionProgram({
         ...p.raw,
         id: p.saved.id,
@@ -823,10 +831,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         (await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } }))
           .reserved,
       ).toBe(0);
-    });
-    it("two real checkouts cannot both redeem the last coupon; losing cart remains usable", async () => {
-      const f = await fixture(),
-        p = await program(f, { totalUsageCap: 1 });
+    }));
+    it("two real checkouts cannot both redeem the last coupon; losing cart remains usable", async () => phase("last-coupon", async () => {
+      const f = await phase("fixture", () => fixture()),
+        p = await phase("program", () => program(f, { totalUsageCap: 1 }));
       const codes = [p.coupon.code];
       await saveCartCoupons(codes, 0);
       const secondToken = randomUUID(),
@@ -877,6 +885,34 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { id: { in: [f.cart.id, second.id] }, completedAt: null },
         }),
       ).toBe(1);
+    }));
+    it("five admitted transaction quotes do not exhaust the five-connection pool", async () => {
+      const f = await fixture();
+      const results = await transactionWave(5, () => Promise.allSettled(Array.from({ length: 5 }, () =>
+        phase("quote-wave", () => db.$transaction((tx) => quoteCart({
+          marketId: f.market.id, locale: f.locale,
+          items: [{ variantId: f.variant.id, quantity: 1 }], address: f.address,
+          promotions: { customerId: null, couponCodes: [] },
+        }, { tx, lockPromotions: true }), { timeout: 30000 })),
+      )));
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(5);
+      expect(await db.order.count({ where: { cartId: f.cart.id } })).toBe(0);
+      expect((await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } })).reserved).toBe(0);
+    });
+    it("five retries of one cart finish with one order and one reservation in a five-connection pool", async () => {
+      const f = await fixture();
+      const q = await quote(f);
+      const results = await transactionWave(5, () => Promise.allSettled(Array.from({ length: 5 }, () =>
+        actor.requests!.run(new Map(actor.cookies), () => phase("checkout-retry-wave", () => placeOrder(f.address, true, 0, q.total))),
+      )));
+      expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(5);
+      const numbers = results.flatMap((r) => r.status === "fulfilled" ? [r.value.number] : []);
+      expect(new Set(numbers).size).toBe(1);
+      const orders = await db.order.findMany({ where: { cartId: f.cart.id }, include: { payments: true, reservations: true } });
+      expect(orders).toHaveLength(1);
+      expect(orders[0].payments).toHaveLength(1);
+      expect(orders[0].reservations).toHaveLength(1);
+      expect((await db.stockItem.findUniqueOrThrow({ where: { id: f.stock.id } })).reserved).toBe(1);
     });
     it("unpaid cancellation releases capacity once, allowing a new quote", async () => {
       const f = await fixture(),
