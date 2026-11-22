@@ -75,73 +75,79 @@ export async function transactionWave<T>(
 
 /** Preserves native model PrismaPromises, transaction options and the original client. */
 export function traceDatabase(client: PrismaClient): PrismaClient {
+  const originalTransaction = client.$transaction;
+  const tracedTransaction = (...args: unknown[]) => {
+    const id = ++sequence,
+      requested = performance.now(),
+      callback = args[0];
+    pending.add(id);
+    timeline("transaction.request", { id });
+    if (typeof callback === "function")
+      args[0] = async (tx: Prisma.TransactionClient) => {
+        const acquired = performance.now();
+        return context.run(
+          {
+            ...context.getStore(),
+            label: context.getStore()?.label ?? "unscoped",
+            transaction: id,
+          },
+          async () => {
+            timeline("transaction.acquired", {
+              id,
+              acquisitionAndBeginMs: acquired - requested,
+            });
+            if (process.env.CHECKOUT_TIMELINE_FILE) {
+              const [backend] = await tx.$queryRaw<
+                { pid: number }[]
+              >`SELECT pg_backend_pid() AS pid`;
+              timeline("transaction.backend", {
+                id,
+                backendPid: backend.pid,
+              });
+            }
+            if (gate) await gate();
+            try {
+              return await callback(tx);
+            } finally {
+              timeline("transaction.callback.end", { id });
+            }
+          },
+        );
+      };
+    return Promise.resolve(
+      Reflect.apply(originalTransaction, client, args),
+    ).then(
+      (result: unknown) => {
+        pending.delete(id);
+        timeline("transaction.commit", {
+          id,
+          totalMs: performance.now() - requested,
+        });
+        return result;
+      },
+      (error: unknown) => {
+        pending.delete(id);
+        timeline("transaction.rollback", {
+          id,
+          totalMs: performance.now() - requested,
+          code:
+            typeof error === "object" && error !== null && "code" in error
+              ? error.code
+              : undefined,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        throw error;
+      },
+    );
+  };
   return new Proxy(client, {
     get(target, key) {
       const value = Reflect.get(target, key);
+      // Existing lock tests replace/restore this method. Keep a stable wrapper
+      // and never wrap their replacement or restored bound wrapper again.
       if (key === "$transaction")
-        return (...args: unknown[]) => {
-          const id = ++sequence,
-            requested = performance.now(),
-            callback = args[0];
-          pending.add(id);
-          timeline("transaction.request", { id });
-          if (typeof callback === "function")
-            args[0] = async (tx: Prisma.TransactionClient) => {
-              const acquired = performance.now();
-              return context.run(
-                {
-                  ...context.getStore(),
-                  label: context.getStore()?.label ?? "unscoped",
-                  transaction: id,
-                },
-                async () => {
-                  timeline("transaction.acquired", {
-                    id,
-                    acquisitionAndBeginMs: acquired - requested,
-                  });
-                  if (process.env.CHECKOUT_TIMELINE_FILE) {
-                    const [backend] = await tx.$queryRaw<
-                      { pid: number }[]
-                    >`SELECT pg_backend_pid() AS pid`;
-                    timeline("transaction.backend", {
-                      id,
-                      backendPid: backend.pid,
-                    });
-                  }
-                  if (gate) await gate();
-                  try {
-                    return await callback(tx);
-                  } finally {
-                    timeline("transaction.callback.end", { id });
-                  }
-                },
-              );
-            };
-          return Promise.resolve(Reflect.apply(value, target, args)).then(
-            (result: unknown) => {
-              pending.delete(id);
-              timeline("transaction.commit", {
-                id,
-                totalMs: performance.now() - requested,
-              });
-              return result;
-            },
-            (error: unknown) => {
-              pending.delete(id);
-              timeline("transaction.rollback", {
-                id,
-                totalMs: performance.now() - requested,
-                code:
-                  typeof error === "object" && error !== null && "code" in error
-                    ? error.code
-                    : undefined,
-                error: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined,
-              });
-              throw error;
-            },
-          );
-        };
+        return value === originalTransaction ? tracedTransaction : value;
       if (
         context.getStore()?.transaction &&
         typeof key === "string" &&
