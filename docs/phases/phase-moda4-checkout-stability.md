@@ -10,4 +10,6 @@ Keep financial state atomic and Decimal-based. Verify stale-price rollback and c
 
 Trace the actual cookie/footer failure across navigation and reload, including readiness, DOM replacement, storage and click delivery. Do not change consent persistence or approved design without demonstrated application error. Preserve Kids World artwork, animation, reduced motion, footer presentation and mobile navigation.
 
+Production server module contexts must reuse the same PrismaClient on their shared Node global. Verify constructor identity across independently evaluated production factories and development/test modules, without changing the datasource, pool capacity or database configuration. Preserve any interrupted preliminary full run explicitly as partial evidence.
+
 Final evidence: independent checkout tests, real concurrency and rollback regressions, nine footer locale/width combinations, two full Vitest runs on new databases, purchase/checkout Playwright, Kids World and reduced motion, production build/lint/typecheck, source/build/live identity and preservation proof. Record SHA and pass/fail/skip counts for every run; retain initial failures. Historical React #418 and Connection closed remain open without new proof. Publish sanitized results in Issue 41 and stop for Mehdi; automated/self review is not D70 acceptance.

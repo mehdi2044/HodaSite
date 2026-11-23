@@ -8,6 +8,8 @@ The two historical checkout cases pass focused. Historical STALE_VERSION is rais
 
 Normal baseline footer checks pass nine combinations. Held JavaScript on an unchanged production build independently proves an early trusted settings click is lost before hydration; saved consent remains intact. Controls now use native disabled/busy state until handlers and stored preference are ready for the current context. Storage format, choice/revocation, analytics policy, text, footer styling and Kids World motion are unchanged. Nine new browser cases cover script gating, reload and reversible decisions.
 
+The production build contains two independent database module factories. Executing those genuine factories on one Node global proves two PrismaClient constructions without issuing queries; one source constructor is not an instance-count guarantee. Production previously skipped saving the global singleton. Persist it in every environment, retaining the same datasource and five-connection limit. A regression reproduces the production failure and checks production/development/test module re-evaluation. Preserve the interrupted earlier full run as partial evidence; only two completed full runs on the final SHA count as final validation.
+
 Read final full-suite, build/browser and preservation results from the source-matched handoff and Issue 41; implementation notes do not imply success. Historical React #418 and Connection closed remain open without new proof. D70 requires fresh head-matched CI/review, independent human acceptance and explicit Mehdi permission.
 
 ## MODA4 bird/butterfly completion — isolated candidate, 2026-11-22
