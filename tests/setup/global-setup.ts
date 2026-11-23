@@ -28,6 +28,7 @@ export default async function setup() {
       label: "Fitting exchange",
     },
     { url: process.env.COMMERCE_TEST_DATABASE_URL, label: "Commerce cron" },
+    { url: process.env.INVENTORY_TEST_DATABASE_URL, label: "Inventory expiry" },
   ]);
   for (const isolated of dedicated) {
     const fixture = new PrismaClient({
