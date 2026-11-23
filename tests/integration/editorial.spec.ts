@@ -31,19 +31,14 @@ vi.mock("@/modules/auth", () => ({
     request.actorId ? { user: { id: request.actorId } } : null,
 }));
 vi.mock("@/lib/db", async (importOriginal) => {
-  const isolated = process.env.EDITORIAL_TEST_DATABASE_URL;
+  const { isolatedTestDatabaseUrl } =
+    await import("../helpers/isolated-database");
+  const isolated = isolatedTestDatabaseUrl(
+    process.env.EDITORIAL_TEST_DATABASE_URL,
+    process.env.TEST_DATABASE_URL,
+    "Editorial",
+  );
   if (!isolated) return importOriginal<typeof import("@/lib/db")>();
-
-  const editorial = new URL(isolated);
-  const shared = process.env.TEST_DATABASE_URL;
-  if (
-    !shared ||
-    !editorial.pathname.endsWith("_test") ||
-    editorial.pathname === new URL(shared).pathname
-  )
-    throw new Error(
-      "Editorial requires a differently named dedicated _test database",
-    );
   const { PrismaClient } = await import("@prisma/client");
   return { db: new PrismaClient({ datasources: { db: { url: isolated } } }) };
 });

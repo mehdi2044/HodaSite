@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { isolatedTestDatabases } from "../helpers/isolated-database";
 
 // Runs once before any test file, deciding what the integration specs below
 // will do (they gate on `Boolean(process.env.TEST_DATABASE_URL)`):
@@ -20,6 +21,24 @@ export default async function setup() {
     );
   }
 
+  const dedicated = isolatedTestDatabases(url, [
+    { url: process.env.EDITORIAL_TEST_DATABASE_URL, label: "Editorial" },
+    {
+      url: process.env.FITTING_EXCHANGE_TEST_DATABASE_URL,
+      label: "Fitting exchange",
+    },
+    { url: process.env.COMMERCE_TEST_DATABASE_URL, label: "Commerce cron" },
+  ]);
+  for (const isolated of dedicated) {
+    const fixture = new PrismaClient({
+      datasources: { db: { url: isolated } },
+    });
+    try {
+      await fixture.$queryRaw`SELECT 1`;
+    } finally {
+      await fixture.$disconnect();
+    }
+  }
   const prisma = new PrismaClient({ datasources: { db: { url } } });
   try {
     await prisma.$queryRaw`SELECT 1`;
