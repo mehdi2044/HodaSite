@@ -10,6 +10,8 @@ The namespace audit parsed every source file even when it could not contain a gu
 
 Correlated homepage traces show seventeen identical active-market reads for content links per render. React request-local memoization coalesces that read by market and locale; every new document/Flight render checks live availability again. No shared financial/authentication cache, cache-tag contract, content data, media, geometry, consent semantics or approved presentation changes.
 
+A clean Next.js 16 build regenerated the tracked next-env declarations to import routes and root-params types. Preserve that generated framework-compatible header in source, retain the first build/static results as nonfinal identity evidence, and rebuild from a clean commit. Do not discard the generated difference merely to report a clean checkout.
+
 Run focused transaction readers, checkout, returns, promotions, access/namespace and content-target tests before complete source-matched build/static/browser/full-suite validation. Evidence must retain initial failures and distinguish instrumented diagnostics from plain production verification. Historical P2024, en/1440 reload and five Windows timeouts remain open until the final evidence resolves each explicitly. Current-head remote CI, independent review and Mehdi acceptance are separate D70 gates; local success alone does not satisfy them. Final sanitized run counts, SHA/Build ID, preservation receipts and remaining blockers are recorded in Issue 41.
 
 ## MODA4 Checkout/pool/consent stability — isolated candidate, 2026-11-23
