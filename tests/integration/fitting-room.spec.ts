@@ -1,3 +1,5 @@
+import { FixtureLifecycle } from "../helpers/fixture-lifecycle";
+const fixtureLife = new FixtureLifecycle();
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import Decimal from "decimal.js";
@@ -192,12 +194,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
     });
     beforeEach(async () => {
+      await fixtureLife.ready();
       state.actor = ownerId;
       state.customer = null;
       state.maintenance = false;
       await configure();
     });
     afterAll(async () => {
+      await fixtureLife.ready();
+      try {
       const sessions = await db.fittingSession.findMany({
         where: { customerId: { in: customers } },
       });
@@ -226,13 +231,17 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ]))
         await storage.delete(key);
       vi.unstubAllEnvs();
+
+      } finally {
+        await db.$disconnect();
+      }
     });
     it.each([
       { enabled: false, coinSalesEnabled: true },
       { enabled: true, coinSalesEnabled: false },
     ])(
       "hides active packs across public catalog surfaces when toggles are %j",
-      async (toggles) => {
+      fixtureLife.track(async (toggles) => {
         const f = await returnFixture(db, { coinPackCoins: "100" });
         const productId = f.variants[0].productId;
         const marker = `coinvisibility${randomUUID().replaceAll("-", "")}`;
@@ -339,11 +348,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             data: { status: "ARCHIVED" },
           });
         }
-      },
+      }),
     );
     it.each(["DRAFT", "ARCHIVED", "COIN_PACK"] as const)(
       "rejects a prepared look when its previously active garment becomes %s",
-      async (state) => {
+      fixtureLife.track(async (state) => {
         const original = await db.product.findUniqueOrThrow({
           where: { id: "seed-style-v2-women-tee" },
         });
@@ -369,9 +378,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             },
           });
         }
-      },
+      }),
     );
-    it("requires globally prepared looks to be available in every inheriting market", async () => {
+    it("requires globally prepared looks to be available in every inheriting market", fixtureLife.track(async () => {
       const product = await db.product.findUniqueOrThrow({
         where: { id: "seed-style-v2-women-tee" },
       });
@@ -420,8 +429,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           data: { marketIds: product.marketIds },
         });
       }
-    });
-    it("excludes live market homepage overrides from global look eligibility, restoring fallback checks after soft deletion", async () => {
+    }));
+    it("excludes live market homepage overrides from global look eligibility, restoring fallback checks after soft deletion", fixtureLife.track(async () => {
       const product = await db.product.findUniqueOrThrow({
         where: { id: "seed-style-v2-women-tee" },
       });
@@ -481,8 +490,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             where: { marketId: overrideMarket.id },
           });
       }
-    });
-    it("rejects a crafted child department without changing homepage content", async () => {
+    }));
+    it("rejects a crafted child department without changing homepage content", fixtureLife.track(async () => {
       state.actor = ownerId;
       const blocks = homepageBlocksSchema.parse([styleLookBlock]);
       const block = blocks[0];
@@ -515,10 +524,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { action: { startsWith: "content.homepage." } },
         }),
       ).toBe(audits);
-    });
+    }));
     it.each(["editor", "homepage"] as const)(
       "serializes homepage references and product AI alt edits with %s first",
-      async (first) => {
+      fixtureLife.track(async (first) => {
         state.actor = ownerId;
         const blocks = homepageBlocksSchema.parse([styleLookBlock]);
         const block = blocks[0];
@@ -687,7 +696,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           else await db.homepage.deleteMany({ where: { marketId } });
           await db.product.delete({ where: { id: product.id } });
         }
-      },
+      }),
     );
     it.each([
       "PRODUCT",
@@ -698,7 +707,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       "MEDIA_STATUS",
     ] as const)(
       "rejects homepage references invalidated by a concurrent %s transaction",
-      async (kind) => {
+      fixtureLife.track(async (kind) => {
         state.actor = ownerId;
         const blocks = homepageBlocksSchema.parse([styleLookBlock]);
         const block = blocks[0];
@@ -835,11 +844,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
               },
             });
         }
-      },
+      }),
     );
     it.each(["DELETE", "STATUS"] as const)(
       "rejects fitting settings after concurrent model-image %s",
-      async (kind) => {
+      fixtureLife.track(async (kind) => {
         state.actor = ownerId;
         const originalMedia = await db.media.findUniqueOrThrow({
           where: { id: defaultConfig.models[0].mediaId },
@@ -913,9 +922,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             },
           });
         }
-      },
+      }),
     );
-    it("audits exact coin entitlement from creation through repeated edits and garment reclassification", async () => {
+    it("audits exact coin entitlement from creation through repeated edits and garment reclassification", fixtureLife.track(async () => {
       state.actor = ownerId;
       const marker = randomUUID();
       const template = await db.variant.findUniqueOrThrow({
@@ -994,10 +1003,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await db.product.delete({ where: { id: productId } });
         }
       }
-    });
+    }));
     it.each(["seed-fitting-pack-100", "seed-style-v2-women-tee"])(
       "preserves fitting metadata when the admin duplicates %s",
-      async (sourceId) => {
+      fixtureLife.track(async (sourceId) => {
         state.actor = ownerId;
         const source = await db.product.findUniqueOrThrow({
           where: { id: sourceId },
@@ -1028,7 +1037,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           fittingSlot: copy.fittingSlot,
         });
         expect(copy.variants).toHaveLength(source.variants.length);
-      },
+      }),
     );
     it.each(
       (["disable", "welcome"] as const).flatMap((change) =>
@@ -1038,7 +1047,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ),
     )(
       "serializes %s settings and welcome grants with %s first",
-      async (change, first) => {
+      fixtureLife.track(async (change, first) => {
         await configure({ welcomeCoins: "100" });
         const c = await customer("0");
         const old = await db.integration.findUniqueOrThrow({
@@ -1099,9 +1108,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await Promise.allSettled([saving, viewing]);
           barrier.restore();
         }
-      },
+      }),
     );
-    it("does not grant welcome/daily credit while disabled", async () => {
+    it("does not grant welcome/daily credit while disabled", fixtureLife.track(async () => {
       await configure({
         enabled: false,
         welcomeCoins: "62.5",
@@ -1113,8 +1122,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await db.fittingSession.count({ where: { customerId: c.id } }),
       ).toBe(0);
-    });
-    it("defers new jobs during maintenance and completes admitted rendering without redispatch", async () => {
+    }));
+    it("defers new jobs during maintenance and completes admitted rendering without redispatch", fixtureLife.track(async () => {
       const c = await customer(),
         s = await create(c.id);
       const provider = {
@@ -1165,7 +1174,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         put.mockRestore();
         registerFittingJobs();
       }
-    });
+    }));
     it.each(
       (["coin", "draft", "archived", "market"] as const).flatMap((change) =>
         (["editor", "session"] as const).map(
@@ -1174,7 +1183,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ),
     )(
       "serializes %s product edits and fitting creation with %s first",
-      async (change, first) => {
+      fixtureLife.track(async (change, first) => {
         const c = await customer();
         const template = await db.variant.findUniqueOrThrow({
           where: { id: "seed-style-v2-women-tee-m" },
@@ -1347,9 +1356,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await db.stockItem.deleteMany({ where: { variantId: variant.id } });
           await db.product.delete({ where: { id: product.id } });
         }
-      },
+      }),
     );
-    it("serializes simultaneous requests without overspend", async () => {
+    it("serializes simultaneous requests without overspend", fixtureLife.track(async () => {
       const c = await customer("50");
       const results = await Promise.allSettled(
         Array.from({ length: 8 }, () => create(c.id)),
@@ -1361,8 +1370,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { customerId: c.id, reason: "FITTING" },
         }),
       ).toBe(4);
-    });
-    it("replays exactly once and rejects changed payload without writes", async () => {
+    }));
+    it("replays exactly once and rejects changed payload without writes", fixtureLife.track(async () => {
       const c = await customer(),
         r = input();
       const [a, b] = await Promise.all([
@@ -1378,10 +1387,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         }),
       ).rejects.toThrow("REQUEST_CONFLICT");
       expect(await balance(c.id)).toBe("87.5");
-    });
+    }));
     it.each(["disable", "dispatch"] as const)(
       "serializes the admin kill switch and queued dispatch with %s first",
-      async (first) => {
+      fixtureLife.track(async (first) => {
         state.actor = ownerId;
         const c = await customer(),
           session = await create(c.id);
@@ -1460,11 +1469,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await Promise.allSettled([settings, rendering]);
           barrier.restore();
         }
-      },
+      }),
     );
     it.each(["QUEUED", "DONE"] as const)(
       "recovers an existing %s session after the feature is disabled",
-      async (status) => {
+      fixtureLife.track(async (status) => {
         const c = await customer(),
           request = input(),
           session = await createFittingSession(c.id, marketId, "en", request),
@@ -1510,7 +1519,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(provider.render).toHaveBeenCalledTimes(
           status === "DONE" ? 1 : 0,
         );
-      },
+      }),
     );
     it.each([
       { expectedCostCoins: "13" },
@@ -1524,15 +1533,15 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       },
       { variantIds: ["missing"] },
       { variantIds: ["seed-fitting-pack-100-digital"] },
-    ])("rejects invalid/changed combinations atomically: %j", async (patch) => {
+    ])("rejects invalid/changed combinations atomically: %j", fixtureLife.track(async (patch) => {
       const c = await customer();
       await expect(create(c.id, patch)).rejects.toThrow();
       expect(await balance(c.id)).toBe("100");
       expect(
         await db.fittingSession.count({ where: { customerId: c.id } }),
       ).toBe(0);
-    });
-    it("enforces daily cap and does not replenish same-day credit after changing settings", async () => {
+    }));
+    it("enforces daily cap and does not replenish same-day credit after changing settings", fixtureLife.track(async () => {
       await configure({ dailyLimit: 1, dailyFreeUses: 1 });
       const c = await customer("0");
       const a = await create(c.id);
@@ -1542,8 +1551,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(create(c.id)).rejects.toThrow("DAILY_LIMIT");
       await db.$transaction((tx) => refundSession(tx, a.id, "TEST"));
       expect(await balance(c.id)).toBe("12.5");
-    });
-    it("expires old daily lots and grants only the current timezone day", async () => {
+    }));
+    it("expires old daily lots and grants only the current timezone day", fixtureLife.track(async () => {
       const c = await customer("0");
       await db.$transaction(async (tx) => {
         await lockWallet(tx, c.id);
@@ -1558,8 +1567,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await configure({ dailyFreeUses: 2 });
       expect(await balance(c.id)).toBe("25");
       expect(await balance(c.id)).toBe("25");
-    });
-    it("keeps refunded failures in the store request budget but restores customer usage", async () => {
+    }));
+    it("keeps refunded failures in the store request budget but restores customer usage", fixtureLife.track(async () => {
       const day = dayBounds(new Date(), defaultConfig.timezone);
       const base = await db.fittingSession.count({
         where: { createdAt: { gte: day.start, lt: day.end } },
@@ -1578,8 +1587,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await configure({ dailyLimit: 1, globalDailyLimit: base + 2 });
       await create(c.id);
       expect(await balance(c.id)).toBe("87.5");
-    });
-    it("refunds a real adapter reference-read error without remote dispatch", async () => {
+    }));
+    it("refunds a real adapter reference-read error without remote dispatch", fixtureLife.track(async () => {
       const c = await customer(),
         session = await create(c.id);
       const read = vi
@@ -1602,10 +1611,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         read.mockRestore();
         vi.unstubAllGlobals();
       }
-    });
+    }));
     it.each(unusableFittingResponses)(
       "refunds adapter $name exactly once without a second dispatch",
-      async ({ response }) => {
+      fixtureLife.track(async ({ response }) => {
         const c = await customer(),
           session = await create(c.id);
         const read = vi
@@ -1628,11 +1637,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           read.mockRestore();
           vi.unstubAllGlobals();
         }
-      },
+      }),
     );
     it.each(["success", "definite", "unknown", "delivery"] as const)(
       "keeps the restore drain active through provider and %s settlement",
-      async (outcome) => {
+      fixtureLife.track(async (outcome) => {
         const c = await customer(),
           session = await create(c.id);
         let entered!: () => void, release!: () => void;
@@ -1710,7 +1719,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           state.maintenance = false;
           failedUpload?.mockRestore();
         }
-      },
+      }),
     );
     it.each([
       ["MODEL", "QUEUED"],
@@ -1719,7 +1728,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ["GARMENT", "RUNNING"],
     ] as const)(
       "pins replaced %s images through %s delivery and cleans after completion",
-      async (kind, phase) => {
+      fixtureLife.track(async (kind, phase) => {
         const unique = randomUUID(),
           oldKey = `media/test-fit-${unique}/old.webp`,
           newKey = `media/test-fit-${unique}/new.webp`;
@@ -1863,9 +1872,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await configure();
           await db.media.delete({ where: { id: media.id } });
         }
-      },
+      }),
     );
-    it("renders once, saves a look and serves only the authenticated owner", async () => {
+    it("renders once, saves a look and serves only the authenticated owner", fixtureLife.track(async () => {
       const c = await customer(),
         s = await create(c.id),
         provider = { render: vi.fn(async () => bytes) };
@@ -1916,8 +1925,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(sessionView(state.customer, s.id)).rejects.toThrow(
         "NOT_FOUND",
       );
-    });
-    it("refunds definite failure once and never retries unknown remote outcomes", async () => {
+    }));
+    it("refunds definite failure once and never retries unknown remote outcomes", fixtureLife.track(async () => {
       const c = await customer(),
         s = await create(c.id),
         bad = {
@@ -1940,10 +1949,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(network.render).toHaveBeenCalledTimes(1);
       expect((await sessionView(c.id, uncertain.id)).status).toBe("REVIEW");
       expect(await balance(c.id)).toBe("87.5");
-    });
+    }));
     it.each(["storage", "encryption"])(
       "refunds a definite %s delivery failure once",
-      async (failure) => {
+      fixtureLife.track(async (failure) => {
         const c = await customer(),
           s = await create(c.id);
         const provider = { render: vi.fn(async () => bytes) };
@@ -2029,9 +2038,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           if (secret === undefined) delete process.env.AUTH_SECRET;
           else process.env.AUTH_SECRET = secret;
         }
-      },
+      }),
     );
-    it("refunds an abandoned known output and retains durable cleanup identity", async () => {
+    it("refunds an abandoned known output and retains durable cleanup identity", fixtureLife.track(async () => {
       const c = await customer(),
         session = await create(c.id);
       const key = `fitting/2026/${randomUUID()}.sealed`;
@@ -2058,10 +2067,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           })
         ).payload,
       ).toEqual({ sessionId: session.id, storageKey: key });
-    });
+    }));
     it.each(["DONE", "RUNNING"] as const)(
       "cleans a late upload after the previous deletion is %s without another render or refund",
-      async (previousState) => {
+      fixtureLife.track(async (previousState) => {
         const c = await customer(),
           session = await create(c.id);
         const provider = { render: vi.fn(async () => bytes) };
@@ -2168,9 +2177,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           put.mockRestore();
           remove.mockRestore();
         }
-      },
+      }),
     );
-    it("locks concurrent refunds and keeps source identity, journal and charge immutable", async () => {
+    it("locks concurrent refunds and keeps source identity, journal and charge immutable", fixtureLife.track(async () => {
       const c = await customer(),
         s = await create(c.id);
       await Promise.all([
@@ -2201,8 +2210,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           data: { amount: "200" },
         }),
       ).rejects.toThrow();
-    });
-    it("rejects guest, inactive and unauthorized admin requests without grants", async () => {
+    }));
+    it("rejects guest, inactive and unauthorized admin requests without grants", fixtureLife.track(async () => {
       const c = await customer("0");
       await db.customer.update({
         where: { id: c.id },
@@ -2224,8 +2233,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         await db.fittingCoinGrant.count({ where: { customerId: c.id } }),
       ).toBe(0);
-    });
-    it("filters the review queue and authorizes refunds against the locked session market", async () => {
+    }));
+    it("filters the review queue and authorizes refunds against the locked session market", fixtureLife.track(async () => {
       const other = await db.market.findUniqueOrThrow({
         where: { code: "CA" },
       });
@@ -2285,10 +2294,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         refund: true,
       });
       expect(await balance(b.id)).toBe("100");
-    });
+    }));
     it.each(["ADD", "CHANGE", "REMOVE"] as const)(
       "requires market-scoped permission to %s a purchase reward despite global allow",
-      async (operation) => {
+      fixtureLife.track(async (operation) => {
         const ca = await db.market.findUniqueOrThrow({ where: { code: "CA" } });
         const trReward = { marketId, spendAmount: "100", coins: "25" };
         const caReward = { marketId: ca.id, spendAmount: "100", coins: "25" };
@@ -2358,9 +2367,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         } finally {
           await db.userPermissionOverride.delete({ where: { id: deny.id } });
         }
-      },
+      }),
     );
-    it("credits the supported 1000-person audience atomically with debt offsets and replay", async () => {
+    it("credits the supported 1000-person audience atomically with debt offsets and replay", fixtureLife.track(async () => {
       const ids = Array.from({ length: 1000 }, () => randomUUID());
       customers.push(...ids);
       await db.customer.createMany({
@@ -2443,8 +2452,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           },
         }),
       ).toBe(1);
-    });
-    it("preserves primary wallet debt and identity against deletion or reassignment while permitting real repayment", async () => {
+    }));
+    it("preserves primary wallet debt and identity against deletion or reassignment while permitting real repayment", fixtureLife.track(async () => {
       const a = await customer("0"),
         b = await customer("0");
       const original = await db.fittingWallet.create({
@@ -2483,8 +2492,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(
         db.fittingWallet.delete({ where: { id: original.id } }),
       ).rejects.toThrow("Fitting wallet identity is immutable");
-    });
-    it("keeps overflow liability identities immutable while permitting repayment", async () => {
+    }));
+    it("keeps overflow liability identities immutable while permitting repayment", fixtureLife.track(async () => {
       const a = await customer("0"),
         b = await customer("0");
       const lot = await db.fittingCoinDebtOverflow.create({
@@ -2515,8 +2524,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(paid.amount.toString()).toBe("5.0001");
       expect(paid.balance.toString()).toBe("4.0001");
       expect(paid.createdAt).toEqual(lot.createdAt);
-    });
-    it("saves versioned admin settings and grants exact batch credits idempotently", async () => {
+    }));
+    it("saves versioned admin settings and grants exact batch credits idempotently", fixtureLife.track(async () => {
       const a = await customer("0"),
         b = await customer("0"),
         settings = await fittingSettings();
@@ -2554,8 +2563,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await expect(
         grantFittingCoins({ ...request, amount: "20" }),
       ).rejects.toThrow("REQUEST_CONFLICT");
-    });
-    it("scopes recipient search and direct grants despite a global allow and scoped deny", async () => {
+    }));
+    it("scopes recipient search and direct grants despite a global allow and scoped deny", fixtureLife.track(async () => {
       const other = await db.market.findUniqueOrThrow({
         where: { code: "CA" },
       });
@@ -2634,8 +2643,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       } finally {
         await db.userPermissionOverride.delete({ where: { id: deny.id } });
       }
-    });
-    it("requires segment and customer membership in the same explicitly authorized market", async () => {
+    }));
+    it("requires segment and customer membership in the same explicitly authorized market", fixtureLife.track(async () => {
       const other = await db.market.findUniqueOrThrow({
         where: { code: "CA" },
       });
@@ -2684,8 +2693,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       await grantFittingCoins(request);
       expect(await balance(a.id)).toBe("12.5");
       expect(await balance(b.id)).toBe("0");
-    });
-    it("binds an idempotent manual grant request to its authorized market", async () => {
+    }));
+    it("binds an idempotent manual grant request to its authorized market", fixtureLife.track(async () => {
       const other = await db.market.findUniqueOrThrow({
         where: { code: "CA" },
       });
@@ -2718,8 +2727,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         grantFittingCoins({ ...request, marketId: other.id }),
       ).rejects.toThrow("REQUEST_CONFLICT");
       expect(await balance(c.id)).toBe("12.5");
-    });
-    it("replays a segment grant against its submitted request after the audience changes", async () => {
+    }));
+    it("replays a segment grant against its submitted request after the audience changes", fixtureLife.track(async () => {
       const a = await customer("0"),
         b = await customer("0"),
         marker = `replay-group-${randomUUID()}`;
@@ -2794,8 +2803,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       }
       expect(await balance(a.id)).toBe("12.5");
       expect(await balance(b.id)).toBe("0");
-    });
-    it("credits a snapshotted pack only after the real PAID transition and once", async () => {
+    }));
+    it("credits a snapshotted pack only after the real PAID transition and once", fixtureLife.track(async () => {
       const f = await returnFixture(db, {
         customerId: (await customer("0")).id,
         pending: true,
@@ -2819,8 +2828,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(
         (await ownedVariantIds(db, f.customer.id)).has(f.variants[0].id),
       ).toBe(false);
-    });
-    it("excludes a paid exchanged coin pack with a legacy unmarked snapshot from the wardrobe", async () => {
+    }));
+    it("excludes a paid exchanged coin pack with a legacy unmarked snapshot from the wardrobe", fixtureLife.track(async () => {
       const c = await customer("0");
       const f = await returnFixture(db, {
         customerId: c.id,
@@ -2892,8 +2901,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { customerId: c.id, reason: "PACK" },
         }),
       ).toBe(1);
-    });
-    it("reclaims returned pack coins after spending and correctly refunds the pending usage", async () => {
+    }));
+    it("reclaims returned pack coins after spending and correctly refunds the pending usage", fixtureLife.track(async () => {
       const f = await returnFixture(db, {
         customerId: (await customer("0")).id,
         coinPackCoins: "100",
@@ -2940,8 +2949,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           })
         ).debt.toString(),
       ).toBe("0");
-    });
-    it("matches Arabic keyboard letters, both digit sets, diacritics and zero-width Persian searches", async () => {
+    }));
+    it("matches Arabic keyboard letters, both digit sets, diacritics and zero-width Persian searches", fixtureLife.track(async () => {
       const c = await customer();
       const marker = `fit${randomUUID().replaceAll("-", "")}`;
       const template = await db.variant.findUniqueOrThrow({
@@ -2988,8 +2997,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       } finally {
         await db.product.delete({ where: { id: product.id } });
       }
-    });
-    it("pages through every size of a 500-variant garment without hiding a later fitting slot or pricing unbounded rows", async () => {
+    }));
+    it("pages through every size of a 500-variant garment without hiding a later fitting slot or pricing unbounded rows", fixtureLife.track(async () => {
       const c = await customer();
       const marker = `fit${randomUUID().replaceAll("-", "")}`;
       const template = await db.variant.findUniqueOrThrow({
@@ -3062,11 +3071,33 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(products.every((p) => p.amount !== null)).toBe(true);
         const top = products.filter((p) => p.productId === productIds[0]);
         let cursor = top[0].nextCursor;
-        while (cursor) {
-          const page = await fittingProducts(c.id, marketId, "en", "", false, {
-            productId: productIds[0],
-            after: cursor,
-          });
+        // Exhaustive immutable-fixture coverage: five bounded readers keep all 50
+      // real API calls without serializing their round trips. Traverse the actual
+      // returned cursor chain below; reject any failed, missing or repeated page.
+      const orderedVariantIds = await db.variant.findMany({
+        where: { productId: productIds[0] }, select: { id: true }, orderBy: { id: "asc" },
+      });
+      expect(orderedVariantIds).toHaveLength(500);
+      const pageStarts = orderedVariantIds.filter((_, index) => (index + 1) % 10 === 0 && index < orderedVariantIds.length - 1).map(variant => variant.id);
+      const prefetchedPages = new Map<string, typeof top>();
+      let scheduledPage = 0;
+      const readers = Array.from({ length: Math.min(5, pageStarts.length) }, async () => {
+        while (scheduledPage < pageStarts.length) {
+          const after = pageStarts[scheduledPage++];
+          const result = await fittingProducts(c.id, marketId, "en", "", false, { productId: productIds[0], after });
+          prefetchedPages.set(after, result);
+        }
+      });
+      const readerResults = await Promise.allSettled(readers);
+      const readerFailure = readerResults.find(result => result.status === "rejected");
+      if (readerFailure?.status === "rejected") throw readerFailure.reason;
+      const visitedCursors = new Set<string>();
+      while (cursor) {
+        if (visitedCursors.has(cursor)) throw Error("Repeated server cursor");
+        visitedCursors.add(cursor);
+          const page = prefetchedPages.get(cursor);
+        expect(page).toBeDefined();
+        if (!page) throw Error("Server cursor did not identify a fetched page");
           expect(page.length).toBeLessThanOrEqual(10);
           expect(
             page.every(
@@ -3076,6 +3107,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           top.push(...page);
           cursor = page[0]?.nextCursor ?? null;
         }
+      expect(visitedCursors.size).toBe(prefetchedPages.size);
         expect(top).toHaveLength(500);
         expect(new Set(top.map((p) => p.variantId)).size).toBe(500);
         const recovered = await fittingProducts(
@@ -3099,8 +3131,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         await db.product.deleteMany({ where: { id: { in: productIds } } });
         await db.size.deleteMany({ where: { id: { in: sizeIds } } });
       }
-    });
-    it("pages fitting products without dropping the 31st garment", async () => {
+    }));
+    it("pages fitting products without dropping the 31st garment", fixtureLife.track(async () => {
       const c = await customer();
       const marker = `fit${randomUUID().replaceAll("-", "")}`;
       const template = await db.variant.findUniqueOrThrow({
@@ -3152,8 +3184,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       } finally {
         await db.product.deleteMany({ where: { id: { in: ids } } });
       }
-    });
-    it("batches fitting catalog prices with a single manual-price and FX lookup", async () => {
+    }));
+    it("batches fitting catalog prices with a single manual-price and FX lookup", fixtureLife.track(async () => {
       const c = await customer();
       const realMany = db.marketPrice.findMany.bind(db.marketPrice),
         realFirst = db.marketPrice.findFirst.bind(db.marketPrice),
@@ -3176,8 +3208,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         db.marketPrice.findFirst = realFirst;
         db.fxOverride.findFirst = realFx;
       }
-    });
-    it("prices a previously purchased active variant in the shop while retaining its free wardrobe reference", async () => {
+    }));
+    it("prices a previously purchased active variant in the shop while retaining its free wardrobe reference", fixtureLife.track(async () => {
       const f = await returnFixture(db, { price: "100" });
       customers.push(f.customer.id);
       await db.product.update({
@@ -3199,8 +3231,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(shop).toMatchObject({ owned: false, available: true });
       expect(new Decimal(shop!.amount!).eq("100")).toBe(true);
       expect(wardrobe).toMatchObject({ owned: true, amount: null });
-    });
-    it("keeps paid garments in the wardrobe even when no longer active for sale", async () => {
+    }));
+    it("keeps paid garments in the wardrobe even when no longer active for sale", fixtureLife.track(async () => {
       const f = await returnFixture(db);
       customers.push(f.customer.id);
       await db.product.update({
@@ -3221,8 +3253,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           (p) => p.variantId === f.variants[0].id && p.owned,
         ),
       ).toBe(true);
-    });
-    it("excludes unclassified shop garments but permits already owned legacy references", async () => {
+    }));
+    it("excludes unclassified shop garments but permits already owned legacy references", fixtureLife.track(async () => {
       const c = await customer();
       const originalProduct = await db.product.findUniqueOrThrow({
         where: { id: "seed-style-v2-women-tee" },
@@ -3259,8 +3291,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           data: { fittingSlot: originalProduct.fittingSlot },
         });
       }
-    });
-    it("prevents concurrent category moves from creating a cycle", async () => {
+    }));
+    it("prevents concurrent category moves from creating a cycle", fixtureLife.track(async () => {
       const id = randomUUID(),
         a = await db.category.create({
           data: {
@@ -3301,10 +3333,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           data: { deletedAt: new Date() },
         });
       }
-    });
+    }));
     it.each(["shipping", "item", "pack"])(
       "uses exact merchandise allocations for %s promotions and reversals",
-      async (kind) => {
+      fixtureLife.track(async (kind) => {
         await configure({
           rewards: [{ marketId, spendAmount: "100", coins: "25" }],
         });
@@ -3465,11 +3497,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             expect(await balance(c.id)).toBe("0");
           }
         }
-      },
+      }),
     );
     it.each(["REFUND", "STORE_CREDIT"] as const)(
       "preserves the four-decimal remainder across repeated %s reward reversals",
-      async (resolution) => {
+      fixtureLife.track(async (resolution) => {
         await configure({
           rewards: [{ marketId, spendAmount: "33.3334", coins: "12.5" }],
         });
@@ -3518,9 +3550,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             }),
           ).toBe(claimed === 2 ? 2 : 1);
         }
-      },
+      }),
     );
-    it("approves payment with extreme reward settings and reverses the capped entitlement once", async () => {
+    it("approves payment with extreme reward settings and reverses the capped entitlement once", fixtureLife.track(async () => {
       await configure({
         rewards: [{ marketId, spendAmount: "0.0001", coins: "9999999999" }],
       });
@@ -3578,10 +3610,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
         }),
       ).toBe(1);
-    });
+    }));
     it.each(["REFUND", "CREDIT"] as const)(
       "settles %s after consumed near-limit grants without overflowing or forgiving debt",
-      async (operation) => {
+      fixtureLife.track(async (operation) => {
         await configure({
           rewards: [{ marketId, spendAmount: "0.0001", coins: "9999999999" }],
         });
@@ -3699,11 +3731,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         expect(settled.amount.toString()).toBe(maximum);
         expect(settled.balance.toString()).toBe("0");
         expect((await create(c.id)).status).toBe("QUEUED");
-      },
+      }),
     );
     it.each(["REFUND", "CREDIT"] as const)(
       "reverses source sale rewards through nested exchanges and %s settlement",
-      async (operation) => {
+      fixtureLife.track(async (operation) => {
         await configure({
           rewards: [{ marketId, spendAmount: "100", coins: "25" }],
         });
@@ -3831,9 +3863,9 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             .findUniqueOrThrow({ where: { customerId: f.customer.id } })
             .then((w) => w.debt.toString()),
         ).toBe("0");
-      },
+      }),
     );
-    it("retains reward rule snapshots and reverses only returned purchase value", async () => {
+    it("retains reward rule snapshots and reverses only returned purchase value", fixtureLife.track(async () => {
       await configure({
         rewards: [{ marketId, spendAmount: "100", coins: "25" }],
       });
@@ -3883,8 +3915,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           where: { customerId: pack.customer.id, reason: "PURCHASE" },
         }),
       ).toBe(0);
-    });
-    it("refunds partially revoked in-flight allocations without minting unearned coins", async () => {
+    }));
+    it("refunds partially revoked in-flight allocations without minting unearned coins", fixtureLife.track(async () => {
       const f = await returnFixture(db, {
         customerId: (await customer("0")).id,
         coinPackCoins: "50",
@@ -3930,8 +3962,8 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           })
         ).debt.toString(),
       ).toBe("0");
-    });
-    it("seed adds four approved fixed models, draft packs, child branches and real variant-color media", async () => {
+    }));
+    it("seed adds four approved fixed models, draft packs, child branches and real variant-color media", fixtureLife.track(async () => {
       const models = (original?.config as { models: { mediaId: string }[] })
         .models;
       expect(models).toHaveLength(4);
@@ -3961,6 +3993,6 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       expect(v.media[0].media.originalName).toBe(
         "demo-fashion-v2-women-tee-charcoal.webp",
       );
-    });
+    }));
   },
 );
