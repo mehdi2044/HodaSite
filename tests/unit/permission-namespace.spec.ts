@@ -3,6 +3,7 @@ import { join } from "node:path";
 import ts from "typescript";
 import { expect, it } from "vitest";
 import { PERMISSIONS } from "@/modules/access/namespace";
+import { mayContainServerGuard } from "../helpers/server-guard-source";
 function files(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()
@@ -16,11 +17,13 @@ it("every literal permission used at a server guard belongs to the declared name
   const missing: string[] = [],
     seen = new Set<string>();
   for (const file of files("src")) {
+    const text = readFileSync(file, "utf8");
+    if (!mayContainServerGuard(text)) continue;
     const source = ts.createSourceFile(
       file,
-      readFileSync(file, "utf8"),
+      text,
       ts.ScriptTarget.Latest,
-      true,
+      false,
     );
     const walk = (node: ts.Node) => {
       if (

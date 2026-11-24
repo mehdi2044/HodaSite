@@ -52,7 +52,7 @@ export async function exchangeReturn(
       include: { product: true, color: true, size: true },
     });
     if (!v) throw new CommerceError("RETURN_VARIANT");
-    const price = await getDisplayPrice(v.product, v, market);
+    const price = await getDisplayPrice(v.product, v, market, tx);
     if (rate && rate !== price.rate) throw new CommerceError("PRICE_CHANGED");
     rate = price.rate;
     lines.push({
@@ -79,7 +79,9 @@ export async function exchangeReturn(
     where: { code: "TR", currency: "TRY" },
   });
   const tryRate =
-    market.currency === "TRY" ? rate! : (await getActiveRate(tryMarket)).rate;
+    market.currency === "TRY"
+      ? rate!
+      : (await getActiveRate(tryMarket, undefined, tx)).rate;
   const usd = total.div(rate!);
   const now = new Date(),
     hold = new Date(now.getTime() + market.holdHours * 3600000),

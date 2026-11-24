@@ -278,13 +278,23 @@ export async function manageReturn(userId: string, raw: unknown) {
           const { lockRewardSource } = await import("@/modules/fitting/ledger");
           await lockRewardSource(tx, subject.orderId);
         }
-        await assertCan(userId, "return.manage", {
-          marketId: subject.order.marketId,
-        });
-        if (settlement)
-          await assertCan(userId, "payment.refund", {
+        await assertCan(
+          userId,
+          "return.manage",
+          {
             marketId: subject.order.marketId,
-          });
+          },
+          tx,
+        );
+        if (settlement)
+          await assertCan(
+            userId,
+            "payment.refund",
+            {
+              marketId: subject.order.marketId,
+            },
+            tx,
+          );
         const row = await tx.returnRequest.findUniqueOrThrow({
           where: { id: input.returnId },
           include,

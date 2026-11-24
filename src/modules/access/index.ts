@@ -1,6 +1,7 @@
 import { isPermission } from "./namespace";
 import { db } from "@/lib/db";
 import { ForbiddenError } from "./errors";
+import type { Prisma } from "@prisma/client";
 
 export type Scope = {
   marketId?: string;
@@ -41,9 +42,10 @@ export async function can(
   userId: string,
   permission: string,
   scope?: Scope,
+  client: Pick<Prisma.TransactionClient, "user"> = db,
 ): Promise<boolean> {
   if (!isPermission(permission)) return false;
-  const user = await db.user.findUnique({
+  const user = await client.user.findUnique({
     where: { id: userId },
     include: {
       overrides: true,
@@ -87,8 +89,9 @@ export async function assertCan(
   userId: string,
   permission: string,
   scope?: Scope,
+  client: Pick<Prisma.TransactionClient, "user"> = db,
 ): Promise<void> {
-  if (!(await can(userId, permission, scope)))
+  if (!(await can(userId, permission, scope, client)))
     throw new ForbiddenError(permission, scope);
 }
 
