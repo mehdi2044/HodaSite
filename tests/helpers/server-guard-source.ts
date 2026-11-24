@@ -2,6 +2,13 @@
  * Escaped identifiers can spell a guard without containing its plain name.
  * Parse every file containing a Unicode escape rather than risk missing one.
  */
+export const SERVER_GUARD_NAMES: readonly string[] = [
+  "can",
+  "assertCan",
+  "requireAdminPage",
+  "authorizedMarketIds",
+];
+const candidate = new RegExp(`\\b(?:${SERVER_GUARD_NAMES.join("|")})\\b|\\\\u`);
 export function mayContainServerGuard(source: string) {
-  return /\b(?:can|assertCan|requireAdminPage)\b|\\u/.test(source);
+  return candidate.test(source);
 }

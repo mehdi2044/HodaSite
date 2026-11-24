@@ -1,5 +1,9 @@
 ## MODA4 final P0 gate — isolated investigation, 2026-11-24
 
+Follow-up on the independently retained 3396 candidate: its clean source 1c2e3af0beb428c03eb95d9ee8aad58a481f3d02, Build N0qJh-nZ9oPwMHJ5r7aqC, 109 focused tests and first complete Windows run (9447/0/0 in 196 files) are retained, not replaced. A second worktree addresses measured market-scope read amplification. The preserved old run started the passing scope file with three retained markets and the failing counterpart with at least 25. Its independent 26-market copy passes the unchanged two-case test in the replay, but performs 575 user lookups; a direct real-service probe confirms 26 subject reads for one lookup. This is demonstrated work amplification, not proof of every millisecond in the historical timeout.
+
+Orders and returns now reuse one fresh operation-local subject through the existing access evaluator across every market, including inactive historical markets. There is no permission cache; existing guard positions remain unchanged, including the transaction-scoped return checks after locking. Real database regressions cover scoped/category/invalid grants, explicit denial, inactive history, account revocation, missing users and unknown permissions; all extra fixture rows roll back. Extend the namespace audit to the new authorization reader, retaining its original assertions and escaped-identifier coverage. Final source-matched complete validation and runtime/consent evidence remain required on the follow-up head.
+
 Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D24, D31, D38, D70, D72, D73, D82.
 
 Based on c57bbb749757bf12688efd14356b126a6f5c1ca1; all existing previews, original data and volumes remain protected. This branch is not approved for release. Follow `phases/phase-moda4-final-p0-gate.md`; no new feature, push, PR, merge or main change is authorized.

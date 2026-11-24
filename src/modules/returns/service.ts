@@ -6,7 +6,11 @@ import Decimal from "decimal.js";
 import { Prisma, type ReturnStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
-import { can, assertCan, ForbiddenError } from "@/modules/access";
+import {
+  authorizedMarketIds,
+  assertCan,
+  ForbiddenError,
+} from "@/modules/access";
 import { CommerceError } from "@/modules/orders/state";
 import {
   returnPolicySchema,
@@ -23,11 +27,7 @@ export async function returnMarkets(
   userId: string,
   permission = "return.manage",
 ) {
-  const markets = await db.market.findMany({ select: { id: true } });
-  const ids: string[] = [];
-  for (const m of markets)
-    if (await can(userId, permission, { marketId: m.id })) ids.push(m.id);
-  return ids;
+  return authorizedMarketIds(userId, permission);
 }
 export async function requestReturn(customerId: string, raw: unknown) {
   const input = returnRequestSchema.parse(raw);

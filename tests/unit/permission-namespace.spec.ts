@@ -3,7 +3,10 @@ import { join } from "node:path";
 import ts from "typescript";
 import { expect, it } from "vitest";
 import { PERMISSIONS } from "@/modules/access/namespace";
-import { mayContainServerGuard } from "../helpers/server-guard-source";
+import {
+  mayContainServerGuard,
+  SERVER_GUARD_NAMES,
+} from "../helpers/server-guard-source";
 function files(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()
@@ -29,7 +32,7 @@ it("every literal permission used at a server guard belongs to the declared name
       if (
         ts.isCallExpression(node) &&
         ts.isIdentifier(node.expression) &&
-        ["can", "assertCan", "requireAdminPage"].includes(node.expression.text)
+        SERVER_GUARD_NAMES.includes(node.expression.text)
       ) {
         const index = node.expression.text === "requireAdminPage" ? 0 : 1,
           arg = node.arguments[index];

@@ -7,7 +7,11 @@ import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 import { currentCustomer } from "@/modules/customers";
 import { tokenHash } from "@/lib/secure-tokens";
-import { assertCan, can, ForbiddenError } from "@/modules/access";
+import {
+  assertCan,
+  authorizedMarketIds,
+  ForbiddenError,
+} from "@/modules/access";
 import {
   verifyOrderInventory,
   consumeOrderInventory,
@@ -51,12 +55,7 @@ export async function visibleOrderMarkets(
   userId: string,
   permission = "order.view",
 ) {
-  const markets = await db.market.findMany({ select: { id: true } }),
-    ids: string[] = [];
-  for (const market of markets)
-    if (await can(userId, permission, { marketId: market.id }))
-      ids.push(market.id);
-  return ids;
+  return authorizedMarketIds(userId, permission);
 }
 /** Uniform denial for absent and outside-scope IDs; first order query is scoped. */
 export async function scopedAdminOrder(

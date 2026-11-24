@@ -1,6 +1,9 @@
 import ts from "typescript";
 import { expect, it } from "vitest";
-import { mayContainServerGuard } from "../helpers/server-guard-source";
+import {
+  mayContainServerGuard,
+  SERVER_GUARD_NAMES,
+} from "../helpers/server-guard-source";
 
 it.each([
   'can(actor, "order.view")',
@@ -9,6 +12,8 @@ it.each([
   'assertCan<Actor>(actor, "order.view")',
   'a\\u0073sertCan(actor, "order.view")',
   '\\u{63}an(actor, "order.view")',
+  'authorizedMarketIds(actor, "order.view")',
+  'authorizedM\\u0061rketIds(actor, "order.view")',
 ])("retains an AST-visible guard in %s", (text) => {
   const source = ts.createSourceFile(
     "fixture.ts",
@@ -20,7 +25,7 @@ it.each([
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      ["can", "assertCan", "requireAdminPage"].includes(node.expression.text)
+      SERVER_GUARD_NAMES.includes(node.expression.text)
     )
       guards++;
     ts.forEachChild(node, walk);
