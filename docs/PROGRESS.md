@@ -1,5 +1,18 @@
 ## MODA4 final P0 gate — isolated investigation, 2026-11-24
 
+Persisted-session follow-up: financeActor previously validated AdminSession
+through the global client while holding a native transaction. A controlled
+five-admitted test fails before correction; transaction-local revocation is
+also invisible to that old reader. The new optional session reader propagates
+the existing transaction through auth/getAdminSession/validAdminSession.
+JWT transport, signature/session-version, expiry, active-user, MFA/enrollment,
+revocation and permission evaluation remain unchanged; no auth strategy,
+schema, money policy, timeout or capacity change. Native before2/2/0 and
+after4/0/0 controls are retained separately from historical homepage P2024.
+Actual-source focused checks: 335/0/0 in 22 files;
+additional finance/security checks: 446/0/0 in 3 files.
+These do not satisfy the final full-suite/browser/CI/independent D70 gates.
+
 Actual cart-reader correction plus the inline permission-client propagation
 passes 325 focused tests in 20 files on six freshly verified independent
 database contexts (0 failed, 0 skipped; original deadlines/pool/retry policy).

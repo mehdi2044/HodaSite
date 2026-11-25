@@ -7,6 +7,7 @@ import {
   revokeAdminSession,
 } from "./security";
 import { getClientIp } from "@/lib/net";
+import type { AdminSessionReader } from "./security";
 export { requiresMfa } from "./security";
 const nextAuth = NextAuth({
   ...authConfig,
@@ -29,7 +30,10 @@ const nextAuth = NextAuth({
   },
 });
 export const { handlers, signIn, signOut } = nextAuth;
-export async function getAdminSession(allowEnrollment = false) {
+export async function getAdminSession(
+  allowEnrollment = false,
+  client?: AdminSessionReader,
+) {
   const session = await nextAuth.auth();
   if (
     !session?.user?.id ||
@@ -42,9 +46,10 @@ export async function getAdminSession(allowEnrollment = false) {
     session.adminSessionId,
     session.sessionVersion,
     allowEnrollment,
+    client,
   );
   return row ? { ...session, enrollmentOnly: row.enrollmentOnly } : null;
 }
-export async function auth() {
-  return getAdminSession();
+export async function auth(client?: AdminSessionReader) {
+  return getAdminSession(false, client);
 }

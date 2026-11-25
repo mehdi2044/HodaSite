@@ -61,3 +61,16 @@ Focused tests precede production build, lint/typecheck, complete Vitest on fresh
 The original retained full-run data has 26 markets. The successful order-scope run started with three retained markets, versus at least 25 for its failed counterpart. Controlled replay retains the old data on a new database: one market-scope lookup performs 26 identical subject reads; the unchanged two-case scope file executes 575 user lookups. Remove this N+1 amplification by reading one fresh access subject locally per operation and applying the existing evaluator to every market. Do not filter inactive markets, alter scope/override precedence, remove later mutation rechecks or cache permissions between operations. Regression fixtures must roll back their extra markets instead of growing the shared dataset. The old timeout itself did not repeat in this replay; do not claim its entire historical timeline is proven.
 
 Preserve the successful first complete 1c2e3af run and its immutable 3396 preview. Further corrections use a new worktree/build and fresh targets; never rebuild the artifact serving that comparison preview. Keep the diagnostic harness path/collection errors as invalid diagnostic runs, not application test failures or successful acceptance evidence.
+
+Persisted-session follow-up: financeActor previously validated AdminSession
+through the global client while holding a native transaction. A controlled
+five-admitted test fails before correction; transaction-local revocation is
+also invisible to that old reader. The new optional session reader propagates
+the existing transaction through auth/getAdminSession/validAdminSession.
+JWT transport, signature/session-version, expiry, active-user, MFA/enrollment,
+revocation and permission evaluation remain unchanged; no auth strategy,
+schema, money policy, timeout or capacity change. Native before2/2/0 and
+after4/0/0 controls are retained separately from historical homepage P2024.
+Actual-source focused checks: 335/0/0 in 22 files;
+additional finance/security checks: 446/0/0 in 3 files.
+These do not satisfy the final full-suite/browser/CI/independent D70 gates.
