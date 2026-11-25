@@ -1,4 +1,5 @@
 "use client";
+import { CuratedLookOrder } from "./curated-look-order";
 import { useTranslations } from "next-intl";
 import { SceneAnchorCanvas } from "./scene-editor";
 import { MediaPicker } from "./media-picker";
@@ -19,6 +20,9 @@ import {
 type Localized = { fa: string; tr: string; en: string };
 export type ModaAdminOptions = {
   categories: { id: string; title: string }[];
+  curatedLooks?: { id: string; title: string }[];
+  curatedModelLooks?: { id: string; title: string }[];
+  articles?: { id: string; title: string }[];
   collections: { id: string; title: string }[];
   pages: { id: string; title: string }[];
   programs: { id: string; marketId: string; title: string; state: string }[];
@@ -148,7 +152,8 @@ export function freshModaBlock(type: Moda4Block["type"]): Moda4Block {
         ...base,
         type,
         title,
-        scenes: [emptyModaScene()],
+        scenes: [],
+        curatedLookIds: [],
         autoplaySeconds: 4.8,
       };
     case "KidsWorld":
@@ -162,6 +167,8 @@ export function freshModaBlock(type: Moda4Block["type"]): Moda4Block {
         ctaLabel,
         target: target(),
       };
+    case "EditorialSpotlight":
+      return { ...base, type, title };
     case "Services":
       return {
         ...base,
@@ -770,6 +777,7 @@ export function Moda4BlockFields({
   scope: string;
 }) {
   const t = useTranslations("modaAdmin");
+  const scenes = useTranslations("scenes");
   const sceneField = (
     scene: ShoppableScene,
     update: (scene: ShoppableScene) => void,
@@ -952,18 +960,37 @@ export function Moda4BlockFields({
                 })
               }
             />
-            <ModaTargetField
-              value={slide.target}
-              options={options}
-              change={(target) =>
-                change({
-                  ...block,
-                  slides: block.slides.map((item, n) =>
-                    n === index ? { ...item, target } : item,
-                  ),
-                })
-              }
-            />
+            <label>
+              <input
+                type="checkbox"
+                checked={slide.buyScene ?? false}
+                onChange={(event) =>
+                  change({
+                    ...block,
+                    slides: block.slides.map((item, n) =>
+                      n === index
+                        ? { ...item, buyScene: event.target.checked }
+                        : item,
+                    ),
+                  })
+                }
+              />{" "}
+              {scenes("addScene")}
+            </label>
+            {!slide.buyScene && (
+              <ModaTargetField
+                value={slide.target}
+                options={options}
+                change={(target) =>
+                  change({
+                    ...block,
+                    slides: block.slides.map((item, n) =>
+                      n === index ? { ...item, target } : item,
+                    ),
+                  })
+                }
+              />
+            )}
             {(() => {
               // M4-01: physical composition; legacy textSide is read through normalizeHeroLayout.
               const layout = normalizeHeroLayout(slide);
@@ -1260,6 +1287,49 @@ export function Moda4BlockFields({
           10,
           120,
         )}
+        <label>
+          <input
+            type="checkbox"
+            checked={Boolean(block.speed)}
+            onChange={(event) =>
+              change({
+                ...block,
+                speed: event.target.checked
+                  ? { first: 7.9, second: 5.6 }
+                  : undefined,
+              })
+            }
+          />
+          {t("ribbonSpeedMode")}
+        </label>
+        {block.speed && (
+          <>
+            {number(
+              "ribbonSpeedFirst",
+              block.speed.first,
+              (first) =>
+                change({
+                  ...block,
+                  speed: { first, second: block.speed!.second },
+                }),
+              4,
+              120,
+              0.1,
+            )}
+            {number(
+              "ribbonSpeedSecond",
+              block.speed.second,
+              (second) =>
+                change({
+                  ...block,
+                  speed: { first: block.speed!.first, second },
+                }),
+              4,
+              120,
+              0.1,
+            )}
+          </>
+        )}
         {(["first", "second"] as const).map((row) => (
           <fieldset key={row}>
             <legend>{t(row)}</legend>
@@ -1376,6 +1446,18 @@ export function Moda4BlockFields({
                 })
               }
             />
+            <LocalizedField
+              label={t("body")}
+              value={face.description ?? { fa: "", tr: "", en: "" }}
+              change={(description) =>
+                change({
+                  ...block,
+                  faces: block.faces.map((item, n) =>
+                    n === index ? { ...item, description } : item,
+                  ),
+                })
+              }
+            />
             {picture(
               face.desktop,
               (desktop) =>
@@ -1433,6 +1515,39 @@ export function Moda4BlockFields({
         ))}
       </div>
     );
+  if (block.type === "Lookbook" && block.curatedLookIds !== undefined)
+    return (
+      <div className="grid gap-3">
+        {title}
+        <label>
+          <input
+            type="checkbox"
+            checked
+            onChange={() =>
+              change({
+                ...block,
+                curatedLookIds: undefined,
+                scenes: block.scenes.length ? block.scenes : [emptyModaScene()],
+              })
+            }
+          />
+          {t("useCuratedLooks")}
+        </label>
+        {number(
+          "autoplaySeconds",
+          block.autoplaySeconds,
+          (autoplaySeconds) => change({ ...block, autoplaySeconds }),
+          3,
+          30,
+          0.1,
+        )}
+        <CuratedLookOrder
+          value={block.curatedLookIds}
+          choices={options.curatedLooks ?? []}
+          change={(curatedLookIds) => change({ ...block, curatedLookIds })}
+        />
+      </div>
+    );
   if (block.type === "Lookbook")
     return (
       <div className="grid gap-3">
@@ -1445,6 +1560,14 @@ export function Moda4BlockFields({
           30,
           0.1,
         )}
+        <label>
+          <input
+            type="checkbox"
+            checked={false}
+            onChange={() => change({ ...block, curatedLookIds: [] })}
+          />
+          {t("useCuratedLooks")}
+        </label>
         {block.scenes.map((scene, index) => (
           <div key={scene.id}>
             {sceneField(scene, (scene) =>
@@ -1480,6 +1603,38 @@ export function Moda4BlockFields({
         >
           {t("addLook")}
         </button>
+      </div>
+    );
+  if (block.type === "EditorialSpotlight")
+    return (
+      <div className="grid gap-3">
+        {title}
+        <label>
+          {t("featuredArticle")}
+          <select
+            className="input"
+            value={block.articleId ?? ""}
+            onChange={(event) =>
+              change({ ...block, articleId: event.target.value || undefined })
+            }
+          >
+            <option value="">{t("featuredArticleAutomatic")}</option>
+            {block.articleId &&
+              !(options.articles ?? []).some(
+                (article) => article.id === block.articleId,
+              ) && (
+                <option value={block.articleId}>{t("missingSource")}</option>
+              )}
+            {(options.articles ?? []).map((article) => (
+              <option key={article.id} value={article.id}>
+                {article.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p>{t("featuredArticleHelp")}</p>
+        <a href="/admin/content/editorial/weekly">{t("manageWeekly")}</a>
+        <a href="/admin/content/editorial">{t("manageArticles")}</a>
       </div>
     );
   if (block.type === "Services")

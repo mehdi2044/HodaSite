@@ -14,10 +14,16 @@ export function HeaderFrame({
   const home = /^\/(fa|tr|en)(?:\/m\/[^/]+)?\/?$/.test(pathname);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
-    const scroll = () => setScrolled(window.scrollY > 40);
+    const pane = header.current?.closest(".storefront-scroll");
+    const scroll = () =>
+      setScrolled(Math.max(window.scrollY, pane?.scrollTop ?? 0) > 40);
     scroll();
+    pane?.addEventListener("scroll", scroll, { passive: true });
     window.addEventListener("scroll", scroll, { passive: true });
-    return () => window.removeEventListener("scroll", scroll);
+    return () => {
+      pane?.removeEventListener("scroll", scroll);
+      window.removeEventListener("scroll", scroll);
+    };
   }, []);
   useEffect(() => {
     const style = document.documentElement.style;

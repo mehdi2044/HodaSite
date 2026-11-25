@@ -47,10 +47,21 @@ const legacyBlockSchemas = [
       title: localizedTextSchema,
       body: localizedTextSchema,
       looks: z.array(preparedLookSchema).max(8),
+      curatedLookIds: z
+        .array(mediaId)
+        .max(12)
+        .refine((ids) => new Set(ids).size === ids.length)
+        .optional(),
     })
-    .refine((block) => Boolean(block.scene) || block.looks.length > 0, {
-      message: "ShopLook requires a shared scene or retained prepared looks",
-    }),
+    .refine(
+      (block) =>
+        block.curatedLookIds !== undefined ||
+        Boolean(block.scene) ||
+        block.looks.length > 0,
+      {
+        message: "ShopLook requires a shared scene or retained prepared looks",
+      },
+    ),
   z.object({
     ...optionalMetadata,
     type: z.literal("Hero"),
@@ -104,11 +115,26 @@ export const homepageBlocksSchema = z
   .array(homepageBlockSchema)
   .max(30)
   .superRefine((blocks, ctx) => {
+    if (
+      blocks.filter(
+        (block) =>
+          block.type === "EditorialSpotlight" && block.enabled !== false,
+      ).length > 1
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Only one visible editorial spotlight is allowed",
+      });
     const identities = blocks.flatMap((block) => (block.id ? [block.id] : []));
     if (new Set(identities).size !== identities.length)
       ctx.addIssue({ code: "custom", message: "Duplicate block identity" });
     const ids = blocks.flatMap((block) =>
-      block.type === "ShopLook" ? block.looks.map((look) => look.id) : [],
+      block.type === "ShopLook"
+        ? [
+            ...block.looks.map((look) => look.id),
+            ...(block.curatedLookIds ?? []),
+          ]
+        : [],
     );
     if (new Set(ids).size !== ids.length)
       ctx.addIssue({ code: "custom", message: "Duplicate outfit identity" });

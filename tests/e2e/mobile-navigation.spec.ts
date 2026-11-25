@@ -32,7 +32,7 @@ for (const locale of ["fa", "tr", "en"] as const)
       );
       const nav = page.getByTestId("mobile-bottom-navigation");
       await expect(nav).toBeVisible();
-      await expect(nav.getByRole("link")).toHaveCount(6);
+      await expect(nav.getByRole("link")).toHaveCount(4);
       await expect(nav.getByRole("link").nth(0)).toHaveAttribute(
         "aria-current",
         "page",

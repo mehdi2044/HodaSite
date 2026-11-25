@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { revalidateTag, unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
@@ -29,21 +30,24 @@ export async function getFxConfiguration() {
   };
 }
 
+async function loadActiveQuote(
+  client: Prisma.TransactionClient,
+  marketId: string,
+) {
+  const quote = await client.fxQuote.findFirst({
+    where: { marketId, status: "ACTIVE" },
+    orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
+  });
+  return quote
+    ? {
+        rate: quote.rate.toString(),
+        source: quote.provider,
+        at: (quote.acceptedAt ?? quote.fetchedAt).toISOString(),
+      }
+    : null;
+}
 const activeQuoteCached = unstable_cache(
-  async (marketId: string) => {
-    const quote = await db.fxQuote.findFirst({
-      where: { marketId, status: "ACTIVE" },
-      orderBy: [{ acceptedAt: "desc" }, { id: "desc" }],
-    });
-    // Next's persistent cache JSON-serializes values: use an explicit wire shape.
-    return quote
-      ? {
-          rate: quote.rate.toString(),
-          source: quote.provider,
-          at: (quote.acceptedAt ?? quote.fetchedAt).toISOString(),
-        }
-      : null;
-  },
+  (marketId: string) => loadActiveQuote(db, marketId),
   ["active-fx-quote"],
   { revalidate: 900, tags: ["pricing"] },
 );
@@ -53,8 +57,10 @@ export async function findEffectiveRate(
   marketId: string,
   at = new Date(),
   historical = false,
+  tx?: Prisma.TransactionClient,
 ) {
-  const override = await db.fxOverride.findFirst({
+  const client = tx ?? db;
+  const override = await client.fxOverride.findFirst({
     where: {
       marketId,
       validFrom: { lte: at },
@@ -69,10 +75,12 @@ export async function findEffectiveRate(
       at: override.validFrom,
     };
   if (!historical) {
-    const active = await activeQuoteCached(marketId);
+    const active = tx
+      ? await loadActiveQuote(tx, marketId)
+      : await activeQuoteCached(marketId);
     return active ? { ...active, at: new Date(active.at) } : null;
   }
-  const quote = await db.fxQuote.findFirst({
+  const quote = await client.fxQuote.findFirst({
     where: {
       marketId,
       status: { in: ["ACTIVE", "SUPERSEDED"] },
@@ -89,12 +97,19 @@ export async function findEffectiveRate(
     : null;
 }
 
+export class MissingActiveFxError extends Error {
+  constructor(marketCode: string) {
+    super(`No active FX rate for market ${marketCode}`);
+  }
+}
+
 export async function getActiveRate(
   market: { id: string; code: string },
   at = new Date(),
+  tx?: Prisma.TransactionClient,
 ) {
-  const active = await findEffectiveRate(market.id, at);
-  if (!active) throw new Error(`No active FX rate for market ${market.code}`);
+  const active = await findEffectiveRate(market.id, at, false, tx);
+  if (!active) throw new MissingActiveFxError(market.code);
   return active;
 }
 
@@ -115,7 +130,9 @@ async function effectiveMarketPrice(
   marketId: string,
   productId: string,
   variantId: string | null,
+  tx?: Prisma.TransactionClient,
 ) {
+  const client = tx ?? db;
   const at = new Date();
   const validity = {
     marketId,
@@ -124,13 +141,13 @@ async function effectiveMarketPrice(
     AND: [{ OR: [{ validUntil: null }, { validUntil: { gt: at } }] }],
   };
   if (variantId) {
-    const variantPrice = await db.marketPrice.findFirst({
+    const variantPrice = await client.marketPrice.findFirst({
       where: { ...validity, variantId },
       orderBy: { validFrom: "desc" },
     });
     if (variantPrice) return variantPrice;
   }
-  return db.marketPrice.findFirst({
+  return client.marketPrice.findFirst({
     where: { ...validity, productId },
     orderBy: { validFrom: "desc" },
   });
@@ -153,13 +170,15 @@ export async function getDisplayPrice(
     markupPercent: { toString(): string };
     roundingRule: unknown;
   },
+  tx?: Prisma.TransactionClient,
 ) {
   const manual = await effectiveMarketPrice(
     market.id,
     product.id,
     variant?.id ?? null,
+    tx,
   );
-  const active = await getActiveRate(market);
+  const active = await getActiveRate(market, undefined, tx);
   const currency = (
     ["USD", "TRY", "CAD", "IRT"].includes(market.currency)
       ? market.currency
@@ -213,7 +232,7 @@ async function activateQuote(
       },
     });
   });
-  revalidateTag("pricing");
+  revalidateTag("pricing", { expire: 0 });
 }
 
 export async function acceptFxQuote(id: string, acceptedById?: string) {

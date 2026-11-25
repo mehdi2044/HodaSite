@@ -203,7 +203,8 @@ export async function saveProduct(
           )
           .max(6)
           .parse(parseJson(data.get("aiAlts"), []));
-        if (aiAlts.length) await assertCan(session.user.id, "media.write");
+        if (aiAlts.length)
+          await assertCan(session.user.id, "media.write", undefined, tx);
         for (const alt of aiAlts) {
           const [kind, mediaId, locale, ...extra] = alt.key.split(".");
           if (
@@ -615,8 +616,8 @@ function suffixLocalized(value: unknown, suffix: string) {
   };
 }
 function revalidateCatalog(...slugs: unknown[]) {
-  revalidateTag("catalog");
-  revalidateTag("homepage");
+  revalidateTag("catalog", { expire: 0 });
+  revalidateTag("homepage", { expire: 0 });
   revalidatePath("/admin/catalog/products");
   for (const locale of ["fa", "tr", "en"] as const) {
     revalidatePath(`/${locale}`);

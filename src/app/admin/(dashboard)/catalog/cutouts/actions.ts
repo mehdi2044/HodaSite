@@ -24,8 +24,8 @@ export async function saveCutoutAction(_: ActionResult | null, form: FormData) {
       throw new z.ZodError([]);
     }
     await saveCatalogCutout(userId, payload);
-    revalidateTag("catalog");
-    revalidateTag("homepage");
+    revalidateTag("catalog", { expire: 0 });
+    revalidateTag("homepage", { expire: 0 });
     revalidatePath("/admin/catalog/cutouts");
   });
 }
@@ -45,8 +45,8 @@ export async function archiveCutoutAction(
       .transform(Number)
       .parse(form.get("expectedVersion"));
     await archiveCatalogCutout(userId, id, version);
-    revalidateTag("catalog");
-    revalidateTag("homepage");
+    revalidateTag("catalog", { expire: 0 });
+    revalidateTag("homepage", { expire: 0 });
     revalidatePath("/admin/catalog/cutouts");
   });
 }

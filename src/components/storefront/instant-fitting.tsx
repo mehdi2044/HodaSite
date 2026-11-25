@@ -52,6 +52,7 @@ export function InstantFitting({
   archived,
   primaryHeading = true,
   paidAvailable = false,
+  preset,
 }: {
   locale: "fa" | "tr" | "en";
   marketId: string;
@@ -69,16 +70,17 @@ export function InstantFitting({
   archived: Saved[];
   primaryHeading?: boolean;
   paidAvailable?: boolean;
+  preset?: { modelId: string; variantIds: string[]; view: View | null };
 }) {
   const t = useTranslations("instantFitting"),
     Heading = primaryHeading ? "h1" : "h2";
-  const [modelId, setModel] = useState(models[0]?.id ?? ""),
+  const [modelId, setModel] = useState(preset?.modelId ?? models[0]?.id ?? ""),
     [catalog, setCatalog] = useState(products),
     [moreSaved, setMoreSaved] = useState(saved.length === 100),
     [moreArchived, setMoreArchived] = useState(archived.length === 100),
-    [view, setView] = useState<View | null>(null),
+    [view, setView] = useState<View | null>(preset?.view ?? null),
     [localLayers, setLocalLayers] = useState<View["layers"] | null>(null),
-    [ids, setIds] = useState<string[]>([]),
+    [ids, setIds] = useState<string[]>(preset?.variantIds ?? []),
     [dockVariant, setDockVariant] = useState<string>(),
     [draftReady, setDraftReady] = useState(false),
     [name, setName] = useState(""),
@@ -313,6 +315,12 @@ export function InstantFitting({
   }
   useEffect(() => {
     requestKey.current = crypto.randomUUID();
+    if (preset) {
+      setDraftReady(true);
+      return () => {
+        sequence.current++;
+      };
+    }
     try {
       const guestKey = `hoda.instant:${marketId}:guest`,
         own = sessionStorage.getItem(draftKey),
@@ -350,7 +358,7 @@ export function InstantFitting({
     // Component is keyed by verified owner/market/locale on the server.
   }, []);
   useEffect(() => {
-    if (!draftReady) return;
+    if (!draftReady || preset) return;
     try {
       if (ids.length)
         sessionStorage.setItem(
@@ -359,7 +367,7 @@ export function InstantFitting({
         );
       else sessionStorage.removeItem(draftKey);
     } catch {}
-  }, [draftKey, draftReady, modelId, ids]);
+  }, [draftKey, draftReady, modelId, ids, preset]);
   function remove(variantId: string) {
     requestKey.current = crypto.randomUUID();
     start(() =>

@@ -1,0 +1,193 @@
+{
+  "contentVersion": 32,
+  "referenceBuildSha": "2943bece0288948f95b0ff1fb70ab250a5b3eca7",
+  "looks": [
+    {
+      "id": "seed-moda4-fitting-look-0",
+      "modelId": "woman",
+      "photoMediaId": "seed-fashion-v2-look-women-knit",
+      "photoStorageKey": "media/2026/11/8419518a-e9d8-4865-9f35-a2ded4bebc16.webp",
+      "photoSha256": "70da5c40dadcf4fa110efeedec7688bffd5d94aa5d495b74a07ff7fc4e62440b",
+      "compositeFingerprint": "fbd1507a3e23a7ec33f26d0dca323d022e9197a50d229f3bbf4ff12399e3f4e8",
+      "photoFingerprint": "feff72c96cba058c316d88b9dd6a4e69f2d46b2c735663b8944906bf6d690137",
+      "pieces": [
+        {
+          "id": "seed-moda4-fitting-scene-0-piece-0",
+          "slot": "TOP",
+          "target": {
+            "x": 0.5,
+            "y": 0.3742630385487529,
+            "visible": true,
+            "width": 0.4523809523809524,
+            "height": 0.3985260770975057,
+            "rotation": 0,
+            "zIndex": 2
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-0-piece-1",
+          "slot": "BOTTOM",
+          "target": {
+            "x": 0.5,
+            "y": 0.7384601579325198,
+            "visible": true,
+            "width": 0.2666666666666667,
+            "height": 0.4412060301507538,
+            "rotation": 0,
+            "zIndex": 1
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-0-piece-3",
+          "slot": "ACCESSORY",
+          "target": {
+            "x": 0.638095238095238,
+            "y": 0.45870967741935487,
+            "visible": true,
+            "width": 0.1714285714285714,
+            "height": 0.1824884792626728,
+            "rotation": 0,
+            "zIndex": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "seed-moda4-fitting-look-1",
+      "modelId": "man",
+      "photoMediaId": "cmwe9j8h10012eo2o2nfbnbv7",
+      "photoStorageKey": "media/2026/11/c5b11c0f-d551-46cc-8a44-8a91e3e8e2f9.webp",
+      "photoSha256": "c8f366d5ad7e7910e1ffc4fecad645bd19b1f32ab92aecebd070bc7ef902d5a3",
+      "compositeFingerprint": "8f41b0de6614b2916af6da1d04b8d289964642c96539651f0847f001c36898fc",
+      "photoFingerprint": "e08eee08f53026a2c478fcfb41db9120ba1e76fd850056e8e23f55c103c2bb8b",
+      "pieces": [
+        {
+          "id": "seed-moda4-fitting-scene-1-piece-0",
+          "slot": "TOP",
+          "target": {
+            "x": 0.5,
+            "y": 0.33703943,
+            "visible": true,
+            "width": 0.45714286,
+            "height": 0.38836458,
+            "rotation": 0,
+            "zIndex": 2
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-1-piece-1",
+          "slot": "BOTTOM",
+          "target": {
+            "x": 0.5,
+            "y": 0.7392857142857143,
+            "visible": true,
+            "width": 0.2523809523809524,
+            "height": 0.4357142857142858,
+            "rotation": 0,
+            "zIndex": 1
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-1-piece-2",
+          "slot": "ACCESSORY",
+          "target": {
+            "x": 0.5,
+            "y": 0.24389157973174364,
+            "visible": true,
+            "width": 0.24523809523809523,
+            "height": 0.2288827975303384,
+            "rotation": 0,
+            "zIndex": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "seed-moda4-fitting-look-2",
+      "modelId": "boy",
+      "photoMediaId": "cmwe9ktir001geo2o5gn3uxjr",
+      "photoStorageKey": "media/2026/11/edb37054-ea58-43e1-bfb4-50840d45159e.webp",
+      "photoSha256": "e8fbd0b254f08279c033f3f000cc94d782bc05e8acbfd584ea6c97ab27fb9712",
+      "compositeFingerprint": "14e7451a8e4ba947e9b2f21d89ce7511f68dbb0ca922c9083349da33e4d3fe95",
+      "photoFingerprint": "544f916de5fe95df658144bffc29f902905244a2eba5401188b2cc3f47f99978",
+      "pieces": [
+        {
+          "id": "seed-moda4-fitting-scene-2-piece-0",
+          "slot": "TOP",
+          "target": {
+            "x": 0.5,
+            "y": 0.51704472,
+            "visible": true,
+            "width": 0.37619048,
+            "height": 0.23766088000000002,
+            "rotation": 0,
+            "zIndex": 2
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-2-piece-1",
+          "slot": "BOTTOM",
+          "target": {
+            "x": 0.5,
+            "y": 0.7892284292035397,
+            "visible": true,
+            "width": 0.23571428571428568,
+            "height": 0.3070282869785082,
+            "rotation": 0,
+            "zIndex": 1
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-2-piece-2",
+          "slot": "ACCESSORY",
+          "target": {
+            "x": 0.5,
+            "y": 0.28953200204813107,
+            "visible": true,
+            "width": 0.14047619047619048,
+            "height": 0.0947836661546339,
+            "rotation": 0,
+            "zIndex": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "seed-moda4-fitting-look-3",
+      "modelId": "girl",
+      "photoMediaId": "cmwebf4mc002deo2ovztt9dh7",
+      "photoStorageKey": "media/2026/11/77dae259-f134-4886-b0b9-48b03765d1f3.webp",
+      "photoSha256": "3a26d2e54412866f2383e2a8cfa78661c8bc7c0c6e9cc91a42421a0da8e98bfa",
+      "compositeFingerprint": "044ea72cf34737ff83f7dc6114836cb76ef48f7e40a81da9fc483937dab330be",
+      "photoFingerprint": "45aa2446cd3acbb8c6450d821d0166ee5d4be842c87b95f2a8e29c60862e74d5",
+      "pieces": [
+        {
+          "id": "seed-moda4-fitting-scene-3-piece-0",
+          "slot": "ONE_PIECE",
+          "target": {
+            "x": 0.5,
+            "y": 0.5763935246995995,
+            "visible": true,
+            "width": 0.4047619047619048,
+            "height": 0.3135013351134846,
+            "rotation": 0,
+            "zIndex": 2
+          }
+        },
+        {
+          "id": "seed-moda4-fitting-scene-3-piece-1",
+          "slot": "ACCESSORY",
+          "target": {
+            "x": 0.5,
+            "y": 0.30381771633384536,
+            "visible": true,
+            "width": 0.14047619047619048,
+            "height": 0.0947836661546339,
+            "rotation": 0,
+            "zIndex": 8
+          }
+        }
+      ]
+    }
+  ]
+}

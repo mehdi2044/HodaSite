@@ -153,9 +153,14 @@ export async function savePromotionProgram(raw: unknown) {
           .filter((c) => c.field === "segment")
           .map((c) => c.value);
         if (segments.length) {
-          await assertCan(actorId, "crm.segment.manage", {
-            marketId: input.marketId,
-          });
+          await assertCan(
+            actorId,
+            "crm.segment.manage",
+            {
+              marketId: input.marketId,
+            },
+            tx,
+          );
           const count = await tx.crmSegment.count({
             where: { id: { in: segments }, marketId: input.marketId },
           });

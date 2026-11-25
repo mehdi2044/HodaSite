@@ -13,8 +13,9 @@ import {
   xmlEscape,
   type SeoKind,
 } from "@/lib/seo";
+import { publishedEntries } from "@/modules/editorial/queries";
 const SIZE = 1000;
-const kinds = ["home", "p", "c", "pages"] as const;
+const kinds = ["home", "p", "c", "pages", "looks", "magazine"] as const;
 const document = (tag: string, body: string) =>
   `<?xml version="1.0" encoding="UTF-8"?><${tag} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</${tag}>`;
 const productWhere = (marketId: string, allowCoinPacks: boolean) => ({
@@ -45,6 +46,8 @@ export async function getSitemapIndex() {
           db.product.count({ where: productWhere(m.id, allowCoinPacks) }),
           db.category.count({ where: { deletedAt: null } }),
           db.page.count({ where: pageWhere(m.id) }),
+          publishedEntries("LOOK", m.id).then((rows) => rows.length + 1),
+          publishedEntries("ARTICLE", m.id).then((rows) => rows.length + 1),
         ]);
         return kinds
           .flatMap((kind, i) =>
@@ -68,6 +71,38 @@ export async function getSitemapPage(code: string, kind: string, part: string) {
   const market = markets.find((m) => m.code === code && m.isActive);
   if (!market) return null;
   if (!config.indexingEnabled) return document("urlset", "");
+  if (kind === "looks" || kind === "magazine") {
+    const entries = await publishedEntries(
+      kind === "looks" ? "LOOK" : "ARTICLE",
+      market.id,
+    );
+    const rows = [
+      {
+        slugFa: "",
+        slugTr: "",
+        slugEn: "",
+        updatedAt: site?.updatedAt ?? market.updatedAt,
+      },
+      ...entries.map((e) => ({ ...e, updatedAt: e.revision.updatedAt })),
+    ].slice(page * SIZE, (page + 1) * SIZE);
+    return document(
+      "urlset",
+      rows
+        .flatMap((row) =>
+          SEO_LOCALES.filter((locale) =>
+            market.enabledLocales.includes(locale),
+          ).map((locale) => {
+            const slug = { fa: row.slugFa, tr: row.slugTr, en: row.slugEn }[
+              locale
+            ];
+            const url =
+              config.origin + seoPath(locale, market.code, kind, slug);
+            return `<url><loc>${xmlEscape(url)}</loc><lastmod>${row.updatedAt.toISOString()}</lastmod></url>`;
+          }),
+        )
+        .join(""),
+    );
+  }
   const pagination = {
     orderBy: { id: "asc" as const },
     skip: page * SIZE,

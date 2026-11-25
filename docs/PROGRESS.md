@@ -1,3 +1,273 @@
+## MODA4 final P0 gate — isolated investigation, 2026-11-24
+
+Persisted-session follow-up: financeActor previously validated AdminSession
+through the global client while holding a native transaction. A controlled
+five-admitted test fails before correction; transaction-local revocation is
+also invisible to that old reader. The new optional session reader propagates
+the existing transaction through auth/getAdminSession/validAdminSession.
+JWT transport, signature/session-version, expiry, active-user, MFA/enrollment,
+revocation and permission evaluation remain unchanged; no auth strategy,
+schema, money policy, timeout or capacity change. Native before2/2/0 and
+after4/0/0 controls are retained separately from historical homepage P2024.
+Actual-source focused checks: 335/0/0 in 22 files;
+additional finance/security checks: 446/0/0 in 3 files.
+These do not satisfy the final full-suite/browser/CI/independent D70 gates.
+
+Actual cart-reader correction plus the inline permission-client propagation
+passes 325 focused tests in 20 files on six freshly verified independent
+database contexts (0 failed, 0 skipped; original deadlines/pool/retry policy).
+Native cart control records 82 global-client accesses inside callbacks and ten
+P2028 rollbacks before correction, versus zero such accesses and no P2028
+afterwards; the expected invalid-batch rollback remains. These focused results
+do not close the full-suite, slow-network UI, CI or independent D70 gates.
+
+The complete inline audit found 27 additional global permission reads across
+16 files. Those calls now receive their enclosing transaction, with identical
+actors, permissions, scopes, guard positions and transaction options; global
+checks keep an explicit undefined scope. This includes backup-queue permission
+checking, not any change of backup scripts/schema/provider or restore process.
+Record this as preventive reader correction and retain the audit's limitations
+for indirect helpers and session validation. Existing negative permission,
+MFA, finance, publication, shipping and backup regressions remain required.
+
+Matched runtime stress exposed a remaining cart validation escape on both c57
+and e8: the cart transaction holds its row lock while quoteCart uses the global
+client. A separate real-service control with five admitted transactions, native
+pool5/default10s and unchanged native5s/test15s deadlines failed both five-cart
+add and market-switch cases before correction; all three cases pass after
+passing the existing transaction. Invalid batch rollback remains enforced.
+Quote validation retains lockPromotions=false: no coupon redemption, order,
+reservation, credit or journal write is introduced. Preserve the e8 source and
+3410 artifact for comparison; final full/source-matched checks must use this
+new isolated cart-reader candidate.
+
+The e8 plain relevant browser run passed54/0/0; its separately instrumented
+consent run passed9/0/0. The additional editorial/hero run was14/5/0: existing
+EditorialSpotlight intentionally suppresses the legacy EditorialHome section,
+an archived extra published look invalidates the ten-card fixture precondition,
+and a read-only credential check proves the harness password does not match
+the archived account hash. Do not weaken assertions, change the approved home
+or overwrite that account. Use a new compatible test fixture and distinct QA
+identity. Broad e8 full gates were deferred before database target creation,
+not counted as executed tests, once the real cart regression was found.
+
+The aef56ed complete Windows attempts remain failed evidence: 9454/1/0,
+then 9371/9/75, across 197 files. Focused Windows Node 20/24 ABBA runs
+each passed 62 tests; these do not erase full-run failures. Further work
+uses another isolated worktree, preserving the 3396 and 3406 artifacts.
+Invoice after-lock permission reads now use their existing transaction:
+the real five-admitted control expired five default transactions (P2028),
+while the corrected control completed; a separate revocation/rollback probe
+also passed. These are not the five historical homepage P2024 errors.
+Direct fitting-ledger imports remove measured cold barrel initialization
+under financial locks without changing the functions or financial policy.
+Direct parser import keeps identical flat lint rules and parser behavior,
+with all six money domains checked by real ESLint rejection/positive tests.
+Current-head build, complete suites, browser traces and D70 remain required;
+do not label this candidate accepted or release-ready.
+
+Follow-up on the independently retained 3396 candidate: its clean source 1c2e3af0beb428c03eb95d9ee8aad58a481f3d02, Build N0qJh-nZ9oPwMHJ5r7aqC, 109 focused tests and first complete Windows run (9447/0/0 in 196 files) are retained, not replaced. A second worktree addresses measured market-scope read amplification. The preserved old run started the passing scope file with three retained markets and the failing counterpart with at least 25. Its independent 26-market copy passes the unchanged two-case test in the replay, but performs 575 user lookups; a direct real-service probe confirms 26 subject reads for one lookup. This is demonstrated work amplification, not proof of every millisecond in the historical timeout.
+
+Orders and returns now reuse one fresh operation-local subject through the existing access evaluator across every market, including inactive historical markets. There is no permission cache; existing guard positions remain unchanged, including the transaction-scoped return checks after locking. Real database regressions cover scoped/category/invalid grants, explicit denial, inactive history, account revocation, missing users and unknown permissions; all extra fixture rows roll back. Extend the namespace audit to the new authorization reader, retaining its original assertions and escaped-identifier coverage. Final source-matched complete validation and runtime/consent evidence remain required on the follow-up head.
+
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D23, D24, D31, D38, D41, D70, D72, D73, D82.
+
+Based on c57bbb749757bf12688efd14356b126a6f5c1ca1; all existing previews, original data and volumes remain protected. This branch is not approved for release. Follow `phases/phase-moda4-final-p0-gate.md`; no new feature, push, PR, merge or main change is authorized.
+
+The transaction audit found return permission checks and exchange pricing/functional FX escaping to the global client. A real five-admitted-transaction control produced five P2024 failures with pool5/default10s and no retry. The existing permission reader now accepts the current transaction client, and return authorization/exchange prices pass it through. Permission evaluation, rechecks after locks, isolation/lock ordering, prices, snapshots and financial mutations remain intact. Focused coverage also requires missing-actor denial and visibility/rollback of an uncommitted account revocation. This finding does not prove the cause of the five historical homepage runtime errors.
+
+The namespace audit parsed every source file even when it could not contain a guard. A test-only spelling filter retains full AST checks for candidate files and all Unicode-escaped identifiers; unused parent links are omitted. The measured candidate retains the same 256 guard calls. Assertions and the 15-second deadline remain unchanged; syntax/escaped-identifier regression cases were added.
+
+Correlated homepage traces show seventeen identical active-market reads for content links per render. React request-local memoization coalesces that read by market and locale; every new document/Flight render checks live availability again. No shared financial/authentication cache, cache-tag contract, content data, media, geometry, consent semantics or approved presentation changes.
+
+A clean Next.js 16 build regenerated the tracked next-env declarations to import routes and root-params types. Preserve that generated framework-compatible header in source, retain the first build/static results as nonfinal identity evidence, and rebuild from a clean commit. Do not discard the generated difference merely to report a clean checkout.
+
+Run focused transaction readers, checkout, returns, promotions, access/namespace and content-target tests before complete source-matched build/static/browser/full-suite validation. Evidence must retain initial failures and distinguish instrumented diagnostics from plain production verification. Historical P2024, en/1440 reload and five Windows timeouts remain open until the final evidence resolves each explicitly. Current-head remote CI, independent review and Mehdi acceptance are separate D70 gates; local success alone does not satisfy them. Final sanitized run counts, SHA/Build ID, preservation receipts and remaining blockers are recorded in Issue 41.
+
+## MODA4 Checkout/pool/consent stability — isolated candidate, 2026-11-23
+
+Final exhaustive fitting pagination coverage retains all 500 fixture variants, all 50 real API page calls and every original assertion. Five bounded read-only readers prefetch immutable-fixture pages; the test then follows the actual returned cursor chain and rejects missing/repeated pages or any reader failure after settling all readers. The existing 15-second deadline and five-connection pool are unchanged. The original serial test passed in both controlled runs but spent most of its time on 49 serial page round trips; paired ABBA measurements are local diagnostic evidence, not a production latency improvement. FixtureLifecycle now drains timed-out fitting test bodies before actor/config reset and final cleanup, with an explicit database disconnect. A separate full-run order-cancellation REQUEST_FAILED has not reproduced under a valid focused trace; retain it as open until an original-module trace or two complete final runs provide further evidence. Never infer acceptance from focused passes.
+
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D24, D31, D38, D70, D72, D73, D82. Preserve all six original previews, databases, media and volumes. No push, PR, merge, main change, public release or new feature.
+
+Five admitted transactions in the unchanged application retain all five pool connections and then request further connections through global quote/context/pricing/inventory readers. The quote-only control has no SQL lock waits and rolls back near ten seconds; same-cart retries additionally wait on the cart row. Pass the existing transaction client through these readers, including current FX. Boundaries, ReadCommitted, lock order, domain timeout, money snapshots and non-transaction cache behavior remain intact. Pool/server limits are unchanged. One application PrismaClient constructor exists; distinct processes own distinct pools. PostgreSQL sessions do not directly reveal the engine queue depth.
+
+The two historical checkout cases pass focused. Historical STALE_VERSION is raised in cleanup after a runner deadline; the original body is not canceled. A fixture lifecycle now drains real bodies before cleanup reads versions or the next case changes actor state. Controlled real-database replay retains the guard and checks unsafe/safe ordering. New coverage exercises five admitted quotes, five same-cart retries and a final-step fault after credit/payment/inventory/coupon/ledger writes, requiring full rollback. Initial failures, including a corrected field-name typo in the new rollback test, remain in the evidence. No test deadlines or original financial assertions are weakened.
+
+Normal baseline footer checks pass nine combinations. Held JavaScript on an unchanged production build independently proves an early trusted settings click is lost before hydration; saved consent remains intact. Controls now use native disabled/busy state until handlers and stored preference are ready for the current context. Storage format, choice/revocation, analytics policy, text, footer styling and Kids World motion are unchanged. Nine new browser cases cover script gating, reload and reversible decisions.
+
+The production build contains two independent database module factories. Executing those genuine factories on one Node global proves two PrismaClient constructions without issuing queries; one source constructor is not an instance-count guarantee. Production previously skipped saving the global singleton. Persist it in every environment, retaining the same datasource and five-connection limit. A regression reproduces the production failure and checks production/development/test module re-evaluation. Preserve the interrupted earlier full run as partial evidence; only two completed full runs on the final SHA count as final validation.
+
+A completed full run exposed a separate global-cron fixture collision: the deadline case processed 107 orders, including 98 other-customer fixtures, instead of its small isolated setup. Keep this failed run. Give both exchange-cancellation and commerce cron specs their own seeded test databases using the existing Editorial isolation pattern, validate optional dedicated URLs before tests, and drain its actual async bodies before cleanup. The inventory concurrency file also calls the global HOLD-expiry sweep and resets its chosen stock; it gets an independent fixture database through the same guard. CI clones four dedicated pristine databases in addition to the shared test database. The real cancellation scan/batch, financial assertions, timeouts, and application source remain unchanged by this test-infrastructure correction.
+
+A subsequent pair of full runs exposed an order-dependent finance scan fixture: the first financial matrix timed out on catalogue rows created by another spec, then its still-running scan changed AuditLog during a denied-action fingerprint. The second run placed finance first and passed all 438 cases. Preserve both results. Give finance operations a sixth dedicated seeded test database, drain actual test bodies before actor changes, and disconnect its client. Keep every permission/financial assertion, 15-second deadline and production scan unchanged; catalogue-scale scan latency remains a separate performance observation, not a proven production fix.
+
+Read final full-suite, build/browser and preservation results from the source-matched handoff and Issue 41; implementation notes do not imply success. Historical React #418 and Connection closed remain open without new proof. D70 requires fresh head-matched CI/review, independent human acceptance and explicit Mehdi permission.
+
+## MODA4 bird/butterfly completion — isolated candidate, 2026-11-22
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D77, D81. The owner's new explicit decision adds one distant inline-SVG bird, one small butterfly and a mild sun-halo opacity change. Slow outer motion, bounded wing transforms and pointer-inert decoration use no extra network resource, client loop, WebGL or package. The butterfly anchors to the existing copy-to-product gap and hides when the catalogue has no products; its absolute positioning does not change ring/podium or text geometry. Root and nested wing/light animations pause on hover/focus and stop under reduced motion. Existing footer, consent/PWA logic, product assets, prices, media and database contracts are unchanged.
+
+The reference preview returned HTTP 200 and 19 healthy JS/CSS resources in installed Windows Chrome, with no console/page/request error in that observation. The internal Codex browser also rendered the same reference successfully. The previously reported internal load failure was not reproduced; its earlier cause is unproven without the original failure trace. Do not call that service broken or claim a cache/network fix that was not demonstrated. No reference preview or global Docker restart is part of this work.
+
+A new worktree, proven-empty database destination and independent media/dependencies support this candidate. Initial lint and TypeScript pass; seven warm development motion scenarios pass, while two early development navigations failed before motion assertions during startup. Retain these failures. Fresh source-matched production, three-locale/three-width motion and geometry checks, footer/consent/PWA/navigation regression, complete Vitest and matched before/after/video evidence belong to the local handoff and Issue 41. These checks are automated/self-review evidence, not Mehdi/Vee visual acceptance or D70 permission. Preserve ports 3283, 3296, 3315, 3330 and 3346; no push, PR, merge, main/original-data change or public site deployment.
+
+## MODA4 Kids World and footer polish — isolated visual candidate, 2026-11-22
+
+Implemented against docs v1.2 / D-numbers touched: D31, D70, D77, D81. The owner-authorized scope is presentation only: organic cloud paths, a softly shaded sun, restrained sun/moon/star/cloud transform/opacity motion, static reduced-motion decor and hover/focus pause. Mobile decor moves outside the title band. Product rendering, media, prices, ring/podium geometry and all commerce code remain unchanged.
+
+The footer now groups the existing configured brand/newsletter and menu/contact content, followed by aligned installation/privacy utilities and a quiet legal line. A readable dark consent panel replaces the scattered light card; both decisions retain equal target size and styling. PWA help uses its existing keyboard-operable disclosure. Consent storage/analytics activation, installation/service-worker logic, translations, market settings and route targets are unchanged. No invented marketing or contact content is added.
+
+Only a newly proven-empty database and independent media/dependency copy support the candidate. All 131 cloned table counts/hashes and 337 copied media files match the reference. Initial lint and TypeScript checks pass. New browser coverage checks three languages at five widths, pointer hit-testing, 44px targets, keyboard disclosure/consent, scoped contrast, reduced motion and actual ambient layout stability. A development-only streaming failure is retained; clean production, complete browser and isolated full Vitest results must be read from the local handoff evidence, never inferred from this implementation note. Existing transport/stress limitations are not closed by visual work. No push, PR, merge, main change or public release; Mehdi's visual acceptance remains pending.
+
+## MODA4 moving RTL ribbon — final visual regression follow-up, 2026-11-22
+
+Real no-preference video exposed a product defect hidden by the static reduced-motion captures: the RTL block layout anchored the oversized track at its right edge, then its negative translating transform moved the entire black ribbon's text outside the viewport. Read-only geometry on production 0f7f053 recorded zero visible black-ribbon words at both 390 and 1440; English/Turkish retained visible words. The fix gives only the ribbon's physical motion container LTR layout; the word units retain their explicit locale direction and the RTL animation direction remains unchanged. No business text, speed setting, autoplay, fitting geometry, media, database or navigation code changes.
+
+Six new real-motion browser scenarios sample both tracks' text/clip intersections and displacement for eight natural seconds in FA/TR/EN at 390/1440. They supplement the existing duplicate-unit, pause and reduced-motion checks. Preserve the failed-before production evidence and build a separately identified after artifact; rerun complete source-matched QA before reporting success. The preceding 0f7f053 ordinary checks passed (M4 67, Homepage 53, Vitest 9417), while its separate four-browser stress run failed 2 M4 and 8 Homepage navigation/deadline scenarios. Neither historical gallery latency nor stress stability is closed by a successful ordinary run. D70 and owner visual acceptance remain blocked; no push, PR, merge, main/original-data change or new feature phase.
+
+## MODA4 final regression repair — local candidate, 2026-11-22
+
+Implemented against docs v1.2 / D-numbers touched: D23, D31, D64, D70, D81, D82.
+
+Owner follow-up preserves production 3315 at source 736e6d8 / Build EeIr84q4k7ssrgo5Ty2az and references 3283/3296. Read-only snapshots cover all 131 tables per environment. A separate proven-empty database, new volume/network and copied read-only media host the unchanged baseline for diagnosis; no original restore/reset or source-preview mutation is authorized.
+
+The three M4 failures involved separate remote reads crossing a short scan window or the natural next-look boundary. Renderer-frame observations record actual scan/final photo and active identity in normal and CPU-throttled scenarios, with correlated real compositor images. The regression sampler now binds those assertions to the trusted selection/Replay click and same cycle; original media hash, geometry, thresholds, decoded-image, real pause/frozen-clock and Replay assertions remain. Three additional natural-autoplay cases explicitly preserve automatic advancement. No fitting engine, approved imagery or application animation clock is changed.
+
+Gallery navigation now records Flight body chunks/completion and browser history commits as well as response headers and aborts. Bounded new observations have not reproduced the previous five-second failure; this is not a demonstrated performance fix or proof of its original cause. The unchanged navigation deadline, zero retries, full sequential checks and separate concurrent stress evidence remain required on the final source/build. Final acceptance, root-cause classification and D70 readiness must follow actual results, not these preliminary observations. Merchant editorial allocation and demo-content decisions remain with Mehdi/Vee; no new content is fabricated.
+
+## MODA4 paired visual review follow-up
+
+Same-viewport before/after inspection found a tall single-weekly-card state: the row-height stretch intended for a real complementary article also applied when that article was absent. Scoped layout variables now stretch only the genuine two-card state; the single desktop photograph stays at 500px and mobile retains 3:4. The acceptance suite adds a desktop upper/lower frame bound and the mobile aspect assertion. A generic composition caption also overlapped the mobile lookbook CTA; it remains in the accessibility tree while the look name, piece count and real CTA provide the visible caption. No media, scene geometry, model profile, inventory or pricing contract changes.
+
+The preceding production SHA passed 53 homepage cases, including six slow-network immediate purchase/history/checkout journeys, and preserved source/served-asset identity. A first slow-network harness had counted the hidden remove-form quantity alongside the real numeric quantity; traces proved one actual item and the selector was corrected without reducing its one-item/quantity-one assertion. CMS preview verified the real article branch in six locale/width combinations, and panel draft/publication succeeded. Its strict comparison detected only the four technical scene.match.confirmedAt renewals performed by the existing authorized draft writer; final verification explicitly records those paths and compares every other field exactly. These are automated technical checks, not human visual approval. Fresh head-matched production and complete regression evidence is required after this visual follow-up.
+
+## MODA4 production visual and purchase feedback follow-up
+
+Paired production inspection found mobile weekly-card image sizing inherited a square gallery rule and exposed blurred placeholder below the photograph. The new block now fills its frame explicitly, preserves the complete real model with contain and omits only its display placeholder; approved media rows and files are untouched. The desktop weekly image stretches with its complementary card, rather than leaving a fixed-height gap.
+
+The intermediate homepage run exposed a real purchase-feedback delay in Persian desktop: the successful action feedback rendered while the original useTransition pending flag kept the button disabled beyond the unchanged five-second assertion. The trace records a 200 action response, visible success feedback and continued aria-busy state. Compact homepage controls now track the committed mutation separately, retaining the synchronous in-flight guard, existing server transaction/idempotency and the original detail-page transition behavior. No polling, native-navigation guard, retry or error reporting is disabled. Six additional slow-network cases exercise immediate gallery navigation after the completed purchase, cart/history/refresh/checkout and record Flight/abort/console evidence. Full final-build verification remains pending; preliminary failures are retained.
+
+## MODA4 isolated content allocation correction
+
+A read-only schedule check found that the cloned active weekly MAIN slot still selected Easy Days. The new duplicate-avoidance rule correctly reserved it, leaving only three shop looks; the intended four-look browser fixture therefore was not yet configured. Slice 4 preparation now replaces that active allocation with the existing published City Layers through saveWeeklyLook, retaining the prior schedule history and its end date. It guards the exact new database and expected prior entry, leaves future schedules intact and does not manufacture content. This requires a fresh source-matched production build; the earlier build is an intermediate artifact, not final acceptance evidence.
+
+## MODA4 homepage experience — Slice 4 implementation candidate
+
+Implemented against docs v1.2 / D31, D64, D70, D77, D81, D82. Editorial Spotlight is an optional ordered/visible block in the existing homepage CMS, using the current weekly MAIN schedule, CuratedLook commerce and published ARTICLE entries. An explicit article selection is respected only when valid and distinct; automatic selection prefers an eligible featured article. Shop topic and photo allocation take precedence, so the sole Easy Days article remains a real story link beside that shop look instead of repeating it as a second promotion. Missing independent article content receives an honest compact journal state. No synthetic article, media, price or new editorial system is introduced. Existing page-level editorial output remains the fallback for configurations without the new block.
+
+The shop is limited to actual model-photo looks, offers the photographed colour and explicit size selection, and retains the existing Decimal quote, stock, authorization and transaction-locked cart behavior. Its compact presentation and the spotlight use the existing site colour tokens. Lookbook compositions reuse existing approved catalogue cutouts when available, with no media/database rewrite. Legacy homepage JSON remains readable, and these presentation changes can be reverted independently.
+
+Focused contracts and allocation: 29 passed. Lint and TypeScript passed before source freeze. Clean production identity, complete browser/full Vitest verification and paired visual review are pending in the delivery evidence; no technical or owner acceptance is implied by this implementation note. No push, PR, merge, public deployment or original-data change is authorized.
+
+## MODA4 Slice 3 — production visual follow-up
+
+The clean production build of the Slice 3 SHA passed the two Persian mobile shop cases, including three real variants, double click suppression, completed repeat idempotency and cart persistence. In the motion run, 18 cases passed and six failed. The six failures assumed every valid curated visual was PHOTO; these five entries actually use the existing validated COMPOSITE contract. The acceptance check now requires five distinct complete visual identities, covering photo pairs or the full piece-media set. Duplicate complete compositions are removed, while sharing one garment remains legitimate. No count assertion or five-second image deadline is reduced.
+
+Visual inspection also found genuinely thin side cards: their parent flattened the counter-rotated child. The scoped fix preserves that parent's 3D context, fills the whole card with the real piece composition and adds measured side-width/full-height acceptance assertions. Original screenshots and failed traces are retained. This follow-up is limited to the lookbook; production verification of the correction remains pending. The approved kids product subtree remains unchanged. It is not owner visual approval or release authorization.
+
+## MODA4 homepage experience — Slice 3 local candidate
+
+Implemented against docs v1.2 / D31, D64, D70, D77, D81, D82. The legacy lookbook really contained two different SceneIDs with the same City Layers wide/portrait media. The new presentation reads ordered published CuratedLook references, reserves the shop allocation and deduplicates both photo sizes; it never clones cards to meet a count. The old scene JSON remains retained. The physical ring keeps its continuous angular seam, with separately oriented planes so neighbouring cards remain legible, real look-detail links, keyboard/drag/touch and reduced-motion handling. Zero/one-entry configurations have honest empty/static output. Shared homepage look reads use render-local React memoization only; no persistent cache or publication delay is added.
+
+Kids changes are confined to six ambient SVGs (previously eight shapes), layered clouds, pastel sun/crescent and gentle CSS motion. The complete product/ring JSX subtree is byte-identical to the protected source after newline normalization. No garment geometry, image, podium or ring code changed. Source-preservation evidence and paired reference images remain in the private QA package; runtime comparison is still required.
+
+Seventeen focused unit/contract tests passed; TypeScript and focused lint passed. The first browser run did not start because its isolated content preparation hit a PostgreSQL connection timeout. PostgreSQL remained running, with no OOM/restart and the same volume. Stopping only this task's development app was followed by three successful fresh network probes and a successful authorized content publication. The exact transport cause remains unproved; production health and browser regressions remain pending. The two reference previews and their databases were not restarted or modified. A clean, network-isolated production build will replace this task's development runtime before further acceptance checks. Slice 2's complete cart/repeat and settled visual comparisons remain open, not implicitly resolved by these unit results.
+
+## MODA4 homepage experience — Slice 2 isolated candidate
+
+Implemented against docs v1.2 / D31, D64, D70, D81, D82. ShopLook can select ordered references to the existing published CuratedLook CMS, without copying its product, price, inventory or checkout logic. The portrait model, separate product rail, colour/size controls, live quotes, individual/batch cart action and exact look preset use the existing editorial commerce path. Legacy scenes and prepared-look JSON remain retained and readable. The shared purchase component keeps its original detail-page markup by default; the compact homepage presentation is opt-in. A synchronous in-flight guard supplements the server's existing transaction-locked idempotent scene/cart operation.
+
+The isolated content preparation uses four actual looks. The existing girls fixture had a single item and no valid model-look visual; a different girls fixture used a flat catalogue dress image. Neither is presented as a complete model photograph. An appended revision of the first fixture reuses the approved M4-02 girl final photograph and exactly its two photographed products. The existing permission-checked, audited editorial writer performs the change only on the explicitly named new database after photo identity and all-market fingerprint checks. No product, price, media, geometry or original revision is replaced. This automated preview preparation is not independent human approval.
+
+Focused contract checks: 10 passed. A focused four-look image/link/keyboard case passed at Persian 390. Individual and three-variant batch actions returned HTTP 200, but the complete repeat/cart case still failed its unchanged five-second enabled-state check under development Flight rendering. One cold run spent about 60 seconds loading before the click; awaiting a development Flight response EOF also reached the 90-second test limit. No complete commerce pass is claimed. The trial that tracked mutation busy separately was reverted because it did not establish a complete pass; production verification is required. Paired 390/1440 inspection found legacy ShopLook grid rules leaking into the new root: the new root now explicitly uses block flow. The original failed comparison is retained; fixed comparison is pending. Initial traces retain an offscreen lazy-image harness error, an incorrect assumption about canonical fitting/cart routes, and a real development-mode image queue delay. Assertions keep their five-second readiness limit; imagery and cart behaviours are now separate cases, with real scrolling before image checks. Production and complete regression remain pending. The photographed colour is retained in this presentation; other catalogue colours remain accessible from the product link. The existing fitting-room contract can omit an incompatible second TOP in Easy Days; the shop can still purchase all three real pieces and does not invent an extra layer slot.
+
+## MODA4 homepage experience — Slice 1 local candidate
+
+Implemented against docs v1.2 / D23, D31, D64, D70, D77, D81, D82. The new isolated copy retains the protected v32 reference and the previous final-acceptance preview. Two equal ribbon units form a seamless CSS loop, with an independent pause row and optional CMS-configured pixel speeds. The old duration-only JSON still parses unchanged. Per-world editable descriptions are separate from the picture captions; the existing physical four-face prism now pairs its active category with three real catalogue thumbnails and a single category CTA. Direct selectors, accessible pause, keyboard, RTL-aware horizontal drag/touch, vertical-scroll intent and reduced motion remain available.
+
+Local focused evidence: seven contract tests and 15 initial browser cases passed in Persian, Turkish and English at 390/1440, including actual emulated touch. Lint/typecheck passed. The measured Persian ribbon baseline was 6.04/4.29 px/s; configured 7.90/5.60 px/s is approximately 30% faster and stays constant across the two widths. Development cold-compilation timeouts, an interrupted overbroad test glob and the initial stale dev reader are retained in the private evidence; they are not successful production checks. Stronger five-second image-readiness assertions then found four delayed thumbnails; bounded preload reduced these to one. World thumbnails now request eagerly without high fetch priority and without a blur background behind contained images; the strengthened browser rerun passed all 15 cases, including image readiness; production verification remains pending. Failed traces are retained. Source copying into the task-owned container avoids reliance on Windows bind-mount change notifications.
+
+See [the scope and rollback contract](phases/phase-moda4-home-experience.md). Slices 2–4, final production provenance, full regression and owner visual acceptance remain pending. No push, PR, merge, original-database change or public release.
+
+## M4-02 final interaction and journal acceptance (D31, D64, D70, D81, D82)
+
+- A separate checkout and database copy preserve the v32 recovery reference. The fitting selector, Replay and Pause controls show a genuine disabled/loading state in server HTML and enable on the client commit. Native links and the parser/Flight guard remain available. The animation and approved geometry/photo data are unchanged.
+- Journal links use the existing editable header/mobile menu records and permission-checked, audited writer. Current journal/article links receive active decoration after commit so rewrites do not alter hydration markup. The hamburger follows the header's existing 1100px breakpoint, without a conflicting 1024px utility. No CMS or migration is added; the five-item dock remains unchanged.
+- Language changes use native document navigation: the shared server root layout must resolve fresh locale messages and HTML lang/dir. Journal/gallery index links preserve their canonical market path before JavaScript loads; translated entity slugs keep the existing resolver. Browser regression checks hold bundles, assert a real document request and root metadata/direction, and retain cart quantities across language changes.
+- Scope, opt-in fixture and rollback are in [the acceptance contract](phases/phase-m402-final-acceptance.md). Issue #41 records final source/build provenance, measured early-interaction timing, visual/technical results and remaining limitations. Owner visual approval and all D70 release/merge gates remain pending; no Push, PR or publication is authorized.
+
+## M4-02 v32 recovery acceptance candidate (D23, D70, D77, D81, D82)
+
+- The owner authorized a new isolated restoration of the approved v32 database and media. Existing previews and data are retained. The candidate keeps the Next.js 16 pins and five-destination mobile navigation.
+- The mobile homepage grid reserves a separate third content track for EditorialHome. The hero and homepage remainder retain their existing two tracks; an absent Editorial section leaves the additional track empty.
+- Run `M402_APP_URL=<isolated-preview> pnpm exec playwright test -c playwright.m402-recovery.config.ts`. This opt-in suite requires the approved v32 CMS/media, validates all four final-photo bytes and projected garment targets, and covers flight, scan, pause and Replay in three languages at 390/1440. Run again with `M402_REQUIRE_EDITORIAL=1` against the separate editorial fixture copy to verify the sibling-layout regression. Ordinary seeded e2e fixtures are not a substitute for this acceptance data.
+- Restore destination guards, full table/media comparison, migration results, build provenance and paired reference/current evidence are recorded in Issue41. Visual acceptance by Mehdi and Vee remains pending; no push, PR, merge or public release is authorized.
+
+## MODA4 — Mobile purchase and early storefront navigation
+
+- The mobile dock and the fixed product purchase bar share a CSS offset that includes the safe area. Short viewports keep the purchase form in the scroller. Product, cart and Checkout controls are checked with pointer hit testing before an actual cart add.
+- The storefront head intercepts ordinary, same-origin link clicks while the HTML parser is active. It starts the chosen navigation after parsing, so the inline Flight payload can finish. Normal hydrated links, new tabs, downloads and same-page fragment links keep their browser behavior. This change has no database migration.
+
+## MODA4 — Next.js 16 candidate with Living Rail
+
+- The isolated candidate includes the approved Living Rail lineage, the admin login hydration guard and the tested framework pins. The [compatibility notes](phases/next16-acceptance-candidate.md) describe the cache contract and legacy Edge middleware.
+
+## MODA4 — ایمنی ارسال فرم ورود مدیر
+
+- فرم ورود با روش POST رندر می‌شود و تا اتصال کنترل‌کنندهٔ مرورگر، ارسال غیرفعال است. آزمون مرورگر با JavaScript دیررس، ارسال با Enter، نبود پارامترهای ورود در URL و ورود موفق به‌وسیلهٔ TOTP بعد از hydration را می‌سنجد.
+- تغییر در فرم محدود است. منطق Auth.js، تراکنش MFA، اعتبارسنجی TOTP و دیتابیس به همان صورت اجرا می‌شوند.
+
+## MODA4 — بررسی ایزولهٔ Hydration و جریان Flight
+
+- آزمون مرورگر ناوبری از مقاله به استایل را با bundleهای نگه‌داشته‌شده و پس از پایان پاسخ سند انجام می‌دهد. بعد از آزادکردن bundleها، آماده‌شدن پنل سبد و نبود خطای مرورگر را می‌سنجد.
+- بررسی‌های React #418 و Connection closed از هم مستقل هستند. اولی در بازاجرای Hydration گالری ترکی با پاسخ کامل HTTP ثبت شد. دومی در مسیر خوانندهٔ Flight و هنگام پایان جریان با رکورد حل‌نشده دیده شد.
+- تغییر این مرحله به تست مرورگر محدود است. بررسی Next.js 16 و تنظیمات سازگاری آن در کپی‌های محلی جدا انجام می‌شود. پذیرش انتشار تحت D70 باز است.
+
+## MODA4 — کنترل کیفیت گالری و Living Rail
+
+- اکشن‌های ذخیره، انتشار، بایگانی و زمان‌بندی، نشست و مجوز را در نقطهٔ ورود بررسی می‌کنند. ماژول Editorial همچنان مجوز فراخواننده را کنترل می‌کند. تست PostgreSQL مسیر واقعی اکشن‌ها را با نشست ناشناس، کاربر محدود و مدیر مجاز می‌سنجد.
+- CI یک کپی تست مستقل برای Editorial می‌سازد. fixture پیش‌نویس، بازار هدف را مشخص می‌کند. تست‌های پرداخت و تغییر پاداش اتاق پرو پیش از آزادکردن تراکنش اول، انتظار قفل advisory همان عملیات را در PostgreSQL بررسی می‌کنند.
+- در پیش‌نمایش ایزوله، پنل فیلتر گالری در عرض موبایل داخل جریان صفحه باز می‌شود. کنترل‌های فیلتر حداقل ۴۴ پیکسل ارتفاع دارند و عنوان بنر Living Rail در عرض کوچک جمع‌وجورتر است.
+- خطاهای React #418 و Connection closed در پیگیری پذیرش بازند. این تغییر migration ندارد.
+
+## MODA4 Living Rail — بازبینی محلی
+
+- بنر منتخب و استایل هفته می‌توانند در گالری از کارت‌های شناور یا رگال استفاده کنند. مدیر نوع چیدمان، سمت خالی عکس، نقش قطعه و حرکت را در پیش‌نویس استایل تنظیم می‌کند. پیش‌نمایش خصوصی همین بنر را رندر می‌کند. بخش زمان‌بندی هفتگی و دادهٔ نسخه‌های قبلی با ساختار فعلی کار می‌کنند.
+- قطعات با Variant هم‌رنگ عکس، تصویر تأییدشدهٔ کاتالوگ و قیمت و موجودی بازار نمایش داده می‌شوند. مجموع فقط انتخاب‌های قابل خرید را پوشش می‌دهد و افزودن به سبد از همان اعتبارسنجی استایل منتشرشده استفاده می‌کند.
+- تنظیم دو بنر و ارتباط قطعات تکمیلی فقط در کپی دیتابیس محلی برای بازبینی ثبت شده است. این تغییر migration ندارد و ارتقای آزمایشی React و Next.js در مسیر جداگانه پیگیری می‌شود.
+
+## MODA4 — گالری استایل‌های منتخب و مجله
+
+- بازبینی دوم روی شاخهٔ ایزوله پیاده شد. گالری عکس تمام‌قد یا چیدمان قطعات دارد. مجله، مقالهٔ برجسته و استایل هفته را کنار هم می‌آورد. پنل خرید مقاله قیمت و موجودی همان SKU و لینک انتخاب سایز و اتاق پرو را نشان می‌دهد.
+- عکس مدل برای انتشار به تأیید تطبیق تصویر، SKU و رنگ نیاز دارد. چیدمان تصویرِ متصل به Variant یا cutout معتبر را به‌کار می‌گیرد. برای محصول تک‌رنگ، تصویر معتبر محصول هم قابل استفاده است. پیش‌نویس‌های قدیمی در پنل باز می‌شوند تا تأیید جدید ثبت شود. این تغییر به migration نیاز ندارد.
+- در پنل استایل هفته می‌توان برنامهٔ آینده را تعویض کرد. اگر برنامهٔ جاری جایگزین شود، بازهٔ قبلی تا زمان شروع برنامهٔ جدید در آرشیو می‌ماند. نوار عمومی در ناحیه‌ای جدا از محتوای قابل اسکرول نمایش داده می‌شود تا کنترل‌های Checkout قابل دسترسی باشند.
+
+- ناوبری Checkout در یک کامیت مستقل فعال شده است. مسیر پرداخت سفارش و امکان غیرفعال‌کردن نوار از تنظیمات تم به قرارداد موجود متکی است.
+- گالری، مقاله، استایل هفته و اتاق پرو از هویت پایدار استایل و نسخه‌های محتوایی استفاده می‌کنند. خرید به SKU، قیمت بازار، قیمت‌گذاری Decimal، موجودی و مسیر اتمیک فعلی سبد متصل است. پروی فوری فقط قطعاتی را نمایش می‌دهد که قرارداد cutout فعلی برای مدل تأیید می‌کند.
+- در پنل از بخش محتوا پیش‌نویس بسازید، تاریخچه را باز کنید و نسخه را در یک زبان و بازار پیش‌نمایش دهید. انتشار و زمان‌بندی مجوز انتشار موجود را می‌خواهند و AuditLog ثبت می‌شود.
+- در یک دیتابیس آزمایشی تازه ابتدا migrations و seed معمول را اجرا کنید. برای داده‌های گالری روی همان محیط `pnpm exec tsx scripts/seed-editorial-preview.ts <test_db>` را اجرا کنید. این fixture فقط برای داده‌های Seed است. مسیر CSV/Excel و برنامهٔ بازگشت در [قرارداد این مرحله](phases/phase-design-01-editorial.md) آمده است.
+- ادغام به پذیرش بصری مهدی و شروط D70 وابسته است.
+
+## M1 — Easy Days and the Kids card
+
+- Easy Days uses the existing Sam cotton tee in ivory, the Sepehr overshirt, and the Bardia chinos. Its photo, size selectors, live market prices and purchase action use the same scene. The CMS can reorder scene pieces. Existing merchant content still goes through draft, photo confirmation and publication.
+- The Kids rotation disclosure moves to the opposite image corner from the wishlist. The standalone Shop the Look panel sits beside the picture on desktop and below it on smaller screens.
+- Repeated submission of a complete scene leaves selected quantities already in the bag intact. Private homepage previews queue same-owner requests before acquiring a connection. Paid fitting rewards take the same advisory lock as fitting settings writers.
+
+## M1 — Storefront footer, hydration and Four Worlds (D31, D64, D77, D81)
+
+- The storefront layout puts streamed Route/Flight children behind keyed fragments so React can suspend before re-entering a claimed HTML wrapper. Verify a direct cart visit after adding a product, and reload checkout in each locale while watching the browser console.
+- The Footer menu in Content → Menus controls group names, links and ordering. Existing standalone policy links remain in the directory. A fresh demonstration store seeds Shop, Experience, Help and Account groups and all four worlds. To adopt the groups in a configured store, add parent and child entries in the existing footer menu. Use a category reference for each world and validate the storefront at 390, 768 and 1440 pixels. No migration or reseeding of an existing store is needed.
+- The prism accepts a drag starting on its linked artwork. A tap or click still opens the selected category. Cross the last-to-first seam twice in each direction and repeat with reduced motion. Local visual approval remains pending.
+- The account tool and post-MFA admin navigation use a fresh document request so the server resolves the current session. The existing credential, MFA, CSRF, return-path checks and stored sessions still apply. Rehearse guest and authenticated routing and invalid admin credentials on an isolated database.
+
+## M1 — Four Worlds prism rotation (D77, D81)
+
+- Next, previous, swipe and autoplay keep the direction of rotation across the first and last faces. Direct face selection takes the shortest path, like the original MODA4 prototype.
+- On the homepage, select Accessories, advance to Women, then go back. Check that each step turns one face and that Enter opens the selected category. With reduced motion enabled, the controls select the same faces without an animated transition.
+- Uses the existing homepage block, artwork and market-aware category targets. Local visual review is pending.
+
 ## Backup verification for empty catalogs (D23, D36, D41)
 
 - An initialized shop may have no products or variants. Backup verification now requires table data entries in the dump and checks the restored schema, migration set, relationships, checksums and media. Partial or corrupt archives still fail verification.
@@ -54,7 +324,6 @@
   shift places the category CTA under the old price-button coordinate.
 - Local evidence is pending independent review. FR4 stays separate.
 
-
 ## FR3 D77 fitting gallery — local review
 
 - Implemented against docs v1.2 / D-numbers touched: D26, D31, D70, D77, D80, D81.
@@ -66,7 +335,6 @@
   for Vee and owner review.
 
 ## 2026-11-02 — بازبینی S0، تفکیک snapshot CAD و نمایش مبلغ سبد
-
 
 ## FR0–FR2 D77 fitting presentation — local review in progress
 
@@ -171,19 +439,19 @@ R5 / PR73 — IN_PROGRESS، Draft: مسیر واقعی دسته/جست‌وجو/
 
 Implemented against docs v1.2 / D-numbers touched: D26, D31, D51, D70, D77, D78.
 
-| مرحله | وضعیت واقعی | مبنا/وابستگی و خروج |
-|---|---|---|
-| R0 | آنلاین BLOCKED_ENV؛ راهنمای Windows آماده، اجرای مالک NOT_VERIFIED | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش. |
-| R1 | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند. |
-| R2 | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI. |
-| R3a | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی. |
-| R4 | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق. |
-| R3b | چهار CI همان head موفق؛ پذیرش مالک باز | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، `b1f806a`؛ ۹٬۲۵۶ unit/PG، ۱۸۰ browser و۳ propagation واقعی، Local+S3 restore. راهنمای Windows همان نسخه در Issue62/comment6181257061؛ آنلاین BLOCKED_ENV. |
-| R5 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR73](https://github.com/mehdi2044/HodaSite/pull/73)، از PR72؛ فیلتر/variant/قیمت/گالری/سبد واقعی و checkbox پنل؛ [شواهد مرورگر و WCAG](design/moda4-redesign/evidence/r5/README.md). بدون migration یا تغییر موتور مالی؛ پذیرش مالک باز. |
-| R6 | IN_PROGRESS، Draft؛ CI نهایی باز | [PR75](https://github.com/mehdi2044/HodaSite/pull/75)، از PR73؛ OTP/تم مستقیم/ترجیحات واقعی/پاک‌کردن و export/تصویر ورود پنل و آمار واقعی؛ [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md) و [شواهد](design/moda4-redesign/evidence/r6/README.md). پنج browser و۱۰ PG/media موفق، migration افزایشی و restore fixture؛ full-account deletion همچنان reviewed/manual. |
-| R7a | IN_PROGRESS، Draft؛ CI نهایی باز | [PR76](https://github.com/mehdi2044/HodaSite/pull/76)، از PR75؛ [راهنما و مشاهدهٔ محلی](design/moda4-redesign/R7A_GUIDE_FA.md)؛ کمد مستقل/پروی رایگان و قیمت/مرجع زنده. [شواهد](design/moda4-redesign/evidence/r7a/README.md). |
-| R7b | چهار CI همان head موفق؛ علت محیط مالک UNVERIFIED | [PR74](https://github.com/mehdi2044/HodaSite/pull/74)، شاخهٔ مستقل از PR72، `79bca4d`؛ health واقعی فقط‌خواندنی و مجوز سراسری؛ ۹٬۲۵۸ unit/PG،۱۸۲ browser،۳ propagation و Local+S3 restore. دسترسی queue/cron/logs مالک موجود نیست؛ no paid probe. |
-| R7c | BLOCKED_DECISION | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست. |
+| مرحله | وضعیت واقعی                                                        | مبنا/وابستگی و خروج                                                                                                                                                                                                                                                                                                                                                       |
+| ----- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R0    | آنلاین BLOCKED_ENV؛ راهنمای Windows آماده، اجرای مالک NOT_VERIFIED | `phase/design-01-r0-live-preview` از PR66 `5a6ed9c`؛ dependency PR65 → PR66 → R0. نوار build/revision فقط برای مدیر مجاز؛ polling احراز‌شدهٔ ۲ ثانیه‌ای و refresh فروشگاه باز پس از ذخیرهٔ brand/theme/homepage، بدون reload فرم ویرایش.                                                                                                                                  |
+| R1    | پیاده‌سازی پایه و verification محلی موفق؛ CI/پذیرش مالک مستقل      | `phase/design-01-r1-theme-foundation` از PR67؛ Manrope5.3.0 + LICENSE و Latin-ext، فونت heading/body/price، token و opacity محدود، crayon و preview امن. default MODA4 فقط برای رکورد تازه؛ تنظیمات موجود بازنویسی نمی‌شوند.                                                                                                                                              |
+| R2    | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR69](https://github.com/mehdi2044/HodaSite/pull/69)، SHA `ce1d223`؛ پوسته/منو/ناوبری بازار و جست‌وجو و رضایت واقعی ایمیل؛ ۹٬۰۵۷ unit/PG و ۱۷۷ browser واقعی CI.                                                                                                                                                                                                         |
+| R3a   | پیاده‌سازی و چهار CI همان head موفق؛ پذیرش مالک باز                | [PR70](https://github.com/mehdi2044/HodaSite/pull/70)، SHA `b99c781`؛ PHOTO/قیمت زنده/سایز و سبد atomic، draft/version/schedule/history/preview خصوصی؛ ۹٬۰۷۲ unit/PG و ۱۷۹ browser و Local+S3 restore واقعی.                                                                                                                                                              |
+| R4    | نسخهٔ آمادهٔ بررسی Windows؛ پذیرش مالک باز                         | [PR71](https://github.com/mehdi2044/HodaSite/pull/71)، SHA `0eb1ddd8c460d1647f677bf640ded4c9840b11b1`؛ cutout/هندسه/چهار مدل/ارث‌بری دسته و Kids، ۹٬۰۸۵ unit/PG و ۱۸۱ browser؛ چهار CI و restore موفق.                                                                                                                                                                    |
+| R3b   | چهار CI همان head موفق؛ پذیرش مالک باز                             | [PR72](https://github.com/mehdi2044/HodaSite/pull/72)، `b1f806a`؛ ۹٬۲۵۶ unit/PG، ۱۸۰ browser و۳ propagation واقعی، Local+S3 restore. راهنمای Windows همان نسخه در Issue62/comment6181257061؛ آنلاین BLOCKED_ENV.                                                                                                                                                          |
+| R5    | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR73](https://github.com/mehdi2044/HodaSite/pull/73)، از PR72؛ فیلتر/variant/قیمت/گالری/سبد واقعی و checkbox پنل؛ [شواهد مرورگر و WCAG](design/moda4-redesign/evidence/r5/README.md). بدون migration یا تغییر موتور مالی؛ پذیرش مالک باز.                                                                                                                                |
+| R6    | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR75](https://github.com/mehdi2044/HodaSite/pull/75)، از PR73؛ OTP/تم مستقیم/ترجیحات واقعی/پاک‌کردن و export/تصویر ورود پنل و آمار واقعی؛ [راهنما](design/moda4-redesign/R6_ADMIN_GUIDE_FA.md) و [شواهد](design/moda4-redesign/evidence/r6/README.md). پنج browser و۱۰ PG/media موفق، migration افزایشی و restore fixture؛ full-account deletion همچنان reviewed/manual. |
+| R7a   | IN_PROGRESS، Draft؛ CI نهایی باز                                   | [PR76](https://github.com/mehdi2044/HodaSite/pull/76)، از PR75؛ [راهنما و مشاهدهٔ محلی](design/moda4-redesign/R7A_GUIDE_FA.md)؛ کمد مستقل/پروی رایگان و قیمت/مرجع زنده. [شواهد](design/moda4-redesign/evidence/r7a/README.md).                                                                                                                                            |
+| R7b   | چهار CI همان head موفق؛ علت محیط مالک UNVERIFIED                   | [PR74](https://github.com/mehdi2044/HodaSite/pull/74)، شاخهٔ مستقل از PR72، `79bca4d`؛ health واقعی فقط‌خواندنی و مجوز سراسری؛ ۹٬۲۵۸ unit/PG،۱۸۲ browser،۳ propagation و Local+S3 restore. دسترسی queue/cron/logs مالک موجود نیست؛ no paid probe.                                                                                                                         |
+| R7c   | BLOCKED_DECISION                                                   | نیازمند شواهد R7b، ADR و بودجهٔ صریح؛ هیچ provider/paid call تازه مجاز نیست.                                                                                                                                                                                                                                                                                              |
 
 - ادامهٔ دستور مالک: cloud به Windows او دسترسی ندارد؛ VPN/TCP grant مقصدی تنظیم نشده است. [فرمان آمادهٔ Codex محلی با حفظ داده](design/moda4-redesign/LOCAL_CODEX_PROMPT_FA.md) و [ثبت نسخهٔ دقیق و چهار CI در Issue62](https://github.com/mehdi2044/HodaSite/issues/62#issuecomment-6177274472). ورود/اجرای Windows، گوشی واقعی، پذیرش بصری و review مستقل هنوز تأیید نشده‌اند. هیچ merge/main push/force-push/paid call انجام نشده است.
 - R3b checkpoint: کوکی زبان آزمون اصلاح شد؛ actual private unsaved preview → clone/disable/remove/restore → save/reload → publish/open-storefront و fa/tr/en بدون overflow موفق. ماتریس واقعی نوشتن با ۱٬۹۴۴ حالت global/بازار مجاز/بازار دیگر و forged actor + ۴۴ guard مجوز موفق. همهٔ اهداف آزمون، دادهٔ اولیه را پس از پایان برمی‌گردانند؛ هیچ DB مالک reset/seed نمی‌شود. نتیجهٔ کامل/CI head تازه پس از پایان جدا ثبت خواهد شد.
@@ -1506,12 +1774,12 @@ Independent branch from FR3.1. The mobile dock follows the selected product, the
 The stacked leading Hero uses a CSS viewport budget from first paint. See [scope and checks](phases/phase-hero-hydration-stability.md). To verify manually, load the homepage in a narrow viewport under network throttling and use the first price chip; the same target should open the in-Hero purchase sheet. FR3.2 remains untouched and owner acceptance is pending.
 
 Local verification completed: unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 10 new hydration/input cases, three repeated original Turkish Hero flows, and 25 Fidelity browser cases (146 criteria) passed. The initial PostgreSQL run had three failures; the unchanged corresponding base files passed 413 cases on a fresh database, and the fresh isolated full run passed all 9,321 cases. Initial logs and the environment/timing investigation remain in the local review bundle. Lint, typecheck, build and isolated restore/seed passed. No push, PR or merge; owner and independent review remain pending.
+
 ### Hero headroom — visual acceptance follow-up
 
 Hero photographs start below the real header row in normal CSS flow, avoiding logo/face overlap while retaining the first-paint viewport budget. Per-slide optional focal/zoom settings support three mobile widths, tablet and desktop; existing content retains its source framing. See [scope and acceptance](phases/phase-hero-headroom.md). Owner visual review remains pending; no FR3.2, paid API or publication.
 
 Local completion evidence: 25 new headroom/admin/short-viewport browser cases, 10 hydration/input cases, unchanged 33 storefront regressions, 12 fitting/Cutout regressions, 25 Fidelity cases / 146 criteria, and the fresh isolated full 9,328-test / 181-file Unit/PostgreSQL run passed. Lint, typecheck and production build passed. The final browser queue used a fresh database and ran sequentially. Initial test setup/SSR-stream synchronization failures and an expired draft-audit transaction during an overlapping QA attempt remain in the local report; no assertion or transaction timeout was weakened. Physical phones and independent owner visual acceptance remain open. No push, PR or merge.
-
 
 ### Shared D77 floating storefront navigation — local review handoff
 
@@ -1527,9 +1795,12 @@ Earlier visibility-only test locators, mobile fitting width inheritance, over-co
 
 Owner visual acceptance and independent review remain pending. Chromium viewport emulation is not physical-device/WebKit acceptance. No push, PR, merge, public release or FR3.2 work.
 
-
 ### Floating navigation — narrow mobile label follow-up
 
 Mobile tracks now respect each translated word's minimum width, with normal word boundaries instead of arbitrary character wrapping. The existing 13px text, 76px dock height, 84px layout budget, black/orange treatment and minimum 44px targets remain. No labels, routes, Hero/fitting layout, data, schema or money code changed.
 
 Local verification: 9 new whole-word/geometry/touch/focus cases (FA/TR/EN at 360/390/430), 65 existing navigation/mobile/headroom/hydration cases, and the fresh full 9,349-case / 182-file Unit/PostgreSQL suite passed. Lint, typecheck and production build passed. Nine final images and paired before/after views remain in the private review bundle. The previous delivery branch, running services, 358-file WIP baseline and original D77 hash were retained. Owner visual review remains pending; no push, PR, merge or public release.
+
+### D70 mobile dock review candidate
+
+The isolated design branch keeps Home, Category, Fitting Room and Cart directly reachable on public mobile screens. More opens Product, sign-in and profile links in the current market. The existing desktop dock and fitting workspace retain their established navigation. Test on a product at 320, 390 and 768 px in Persian, English and Turkish, including touch, keyboard, safe-area clearance and the path to Checkout. Catalogue artwork disclosures still identify demo media. Replace these assets on intended release routes and audit the published content before release.

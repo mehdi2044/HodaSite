@@ -122,7 +122,7 @@ export async function saveBrand(
       });
     });
 
-    revalidateTag("site-settings");
-    revalidateTag("theme");
+    revalidateTag("site-settings", { expire: 0 });
+    revalidateTag("theme", { expire: 0 });
   });
 }

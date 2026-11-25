@@ -28,8 +28,8 @@ export { creditPaidOrder, revokeReturnedCoins } from "./ledger";
 
 export { FittingError } from "./contracts";
 export { registerFittingJobs } from "./worker";
-export async function fittingConfig() {
-  return readConfig(db);
+export async function fittingConfig(tx?: Prisma.TransactionClient) {
+  return readConfig(tx ?? db);
 }
 export async function requireCustomer(
   tx: Prisma.TransactionClient,

@@ -7,6 +7,7 @@ export function transactionBarrier(
     "product" | "homepage" | "integration" | "fittingSession" | "stockItem",
   method: string,
   matches: (input: unknown) => boolean,
+  transactionTimeout?: number,
 ) {
   let notify!: () => void,
     release!: () => void,
@@ -25,7 +26,7 @@ export function transactionBarrier(
   ) => Promise<unknown>;
   db.$transaction = (async (fn: unknown, options?: unknown) => {
     if (typeof fn !== "function") return run(fn, options);
-    return run(async (tx: Prisma.TransactionClient) => {
+    const execute = async (tx: Prisma.TransactionClient) => {
       const wrapped = new Proxy(tx, {
         get(target, key) {
           const value = Reflect.get(target, key, target);
@@ -54,7 +55,13 @@ export function transactionBarrier(
       return (fn as (client: Prisma.TransactionClient) => Promise<unknown>)(
         wrapped,
       );
-    }, options);
+    };
+    return run(
+      execute,
+      transactionTimeout
+        ? { ...(options as object | undefined), timeout: transactionTimeout }
+        : options,
+    );
   }) as typeof db.$transaction;
   return {
     entered,

@@ -1,4 +1,4 @@
-import tseslint from "typescript-eslint";
+import parser from "@typescript-eslint/parser";
 
 // Fix-order B1: block `Number(...)`, `parseFloat(...)` and `.toNumber(...)` in
 // the money domains. These directories do not exist yet — the rule activates
@@ -29,14 +29,14 @@ const noFloatMoney = [
   },
 ];
 
-export default tseslint.config(
+export default [
   { ignores: [".next/**", "node_modules/**", ".deploy/**"] },
   {
     files: ["**/*.{ts,tsx}"],
-    languageOptions: { parser: tseslint.parser },
+    languageOptions: { parser },
   },
   {
     files: MONEY_MODULES,
     rules: { "no-restricted-syntax": noFloatMoney },
   },
-);
+];

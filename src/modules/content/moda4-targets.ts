@@ -4,7 +4,19 @@ import { fittingConfig } from "@/modules/fitting";
 import { pageBlocksSchema } from "./validation";
 import { contentTargetSchema } from "./moda4-contracts";
 import type { z } from "zod";
+import { cache } from "react";
 export type ContentTarget = z.infer<typeof contentTargetSchema>;
+// React owns this memoization only for the current server render. Every new
+// document/Flight request rechecks market availability and enabled languages.
+// Do not replace this with a shared cache: disabling a market must take effect
+// on the next request without a second invalidation contract.
+const contentTargetMarket = cache(
+  (marketId: string, locale: "fa" | "tr" | "en") =>
+    db.market.findFirst({
+      where: { id: marketId, isActive: true, enabledLocales: { has: locale } },
+      select: { code: true },
+    }),
+);
 /** Slug readers require the selected language; a display-text fallback is not a route. */
 function translatedSlug(value: unknown, locale: "fa" | "tr" | "en") {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -18,10 +30,7 @@ export async function resolveContentTarget(
   locale: "fa" | "tr" | "en",
 ) {
   const target = contentTargetSchema.parse(raw);
-  const market = await db.market.findFirst({
-    where: { id: marketId, isActive: true, enabledLocales: { has: locale } },
-    select: { code: true },
-  });
+  const market = await contentTargetMarket(marketId, locale);
   if (!market) return null;
   if (target.kind === "catalog" || target.kind === "search")
     return `/${locale}/search?${new URLSearchParams({ market: market.code })}`;

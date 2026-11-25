@@ -26,6 +26,58 @@ async function login(page: Page, email: string, token = "") {
   await page.locator('[name="token"]').fill(token);
   await page.getByRole("button", { name: "ورود امن" }).click();
 }
+test("admin login waits for hydration and never puts credentials in the URL", async ({
+  page,
+}) => {
+  const account = await user(true);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(/\/_next\/static\/chunks\/.*\.js(?:\?|$)/, async (route) => {
+    await held;
+    await route.continue();
+  });
+
+  const leakedQueryKeys: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    for (const key of ["email", "password", "token"]) {
+      if (url.pathname === "/admin/login" && url.searchParams.has(key))
+        leakedQueryKeys.push(key);
+    }
+  });
+  const form = page.locator(".admin-login-form");
+  const submit = form.locator('button[type="submit"]');
+  try {
+    await page.goto("/admin/login", { waitUntil: "commit" });
+    await expect(form).toHaveAttribute("method", "post");
+    await expect(submit).toBeDisabled();
+    await form.locator('[name="email"]').fill(account.email);
+    await form.locator('[name="password"]').fill(password);
+    await form.locator('[name="password"]').press("Enter");
+    await expect(page).toHaveURL(/\/admin\/login$/);
+    expect(leakedQueryKeys).toEqual([]);
+  } finally {
+    release();
+  }
+
+  await expect(submit).toBeEnabled();
+  const token = new TOTP({
+    secret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+  }).generate();
+  await form.locator('[name="token"]').fill(token);
+  const credentialsResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/auth/callback/credentials" &&
+      response.request().method() === "POST",
+  );
+  await submit.click();
+  expect((await credentialsResponse).ok()).toBe(true);
+  await expect(page).toHaveURL(/\/admin$/);
+  expect(leakedQueryKeys).toEqual([]);
+});
+
 test("owner enrollment, one-time recovery and session revocation in the real browser", async ({
   page,
 }) => {

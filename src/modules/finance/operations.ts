@@ -31,7 +31,7 @@ export async function financeActor(
   permission: string,
   marketId?: string,
 ) {
-  const id = (await auth())?.user?.id;
+  const id = (await auth(tx))?.user?.id;
   if (!id) throw new UnauthorizedError();
   const user = await tx.user.findUnique({
     where: { id },

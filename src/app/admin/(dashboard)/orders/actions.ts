@@ -165,9 +165,14 @@ export async function bankAccountAction(form: FormData) {
     });
     await withMutation(() =>
       db.$transaction(async (tx) => {
-        await assertCan(session.user.id, "markets.edit", {
-          marketId: data.marketId,
-        });
+        await assertCan(
+          session.user.id,
+          "markets.edit",
+          {
+            marketId: data.marketId,
+          },
+          tx,
+        );
         const before = data.id
           ? await tx.marketBankAccount.findFirst({
               where: { id: data.id, marketId: data.marketId },

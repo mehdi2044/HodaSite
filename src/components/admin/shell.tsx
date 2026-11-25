@@ -17,6 +17,7 @@ export async function AdminShell({
   user: { id: string; name: string; email: string };
 }) {
   const t = await getTranslations("contentAdmin");
+  const editorial = await getTranslations("editorial");
   const nav = await getTranslations("adminShell");
   const locale = await getLocale();
   const brand = normalizeBrand((await getSiteSettings())?.brand);
@@ -90,6 +91,17 @@ export async function AdminShell({
           <Link href="/admin/content/reviews">{engagement("moderation")}</Link>
         )}
         <Link href="/admin/content/pages">{t("pages")}</Link>
+        {(await can(user.id, "content.page.read")) && (
+          <>
+            <Link href="/admin/content/editorial">{editorial("gallery")}</Link>
+            <Link href="/admin/content/editorial?kind=ARTICLE">
+              {editorial("magazine")}
+            </Link>
+            <Link href="/admin/content/editorial/weekly">
+              {editorial("weekly")}
+            </Link>
+          </>
+        )}
         <Link href="/admin/content/homepage">{t("homepage")}</Link>
         <Link href="/admin/content/translations">{t("translations")}</Link>
         {(await can(user.id, "ai.settings.manage")) && (

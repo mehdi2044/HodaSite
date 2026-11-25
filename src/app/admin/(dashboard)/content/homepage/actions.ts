@@ -70,7 +70,7 @@ export async function saveHomepage(
         saved = { ...saved, version: published.version };
       }
     } finally {
-      revalidateTag("homepage");
+      revalidateTag("homepage", { expire: 0 });
       revalidatePath("/admin/content/homepage");
       revalidatePath("/admin/content/homepage/scenes");
     }

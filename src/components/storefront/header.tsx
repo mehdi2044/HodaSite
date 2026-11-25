@@ -13,7 +13,7 @@ import { quoteSavedCart } from "@/modules/fees";
 import { currentCustomer } from "@/modules/customers";
 import { CartDrawer } from "./cart-drawer";
 import { db } from "@/lib/db";
-import type { Market } from "@/lib/request-context";
+import { marketOptions, type Market } from "@/lib/request-context";
 import { LocaleSwitcher } from "./locale-switcher";
 import { MarketSwitcher } from "./market-switcher";
 import { ResponsiveImage } from "./responsive-image";
@@ -154,7 +154,7 @@ export async function Header({
                   {t("mobileStorefront.market")}
                   <MarketSwitcher
                     current={market.code}
-                    markets={markets}
+                    markets={marketOptions(markets)}
                     ariaLabel={t("mobileStorefront.market")}
                   />
                 </label>
@@ -199,13 +199,13 @@ export async function Header({
             >
               <span aria-hidden="true">♡</span>
             </Link>
-            <Link
+            <a
               href={storefrontPath(locale, market.code, "account")}
               className="moda-tool moda-account-tool"
               aria-label={t("commerce.account")}
             >
               <StorefrontIcon name="account" />
-            </Link>
+            </a>
             <CartDrawer
               locale={locale}
               marketCode={market.code}
@@ -272,9 +272,9 @@ export async function Header({
           labels={{
             navigation: t("mobileStorefront.navigation"),
             home: t("mobileStorefront.home"),
-            search: t("catalog.search"),
+            more: t("mobileStorefront.more"),
+            shortFitting: t("mobileStorefront.fitting"),
             cart: t("commerce.cart"),
-            account: t("commerce.account"),
             category: t("instantFitting.dockCategory"),
             product: t("instantFitting.dockProduct"),
             fitting: t("instantFitting.dockFitting"),

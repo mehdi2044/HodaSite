@@ -219,7 +219,12 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
   return withMutation(() =>
     db.$transaction(async (tx) => {
       const before = await lockScope(tx, input.marketId);
-      await assertCan(actorId, "content.homepage.write", scope(input.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(input.marketId),
+        tx,
+      );
       if ((before?.version ?? 0) !== input.expectedVersion)
         throw new RevisionConflictError();
       // A new market editor starts from the publicly published global fallback.
@@ -244,7 +249,12 @@ export async function saveHomepageDraft(actorId: string, raw: unknown) {
         false,
         input.expectedSceneFingerprints,
       );
-      await assertCan(actorId, "content.homepage.write", scope(input.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(input.marketId),
+        tx,
+      );
       const row =
         before ??
         (await tx.homepage.create({
@@ -317,7 +327,12 @@ export async function publishHomepageRevision(actorId: string, raw: unknown) {
       const row = await lockScope(tx, candidate.marketId);
       if (!row || row.id !== input.homepageId)
         throw new RevisionConflictError();
-      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(row.marketId),
+        tx,
+      );
       if (
         input.jobId &&
         (await tx.auditLog.findFirst({
@@ -357,7 +372,12 @@ export async function publishHomepageRevision(actorId: string, raw: unknown) {
         [],
         true,
       );
-      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(row.marketId),
+        tx,
+      );
       const nextVersion = row.version + 1;
       await tx.homepage.update({
         where: { id: row.id },
@@ -414,7 +434,12 @@ export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
         row.version !== input.expectedVersion
       )
         throw new RevisionConflictError();
-      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(row.marketId),
+        tx,
+      );
       const revision = await tx.auditLog.findFirstOrThrow({
         where: {
           id: input.revisionId,
@@ -431,7 +456,12 @@ export async function scheduleHomepageRevision(actorId: string, raw: unknown) {
         [],
         true,
       );
-      await assertCan(actorId, "content.homepage.write", scope(row.marketId));
+      await assertCan(
+        actorId,
+        "content.homepage.write",
+        scope(row.marketId),
+        tx,
+      );
       const nextVersion = row.version + 1;
       await tx.homepage.update({
         where: { id: row.id },

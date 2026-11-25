@@ -83,7 +83,7 @@ export function ModaHeroSlide({
   title: string;
   subtitle?: string;
   body?: string;
-  cta?: { label: string; href: string };
+  cta?: { label: string; href?: string };
   secondary?: { label: string; href: string };
   accent?: boolean;
   pins: HeroPinView[];
@@ -128,7 +128,7 @@ export function ModaHeroSlide({
     ]),
   );
   const number = new Intl.NumberFormat(locale);
-  const openSheet = (pieceId: string) => {
+  const openSheet = (pieceId?: string) => {
     const sheet = ref.current?.querySelector<HTMLDetailsElement>(
       "details.moda-scene-purchase",
     );
@@ -136,7 +136,9 @@ export function ModaHeroSlide({
       sheet.open = true;
       sheet
         .querySelector<HTMLElement>(
-          `[data-testid="scene-piece-${CSS.escape(pieceId)}"] select`,
+          pieceId
+            ? `[data-testid="scene-piece-${CSS.escape(pieceId)}"] select`
+            : "select",
         )
         ?.focus({ preventScroll: true });
     }
@@ -359,7 +361,7 @@ export function ModaHeroSlide({
           </ul>
         )}
         <div className="m4-acts moda-hero-acts">
-          {cta && (
+          {cta?.href ? (
             <a
               data-moda4-cta=""
               className={`button${accent ? " m4-cta-accent" : " m4-cta-ink"}`}
@@ -367,6 +369,18 @@ export function ModaHeroSlide({
             >
               {cta.label}
             </a>
+          ) : (
+            cta && (
+              <button
+                type="button"
+                data-moda4-cta=""
+                className="button m4-cta-ink"
+                disabled={!purchase || failed || Boolean(view.reason)}
+                onClick={() => openSheet()}
+              >
+                {cta.label}
+              </button>
+            )
           )}
           {secondary && (
             <a

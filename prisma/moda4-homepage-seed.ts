@@ -562,6 +562,7 @@ export async function seedFreshModa4Homepage(
               : n === 1
                 ? text("خرید کل ست", "Kombini al", "Shop the look")
                 : text("خرید بچگانه", "Çocuk alışverişi", "Shop kids"),
+        ...(n === 1 ? { buyScene: true } : {}),
         target:
           n === 3
             ? { kind: "fitting" }

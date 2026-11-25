@@ -1,6 +1,7 @@
 import { isPermission } from "./namespace";
 import { db } from "@/lib/db";
 import { ForbiddenError } from "./errors";
+import type { Prisma } from "@prisma/client";
 
 export type Scope = {
   marketId?: string;
@@ -37,20 +38,50 @@ export function scopeMatches(
   );
 }
 
-export async function can(
+function readAccessSubject(
   userId: string,
-  permission: string,
-  scope?: Scope,
-): Promise<boolean> {
-  if (!isPermission(permission)) return false;
-  const user = await db.user.findUnique({
+  client: Pick<Prisma.TransactionClient, "user">,
+) {
+  return client.user.findUnique({
     where: { id: userId },
     include: {
       overrides: true,
       roles: { include: { role: { include: { permissions: true } } } },
     },
   });
+}
+
+export async function can(
+  userId: string,
+  permission: string,
+  scope?: Scope,
+  client: Pick<Prisma.TransactionClient, "user"> = db,
+): Promise<boolean> {
+  if (!isPermission(permission)) return false;
+  const user = await readAccessSubject(userId, client);
   return evaluateAccess(user, permission, scope);
+}
+
+/** One fresh subject per operation; no shared or request-level permission cache.
+ * Retain inactive markets so authorized historical orders remain addressable.
+ * Callers retain their existing guard rechecks; return settlement still checks
+ * again through the transaction client after acquiring its locks.
+ */
+export async function authorizedMarketIds(
+  userId: string,
+  permission: string,
+  client: Pick<Prisma.TransactionClient, "user" | "market"> = db,
+): Promise<string[]> {
+  if (!isPermission(permission)) return [];
+  const [subject, markets] = await Promise.all([
+    readAccessSubject(userId, client),
+    client.market.findMany({ select: { id: true } }),
+  ]);
+  return markets
+    .filter((market) =>
+      evaluateAccess(subject, permission, { marketId: market.id }),
+    )
+    .map((market) => market.id);
 }
 export type AccessSubject = {
   isActive: boolean;
@@ -87,8 +118,9 @@ export async function assertCan(
   userId: string,
   permission: string,
   scope?: Scope,
+  client: Pick<Prisma.TransactionClient, "user"> = db,
 ): Promise<void> {
-  if (!(await can(userId, permission, scope)))
+  if (!(await can(userId, permission, scope, client)))
     throw new ForbiddenError(permission, scope);
 }
 

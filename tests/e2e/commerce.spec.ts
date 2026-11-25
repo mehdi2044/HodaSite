@@ -106,7 +106,9 @@ for (const [locale, slug, province, city, postal] of [
     await expect(page).toHaveURL(
       new URL(`/${locale}/checkout`, info.project.use.baseURL).href,
     );
-    await expect(page.getByTestId("mobile-bottom-navigation")).toHaveCount(0);
+    const dock = page.getByTestId("mobile-bottom-navigation");
+    await expect(dock).toBeVisible();
+    await expect(dock.getByRole("link")).toHaveCount(4);
     const headerCart = page.locator("header .storefront-cart-toggle");
     await expect(headerCart).toBeVisible();
     await expect(headerCart).toHaveAccessibleName(`${t.cart} (1)`);
@@ -129,7 +131,14 @@ for (const [locale, slug, province, city, postal] of [
     await page.getByRole("button", { name: t.next, exact: true }).click();
     await expect(page).toHaveURL(/step=3/);
     await shoppingProof(page, info, `${locale}-checkout-payment`);
+    await expect(dock).toBeVisible();
     await page.locator('[name="terms"]').check();
+    const submitOrder = page
+      .locator("form")
+      .filter({ has: page.locator('[name="terms"]') })
+      .locator('button:not([type="button"])')
+      .last();
+    await submitOrder.click({ trial: true });
     await submit(page, "terms");
     await expect(page).toHaveURL(/\/orders\/[A-Z]{2}-\d+\/pay$/);
     await shoppingProof(page, info, `${locale}-payment-instructions`);

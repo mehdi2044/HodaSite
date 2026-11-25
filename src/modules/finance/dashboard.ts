@@ -30,7 +30,7 @@ export async function financeDashboard(raw: unknown) {
 export async function financeWorkspace(marketId: string) {
   return db.$transaction(async (tx) => {
     const actor = await financeActor(tx, "finance.report.view", marketId);
-    const global = await can(actor, "finance.report.view");
+    const global = await can(actor, "finance.report.view", undefined, tx);
     const [
       config,
       suppliers,

@@ -28,6 +28,7 @@ import type { SceneView } from "@/modules/content/scenes/resolve";
 import { SceneLayerImage } from "./scene-layer";
 import { ActiveCarouselSlide } from "./carousel-context";
 import { scenePointInFrame } from "@/modules/content/scenes/geometry";
+import Decimal from "decimal.js";
 
 export function ShoppableScene({
   view,
@@ -71,6 +72,7 @@ export function ShoppableScene({
   const PurchasePanel = sheet ? "details" : "div";
   const t = useTranslations("scenes"),
     shopping = useTranslations("shopping"),
+    outfit = useTranslations("outfit"),
     cutouts = useTranslations("cutouts");
   const root = useRef<HTMLElement>(null),
     router = useRouter();
@@ -155,14 +157,23 @@ export function ShoppableScene({
   const chosen = view.pieces.map((piece) =>
     piece.variants.find((v) => v.id === selections[piece.id]),
   );
+  const total = chosen.reduce(
+    (sum, variant) =>
+      variant?.amount != null && variant.available > 0
+        ? sum.plus(variant.amount)
+        : sum,
+    new Decimal(0),
+  );
+  const allSized =
+    chosen.length > 0 &&
+    chosen.every((variant) => variant?.amount != null && variant.available > 0);
   const ready =
     heroImageValid &&
     !preview &&
     !view.reason &&
     !imageFailed("desktop") &&
     !imageFailed("mobile") &&
-    view.pieces.length > 0 &&
-    chosen.every((v) => v && v.available > 0 && v.amount !== null);
+    allSized;
   const price = useCallback(
     (piece: SceneView["pieces"][number]) => {
       const selected = piece.variants.find(
@@ -331,6 +342,7 @@ export function ShoppableScene({
               <select
                 className="input"
                 name="variantId"
+                aria-label={`${t("size")} · ${piece.title}`}
                 value={selections[piece.id] ?? ""}
                 onChange={(event) =>
                   select((old) => ({
@@ -360,6 +372,12 @@ export function ShoppableScene({
         ))}
         {view.pieces.length > 0 && (
           <>
+            <p className="scene-selection-total" role="status">
+              {outfit("subtotal")}{" "}
+              <bdi>
+                {formatStorefrontAmount(total.toFixed(), view.currency, locale)}
+              </bdi>
+            </p>
             <p>{preview ? t("previewOnly") : t("chooseEverySize")}</p>
             <button className="button" disabled={!ready}>
               {t("addScene")}
@@ -392,6 +410,8 @@ export function ShoppableScene({
     >
       {presentation === "hero" ? (
         <div className="moda-hero-copy">{copy}</div>
+      ) : presentation === "look" ? (
+        <div className="moda-look-copy">{copy}</div>
       ) : (
         copy
       )}

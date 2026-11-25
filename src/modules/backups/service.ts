@@ -79,7 +79,7 @@ export async function queueBackupOperation(userId: string, raw: unknown) {
       await requireFreshMfa(userId, input.password, input.token);
     }
     return db.$transaction(async (tx) => {
-      await assertCan(userId, permission);
+      await assertCan(userId, permission, undefined, tx);
       const task = await tx.opsTask.create({
         data: {
           requestKey: input.requestKey,

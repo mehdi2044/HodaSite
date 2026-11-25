@@ -33,6 +33,18 @@ vi.mock("@/modules/customers", () => ({
     db.customer.findUnique({ where: { id: state.customerId } }),
 }));
 
+vi.mock("@/lib/db", async (importOriginal) => {
+  const { isolatedTestDatabaseUrl } =
+    await import("../helpers/isolated-database");
+  const isolated = isolatedTestDatabaseUrl(
+    process.env.FITTING_EXCHANGE_TEST_DATABASE_URL,
+    process.env.TEST_DATABASE_URL,
+    "Fitting exchange",
+  );
+  if (!isolated) return importOriginal<typeof import("@/lib/db")>();
+  const { PrismaClient } = await import("@prisma/client");
+  return { db: new PrismaClient({ datasources: { db: { url: isolated } } }) };
+});
 import { db } from "@/lib/db";
 import { tokenHash } from "@/lib/secure-tokens";
 import { placeOrder, addressSchema } from "@/modules/checkout";
@@ -59,6 +71,32 @@ import {
 import { returnFixture } from "../helpers/returns";
 import { saveFittingSettings } from "@/modules/fitting/settings";
 import { transactionBarrier } from "../helpers/transaction-barrier";
+import { FixtureLifecycle } from "../helpers/fixture-lifecycle";
+const lifecycle = new FixtureLifecycle();
+
+// Observe the exact lock and blocker before releasing the winning transaction.
+async function expectFittingRewardWait(
+  blockerPid: number,
+  waitingMode: "ShareLock" | "ExclusiveLock",
+) {
+  await expect
+    .poll(
+      async () => {
+        const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
+        SELECT EXISTS (
+          SELECT 1 FROM pg_locks
+          WHERE locktype = 'advisory' AND classid = 0
+            AND objid = 75105 AND objsubid = 1
+            AND NOT granted AND mode = ${waitingMode}
+            AND ${blockerPid} = ANY(pg_blocking_pids(pid))
+        ) AS blocked
+      `;
+        return row.blocked;
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
+}
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)(
   "cancelled exchange coin entitlement: PostgreSQL",
@@ -80,6 +118,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       vi.stubEnv("FITTING_OPENAI_API_KEY", "fixture-key-never-sent");
     });
     beforeEach(async () => {
+      await lifecycle.ready();
       state.cookies.clear();
       state.actorId = ownerId;
       const config = configSchema.parse({
@@ -112,6 +151,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       });
     });
     afterAll(async () => {
+      await lifecycle.ready();
       if (original)
         await db.integration.update({
           where: { id: original.id },
@@ -119,18 +159,24 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
         });
       else await db.integration.deleteMany({ where: { key: "fitting-room" } });
       vi.unstubAllEnvs();
+
+      await db.$disconnect();
     });
-    afterEach(async () => {
-      for (const id of pendingSessions.splice(0)) {
-        await db.job.deleteMany({
-          where: {
-            type: "fitting-render",
-            payload: { path: ["sessionId"], equals: id },
-          },
-        });
-        await db.$transaction((tx) => refundSession(tx, id, "FIXTURE_CLEANUP"));
-      }
-    });
+    afterEach(() =>
+      lifecycle.finish(async () => {
+        for (const id of pendingSessions.splice(0)) {
+          await db.job.deleteMany({
+            where: {
+              type: "fitting-render",
+              payload: { path: ["sessionId"], equals: id },
+            },
+          });
+          await db.$transaction((tx) =>
+            refundSession(tx, id, "FIXTURE_CLEANUP"),
+          );
+        }
+      }),
+    );
     async function exchange(
       order: { id: string; customerId: string; items: { id: string }[] },
       variantId: string,
@@ -273,7 +319,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
       ),
     )(
       "serializes %s settings and real payment approval with %s first",
-      async (change, first) => {
+      lifecycle.track(async (change, first) => {
         const f = await actualPackSale({ approve: false, pack: false });
         const old = await db.integration.findUniqueOrThrow({
           where: { key: "fitting-room" },
@@ -303,6 +349,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             const input = raw as { where?: { key?: string } };
             return input.where?.key === "fitting-room";
           },
+          20_000,
         );
         let saving: ReturnType<typeof save> | undefined,
           approving: ReturnType<typeof approvePayment> | undefined;
@@ -318,12 +365,10 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           if (first === "settings")
             approving = approvePayment(f.order.id, ownerId);
           else saving = save();
-          await vi.waitFor(async () => {
-            const [row] = await db.$queryRaw<{ blocked: boolean }[]>`
-              SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE ${barrier.pid} = ANY(pg_blocking_pids(pid))) AS blocked
-            `;
-            expect(row.blocked).toBe(true);
-          });
+          await expectFittingRewardWait(
+            barrier.pid,
+            first === "settings" ? "ShareLock" : "ExclusiveLock",
+          );
           barrier.release();
           await Promise.all([saving, approving]);
           const expected =
@@ -361,11 +406,67 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
           await Promise.allSettled([saving, approving]);
           barrier.restore();
         }
-      },
+      }),
+      30_000,
+    );
+    it(
+      "orders the first reward configuration before an overlapping paid sale",
+      lifecycle.track(async () => {
+        const f = await actualPackSale({ approve: false, pack: false });
+        const previous = await db.integration.delete({
+          where: { key: "fitting-room" },
+        });
+        const config = configSchema.parse(previous.config);
+        const barrier = transactionBarrier(
+          db,
+          "integration",
+          "upsert",
+          (raw) => {
+            const input = raw as { where?: { key?: string } };
+            return input.where?.key === "fitting-room";
+          },
+          20_000,
+        );
+        const saving = saveFittingSettings({
+          config: {
+            ...config,
+            rewards: [{ marketId, spendAmount: "100", coins: "10" }],
+          },
+          version: null,
+          confirm: true,
+        });
+        let approving: ReturnType<typeof approvePayment> | undefined;
+        try {
+          await Promise.race([
+            barrier.entered,
+            saving.then(() => {
+              throw Error("settings write missed barrier");
+            }),
+          ]);
+          approving = approvePayment(f.order.id, ownerId);
+          await expectFittingRewardWait(barrier.pid, "ShareLock");
+          barrier.release();
+          await Promise.all([saving, approving]);
+          expect((await walletView(f.customer.id)).balance).toBe("10");
+          await approvePayment(f.order.id, ownerId);
+          expect((await walletView(f.customer.id)).balance).toBe("10");
+        } finally {
+          barrier.release();
+          await Promise.allSettled([saving, approving]);
+          barrier.restore();
+          await db.$transaction([
+            db.integration.deleteMany({ where: { key: previous.key } }),
+            db.integration.create({
+              data: { ...previous, config: previous.config ?? {} },
+            }),
+          ]);
+        }
+      }),
+      30_000,
     );
     it.each([false, true])(
       "actual checkout/payment and repeated manual cancellation; spent=%s",
-      async (spent) => {
+      lifecycle.track(async (spent) => {
         const f = await actualPackSale();
         if (spent) {
           const session = await createFittingSession(
@@ -425,38 +526,41 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             debt: "0",
           });
         }
-      },
+      }),
     );
-    it("deadline cancellation releases credit and reverses the source pack once", async () => {
-      const f = await actualPackSale(),
-        child = await exchange(f.order, f.variants[1].id);
-      // Advance the cron's explicit clock; financial deadlines are immutable.
-      const now = new Date(child.paymentDeadlineAt.getTime() + 1000);
-      await cancelUnpaidOrders(now);
-      await cancelUnpaidOrders(now);
-      expect(
-        await db.order.findUniqueOrThrow({ where: { id: child.id } }),
-      ).toMatchObject({ status: "CANCELLED", paidAt: null });
-      expect(await walletView(f.customer.id)).toMatchObject({
-        balance: "0",
-        debt: "0",
-      });
-      expect(
-        (
-          await db.storeCredit.findFirstOrThrow({
-            where: { customerId: f.customer.id },
-          })
-        ).balance.toString(),
-      ).toBe("100");
-      expect(
-        await db.fittingCoinEntry.count({
-          where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
-        }),
-      ).toBe(1);
-    });
+    it(
+      "deadline cancellation releases credit and reverses the source pack once",
+      lifecycle.track(async () => {
+        const f = await actualPackSale(),
+          child = await exchange(f.order, f.variants[1].id);
+        // Advance the cron's explicit clock; financial deadlines are immutable.
+        const now = new Date(child.paymentDeadlineAt.getTime() + 1000);
+        await cancelUnpaidOrders(now);
+        await cancelUnpaidOrders(now);
+        expect(
+          await db.order.findUniqueOrThrow({ where: { id: child.id } }),
+        ).toMatchObject({ status: "CANCELLED", paidAt: null });
+        expect(await walletView(f.customer.id)).toMatchObject({
+          balance: "0",
+          debt: "0",
+        });
+        expect(
+          (
+            await db.storeCredit.findFirstOrThrow({
+              where: { customerId: f.customer.id },
+            })
+          ).balance.toString(),
+        ).toBe("100");
+        expect(
+          await db.fittingCoinEntry.count({
+            where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
+          }),
+        ).toBe(1);
+      }),
+    );
     it.each([false, true])(
       "partial source reversal through nested cancelled exchange; pack=%s",
-      async (pack) => {
+      lifecycle.track(async (pack) => {
         const f = await returnFixture(db, {
           customerId: (
             await db.customer.create({
@@ -503,42 +607,48 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             where: { orderId: { in: [child.id, grandchild.id] } },
           }),
         ).toBe(0);
-      },
+      }),
     );
-    it("reverses only the clothing reward for the directly cancelled returned quantity", async () => {
-      const customer = await db.customer.create({
-        data: { email: `partial-${randomUUID()}@example.com`, isGuest: false },
-      });
-      const f = await returnFixture(db, {
-        customerId: customer.id,
-        quantity: 3,
-        price: "100",
-        replacementPrice: "200",
-      });
-      await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
-      const child = await exchange(f.order, f.variants[1].id);
-      await cancelOrder(child.id, "partial clothing fixture", ownerId);
-      await cancelOrder(child.id, "partial clothing replay", ownerId);
-      expect(await walletView(customer.id)).toMatchObject({
-        balance: "50",
-        debt: "0",
-      });
-      const grant = await db.fittingCoinGrant.findFirstOrThrow({
-        where: { orderId: f.order.id, reason: "PURCHASE" },
-      });
-      expect(grant.amount.toString()).toBe("75");
-      expect(grant.revokedAmount.toString()).toBe("25");
-      expect(
-        (
-          await db.storeCredit.findFirstOrThrow({
-            where: { customerId: customer.id },
-          })
-        ).balance.toString(),
-      ).toBe("100");
-    });
+    it(
+      "reverses only the clothing reward for the directly cancelled returned quantity",
+      lifecycle.track(async () => {
+        const customer = await db.customer.create({
+          data: {
+            email: `partial-${randomUUID()}@example.com`,
+            isGuest: false,
+          },
+        });
+        const f = await returnFixture(db, {
+          customerId: customer.id,
+          quantity: 3,
+          price: "100",
+          replacementPrice: "200",
+        });
+        await db.$transaction((tx) => creditPaidOrder(tx, f.order.id));
+        const child = await exchange(f.order, f.variants[1].id);
+        await cancelOrder(child.id, "partial clothing fixture", ownerId);
+        await cancelOrder(child.id, "partial clothing replay", ownerId);
+        expect(await walletView(customer.id)).toMatchObject({
+          balance: "50",
+          debt: "0",
+        });
+        const grant = await db.fittingCoinGrant.findFirstOrThrow({
+          where: { orderId: f.order.id, reason: "PURCHASE" },
+        });
+        expect(grant.amount.toString()).toBe("75");
+        expect(grant.revokedAmount.toString()).toBe("25");
+        expect(
+          (
+            await db.storeCredit.findFirstOrThrow({
+              where: { customerId: customer.id },
+            })
+          ).balance.toString(),
+        ).toBe("100");
+      }),
+    );
     it.each(["cancel", "approve"] as const)(
       "serializes payment/cancellation with %s admitted first",
-      async (first) => {
+      lifecycle.track(async (first) => {
         const f = await actualPackSale(),
           child = await exchange(f.order, f.variants[1].id);
         let notifyAdmission!: () => void;
@@ -602,11 +712,11 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             where: { customerId: f.customer.id, reason: "RETURN_REVERSAL" },
           }),
         ).toBe(first === "cancel" ? 1 : 0);
-      },
+      }),
     );
     it.each([101, 1000])(
       "walletView matches PostgreSQL SUM for %i maximum lots and does not mutate them",
-      async (count) => {
+      lifecycle.track(async (count) => {
         const c = await db.customer.create({
           data: {
             email: `balance-${randomUUID()}@example.com`,
@@ -639,7 +749,7 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)(
             orderBy: { id: "asc" },
           }),
         ).toEqual(before);
-      },
+      }),
     );
   },
 );

@@ -31,8 +31,10 @@ export function Consent({
     version = `1:${ids.ga4}:${ids.gtm}:${ids.meta}`;
   const [choice, setChoice] = useState<boolean | null>(null),
     [open, setOpen] = useState(false),
+    [readyFor, setReadyFor] = useState<string | null>(null),
     loaded = useRef(false),
     loadedFor = useRef("");
+  const ready = readyFor === key + version;
   useEffect(() => {
     if (loaded.current && loadedFor.current !== key + version) {
       window.location.reload();
@@ -44,6 +46,7 @@ export function Consent({
     } catch {
       setChoice(null);
     }
+    setReadyFor(key + version);
   }, [key, version]);
   useEffect(() => {
     if (loaded.current && !analyticsPublicPath(path)) {
@@ -171,35 +174,39 @@ export function Consent({
     }
   }
   return (
-    <>
+    <div className="moda-footer-privacy">
       <button
         type="button"
-        className="m-4 min-h-11 underline"
+        className="moda-privacy-settings"
+        disabled={!ready}
+        aria-busy={!ready}
         onClick={() => setOpen(true)}
       >
         {t("settings")}
       </button>
       {(choice === null || open) && (
-        <section
-          aria-label={t("title")}
-          className="moda-consent-panel mx-auto my-4 grid max-w-2xl gap-3 rounded-token border bg-bg p-5 shadow-xl"
-        >
+        <section aria-label={t("title")} className="moda-consent-panel">
           <h2 className="text-lg font-semibold">{t("title")}</h2>
           <p>{t("description")}</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="moda-consent-actions">
             <button
               data-testid="consent-reject"
-              className="button"
+              className="moda-consent-choice"
+              disabled={!ready}
               onClick={() => choose(false)}
             >
               {t("reject")}
             </button>
-            <button className="button" onClick={() => choose(true)}>
+            <button
+              className="moda-consent-choice"
+              disabled={!ready}
+              onClick={() => choose(true)}
+            >
               {t("accept")}
             </button>
           </div>
         </section>
       )}
-    </>
+    </div>
   );
 }

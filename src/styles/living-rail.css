@@ -1,0 +1,484 @@
+.living-rail {
+  --rail-ink: #31251e;
+  --rail-accent: #642f24;
+  --rail-paper: #fcf8f0;
+  --rail-border: #d7c9b8;
+  display: grid;
+  align-items: stretch;
+  color: var(--rail-ink);
+  background: #efe4d3;
+  border: 1px solid var(--rail-border);
+  border-radius: 0.6rem;
+  overflow: clip;
+  min-inline-size: 0;
+  text-align: start;
+}
+
+.living-rail-stage {
+  position: relative;
+  align-self: center;
+  min-inline-size: 0;
+}
+
+.living-rail-photo {
+  position: relative;
+  background: #e9ddcd;
+}
+
+.living-rail-photo picture,
+.living-rail-photo img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.living-rail-disclosure {
+  position: absolute;
+  inset-block-end: 0.45rem;
+  inset-inline-start: 0.45rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.22rem;
+  background: #f8f0e4;
+  color: #4d382a;
+  font-size: 0.68rem;
+}
+
+.living-rail-collection {
+  min-inline-size: 0;
+  padding: 0.65rem;
+  background: #e9ddcd;
+}
+
+.living-rail-track {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  padding: 0.45rem 0.2rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  perspective: 700px;
+}
+
+.living-rail-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  flex: 0 0 clamp(85px, 26vw, 128px);
+  gap: 0.3rem;
+  padding: 0.35rem;
+  border: 1px solid #d8c8b6;
+  border-radius: 0.37rem;
+  background: #fffaf1;
+  color: var(--rail-ink);
+  box-shadow: 0 5px 11px #36231832;
+  scroll-snap-align: start;
+}
+
+.living-rail-card-image {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.28;
+  border-radius: 0.19rem;
+  overflow: hidden;
+  background: #ede1d1;
+  font-size: 0.65rem;
+}
+
+.living-rail-card-image picture,
+.living-rail-piece-image picture {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.living-rail-card-image picture {
+  position: absolute;
+  inset: 0;
+}
+
+.living-rail-card-image img,
+.living-rail-piece-image img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.living-rail-card-name {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  align-self: center;
+  overflow-wrap: anywhere;
+}
+
+.living-rail-card[aria-pressed="true"] {
+  border-color: var(--rail-accent);
+  box-shadow:
+    0 0 0 1px var(--rail-accent),
+    0 7px 15px #36231835;
+  font-weight: 700;
+}
+
+.living-rail-card:focus-visible,
+.living-rail button:focus-visible,
+.living-rail a:focus-visible,
+.living-rail input:focus-visible,
+.living-rail select:focus-visible {
+  outline: 2px solid var(--rail-accent);
+  outline-offset: 2px;
+}
+
+.living-rail-selected {
+  position: absolute;
+  inset-block-start: 0.35rem;
+  inset-inline-end: 0.35rem;
+  min-inline-size: 1.1rem;
+  border-radius: 50%;
+  background: var(--rail-accent);
+  color: white;
+  font-size: 0.75rem;
+}
+
+.living-rail-replay {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-block-size: 44px;
+  margin-block-start: 0.2rem;
+  padding: 0 0.7rem;
+  background: #fffaf1;
+  color: var(--rail-accent);
+  border: 1px solid #c7ad98;
+  border-radius: 1.5rem;
+  font-size: 0.73rem;
+}
+
+.living-rail-replay span {
+  font-size: 1.2rem;
+}
+
+.living-rail-info {
+  display: grid;
+  align-content: center;
+  gap: 0.65rem;
+  min-inline-size: 0;
+  padding: clamp(0.85rem, 2.5vw, 1.8rem);
+  background: var(--rail-paper);
+}
+
+.living-rail-heading {
+  display: grid;
+  gap: 0.17rem;
+}
+
+.living-rail-heading p,
+.living-rail-role {
+  color: var(--rail-accent);
+  font-weight: 700;
+  font-size: 0.74rem;
+}
+
+.living-rail-heading p {
+  margin: 0;
+}
+
+.living-rail-heading h1,
+.living-rail-heading h2 {
+  color: var(--rail-ink);
+  font-size: clamp(1.65rem, 3.05vw, 2.85rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .living-rail-heading h1,
+  .living-rail-heading h2 {
+    font-size: clamp(1.5rem, 6vw, 1.85rem);
+    overflow-wrap: anywhere;
+  }
+}
+
+.living-rail-heading > span {
+  font-size: 0.75rem;
+  color: #67503e;
+}
+
+.living-rail-piece {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem 0.65rem;
+  padding-block: 0.68rem;
+  border-block: 1px solid var(--rail-border);
+}
+
+.living-rail-piece-image {
+  inline-size: 62px;
+  block-size: 70px;
+  border-radius: 0.24rem;
+  overflow: hidden;
+  background: #ede1d1;
+}
+
+.living-rail-piece-copy {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+}
+
+.living-rail-piece-copy strong:first-of-type {
+  font-size: 0.94rem;
+}
+
+.living-rail-sku {
+  color: #6e5848;
+  font-size: 0.67rem;
+  overflow-wrap: anywhere;
+}
+
+.living-rail-product {
+  justify-self: start;
+  color: var(--rail-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+}
+
+.living-rail-controls {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+}
+
+.living-rail-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-block-size: 44px;
+}
+
+.living-rail-controls select {
+  min-block-size: 44px;
+  max-inline-size: 7rem;
+  padding: 0 0.35rem;
+  border: 1px solid #b19b87;
+  border-radius: 0.24rem;
+  background: #fffaf1;
+}
+
+.living-rail-choose input {
+  accent-color: var(--rail-accent);
+  inline-size: 17px;
+  block-size: 17px;
+}
+
+.living-rail-total,
+.living-rail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.living-rail-total {
+  justify-content: space-between;
+}
+
+.living-rail-actions :is(a, button) {
+  display: inline-flex;
+  min-block-size: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.32rem;
+  padding-inline: 0.5rem;
+  color: var(--rail-accent);
+}
+
+.living-rail-actions button {
+  background: var(--rail-accent);
+  color: #fffaf1;
+}
+
+.living-rail-actions button:disabled {
+  background: #e7dbce;
+  color: #695748;
+}
+
+.living-rail-actions a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.living-rail-full {
+  border: 1px solid var(--rail-border);
+}
+
+.living-rail-feedback {
+  min-block-size: 1.15rem;
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--rail-accent);
+}
+
+/* Wide photos have art-directed empty space on a physical side independent of locale. */
+@media (min-width: 960px) {
+  .living-rail {
+    grid-template-columns: minmax(0, 2.1fr) minmax(285px, 1fr);
+  }
+  .living-rail-stage {
+    align-self: stretch;
+    display: grid;
+    align-content: center;
+    background: linear-gradient(171deg, #d8c9b5, #f0e1cc 82%);
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .living-rail-info {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [dir="rtl"] .living-rail-stage {
+    grid-column: 2;
+  }
+  [dir="rtl"] .living-rail-info {
+    grid-column: 1;
+  }
+  [dir="rtl"] .living-rail {
+    grid-template-columns: minmax(285px, 1fr) minmax(0, 2.1fr);
+  }
+  .living-rail-collection {
+    position: absolute;
+    width: 43%;
+    top: 50%;
+    right: 5%;
+    transform: translateY(-50%);
+    background: transparent;
+    padding: 0;
+  }
+  [data-free-side="left"] .living-rail-collection {
+    left: 5%;
+    right: auto;
+  }
+  .living-rail-track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .living-rail[data-layout="cards"] .living-rail-track {
+    max-block-size: clamp(125px, 20vw, 300px);
+    overflow: auto;
+  }
+  .living-rail[data-layout="cards"] .living-rail-card {
+    max-inline-size: 8.5rem;
+    inline-size: 100%;
+    justify-self: center;
+  }
+  .living-rail[data-layout="rack"] .living-rail-track {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(75px, 1fr);
+    padding-block: 1.45rem 0.55rem;
+    border-block-start: 2px solid #5c4739;
+    box-shadow: inset 0 2px 0 #fff0da8c;
+  }
+  .living-rail[data-layout="rack"] .living-rail-card {
+    align-self: start;
+    border-radius: 0.22rem;
+  }
+  .living-rail[data-layout="rack"] .living-rail-card::before {
+    content: "";
+    position: absolute;
+    inline-size: 0.64rem;
+    block-size: 0.75rem;
+    top: -1.4rem;
+    left: calc(50% - 0.32rem);
+    border: 1px solid #654b39;
+    border-block-end: 0;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+  .living-rail[data-layout="rack"] .living-rail-card::after {
+    content: "";
+    position: absolute;
+    inline-size: 33%;
+    block-size: 0.66rem;
+    top: -0.67rem;
+    left: 33%;
+    background: #654b39;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .living-rail[data-motion="true"] .living-rail-card {
+    transition:
+      transform 320ms ease,
+      box-shadow 320ms ease;
+  }
+  .living-rail[data-motion="true"] .living-rail-card[aria-pressed="true"] {
+    transform: translateY(-2px) translateZ(12px);
+  }
+  .living-rail[data-layout="cards"][data-motion="true"]
+    .living-rail-card:hover {
+    transform: rotateY(-5deg) translateZ(12px);
+  }
+  .living-rail[data-motion="true"][data-replay="1"] .living-rail-card {
+    animation: living-rail-sway 850ms ease both;
+  }
+  .living-rail[data-motion="true"][data-replay="2"] .living-rail-card {
+    animation: living-rail-sway-again 850ms ease both;
+  }
+  .living-rail[data-motion="true"] .living-rail-card:nth-child(2) {
+    animation-delay: 110ms;
+  }
+  .living-rail[data-motion="true"] .living-rail-card:nth-child(3) {
+    animation-delay: 220ms;
+  }
+}
+
+@keyframes living-rail-sway {
+  45% {
+    transform: translateY(-4px) translateZ(14px) rotateY(7deg);
+  }
+}
+
+@keyframes living-rail-sway-again {
+  45% {
+    transform: translateY(-4px) translateZ(14px) rotateY(7deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .living-rail .living-rail-replay {
+    display: none;
+  }
+}
+
+.editorial-preview-mobile .living-rail {
+  container-type: inline-size;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.editorial-preview-mobile .living-rail-stage,
+.editorial-preview-mobile .living-rail-info {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.editorial-preview-mobile .living-rail-collection {
+  position: static;
+  width: auto;
+  transform: none;
+  padding: 0.65rem;
+}
+
+.editorial-preview-mobile .living-rail-track {
+  display: flex;
+}

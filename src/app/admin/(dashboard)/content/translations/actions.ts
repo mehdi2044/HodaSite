@@ -166,8 +166,8 @@ export async function importUiTranslations(
 }
 
 function invalidate(locale: string) {
-  revalidateTag("ui-translations");
-  revalidateTag(`ui-translations:${locale}`);
+  revalidateTag("ui-translations", { expire: 0 });
+  revalidateTag(`ui-translations:${locale}`, { expire: 0 });
   revalidatePath("/admin/content/translations");
   revalidatePath("/fa");
   revalidatePath("/tr");

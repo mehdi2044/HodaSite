@@ -8,6 +8,7 @@ import { seal, unseal, signValue } from "@/lib/secure-tokens";
 import { withMutation } from "@/lib/mutation-gate";
 
 type Tx = Prisma.TransactionClient;
+export type AdminSessionReader = Pick<Tx, "adminSession">;
 export const adminIdentityInclude = {
   overrides: true,
   roles: { include: { role: { include: { permissions: true } } } },
@@ -198,8 +199,9 @@ export async function validAdminSession(
   sessionId: string,
   version: number,
   allowEnrollment = false,
+  client: AdminSessionReader = db,
 ) {
-  const row = await db.adminSession.findUnique({
+  const row = await client.adminSession.findUnique({
     where: { id: sessionId },
     include: { user: { include: adminIdentityInclude } },
   });

@@ -50,8 +50,8 @@ export async function placeOrder(
       async (tx) => {
         const hash = tokenHash(token);
         await tx.$queryRaw`SELECT id FROM "Cart" WHERE "tokenHash"=${hash} FOR UPDATE`;
-        // Quote providers may read through a separate connection. Hold product
-        // classification stable before loading snapshots and until order commit.
+        // Hold product classification stable against concurrent admin writes
+        // before loading quote snapshots and until order commit.
         await tx.$queryRaw`
           SELECT p.id FROM "Product" p
           JOIN "Variant" v ON v."productId"=p.id
@@ -130,7 +130,7 @@ export async function placeOrder(
         });
         if (!banks.length) throw new CommerceError("PAYMENT_UNAVAILABLE");
         const locale = requestedLocale ?? localeSchema.parse(cart.locale);
-        if ((await getRequestContext(locale)).market.id !== cart.marketId)
+        if ((await getRequestContext(locale, tx)).market.id !== cart.marketId)
           throw new CommerceError("MARKET_CHANGED");
         const quote = await quoteCart(
           {
@@ -166,7 +166,7 @@ export async function placeOrder(
         const tryRate =
           cart.market.currency === "TRY"
             ? marketRate
-            : (await getActiveRate(tryMarket)).rate;
+            : (await getActiveRate(tryMarket, undefined, tx)).rate;
         const now = new Date(),
           holdUntil = new Date(now.getTime() + cart.market.holdHours * 3600000),
           deadline = new Date(

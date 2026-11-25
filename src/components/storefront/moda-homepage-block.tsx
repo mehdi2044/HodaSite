@@ -1,3 +1,5 @@
+import { HomeEditorialSpotlight } from "./home-editorial-spotlight";
+import { HomeCuratedLookbook } from "./home-curated-lookbook";
 import { FittingAdMotion } from "./fitting-ad-motion";
 import { resolveFittingAdLooks } from "@/modules/content/scenes/fitting-ad";
 import { ModaHeroSlide } from "./moda-hero-slide";
@@ -12,6 +14,7 @@ import {
 import { resolveHeroFloat } from "@/modules/content/moda4-hero";
 import { ModaKidsWorld } from "./moda-kids-world";
 import Link from "next/link";
+import { Fragment } from "react";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { localizedValue } from "@/modules/content/homepage";
@@ -29,6 +32,8 @@ import { ModaCampaign } from "./moda-campaign";
 import { ModaVideo } from "./moda-video";
 import { SceneArt } from "./scene-art";
 import { ServicePolicySummary } from "./service-policy";
+import { catalogText } from "@/modules/catalog";
+import { seoPath } from "@/lib/seo-urls";
 type Market = Parameters<typeof getVariantDisplayPrices>[1];
 type Locale = "fa" | "tr" | "en";
 export async function ModaHomepageBlock({
@@ -37,12 +42,22 @@ export async function ModaHomepageBlock({
   locale,
   first = false,
   preview = false,
+  anchor,
+  excludedLookIds = [],
+  excludedLookMediaIds = [],
+  spotlightExcludedTopicIds = [],
+  spotlightExcludedPhotoIds = [],
 }: {
   block: Moda4Block;
   market: Market;
   locale: Locale;
   first?: boolean;
   preview?: boolean;
+  anchor?: string;
+  excludedLookIds?: string[];
+  excludedLookMediaIds?: string[];
+  spotlightExcludedTopicIds?: string[];
+  spotlightExcludedPhotoIds?: string[];
 }) {
   const text = (value: Parameters<typeof localizedValue>[0]) =>
     localizedValue(value, locale);
@@ -107,6 +122,7 @@ export async function ModaHomepageBlock({
         first={block.first.map(text)}
         second={block.second.map(text)}
         seconds={block.durationSeconds}
+        speed={block.speed}
       />
     );
   if (block.type === "HeroSlider") {
@@ -136,7 +152,9 @@ export async function ModaHomepageBlock({
           resolveShoppableScene(slide.scene, market, locale, {
             adminPreview: preview,
           }),
-          resolveContentTarget(slide.target, market.id, locale),
+          slide.buyScene
+            ? null
+            : resolveContentTarget(slide.target, market.id, locale),
           slide.secondaryTarget
             ? resolveContentTarget(slide.secondaryTarget, market.id, locale)
             : null,
@@ -164,7 +182,13 @@ export async function ModaHomepageBlock({
             title={view.title}
             subtitle={rest.length ? subtitle : undefined}
             body={rest.length ? rest.join("\n") : subtitle}
-            cta={href ? { href, label: text(slide.ctaLabel) } : undefined}
+            cta={
+              slide.buyScene
+                ? { label: text(slide.ctaLabel) }
+                : href
+                  ? { href, label: text(slide.ctaLabel) }
+                  : undefined
+            }
             secondary={
               secondary && slide.secondaryLabel
                 ? { href: secondary, label: text(slide.secondaryLabel) }
@@ -223,13 +247,52 @@ export async function ModaHomepageBlock({
   if (block.type === "WorldsPrism") {
     const items = await Promise.all(
       block.faces.map(async (face) => {
-        const href = await resolveContentTarget(
-          { kind: "category", id: face.categoryId },
-          market.id,
-          locale,
-        );
+        const [href, products] = await Promise.all([
+          resolveContentTarget(
+            { kind: "category", id: face.categoryId },
+            market.id,
+            locale,
+          ),
+          moda4Products(market.id, locale, {
+            mode: "category",
+            referenceId: face.categoryId,
+            productIds: [],
+            limit: 3,
+          }),
+        ]);
         return (
-          <article className="moda-world-face">
+          <article className="moda-world-face" key={face.id}>
+            <h3>{text(face.title)}</h3>
+            <p>
+              {face.description ? text(face.description) : t("worldsIntro")}
+            </p>
+            <div className="moda-world-products">
+              {products.map((product) => {
+                const image =
+                  product.media[0]?.media ??
+                  product.variants[0]?.media[0]?.media;
+                return image ? (
+                  <Link
+                    key={product.id}
+                    href={seoPath(
+                      locale,
+                      market.code,
+                      "p",
+                      catalogText(product.slugI18n, locale),
+                    )}
+                  >
+                    <ResponsiveImage
+                      media={{ ...image, blurDataUrl: null }}
+                      loading="eager"
+                      locale={locale}
+                      sizes="110px"
+                      imgClassName="h-full w-full object-contain"
+                    />
+                    <span>{catalogText(product.titleI18n, locale)}</span>
+                  </Link>
+                ) : null;
+              })}
+            </div>
             {href && (
               <Link className="button" href={href}>
                 {t("worldEnter", { title: text(face.title) })}
@@ -247,7 +310,11 @@ export async function ModaHomepageBlock({
           locale,
         );
         return (
-          <Link className="moda-world-art" href={href ?? `/${locale}/search`}>
+          <Link
+            key={face.id}
+            className="moda-world-art"
+            href={href ?? `/${locale}/search`}
+          >
             {await photo(face.desktop, face.mobile, text(face.title))}
             <span className="moda-world-number">
               {String(index + 1).padStart(2, "0")}
@@ -300,6 +367,16 @@ export async function ModaHomepageBlock({
       </div>
     );
   }
+  if (block.type === "EditorialSpotlight")
+    return (
+      <HomeEditorialSpotlight
+        block={block}
+        locale={locale}
+        marketCode={market.code}
+        excludedTopicLookIds={spotlightExcludedTopicIds}
+        excludedPhotoIds={spotlightExcludedPhotoIds}
+      />
+    );
   if (block.type === "FittingAd") {
     const { animated, staticPhoto, diagnostics, photoPreviews } =
       await resolveFittingAdLooks(block.looks, market.id, locale, {
@@ -410,6 +487,19 @@ export async function ModaHomepageBlock({
       </>
     );
   }
+  if (block.type === "Lookbook" && block.curatedLookIds !== undefined)
+    return (
+      <HomeCuratedLookbook
+        ids={block.curatedLookIds}
+        excludedIds={excludedLookIds}
+        excludedMediaIds={excludedLookMediaIds}
+        locale={locale}
+        market={market}
+        title={text(block.title)}
+        seconds={block.autoplaySeconds}
+        anchor={anchor}
+      />
+    );
   if (block.type === "Lookbook") {
     const views = await Promise.all(
       block.scenes.map((scene) =>
@@ -417,7 +507,7 @@ export async function ModaHomepageBlock({
       ),
     );
     return (
-      <div data-moda4="lookbook" className="moda-lookbook">
+      <div id={anchor} data-moda4="lookbook" className="moda-lookbook">
         <ModaCarousel
           art={views.map((view) => (
             <SceneArt key={view.id} view={view} locale={locale} />
@@ -459,18 +549,20 @@ export async function ModaHomepageBlock({
         </div>
         <div className="moda-snap-products">
           {await Promise.all(
-            products.map((product) =>
-              ProductCard({
-                product: {
-                  ...product,
-                  displayPrice: prices.get(product.id)!,
-                },
-                variantPrices,
-                locale,
-                market,
-                readOnly: preview,
-              }),
-            ),
+            products.map(async (product) => (
+              <Fragment key={product.id}>
+                {await ProductCard({
+                  product: {
+                    ...product,
+                    displayPrice: prices.get(product.id)!,
+                  },
+                  variantPrices,
+                  locale,
+                  market,
+                  readOnly: preview,
+                })}
+              </Fragment>
+            )),
           )}
         </div>
         {products.length === 0 && <p>{t("noProducts")}</p>}

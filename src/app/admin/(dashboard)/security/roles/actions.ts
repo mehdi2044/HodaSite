@@ -30,7 +30,7 @@ export async function saveRole(form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
-      await assertCan(userId, "security.role.manage");
+      await assertCan(userId, "security.role.manage", undefined, tx);
       for (const permission of input.permissions)
         await assertDelegablePermission(userId, permission);
       const before = input.id
@@ -104,7 +104,7 @@ export async function saveOverride(form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
-      await assertCan(userId, "security.role.manage");
+      await assertCan(userId, "security.role.manage", undefined, tx);
       // Removing a deny can grant access just as surely as adding an allow.
       await assertDelegablePermission(userId, permission, scope);
       const owner = await tx.userRole.findFirst({

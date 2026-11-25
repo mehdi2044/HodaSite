@@ -1,13 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+
+const subscribeToHydration = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
 
 function LoginForm() {
   const t = useTranslations("security");
-  const router = useRouter();
   const params = useSearchParams();
   const candidate = params.get("next") ?? "/admin";
   const next =
@@ -16,6 +19,11 @@ function LoginForm() {
       : "/admin";
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const interactive = useSyncExternalStore(
+    subscribeToHydration,
+    clientReady,
+    serverReady,
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -33,19 +41,21 @@ function LoginForm() {
       });
       if (!res || res.error) {
         setError(t("loginError"));
+        setLoading(false);
         return;
       }
-      router.push(next);
-      router.refresh();
+      // Resolve the protected destination against the new session cookie in
+      // one document request. A client push can reuse a guest redirect.
+      window.location.replace(next);
+      return;
     } catch {
       setError(t("loginConnectionError"));
-    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form className="grid admin-login-form" onSubmit={onSubmit}>
+    <form method="post" className="grid admin-login-form" onSubmit={onSubmit}>
       <label>
         {t("email")}
         <input
@@ -110,8 +120,12 @@ function LoginForm() {
           {error}
         </p>
       ) : null}
-      <button className="button" type="submit" disabled={loading}>
-        {loading ? t("loading") : t("login")}
+      <button
+        className="button"
+        type="submit"
+        disabled={!interactive || loading}
+      >
+        {!interactive || loading ? t("loading") : t("login")}
       </button>
     </form>
   );

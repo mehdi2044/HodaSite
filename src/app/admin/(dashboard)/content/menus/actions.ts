@@ -48,7 +48,7 @@ export async function createMenuOverride(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -98,7 +98,7 @@ export async function saveMenuItem(
     });
 
     await writeMenuItem(session.user.id, input);
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -124,6 +124,7 @@ export async function deleteMenuItem(
           session.user.id,
           "content.menu.write",
           menu.marketId ? { marketId: menu.marketId } : undefined,
+          tx,
         );
         await tx.menuItem.updateMany({
           where: { OR: [{ id }, { parentId: id }], deletedAt: null },
@@ -140,7 +141,7 @@ export async function deleteMenuItem(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }
@@ -175,6 +176,7 @@ export async function reorderMenuItems(
           session.user.id,
           "content.menu.write",
           menu.marketId ? { marketId: menu.marketId } : undefined,
+          tx,
         );
         const lockedIds = [
           ...new Set([
@@ -221,7 +223,7 @@ export async function reorderMenuItems(
         });
       }),
     );
-    revalidateTag("menus");
+    revalidateTag("menus", { expire: 0 });
     revalidatePath("/admin/content/menus");
   });
 }

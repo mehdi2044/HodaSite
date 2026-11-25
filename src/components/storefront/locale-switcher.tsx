@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { parseSeoPath, seoPath } from "@/lib/seo-urls";
 import { isMarketContextPath, marketCodePattern } from "@/lib/storefront-path";
@@ -29,8 +28,11 @@ export function LocaleSwitcher({
   const queryString = useSearchParams().toString();
   const rest = pathname.split("/").slice(2).join("/");
   const canonical = parseSeoPath(pathname);
+  const editorialIndex = /^\/(?:fa|tr|en)\/(looks|magazine)\/?$/.exec(
+    canonical?.target ?? "",
+  )?.[1];
   const entityPath =
-    /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:p|c|pages)\/[^/]+\/?$/.test(
+    /^\/(fa|tr|en)\/(?:m\/[A-Za-z0-9_-]{1,40}\/)?(?:(?:p|c|pages)\/[^/]+|(?:looks|magazine)(?:\/[^/]+)?)\/?$/.test(
       pathname,
     );
   const [resolved, setResolved] = useState<{
@@ -42,6 +44,23 @@ export function LocaleSwitcher({
   const keep = new URLSearchParams();
   // Catalog filters and the validated market are available before hydration.
   // Sensitive query parameters must not travel through language links.
+  if (/\/(looks|magazine)\/?$/.test(pathname)) {
+    for (const key of [
+      "q",
+      "audience",
+      "category",
+      "season",
+      "occasion",
+      "style",
+      "color",
+      "sort",
+      "archive",
+      "min",
+      "max",
+      "page",
+    ])
+      for (const value of query.getAll(key)) keep.append(key, value);
+  }
   if (rest === "search") {
     for (const key of [
       "q",
@@ -73,7 +92,7 @@ export function LocaleSwitcher({
   }
   const localesKey = enabledLocales.join(",");
   useEffect(() => {
-    if (!entityPath) return;
+    if (!entityPath || editorialIndex) return;
     const controller = new AbortController();
     void Promise.all(
       localesKey.split(",").map(async (target) => {
@@ -95,7 +114,7 @@ export function LocaleSwitcher({
       })
       .catch(() => {});
     return () => controller.abort();
-  }, [pathname, entityPath, localesKey]);
+  }, [pathname, entityPath, localesKey, editorialIndex]);
   const href = (locale: string) => {
     const params = new URLSearchParams(keep);
     const next = query.get("next");
@@ -115,6 +134,11 @@ export function LocaleSwitcher({
     }
     const search = params.size ? `?${params}` : "";
     if (locale === current) return pathname + search;
+    if (
+      canonical &&
+      (editorialIndex === "looks" || editorialIndex === "magazine")
+    )
+      return seoPath(locale, canonical.market, editorialIndex) + search;
     if (entityPath)
       return (
         ((resolved.path === pathname && resolved.links[locale]) ||
@@ -136,7 +160,7 @@ export function LocaleSwitcher({
       }
     >
       {enabledLocales.map((locale) => (
-        <Link
+        <a
           key={locale}
           href={href(locale)}
           aria-current={locale === current ? "true" : undefined}
@@ -148,7 +172,7 @@ export function LocaleSwitcher({
           }
         >
           {compact ? locale.toUpperCase() : (LABELS[locale] ?? locale)}
-        </Link>
+        </a>
       ))}
     </nav>
   );

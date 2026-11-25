@@ -6,7 +6,11 @@ import Decimal from "decimal.js";
 import { Prisma, type ReturnStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { withMutation } from "@/lib/mutation-gate";
-import { can, assertCan, ForbiddenError } from "@/modules/access";
+import {
+  authorizedMarketIds,
+  assertCan,
+  ForbiddenError,
+} from "@/modules/access";
 import { CommerceError } from "@/modules/orders/state";
 import {
   returnPolicySchema,
@@ -23,11 +27,7 @@ export async function returnMarkets(
   userId: string,
   permission = "return.manage",
 ) {
-  const markets = await db.market.findMany({ select: { id: true } });
-  const ids: string[] = [];
-  for (const m of markets)
-    if (await can(userId, permission, { marketId: m.id })) ids.push(m.id);
-  return ids;
+  return authorizedMarketIds(userId, permission);
 }
 export async function requestReturn(customerId: string, raw: unknown) {
   const input = returnRequestSchema.parse(raw);
@@ -278,13 +278,23 @@ export async function manageReturn(userId: string, raw: unknown) {
           const { lockRewardSource } = await import("@/modules/fitting/ledger");
           await lockRewardSource(tx, subject.orderId);
         }
-        await assertCan(userId, "return.manage", {
-          marketId: subject.order.marketId,
-        });
-        if (settlement)
-          await assertCan(userId, "payment.refund", {
+        await assertCan(
+          userId,
+          "return.manage",
+          {
             marketId: subject.order.marketId,
-          });
+          },
+          tx,
+        );
+        if (settlement)
+          await assertCan(
+            userId,
+            "payment.refund",
+            {
+              marketId: subject.order.marketId,
+            },
+            tx,
+          );
         const row = await tx.returnRequest.findUniqueOrThrow({
           where: { id: input.returnId },
           include,
@@ -400,7 +410,7 @@ export async function manageReturn(userId: string, raw: unknown) {
         });
         await recognizeReturn(tx, row.id, userId);
         if (input.operation === "REFUND" || input.operation === "CREDIT") {
-          const { revokeReturnedCoins } = await import("@/modules/fitting");
+          const { revokeReturnedCoins } = await import("@/modules/fitting/ledger");
           await revokeReturnedCoins(tx, row.orderId);
         }
         await tx.auditLog.create({

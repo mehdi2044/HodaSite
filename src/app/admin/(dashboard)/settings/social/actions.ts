@@ -59,6 +59,6 @@ export async function saveSocial(
       ]);
     });
 
-    revalidateTag("site-settings");
+    revalidateTag("site-settings", { expire: 0 });
   });
 }

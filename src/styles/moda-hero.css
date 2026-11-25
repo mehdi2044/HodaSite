@@ -596,30 +596,30 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
     height: calc(100svh - 36px - var(--storefront-nav-height, 0px));
   }
   @supports (grid-template-rows: subgrid) {
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) {
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: max-content max-content max-content 1fr auto auto;
+      grid-template-rows: max-content max-content max-content 1fr auto auto auto;
       --m4-fold-budget: calc(
         100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)
       );
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero])::before {
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero])::before {
       content: "";
       grid-area: 1 / 1 / 5 / 2;
       visibility: hidden;
       pointer-events: none;
       block-size: var(--m4-fold-budget);
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero])
       > .moda-announcement {
       grid-area: 1 / 1;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-header {
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) > .moda-header {
       grid-area: 2 / 1;
       align-self: start;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero])
       > [data-moda4="geo-suggestion"] {
       grid-area: 3 / 1;
     }
@@ -633,9 +633,15 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       grid-template-rows: subgrid;
       min-width: 0;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero])
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero])
       > #storefront-content {
-      grid-row: 4 / 6;
+      grid-row: 4 / 7;
+    }
+    /* Editorial is a sibling of the two-row homepage, not part of its
+       remainder. Reserve its own track; an absent section leaves it empty. */
+    #storefront-content > .editorial-home {
+      grid-column: 1;
+      grid-row: 3;
     }
     #storefront-content
       .shop-homepage[data-m4-leading-hero]
@@ -652,8 +658,8 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
       grid-row: 2;
       min-width: 0;
     }
-    .storefront-app:has(.shop-homepage[data-m4-leading-hero]) > .moda-footer {
-      grid-area: 6 / 1;
+    .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) > .moda-footer {
+      grid-area: 7 / 1;
     }
   }
 }
@@ -667,7 +673,7 @@ html[data-button-style="crayon"] .m4-acts .m4-cta-ink {
   }
   /* Retain the portrait tablet height cap. The standard tablet
      announcement occupies 52px and the hero overlaps the 72px header. */
-  .storefront-app:has(.shop-homepage[data-m4-leading-hero]) {
+  .storefront-scroll:has(.shop-homepage[data-m4-leading-hero]) {
     --m4-fold-budget: min(
       calc(
         100svh - var(--storefront-nav-height) - env(safe-area-inset-bottom, 0px)

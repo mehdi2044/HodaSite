@@ -127,7 +127,7 @@ export async function saveCatalogCutout(actorId: string, raw: unknown) {
         )
       )
         throw new RevisionConflictError();
-      await assertCan(actorId, "catalog.product.edit");
+      await assertCan(actorId, "catalog.product.edit", undefined, tx);
       const data = {
         productId: input.productId,
         colorId: input.colorId,
@@ -190,7 +190,7 @@ export async function archiveCatalogCutout(
         throw new RevisionConflictError();
       if (before.version !== expectedVersion || before.deletedAt)
         throw new RevisionConflictError();
-      await assertCan(actorId, "catalog.product.edit");
+      await assertCan(actorId, "catalog.product.edit", undefined, tx);
       const after = await tx.catalogCutout.update({
         where: { id },
         data: { deletedAt: new Date(), version: before.version + 1 },

@@ -68,6 +68,8 @@ export async function Footer({
     market.code,
     locale as "fa" | "tr" | "en",
   );
+  const groups = menu.filter((item) => item.children.length > 0);
+  const standalone = menu.filter((item) => item.children.length === 0);
   const logo = logoMediaId
     ? await db.media.findFirst({
         where: {
@@ -82,93 +84,113 @@ export async function Footer({
   return (
     <footer className="moda-footer" data-moda4="footer">
       <div className="moda-lace" aria-hidden="true" />
-      <div className="moda-footer-top">
-        {await Newsletter({ locale, marketId: market.id })}
-      </div>
-      <div className="moda-footer-links shell grid gap-10 py-14 text-sm sm:grid-cols-2 lg:grid-cols-4">
-        {(email || phone || address) && (
-          <div className="grid gap-1">
-            <strong>{t("contactTitle")}</strong>
-            {email && (
-              <bdi dir="ltr">
-                <a href={`mailto:${email}`}>{email}</a>
-              </bdi>
+      <div className="moda-footer-main">
+        <div className="moda-footer-brand">
+          <div className="moda-footer-wordmark" data-moda4="footer-wordmark">
+            {logo?.originalName === "seed-moda4-logo.png" ? (
+              <ModaWordmark />
+            ) : logo ? (
+              <ResponsiveImage
+                media={{
+                  url: logo.url,
+                  variants: logo.variants,
+                  width: logo.width,
+                  height: logo.height,
+                  blurDataUrl: logo.blurDataUrl,
+                  altI18n: { fa: siteName, tr: siteName, en: siteName },
+                }}
+                locale={locale as "fa" | "tr" | "en"}
+                sizes="90vw"
+                imgClassName="w-full h-auto object-contain"
+              />
+            ) : (
+              <strong>{siteName}</strong>
             )}
-            {phone && (
-              <bdi dir="ltr">
-                <a href={`tel:${phone}`}>{phone}</a>
-              </bdi>
-            )}
-            {address && <p className="opacity-70">{address}</p>}
           </div>
-        )}
-        {socialLinks.length > 0 && (
-          <div className="grid gap-1">
-            <strong>{t("socialTitle")}</strong>
-            {socialLinks.map(([key, url]) => (
-              <a key={key} href={url} target="_blank" rel="noreferrer">
-                {t(key)}
-              </a>
-            ))}
+          <div className="moda-footer-top">
+            {await Newsletter({ locale, marketId: market.id })}
           </div>
-        )}
-        {menu.length > 0 && (
-          <nav className="grid content-start gap-1" aria-label={navT("footer")}>
-            {menu.map((item) => (
-              <FooterMenuItem key={item.id} item={item} />
-            ))}
-          </nav>
-        )}
-        {footerLine && (
-          <div className="grid gap-1 opacity-70">
-            <p>{footerLine}</p>
-          </div>
-        )}
-      </div>
-      <div className="moda-footer-wordmark" data-moda4="footer-wordmark">
-        {logo?.originalName === "seed-moda4-logo.png" ? (
-          <ModaWordmark />
-        ) : logo ? (
-          <ResponsiveImage
-            media={{
-              url: logo.url,
-              variants: logo.variants,
-              width: logo.width,
-              height: logo.height,
-              blurDataUrl: logo.blurDataUrl,
-              altI18n: { fa: siteName, tr: siteName, en: siteName },
-            }}
-            locale={locale as "fa" | "tr" | "en"}
-            sizes="90vw"
-            imgClassName="w-full h-auto object-contain"
-          />
-        ) : (
-          <strong>{siteName}</strong>
-        )}
+        </div>
+        <div className="moda-footer-links text-sm">
+          {menu.length > 0 && (
+            <nav aria-label={navT("footer")}>
+              {groups.length > 0 && (
+                <ul className="moda-footer-groups">
+                  {groups.map((item) => (
+                    <li className="moda-footer-group" key={item.id}>
+                      <div className="moda-footer-group-title">
+                        <FooterMenuLink item={item} />
+                      </div>
+                      <ul>
+                        {item.children.map((child) => (
+                          <li key={child.id}>
+                            <FooterMenuLink item={child} />
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {standalone.length > 0 && (
+                <ul className="moda-footer-directory">
+                  {standalone.map((item) => (
+                    <li key={item.id}>
+                      <FooterMenuLink item={item} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </nav>
+          )}
+          {(email || phone || address || socialLinks.length > 0) && (
+            <div className="moda-footer-contact">
+              {(email || phone || address) && (
+                <div className="grid gap-1">
+                  <strong>{t("contactTitle")}</strong>
+                  {email && (
+                    <bdi dir="ltr">
+                      <a href={`mailto:${email}`}>{email}</a>
+                    </bdi>
+                  )}
+                  {phone && (
+                    <bdi dir="ltr">
+                      <a href={`tel:${phone}`}>{phone}</a>
+                    </bdi>
+                  )}
+                  {address && <p className="opacity-70">{address}</p>}
+                </div>
+              )}
+              {socialLinks.length > 0 && (
+                <div className="grid gap-1">
+                  <strong>{t("socialTitle")}</strong>
+                  {socialLinks.map(([key, url]) => (
+                    <a key={key} href={url} target="_blank" rel="noreferrer">
+                      {t(key)}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       {children && <div className="moda-footer-utilities">{children}</div>}
+      {footerLine && <p className="moda-footer-legal">{footerLine}</p>}
     </footer>
   );
 }
 
-function FooterMenuItem({ item }: { item: PublicMenuItem }) {
-  return (
-    <div className="grid gap-1">
-      {item.href ? (
-        <a
-          className="min-h-11 py-3"
-          href={item.href}
-          target={item.target}
-          rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-        >
-          {item.label}
-        </a>
-      ) : (
-        <span className="py-2 font-semibold opacity-70">{item.label}</span>
-      )}
-      {item.children.map((child) => (
-        <FooterMenuItem key={child.id} item={child} />
-      ))}
-    </div>
+function FooterMenuLink({ item }: { item: PublicMenuItem }) {
+  return item.href ? (
+    <a
+      href={item.href}
+      target={item.target}
+      rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+    >
+      {item.label}
+    </a>
+  ) : (
+    <span>{item.label}</span>
   );
 }

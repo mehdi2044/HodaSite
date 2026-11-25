@@ -3,6 +3,7 @@ import type { SeoLocale } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import { getRequestContext } from "@/lib/request-context";
 import { getHomepage } from "@/modules/content/homepage";
+import { EditorialHome } from "@/components/storefront/editorial-home";
 import { HomepageBlocks } from "@/components/storefront/homepage-blocks";
 
 export async function generateMetadata({
@@ -41,10 +42,15 @@ export default async function Home({
       </main>
     );
   return (
-    <HomepageBlocks
-      blocks={homepage.blocks}
-      locale={safeLocale}
-      market={market}
-    />
+    <>
+      <HomepageBlocks
+        blocks={homepage.blocks}
+        locale={safeLocale}
+        market={market}
+      />
+      {!homepage.blocks.some(
+        (block) => block.type === "EditorialSpotlight",
+      ) && <EditorialHome locale={safeLocale} market={market} />}
+    </>
   );
 }

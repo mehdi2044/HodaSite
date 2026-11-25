@@ -25,7 +25,7 @@ for (const [locale, market, copy] of markets) {
       await page.evaluate(() => document.fonts.ready);
       const dock = page.getByTestId("mobile-bottom-navigation");
       await expect(dock).toBeVisible();
-      await expect(dock.getByRole("link")).toHaveCount(6);
+      await expect(dock.getByRole("link")).toHaveCount(width < 1024 ? 4 : 6);
       await expect(page.locator(".storefront-app")).toHaveAttribute(
         "dir",
         locale === "fa" ? "rtl" : "ltr",
@@ -36,23 +36,25 @@ for (const [locale, market, copy] of markets) {
           color: getComputedStyle(el).backgroundColor,
           bottom: innerHeight - rect.bottom,
           overflow: document.documentElement.scrollWidth > innerWidth,
-          links: [...el.querySelectorAll("a")].map((a) => {
-            const r = a.getBoundingClientRect(),
-              text = document.createRange();
-            text.selectNodeContents(a);
-            return {
-              width: r.width,
-              height: r.height,
-              href: a.getAttribute("href"),
-              readable: [...text.getClientRects()].every(
-                (t) =>
-                  t.left >= r.left - 1 &&
-                  t.right <= r.right + 1 &&
-                  t.top >= r.top - 1 &&
-                  t.bottom <= r.bottom + 1,
-              ),
-            };
-          }),
+          links: [...el.querySelectorAll("a")]
+            .filter((a) => a.getClientRects().length > 0)
+            .map((a) => {
+              const r = a.getBoundingClientRect(),
+                text = document.createRange();
+              text.selectNodeContents(a);
+              return {
+                width: r.width,
+                height: r.height,
+                href: a.getAttribute("href"),
+                readable: [...text.getClientRects()].every(
+                  (t) =>
+                    t.left >= r.left - 1 &&
+                    t.right <= r.right + 1 &&
+                    t.top >= r.top - 1 &&
+                    t.bottom <= r.bottom + 1,
+                ),
+              };
+            }),
         };
       });
       expect(metrics.overflow).toBe(false);
@@ -79,10 +81,15 @@ for (const [locale, market, copy] of markets) {
       );
       await dock.getByRole("link").nth(0).click();
       await expect(page).toHaveURL(home);
+      const more = dock.locator("summary");
+      async function openMore() {
+        if (width < 1024) await more.click();
+      }
       const catalog = dock.getByRole("link", {
         name: copy.instantFitting.dockProduct,
         exact: true,
       });
+      await openMore();
       await expect(catalog).toHaveAttribute(
         "href",
         `/${locale}/search?market=${market}`,
@@ -125,9 +132,10 @@ for (const [locale, market, copy] of markets) {
       await seededProduct.click();
       await expect(page).toHaveURL((url) => url.pathname === pdpPath);
       await expect(page.locator(".shop-product-title")).toHaveText(title);
+      await openMore();
       await expect(catalog).toHaveAttribute("aria-current", "page");
-      await expect(catalog).toHaveAttribute("href", new RegExp(pdpPath));
       const productHref = await catalog.getAttribute("href");
+      if (width < 1024) await page.keyboard.press("Escape");
       expect(productHref).toContain(`/m/${market}/p/`);
       await expect(page.locator(".storefront-cart-toggle")).toBeVisible();
       const buy = page.locator(".shop-product-submit .shop-add-button");
@@ -139,6 +147,8 @@ for (const [locale, market, copy] of markets) {
       expect(purchaseBox!.y + purchaseBox!.height).toBeLessThanOrEqual(
         dockBox!.y,
       );
+      await openMore();
+      await expect(catalog).toHaveAttribute("href", new RegExp(pdpPath));
       await catalog.focus();
       await page.keyboard.press("Tab");
       await page.keyboard.press("Shift+Tab");
@@ -155,6 +165,7 @@ for (const [locale, market, copy] of markets) {
       );
       await dock.getByRole("link").nth(0).click();
       await expect(page).toHaveURL(new RegExp(home + "$"));
+      await openMore();
       await expect(catalog).toHaveAttribute(
         "href",
         `/${locale}/search?market=${market}`,
@@ -199,6 +210,8 @@ for (const [locale, market, copy] of markets) {
       (url) => url.pathname === `/${locale}/account/login`,
     );
     await expect(page.locator('input[type="email"]')).toBeVisible();
+    const more = dock.locator("summary");
+    await more.click();
     await dock
       .getByRole("link", { name: copy.instantFitting.dockProfile, exact: true })
       .click();
@@ -212,6 +225,7 @@ for (const [locale, market, copy] of markets) {
       (url) => url.pathname === `/${locale}/fitting-room`,
     );
     await page.goto(`/${locale}/m/${market}/p/definitely-not-a-product`);
+    await more.click();
     await expect(product).toHaveAttribute(
       "href",
       `/${locale}/search?market=${market}`,

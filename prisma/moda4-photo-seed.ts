@@ -14,7 +14,11 @@ const looks = [
     title: "City Layers",
     pieces: ["women-coat", "accessories-bag"],
   },
-  { photo: "look-men", title: "Easy Days", pieces: ["men-shirt", "men-chino"] },
+  {
+    photo: "look-men",
+    title: "Easy Days",
+    pieces: ["men-shirt", "men-tee", "men-chino"],
+  },
   {
     photo: "look-kids",
     title: "Play Date",
@@ -85,7 +89,10 @@ export async function seedModa4PhotoScene(
   }
   const products = await db.product.findMany({
     where: { id: { in: look.pieces.map((key) => `seed-moda4-style-${key}`) } },
-    include: { media: true, variants: { include: { color: true } } },
+    include: {
+      media: true,
+      variants: { include: { color: true, media: true } },
+    },
   });
   const scene: ShoppableScene = {
     version: 1,
@@ -107,14 +114,34 @@ export async function seedModa4PhotoScene(
     },
     pieces: look.pieces.map((key, index) => {
       const p = products.find((p) => p.id === `seed-moda4-style-${key}`)!;
-      const v = p.variants[0];
+      const v =
+        key === "men-tee"
+          ? p.variants.find((variant) => variant.color.code === "IVORY")!
+          : p.variants[0];
+      const desktop = [
+        { x: 0.651, y: 0.3 },
+        { x: 0.701, y: 0.39 },
+        { x: 0.681, y: 0.65 },
+      ];
+      const mobile = [
+        { x: 0.375, y: 0.29 },
+        { x: 0.492, y: 0.4 },
+        { x: 0.45, y: 0.63 },
+      ];
       return {
         id: `${id}-piece-${index}`,
         productId: p.id,
         colorId: v.colorId,
-        referenceMediaId: p.media[0].mediaId,
-        desktop: { x: 0.25 + index * 0.2, y: 0.46 },
-        mobile: { x: 0.3 + index * 0.22, y: 0.4 + index * 0.1 },
+        referenceMediaId:
+          key === "men-tee" ? v.media[0].mediaId : p.media[0].mediaId,
+        desktop:
+          look.photo === "look-men"
+            ? desktop[index]
+            : { x: 0.25 + index * 0.2, y: 0.46 },
+        mobile:
+          look.photo === "look-men"
+            ? mobile[index]
+            : { x: 0.3 + index * 0.22, y: 0.4 + index * 0.1 },
         side: "end",
       };
     }),

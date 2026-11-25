@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { PublicMenuItem } from "@/modules/content";
 import { useTranslations } from "next-intl";
 import { ResponsiveImage, isDemoFashionMedia } from "./responsive-image";
+import { menuLinkIsActive } from "@/lib/menu-active";
 
 export function MegaNavigation({
   items,
@@ -21,7 +22,13 @@ export function MegaNavigation({
   const root = useRef<HTMLElement>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const pathname = usePathname();
-  useEffect(() => setOpen(null), [pathname]);
+  // Rewrites may expose a different server pathname. Apply active decoration
+  // after commit so it never changes the server/client hydration contract.
+  const [activePath, setActivePath] = useState<string | null>(null);
+  useEffect(() => {
+    setOpen(null);
+    setActivePath(pathname);
+  }, [pathname]);
   useEffect(() => {
     const outside = (event: PointerEvent) => {
       if (event.target instanceof Node && !root.current?.contains(event.target))
@@ -67,6 +74,10 @@ export function MegaNavigation({
             {item.href ? (
               <Link
                 href={item.href}
+                title={item.label}
+                aria-current={
+                  menuLinkIsActive(item.href, activePath) ? "page" : undefined
+                }
                 target={item.target}
                 rel={
                   item.target === "_blank" ? "noopener noreferrer" : undefined
@@ -105,6 +116,12 @@ export function MegaNavigation({
                     <Link
                       key={child.id}
                       href={child.href}
+                      title={child.label}
+                      aria-current={
+                        menuLinkIsActive(child.href, activePath)
+                          ? "page"
+                          : undefined
+                      }
                       target={child.target}
                       rel={
                         child.target === "_blank"

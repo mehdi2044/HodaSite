@@ -41,7 +41,7 @@ export async function executeHomepagePublication(job: JobContext) {
     },
   });
   if (committed) {
-    revalidateTag("homepage");
+    revalidateTag("homepage", { expire: 0 });
     return;
   }
   try {
@@ -97,7 +97,7 @@ export async function executeHomepagePublication(job: JobContext) {
     });
     throw new JobPermanentError(code);
   }
-  revalidateTag("homepage");
+  revalidateTag("homepage", { expire: 0 });
 }
 export function registerHomepagePublicationJobs() {
   registerJobHandler("homepage-publish", executeHomepagePublication);

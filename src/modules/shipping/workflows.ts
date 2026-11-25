@@ -20,9 +20,14 @@ export async function saveWorkflow(userId: string, raw: unknown) {
   return withMutation(() =>
     db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Market" WHERE id=${input.marketId} FOR UPDATE`;
-      await assertCan(userId, "shipping.workflow.manage", {
-        marketId: input.marketId,
-      });
+      await assertCan(
+        userId,
+        "shipping.workflow.manage",
+        {
+          marketId: input.marketId,
+        },
+        tx,
+      );
       const before = input.id
         ? await tx.shippingWorkflow.findUnique({
             where: { id: input.id },

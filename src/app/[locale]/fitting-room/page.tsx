@@ -1,3 +1,4 @@
+import { resolveLookPreset } from "@/modules/editorial/fitting";
 import { InstantFitting } from "@/components/storefront/instant-fitting";
 import { storeCutoutModels } from "@/modules/catalog/cutouts/models";
 import { cutoutPublicImage } from "@/modules/catalog/cutouts/resolve";
@@ -191,25 +192,48 @@ async function PaidPage({
 
 export default async function Page(props: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    look?: string;
+    story?: string;
+    variants?: string;
+  }>;
 }) {
   const locale = z.enum(["fa", "tr", "en"]).parse((await props.params).locale),
     config = await fittingConfig(),
     customer = await currentCustomer();
   if (!config.instantEnabled) return <main>{await PaidPage(props)}</main>;
   const { market } = await getRequestContext(locale);
-  const [models, products, saved, archived] = await Promise.all([
+  const { look, story, variants } = await props.searchParams;
+  const [models, products, saved, archived, preset] = await Promise.all([
     storeCutoutModels(),
     instantCatalog(market.id, locale),
     customer && !customer.isGuest ? instantLooks(locale) : [],
     customer && !customer.isGuest ? instantLooks(locale, true) : [],
+    look ? resolveLookPreset(look, story, variants, market, locale) : null,
   ]);
+  const editorial = preset ? await getTranslations("editorial") : null;
   const showPaid = !!customer && !customer.isGuest;
   return (
     <>
       <main className="shell shop-page py-10">
+        {preset && editorial && (
+          <section className="editorial-section" aria-label={preset.title}>
+            <h2>{preset.title}</h2>
+            {preset.missing && <p>{editorial("fittingFallback")}</p>}
+            <div className="editorial-link-row">
+              <Link href={preset.lookHref}>{editorial("backToLook")}</Link>
+              {preset.storyHref && (
+                <Link href={preset.storyHref}>
+                  {editorial("backToArticle")}
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
         <InstantFitting
-          key={`${customer?.id ?? "guest"}:${market.id}:${locale}`}
+          key={`${customer?.id ?? "guest"}:${market.id}:${locale}:${preset?.revisionId ?? ""}:${preset?.selection?.variantIds.join(",") ?? ""}`}
+          preset={preset?.selection}
           locale={locale}
           marketId={market.id}
           marketCode={market.code}
@@ -221,7 +245,19 @@ export default async function Page(props: {
             kind: m.kind,
             media: cutoutPublicImage(m.image),
           }))}
-          products={products}
+          products={
+            preset
+              ? [
+                  ...preset.products,
+                  ...products.filter(
+                    (item) =>
+                      !preset.products.some(
+                        (other) => other.variantId === item.variantId,
+                      ),
+                  ),
+                ]
+              : products
+          }
           saved={saved}
           archived={archived}
           paidAvailable={showPaid && config.enabled}

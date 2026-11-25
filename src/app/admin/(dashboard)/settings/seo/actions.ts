@@ -61,6 +61,6 @@ export async function saveSeo(
         });
       }),
     );
-    revalidateTag("site-settings");
+    revalidateTag("site-settings", { expire: 0 });
   });
 }

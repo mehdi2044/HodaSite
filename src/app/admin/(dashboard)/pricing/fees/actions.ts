@@ -122,7 +122,7 @@ export async function saveFeeRule(
         },
       });
     });
-    revalidateTag("fees");
+    revalidateTag("fees", { expire: 0 });
     revalidatePath("/admin/pricing/fees");
   });
 }
@@ -151,7 +151,7 @@ export async function toggleFeeRule(
         },
       });
     });
-    revalidateTag("fees");
+    revalidateTag("fees", { expire: 0 });
     revalidatePath("/admin/pricing/fees");
   });
 }

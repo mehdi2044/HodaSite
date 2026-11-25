@@ -30,6 +30,7 @@ export async function writeMenuItem(userId: string, input: MenuItemInput) {
         userId,
         "content.menu.write",
         menu.marketId ? { marketId: menu.marketId } : undefined,
+        tx,
       );
       if (old && old.menuId !== menu.id) {
         const source = await tx.menu.findUniqueOrThrow({
@@ -39,6 +40,7 @@ export async function writeMenuItem(userId: string, input: MenuItemInput) {
           userId,
           "content.menu.write",
           source.marketId ? { marketId: source.marketId } : undefined,
+          tx,
         );
       }
       const ids = [

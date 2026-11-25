@@ -3,6 +3,7 @@ import { seedLedgerAccounts } from "./ledger-seed";
 import { legacyHomepageBlocks } from "./demo-homepage";
 import { seedFittingRoom } from "./fitting-seed";
 import { seedFreshModa4Homepage } from "./moda4-homepage-seed";
+import { seedModa4Footer } from "./moda4-footer-seed";
 import { seedStyleStorefront } from "./style-seed";
 import { seedModa4BrandMedia, MODA4_BRAND_MEDIA } from "./moda4-brand";
 import { MODA4_LIGHT, MODA4_DARK, MODA4_FONTS } from "../scripts/moda4-theme";
@@ -505,6 +506,7 @@ async function seedContent(freshModa4Demo = false) {
       update: {},
       create: { id: `seed-menu-${key}`, key },
     });
+    if (freshModa4Demo && key === "footer") await seedModa4Footer(db, menu.id);
     const hasModa4Menu =
       key !== "footer" &&
       Boolean(

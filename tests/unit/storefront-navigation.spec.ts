@@ -26,13 +26,18 @@ describe("shared storefront navigation presentation contract", () => {
     });
   });
   it.each([
-    "/fa/checkout",
     "/tr/m/TR/payment",
     "/en/payments",
     "/en/orders/real-order",
   ])("removes intrusive navigation: %s", (path) => {
     expect(storefrontNavigationRoute(path).suppressed).toBe(true);
   });
+  it.each(["/fa/checkout", "/tr/m/TR/checkout", "/en/checkout"])(
+    "keeps the storefront dock during checkout: %s",
+    (path) => {
+      expect(storefrontNavigationRoute(path).suppressed).toBe(false);
+    },
+  );
   it("keeps cart and account reachable", () => {
     expect(storefrontNavigationRoute("/fa/cart").suppressed).toBe(false);
     expect(storefrontNavigationRoute("/fa/account").suppressed).toBe(false);

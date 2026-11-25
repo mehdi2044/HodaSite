@@ -8,6 +8,9 @@ import "@/styles/moda-fidelity-product.css";
 import "@/styles/moda-fidelity-fitting.css";
 import "@/styles/moda-fidelity-account.css";
 import "@/styles/storefront-navigation.css";
+import "@/styles/editorial.css";
+import "@/styles/living-rail.css";
+import "@/styles/moda-home-experience.css";
 import { AdminHistoryTracking } from "@/components/admin/unsaved-history";
 import { getLocale, getMessages } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
@@ -27,6 +30,7 @@ import { auth } from "@/modules/auth";
 import { can } from "@/modules/access";
 import { PreviewStatus } from "@/components/admin/preview-status";
 import { CrayonFilter } from "@/components/ui/crayon-filter";
+import { storefrontEarlyNavigation } from "@/lib/storefront-early-navigation";
 
 // Depends on the request (locale, and — via the theme accessor — the DB), so
 // a brand/theme change is visible on the next load without a rebuild.
@@ -98,6 +102,10 @@ export default async function RootLayout({
       data-button-style={buttonStyle}
     >
       <head>
+        {/* Static source. Install the click handler before any storefront HTML is parsed. */}
+        <script
+          dangerouslySetInnerHTML={{ __html: storefrontEarlyNavigation }}
+        />
         {/* Server-generated CSS vars from admin-controlled ThemeSettings, not user input. */}
         <style dangerouslySetInnerHTML={{ __html: css }} />
         {customCss && (

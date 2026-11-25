@@ -39,7 +39,7 @@ function json(value: FormDataEntryValue | null) {
   }
 }
 function invalidate() {
-  revalidateTag("homepage");
+  revalidateTag("homepage", { expire: 0 });
   revalidatePath("/admin/content/homepage/scenes");
   revalidatePath("/admin/content/homepage");
 }

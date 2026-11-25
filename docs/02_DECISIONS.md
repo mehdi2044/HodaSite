@@ -1,5 +1,11 @@
 # تصمیم‌های قطعی پروژه (Architecture Decision Records) — v1.2.1
 
+### Next.js 16 and Living Rail acceptance candidate — D82 (2026-11-17)
+
+Mehdi requested a local comparison and acceptance preview for Next.js 16.4.6 and React 19.3.1 on the approved Living Rail lineage. D02 remains the production baseline. Record the dependency pins, cache-expiration behavior and production-build options in the candidate. Check URL normalization, middleware, authentication, catalog, editorial publication, fitting and the full purchase flow on a separate PostgreSQL copy and media path.
+
+This candidate adds no schema migration or existing-data backfill. Revert by selecting the previous application artifact. Keep all existing previews running. Promotion remains subject to the owner's review and the D70 gates.
+
 ### MODA4 composition and measured fidelity — D81 (2026-10-16)
 
 Owner instruction in PR77's FIDELITY_HANDOFF_FA.md is accepted before presentation changes. D77 font roles remain unchanged: Manrope display, Inter UI/prices, Vazirmatn Persian; approved outlined brand asset remains. FIDELITY_SPEC.md is the binding presentation contract, followed by its unchanged measured rules and prototype/source/template.html values. Preserve all catalog/market/CMS/cart/instant-wardrobe/profile capabilities, authorization, accessibility and reduced motion.

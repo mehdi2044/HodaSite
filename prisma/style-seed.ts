@@ -440,13 +440,17 @@ export async function seedStyleStorefront(
           },
         });
         if (
-          selectedColor !== color &&
+          (selectedColor !== color || key === "men-tee") &&
           !(await db.variantMedia.count({ where: { variantId: variant.id } }))
         )
           await db.variantMedia.create({
             data: {
               variantId: variant.id,
-              mediaId: mediaId(`${key}-${selectedColor.toLowerCase()}`),
+              mediaId: mediaId(
+                selectedColor === color
+                  ? key
+                  : `${key}-${selectedColor.toLowerCase()}`,
+              ),
               sortOrder: 0,
             },
           });

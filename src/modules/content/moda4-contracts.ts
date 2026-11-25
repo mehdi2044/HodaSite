@@ -64,23 +64,37 @@ export const modaHeroSlideSchema = z
     /** M4-01: optional decorative cutout beside the person (desktop â‰¥1280 only). Price from catalog. */
     float: z.object({ productId: id, colorId: id }).strict().optional(),
     ctaLabel: localizedTextSchema,
+    buyScene: z.boolean().optional(),
     target: contentTargetSchema,
     secondaryLabel: localizedTextSchema.optional(),
     secondaryTarget: contentTargetSchema.optional(),
   })
-  .strict();
+  .strict()
+  .refine((slide) => !slide.buyScene || slide.scene.pieces.length > 0, {
+    path: ["scene", "pieces"],
+    message: "The purchase button requires at least one scene piece",
+  });
 export const modaWorldFaceSchema = z
   .object({
     id,
     categoryId: id,
     title: localizedTextSchema,
     subtitle: localizedTextSchema,
+    description: localizedTextSchema.optional(),
     desktop: sceneImageSchema,
     mobile: sceneImageSchema,
     scene: shoppableSceneSchema.optional(),
   })
   .strict();
 export const moda4BlockSchemas = [
+  z
+    .object({
+      ...base,
+      type: z.literal("EditorialSpotlight"),
+      title: localizedTextSchema,
+      articleId: id.optional(),
+    })
+    .strict(),
   z
     .object({
       ...base,
@@ -96,6 +110,13 @@ export const moda4BlockSchemas = [
       first: z.array(localizedTextSchema).min(1).max(12),
       second: z.array(localizedTextSchema).min(1).max(12),
       durationSeconds: z.number().min(10).max(120).default(30),
+      speed: z
+        .object({
+          first: z.number().min(4).max(120),
+          second: z.number().min(4).max(120),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   z
@@ -148,10 +169,18 @@ export const moda4BlockSchemas = [
       ...base,
       type: z.literal("Lookbook"),
       title: localizedTextSchema,
-      scenes: z.array(shoppableSceneSchema).min(1).max(12),
+      scenes: z.array(shoppableSceneSchema).max(12),
+      curatedLookIds: z
+        .array(id)
+        .max(12)
+        .refine((ids) => new Set(ids).size === ids.length)
+        .optional(),
       autoplaySeconds: z.number().min(3).max(30).default(4.8),
     })
-    .strict(),
+    .strict()
+    .refine(
+      (block) => block.curatedLookIds !== undefined || block.scenes.length > 0,
+    ),
   z
     .object({
       ...base,
@@ -229,6 +258,7 @@ export const moda4BlockSchemas = [
 ] as const;
 export type Moda4Block = z.infer<(typeof moda4BlockSchemas)[number]>;
 export const MODA4_TYPES = [
+  "EditorialSpotlight",
   "HeroSlider",
   "Bands",
   "WorldsPrism",

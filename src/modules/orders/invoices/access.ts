@@ -60,10 +60,15 @@ export async function regenerateInvoice(
   return withMutation(() =>
     db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Order" WHERE id=${orderId} FOR UPDATE`;
-      await assertCan(userId, "order.invoice.view", {
-        marketId: order.marketId,
-      });
-      await assertCan(userId, "order.edit", { marketId: order.marketId });
+      await assertCan(
+        userId,
+        "order.invoice.view",
+        {
+          marketId: order.marketId,
+        },
+        tx,
+      );
+      await assertCan(userId, "order.edit", { marketId: order.marketId }, tx);
       return queueInvoice(tx, orderId, userId, expectedVersion);
     }),
   );

@@ -191,7 +191,7 @@ export async function saveTaxonomy(
       }),
     );
     void entityId;
-    revalidateTag("catalog");
+    revalidateTag("catalog", { expire: 0 });
     revalidatePath("/admin/catalog/taxonomy");
   });
 }
@@ -253,7 +253,7 @@ export async function archiveTaxonomy(
         });
       }),
     );
-    revalidateTag("catalog");
+    revalidateTag("catalog", { expire: 0 });
     revalidatePath("/admin/catalog/taxonomy");
   });
 }
