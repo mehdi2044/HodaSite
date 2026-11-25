@@ -73,8 +73,10 @@ export async function quoteCart(
   if (variants.length !== new Set(items.map((item) => item.variantId)).size)
     throw new Error("One or more variants are unavailable");
   if (variants.some((v) => v.product.coinPackCoins)) {
-    const { fittingConfig } = await import("@/modules/fitting");
-    const fitting = await fittingConfig(transaction?.tx);
+    // Keep cold initialization of the fitting UI/worker barrel outside the
+    // checkout's held locks; this is the same reader used by fittingConfig.
+    const { readConfig } = await import("@/modules/fitting/ledger");
+    const fitting = await readConfig(client);
     if (!fitting.enabled || !fitting.coinSalesEnabled)
       throw new Error("Coin pack sales are disabled");
   }

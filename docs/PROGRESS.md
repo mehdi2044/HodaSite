@@ -1,5 +1,20 @@
 ## MODA4 final P0 gate — isolated investigation, 2026-11-24
 
+The aef56ed complete Windows attempts remain failed evidence: 9454/1/0,
+then 9371/9/75, across 197 files. Focused Windows Node 20/24 ABBA runs
+each passed 62 tests; these do not erase full-run failures. Further work
+uses another isolated worktree, preserving the 3396 and 3406 artifacts.
+Invoice after-lock permission reads now use their existing transaction:
+the real five-admitted control expired five default transactions (P2028),
+while the corrected control completed; a separate revocation/rollback probe
+also passed. These are not the five historical homepage P2024 errors.
+Direct fitting-ledger imports remove measured cold barrel initialization
+under financial locks without changing the functions or financial policy.
+Direct parser import keeps identical flat lint rules and parser behavior,
+with all six money domains checked by real ESLint rejection/positive tests.
+Current-head build, complete suites, browser traces and D70 remain required;
+do not label this candidate accepted or release-ready.
+
 Follow-up on the independently retained 3396 candidate: its clean source 1c2e3af0beb428c03eb95d9ee8aad58a481f3d02, Build N0qJh-nZ9oPwMHJ5r7aqC, 109 focused tests and first complete Windows run (9447/0/0 in 196 files) are retained, not replaced. A second worktree addresses measured market-scope read amplification. The preserved old run started the passing scope file with three retained markets and the failing counterpart with at least 25. Its independent 26-market copy passes the unchanged two-case test in the replay, but performs 575 user lookups; a direct real-service probe confirms 26 subject reads for one lookup. This is demonstrated work amplification, not proof of every millisecond in the historical timeout.
 
 Orders and returns now reuse one fresh operation-local subject through the existing access evaluator across every market, including inactive historical markets. There is no permission cache; existing guard positions remain unchanged, including the transaction-scoped return checks after locking. Real database regressions cover scoped/category/invalid grants, explicit denial, inactive history, account revocation, missing users and unknown permissions; all extra fixture rows roll back. Extend the namespace audit to the new authorization reader, retaining its original assertions and escaped-identifier coverage. Final source-matched complete validation and runtime/consent evidence remain required on the follow-up head.

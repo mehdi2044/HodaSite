@@ -1,5 +1,28 @@
 # MODA4 final P0 stability gate
 
+Follow-up reader correction: invoice regeneration must pass its existing
+transaction to both after-order-lock permission checks. Retain prechecks,
+native transaction/pool deadlines and all invoice/version/job assertions.
+The controlled five-admitted baseline expires its five native transactions
+with P2028, not the historical homepage P2024. A separate transaction-local
+revocation probe must deny and roll back; it is not a claim of an exploitable
+production revocation race.
+
+Avoid the fitting barrel's cold initialization inside financial transactions:
+quote reads the identical ledger configuration reader with the same client;
+order/return rewards import their existing ledger exports directly. No lock,
+money, reservation or reward policy changes. The controlled cold quote import
+was 1031–1291 ms through the barrel versus 2–5 ms directly, with both original
+coin-disable race cases passing in every comparison. This does not explain
+every full-run timeout.
+
+ESLint imports the same pinned TypeScript parser directly rather than loading
+the unused aggregate plugin graph. Declare it as a direct development
+dependency and keep the original structural test; add actual negative and
+positive lint behavior coverage for all six money domains. Do not raise the
+test deadline. Retain both failed aef56ed complete Windows attempts and the
+75 cases skipped after its failed setup hook as unresolved acceptance evidence.
+
 Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D24, D31, D38, D70, D72, D73, D82.
 
 Owner-authorized investigation based on c57bbb749757bf12688efd14356b126a6f5c1ca1. Preserve every existing preview/database/volume, especially 3392, 3362, 3346, 3330, 3315, 3296 and 3283. Use a separate worktree and newly verified empty destinations; restore only in ops. No push, PR, merge, main change, public deployment or feature development.
