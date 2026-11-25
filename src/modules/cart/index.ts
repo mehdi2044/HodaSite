@@ -161,7 +161,10 @@ async function changeCartBatch(
       });
       if (proposed.length > 100) throw new CommerceError("CART_LIMIT");
       if (proposed.length)
-        await quoteCart({ marketId: latest.marketId, locale, items: proposed });
+        await quoteCart(
+          { marketId: latest.marketId, locale, items: proposed },
+          { tx, lockPromotions: false },
+        );
       if (validate && updates.every((update) => update.unchanged)) return;
       for (const { variantId, next } of updates) {
         if (next)
@@ -195,7 +198,10 @@ export async function changeCartMarket(locale: "fa" | "tr" | "en") {
       if (latest.customerId && latest.customerId !== customer?.id)
         throw new CommerceError("FORBIDDEN");
       if (latest.items.length)
-        await quoteCart({ marketId: market.id, locale, items: latest.items });
+        await quoteCart(
+          { marketId: market.id, locale, items: latest.items },
+          { tx, lockPromotions: false },
+        );
       await tx.cart.update({
         where: { id: cart.id },
         data: {

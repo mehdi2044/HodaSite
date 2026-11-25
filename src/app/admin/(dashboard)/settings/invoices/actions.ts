@@ -16,7 +16,7 @@ export async function saveInvoiceSettings(form: FormData) {
   const settings = invoiceSettingsSchema.parse(Object.fromEntries(form));
   await withMutation(() =>
     db.$transaction(async (tx) => {
-      await assertCan(userId, "markets.edit", { marketId: id });
+      await assertCan(userId, "markets.edit", { marketId: id }, tx);
       const before = await tx.market.findUniqueOrThrow({
         where: { id },
         select: { invoiceSettings: true },

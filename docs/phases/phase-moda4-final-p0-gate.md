@@ -1,5 +1,26 @@
 # MODA4 final P0 stability gate
 
+The expanded inline-callback audit records 27 additional existing can/assertCan
+calls that omitted their enclosing transaction. Pass that explicit client at
+those exact guard positions, preserving user, permission and scope arguments,
+including undefined scope for global checks. No guard is removed and no
+permission is memoized. This is preventive correction of the same proven
+reader escape; it does not retrospectively attribute historical runtime errors.
+The audit covers 155 inline callbacks; indirect helpers/session validation still
+require manual/dynamic review and are not certified by that syntax audit.
+The backup queue's authorization reader is included, but backup scripts,
+providers, schema, restore execution and ops boundaries remain unchanged.
+
+The cart mutation and market-switch quote readers must use their current
+transaction too. Keep native maxWait/timeout, five-connection pool, cart row
+lock order, revision increments, scene/set idempotency, market ownership and
+financial assertions unchanged. Cart validation uses lockPromotions=false;
+it does not redeem benefits or reserve inventory. Require independent real
+five-admitted cart-add and market-switch regressions plus invalid-batch
+rollback, and repeat the actual slow-network browser scenario. Schema and
+backup scripts are unchanged; recovery is a code-only revert in an isolated
+copy, with no restore of an original database.
+
 Follow-up reader correction: invoice regeneration must pass its existing
 transaction to both after-order-lock permission checks. Retain prechecks,
 native transaction/pool deadlines and all invoice/version/job assertions.
@@ -23,7 +44,7 @@ positive lint behavior coverage for all six money domains. Do not raise the
 test deadline. Retain both failed aef56ed complete Windows attempts and the
 75 cases skipped after its failed setup hook as unresolved acceptance evidence.
 
-Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D24, D31, D38, D70, D72, D73, D82.
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D23, D24, D31, D38, D41, D70, D72, D73, D82.
 
 Owner-authorized investigation based on c57bbb749757bf12688efd14356b126a6f5c1ca1. Preserve every existing preview/database/volume, especially 3392, 3362, 3346, 3330, 3315, 3296 and 3283. Use a separate worktree and newly verified empty destinations; restore only in ops. No push, PR, merge, main change, public deployment or feature development.
 

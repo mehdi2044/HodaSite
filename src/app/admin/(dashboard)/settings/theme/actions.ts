@@ -103,7 +103,7 @@ export async function saveTheme(
     await withMutation(async () => {
       await db.$transaction(async (tx) => {
         await lockMediaReferences(tx, [accountMediaId], { readyImages: true });
-        await assertCan(userId, "settings.theme.edit");
+        await assertCan(userId, "settings.theme.edit", undefined, tx);
         await tx.$queryRaw`SELECT id FROM "ThemeSettings" WHERE id = ${"default"} FOR UPDATE`;
         const current = await tx.themeSettings.findUniqueOrThrow({
           where: { id: "default" },

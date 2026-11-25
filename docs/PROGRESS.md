@@ -1,5 +1,43 @@
 ## MODA4 final P0 gate — isolated investigation, 2026-11-24
 
+Actual cart-reader correction plus the inline permission-client propagation
+passes 325 focused tests in 20 files on six freshly verified independent
+database contexts (0 failed, 0 skipped; original deadlines/pool/retry policy).
+Native cart control records 82 global-client accesses inside callbacks and ten
+P2028 rollbacks before correction, versus zero such accesses and no P2028
+afterwards; the expected invalid-batch rollback remains. These focused results
+do not close the full-suite, slow-network UI, CI or independent D70 gates.
+
+The complete inline audit found 27 additional global permission reads across
+16 files. Those calls now receive their enclosing transaction, with identical
+actors, permissions, scopes, guard positions and transaction options; global
+checks keep an explicit undefined scope. This includes backup-queue permission
+checking, not any change of backup scripts/schema/provider or restore process.
+Record this as preventive reader correction and retain the audit's limitations
+for indirect helpers and session validation. Existing negative permission,
+MFA, finance, publication, shipping and backup regressions remain required.
+
+Matched runtime stress exposed a remaining cart validation escape on both c57
+and e8: the cart transaction holds its row lock while quoteCart uses the global
+client. A separate real-service control with five admitted transactions, native
+pool5/default10s and unchanged native5s/test15s deadlines failed both five-cart
+add and market-switch cases before correction; all three cases pass after
+passing the existing transaction. Invalid batch rollback remains enforced.
+Quote validation retains lockPromotions=false: no coupon redemption, order,
+reservation, credit or journal write is introduced. Preserve the e8 source and
+3410 artifact for comparison; final full/source-matched checks must use this
+new isolated cart-reader candidate.
+
+The e8 plain relevant browser run passed54/0/0; its separately instrumented
+consent run passed9/0/0. The additional editorial/hero run was14/5/0: existing
+EditorialSpotlight intentionally suppresses the legacy EditorialHome section,
+an archived extra published look invalidates the ten-card fixture precondition,
+and a read-only credential check proves the harness password does not match
+the archived account hash. Do not weaken assertions, change the approved home
+or overwrite that account. Use a new compatible test fixture and distinct QA
+identity. Broad e8 full gates were deferred before database target creation,
+not counted as executed tests, once the real cart regression was found.
+
 The aef56ed complete Windows attempts remain failed evidence: 9454/1/0,
 then 9371/9/75, across 197 files. Focused Windows Node 20/24 ABBA runs
 each passed 62 tests; these do not erase full-run failures. Further work
@@ -19,7 +57,7 @@ Follow-up on the independently retained 3396 candidate: its clean source 1c2e3af
 
 Orders and returns now reuse one fresh operation-local subject through the existing access evaluator across every market, including inactive historical markets. There is no permission cache; existing guard positions remain unchanged, including the transaction-scoped return checks after locking. Real database regressions cover scoped/category/invalid grants, explicit denial, inactive history, account revocation, missing users and unknown permissions; all extra fixture rows roll back. Extend the namespace audit to the new authorization reader, retaining its original assertions and escaped-identifier coverage. Final source-matched complete validation and runtime/consent evidence remain required on the follow-up head.
 
-Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D24, D31, D38, D70, D72, D73, D82.
+Implemented against docs v1.2 / D-numbers touched: D04, D07, D08, D23, D24, D31, D38, D41, D70, D72, D73, D82.
 
 Based on c57bbb749757bf12688efd14356b126a6f5c1ca1; all existing previews, original data and volumes remain protected. This branch is not approved for release. Follow `phases/phase-moda4-final-p0-gate.md`; no new feature, push, PR, merge or main change is authorized.
 

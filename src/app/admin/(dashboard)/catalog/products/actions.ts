@@ -203,7 +203,8 @@ export async function saveProduct(
           )
           .max(6)
           .parse(parseJson(data.get("aiAlts"), []));
-        if (aiAlts.length) await assertCan(session.user.id, "media.write");
+        if (aiAlts.length)
+          await assertCan(session.user.id, "media.write", undefined, tx);
         for (const alt of aiAlts) {
           const [kind, mediaId, locale, ...extra] = alt.key.split(".");
           if (

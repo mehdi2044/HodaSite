@@ -58,7 +58,7 @@ export async function saveCategoryPresentation(actorId: string, raw: unknown) {
       });
       if (!before || before.updatedAt.toISOString() !== input.expectedUpdatedAt)
         throw new RevisionConflictError();
-      await assertCan(actorId, "catalog.product.edit");
+      await assertCan(actorId, "catalog.product.edit", undefined, tx);
       const after = await tx.category.update({
         where: { id: input.id },
         data: { presentation: input.presentation ?? Prisma.DbNull },

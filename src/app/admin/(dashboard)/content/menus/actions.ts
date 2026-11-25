@@ -124,6 +124,7 @@ export async function deleteMenuItem(
           session.user.id,
           "content.menu.write",
           menu.marketId ? { marketId: menu.marketId } : undefined,
+          tx,
         );
         await tx.menuItem.updateMany({
           where: { OR: [{ id }, { parentId: id }], deletedAt: null },
@@ -175,6 +176,7 @@ export async function reorderMenuItems(
           session.user.id,
           "content.menu.write",
           menu.marketId ? { marketId: menu.marketId } : undefined,
+          tx,
         );
         const lockedIds = [
           ...new Set([

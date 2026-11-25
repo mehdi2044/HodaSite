@@ -39,7 +39,7 @@ export async function createUser(form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
-      await assertCan(actor, "users.manage");
+      await assertCan(actor, "users.manage", undefined, tx);
       const role = await tx.role.findUniqueOrThrow({
         where: { key: input.roleKey },
       });
@@ -84,7 +84,7 @@ export async function updateUser(id: string, form: FormData) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
-      await assertCan(actor, "users.manage");
+      await assertCan(actor, "users.manage", undefined, tx);
       const role = await tx.role.findUniqueOrThrow({
         where: { key: input.roleKey },
       });
@@ -155,7 +155,7 @@ export async function setUserActive(id: string, active: boolean) {
   await withMutation(() =>
     db.$transaction(async (tx) => {
       await lockSecurity(tx);
-      await assertCan(actor, "users.manage");
+      await assertCan(actor, "users.manage", undefined, tx);
       const before = await protectLastOwner(tx, id, true, active);
       for (const grant of before.roles)
         await assertRoleGrant(

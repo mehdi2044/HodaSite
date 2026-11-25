@@ -41,7 +41,7 @@ export async function saveReturnPolicy(form: FormData) {
   });
   await withMutation(() =>
     db.$transaction(async (tx) => {
-      await assertCan(session.user!.id!, "markets.edit", { marketId: id });
+      await assertCan(session.user!.id!, "markets.edit", { marketId: id }, tx);
       const before = await tx.market.findUniqueOrThrow({
         where: { id },
         select: { returnSettings: true },
